@@ -1,0 +1,33 @@
+# See config.example.yml for documentation.
+object_base: orig/GAEJ01
+object: sys/main.dol
+hash: 25d65de224306e90b12e89613c5658e4214c63b2
+symbols: config/GAEJ01/symbols.txt
+splits: config/GAEJ01/splits.txt
+# map: orig/GAEJ01/files/static.map
+common_start: 0x8028663C
+# Change this to match the linker verison.
+# See config.example.yml for a list.
+mw_comment_version: 11
+
+modules:
+- object: files/foresta.rel
+  hash: 83ef468f00e6374aa8e40b906e2da3e1dc6a9beb
+  symbols: config/GAEJ01/foresta/symbols.txt
+  splits: config/GAEJ01/foresta/splits.txt
+  # map: orig/GAEJ01/files/foresta.map
+- object: files/forestd.rel
+  hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb
+  symbols: config/GAEJ01/forestd/symbols.txt
+  splits: config/GAEJ01/forestd/splits.txt
+  # map: orig/GAEJ01/files/forestd.map
+- object: files/foresti.rel
+  hash: 39a8462764ecc1405b25d41f829fe36fff793f25
+  symbols: config/GAEJ01/foresti/symbols.txt
+  splits: config/GAEJ01/foresti/splits.txt
+  # map: orig/GAEJ01/files/foresti.map
+- object: files/foresto.rel
+  hash: de8154e1c10c24fc6b19c2e77acdc634120a46bf
+  symbols: config/GAEJ01/foresto/symbols.txt
+  splits: config/GAEJ01/foresto/splits.txt
+  # map: orig/GAEJ01/files/foresto.map
