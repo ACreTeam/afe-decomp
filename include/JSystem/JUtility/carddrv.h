@@ -10,9 +10,29 @@
 extern "C" {
 #endif
 
-typedef struct Test {
-    u16 unk_00;
-} Test;
+enum CardErrorStatus {
+    CARD_ERROR_0000 = (0 << 0),
+    CARD_ERROR_0001 = (1 << 0),
+    CARD_ERROR_0002 = (1 << 1),
+    CARD_ERROR_0008 = (1 << 3),
+    CARD_ERROR_0010 = (1 << 4),
+    CARD_ERROR_0020 = (1 << 5),
+    CARD_ERROR_0040 = (1 << 6),
+    CARD_ERROR_0080 = (1 << 7),
+    CARD_ERROR_0100 = (1 << 8),
+    CARD_ERROR_0200 = (1 << 9),
+    CARD_ERROR_1000 = (1 << 12),
+    CARD_ERROR_4000 = (1 << 14),
+    CARD_ERROR_8000 = (1 << 15),
+
+    CARD_ERROR_0090 = (CARD_ERROR_0080 | CARD_ERROR_0010),
+    CARD_ERROR_00A0 = (CARD_ERROR_0080 | CARD_ERROR_0020),
+    CARD_ERROR_00B0 = (CARD_ERROR_0080 | CARD_ERROR_0020 | CARD_ERROR_0010),
+    CARD_ERROR_00C0 = (CARD_ERROR_0080 | CARD_ERROR_0040),
+    CARD_ERROR_00D0 = (CARD_ERROR_0080 | CARD_ERROR_0040 | CARD_ERROR_0010),
+    CARD_ERROR_00E0 = (CARD_ERROR_0080 | CARD_ERROR_0040 | CARD_ERROR_0020),
+    CARD_ERROR_00F0 = (CARD_ERROR_0080 | CARD_ERROR_0040 | CARD_ERROR_0020 | CARD_ERROR_0010),
+};
 
 typedef struct UnkARG {
     ARG arg;
@@ -30,7 +50,7 @@ extern u16 CARD_InitD(int param_1, int param_2);
 extern u16 CARD_SelectedNo();
 extern u16 CARD_Select(u16 param_1);
 extern u16 CARD_Reset();
-extern int CARD_Getstatus(Test* param1);
+extern int CARD_Getstatus(u16* param1);
 extern int CARD_Getinfo(u8* param1);
 extern u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
 extern u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
