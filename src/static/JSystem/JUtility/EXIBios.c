@@ -400,7 +400,7 @@ int EXIDetach(long chan) {
     return 1;
 }
 
-int EXISelectSD(long chan, unsigned long dev, unsigned long freq) {
+BOOL EXISelectSD(long chan, unsigned long dev, unsigned long freq) {
     struct EXIControl* exi;
     unsigned long cpr;
     int enabled;
@@ -443,7 +443,7 @@ int EXISelectSD(long chan, unsigned long dev, unsigned long freq) {
 
 exit:
     OSRestoreInterrupts(enabled);
-    return 0;
+    return FALSE;
 
 select:
     exi->state |= 4;
@@ -462,7 +462,7 @@ select:
         }
     }
     OSRestoreInterrupts(enabled);
-    return 1;
+    return TRUE;
 }
 
 int EXISelect(long chan, unsigned long dev, unsigned long freq) {
