@@ -1,8 +1,10 @@
 #include "JSystem/JUtility/fs_chdr.h"
+#include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_subd.h"
 
 u16 FS_Chdir(FSFile* pFile, char* arg1) {
     u16 status;
+    DrvCtl* ptr;
 
     if (pFile == NULL || arg1 == NULL) {
         return 0xA00C;
@@ -12,8 +14,9 @@ u16 FS_Chdir(FSFile* pFile, char* arg1) {
         return 0xA003;
     }
 
-    //! TODO: is FS_drv_ctl type FSFile struct?
-    if (pFile->unk_00 != ((u16*)&FS_drv_ctl[pFile->unk_00[0] * 0x25E48]) + 4) {
+    ptr = &FS_drv_ctl[pFile->unk_00[0]];
+
+    if (pFile->unk_00 != ptr->unk_08) {
         return 0xA00C;
     }
 
@@ -31,10 +34,10 @@ u16 FS_Chdir_sub(FSFile* pFile, char* arg1) {
     u16 sp74;
     char sp54[32];
     char sp14[64];
-    void *sp10;
+    DrvCtl *sp10;
 
     sp78[0] = 0;
-    sp10 = &FS_drv_ctl[pFile->unk_00[0] * 0x25E48];
+    sp10 = &FS_drv_ctl[pFile->unk_00[0]];
 
     if (FS_strlen(arg1) > 63) {
         return 0xA017;

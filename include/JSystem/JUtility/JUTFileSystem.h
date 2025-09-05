@@ -34,8 +34,6 @@ int FS_Mount(void** param1, u16 param2);
 int FS_Umount(void* param1);
 int FS_Readdir(void* param1, void* param2);
 
-extern u8 FS_drv_ctl[0x4BC90];
-
 static inline int Init(int param1, int param2, u16 param3) {
     int r = FS_Init(param1, param2, param3);
     return r & 0xFFFF ? r : 0;

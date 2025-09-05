@@ -1,1 +1,3 @@
-unsigned char FS_drv_ctl[0x4BC90];
+#include "JSystem/JUtility/fs_file.h"
+
+DrvCtl FS_drv_ctl[2];
