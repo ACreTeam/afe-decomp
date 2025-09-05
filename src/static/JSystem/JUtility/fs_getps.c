@@ -1,5 +1,4 @@
-#include "JSystem/JUtility/fs_getps.h"
-#include "JSystem/JUtility/fs.h"
+#include "JSystem/JUtility/fs_file.h"
 
 u16 FS_Getpos(FSFile* pFile, int* arg1) {
     u16 status = 0;
