@@ -17,7 +17,7 @@ u16 FS_Getpos(FSFile* pFile, int* arg1) {
     //! TODO: is FS_drv_ctl type FSFile struct?
     if (pFile->unk_04 != ptr + 4) {
         return 0xA00C;
-    } else if (pFile->unk_00 >= 5) {
+    } else if (pFile->unk_00[0] >= 5) {
         return 0xA008;
     } else {
         *arg1 = pFile->unk_28;
