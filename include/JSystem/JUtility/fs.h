@@ -12,6 +12,7 @@ extern "C" {
 #include "JSystem/JUtility/fs_dele.h"
 #include "JSystem/JUtility/fs_drv.h"
 #include "JSystem/JUtility/fs_drvsel.h"
+#include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_getps.h"
 #include "JSystem/JUtility/fs_init.h"
@@ -27,8 +28,6 @@ extern "C" {
 #include "JSystem/JUtility/fs_sync.h"
 #include "JSystem/JUtility/fs_umount.h"
 #include "JSystem/JUtility/fs_write.h"
-
-extern unsigned char FS_drv_ctl[0x4BC90];
 
 #ifdef __cplusplus
 };
