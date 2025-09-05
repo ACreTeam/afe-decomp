@@ -6,16 +6,16 @@ u16 FS_Getpos(FSFile* pFile, int* arg1) {
 
     if (pFile == NULL) {
         return 0xA00C;
-    } else if (pFile->unk_04[2] != 1) {
+    } else if (pFile->unk_04_ptr[2] != 1) {
         return 0xA016;
-    } else if (pFile->unk_04[3] != 2) {
+    } else if (pFile->unk_04_ptr[3] != 2) {
         return 0xA003;
     }
 
-    ptr = (u16*)&FS_drv_ctl[pFile->unk_04[0] * 0x25E48];
+    ptr = (u16*)&FS_drv_ctl[pFile->unk_04_ptr[0] * 0x25E48];
 
     //! TODO: is FS_drv_ctl type FSFile struct?
-    if (pFile->unk_04 != ptr + 4) {
+    if (pFile->unk_04_ptr != ptr + 4) {
         return 0xA00C;
     } else if (pFile->unk_00[0] >= 5) {
         return 0xA008;

@@ -66,6 +66,17 @@ typedef struct ARG {
     };
 } ARG;
 
+typedef struct UnkARG {
+    ARG arg;
+    u8 _00;
+} UnkARG;
+
+typedef struct ReadWriteDParam5 {
+    u16 unk_00;
+    u16 unk_02;
+    u32 unk_04;
+} ReadWriteDParam5;
+
 #ifdef __cplusplus
 };
 #endif
