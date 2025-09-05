@@ -316,7 +316,7 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/fs_dele.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_opdr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_rddr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(NonMatching, "JSystem/JUtility/fs_cldr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(Matching, "JSystem/JUtility/fs_cldr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_mkdr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_renm.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all", "-sym off"]),
             Object(NonMatching, "JSystem/JUtility/fs_write.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
