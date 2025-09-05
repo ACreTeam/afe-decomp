@@ -1,7 +1,6 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "MSL_C/w_math.h"
 #include <dolphin/types.h>
 #include "macros.h"
 
