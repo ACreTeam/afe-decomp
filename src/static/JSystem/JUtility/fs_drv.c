@@ -33,7 +33,7 @@ u16 CARD_Read(SDSTATUS* param1, u32 param2, int param3, u32 param4, ReadWriteDPa
     return ret;
 }
 
-u16 CARD_Init(void) {
+u16 CARD_Init(int param1, int param2) {
     return CARD_InitD(0, 0);
 }
 

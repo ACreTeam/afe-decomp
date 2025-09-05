@@ -34,24 +34,13 @@ enum CardErrorStatus {
     CARD_ERROR_00F0 = (CARD_ERROR_0080 | CARD_ERROR_0040 | CARD_ERROR_0020 | CARD_ERROR_0010),
 };
 
-typedef struct UnkARG {
-    ARG arg;
-    u8 _00;
-} UnkARG;
-
-typedef struct ReadWriteDParam5 {
-    u16 unk_00;
-    u16 unk_02;
-    u32 unk_04;
-} ReadWriteDParam5;
-
-extern int CARD_IF_Reset();
+extern u16 CARD_IF_Reset();
 extern u16 CARD_InitD(int param_1, int param_2);
 extern u16 CARD_SelectedNo();
 extern u16 CARD_Select(u16 param_1);
 extern u16 CARD_Reset();
-extern int CARD_Getstatus(u16* param1);
-extern int CARD_Getinfo(u8* param1);
+extern u16 CARD_Getstatus(u16* param1);
+extern u16 CARD_Getinfo(u8* param1);
 extern u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
 extern u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
 extern u16 CARD_SD_Status();

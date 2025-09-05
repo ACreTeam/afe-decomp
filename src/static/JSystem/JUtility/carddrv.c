@@ -31,7 +31,7 @@ int CARD_Size[CARD_NUM_CHANS];
 int func_CARD_In[CARD_NUM_CHANS];
 int func_CARD_Out[CARD_NUM_CHANS];
 
-int CARD_IF_Reset() {
+u16 CARD_IF_Reset() {
     int i;
 
     EXIInit();
@@ -174,25 +174,25 @@ u16 CARD_Reset() {
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-int CARD_Getstatus(u16* param1) {
+u16 CARD_Getstatus(u16* param1) {
     int iVar1;
 
-    param1[0] = 0x831F;
+    *param1 = 0x831F;
 
     while ((iVar1 = EXIProbeEx(CARD_ExiChannel)) == 0) {}
 
     if (iVar1 != 1) {
-        param1[0] |= 0x420;
+        *param1 |= 0x420;
     }
 
     if (CARD_WP_Flag[CARD_ExiChannel] != 0) {
-        param1[0] |= 0x80;
+        *param1 |= 0x80;
     }
 
     return 0;
 }
 
-int CARD_Getinfo(u8* param1) {
+u16 CARD_Getinfo(u8* param1) {
     s32 iVar1;
     u8* ptr = param1;
 
