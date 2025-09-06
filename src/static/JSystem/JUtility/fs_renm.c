@@ -82,7 +82,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     u16 temp_r3_8;
     u16 temp_r3_9;
     u16 var_r31;
-    TESTTESTTEST2 *temp_r29;
+    char *temp_r29;
 
     sp14 = arg1;
     sp18 = arg2;
@@ -112,7 +112,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
         return temp_r3_3;
     }
     if (sp24 == sp22) {
-        temp_r3_2 = FS_entry_name_set(temp_r27 + 0x20000 + sp28 + 0xBA4, (&sp78[0])[sp74 - 1]);
+        temp_r3_2 = FS_entry_name_set(&temp_r27->unk_20BA4[sp28], (&sp78[0])[sp74 - 1]);
         if (temp_r3_2 != 0) {
             return temp_r3_2;
         }
@@ -146,23 +146,25 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
         if (temp_r3 != 0) {
             return temp_r3;
         }
-        temp_r29 = (TESTTESTTEST2*)(&temp_r27->unk_20BA4[sp20]);
+
+        temp_r29 = &temp_r27->unk_20BA4[sp20];
         FS_memset(temp_r29, 0, 0x20U);
         temp_r3_6 = FS_entry_name_set(temp_r29, (&sp78[0])[sp74 - 1]);
         var_r31 = temp_r3_6;
+
         if (temp_r3_6 == 0) {
-            temp_r29->unk_0B = sp54.unk_0B;
-            FS_strncpy(temp_r29->unk_0C, sp60, 0xAU);
-            temp_r29->unk_16[0] = sp60[0]; // sp6A;
-            temp_r29->unk_16[1]/*7*/ = sp60[1]; // ((s32) sp6A >> 8);
-            temp_r29->unk_16[2]/*8*/ = sp60[2]; // sp6C;
-            temp_r29->unk_16[3]/*9*/ = sp60[3]; // ((s32) sp6C >> 8);
-            temp_r29->unk_16[4]/*A*/ = sp60[4]; // sp6E;
-            temp_r29->unk_16[5]/*B*/ = sp60[5]; // ((s32) sp6E >> 8);
-            temp_r29->unk_16[6]/*C*/ = sp60[6]; // (sp70 >> 0);
-            temp_r29->unk_16[7]/*D*/ = sp60[7]; // (sp70 >> 8);
-            temp_r29->unk_16[8]/*E*/ = sp60[8]; // (sp70 >> 16);
-            temp_r29->unk_16[9]/*F*/ = sp60[9]; // (sp70 >> 24);
+            temp_r29[11] = sp54.unk_0B;
+            FS_strncpy(&temp_r29[12], sp60, 0xAU);
+            temp_r29[0x16 + 0] = sp60[0]; // sp6A;
+            temp_r29[0x16 + 1]/*7*/ = sp60[1]; // ((s32) sp6A >> 8);
+            temp_r29[0x16 + 2]/*8*/ = sp60[2]; // sp6C;
+            temp_r29[0x16 + 3]/*9*/ = sp60[3]; // ((s32) sp6C >> 8);
+            temp_r29[0x16 + 4]/*A*/ = sp60[4]; // sp6E;
+            temp_r29[0x16 + 5]/*B*/ = sp60[5]; // ((s32) sp6E >> 8);
+            temp_r29[0x16 + 6]/*C*/ = sp60[6]; // (sp70 >> 0);
+            temp_r29[0x16 + 7]/*D*/ = sp60[7]; // (sp70 >> 8);
+            temp_r29[0x16 + 8]/*E*/ = sp60[8]; // (sp70 >> 16);
+            temp_r29[0x16 + 9]/*F*/ = sp60[9]; // (sp70 >> 24);
             temp_r3_7 = FS_write_sub(0, 1, sp1C, 0, &pFile->unk_04[0], 0, &pFile->unk_00[0]);
             var_r31 = temp_r3_7;
             if (temp_r3_7 == 0) {
