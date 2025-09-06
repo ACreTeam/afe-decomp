@@ -4,7 +4,7 @@
 #include "JSystem/JUtility/fs_subd.h"
 #include "types.h"
 
-u16 FS_Rename(FSFile* pFile, int* arg1, int* arg2) {
+u16 FS_Rename(FSFile* pFile, char* arg1, char* arg2) {
     u16 status;
     DrvCtl* ptr;
 
@@ -47,7 +47,7 @@ typedef struct TESTTESTTEST2 {
     char unk_1F;
 } TESTTESTTEST2;
 
-u16 FS_Rename_sub(FSFile *pFile, int *arg1, int *arg2) {
+u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     char spF8[64];
     char spB8[64];
     char sp98[32];

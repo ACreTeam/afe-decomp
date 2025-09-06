@@ -1,6 +1,6 @@
 #include "JSystem/JUtility/fs_file.h"
 
-u16 FS_Getpos(FSFile* pFile, int* arg1) {
+u16 FS_Getpos(FSFile* pFile, u32* arg1) {
     u16 status = 0;
     DrvCtl* ptr;
 

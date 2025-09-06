@@ -29,6 +29,12 @@ extern "C" {
 #include "JSystem/JUtility/fs_umount.h"
 #include "JSystem/JUtility/fs_write.h"
 
+static inline u16 CheckStatus(u16 curStatus) {
+    u16 status = 0;
+    status = curStatus != 0 ? curStatus : status;
+    return status;
+}
+
 #ifdef __cplusplus
 };
 #endif

@@ -1,7 +1,7 @@
 #include "JSystem/JUtility/JUTSDFile.h"
 #include "JSystem/JUtility/JUTSDDrive.h"
-#include "JSystem/JUtility/JUTFileSystem.h"
 #include "JSystem/JUtility/JUTException.h"
+#include "JSystem/JUtility/fs.h"
 
 JUTSDFile::JUTSDFile() {
     mUnk_26 = 0;
@@ -38,17 +38,19 @@ bool JUTSDFile::close() {
 
 int JUTSDFile::readData(void* data, s32 length, s32 ofs) {
     UnkStruct_ReadWrite sp8;
-    u16 temp_r3;
+    u16 status;
 
-    temp_r3 = FS_Seek(mUnk_20, ofs, 1);
-    if (temp_r3 != 0) {
-        mUnk_26 = temp_r3;
+    status = FS_Seek(mUnk_20, ofs, 1);
+
+    if (status != 0) {
+        mUnk_26 = status;
         return -1;
     }
 
-    temp_r3 = FS_Read(mUnk_20, data, length, 0, &sp8);
-    if (temp_r3 != 0) {
-        mUnk_26 = temp_r3;
+    status = FS_Read(mUnk_20, data, length, 0, &sp8);
+
+    if (status != 0) {
+        mUnk_26 = status;
         return -1;
     }
 
@@ -72,17 +74,19 @@ int JUTSDFile::readData(void* data, s32 length, s32 ofs) {
 
 int JUTSDFile::writeData(const void* data, s32 length, s32 ofs) {
     UnkStruct_ReadWrite sp8;
-    u16 temp_r3;
+    u16 status;
 
-    temp_r3 = FS_Seek(mUnk_20, ofs, 1);
-    if (temp_r3 != 0) {
-        mUnk_26 = temp_r3;
+    status = FS_Seek(mUnk_20, ofs, 1);
+
+    if (status != 0) {
+        mUnk_26 = status;
         return -1;
     }
 
-    temp_r3 = FS_Write(mUnk_20, data, length, 0, &sp8);
-    if (temp_r3 != 0) {
-        mUnk_26 = temp_r3;
+    status = FS_Write(mUnk_20, data, length, 0, &sp8);
+
+    if (status != 0) {
+        mUnk_26 = status;
         return -1;
     }
 
@@ -99,20 +103,20 @@ int JUTSDFile::writeData(const void* data, s32 length, s32 ofs) {
 }
 
 u32 JUTSDFile::getFileSize() const {
-    u16 uVar1;
+    u16 status;
     u32 fileSize;
 
-    uVar1 = FS_Seek(mUnk_20, 0, 4);
+    status = FS_Seek(mUnk_20, 0, 4);
 
-    if (uVar1 != 0) {
-        mUnk_26 = uVar1;
+    if (status != 0) {
+        mUnk_26 = status;
         return 0;
     }
 
-    uVar1 = FS_Getpos(mUnk_20, &fileSize);
+    status = FS_Getpos(mUnk_20, &fileSize);
 
-    if (uVar1 != 0) {
-        mUnk_26 = uVar1;
+    if (status != 0) {
+        mUnk_26 = status;
         return 0;
     }
 

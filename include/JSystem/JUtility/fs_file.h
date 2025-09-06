@@ -9,6 +9,12 @@
 extern "C" {
 #endif
 
+typedef struct UnkStruct_ReadWrite {
+    /* 00 */ u16 unk_00;
+    /* 02 */ u16 unk_02;
+    /* 04 */ int unk_04;
+} UnkStruct_ReadWrite; // size = 0x08
+
 typedef struct FSFile {
     // ?
     u16 unk_00[2];
@@ -27,6 +33,16 @@ typedef struct FSFile {
     u16 unk_74;
     char unk_76[64];
 } FSFile;
+
+typedef struct FSDir {
+    /* 0x00 */ FSFile* pFile;
+    /* 0x04 */ int unk_04;
+    /* 0x08 */ int unk_08;
+    /* 0x0C */ int unk_0C;
+    /* 0x10 */ u16 unk_10;
+    /* 0x12 */ u16 unk_12;
+    /* 0x14 */ char unk_14[64];
+} FSDir; // size = 0x44
 
 typedef struct DrvCtl {
     /* 0x00 */ u16 unk_00[2];

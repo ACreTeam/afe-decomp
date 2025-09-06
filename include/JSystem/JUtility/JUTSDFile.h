@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "JSystem/JKernel/JKRFile.h"
+#include "JSystem/JUtility/fs_file.h"
 
 class JUTSDFile : public JKRFile {
   public:
@@ -20,7 +21,7 @@ class JUTSDFile : public JKRFile {
   private:
     u16 mUnk_1C;   // _1C
     u16 mUnk_1E;   // _1E
-    void* mUnk_20; // _20
+    FSFile* mUnk_20; // _20
     bool mUnk_24;  // _24
     bool mUnk_25;  // _25
     mutable u16 mUnk_26;   // _26

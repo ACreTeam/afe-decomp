@@ -1,14 +1,13 @@
-#ifndef FSGETPS_H
-#define FSGETPS_H
+#ifndef FSOPDR_H
+#define FSOPDR_H
 
-#include "types.h"
 #include "JSystem/JUtility/fs_file.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern u16 FS_Getpos(FSFile* pFile, u32* arg1);
+extern u16 FS_Opendir(FSFile* param1, FSDir** param2, const char* param3);
 
 #ifdef __cplusplus
 };
