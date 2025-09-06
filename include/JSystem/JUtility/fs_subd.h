@@ -20,11 +20,14 @@ extern u16 FS_write_sub(void* param1, int param2, int param3, int param4, u16* p
 extern u16 FS_divide_fpathname(void* param1, void* param2, void* param3, u16 param4);
 extern u16 FS_entry_name_set(void* param1, int param2);
 extern u16 FS_uchar_to_dchar(char* param1);
-extern void *FS_memset(void *dest, int ch, size_t count);
+extern void FS_toupper(char *arg0);
+extern void *FS_memset(void *dest, u16 ch, size_t count);
 extern char *FS_strcpy(char *dest, const char *src);
 extern char *FS_strncpy(char *dest, const char *src, size_t num);
 extern size_t FS_strlen(const char *s);
 extern u16 FS_strncmp(const char *s1, const char *s2, size_t n);
+extern void FS_srand(u16 arg0, u16 arg1);
+extern u16 FS_rand(u16 arg0, u16 arg1);
 
 #ifdef __cplusplus
 };

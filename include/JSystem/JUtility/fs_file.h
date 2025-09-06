@@ -55,10 +55,7 @@ typedef struct DrvCtl_unk_20000 {
     /* 0x20BB0 */ char unk_20BB0[10];
     /* 0x20BBA */ u8 unk_20BBA[10];
     /* 0x20BC4 */ char pad_unk_20BC4[0x4E10];
-    /* 0x259D4 */ s32 unk_259D4;
-    /* 0x259D8 */ s32 unk_259D8;
-    /* 0x259DC */ u16 unk_259DC;
-    /* 0x259DE */ char pad_unk_259DE[0x46A];
+    
 } DrvCtl_unk_20000;
 
 typedef struct DrvCtl {
@@ -84,6 +81,10 @@ typedef struct DrvCtl {
     /* 0x00206 */ u16 unk_206;
     /* 0x00208 */ char pad_unk_208[0x20000 - 0x00208];
     /* 0x20000 */ DrvCtl_unk_20000 unk_20000[1]; // fake
+    /* 0x259D4 */ s32 unk_259D4;
+    /* 0x259D8 */ u32 unk_259D8;
+    /* 0x259DC */ u16 unk_259DC;
+    /* 0x259DE */ char pad_unk_259DE[0x46A];
 } DrvCtl; // size = 0x25E48
 
 extern DrvCtl FS_drv_ctl[CARD_NUM_CHANS];
