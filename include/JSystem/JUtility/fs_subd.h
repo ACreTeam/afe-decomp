@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-extern u16 FS_fat_clear(FSFile* param1, u16 param2);
+extern u16 FS_fat_clear(u16 param2, FSFile* param1);
 extern u16 FS_Flush(FSFile* pFile);
 extern u16 FS_get_entry(void* param1, void* param2, char* param3, u16 param4, void* param5, void* param6, void* param7);
 extern u16 FS_allocate_entry(FSFile* pFile, int param1, int* param2, u16* param3);

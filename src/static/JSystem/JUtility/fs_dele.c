@@ -52,20 +52,24 @@ u16 FS_Delete_sub(FSFile* param1, const char* param2) {
 }
 
 u16 FS_Delete_Entry(FSFile* param1, int param2, u16 param3, u16 param4) {
-    DrvCtl_unk_20000* ptr;
+    DrvCtl* ptr;
     DrvCtl_unk_20000* ptr2;
     u16 temp_r29;
     u16 status;
-    int pad[2];
+    int pad;
+    int idx;
 
-    ptr = FS_drv_ctl[param1->unk_00[0]].unk_20000;
-
-    if (param1->unk_04[13] == 0x20) {
-        (void)0;
-    }
-
-    ptr2 = &ptr[param3];
-
+    ptr = &FS_drv_ctl[param1->unk_00[0]];
+    if(param1->unk_04[13] == 0x20){
+        pad = 0;
+        (void)pad;
+        (void)pad;
+        (void)idx;
+    };
+    // ptr2 = (DrvCtl_unk_20000*)((u32)&ptr->unk_20000 + param3);
+    idx = (int)param3;
+    ptr2 = (DrvCtl_unk_20000*)((u32)ptr->ctrl_p + idx);
+    
     ptr2->unk_20BA4 = 0xE5;
     temp_r29 = ((ptr2->unk_20BBA[5] << 8) & 0xFF00) | (ptr2->unk_20BBA[4] & 0x00FF);
 
@@ -76,7 +80,7 @@ u16 FS_Delete_Entry(FSFile* param1, int param2, u16 param3, u16 param4) {
     }
 
     if (temp_r29 > 1 && temp_r29 <= (param1->unk_BC - 1)) {
-        status = FS_fat_clear(param1, temp_r29);
+        status = FS_fat_clear(temp_r29, param1); // the declaration for this was changed
 
         if (status != 0) {
             return status;
