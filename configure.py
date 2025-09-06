@@ -323,7 +323,7 @@ config.libs = [
             Object(Matching, "JSystem/JUtility/fs_chdr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_getps.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_cardrst.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(NonMatching, "JSystem/JUtility/fs_drvsel.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(Matching, "JSystem/JUtility/fs_drvsel.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/exidrv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/carddrv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/EXIBios.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-O3,p", "-inline all"]),
