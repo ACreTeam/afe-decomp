@@ -305,7 +305,7 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/fs_subd.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_drv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/time.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(NonMatching, "JSystem/JUtility/fs_init.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(Matching, "JSystem/JUtility/fs_init.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_mount.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_umount.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(NonMatching, "JSystem/JUtility/fs_sync.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),

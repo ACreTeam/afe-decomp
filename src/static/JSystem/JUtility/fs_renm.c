@@ -65,8 +65,8 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     u16 sp22;
     u16 sp20;
     int sp1C;
-    int *sp18;
-    int *sp14;
+    char *sp18;
+    char *sp14;
     int spC;
     u16 *sp8;
     DrvCtl *temp_r27;
@@ -102,7 +102,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     if ((sp22 == 0) && (sp74 != 1)) {
         return 0xA00F;
     }
-    if (temp_r3_4 != -0x5FF9U) {
+    if (temp_r3_4 != 0xA007) {
         return temp_r3_4;
     }
     sp8 = &sp24;

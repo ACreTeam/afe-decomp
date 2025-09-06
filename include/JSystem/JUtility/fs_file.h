@@ -45,16 +45,37 @@ typedef struct FSDir {
 } FSDir; // size = 0x44
 
 typedef struct DrvCtl {
-    /* 0x00 */ u16 unk_00[2];
-    /* 0x04 */ int pad_unk_04;
-    /* 0x08 */ u16 unk_08[2];
-    /* 0x0C */ char pad_unk_0C[0x20BA4 - 0x0C];
-    /* 0x20BA4 */ char unk_20BA4[32];
+    /* 0x00000 */ u16 unk_00[2];
+    /* 0x00004 */ u16 unk_04;
+    /* 0x00006 */ u16 unk_06;
+    /* 0x00008 */ u16 unk_08[2];
+    /* 0x0000C */ u16 unk_0C;
+    /* 0x0000E */ u16 unk_0E;
+    /* 0x00010 */ char pad_unk_10[0xB8];
+    /* 0x000C8 */ u16 unk_C8;
+    /* 0x000CA */ char pad_unk_CA[0x32];
+    /* 0x000FC */ u16 unk_FC;
+    /* 0x000FE */ char pad_unk_FE[4];
+    /* 0x00102 */ u16 unk_102;
+    /* 0x00104 */ char pad_unk_104[0xE];
+    /* 0x00112 */ u16 unk_112;
+    /* 0x00114 */ char pad_unk_114[0xB8];
+    /* 0x001CC */ u16 unk_1CC;
+    /* 0x001CE */ char pad_unk_1CE[0x32];
+    /* 0x00200 */ u16 unk_200;
+    /* 0x00202 */ char pad_unk_202[4];
+    /* 0x00206 */ u16 unk_206;
+    /* 0x00208 */ char pad_unk_208[0x2099C];
+    /* 0x20BA4 */ char *unk_20BA4;
     /* 0x20BA8 */ char pad_unk_20BA8[7];
     /* 0x20BAF */ char unk_20BAF;
     /* 0x20BB0 */ char unk_20BB0[10];
     /* 0x20BBA */ char unk_20BBA[10];
-    /* 0x20BC4 */ char pad_unk_20BC4[0x25E48 - 0x20BE0];
+    /* 0x20BC4 */ char pad_unk_20BC4[0x4E10];
+    /* 0x259D4 */ s32 unk_259D4;
+    /* 0x259D8 */ s32 unk_259D8;
+    /* 0x259DC */ u16 unk_259DC;
+    /* 0x259DE */ char pad_unk_259DE[0x46A];
 } DrvCtl; // size = 0x25E48
 
 extern DrvCtl FS_drv_ctl[CARD_NUM_CHANS];
