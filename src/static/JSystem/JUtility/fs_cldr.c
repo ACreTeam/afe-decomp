@@ -10,13 +10,13 @@ u16 FS_Closedir(FSDir* pDir) {
     if (pDir == NULL) {
         return 0xA00C;
     } else {
-        ptr = &FS_drv_ctl[pDir->pFile->unk_00[0]];
+        ptr = &FS_drv_ctl[pDir->pDriveInfo->nChan];
 
-        if (pDir->pFile->unk_00 != ptr->unk_08) {
+        if (pDir->pDriveInfo != &ptr->unk_08[0]) {
             return 0xA02E;
-        } else if (pDir->pFile->unk_04[1] != 2) {
+        } else if (pDir->pDriveInfo->unk_06 != 2) {
             return 0xA003;
-        } else if (pDir->pFile->unk_04[0] != 1) {
+        } else if (pDir->pDriveInfo->unk_04 != 1) {
             return 0xA016;
         }
 
@@ -30,7 +30,7 @@ u16 FS_Closedir(FSDir* pDir) {
 }
 
 u16 FS_Closedir_sub(FSDir* pDir) {
-    pDir->pFile = NULL;
+    pDir->pDriveInfo = NULL;
     pDir->unk_04 = 0;
     pDir->unk_08 = 0;
     pDir->unk_10 = 0;

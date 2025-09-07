@@ -9,16 +9,19 @@
 extern "C" {
 #endif
 
-extern u16 FS_fat_clear(u16 param2, FSFile* param1);
-extern u16 FS_Flush(FSFile* pFile);
-extern u16 FS_get_entry(void* param1, void* param2, char* param3, u16 param4, void* param5, void* param6, void* param7);
+#define FS_SD_CARD_MODE_RAW (1 << 0)
+#define FS_SD_CARD_MODE_FORMATTED_MODE (1 << 1)
+
+extern u16 FS_fat_clear(u16 param2, SDDriveInfo* param1);
+extern u16 FS_Flush(SDDriveInfo* pFile);
+extern u16 FS_get_entry(SDDriveInfo* param1, char* param2, char* param3, u16 param4, void* param5, void* param6, void* param7);
 extern u16 FS_allocate_entry(FSFile* pFile, int param1, int* param2, u16* param3);
-extern u16 FS_delete_lfn_entry(FSFile* pFile, u16 param1, int param2, u16 param3);
+extern u16 FS_delete_lfn_entry(SDDriveInfo* pFile, u16 param1, int param2, u16 param3);
 extern u16 FS_cluster_to_sector(FSFile* pFile, u16 param1);
 extern u16 FS_read_sub(void* param1, int param2, int param3, int param4, u16* param5, u16* param6);
-extern u16 FS_write_sub(void* param1, int param2, int param3, int param4, u16* param5, int param6, u16* param7);
 
-extern s32 FS_csd_to_size(u32 *arg0, s32 *arg1, s32 arg2, u16 arg3, u16 arg4);
+// extern u16 FS_write_sub(void* param1, int param2, int param3, int param4, u16* param5, int param6, u16* param7);
+extern s32 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan);
 extern u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4);
 extern u16 FS_fat_strcmp(UnkStruct_20BA4 *arg0, UnkStruct_20BA4 *arg1); // matched but param types not 100% confirmed
 extern u16 FS_entry_name_set(char* param1, char* param2);

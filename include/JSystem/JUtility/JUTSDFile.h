@@ -21,7 +21,7 @@ class JUTSDFile : public JKRFile {
   private:
     u16 mUnk_1C;   // _1C
     u16 mUnk_1E;   // _1E
-    FSFile* mUnk_20; // _20
+    SDDriveInfo* mUnk_20; // _20 //!TODO: wrong type?
     bool mUnk_24;  // _24
     bool mUnk_25;  // _25
     mutable u16 mUnk_26;   // _26

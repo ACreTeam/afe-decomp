@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern u16 FS_Seek(FSFile* param1, int param2, int param3);
+extern u16 FS_Seek(SDDriveInfo* param1, int param2, int param3);
 
 #ifdef __cplusplus
 };

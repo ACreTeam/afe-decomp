@@ -26,14 +26,16 @@ u16 FS_Init(int param1, int param2, u16 param3) {
         return status;
     }
 
-    temp_r31->unk_0E = 1;
-    temp_r31->unk_FC = 0;
-    temp_r31->unk_C8 = 0;
-    temp_r31->unk_102 = 0;
-    temp_r31->unk_112 = 1;
-    temp_r31->unk_200 = 0;
-    temp_r31->unk_1CC = 0;
-    temp_r31->unk_206 = 0;
+    temp_r31->unk_08[0].unk_06 = 1;
+    temp_r31->unk_08[0].unk_F4 = 0;
+    temp_r31->unk_08[0].unk_C0 = 0;
+    temp_r31->unk_08[0].unk_FA = 0;
+
+    temp_r31->unk_08[1].unk_06 = 1;
+    temp_r31->unk_08[1].unk_F4 = 0;
+    temp_r31->unk_08[1].unk_C0 = 0;
+    temp_r31->unk_08[1].unk_FA = 0;
+
     temp_r31->unk_259D4 = 0;
     temp_r31->unk_259D8 = 1;
     temp_r31->unk_259DC = 0;
@@ -164,7 +166,7 @@ u16 FS_Init_check_config(u16 param1, u16* param2) {
 void FS_Init_set_drive_info(u16 param1) {
     DrvCtl* temp_r31 = &FS_drv_ctl[param1];
 
-    temp_r31->unk_04 = 0;
+    temp_r31->unk_00[2] = 0;
     temp_r31->unk_00[0] = param1;
     temp_r31->unk_00[1] = kindDrv[param1];
 }

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern u16 FS_Mkdir(FSFile* param1, const char* param2);
+extern u16 FS_Mkdir(SDDriveInfo* param1, const char* param2);
 
 #ifdef __cplusplus
 };

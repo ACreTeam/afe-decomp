@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-extern u16 FS_Rename(FSFile* pFile, char* arg1, char* arg2);
-extern u16 FS_Rename_sub(FSFile* pFile, char* arg1, char* arg2);
+extern u16 FS_Rename(SDDriveInfo* pDriveInfo, char* arg1, char* arg2);
+extern u16 FS_Rename_sub(SDDriveInfo* pDriveInfo, char* arg1, char* arg2);
 
 #ifdef __cplusplus
 };

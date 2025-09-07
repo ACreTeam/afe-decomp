@@ -1,6 +1,7 @@
 #ifndef CARDDRV_H
 #define CARDDRV_H
 
+#include "JSystem/JUtility/fs_file.h"
 #include "types.h"
 #include "JSystem/JUtility/JUTSDCard.h"
 
@@ -41,8 +42,8 @@ extern u16 CARD_Select(u16 param_1);
 extern u16 CARD_Reset();
 extern u16 CARD_Getstatus(u16* param1);
 extern u16 CARD_Getinfo(SDInfos* param1);
-extern u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
-extern u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
+extern u16 CARD_ReadD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5);
+extern u16 CARD_WriteD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5);
 extern u16 CARD_SD_Status();
 extern u16 CARD_Command(u8 param1, int cmd);
 extern u16 CARD_Response1(void);

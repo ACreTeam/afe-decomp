@@ -5,7 +5,7 @@
 
 bool JUTSDDrive::sInitialized;
 int JUTSDDrive::sCurrentDrive;
-FSFile* JUTSDDrive::sDriveInfoPtr[MAX_DRIVES];
+SDDriveInfo* JUTSDDrive::sDriveInfoPtr[MAX_DRIVES];
 char JUTSDDrive::sCurrentPath[MAX_DRIVES][MAX_PATH_LEN - 1];
 
 bool JUTSDDrive::sAvailable[MAX_DRIVES] = {

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern u16 FS_Write(FSFile* param1, const void* data, s32 length, int param4, UnkStruct_ReadWrite* param5);
+extern u16 FS_Write(SDDriveInfo* param1, const void* data, s32 length, int param4, UnkStruct_ReadWrite* param5);
 
 #ifdef __cplusplus
 };

@@ -57,7 +57,7 @@ struct JUTSDDrive {
         return sCurrentDrive;
     }
 
-    static FSFile* GetDriveInfoPtr(int nDrive) {
+    static SDDriveInfo* GetDriveInfoPtr(int nDrive) {
         return sDriveInfoPtr[nDrive];
     }
 
@@ -76,7 +76,7 @@ struct JUTSDDrive {
   private:
     static bool sInitialized;
     static int sCurrentDrive;
-    static FSFile* sDriveInfoPtr[MAX_DRIVES];
+    static SDDriveInfo* sDriveInfoPtr[MAX_DRIVES];
     static char sCurrentPath[MAX_DRIVES][MAX_PATH_LEN - 1];
     static bool sAvailable[MAX_DRIVES];
     static bool sMounted[MAX_DRIVES];

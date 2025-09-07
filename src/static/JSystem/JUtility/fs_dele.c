@@ -3,28 +3,29 @@
 #include "JSystem/JUtility/fs_open.h"
 #include "JSystem/JUtility/fs_subd.h"
 
-u16 FS_Delete(FSFile* param1, const char* param2) {
+u16 FS_Delete(SDDriveInfo* pDriveInfo, const char* param2) {
     DrvCtl* ptr;
     u16 status = 0;
 
-    if (param1 == NULL || param2 == NULL) {
+    if (pDriveInfo == NULL || param2 == NULL) {
         return 0xA00C;
     }
 
-    if (param1->unk_04[0] != 1) {
+    if (pDriveInfo->unk_04 != 1) {
         return 0xA016;
     }
 
-    ptr = &FS_drv_ctl[param1->unk_00[0]];
-    if (param1->unk_00 != ptr->unk_08) {
+    ptr = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (pDriveInfo != &ptr->unk_08[0]) {
         return 0xA00C;
     }
 
-    status = FS_Delete_sub(param1, param2);
+    status = FS_Delete_sub(pDriveInfo, param2);
     return status;
 }
 
-u16 FS_Delete_sub(FSFile* param1, const char* param2) {
+u16 FS_Delete_sub(SDDriveInfo* pDriveInfo, const char* param2) {
     char sp68[64];
     char sp48[32];
     u16 sp44[2];
@@ -36,8 +37,8 @@ u16 FS_Delete_sub(FSFile* param1, const char* param2) {
     u16 status;
 
     sp44[0] = 0;
-    ptr = &FS_drv_ctl[param1->unk_00[0]];
-    status = FS_Search_Entry(param1, (char*)param2, sp68, sp48, sp44, sp24, &sp20, &sp1E, &sp1C, 1);
+    ptr = &FS_drv_ctl[pDriveInfo->nChan];
+    status = FS_Search_Entry(pDriveInfo, (char*)param2, sp68, sp48, sp44, sp24, &sp20, &sp1E, &sp1C, 1);
 
     if (status != 0) {
         return status;
@@ -47,11 +48,11 @@ u16 FS_Delete_sub(FSFile* param1, const char* param2) {
         return 0xA006;
     }
 
-    status = FS_Delete_Entry(param1, sp20, sp1E, sp1C);
+    status = FS_Delete_Entry(pDriveInfo, sp20, sp1E, sp1C);
     return status;
 }
 
-u16 FS_Delete_Entry(FSFile* param1, int param2, u16 param3, u16 param4) {
+u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4) {
     DrvCtl* ptr;
     DrvCtl_unk_20000* ptr2;
     u16 temp_r29;
@@ -59,34 +60,35 @@ u16 FS_Delete_Entry(FSFile* param1, int param2, u16 param3, u16 param4) {
     int pad;
     int idx;
 
-    ptr = &FS_drv_ctl[param1->unk_00[0]];
-    if(param1->unk_04[13] == 0x20){
+    ptr = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if(pDriveInfo->unk_1E == 0x20) {
         pad = 0;
         (void)pad;
         (void)pad;
         (void)idx;
-    };
-    // ptr2 = (DrvCtl_unk_20000*)((u32)&ptr->unk_20000 + param3);
+    }
+
     idx = (int)param3;
     ptr2 = (DrvCtl_unk_20000*)((u32)ptr->ctrl_p + idx);
 
     ptr2->unk_20BA4.unk_00[0] = 0xE5;
     temp_r29 = ((ptr2->unk_20BA4.unk_1B << 8) & 0xFF00) | (ptr2->unk_20BA4.unk_1A & 0x00FF);
 
-    status = FS_delete_lfn_entry(param1, param4, param2, param3);
+    status = FS_delete_lfn_entry(pDriveInfo, param4, param2, param3);
 
     if (status != 0) {
         return status;
     }
 
-    if (temp_r29 > 1 && temp_r29 <= (param1->unk_BC - 1)) {
-        status = FS_fat_clear(temp_r29, param1); // the declaration for this was changed
+    if (temp_r29 > 1 && temp_r29 <= (pDriveInfo->unk_BC - 1)) {
+        status = FS_fat_clear(temp_r29, pDriveInfo);
 
         if (status != 0) {
             return status;
         }
 
-        status = FS_Flush(param1);
+        status = FS_Flush(pDriveInfo);
     } else {
         if (temp_r29 == 0) {
             status = 0;

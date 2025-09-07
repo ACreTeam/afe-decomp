@@ -207,12 +207,13 @@ u16 CARD_Getinfo(SDInfos* param1) {
     return 0;
 }
 
-u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5) {
+//! TODO: parameters not correct?
+u16 CARD_ReadD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5) {
     u8* pData;
     int i;
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
-    pData = param1->data;
+    pData = (u8*)param1;
 
     if (!CARD_Command(READ_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2 - 1; i++) {
@@ -228,11 +229,12 @@ u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDP
         }
     }
 
-    param5->unk_02 = CARD_ErrStatus[CARD_ExiChannel];
+    param5->unk_00[1] = CARD_ErrStatus[CARD_ExiChannel];
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5) {
+//! TODO: parameters not correct?
+u16 CARD_WriteD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5) {
     u8* volatile pData;
     int i;
 
@@ -242,7 +244,7 @@ u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteD
         return LOCK_UNLOCK_FAILED;
     }
 
-    pData = param1->data;
+    pData = (u8*)param1;
 
     if (!CARD_Command(WRITE_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2; i++) {
@@ -261,7 +263,7 @@ u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteD
         CARD_Response2();
     }
 
-    param5->unk_02 = CARD_ErrStatus[CARD_ExiChannel];
+    param5->unk_00[1] = CARD_ErrStatus[CARD_ExiChannel];
     param5->unk_04 = i * CARD_SectorSize[CARD_ExiChannel];
     return CARD_ErrStatus[CARD_ExiChannel];
 }

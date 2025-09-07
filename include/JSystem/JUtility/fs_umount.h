@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-extern u16 FS_Umount(FSFile* param1);
+extern u16 FS_Umount(SDDriveInfo* param1);
 
 #ifdef __cplusplus
 };

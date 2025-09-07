@@ -4,25 +4,25 @@
 #include "JSystem/JUtility/fs_subd.h"
 #include "types.h"
 
-u16 FS_Rename(FSFile* pFile, char* arg1, char* arg2) {
+u16 FS_Rename(SDDriveInfo* pDriveInfo, char* arg1, char* arg2) {
     u16 status;
     DrvCtl* ptr;
 
-    if (pFile == NULL || arg1 == NULL || arg2 == NULL) {
+    if (pDriveInfo == NULL || arg1 == NULL || arg2 == NULL) {
         return 0xA00C;
-    } else if (pFile->unk_04[1] != 2) {
+    } else if (pDriveInfo->unk_06 != 2) {
         return 0xA003;
-    } else if (pFile->unk_04[0] != 1) {
+    } else if (pDriveInfo->unk_04 != 1) {
         return 0xA016;
     }
 
-    ptr = &FS_drv_ctl[pFile->unk_00[0]];
+    ptr = &FS_drv_ctl[pDriveInfo->nChan];
 
-    if (pFile->unk_00 != ptr->unk_08) {
+    if (pDriveInfo != &ptr->unk_08) {
         return 0xA00C;
     }
 
-    status = FS_Rename_sub(pFile, arg1, arg2);
+    status = FS_Rename_sub(pDriveInfo, arg1, arg2);
     return status;
 }
 
@@ -47,7 +47,7 @@ typedef struct TESTTESTTEST2 {
     char unk_1F;
 } TESTTESTTEST2;
 
-u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
+u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
     char spF8[64];
     char spB8[64];
     char sp98[32];
@@ -92,10 +92,10 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     sp22 = 1;
     sp20 = 0;
     sp1C = 0;
-    temp_r27 = &FS_drv_ctl[pFile->unk_00[0]];
+    temp_r27 = &FS_drv_ctl[pDriveInfo->nChan];
     sp8 = &sp22;
     spC = 2;
-    temp_r3_4 = FS_Search_Entry(pFile, sp18, spB8, &sp78[0], &sp74, sp34, &sp2C, &sp26);
+    temp_r3_4 = FS_Search_Entry(pDriveInfo, sp18, spB8, &sp78[0], &sp74, sp34, &sp2C, &sp26);
     if (temp_r3_4 == 0) {
         return 0xA011;
     }
@@ -107,7 +107,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
     }
     sp8 = &sp24;
     spC = 2;
-    temp_r3_3 = FS_Search_Entry(pFile, sp14, spF8, &sp98[0], &sp76, sp54.unk_00, &sp30, &sp28);
+    temp_r3_3 = FS_Search_Entry(pDriveInfo, sp14, spF8, &sp98[0], &sp76, sp54.unk_00, &sp30, &sp28);
     if (temp_r3_3 != 0) {
         return temp_r3_3;
     }
@@ -119,15 +119,15 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
         temp_r3_5 = FS_write_sub(0, 1, sp30, 0, &pFile->unk_04[0], 0, &pFile->unk_00[0]);
         var_r31 = temp_r3_5;
         if (temp_r3_5 == 0) {
-            var_r31 = FS_delete_lfn_entry(pFile, sp24, sp30, sp28);
+            var_r31 = FS_delete_lfn_entry(pDriveInfo, sp24, sp30, sp28);
         }
         if (sp54.unk_0B & 0x10) {
-            pFile->unk_6C = 0;
-            pFile->unk_70 = 0;
-            pFile->unk_72 = 0;
-            pFile->unk_74 = 0;
-            FS_memset(pFile->unk_76, 0, 0x40U);
-            FS_strncpy(pFile->unk_76, "\\", 1U);
+            pDriveInfo->unk_6C = 0;
+            pDriveInfo->unk_70 = 0;
+            pDriveInfo->unk_72 = 0;
+            pDriveInfo->unk_74 = 0;
+            FS_memset(pDriveInfo->unk_76, 0, 0x40U);
+            FS_strncpy(pDriveInfo->unk_76, "\\", 1U);
         }
     } else {
         if (sp54.unk_0B & 0x10) {
@@ -136,13 +136,13 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
         if (sp74 == 1) {
             var_r28 = pFile->unk_60;
         } else {
-            var_r28 = FS_cluster_to_sector(pFile, sp22);
+            var_r28 = FS_cluster_to_sector(pDriveInfo, sp22);
             if ((u32) (var_r28 + 0x10000) == -1U) {
                 return 0xA032;
             }
         }
 
-        temp_r3 = FS_allocate_entry(pFile, var_r28, &sp1C, &sp20);
+        temp_r3 = FS_allocate_entry(pDriveInfo, var_r28, &sp1C, &sp20);
         if (temp_r3 != 0) {
             return temp_r3;
         }
@@ -175,7 +175,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
                     temp_r3_9 = FS_write_sub(0, 1, sp30, 0, &pFile->unk_04[0], 0, &pFile->unk_00[0]);
                     var_r31 = temp_r3_9;
                     if (temp_r3_9 == 0) {
-                        temp_r3_10 = FS_delete_lfn_entry(pFile, sp24, sp30, sp28);
+                        temp_r3_10 = FS_delete_lfn_entry(pDriveInfo, sp24, sp30, sp28);
                         var_r31 = temp_r3_10;
                         if (temp_r3_10 != 0) {
                             return var_r31;
@@ -185,7 +185,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
             }
         }
         if (sp20 == 0) {
-            var_r31 = FS_Flush(pFile);
+            var_r31 = FS_Flush(pDriveInfo);
         }
     }
 
@@ -193,7 +193,7 @@ u16 FS_Rename_sub(FSFile *pFile, char *arg1, char *arg2) {
 }
 
 
-// u16 FS_Rename_sub(FSFile* pFile, int* arg1, int* arg2) {
+// u16 FS_Rename_sub(SDDriveInfo* pDriveInfo, int* arg1, int* arg2) {
 //     DrvCtl* volatile var_r27; // volatile real?
 //     u16* uVar1;
 //     int iVar3;

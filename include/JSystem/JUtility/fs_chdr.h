@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-extern u16 FS_Chdir(FSFile* pFile, char* arg1);
-extern u16 FS_Chdir_sub(FSFile* pFile, char* arg1);
+extern u16 FS_Chdir(SDDriveInfo* pDriveInfo, char* arg1);
+extern u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1);
 
 #ifdef __cplusplus
 };

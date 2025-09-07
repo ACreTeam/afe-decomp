@@ -1,98 +1,156 @@
 #include "JSystem/JUtility/fs_subd.h"
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/JUTSDCard.h"
+#include "JSystem/JUtility/fs_file.h"
 #include "types.h"
 
-u16 FS_fat_clear(u16 param2, FSFile* param1) {}
-u16 FS_Flush(FSFile* pFile) {}
-u16 FS_get_entry(void* param1, void* param2, char* param3, u16 param4, void* param5, void* param6, void* param7) {}
+u16 FS_fat_clear(u16 param2, SDDriveInfo* param1) {}
+u16 FS_Flush(SDDriveInfo* pFile) {}
+u16 FS_get_entry(SDDriveInfo* param1, char* param2, char* param3, u16 param4, void* param5, void* param6, void* param7) {}
 u16 FS_allocate_entry(FSFile* pFile, int param1, int* param2, u16* param3) {}
-u16 FS_delete_lfn_entry(FSFile* pFile, u16 param1, int param2, u16 param3) {}
+u16 FS_delete_lfn_entry(SDDriveInfo* pFile, u16 param1, int param2, u16 param3) {}
 u16 FS_cluster_to_sector(FSFile* pFile, u16 param1) {}
 u16 FS_read_sub(void* param1, int param2, int param3, int param4, u16* param5, u16* param6) {}
-u16 FS_write_sub(void* param1, int param2, int param3, int param4, u16* param5, int param6, u16* param7) {}
 
-s32 FS_csd_to_size(u32 *arg0, s32 *arg1, s32 arg2, u16 arg3, u16 arg4) {
-    s32 var_r27;
-    u32 temp_r31;
-    u32 var_r29;
+u16 FS_write_sub(UnkStruct_20BA4* param1, int param2, int param3, UnkStruct_20BA4* param4, u16 param5, u16 param6, u16 param7) {
     DrvCtl* pDrvCtl;
-    u16 sp18;
+    u16 status;
+    u16 sp1E;
+
+    pDrvCtl = &FS_drv_ctl[param7];
+
+    if (param5 != 1 && param5 != 2) {
+        return 0xA016;
+    }
+
+    if (param4 == NULL) {
+        param4 = &pDrvCtl->ctrl_p[1]->unk_20BA4; // 24ba4
+    }
+
+    if (param1 == NULL) {
+        param1 = &pDrvCtl->ctrl_p[0]->unk_20BA4;
+    }
+
+    ((u16*)param4->unk_00)[0] = 0x2000;
+    ((u16*)param4->unk_00)[1] = 0;
+    param4->unk_04 = 0;
+
+    if (param5 == 1) {
+        if (pDrvCtl->unk_08[0].unk_06 == 2 && pDrvCtl->unk_08[0].unk_FC < (param3 + param2)) {
+            return 0xA023;
+        }
+    } else {
+        if (pDrvCtl->unk_08[1].unk_06 == 2 && pDrvCtl->unk_08[1].unk_FC < (param3 + param2)) {
+            return 0xA023;
+        }
+    }
+
+    if (param5 == 1) {
+        status = FS_DrvSel_Write(param1, param2, param3, 0, (DrvCtl_unk_20000*)param4, pDrvCtl->unk_00[1]);
+    } else {
+        sp1E = param6;
+        status = 0xA047;
+    }
+
+    return status;
+}
+
+s32 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan) {
+    s32 blockMultiplier;
+    u32 i;
+    DrvCtl* pDrvCtl;
+    SDInfos rawCsdInfo;
+    SDInfos csdInfo;
+    u16 status;
     u16 sp16;
-    u16 sp14;
-    u8 value1;
-    u8 value2;
-    u8 value3;
-    u8 value4;
-    SDInfos sp5C;
-    SDInfos sp1C;
-    u32 temp1;
-    u32 temp2;
+    u32 read_bl_len;
+    u32 c_size;
+    u32 c_size_mult;
+    u32 max;
+    u32 size;
+    s32 t0;
 
-    pDrvCtl = &FS_drv_ctl[arg4];
-
+    pDrvCtl = &FS_drv_ctl[chan];
     sp16 = arg3;
 
-    if (arg2 & 1) {
-        *arg0 = 0x1E500;
-        *arg1 = 0x20;
+    // these are probably used somewhere in assert calls or something
+    (void)read_bl_len;
+    (void)c_size;
+    (void)c_size_mult;
+    (void)t0;
+
+
+    if (modeFlags & FS_SD_CARD_MODE_RAW) {
+        *outSectorsPerCluster = 0xF28 * 0x20; // 0x1E500
+        *outCsdBlockMultiplier = 0x20;
     } else {
-        *arg0 = 0x500;
-        *arg1 = 0x20;
+        *outSectorsPerCluster = 0xA0 * 0x08; // 0x500
+        *outCsdBlockMultiplier = 0x20;
     }
 
-    sp18 = FS_DrvSel_Getinfo(&sp5C, pDrvCtl->unk_00[1]);
+    status = FS_DrvSel_Getinfo(&rawCsdInfo, pDrvCtl->unk_00[1]);
 
-    var_r29 = 0U;
-    while (var_r29 < ARRAY_COUNT(sp1C.data)) {
-        sp1C.data[var_r29] = sp5C.data[0x1F - var_r29];
-        var_r29++;
+    // byte swap CSD register data I guess?
+    i = 0;
+    while (i < ARRAY_COUNT(csdInfo.data)) {
+        csdInfo.data[i] = rawCsdInfo.data[0x1F - i];
+        i++;
     }
 
-    temp_r31 = ((sp1C.data[12] << 2) & 0x0C) | (((sp1C.data[13] >> 6) & 3) & ~0x0C);
-    temp1 = ((sp1C.data[8] << 26) & 3) | (((sp1C.data[6] << 10) & 0xC00) | ((((sp1C.data[7] << 2) & ~3)) & ~0xC00)) & ~3;
-    temp2 = (((sp1C.data[9] << 1) & 6) | (((sp1C.data[10] << 25) & 1) & ~6)) & 0xFFFF;
-
-    var_r27 = 2;
-    var_r29 = 0;
-    while (var_r29 < (temp2 + 1)) {
-        var_r27 <<= 1;
-        var_r29++;
+    read_bl_len = ((u16)(csdInfo.data[12] & 3) << 2) | ((u16)(csdInfo.data[13] & (3 << 6)) >> 6);
+    c_size = ((u16)(csdInfo.data[6] & (3 << 0)) << 10) | ((u16)(csdInfo.data[7] << 2)) | ((u16)(csdInfo.data[8] & (3 << 6)) >> 6);
+    c_size_mult = ((u16)(csdInfo.data[9] & (3 << 0)) << 1) | ((u16)(csdInfo.data[10] & (1 << 7)) >> 7); // r23
+    size = 1 + (c_size & 0xFFFF); // these are actually the 'total blocks' until the later multiplication step
+    
+    max = c_size_mult & 0xFFFF;
+    blockMultiplier = 2;
+    i = 0;
+    while (i < (max + 1)) {
+        blockMultiplier <<= 1;
+        i++;
     }
 
-    var_r27 = 2;
-    var_r29 = 0;
-    while (var_r29 < (temp_r31 - 1)) {
-        var_r29++;
+    max = read_bl_len & 0xFFFF;
+    t0 = 2;
+    i = 0;
+    while (i < max - 1) {
+        t0 <<= 1;
+        i++;
     }
 
-    if (arg2 & 1) {
-        *arg0 = temp_r31;
-        *arg1 = var_r27;
+    max = blockMultiplier;
+    size *= max;
+
+    if (modeFlags & FS_SD_CARD_MODE_RAW) {
+        // Get the raw card size
+        *outSectorsPerCluster = size;
+        *outCsdBlockMultiplier = blockMultiplier;
     } else {
-        if (temp_r31 <= 0x1F60) {
-            *arg0 = 0xA0;
-        } else if (temp_r31 <= 0x3F60) {
-            *arg0 = 0xA0;
-        } else if (temp_r31 <= 0x7EC0) {
-            *arg0 = 0x140;
-        } else if (temp_r31 <= 0xFD80) {
-            *arg0 = 0x280;
-        } else if (temp_r31 <= 0x1F3E4) {
-            *arg0 = 0x500;
-        } else if (temp_r31 <= 0x3F600) {
-            *arg0 = 0xA00;
-        } else if (temp_r31 <= 0x7EC0A) {
-            *arg0 = 0x1400;
-        } else if (temp_r31 <= 0xFD800) {
-            *arg0 = 0x2800;
-        } else if (temp_r31 <= 0x1FB000) {
-            *arg0 = 0x5000;
-        } else if (temp_r31 <= 0x3F6000) {
-            *arg0 = 0xA000;
+        // Chose an optimal cluster size for a given card size.
+        // Larger capacity cards perform better with a larger minimum cluster size for files.
+        if (size <= 0x1F60) {
+            *outSectorsPerCluster = 0xA0; // 4MB card
+        } else if (size <= 0x3F60) {
+            *outSectorsPerCluster = 0xA0; // 8MB card
+        } else if (size <= 0x7EC0) {
+            *outSectorsPerCluster = 0xA0 * 0x02; // 16MB card
+        } else if (size <= 0xFD80) {
+            *outSectorsPerCluster = 0xA0 * 0x04; // 32MB card
+        } else if (size <= 0x1F3E4) {
+            *outSectorsPerCluster = 0xA0 * 0x08; // 64MB card
+        } else if (size <= 0x3F600) {
+            *outSectorsPerCluster = 0xA0 * 0x10; // 128MB card
+        } else if (size <= 0x7EC0A) {
+            *outSectorsPerCluster = 0xA0 * 0x20; // 256MB card
+        } else if (size <= 0xFD800) {
+            *outSectorsPerCluster = 0xA0 * 0x40; // 512MB card
+        } else if (size <= 0x1FB000) {
+            *outSectorsPerCluster = 0xA0 * 0x80; // 1GB card
+        } else if (size <= 0x3F6000) {
+            *outSectorsPerCluster = 0xA0 * 0x100; // 2GB card
         }
 
-        *arg1 = var_r27;
+        *outCsdBlockMultiplier = blockMultiplier;
     }
 
     return 0;
@@ -166,6 +224,7 @@ u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4) {
     return 0;
 }
 
+// params not sure
 u16 FS_fat_strcmp(UnkStruct_20BA4 *arg0, UnkStruct_20BA4 *arg1) {
     u16 var_r31 = 0;
 

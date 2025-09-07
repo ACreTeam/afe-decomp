@@ -875,17 +875,15 @@ u8 EXI_MakeCRC7(u8* arg0, u16 arg1) {
 }
 
 u16 EXI_MakeCRC16(u8* arg0, u16 arg1) {
+    u8 pad0;
+    u8 nMask;
+    u8 nData;
     u16 i;
     s32 j;
     u8* pData;
-    u8 nMask;
-    u8 nData;
-    u8 pad0;
     volatile s32 CRC;
-    volatile u16 spC;
-
-    spC = arg1;
-    nMask = 0;
+    //spC = arg1;
+    //nMask = 0;
     CRC = 0;
     i = 0;
     pData = arg0;
@@ -894,7 +892,7 @@ u16 EXI_MakeCRC16(u8* arg0, u16 arg1) {
     (void)pad0;
     (void)pad0;
 
-    while (i < spC) {
+    while (i < *(u16*)&arg1) {
         nData = *pData;
         nMask = 0x80;
 
@@ -935,7 +933,7 @@ u16 EXI_MakeCRC16(u8* arg0, u16 arg1) {
         }
 
         CRC &= 0xFFFF;
-        pData = pData + 1;
+        pData++;
         i++;
     }
 

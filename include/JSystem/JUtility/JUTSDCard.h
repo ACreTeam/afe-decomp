@@ -72,12 +72,6 @@ typedef struct UnkARG {
     u8 _00;
 } UnkARG;
 
-typedef struct ReadWriteDParam5 {
-    u16 unk_00;
-    u16 unk_02;
-    u32 unk_04;
-} ReadWriteDParam5;
-
 typedef struct SDInfos {
     union {
         /* 0x00 */ u8 data[32];
