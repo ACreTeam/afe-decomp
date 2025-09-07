@@ -59,7 +59,7 @@ u16 FS_Chdir_sub(FSFile* pFile, char* arg1) {
         return status;
     }
 
-    status = FS_divide_fpathname(sp14, sp54, sp78, pFile->unk_00[0]);
+    status = FS_divide_fpathname(sp14, (char**)&sp54, sp78, pFile->unk_00[0]);
     if (status != 0) {
         return status;
     }

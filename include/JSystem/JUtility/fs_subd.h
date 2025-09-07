@@ -17,8 +17,12 @@ extern u16 FS_delete_lfn_entry(FSFile* pFile, u16 param1, int param2, u16 param3
 extern u16 FS_cluster_to_sector(FSFile* pFile, u16 param1);
 extern u16 FS_read_sub(void* param1, int param2, int param3, int param4, u16* param5, u16* param6);
 extern u16 FS_write_sub(void* param1, int param2, int param3, int param4, u16* param5, int param6, u16* param7);
-extern u16 FS_divide_fpathname(void* param1, void* param2, void* param3, u16 param4);
-extern u16 FS_entry_name_set(void* param1, int param2);
+
+extern s32 FS_csd_to_size(u32 *arg0, s32 *arg1, s32 arg2, u16 arg3, u16 arg4);
+extern u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4);
+extern u16 FS_fat_strcmp(UnkStruct_20BA4 *arg0, UnkStruct_20BA4 *arg1); // matched but param types not 100% confirmed
+extern u16 FS_entry_name_set(char* param1, char* param2);
+extern void FS_entname_to_stdname(char* param1);
 extern u16 FS_uchar_to_dchar(char* param1);
 extern void FS_toupper(char *arg0);
 extern void *FS_memset(void *dest, u16 ch, size_t count);

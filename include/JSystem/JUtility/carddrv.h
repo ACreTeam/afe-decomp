@@ -40,7 +40,7 @@ extern u16 CARD_SelectedNo();
 extern u16 CARD_Select(u16 param_1);
 extern u16 CARD_Reset();
 extern u16 CARD_Getstatus(u16* param1);
-extern u16 CARD_Getinfo(u8* param1);
+extern u16 CARD_Getinfo(SDInfos* param1);
 extern u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
 extern u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5);
 extern u16 CARD_SD_Status();

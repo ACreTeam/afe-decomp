@@ -44,7 +44,8 @@ typedef struct CID {
 } CID;
 
 typedef struct CSD {
-    u8 data[0x12];
+    u8 data[0x10];
+    u8 data2[0x02];
 } CSD;
 
 typedef struct SDSTATUS {
@@ -76,6 +77,17 @@ typedef struct ReadWriteDParam5 {
     u16 unk_02;
     u32 unk_04;
 } ReadWriteDParam5;
+
+typedef struct SDInfos {
+    union {
+        /* 0x00 */ u8 data[32];
+        struct {
+            /* 0x00 */ u8 cid[16];
+            /* 0x10 */ u8 csd[16];
+        };
+    };
+    /* 0x20 */ char pad_unk_20[32];
+} SDInfos; // size = 0x40
 
 #ifdef __cplusplus
 };

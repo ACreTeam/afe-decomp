@@ -109,14 +109,14 @@ u16 FS_DrvSel_Getstatus(SDSTATUS* arg0, int arg5) {
     return status;
 }
 
-u16 FS_DrvSel_Getinfo(SDSTATUS* arg0, int arg5) {
+u16 FS_DrvSel_Getinfo(SDInfos* arg0, int arg5) {
     u16 status;
     u16 value = arg5;
     
     value &= 0xF00;
     if (value == 0x100) {
         if ((status = FS_DrvSel_Select(arg5)) == 0) {
-            status = CARD_Getinfo((u8*)arg0);
+            status = CARD_Getinfo(arg0);
         }
     } else {
         status = 0xA00C;

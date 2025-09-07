@@ -192,16 +192,15 @@ u16 CARD_Getstatus(u16* param1) {
     return 0;
 }
 
-u16 CARD_Getinfo(u8* param1) {
+u16 CARD_Getinfo(SDInfos* param1) {
     s32 iVar1;
-    u8* ptr = param1;
+    u8* ptr = param1->data;
 
-    for (iVar1 = 0; iVar1 < 0x10; iVar1++) {
+    for (iVar1 = 0; iVar1 < ARRAY_COUNT(param1->cid); iVar1++) {
         *ptr++ = SD_CID[CARD_ExiChannel].data[0x0F - iVar1];
     }
 
-    // not sizeof(CSD)?
-    for (iVar1 = 0; iVar1 < 0x10; iVar1++) {
+    for (iVar1 = 0; iVar1 < ARRAY_COUNT(param1->csd); iVar1++) {
         *ptr++ = SD_CSD[CARD_ExiChannel].data[0x0F - iVar1];
     }
 

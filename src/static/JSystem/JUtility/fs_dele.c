@@ -69,9 +69,9 @@ u16 FS_Delete_Entry(FSFile* param1, int param2, u16 param3, u16 param4) {
     // ptr2 = (DrvCtl_unk_20000*)((u32)&ptr->unk_20000 + param3);
     idx = (int)param3;
     ptr2 = (DrvCtl_unk_20000*)((u32)ptr->ctrl_p + idx);
-    
-    ptr2->unk_20BA4 = 0xE5;
-    temp_r29 = ((ptr2->unk_20BBA[5] << 8) & 0xFF00) | (ptr2->unk_20BBA[4] & 0x00FF);
+
+    ptr2->unk_20BA4.unk_00[0] = 0xE5;
+    temp_r29 = ((ptr2->unk_20BA4.unk_1B << 8) & 0xFF00) | (ptr2->unk_20BA4.unk_1A & 0x00FF);
 
     status = FS_delete_lfn_entry(param1, param4, param2, param3);
 

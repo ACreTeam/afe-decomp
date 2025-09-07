@@ -46,14 +46,20 @@ typedef struct FSDir {
     /* 0x14 */ char unk_14[64];
 } FSDir; // size = 0x44
 
+typedef struct UnkStruct_20BA4 {
+    /* 0x00 */ u8 unk_00[2];
+    /* 0x02 */ char pad_unk_04[0x0A - 0x02];
+    /* 0x0A */ u8 unk_0A;
+    /* 0x0B */ u8 unk_0B;
+    /* 0x0C */ char pad_unk_0C[0x1A - 0x0C];
+    /* 0x1A */ u8 unk_1A;
+    /* 0x1B */ u8 unk_1B;
+    /* 0x1C */ int pad_unk_1C;
+} UnkStruct_20BA4; // size = 0x20
+
 typedef struct DrvCtl_unk_20000 {
     char pad[0xBA4];
-    /* 0xBA4 */ u8 unk_20BA4;
-    char pad2[3];
-    /* 0x20BA8 */ char pad_unk_20BA8[7];
-    /* 0x20BAF */ char unk_20BAF;
-    /* 0x20BB0 */ char unk_20BB0[10];
-    /* 0x20BBA */ u8 unk_20BBA[10];
+    /* 0xBA4 */ UnkStruct_20BA4 unk_20BA4;
 } DrvCtl_unk_20000;
 
 typedef struct DrvCtl {
