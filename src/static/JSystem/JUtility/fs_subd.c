@@ -2,37 +2,538 @@
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/JUTSDCard.h"
 #include "JSystem/JUtility/fs_file.h"
+#include "JSystem/JUtility/fs_sync.h"
+#include "JSystem/JUtility/time.h"
 #include "types.h"
 
-u16 FS_fat_clear(u16 param2, SDDriveInfo* param1) {}
-u16 FS_Flush(SDDriveInfo* pFile) {}
-u16 FS_get_entry(SDDriveInfo* param1, char* param2, char* param3, u16 param4, void* param5, void* param6, void* param7) {}
-u16 FS_allocate_entry(FSFile* pFile, int param1, int* param2, u16* param3) {}
-u16 FS_delete_lfn_entry(SDDriveInfo* pFile, u16 param1, int param2, u16 param3) {}
-u16 FS_cluster_to_sector(FSFile* pFile, u16 param1) {}
-u16 FS_read_sub(void* param1, int param2, int param3, int param4, u16* param5, u16* param6) {}
+u16 FS_fat_clear(u16 param2, SDDriveInfo* pDriveInfo) {
+    DrvCtl* sp10;
+    u16 temp_r3_2;
+    u16 var_r28;
+    u16 var_r29;
+    u16 status;
 
-u16 FS_write_sub(UnkStruct_20BA4* param1, int param2, int param3, UnkStruct_20BA4* param4, u16 param5, u16 param6, u16 param7) {
+    sp10 = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (param2 < 2 || param2 >= pDriveInfo->unk_BC) {
+        return 0xA00C;
+    }
+
+    var_r29 = param2;
+
+    for (var_r28 = 0; var_r28 < 0xFFFF; var_r28++) {
+        temp_r3_2 = FS_get_next_cluster(pDriveInfo, var_r29);
+
+        if (temp_r3_2 >= 0xFFF7 && temp_r3_2 < 0xFFFF) {
+            break;
+        }
+
+        status = FS_set_fat_entry(pDriveInfo, var_r29, 0);
+
+        if (status != 0) {
+            return status;
+        }
+
+        if (temp_r3_2 == 0xFFFF) {
+            return FS_fat_sync(pDriveInfo);
+        }
+
+        var_r29 = temp_r3_2;
+    }
+
+    return 0xA029;
+}
+
+u16 FS_Flush(SDDriveInfo* pDriveInfo) {
+    return FS_Sync_sub(pDriveInfo);
+}
+
+u16 FS_get_entry(SDDriveInfo* pDriveInfo, char* param2, char* param3, u16 param4, void* param5, void* param6, void* param7) {}
+u16 FS_allocate_entry(SDDriveInfo* pDriveInfo, int param1, int* param2, u16* param3) {}
+
+u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 param3) {
+    DrvCtl_unk_20000* ptr;
+    UnkStruct_20BA4* var_r26;
+    DrvCtl* temp_r24;
+    u32 var_r30;
+    u16 var_r22;
+    u16 var_r23;
+    u32 var_r27;
+    u16 var_r29;
+    u16 status;
+    s32 temp_r3;
+    s32 temp_r3_2;
+
+    var_r29 = 1;
+    temp_r24 = &FS_drv_ctl[pDriveInfo->nChan];
+
+    // var_r26 = &temp_r24->ctrl_p[param3]->unk_20BA4[0];
+    ptr = (DrvCtl_unk_20000*)(((u32)temp_r24->ctrl_p) + param3);
+
+    var_r30 = param2;
+
+    var_r22 = 0;
+    var_r26 = &ptr->unk_20BA4[0];
+
+    while (var_r22 < 0x15) {
+        if (var_r22 != 0) {
+            if (var_r26->unk_00[0] == 0xE5 || (var_r26->unk_0B & 0x3F) != 0x0F) {
+                break;
+            }
+
+            var_r26->unk_00[0] = 0xE5;
+        }
+
+        if (var_r26 == &ptr->unk_20BA4[0]) {
+            if (var_r30 < pDriveInfo->unk_64) {
+                if (var_r30 == pDriveInfo->nSector) {
+                    break;
+                }
+
+                var_r30--;
+            } else {
+                temp_r3_2 = FS_sector_to_cluster(pDriveInfo, var_r30);
+                temp_r3 = FS_cluster_to_sector(pDriveInfo, temp_r3_2);
+
+                if (temp_r3 == 0xFFFFFFFF) {
+                    break;
+                }
+
+                if (temp_r3 != var_r30) {
+                    var_r30--;
+                } else {
+                    temp_r3 = FS_get_previous_cluster(pDriveInfo, param1, temp_r3_2);
+
+                    if (temp_r3 >= 0xFFF7) {
+                        break;
+                    }
+                    
+                    temp_r3 = FS_cluster_to_sector(pDriveInfo, temp_r3);
+
+                    if (temp_r3 >= 0xFFF7) {
+                        break;
+                    }
+
+                    var_r30 = pDriveInfo->unk_1E[temp_r3 - 1];
+                }
+
+                if ((var_r27 == (u32) (var_r30 - 1)) && (var_r29 < 0x20U)) {
+                    for (var_r23 = 0; var_r23 < var_r29; var_r23++) {
+                        // FS_strncpy(temp_r24 + (((var_r29 - var_r23) << 9) + 0x20BA4), temp_r24 + ((((var_r29 - var_r23) - 1) << 9) + 0x20BA4), 0x200);
+                        FS_strncpy((char*)temp_r24->ctrl_p[((var_r29 - var_r23) << 9)]->unk_20BA4, (char*)temp_r24->ctrl_p[((var_r29 - var_r23 - 1) << 9)]->unk_20BA4, 0x200);
+                    }
+                } else {
+                    status = FS_write_sub(NULL, var_r29, var_r30, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
+                    if (status != 0) {
+                        return status;
+                    }
+
+                    var_r29 = 0;
+                }
+
+                status = FS_read_sub(NULL, 1, temp_r3, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
+                if (status != 0) {
+                    return status;
+                }
+
+                var_r30 = var_r27;
+                var_r26 = (UnkStruct_20BA4*)&ptr->unk_20DA4; // fake
+                var_r29++;
+            }
+        }
+
+    block_27:
+        var_r22++;
+        var_r26--;
+    }
+
+    status = FS_write_sub(NULL, var_r29, var_r30, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
+    return status;
+}
+
+u32 FS_set_now_date(UnkStruct_20BA4 *param1, void *param2) {
+    NowData sp10;
+    u16 temp_r30;
+    u16 status;
+
+    FS_memset(&sp10, 0, sizeof(NowData));
+
+    if (param2 == NULL) {
+        status = GetNowData(&sp10);
+
+        if (status != 0) {
+            *(u16*)param1->unk_16 = 0;
+            *(u16*)param1->unk_18 = 0;
+            return 0xA041;
+        }
+    } else {
+        // ?
+        FS_strncpy((char*)&sp10, param2, sizeof(NowData));
+    }
+
+    if (sp10.year < 1980 || sp10.year > 2107 || sp10.mon < 1 || sp10.mon > 12 || sp10.mday < 1 || sp10.mday > 31 || sp10.hour > 23 || sp10.min > 59 || sp10.sec > 59) {
+        *(u16*)param1->unk_16 = 0;
+        *(u16*)param1->unk_18 = 0;
+        return 0xA041;
+    }
+
+    temp_r30 = (sp10.hour << 11) + (sp10.min << 5) + (sp10.sec / 2);
+    param1->unk_16[0] = temp_r30;
+    param1->unk_16[1] = temp_r30 >> 8;
+
+    temp_r30 = ((sp10.year - 1980) << 9) + (sp10.mon << 5) + sp10.mday;
+    param1->unk_18[0] = temp_r30;
+    param1->unk_18[1] = temp_r30 >> 8;
+    return 0;
+}
+
+u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2) {
+    UnkStruct_20A00 *var_r28;
+    SDFileInfo *var_r27;
+    DrvCtl *pDrvCtl;
+    u16 nArrayCount;
+    u16 var_r31;
+    u16 var_r30;
+    u16 var_r29;
+
+    pDrvCtl = &FS_drv_ctl[pDriveInfo->nChan];
+
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_210) : ARRAY_COUNT(pDrvCtl->unk_47C);
+    for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
+        if (pDriveInfo->unk_04 == 1) {
+            var_r27 = &pDrvCtl->unk_210[var_r30];
+        } else {
+            var_r27 = &pDrvCtl->unk_47C[var_r30];
+        }
+
+        if (var_r27->pDriveInfo != NULL) {
+            for (var_r31 = 0; var_r31 < ARRAY_COUNT(var_r27->path); var_r31++) {
+                if (param2[var_r31] == '\0') {
+                    if (var_r27->path[var_r31] == '\0') {
+                        return 0xA018;
+                    }
+
+                    break;
+                }
+
+                if (var_r27->path[var_r31] != param2[var_r31]) {
+                    break;
+                }
+            }
+        }
+    }
+
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_20A00) : ARRAY_COUNT(pDrvCtl->unk_20AFC);
+    for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
+        if (pDriveInfo->unk_04 == 1) {
+            var_r28 = &pDrvCtl->unk_20A00[var_r30];
+        } else {
+            var_r28 = &pDrvCtl->unk_20AFC[var_r30];
+        }
+
+        if (var_r28->pDriveInfo != NULL) {
+            for (var_r31 = 0; var_r31 < ARRAY_COUNT(var_r28->unk_14); var_r31++) {
+                if (param2[var_r31] == '\0') {
+                    if (var_r28->unk_14[var_r31] == '\0') {
+                        return 0xA018;
+                    }
+
+                    break;
+                } 
+
+                if (var_r28->unk_14[var_r31] == '\0') {
+                    if (param2[var_r31] == '\\') {
+                        for (var_r29 = var_r31 + 1; var_r29 < 64; var_r29++) {
+                            if (param2[var_r29] == '\\') {
+                                break;
+                            }
+
+                            if (param2[var_r29] == '\0') {
+                                return 0xA02F;
+                            }
+                        }
+
+                        break;
+                    }
+                    
+                    if (var_r31 == 1 && var_r28->unk_14[0] == '\\') {
+                        for (var_r29 = 1; var_r29 < 64; var_r29++) {
+                            if (param2[var_r29] == '\\') {
+                                break;
+                            }
+
+                            if (param2[var_r29] == '\0') {
+                                return 0xA02F;
+                            }
+
+                        }
+                    }
+
+                    break;
+                }
+
+                if (var_r28->unk_14[var_r31] != param2[var_r31]) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2) {
+    DrvCtl *pDrvCtl;
+    SDFileInfo *var_r28;
+    UnkStruct_20A00 *var_r29;
+    u16 nArrayCount;
+    u16 var_r30;
+    u16 var_r31;
+
+    pDrvCtl = &FS_drv_ctl[pDriveInfo->nChan];
+
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_210) : ARRAY_COUNT(pDrvCtl->unk_47C);
+    for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
+        if (pDriveInfo->unk_04 == 1) {
+            var_r28 = &pDrvCtl->unk_210[var_r30];
+        } else {
+            var_r28 = &pDrvCtl->unk_47C[var_r30];
+        }
+
+        if (var_r28->pDriveInfo != NULL) {
+            for (var_r31 = 0; var_r31 < ARRAY_COUNT(var_r28->path); var_r31++) {
+                if (param2[var_r31] == '\0') {
+                    if (var_r28->path[var_r31] == '\0') {
+                        return 0xA009;
+                    }
+
+                    if (var_r28->path[var_r31] == '\\') {
+                        return 0xA009;
+                    }
+
+                    break;
+                }
+
+                if (var_r28->path[var_r31] != param2[var_r31]) {
+                    break;
+                }
+            }
+        }
+    }
+
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_20A00) : ARRAY_COUNT(pDrvCtl->unk_20AFC);
+    for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
+        if (pDriveInfo->unk_04 == 1) {
+            var_r29 = &pDrvCtl->unk_20A00[var_r30];
+        } else {
+            var_r29 = &pDrvCtl->unk_20AFC[var_r30];
+        }
+
+        if (var_r29->pDriveInfo != NULL) {
+            for (var_r31 = 0; var_r31 < ARRAY_COUNT(var_r29->unk_14); var_r31++) {
+                if (param2[var_r31] == '\0') {
+                    if (var_r29->unk_14[var_r31] == '\0') {
+                        return 0xA02F;
+                    }
+
+                    if (var_r29->unk_14[var_r31] == '\\') {
+                        return 0xA02F;
+                    }
+
+                    break;
+                }
+
+                if (var_r29->unk_14[var_r31] == '\0') {
+                    if (param2[var_r31] == '\\') {
+                        return 0xA02F;
+                    }
+
+                    if (var_r31 == 1 && var_r29->unk_14[0] == '\\') {
+                        return 0xA02F;
+                    }
+                }
+
+                if (var_r29->unk_14[var_r31] != param2[var_r31]) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_get_next_cluster(SDDriveInfo *pDriveInfo, u16 param2) {
+    u16 status;
+    u16 spE;
+
+    if (param2 < 2 || param2 >= pDriveInfo->unk_BC) {
+        return 0xFFFD;
+    }
+
+    status = FS_get_fat_entry(pDriveInfo, param2, &spE);
+
+    if (status != 0) {
+        return 0xFFFE;
+    }
+
+    if (spE >= 2 && spE < pDriveInfo->unk_BC) {
+        return spE;
+    }
+
+    if (pDriveInfo->unk_3C == 1) {
+        if (spE == 0xFFF7) {
+            return 0xFFF7;
+        }
+        if (spE >= 0xFFF8 && spE <= 0xFFFF) {
+            return 0xFFFF;
+        }
+        return 0xFFFE;
+    }
+
+    if (spE == 0xFF7) {
+        return 0xFFF7;
+    }
+
+    if (spE >= 0xFF8 && spE <= 0xFFF) {
+        return 0xFFFF;
+    }
+
+    return 0xFFFE;
+}
+
+u16 FS_get_previous_cluster(SDDriveInfo *pDriveInfo, u16 param2, u16 param3) {
+    u16 var_r29;
+    u16 var_r31;
+    u16 status;
+    u16 sp10;
+
+    if (param2 < 2 || param2 >= pDriveInfo->unk_BC) {
+        return 0xFFFD;
+    }
+
+    if (param3 < 2 || param3 >= pDriveInfo->unk_BC) {
+        return 0xFFFD;
+    }
+
+    if (param2 == param3) {
+        return 0xFFFD;
+    }
+
+    var_r31 = param2;
+
+    if (pDriveInfo->unk_3C == 1) {
+        for (var_r29 = 0; var_r29 < 0xFFFF; var_r29++) {
+            status = FS_get_fat_entry(pDriveInfo, var_r31, &sp10);
+            if (status != 0) {
+                return 0xFFFE;
+            }
+
+            if (sp10 == param3) {
+                return var_r31;
+            }
+
+            if (sp10 == 0xFFF7) {
+                return 0xFFF7;
+            }
+
+            if (sp10 >= 0xFFF8 && sp10 <= 0xFFFF) {
+                return 0xFFFF;
+            }
+
+            if (sp10 < 2 || sp10 >= pDriveInfo->unk_BC) {
+                return 0xFFFE;
+            }
+
+            var_r31 = sp10;
+        }
+
+        return 0xFFFE;
+    }
+
+    for (var_r29 = 0; var_r29 < 0xFFFF; var_r29++) {
+        status = FS_get_fat_entry(pDriveInfo, var_r31, &sp10);
+        if (status != 0) {
+            return 0xFFFE;
+        }
+
+        if (sp10 == param3) {
+            return var_r31;
+        }
+
+        if (sp10 == 0xFF7) {
+            return 0xFFF7;
+        }
+
+        if (sp10 >= 0xFF8 && sp10 <= 0xFFF) {
+            return 0xFFFF;
+        }
+
+        if (sp10 < 2 || sp10 >= pDriveInfo->unk_BC) {
+            return 0xFFFE;
+        }
+
+        var_r31 = sp10;
+    }
+
+    return 0xFFFE;
+}
+
+u16 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2) {
+    u32 nCluster;
+
+    if (param2 < pDriveInfo->unk_64) {
+        return -1;
+    }
+
+    if (param2 >= pDriveInfo->unk_68) {
+        return -1;
+    }
+
+    nCluster = ((param2 - pDriveInfo->unk_64) / pDriveInfo->unk_1E[0]) + 2;
+    return nCluster;
+}
+
+u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u32 param2) {
+    u32 nSector;
+
+    if ((param2 & 0xFFFF) < 2) {
+        return -1;
+    }
+
+    nSector = pDriveInfo->unk_64 + (((param2 & 0xFFFF) - 2) * pDriveInfo->unk_1E[0]);
+
+    if (nSector >= pDriveInfo->unk_68) {
+        return -1;
+    }
+
+    return nSector;
+}
+
+u16 FS_read_sub(UnkStruct_20BA4_2* param1, int param2, u32 param3, UnkStruct_24BA4* param4, u16 param5, u16 param6) {}
+
+// non-matching
+u16 FS_write_sub(UnkStruct_20BA4_2* param1, int param2, u32 param3, UnkStruct_24BA4* param4, u16 param5, int param6, u16 nChan) {
     DrvCtl* pDrvCtl;
     u16 status;
     u16 sp1E;
 
-    pDrvCtl = &FS_drv_ctl[param7];
+    pDrvCtl = &FS_drv_ctl[nChan];
 
     if (param5 != 1 && param5 != 2) {
         return 0xA016;
     }
 
-    if (param4 == NULL) {
-        param4 = &pDrvCtl->ctrl_p[1]->unk_20BA4; // 24ba4
+    if (param4 == 0) {
+        param4 = (UnkStruct_24BA4*)&pDrvCtl->ctrl_p[1]->unk_20BA4; // 24ba4
     }
 
     if (param1 == NULL) {
-        param1 = &pDrvCtl->ctrl_p[0]->unk_20BA4;
+        param1 = (UnkStruct_20BA4_2*)&pDrvCtl->ctrl_p[0]->unk_20BA4;
     }
 
-    ((u16*)param4->unk_00)[0] = 0x2000;
-    ((u16*)param4->unk_00)[1] = 0;
+    param4->unk_00 = 0x2000;
+    param4->unk_02 = 0;
     param4->unk_04 = 0;
 
     if (param5 == 1) {
@@ -46,7 +547,7 @@ u16 FS_write_sub(UnkStruct_20BA4* param1, int param2, int param3, UnkStruct_20BA
     }
 
     if (param5 == 1) {
-        status = FS_DrvSel_Write(param1, param2, param3, 0, (DrvCtl_unk_20000*)param4, pDrvCtl->unk_00[1]);
+        status = FS_DrvSel_Write((UnkStruct_20BA4*)param1, param2, param3, 0, (DrvCtl_unk_20000*)param4, pDrvCtl->unk_00[1]);
     } else {
         sp1E = param6;
         status = 0xA047;

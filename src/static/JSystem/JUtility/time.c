@@ -2,7 +2,7 @@
 
 #include <dolphin.h>
 
-int GetNowData(NowData* pNowData) {
+u16 GetNowData(NowData* pNowData) {
     OSCalendarTime td;
     OSTime time = OSGetTime();
 
