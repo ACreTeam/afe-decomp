@@ -12,10 +12,10 @@ typedef struct DataCluTbl {
     /* 0x06 */ u16 unk_06;
 } DataCluTbl;
 
-int FS_LCS; // u16[2]?
+u32 FS_LCS;
 u16 FS_TRACK_PER_SECTOR;
 u16 FS_HEAD_NUM;
-int FS_gl_partition_size; // u16[2]?
+u32 FS_gl_partition_size;
 u16 FS_gl_card_size;
 u16 FS_format_fat_mode;
 u16 FS_gl_bu;
@@ -30,15 +30,6 @@ u16 FS_BUF_POS_FDC;
 u16 FS_BUF_POS_FAT1;
 u16 FS_BUF_POS_FAT2;
 u16 FS_BUF_POS_RDE;
-
-extern u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 param5, u16 nChan);
-extern u16 FS_get_area_information(u16 param1, u32* param2, u32* param3, u16 param4, u16 param6);
-extern u16 FS_calc_parameter(u32* param1, u16 param2);
-extern u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan);
-extern u16 FS_init_pbs(char* param1, u32 param2, s32* param3, u16 param4, u16 param5, u16 nChan);
-extern u16 FS_init_fat(s32* param1, u16 param2, u16 nChan);
-extern u16 FS_init_rde(char* param1, s32* param2, u16 param3, u16 nChan);
-extern u16 FS_format_write_sub(s32* param1, u16 param2, u16 nChan);
 
 static inline void FS_UnknownMathInline1(u32* param1, u16 param2, u32 param3) {
     if (param2 == 1) {
@@ -99,21 +90,13 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
     u32 var_r22;
 
     static const DataCluTbl data_clu_tbl[] = {
-        { 0x00004000, 0x0010, 0x0010 },
-        { 0x00020000, 0x0020, 0x0020 },
-        { 0x00080000, 0x0020, 0x0040 },
-        { 0x00200000, 0x0020, 0x0080 },
-        { 0x00400000, 0x0040, 0x0080 },
-        { 0x0000FFFF, 0xFFFF, 0xFFFF },
+        { 0x00004000, 0x0010, 0x0010 }, { 0x00020000, 0x0020, 0x0020 }, { 0x00080000, 0x0020, 0x0040 },
+        { 0x00200000, 0x0020, 0x0080 }, { 0x00400000, 0x0040, 0x0080 }, { 0x0000FFFF, 0xFFFF, 0xFFFF },
     };
 
     static const DataCluTbl prot_clu_tbl[] = {
-        { 0x00000200, 0x0001, 0x0001 },
-        { 0x00000800, 0x0002, 0x0002 },
-        { 0x00002000, 0x0008, 0x0008 },
-        { 0x00200000, 0x0020, 0x0020 },
-        { 0x00400000, 0x0040, 0x0040 },
-        { 0x0000FFFF, 0xFFFF, 0xFFFF },
+        { 0x00000200, 0x0001, 0x0001 }, { 0x00000800, 0x0002, 0x0002 }, { 0x00002000, 0x0008, 0x0008 },
+        { 0x00200000, 0x0020, 0x0020 }, { 0x00400000, 0x0040, 0x0040 }, { 0x0000FFFF, 0xFFFF, 0xFFFF },
     };
 
     sp34 = 0;
@@ -218,7 +201,8 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
         }
     }
 
-    if (param3 == 1 || param3 == 2 || param3 == 4 || param3 == 8 || param3 == 0x10 || param3 == 0x20 || param3 == 0x40) {
+    if (param3 == 1 || param3 == 2 || param3 == 4 || param3 == 8 || param3 == 0x10 || param3 == 0x20 ||
+        param3 == 0x40) {
         FS_FAT_SC = param3;
     } else if (param3 != 0) {
         return 0xA00C;
@@ -231,14 +215,14 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
         var_r22 = FS_FAT_SC * 0xFF7;
 
         if (param5 == 1) {
-            var_r23 += (FS_gl_bu * ((u32) (FS_gl_bu + 0x39) / FS_gl_bu));
-            var_r22 += (FS_gl_bu * ((u32) (FS_gl_bu + 0x41) / FS_gl_bu));
+            var_r23 += (FS_gl_bu * ((u32)(FS_gl_bu + 0x39) / FS_gl_bu));
+            var_r22 += (FS_gl_bu * ((u32)(FS_gl_bu + 0x41) / FS_gl_bu));
 
-            if (((u32) (FS_gl_bu + 0x39) / FS_gl_bu) == ((u32) (FS_gl_bu + 0x38) / FS_gl_bu)) {
+            if (((u32)(FS_gl_bu + 0x39) / FS_gl_bu) == ((u32)(FS_gl_bu + 0x38) / FS_gl_bu)) {
                 var_r23 += FS_gl_bu;
             }
 
-            if (((u32) (FS_gl_bu + 0x41) / FS_gl_bu) == ((u32) (FS_gl_bu + 0x40) / FS_gl_bu)) {
+            if (((u32)(FS_gl_bu + 0x41) / FS_gl_bu) == ((u32)(FS_gl_bu + 0x40) / FS_gl_bu)) {
                 var_r22 += FS_gl_bu;
             }
         } else {
@@ -287,7 +271,7 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
         FS_memset(temp_r25->ctrl_p.unk_20BA4, 0xFF, sizeof(temp_r25->ctrl_p.unk_20BA4));
         sp34 = FS_FAT_SSA + FS_FAT_MBR;
 
-        for (var_r31 = 0; var_r31 < ((u32) ((FS_FAT_MAX - 1) * FS_FAT_SC) >> 5); var_r31++) {
+        for (var_r31 = 0; var_r31 < ((u32)((FS_FAT_MAX - 1) * FS_FAT_SC) >> 5); var_r31++) {
             status = FS_format_write_sub(&sp34, param4, nChan);
             if (status != 0) {
                 return status;
@@ -378,7 +362,7 @@ u16 FS_calc_parameter(u32* param1, u16 param2) {
         if (*param1 < FS_FAT_MBR + FS_FAT_SSA) {
             return 0xA01E;
         }
-    
+
         FS_FAT_MAX = (*param1 - FS_FAT_MBR - FS_FAT_SSA) / FS_FAT_SC + 1;
 
         if (FS_FAT_MAX < 1) {
@@ -456,8 +440,10 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_1 + index)] = 0x00;
     temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_2 + index)] = 0x90;
 
-    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20, membersize(FSPartitionBootSector16, BS_OEMName));
-    FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], "        ", membersize(FSPartitionBootSector16, BS_OEMName));
+    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20,
+              membersize(FSPartitionBootSector16, BS_OEMName));
+    FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], "        ",
+               membersize(FSPartitionBootSector16, BS_OEMName));
 
     temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_0 + index] = 0;
     temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_1 + index] = 2;
@@ -526,7 +512,8 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;
 
     if (arg0[0] != '\0') {
-        FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], 0x20, membersize(FSPartitionBootSector16, BS_VolLab));
+        FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], 0x20,
+                  membersize(FSPartitionBootSector16, BS_VolLab));
         FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], arg0, FS_strlen(arg0));
     } else {
         FS_strcpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], "NO NAME    ");
@@ -538,7 +525,8 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
         FS_strcpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_FIL_SYS_TYPE + index], "FAT16   ");
     }
 
-    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_CODE + index], 0, membersize(FSPartitionBootSector16, BS_BootCode));
+    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_CODE + index], 0,
+              membersize(FSPartitionBootSector16, BS_BootCode));
     temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_0 + index] = 0x55;
     temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_1 + index] = 0xAA;
 
@@ -598,14 +586,13 @@ u16 FS_init_fat(s32* arg0, u16 arg1, u16 nChan) {
             }
 
             FS_memset(temp_r29->ctrl_p.unk_20BA4, 0, sizeof(temp_r29->ctrl_p.unk_20BA4));
-            
+
             for (var_r25 = var_r28; var_r25 < (var_r27 - 1); var_r25++) {
                 status = FS_format_write_sub(arg0, arg1, nChan);
                 if (status != 0) {
                     return status;
                 }
             }
-
         }
     }
 
@@ -632,7 +619,7 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
         FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_NAME + temp_r30], 0x20, membersize(FSDirEntry, DIR_Name));
         FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_NAME + temp_r30], arg0, FS_strlen(arg0));
         temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_ATTR + temp_r30] = 0x28;
-        FS_set_now_date((FSDirEntry*) &temp_r31->ctrl_p.unk_20BA4[temp_r30], NULL);
+        FS_set_now_date((FSDirEntry*)&temp_r31->ctrl_p.unk_20BA4[temp_r30], NULL);
     }
 
     var_r29 = sizeof(FSDirEntry);
@@ -668,7 +655,8 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
     // !pBuffer;
 
     temp_r29->ctrl_p.unk_20BA4[0x1BE] = 0;
-    test->FAT16.BS_BootCode[/* 0x1BF */ 0x181] = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
+    test->FAT16.BS_BootCode[/* 0x1BF */ 0x181] =
+        (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
 
     temp_r5 = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1;
     test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] &= 0xC0;
@@ -692,10 +680,10 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
     temp_r31[5] = ((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
     temp_r31[6] |= (((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1) & 0x3F;
     temp_r31[6] &= 0xC0;
-    
+
     temp_r5 = (param1 - 1) / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM);
     temp_r31[6] |= (((temp_r5 >> 8) << 6) & 0xC0);
-    temp_r31[6] &=  0x3F;
+    temp_r31[6] &= 0x3F;
     temp_r31[7] = temp_r5;
 
     temp_r29->ctrl_p.unk_20BA4[0x1C6] = (FS_FAT_MBR >> 0);
@@ -718,7 +706,7 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
         }
 
         FS_memset(temp_r29->ctrl_p.unk_20BA4, 0, sizeof(temp_r29->ctrl_p.unk_20BA4));
-        
+
         for (var_r26 = 0; var_r26 < (FS_BUF_POS_FDC - 1); var_r26++) {
             status = FS_format_write_sub(param2, param3, nChan);
             if (status != 0) {
@@ -738,15 +726,9 @@ u16 FS_get_area_information(u16 param1, u32* param2, u32* param3, u16 param4, u1
     u16 status;
 
     static const DataCluTbl chs_tbl[] = {
-        { 0x00001000, 0x0002, 0x0010 },
-        { 0x00008000, 0x0002, 0x0020 },
-        { 0x00010000, 0x0004, 0x0020 },
-        { 0x00040000, 0x0008, 0x0020 },
-        { 0x00080000, 0x0010, 0x0020 },
-        { 0x000FC000, 0x0010, 0x003F },
-        { 0x001F8000, 0x0020, 0x003F },
-        { 0x003F0000, 0x0040, 0x003F },
-        { 0x00400000, 0x0080, 0x003F },
+        { 0x00001000, 0x0002, 0x0010 }, { 0x00008000, 0x0002, 0x0020 }, { 0x00010000, 0x0004, 0x0020 },
+        { 0x00040000, 0x0008, 0x0020 }, { 0x00080000, 0x0010, 0x0020 }, { 0x000FC000, 0x0010, 0x003F },
+        { 0x001F8000, 0x0020, 0x003F }, { 0x003F0000, 0x0040, 0x003F }, { 0x00400000, 0x0080, 0x003F },
         { 0x0000FFFF, 0xFFFF, 0xFFFF },
     };
 
