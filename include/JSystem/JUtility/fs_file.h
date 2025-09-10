@@ -1,9 +1,10 @@
 #ifndef FSFILE_H
 #define FSFILE_H
 
+#include "JSystem/JUtility/fs_form.h"
 #include "types.h"
 
-#include <dolphin.h>
+// #include <dolphin.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,7 +15,8 @@ typedef struct SDDriveInfo {
     /* 0x002 */ u16 unk_02;
     /* 0x004 */ u16 unk_04;
     /* 0x006 */ u16 unk_06;
-    /* 0x008 */ char pad_unk_08[0x1E - 0x08];
+    /* 0x008 */ char pad_unk_08[0x1C - 0x08];
+    /* 0x01C */ u16 unk_1C;
     /* 0x01E */ u16 unk_1E[1];
     /* 0x020 */ char pad_unk_20[0x3C - 0x20];
     /* 0x03C */ u16 unk_3C;
@@ -29,7 +31,7 @@ typedef struct SDDriveInfo {
     /* 0x076 */ char unk_76[64];
     /* 0x0B6 */ char pad_unk_B6[0xBC - 0xB6];
     /* 0x0BC */ u16 unk_BC;
-    /* 0x0BE */ u16 pad_unk_BE;
+    /* 0x0BE */ u16 unk_BE;
     /* 0x0C0 */ u16 unk_C0;
     /* 0x0C2 */ char unk_C2[0x20];
     /* 0x0E2 */ u16 unk_E2;
@@ -111,14 +113,22 @@ typedef struct UnkStruct_20BA4 {
     /* 0x1F */ u8 unk_1F;
 } UnkStruct_20BA4; // size = 0x20
 
+typedef struct UnknownStruct1 {
+    /* 0x00 */ u16 unk_00;
+    /* 0x02 */ u16 unk_02;
+    /* 0x04 */ u32 unk_04;
+} UnknownStruct1; // size = 0x08
+
 typedef struct DrvCtl_unk_20000 {
     /* 0x0000 */ char pad_unk_000[0x9F8];
-    /* 0x09F8 */ void* unk_09F8; // OK
-    /* 0x0000 */ char pad_unk_9FC[0xBA4 - 0x9FC];
-    /* 0x0BA4 */ UnkStruct_20BA4 unk_20BA4[16];
-    /* 0x0BA4 */ UnkStruct_20BA4 unk_20DA4;
-    /* 0x0DA4 */ char pad_unk_DA4[0x4000 - 0xDA4];
-} DrvCtl_unk_20000; // size = 0x4000 (?)
+    /* 0x09F8 */ void* unk_09F8;
+    /* 0x0000 */ char pad_unk_9FC[0x0A00 - 0x9FC];
+    /* 0x0A00 */ UnkStruct_20A00 unk_20A00[3];
+    /* 0x0AFC */ UnkStruct_20A00 unk_20AFC[2];
+    /* 0x0BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
+    /* 0x4BA4 */ UnknownStruct1 unk_24BA4;
+    /* 0x4BAC */ char pad_unk_4BAC[0x4DA4 - 0x4BAC];
+} DrvCtl_unk_20000; // size = 0x4DA4
 
 typedef struct DrvCtl {
     /* 0x00000 */ u16 unk_00[4]; // note sure if it's the same array
@@ -126,11 +136,8 @@ typedef struct DrvCtl {
     /* 0x00210 */ SDFileInfo unk_210[5];
     /* 0x0047C */ SDFileInfo unk_47C[3];
     /* 0x005F0 */ char pad_unk_6E8[0x20000 - 0x5F0];
-    /* 0x20000 */ DrvCtl_unk_20000* ctrl_p[2]; //! TODO: confirm
-    /* 0x20008 */ char pad_unk_20008[0x20A00 - 0x20008];
-    /* 0x20A00 */ UnkStruct_20A00 unk_20A00[3];
-    /* 0x20AFC */ UnkStruct_20A00 unk_20AFC[2];
-    /* 0x20BA4 */ char pad_unk_20BF8[0x259D4 - 0x20BA4];
+    /* 0x20000 */ DrvCtl_unk_20000 ctrl_p;
+    /* 0x24DA4 */ char pad_unk_24DA4[0x259D4 - 0x24DA4];
     /* 0x259D4 */ s32 unk_259D4;
     /* 0x259D8 */ u32 unk_259D8;
     /* 0x259DC */ u16 unk_259DC;
@@ -157,7 +164,9 @@ typedef struct FSDir {
 
 // ---
 
-extern DrvCtl FS_drv_ctl[CARD_NUM_CHANS];
+#define GET_PBS_PTR(pDrvCtl, index) ((FSPartitionBootSector*)((pDrvCtl)->ctrl_p.unk_20BA4 + (index)))
+
+extern DrvCtl FS_drv_ctl[2];
 
 #ifdef __cplusplus
 };

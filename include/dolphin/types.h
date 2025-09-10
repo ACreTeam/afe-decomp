@@ -44,10 +44,10 @@ typedef int BOOL;
 #endif
 
 #include "libc/stdio.h"
-#include "libc/stdarg.h"
-#include "libc/string.h"
-#include "libc/ctype.h"
+// #include "libc/stdarg.h"
+// #include "libc/string.h"
+// #include "libc/ctype.h"
 
-#include "cmath.h"
+// #include "cmath.h"
 
 #endif

@@ -1,8 +1,9 @@
 #include "JSystem/JUtility/carddrv.h"
+#include "JSystem/JUtility/fs_file.h"
 
 #include <dolphin.h>
 
-u16 CARD_Write(UnkStruct_20BA4* param1, u32 param2, int param3, u32 param4, UnkStruct_20BA4* param5) {
+u16 CARD_Write(u8* param1, u32 param2, int param3, u32 param4, UnknownStruct1* param5) {
     OSTick start;
     OSTick end;
     u16 ret;
@@ -17,7 +18,7 @@ u16 CARD_Write(UnkStruct_20BA4* param1, u32 param2, int param3, u32 param4, UnkS
     return ret;
 }
 
-u16 CARD_Read(UnkStruct_20BA4* param1, u32 param2, int param3, u32 param4, UnkStruct_20BA4* param5) {
+u16 CARD_Read(u8* param1, u32 param2, int param3, u32 param4, UnknownStruct1* param5) {
     OSTick start;
     OSTick end;
     u16 ret;

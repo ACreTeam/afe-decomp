@@ -207,8 +207,7 @@ u16 CARD_Getinfo(SDInfos* param1) {
     return 0;
 }
 
-//! TODO: parameters not correct?
-u16 CARD_ReadD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5) {
+u16 CARD_ReadD(u8* param1, u32 param2, int param3, int param4, UnknownStruct1* param5) {
     u8* pData;
     int i;
 
@@ -229,12 +228,11 @@ u16 CARD_ReadD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkS
         }
     }
 
-    param5->unk_00[1] = CARD_ErrStatus[CARD_ExiChannel];
+    param5->unk_02 = CARD_ErrStatus[CARD_ExiChannel];
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-//! TODO: parameters not correct?
-u16 CARD_WriteD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, UnkStruct_20BA4* param5) {
+u16 CARD_WriteD(u8* param1, u32 param2, int param3, int param4, UnknownStruct1* param5) {
     u8* volatile pData;
     int i;
 
@@ -244,7 +242,7 @@ u16 CARD_WriteD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, Unk
         return LOCK_UNLOCK_FAILED;
     }
 
-    pData = (u8*)param1;
+    pData = param1;
 
     if (!CARD_Command(WRITE_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2; i++) {
@@ -263,7 +261,7 @@ u16 CARD_WriteD(UnkStruct_20BA4* param1, u32 param2, int param3, int param4, Unk
         CARD_Response2();
     }
 
-    param5->unk_00[1] = CARD_ErrStatus[CARD_ExiChannel];
+    param5->unk_02 = CARD_ErrStatus[CARD_ExiChannel];
     param5->unk_04 = i * CARD_SectorSize[CARD_ExiChannel];
     return CARD_ErrStatus[CARD_ExiChannel];
 }

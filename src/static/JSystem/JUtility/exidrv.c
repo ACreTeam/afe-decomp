@@ -722,9 +722,9 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
     (void)pad0;
     (void)pad0;
 
-    (void)arg0;
-    (void)arg1;
-    (void)arg1;
+    // (void)arg0;
+    // (void)arg1;
+    // (void)arg1;
 
     var_r29 = arg0;
     var_r29[0] |= 0x40;

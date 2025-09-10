@@ -53,7 +53,7 @@ u16 FS_DrvSel_Select(int arg5) {
     return status;
 }
 
-u16 FS_DrvSel_Read(UnkStruct_20BA4* arg0, s32 arg1, s32 arg2, s32 arg3, UnkStruct_20BA4* arg4, int arg5) {
+u16 FS_DrvSel_Read(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4, int arg5) {
     u16 status;
     u16 value = arg5;
     
@@ -72,7 +72,7 @@ u16 FS_DrvSel_Read(UnkStruct_20BA4* arg0, s32 arg1, s32 arg2, s32 arg3, UnkStruc
     return status;
 }
 
-u16 FS_DrvSel_Write(UnkStruct_20BA4* arg0, s32 arg1, s32 arg2, s32 arg3, UnkStruct_20BA4* arg4, int arg5) {
+u16 FS_DrvSel_Write(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4, int arg5) {
     u16 status;
     u16 value = arg5;
     

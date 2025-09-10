@@ -18,7 +18,7 @@ u16 GetNowData(NowData* pNowData) {
     return 0;
 }
 
-int GetRandomSeed(void) {
-    int seed = 0x67CD;
+u16 GetRandomSeed(void) {
+    u16 seed = 0x67CD;
     return seed;
 }

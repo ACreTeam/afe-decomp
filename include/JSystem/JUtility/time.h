@@ -18,7 +18,7 @@ typedef struct NowData {
 } NowData; // size = 0x08
 
 extern u16 GetNowData(NowData* pNowData);
-extern int GetRandomSeed(void);
+extern u16 GetRandomSeed(void);
 
 #ifdef __cplusplus
 };

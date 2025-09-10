@@ -1,5 +1,6 @@
 #include "JSystem/JUtility/fs_renm.h"
 #include "JSystem/JUtility/fs_file.h"
+#include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_open.h"
 #include "JSystem/JUtility/fs_subd.h"
 #include "types.h"
@@ -67,8 +68,6 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
     int sp1C;
     char *sp18;
     char *sp14;
-    int spC;
-    u16 *sp8;
     DrvCtl *temp_r27;
     int var_r28;
     u16 temp_r3;
@@ -93,9 +92,8 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
     sp20 = 0;
     sp1C = 0;
     temp_r27 = &FS_drv_ctl[pDriveInfo->nChan];
-    sp8 = &sp22;
-    spC = 2;
-    temp_r3_4 = FS_Search_Entry(pDriveInfo, sp18, spB8, &sp78[0], &sp74, sp34, &sp2C, &sp26);
+
+    temp_r3_4 = FS_Search_Entry(pDriveInfo, sp18, spB8, &sp78[0], &sp74, sp34, &sp2C, &sp26, &sp22, 2);
     if (temp_r3_4 == 0) {
         return 0xA011;
     }
@@ -105,14 +103,13 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
     if (temp_r3_4 != 0xA007) {
         return temp_r3_4;
     }
-    sp8 = &sp24;
-    spC = 2;
-    temp_r3_3 = FS_Search_Entry(pDriveInfo, sp14, spF8, &sp98[0], &sp76, sp54.unk_00, &sp30, &sp28);
+
+    temp_r3_3 = FS_Search_Entry(pDriveInfo, sp14, spF8, &sp98[0], &sp76, sp54.unk_00, &sp30, &sp28, &sp24, 2);
     if (temp_r3_3 != 0) {
         return temp_r3_3;
     }
     if (sp24 == sp22) {
-        temp_r3_2 = FS_entry_name_set(&temp_r27->unk_20BA4[sp28], (&sp78[0])[sp74 - 1]);
+        temp_r3_2 = FS_entry_name_set((char*)PTR_BOOT_SECTOR_ENTRY(temp_r27, sp28)->FAT16.BS_OEMName, (&sp78[0])[sp74 - 1]);
         if (temp_r3_2 != 0) {
             return temp_r3_2;
         }

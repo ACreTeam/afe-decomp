@@ -54,15 +54,15 @@ u16 FS_Delete_sub(SDDriveInfo* pDriveInfo, const char* param2) {
 
 u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4) {
     DrvCtl* ptr;
-    DrvCtl_unk_20000* ptr2;
-    u16 temp_r29;
+    FSDirEntry* ptr2;
+    u16 clusterLO;
     u16 status;
     int pad;
     int idx;
 
     ptr = &FS_drv_ctl[pDriveInfo->nChan];
 
-    if(pDriveInfo->unk_1E == 0x20) {
+    if(pDriveInfo->unk_1E[0] == 0x20) {
         pad = 0;
         (void)pad;
         (void)pad;
@@ -70,10 +70,10 @@ u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4)
     }
 
     idx = (int)param3;
-    ptr2 = (DrvCtl_unk_20000*)((u32)ptr->ctrl_p + idx);
+    ptr2 = PTR_ROOT_DIR_ENTRY(ptr, idx);
 
-    ptr2->unk_20BA4.unk_00[0] = 0xE5;
-    temp_r29 = ((ptr2->unk_20BA4.unk_1B << 8) & 0xFF00) | (ptr2->unk_20BA4.unk_1A & 0x00FF);
+    ptr2->DIR_Name[0] = FLAG_DELETED;
+    clusterLO = ((ptr2->DIR_FstClusLO.data_u8[1] << 8) & 0xFF00) | (ptr2->DIR_FstClusLO.data_u8[0] & 0x00FF);
 
     status = FS_delete_lfn_entry(pDriveInfo, param4, param2, param3);
 
@@ -81,8 +81,8 @@ u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4)
         return status;
     }
 
-    if (temp_r29 > 1 && temp_r29 <= (pDriveInfo->unk_BC - 1)) {
-        status = FS_fat_clear(temp_r29, pDriveInfo);
+    if (clusterLO > 1 && clusterLO <= (pDriveInfo->unk_BC - 1)) {
+        status = FS_fat_clear(clusterLO, pDriveInfo);
 
         if (status != 0) {
             return status;
@@ -90,7 +90,7 @@ u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4)
 
         status = FS_Flush(pDriveInfo);
     } else {
-        if (temp_r29 == 0) {
+        if (clusterLO == 0) {
             status = 0;
         } else {
             status = 0xA032;

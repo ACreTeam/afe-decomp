@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <dolphin/types.h>
+// #include <dolphin/types.h>
 #include "macros.h"
 
 #define VER_GAFE01_00 0
