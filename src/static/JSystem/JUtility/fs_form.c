@@ -436,22 +436,25 @@ u16 FS_calc_parameter(u32* param1, u16 param2) {
 }
 
 u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
-    u16 sp16;
-    u32 temp_r29;
-    u16 status;
-    u16 var_r24;
     DrvCtl* temp_r31;
     u16 index;
+    u16 status;
+    u16 var_r24;
+    u16 temp_r29;
+    u32 tmp;
 
-    sp16 = arg4;
-    (void)sp16;
+    (void)arg4;
+    (void)temp_r29; // this is actually r25
+    (void)temp_r29; // this is actually r25
+    // (void)status;
+    // (void)status;
 
     temp_r31 = &FS_drv_ctl[arg5];
-    index = (((FS_FAT_MBR - FS_FAT_MBR / 32) * sizeof(FSPartitionBootSector)));
+    index = ((FS_FAT_MBR % 32) * sizeof(FSPartitionBootSector));
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_0 + index] = 0xEB;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_1 + index] = 0x00;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_2 + index] = 0x90;
+    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_0 + index)] = 0xEB;
+    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_1 + index)] = 0x00;
+    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_2 + index)] = 0x90;
 
     FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20, membersize(FSPartitionBootSector16, BS_OEMName));
     FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], "        ", membersize(FSPartitionBootSector16, BS_OEMName));
@@ -509,14 +512,18 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     if (temp_r31->unk_259DC == 0) {
         FS_srand(GetRandomSeed(), arg5);
     }
-    
-    temp_r29 = (FS_rand(0xFF, arg5) << 8) * FS_rand(0xFF, arg5);
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = temp_r29;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = (temp_r29 >> 8) & 0xFF;
 
-    temp_r29 = (FS_rand(0xFF, arg5) << 8) * FS_rand(0xFF, arg5);
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = temp_r29;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (temp_r29 >> 8) & 0xFF;
+    status = FS_rand(0xFF, arg5) * 256;
+    // tmp = FS_rand(0xFF, arg5);
+    status *= (temp_r29 = FS_rand(0xFF, arg5));
+    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = status;
+    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = (status >> 8) & 0xFF;
+
+    status = FS_rand(0xFF, arg5) * 256;
+    // tmp = FS_rand(0xFF, arg5);
+    status *= (temp_r29 = FS_rand(0xFF, arg5));
+    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = status;
+    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;
 
     if (arg0[0] != '\0') {
         FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], 0x20, membersize(FSPartitionBootSector16, BS_VolLab));
@@ -571,7 +578,7 @@ u16 FS_init_fat(s32* arg0, u16 arg1, u16 nChan) {
             var_r28 = FS_BUF_POS_FAT1;
             var_r27 = FS_BUF_POS_FAT2;
         } else {
-            index = (((FS_FAT_MBR + FS_FAT_RSC) + FS_FAT_SF) & 0x1F) * (sizeof(FSPartitionBootSector));
+            index = ((FS_FAT_MBR + FS_FAT_RSC + FS_FAT_SF) & 0x1F) * (sizeof(FSPartitionBootSector));
             var_r28 = FS_BUF_POS_FAT2;
             var_r27 = FS_BUF_POS_RDE;
         }
@@ -612,6 +619,10 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
     s32 var_r29;
     u16 status = 0;
 
+    (void)arg0;
+    (void)arg0;
+    (void)pArg0;
+    (void)pArg0;
 
     pArg0 = arg0;
     temp_r31 = &FS_drv_ctl[nChan];
