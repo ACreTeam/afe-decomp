@@ -651,3 +651,160 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
 
     return 0;
 }
+
+u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
+    DrvCtl* temp_r29;
+    u32 temp_r5;
+    u16 status;
+    u16 var_r26;
+    u8* temp_r31;
+    u8* pBuffer;
+    FSPartitionBootSector* test;
+
+    temp_r29 = &FS_drv_ctl[nChan];
+    test = PTR_BOOT_SECTOR_ENTRY(temp_r29, 0);
+
+    // pBuffer = temp_r29->ctrl_p.unk_20BA4;
+    // !pBuffer;
+
+    temp_r29->ctrl_p.unk_20BA4[0x1BE] = 0;
+    test->FAT16.BS_BootCode[/* 0x1BF */ 0x181] = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
+
+    temp_r5 = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1;
+    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] &= 0xC0;
+    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] |= temp_r5 & 0x3F;
+
+    temp_r5 = FS_FAT_MBR / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM);
+    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] &= 0x3F;
+    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] |= (((temp_r5 & 0xFFFF) >> 8) << 6);
+    test->FAT16.BS_BootCode[/* 0x1C1 */ 0x183] = temp_r5;
+
+    temp_r31 = &temp_r29->ctrl_p.unk_20BA4[0x1BE];
+
+    if ((param1 - FS_FAT_MBR) < 0x7FA8) {
+        temp_r31[4] = 1;
+    } else if ((param1 - FS_FAT_MBR) < 0x10000) {
+        temp_r31[4] = 4;
+    } else {
+        temp_r31[4] = 6;
+    }
+
+    temp_r31[5] = ((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
+    temp_r31[6] |= (((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1) & 0x3F;
+    temp_r31[6] &= 0xC0;
+    
+    temp_r5 = (param1 - 1) / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM);
+    temp_r31[6] |= (((temp_r5 >> 8) << 6) & 0xC0);
+    temp_r31[6] &=  0x3F;
+    temp_r31[7] = temp_r5;
+
+    temp_r29->ctrl_p.unk_20BA4[0x1C6] = (FS_FAT_MBR >> 0);
+    temp_r29->ctrl_p.unk_20BA4[0x1C7] = (FS_FAT_MBR >> 8);
+    temp_r29->ctrl_p.unk_20BA4[0x1C8] = (FS_FAT_MBR >> 16);
+    temp_r29->ctrl_p.unk_20BA4[0x1C9] = (FS_FAT_MBR >> 24);
+
+    temp_r29->ctrl_p.unk_20BA4[0x1CA] = ((param1 - FS_FAT_MBR) >> 0);
+    temp_r29->ctrl_p.unk_20BA4[0x1CB] = ((param1 - FS_FAT_MBR) >> 8);
+    temp_r29->ctrl_p.unk_20BA4[0x1CC] = ((param1 - FS_FAT_MBR) >> 16);
+    temp_r29->ctrl_p.unk_20BA4[0x1CD] = ((param1 - FS_FAT_MBR) >> 24);
+
+    temp_r29->ctrl_p.unk_20BA4[0x1FE] = 0x55;
+    temp_r29->ctrl_p.unk_20BA4[0x1FF] = 0xAA;
+
+    if (FS_BUF_POS_FDC != 0) {
+        status = FS_format_write_sub(param2, param3, nChan);
+        if (status != 0) {
+            return status;
+        }
+
+        FS_memset(temp_r29->ctrl_p.unk_20BA4, 0, sizeof(temp_r29->ctrl_p.unk_20BA4));
+        
+        for (var_r26 = 0; var_r26 < (FS_BUF_POS_FDC - 1); var_r26++) {
+            status = FS_format_write_sub(param2, param3, nChan);
+            if (status != 0) {
+                return status;
+            }
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_get_area_information(u16 param1, u32* param2, u32* param3, u16 param4, u16 param6) {
+    s32 sp20;
+    u32 sp1C;
+    u32 sp18;
+    u16 var_r31;
+    u16 status;
+
+    static const DataCluTbl chs_tbl[] = {
+        { 0x00001000, 0x0002, 0x0010 },
+        { 0x00008000, 0x0002, 0x0020 },
+        { 0x00010000, 0x0004, 0x0020 },
+        { 0x00040000, 0x0008, 0x0020 },
+        { 0x00080000, 0x0010, 0x0020 },
+        { 0x000FC000, 0x0010, 0x003F },
+        { 0x001F8000, 0x0020, 0x003F },
+        { 0x003F0000, 0x0040, 0x003F },
+        { 0x00400000, 0x0080, 0x003F },
+        { 0x0000FFFF, 0xFFFF, 0xFFFF },
+    };
+
+    status = FS_csd_to_size(&sp1C, &sp20, FS_SD_CARD_MODE_RAW, param4, param6);
+    if (status != 0) {
+        return 0xA00E;
+    }
+
+    status = FS_csd_to_size(&sp18, &sp20, FS_SD_CARD_MODE_FORMATTED_MODE, param4, param6);
+    if (status != 0) {
+        return 0xA00E;
+    }
+
+    if (param1 == 1) {
+        *param2 = sp1C;
+    } else {
+        *param2 = sp18;
+    }
+
+    *param3 = sp1C + sp18;
+    sp20 = *param3;
+
+    for (var_r31 = 0; var_r31 < 9; var_r31++) {
+        if (chs_tbl[var_r31].unk_00 == 0xFFFF) {
+            return 0xA00E;
+        }
+
+        if (chs_tbl[var_r31].unk_00 >= sp20) {
+            FS_HEAD_NUM = chs_tbl[var_r31].unk_04;
+            FS_TRACK_PER_SECTOR = chs_tbl[var_r31].unk_06;
+
+            break;
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_format_write_sub(s32* param1, u16 param2, u16 nChan) {
+    UnknownStruct1 sp10;
+    DrvCtl* temp_r31;
+    u16 status;
+
+    temp_r31 = &FS_drv_ctl[nChan];
+    sp10.unk_00 = 0x2000;
+    sp10.unk_02 = 0;
+    sp10.unk_04 = 0;
+
+    if (param2 == 1) {
+        status = FS_DrvSel_Write(temp_r31->ctrl_p.unk_20BA4, 0x20, *param1, 0, &sp10, temp_r31->unk_00[1]);
+
+        if (status != 0) {
+            return status;
+        }
+    } else if (1) {
+        return 0xA047;
+    }
+
+    *param1 += 0x20;
+    return 0;
+}

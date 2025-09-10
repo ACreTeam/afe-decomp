@@ -770,7 +770,7 @@ u16 FS_write_sub(u8* param1, int param2, u32 param3, UnknownStruct1* param4, u16
     return status;
 }
 
-s32 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan) {
+u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan) {
     s32 blockMultiplier;
     u32 i;
     DrvCtl* pDrvCtl;
@@ -793,7 +793,6 @@ s32 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
     (void)c_size;
     (void)c_size_mult;
     (void)t0;
-
 
     if (modeFlags & FS_SD_CARD_MODE_RAW) {
         *outSectorsPerCluster = 0xF28 * 0x20; // 0x1E500

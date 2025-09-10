@@ -33,7 +33,7 @@ extern u32 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2);
 extern u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u32 param2);
 extern u16 FS_read_sub(u8* param1, int param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6);
 extern u16 FS_write_sub(u8* param1, int param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6, u16 nChan);
-extern s32 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan);
+extern u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan);
 extern u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4);
 extern u16 FS_fat_strcmp(UnkStruct_20BA4 *arg0, UnkStruct_20BA4 *arg1); // matched but param types not 100% confirmed
 extern u16 FS_entry_name_set(char* param1, char* param2);
