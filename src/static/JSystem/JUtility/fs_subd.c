@@ -618,16 +618,16 @@ u16 FS_allocate_entry_sub(SDDriveInfo* pDriveInfo, u32 arg1, u32* arg2, u16* arg
 }
 
 u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 param3) {
-    FSDirEntry* var_r26;
-    DrvCtl* temp_r24;
-    u32 var_r30;
-    u16 var_r22;
-    u16 var_r23;
-    u32 var_r27;
-    u16 var_r29;
     u16 status;
     u32 temp_r3;
-    u32 temp_r3_2;
+    u16 temp_r3_2;
+    u32 var_r30;
+    u16 var_r29;
+    u32 var_r27;
+    FSDirEntry* var_r26;
+    DrvCtl* temp_r24;
+    u16 var_r23;
+    u16 var_r22;
 
     var_r29 = 1;
     temp_r24 = &FS_drv_ctl[pDriveInfo->nChan];
@@ -651,53 +651,53 @@ u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 par
                     break;
                 }
 
-                var_r30--;
+                var_r27 = var_r30 - 1;
             } else {
                 temp_r3_2 = FS_sector_to_cluster(pDriveInfo, var_r30);
                 temp_r3 = FS_cluster_to_sector(pDriveInfo, temp_r3_2);
 
-                if (temp_r3_2 == 0xFFFFFFFF) {
+                if (temp_r3 == 0xFFFFFFFF) {
                     break;
                 }
 
-                if (temp_r3_2 != var_r30) {
-                    var_r30--;
+                if (temp_r3 != var_r30) {
+                    var_r27 = var_r30 - 1;
                 } else {
-                    temp_r3_2 = FS_get_previous_cluster(pDriveInfo, param1, temp_r3);
+                    temp_r3_2 = (u16)FS_get_previous_cluster(pDriveInfo, param1, temp_r3_2);
                     if (temp_r3_2 >= 0xFFF7) {
                         break;
                     }
 
-                    temp_r3 = FS_cluster_to_sector(pDriveInfo, temp_r3);
-                    if (temp_r3 >= 0xFFF7) {
+                    var_r27 = FS_cluster_to_sector(pDriveInfo, temp_r3_2);
+                    if (var_r27 >= 0xFFF7) {
                         break;
                     }
 
-                    var_r30 = pDriveInfo->unk_1E[0] - 1 + temp_r3;
+                    var_r27 += pDriveInfo->unk_1E[0] - 1;
                 }
-
-                if (var_r27 == (var_r30 - 1) && var_r29 < 0x20) {
-                    for (var_r23 = 0; var_r23 < var_r29; var_r23++) {
-                        FS_strncpy((char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23) * 0x200], (char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23 - 1) * 0x200], 0x200);
-                    }
-                } else {
-                    status = FS_write_sub(NULL, var_r29, var_r30, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
-                    if (status != 0) {
-                        return status;
-                    }
-
-                    var_r29 = 0;
+            }
+            
+            if (var_r27 == (var_r30 - 1) && var_r29 < 0x20) {
+                for (var_r23 = 0; var_r23 < var_r29; var_r23++) {
+                    FS_strncpy((char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23) * 0x200], (char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23 - 1) * 0x200], 0x200);
                 }
-
-                status = FS_read_sub(NULL, 1, temp_r3, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
+            } else {
+                status = FS_write_sub(NULL, var_r29, var_r30, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
                 if (status != 0) {
                     return status;
                 }
 
-                var_r26 = (FSDirEntry*)&temp_r24->ctrl_p.unk_20BA4[0x200];
-                var_r29++;
-                var_r30 = var_r27;
+                var_r29 = 0;
             }
+
+            status = FS_read_sub(NULL, 1, var_r27, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
+            if (status != 0) {
+                return status;
+            }
+
+            var_r26 = (FSDirEntry*)&temp_r24->ctrl_p.unk_20BA4[0x200];
+            var_r29++;
+            var_r30 = var_r27;
         }
 
         var_r22++;
@@ -1051,14 +1051,14 @@ u16 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2) {
     return nCluster & 0xFFFF;
 }
 
-u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u32 param2) {
+u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u16 param2) {
     u32 nSector;
 
-    if ((param2 & 0xFFFF) < 2) {
+    if (param2 < 2) {
         return -1;
     }
 
-    nSector = pDriveInfo->unk_64 + (((param2 & 0xFFFF) - 2) * pDriveInfo->unk_1E[0]);
+    nSector = pDriveInfo->unk_64 + ((param2 - 2) * pDriveInfo->unk_1E[0]);
 
     if (nSector >= pDriveInfo->unk_68) {
         return -1;

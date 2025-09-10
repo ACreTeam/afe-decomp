@@ -32,7 +32,7 @@ extern u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2);
 extern u16 FS_get_next_cluster(SDDriveInfo *pDriveInfo, u16 param2);
 extern u16 FS_get_previous_cluster(SDDriveInfo *pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2);
-extern u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u32 param2);
+extern u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u16 param2);
 
 extern u16 FS_read_sub(u8* param1, int param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6);
 extern u16 FS_write_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6, u16 nChan);

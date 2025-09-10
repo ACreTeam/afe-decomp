@@ -112,7 +112,7 @@ typedef struct FSPartitionBootSector32 {
 } FSPartitionBootSector32;           // size = 0x200
 
 typedef struct FSDirEntry {
-    /* 0x00 */ u8 DIR_Name[8 + 3];    // File name (8) and extension (3)
+    /* 0x00 */ char DIR_Name[8 + 3];  // File name (8) and extension (3)
     /* 0x0B */ u8 DIR_Attr;           // File attributes (read-only, hidden, etc.)
     /* 0x0C */ u8 DIR_NTRes;          // Reserved for Windows NT
     /* 0x0D */ u8 DIR_CrtTimeTenth;   // Creation time in tenths of a second
