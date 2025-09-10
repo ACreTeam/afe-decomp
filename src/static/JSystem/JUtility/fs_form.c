@@ -783,7 +783,7 @@ u16 FS_format_write_sub(s32* param1, u16 param2, u16 nChan) {
         if (status != 0) {
             return status;
         }
-    } else if (1) {
+    } else {
         return 0xA047;
     }
 

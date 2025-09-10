@@ -10,6 +10,15 @@
 extern "C" {
 #endif
 
+typedef struct UnknownStruct2 {
+    /* 0x000 */ u32 pad_unk_000[0x60C / 4];
+    /* 0x60C */ u16* unk_60C;
+    /* 0x610 */ char pad_unk_610[0x810 - 0x610];
+    /* 0x810 */ u32 unk_810;
+    /* 0x814 */ char pad_unk_814[0xC18 - 0x814];
+    /* 0xC18 */ u8* unk_C18;
+} UnknownStruct2; // size = ?
+
 typedef struct SDDriveInfo {
     /* 0x000 */ u16 nChan;
     /* 0x002 */ u16 unk_02;
@@ -39,11 +48,13 @@ typedef struct SDDriveInfo {
     /* 0x0E5 */ char unk_E5;
     /* 0x0E6 */ char unk_E6;
     /* 0x0E7 */ char unk_E7;
-    /* 0x0E8 */ void* unk_E8;
-    /* 0x0EC */ void* unk_EC;
-    /* 0x0F0 */ u32 pad_unk_F0;
+    /* 0x0E8 */ u8* unk_E8;
+    /* 0x0EC */ UnknownStruct2* unk_EC;    
+    /* 0x0F0 */ u16 unk_F0;
+    /* 0x0F0 */ u16 unk_F2;
     /* 0x0F4 */ u16 unk_F4;
-    /* 0x0F6 */ char pad_unk_F6[0xFA - 0xF6];
+    /* 0x0F6 */ u16 unk_F6;
+    /* 0x0F8 */ u16 unk_F8;
     /* 0x0FA */ u16 unk_FA;
     /* 0x0FC */ u32 unk_FC;
     /* 0x100 */ u32 pad_unk_100;
@@ -127,7 +138,12 @@ typedef struct DrvCtl_unk_20000 {
     /* 0x0AFC */ UnkStruct_20A00 unk_20AFC[2];
     /* 0x0BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
     /* 0x4BA4 */ UnknownStruct1 unk_24BA4;
-    /* 0x4BAC */ char pad_unk_4BAC[0x4DA4 - 0x4BAC];
+    /* 0x4BAC */ u32 unk_4BAC;
+    /* 0x4BB0 */ u32 unk_4BB0;
+    /* 0x4BB4 */ u16 unk_4BB4;
+    /* 0x4BB6 */ u16 unk_4BB6;
+    /* 0x4BB8 */ UnknownStruct2* unk_4BB8; // TBD
+    /* 0x4BBC */ char pad_unk_4BBC[0x4DA4 - 0x4BBC];
 } DrvCtl_unk_20000; // size = 0x4DA4
 
 typedef struct DrvCtl {

@@ -72,7 +72,7 @@ u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4)
     idx = (int)param3;
     ptr2 = PTR_ROOT_DIR_ENTRY(ptr, idx);
 
-    ptr2->DIR_Name[0] = FLAG_DELETED;
+    ptr2->DIR_Name[0] = FAT_FLAG_DELETED;
     clusterLO = ((ptr2->DIR_FstClusLO.data_u8[1] << 8) & 0xFF00) | (ptr2->DIR_FstClusLO.data_u8[0] & 0x00FF);
 
     status = FS_delete_lfn_entry(pDriveInfo, param4, param2, param3);

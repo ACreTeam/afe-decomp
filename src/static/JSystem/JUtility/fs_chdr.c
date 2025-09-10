@@ -32,7 +32,7 @@ u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1) {
     u16 sp78[2];
     u16 sp76;
     u16 sp74;
-    char sp54[32];
+    char* sp54[8];
     char sp14[64];
     DrvCtl *sp10;
 
@@ -59,7 +59,7 @@ u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1) {
         return status;
     }
 
-    status = FS_divide_fpathname(sp14, (char**)&sp54, sp78, pDriveInfo->nChan);
+    status = FS_divide_fpathname(sp14, sp54, sp78, pDriveInfo->nChan);
     if (status != 0) {
         return status;
     }
