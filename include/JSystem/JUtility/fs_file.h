@@ -100,7 +100,7 @@ typedef struct SDFileInfo {
     /* 0x00 */ u16 unk_00;
     /* 0x02 */ u16 unk_02;
     /* 0x04 */ SDDriveInfo* pDriveInfo;
-    /* 0x08 */ u8 unk_08[11];
+    /* 0x08 */ char unk_08[8 + 3]; // filename + extension
     /* 0x13 */ u8 unk_13;
     /* 0x14 */ char unk_14[10];
     /* 0x1E */ u16 unk_1E;
