@@ -38,7 +38,7 @@ u16 FS_Seek_sub(SDFileInfo* pFileInfo, u32 param2, u16 param3) {
     SDDriveInfo* temp_r21;
 
     status = 0;
-    temp_r27 = pFileInfo->pDriveInfo->unk_1E[0] * pFileInfo->pDriveInfo->unk_1C;
+    temp_r27 = pFileInfo->pDriveInfo->unk_1E * pFileInfo->pDriveInfo->unk_1C;
     temp_r21 = pFileInfo->pDriveInfo;
 
     if (pFileInfo == NULL) {

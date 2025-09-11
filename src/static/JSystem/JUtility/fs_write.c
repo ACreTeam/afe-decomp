@@ -190,11 +190,11 @@ u16 FS_GetWriteDoingCluster2(SDFileInfo* pFileInfo, u16* param2, u16* param3, u1
         return 0xA029;
     }
 
-    if ((pFileInfo->pDriveInfo->unk_1E[0] % pFileInfo->pDriveInfo->unk_F6) != 0) {
+    if ((pFileInfo->pDriveInfo->unk_1E % pFileInfo->pDriveInfo->unk_F6) != 0) {
         return 0xA02D;
     }
 
-    temp = (pFileInfo->pDriveInfo->unk_1E[0] / pFileInfo->pDriveInfo->unk_F6);
+    temp = (pFileInfo->pDriveInfo->unk_1E / pFileInfo->pDriveInfo->unk_F6);
     temp2 = (pFileInfo->unk_28 / temp_r28);
     *param6 = temp2 % temp;
     return status;
@@ -213,7 +213,7 @@ u16 FS_GetWriteNextCluster(SDFileInfo* pFileInfo, u16 param2) {
     var_r28 = TRUE;
     var_r26 = TRUE;
     temp_r25 = pFileInfo->pDriveInfo;
-    temp_r27 = pFileInfo->pDriveInfo->unk_1E[0] * pFileInfo->pDriveInfo->unk_1C;
+    temp_r27 = pFileInfo->pDriveInfo->unk_1E * pFileInfo->pDriveInfo->unk_1C;
 
     if ((pFileInfo->unk_28 + param2) / temp_r27 == pFileInfo->unk_28 / temp_r27) {
         return status;

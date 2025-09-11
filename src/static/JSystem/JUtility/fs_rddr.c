@@ -72,12 +72,12 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
     sp32 = pDirInfo->unk_12;
 
     FS_strncpy(sp34, pDirInfo->unk_14, sizeof(sp34));
-    temp_r22 = sp20->unk_1C * sp20->unk_1E[0];
+    temp_r22 = sp20->unk_1C * sp20->unk_1E;
 
-    if (sp20->unk_1E[0] > 0x20) {
+    if (sp20->unk_1E > 0x20) {
         var_r23 = 0x20;
     } else {
-        var_r23 = sp20->unk_1E[0];
+        var_r23 = sp20->unk_1E;
     }
 
     var_r31 = PTR_ROOT_DIR_ENTRY(temp_r20, sp28 % (var_r23 * sp20->unk_1C));
@@ -157,8 +157,8 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
 
                 if (var_r21 == (var_r25 - 1)) {
                     if (sp34[0] == '\\' && sp34[1] == '\0') {
-                        if ((sp2C + sp20->unk_1E[0]) < sp20->unk_64) {
-                            sp2C += sp20->unk_1E[0];
+                        if ((sp2C + sp20->unk_1E) < sp20->unk_64) {
+                            sp2C += sp20->unk_1E;
                         } else {
                             sp2C = -1;
                         }
@@ -185,11 +185,11 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
         }
 
         if (sp34[0] == '\\' && sp34[1] == '\0') {
-            if ((sp2C + sp20->unk_1E[0]) >= sp20->unk_64) {
+            if ((sp2C + sp20->unk_1E) >= sp20->unk_64) {
                 return 0xA030;
             }
 
-            sp2C += sp20->unk_1E[0];
+            sp2C += sp20->unk_1E;
             var_r24 = sp2C;
         } else {
             // right var? (temp_r3_3)
@@ -208,7 +208,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
         }
 
         var_r31 = (FSDirEntry*)temp_r20->ctrl_p.unk_20BA4;
-        var_r25 = ((sp20->unk_1E[0] * sp20->unk_1C) / 32);
+        var_r25 = ((sp20->unk_1E * sp20->unk_1C) / 32);
 
         if (sp34[0] == '\\' && sp34[1] == '\0') {
             temp_r27 = (u32)((sp20->unk_1C * (sp2C - sp24)) + sp28);

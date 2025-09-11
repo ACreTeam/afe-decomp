@@ -178,10 +178,10 @@ u16 FS_initialize_directory_data(SDDriveInfo* pDriveInfo, u16 param2, u16 param3
         return 0xA029;
     }
 
-    if (pDriveInfo->unk_1E[0] > 0x20) {
+    if (pDriveInfo->unk_1E > 0x20) {
         var_r28 = 0x20;
     } else {
-        var_r28 = pDriveInfo->unk_1E[0];
+        var_r28 = pDriveInfo->unk_1E;
     }
 
     status = FS_write_sub(NULL, var_r28, var_r29, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
@@ -192,7 +192,7 @@ u16 FS_initialize_directory_data(SDDriveInfo* pDriveInfo, u16 param2, u16 param3
     var_r29 = var_r29 + var_r28;
     FS_memset(temp_r26->ctrl_p.unk_20BA4, 0, 0x40);
 
-    for (var_r25 = 0; var_r25 < (pDriveInfo->unk_1E[0] / (u16)var_r28) - 1; var_r25++) {
+    for (var_r25 = 0; var_r25 < (pDriveInfo->unk_1E / (u16)var_r28) - 1; var_r25++) {
         status = FS_write_sub(NULL, var_r28, var_r29, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
         if (status != 0) {
             return status;

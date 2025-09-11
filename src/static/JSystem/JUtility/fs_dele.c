@@ -64,7 +64,7 @@ u16 FS_Delete_Entry(SDDriveInfo* pDriveInfo, int param2, u16 param3, u16 param4)
 
     ptr = &FS_drv_ctl[pDriveInfo->nChan];
 
-    if(pDriveInfo->unk_1E[0] == 0x20) {
+    if(pDriveInfo->unk_1E == 0x20) {
         pad = 0;
         (void)pad;
         (void)pad;
