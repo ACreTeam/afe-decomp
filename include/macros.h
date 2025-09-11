@@ -34,4 +34,10 @@
 #define ASM
 #endif
 
+#define LOAD_LE_u32(v)                                                                                          \
+    ((u32)(((((u8*)&(v))[3] & 0xFF) << 24) | ((((u8*)&(v))[2] & 0xFF) << 16) | ((((u8*)&(v))[1] & 0xFF) << 8) | \
+           ((((u8*)&(v))[0] & 0xFF) << 0)))
+
+#define LOAD_LE_u16(v) ((u16)(((((u8*)&(v))[1] << 8) & 0xFF00) | ((((u8*)&(v))[0] & 0xFF) << 0)))
+
 #endif // _H_MACROS_

@@ -139,23 +139,19 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
                 }
 
                 FS_uchar_to_dchar(param2->unk_00);
-                param2->unk_52 =
-                    ((var_r31->DIR_FstClusLO.data_u8[1] & 0xFF) << 8) | (var_r31->DIR_FstClusLO.data_u8[0] & 0xFF);
-                param2->unk_40 = (var_r31->DIR_FileSize.data_u8[3] << 24) |
-                                 ((var_r31->DIR_FileSize.data_u8[2] & 0x00FF) << 16) |
-                                 ((var_r31->DIR_FileSize.data_u8[1] << 8) & 0x0000FF00) |
-                                 (var_r31->DIR_FileSize.data_u8[0] & 0x000000FF);
-                param2->unk_44 = ((var_r31->DIR_NTRes << 8) & 0xFF00) | ((var_r31->DIR_Attr & 0x00FF));
+                param2->unk_52 = LOAD_LE_u16(var_r31->DIR_FstClusLO);
+                param2->unk_40 = LOAD_LE_u32(var_r31->DIR_FileSize);
+                param2->unk_44 = LOAD_LE_u16(var_r31->DIR_Attr);
 
-                temp_r30 = ((var_r31->DIR_WrtDate.data_u8[1] << 8) & 0xFF00) | (var_r31->DIR_WrtDate.data_u8[0] & 0xFF);
-                param2->unk_46 = (((temp_r30 >> 9U) & 0x7F) + 0x7BC);
-                param2->unk_48 = ((temp_r30 >> 5U) & 0xF);
+                temp_r30 = LOAD_LE_u16(var_r31->DIR_WrtDate.data_u16);
+                param2->unk_46 = (((temp_r30 >> 9) & 0x7F) + 1980);
+                param2->unk_48 = ((temp_r30 >> 5) & 0x0F);
                 param2->unk_4A = (temp_r30 & 0x1F);
 
-                temp_r30 = ((var_r31->DIR_WrtTime.data_u8[1] << 8) & 0xFF00) | (var_r31->DIR_WrtTime.data_u8[0] & 0xFF);
+                temp_r30 = LOAD_LE_u16(var_r31->DIR_WrtTime.data_u16);
                 param2->unk_4C = ((temp_r30 >> 11) & 0x1F);
                 param2->unk_4E = ((temp_r30 >> 5) & 0x3F);
-                param2->unk_50 = ((temp_r30 * 2) & 0x3E);
+                param2->unk_50 = ((temp_r30 << 1) & 0x3E);
                 sp28 += 0x20;
                 sp30++;
 
@@ -216,7 +212,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
 
         if (sp34[0] == '\\' && sp34[1] == '\0') {
             temp_r27 = (u32)((sp20->unk_1C * (sp2C - sp24)) + sp28);
-            temp_r27 = temp_r27 >> 5;
+            temp_r27 >>= 5;
             temp_r27 = sp20->unk_28 - temp_r27;
             if (temp_r27 < var_r25) {
                 var_r25 = temp_r27;
