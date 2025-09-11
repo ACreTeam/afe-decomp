@@ -51,7 +51,9 @@ typedef struct SDDriveInfo {
     /* 0x038 */ u16 unk_38;
     /* 0x03A */ u16 unk_3A;
     /* 0x03C */ u16 unk_3C;
-    /* 0x03E */ char pad_unk_3E[0x60 - 0x3E];
+    /* 0x03E */ char pad_unk_3E[0x58 - 0x3E];
+    /* 0x058 */ u32 unk_58;
+    /* 0x05C */ u32 unk_5C;
     /* 0x060 */ s32 nSector;
     /* 0x064 */ u32 unk_64;
     /* 0x068 */ u32 unk_68;
