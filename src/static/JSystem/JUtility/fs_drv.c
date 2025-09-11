@@ -1,3 +1,5 @@
+#include "JSystem/JUtility/fs_drv.h"
+
 #include "JSystem/JUtility/carddrv.h"
 #include "JSystem/JUtility/fs_file.h"
 

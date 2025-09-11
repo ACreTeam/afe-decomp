@@ -1,3 +1,5 @@
+#include "JSystem/JUtility/fs_drvsel.h"
+
 #include "JSystem/JUtility/JUTSDCard.h"
 #include "JSystem/JUtility/carddrv.h"
 #include "JSystem/JUtility/fs_drv.h"
@@ -56,7 +58,7 @@ u16 FS_DrvSel_Select(int arg5) {
 u16 FS_DrvSel_Read(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4, int arg5) {
     u16 status;
     u16 value = arg5;
-    
+
     value &= 0xF00;
     switch (value) {
         case 0x100:
@@ -75,7 +77,7 @@ u16 FS_DrvSel_Read(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4,
 u16 FS_DrvSel_Write(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4, int arg5) {
     u16 status;
     u16 value = arg5;
-    
+
     value &= 0xF00;
     switch (value) {
         case 0x100:
@@ -94,7 +96,7 @@ u16 FS_DrvSel_Write(u8* arg0, s32 arg1, s32 arg2, s32 arg3, UnknownStruct1* arg4
 u16 FS_DrvSel_Getstatus(u16* arg0, int arg5) {
     u16 status;
     u16 value = arg5;
-    
+
     value &= 0xF00;
     switch (value) {
         case 0x100:
@@ -113,7 +115,7 @@ u16 FS_DrvSel_Getstatus(u16* arg0, int arg5) {
 u16 FS_DrvSel_Getinfo(SDInfos* arg0, int arg5) {
     u16 status;
     u16 value = arg5;
-    
+
     value &= 0xF00;
     if (value == 0x100) {
         if ((status = FS_DrvSel_Select(arg5)) == 0) {

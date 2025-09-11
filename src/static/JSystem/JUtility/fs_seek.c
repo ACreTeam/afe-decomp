@@ -1,4 +1,5 @@
 #include "JSystem/JUtility/fs_seek.h"
+
 #include "JSystem/JUtility/fs_read.h"
 #include "JSystem/JUtility/fs_subd.h"
 
@@ -66,7 +67,6 @@ u16 FS_Seek_sub(SDFileInfo* pFileInfo, u32 param2, u16 param3) {
         default:
             return 0xA00C;
     }
-
 
     if (var_r29 < 0) {
         return 0xA00C;

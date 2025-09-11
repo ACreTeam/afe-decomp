@@ -1,11 +1,11 @@
 #include "JSystem/JUtility/fs_subd.h"
+
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/JUTSDCard.h"
 #include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_sync.h"
 #include "JSystem/JUtility/time.h"
-#include "types.h"
 
 u16 FS_get_space(SDDriveInfo* pDriveInfo, u16 nCluster, u16* param3) {
     u16 nCurCluster;
@@ -638,7 +638,7 @@ u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 par
 
     while (var_r22 < 0x15) {
         if (var_r22 != 0) {
-            if (var_r26->DIR_Name[0] == FAT_FLAG_DELETED || !CHECK_ATTR(var_r26, FAT_ATTR_LFN)) {
+            if (var_r26->DIR_Name[0] == FAT_FLAG_DELETED || !CHECK_ATTR(var_r26, 0x3F, FAT_ATTR_LFN)) {
                 break;
             }
 

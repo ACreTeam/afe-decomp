@@ -1,3 +1,5 @@
+#include "JSystem/JUtility/fs_getps.h"
+
 #include "JSystem/JUtility/fs_file.h"
 
 u16 FS_Getpos(SDFileInfo* pFileInfo, u32* arg1) {

@@ -1,9 +1,10 @@
 #include "JSystem/JUtility/fs_form.h"
+
 #include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/fs_subd.h"
 #include "JSystem/JUtility/time.h"
-#include "types.h"
+
 #include <stddef.h>
 
 typedef struct DataCluTbl {

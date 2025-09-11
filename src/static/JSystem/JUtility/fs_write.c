@@ -1,8 +1,8 @@
-#include "JSystem/JUtility/fs_read.h"
 #include "JSystem/JUtility/fs_write.h"
+
+#include "JSystem/JUtility/fs_read.h"
 #include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_subd.h"
-#include "types.h"
 
 u16 FS_Write(SDFileInfo* pFileInfo, const void* data, u32 length, int param4, UnknownStruct1* param5) {
     DrvCtl* pDrvCtl;
@@ -255,6 +255,8 @@ static inline u16 UnknownInline1(SDFileInfo* pFileInfo, u32 param2, u16 param4, 
     if (pFileInfo->unk_28 / param2 == pFileInfo->unk_24 / param2) {
         u16 param1 = pFileInfo->unk_24 % param2;
 
+        (void)param1;
+
         if (param1 == 0) {
             return FALSE;
         } else if (((param4 + param5) / 512) <= (param1 / 512)) {
@@ -272,18 +274,21 @@ static inline u16 UnknownInline1(SDFileInfo* pFileInfo, u32 param2, u16 param4, 
 u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4, u16 param5, UnknownStruct1* param6,
                     u16 param7) {
     SDDriveInfo* temp_r30;
-    s32 temp_r26;
-    u32 someValue;
     u16 var_r28;
+    s32 temp_r26;
     u16 var_r25;
-    u16 var_r25_2;
     u32 temp_r24;
+    u16 r20;
     DrvCtl* temp_r19;
+    u32 someValue;
     u16 var_r18;
     u32 sp20;
 
-    (void)someValue;
-    (void)someValue;
+    (void)r20;
+    (void)r20;
+    (void)r20;
+    (void)var_r25;
+    (void)var_r18;
 
     var_r28 = 0;
     temp_r24 = pFileInfo->pDriveInfo->unk_F6 * pFileInfo->pDriveInfo->unk_1C;
@@ -304,7 +309,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
 
     if (param4 == 0 && temp_r24 == (param4 + param5)) {
         if (someValue & 1) {
-            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)someValue, param5);
+            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)param2, param5);
             var_r28 = FS_write_sub(NULL, temp_r30->unk_F6, temp_r26, param6, temp_r30->unk_04, 1,
                                    pFileInfo->pDriveInfo->nChan);
         } else {
@@ -313,7 +318,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
         }
     } else if (param4 % 512 == 0 && param5 % 512 == 0) {
         if (someValue & 1) {
-            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)someValue, param5);
+            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)param2, param5);
             var_r28 = FS_write_sub(NULL, (param5 >> 9U) & 0x7F, temp_r26 + ((param4 >> 9U) & 0x7F), param6,
                                    temp_r30->unk_04, 1, pFileInfo->pDriveInfo->nChan);
         } else {
@@ -321,7 +326,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
                                    temp_r30->unk_04, 1, pFileInfo->pDriveInfo->nChan);
         }
     } else {
-        if (UnknownInline1(pFileInfo, temp_r24, param4, param5) == 0) {
+        if (UnknownInline1(pFileInfo, temp_r24, param4, param5) == FALSE) {
             if (param4 != 0) {
                 var_r25 = ((param4 % 512) / 512);
 
@@ -337,19 +342,20 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
                 FS_memset(&temp_r19->ctrl_p.unk_20BA4[(((param4 + param5) / 512) << 9) & 0xFE00], 0, 0x200);
             }
         } else {
-            var_r25_2 = ((param4 % 512) + param5) / 512;
+            var_r25 = ((param4 % 512) + param5) / 512;
 
             if (((param4 % 512) + param5) % 512 != 0) {
-                var_r25_2++;
+                var_r25++;
             }
 
-            var_r28 = FS_read_sub(0, var_r25_2, temp_r26 + ((s32)param4 / 512), 0, temp_r30->unk_04, temp_r30->nChan);
+            var_r28 = FS_read_sub(0, var_r25, temp_r26 + ((s32)param4 / 512), 0, temp_r30->unk_04, temp_r30->nChan);
             if (var_r28 != 0) {
                 return var_r28;
             }
         }
 
-        FS_strncpy((char*)&temp_r19->ctrl_p.unk_20BA4[(param4 % 512) & 0xFFFF], (char*)someValue, param5);
+        r20 = (param4 % 512);
+        FS_strncpy((char*)&temp_r19->ctrl_p.unk_20BA4[r20], (char*)param2, param5);
         var_r18 = ((param4 % 512) + param5) / 512;
 
         if (((param4 % 512) + param5) % 512 != 0) {

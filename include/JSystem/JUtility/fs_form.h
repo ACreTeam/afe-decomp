@@ -17,6 +17,7 @@ extern "C" {
 
 #define PTR_ROOT_DIR_ENTRY(pDrvCtl, index) ((FSDirEntry*)((u32)pDrvCtl->ctrl_p.unk_20BA4 + index))
 #define FAT_FLAG_DELETED 0xE5
+
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
 #define FAT_ATTR_SYSTEM 0x04
@@ -24,7 +25,14 @@ extern "C" {
 #define FAT_ATTR_DIRECTORY 0x10
 #define FAT_ATTR_ARCHIVE 0x20
 #define FAT_ATTR_LFN 0x0F // Long File Name
-#define CHECK_ATTR(pDirEntry, value) ((((pDirEntry)->DIR_Attr) & 0x3F) == value)
+
+#define CHECK_ATTR(pDirEntry, mask, value) ((((pDirEntry)->DIR_Attr) & (mask)) == value)
+#define READ_ONLY(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_READ_ONLY)
+#define HIDDEN(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_HIDDEN)
+#define SYSTEM(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_SYSTEM)
+#define VOLUME_ID(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_VOLUME_ID)
+#define DIRECTORY(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_DIRECTORY)
+#define ARCHIVE(pDirEntry) ((pDirEntry)->DIR_Attr & FAT_ATTR_ARCHIVE)
 
 typedef union u8_u16 {
     u8 data_u8[2];

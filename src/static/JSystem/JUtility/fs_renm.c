@@ -1,9 +1,9 @@
 #include "JSystem/JUtility/fs_renm.h"
+
 #include "JSystem/JUtility/fs_file.h"
 #include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_open.h"
 #include "JSystem/JUtility/fs_subd.h"
-#include "types.h"
 
 u16 FS_Rename(SDDriveInfo* pDriveInfo, char* arg1, char* arg2) {
     u16 status;

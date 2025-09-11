@@ -1,5 +1,7 @@
 #include "JSystem/JUtility/fs_dele.h"
+
 #include "JSystem/JUtility/fs_file.h"
+#include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_open.h"
 #include "JSystem/JUtility/fs_subd.h"
 
@@ -27,9 +29,9 @@ u16 FS_Delete(SDDriveInfo* pDriveInfo, const char* param2) {
 
 u16 FS_Delete_sub(SDDriveInfo* pDriveInfo, const char* param2) {
     char sp68[64];
-    char sp48[32];
+    char* sp48[8];
     u16 sp44[2];
-    char sp24[32];
+    FSDirEntry sp24;
     int sp20;
     u16 sp1E;
     u16 sp1C;
@@ -38,13 +40,13 @@ u16 FS_Delete_sub(SDDriveInfo* pDriveInfo, const char* param2) {
 
     sp44[0] = 0;
     ptr = &FS_drv_ctl[pDriveInfo->nChan];
-    status = FS_Search_Entry(pDriveInfo, (char*)param2, sp68, sp48, sp44, sp24, &sp20, &sp1E, &sp1C, 1);
+    status = FS_Search_Entry(pDriveInfo, (char*)param2, sp68, sp48, sp44, &sp24, &sp20, &sp1E, &sp1C, 1);
 
     if (status != 0) {
         return status;
     }
 
-    if ((sp24[11] & 1) || (sp24[11] & 8) || (sp24[11] & 0x10) || ((sp24[11] & 0xF) == 0xF)) {
+    if (READ_ONLY(&sp24) || VOLUME_ID(&sp24) || DIRECTORY(&sp24) || CHECK_ATTR(&sp24, 0x0F, FAT_ATTR_LFN)) {
         return 0xA006;
     }
 
