@@ -37,7 +37,7 @@ bool JUTSDFile::close() {
 }
 
 int JUTSDFile::readData(void* data, s32 length, s32 ofs) {
-    UnkStruct_ReadWrite sp8;
+    UnknownStruct1 sp8;
     u16 status;
 
     status = FS_Seek(mUnk_20, ofs, 1);
@@ -73,7 +73,7 @@ int JUTSDFile::readData(void* data, s32 length, s32 ofs) {
 }
 
 int JUTSDFile::writeData(const void* data, s32 length, s32 ofs) {
-    UnkStruct_ReadWrite sp8;
+    UnknownStruct1 sp8;
     u16 status;
 
     status = FS_Seek(mUnk_20, ofs, 1);

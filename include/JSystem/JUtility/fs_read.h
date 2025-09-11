@@ -7,7 +7,9 @@
 extern "C" {
 #endif
 
-extern u16 FS_Read(SDDriveInfo* param1, const void* data, s32 length, int param4, UnkStruct_ReadWrite* param5);
+extern u16 FS_Read(SDFileInfo* param1, const void* data, s32 length, int param4, UnknownStruct1* param5);
+extern u16 FS_FatTable_PageChange(SDDriveInfo* pDriveInfo);
+extern u16 FS_GetAccessClusterCount(SDFileInfo* pFileInfo, u32 param2);
 
 #ifdef __cplusplus
 };

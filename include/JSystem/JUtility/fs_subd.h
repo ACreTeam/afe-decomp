@@ -29,6 +29,8 @@ extern u32 FS_set_now_date(FSDirEntry *param1, void *param2);
 extern u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2);
 extern u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2);
 
+extern u16 FS_release_space(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
+
 extern u16 FS_get_next_cluster(SDDriveInfo *pDriveInfo, u16 param2);
 extern u16 FS_get_previous_cluster(SDDriveInfo *pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2);

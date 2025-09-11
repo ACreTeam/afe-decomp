@@ -27,7 +27,15 @@ typedef struct SDDriveInfo {
     /* 0x008 */ char pad_unk_08[0x1C - 0x08];
     /* 0x01C */ u16 unk_1C;
     /* 0x01E */ u16 unk_1E[1];
-    /* 0x020 */ char pad_unk_20[0x3C - 0x20];
+    /* 0x020 */ char pad_unk_20[0x2A - 0x20];
+    /* 0x02A */ u16 unk_2A;
+    /* 0x02C */ u16 unk_2C;
+    /* 0x02E */ u16 unk_2E;
+    /* 0x030 */ u16 unk_30;
+    /* 0x032 */ u16 unk_32;
+    /* 0x034 */ u32 unk_34;
+    /* 0x038 */ u16 unk_38;
+    /* 0x03A */ u16 unk_3A;
     /* 0x03C */ u16 unk_3C;
     /* 0x03E */ char pad_unk_3E[0x60 - 0x3E];
     /* 0x060 */ s32 nSector;
@@ -38,7 +46,9 @@ typedef struct SDDriveInfo {
     /* 0x072 */ u16 unk_72;
     /* 0x074 */ u16 unk_74;
     /* 0x076 */ char unk_76[64];
-    /* 0x0B6 */ char pad_unk_B6[0xBC - 0xB6];
+    /* 0x0B6 */ u16 unk_B6;
+    /* 0x0B8 */ u16 unk_B8;
+    /* 0x0BA */ u16 unk_BA;
     /* 0x0BC */ u16 unk_BC;
     /* 0x0BE */ u16 unk_BE;
     /* 0x0C0 */ u16 unk_C0;
@@ -73,10 +83,10 @@ typedef struct UnkStruct_20A00 {
 
 typedef struct SDFileInfo {
     /* 0x00 */ u16 unk_00;
-    /* 0x02 */ u16 pad_unk_02;
+    /* 0x02 */ u16 unk_02;
     /* 0x04 */ SDDriveInfo* pDriveInfo;
     /* 0x08 */ u8 unk_08[11];
-    /* 0x13 */ u8 pad_unk_13;
+    /* 0x13 */ u8 unk_13;
     /* 0x14 */ char unk_14[10];
     /* 0x1E */ u16 unk_1E;
     /* 0x20 */ u16 unk_20;
@@ -160,13 +170,9 @@ typedef struct DrvCtl {
     /* 0x259DE */ char pad_unk_259DE[0x25E48 - 0x259DE];
 } DrvCtl; // size = 0x25E48
 
-// --- OLD
+#define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
 
-typedef struct UnkStruct_ReadWrite {
-    /* 00 */ u16 unk_00;
-    /* 02 */ u16 unk_02;
-    /* 04 */ int unk_04;
-} UnkStruct_ReadWrite; // size = 0x08
+// --- OLD
 
 typedef struct FSDir {
     /* 0x00 */ SDDriveInfo* pDriveInfo;
