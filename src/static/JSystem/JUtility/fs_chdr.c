@@ -27,8 +27,7 @@ u16 FS_Chdir(SDDriveInfo* pDriveInfo, char* arg1) {
 
 u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1) {
     u16 status;
-    u16 sp9A;
-    char sp80[25];
+    FSDirEntry sp80;
     s32 sp7C;
     u16 sp78[2];
     u16 sp76;
@@ -65,19 +64,19 @@ u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1) {
         return status;
     }
 
-    status = FS_get_entry(pDriveInfo, sp80, sp54, sp78[0], &sp7C, &sp76, &sp74);
+    status = FS_get_entry(pDriveInfo, &sp80, sp54, sp78[0], &sp7C, &sp76, &sp74);
     if (status != 0) {
         return status;
     }
 
-    if ((sp80[11] & 0x10) != 0x10 || (sp80[11] & 0x08) == 0x08 || (sp80[11] & 0x0F) == 0x0F) {
+    if (!CHECK_ATTR(&sp80, 0x10, FAT_ATTR_DIRECTORY) || CHECK_ATTR(&sp80, 0x08, FAT_ATTR_VOLUME_ID) || CHECK_ATTR(&sp80, 0x0F, FAT_ATTR_LFN)) {
         return 0xA027;
     }
 
     pDriveInfo->unk_6C = sp7C;
     pDriveInfo->unk_70 = sp76;
     pDriveInfo->unk_72 = sp74;
-    pDriveInfo->unk_74 = sp9A;
+    pDriveInfo->unk_74 = sp80.DIR_FstClusLO.data_u16;
     FS_strcpy(sp14, arg1);
     FS_uchar_to_dchar(sp14);
     FS_strcpy(pDriveInfo->unk_76, sp14);

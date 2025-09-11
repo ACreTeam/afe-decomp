@@ -18,7 +18,7 @@ extern u16 FS_get_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16* param3);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* param1);
 extern u16 FS_FAT_onmemory_check(SDDriveInfo* pDriveInfo);
 extern u16 FS_Flush(SDDriveInfo* pFile);
-extern u16 FS_get_entry(SDDriveInfo* param1, char* param2, char** param3, u16 param4, void* param5, void* param6, void* param7);
+extern u16 FS_get_entry(SDDriveInfo* param1, FSDirEntry* param2, char** param3, u16 param4, void* param5, void* param6, void* param7);
 extern u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, int param3);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* pDriveInfo);
 extern u16 FS_fat_sync(SDDriveInfo* pDriveInfo);

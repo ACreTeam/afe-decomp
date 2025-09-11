@@ -184,6 +184,8 @@ typedef struct DrvCtl {
 } DrvCtl; // size = 0x25E48
 
 #define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
+#define GET_DIR_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20A00) : ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20AFC)))
+#define GET_DIR_INFO_COUNT2(pDrvCtl, pDriveInfo) (((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20A00) : ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20AFC)))
 
 extern DrvCtl FS_drv_ctl[2];
 

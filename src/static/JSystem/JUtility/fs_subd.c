@@ -416,7 +416,7 @@ u16 FS_Flush(SDDriveInfo* pDriveInfo) {
     return FS_Sync_sub(pDriveInfo);
 }
 
-u16 FS_get_entry(SDDriveInfo* pDriveInfo, char* param2, char** param3, u16 param4, void* param5, void* param6, void* param7) {}
+u16 FS_get_entry(SDDriveInfo* pDriveInfo, FSDirEntry* param2, char** param3, u16 param4, void* param5, void* param6, void* param7) {}
 
 u16 FS_current_check(SDDriveInfo* pDriveInfo, char** param2, u16 param3, u16* param4) {
     char sp38[64];

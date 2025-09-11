@@ -30,8 +30,7 @@ u16 FS_Mkdir(SDDriveInfo* pDriveInfo, const char* param2) {
 }
 
 u16 FS_Mkdir_sub(SDDriveInfo* pDriveInfo, const char* param2) {
-    int pad[6];
-    char sp88;
+    FSDirEntry sp88;
     NowData sp80;
     u32 sp7C;
     u16 sp78;
