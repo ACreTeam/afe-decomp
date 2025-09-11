@@ -745,7 +745,7 @@ u32 FS_set_now_date(FSDirEntry *param1, void *param2) {
 }
 
 u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2) {
-    UnkStruct_20A00 *var_r28;
+    SDDirInfo *var_r28;
     SDFileInfo *var_r27;
     DrvCtl *pDrvCtl;
     u16 nArrayCount;
@@ -842,7 +842,7 @@ u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2) {
 u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2) {
     DrvCtl *pDrvCtl;
     SDFileInfo *var_r28;
-    UnkStruct_20A00 *var_r29;
+    SDDirInfo *var_r29;
     u16 nArrayCount;
     u16 var_r30;
     u16 var_r31;
@@ -1067,7 +1067,7 @@ u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u16 param2) {
     return nSector;
 }
 
-u16 FS_read_sub(u8* param1, int param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 nChan) {
+u16 FS_read_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 nChan) {
     DrvCtl* pDrvCtl;
     u16 status;
 

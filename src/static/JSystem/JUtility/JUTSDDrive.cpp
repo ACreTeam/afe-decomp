@@ -178,8 +178,7 @@ bool JUTSDCardFinder::findNextFile() {
         return false;
     }
 
-    //! TODO: fake match?
-    this->mIsDir = (this->mUnk_5C >> 4) & 1;
+    this->mIsDir = this->mUnk_18.unk_44 & FAT_ATTR_DIRECTORY;
     return true;
 }
 

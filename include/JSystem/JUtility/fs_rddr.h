@@ -7,7 +7,8 @@
 extern "C" {
 #endif
 
-extern u16 FS_Readdir(FSDir* param1, void* param2);
+extern u16 FS_Readdir(SDDirInfo* pDirInfo, UnknownStruct3* param2);
+extern u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2);
 
 #ifdef __cplusplus
 };

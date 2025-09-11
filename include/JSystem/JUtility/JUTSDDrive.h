@@ -27,11 +27,8 @@ class JUTSDCardFinder : public JKRFileFinder {
 
     // _00     = VTBL
     // _00-_14 = JKRFileFinder
-    FSDir* mUnk_14; // _14
-    void* mUnk_18; // _18
-    char mUnk_1C[0x5C - 0x1C]; // _1C
-    u16 mUnk_5C;
-    char mUnk_5E[0x6C - 0x5E]; // _5E
+    SDDirInfo* mUnk_14; // _14
+    UnknownStruct3 mUnk_18; // _18
     u16 mUnk_6C; // _6C
 };
 

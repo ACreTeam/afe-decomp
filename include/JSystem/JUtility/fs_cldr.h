@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-extern u16 FS_Closedir(FSDir* pDir);
-extern u16 FS_Closedir_sub(FSDir* pDir);
+extern u16 FS_Closedir(SDDirInfo* pDirInfo);
+extern u16 FS_Closedir_sub(SDDirInfo* pDirInfo);
 
 #ifdef __cplusplus
 };

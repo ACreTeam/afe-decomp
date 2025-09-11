@@ -10,6 +10,19 @@
 extern "C" {
 #endif
 
+typedef struct UnknownStruct3 {
+    /* 0x00 */ char unk_00[64];
+    /* 0x40 */ u32 unk_40;
+    /* 0x44 */ u16 unk_44; 
+    /* 0x46 */ u16 unk_46; 
+    /* 0x48 */ u16 unk_48; 
+    /* 0x4A */ u16 unk_4A; 
+    /* 0x4C */ u16 unk_4C; 
+    /* 0x4E */ u16 unk_4E; 
+    /* 0x50 */ u16 unk_50; 
+    /* 0x52 */ u16 unk_52; 
+} UnknownStruct3; // size = 0x54
+
 typedef struct UnknownStruct2 {
     /* 0x000 */ u32 pad_unk_000[0x60C / 4];
     /* 0x60C */ u16* unk_60C;
@@ -27,7 +40,8 @@ typedef struct SDDriveInfo {
     /* 0x008 */ char pad_unk_08[0x1C - 0x08];
     /* 0x01C */ u16 unk_1C;
     /* 0x01E */ u16 unk_1E[1];
-    /* 0x020 */ char pad_unk_20[0x2A - 0x20];
+    /* 0x020 */ char pad_unk_20[0x28 - 0x20];
+    /* 0x028 */ u16 unk_28;
     /* 0x02A */ u16 unk_2A;
     /* 0x02C */ u16 unk_2C;
     /* 0x02E */ u16 unk_2E;
@@ -70,16 +84,15 @@ typedef struct SDDriveInfo {
     /* 0x100 */ u32 pad_unk_100;
 } SDDriveInfo; // size = 0x104
 
-// SDDirInfo ?
-typedef struct UnkStruct_20A00 {
+typedef struct SDDirInfo {
     /* 0x00 */ SDDriveInfo* pDriveInfo;
-    /* 0x04 */ int unk_04;
-    /* 0x08 */ int unk_08;
-    /* 0x0C */ int unk_0C;
+    /* 0x04 */ u32 unk_04;
+    /* 0x08 */ u32 unk_08;
+    /* 0x0C */ u32 unk_0C;
     /* 0x10 */ u16 unk_10;
     /* 0x12 */ u16 unk_12;
     /* 0x14 */ char unk_14[64];
-} UnkStruct_20A00; // size = 0x54
+} SDDirInfo; // size = 0x54
 
 typedef struct SDFileInfo {
     /* 0x00 */ u16 unk_00;
@@ -144,8 +157,8 @@ typedef struct DrvCtl_unk_20000 {
     /* 0x0000 */ char pad_unk_000[0x9F8];
     /* 0x09F8 */ void* unk_09F8;
     /* 0x0000 */ char pad_unk_9FC[0x0A00 - 0x9FC];
-    /* 0x0A00 */ UnkStruct_20A00 unk_20A00[3];
-    /* 0x0AFC */ UnkStruct_20A00 unk_20AFC[2];
+    /* 0x0A00 */ SDDirInfo unk_20A00[3];
+    /* 0x0AFC */ SDDirInfo unk_20AFC[2];
     /* 0x0BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
     /* 0x4BA4 */ UnknownStruct1 unk_24BA4;
     /* 0x4BAC */ u32 unk_4BAC;
@@ -171,22 +184,6 @@ typedef struct DrvCtl {
 } DrvCtl; // size = 0x25E48
 
 #define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
-
-// --- OLD
-
-typedef struct FSDir {
-    /* 0x00 */ SDDriveInfo* pDriveInfo;
-    /* 0x04 */ int unk_04;
-    /* 0x08 */ int unk_08;
-    /* 0x0C */ int unk_0C;
-    /* 0x10 */ u16 unk_10;
-    /* 0x12 */ u16 unk_12;
-    /* 0x14 */ char unk_14[64];
-} FSDir; // size = 0x44
-
-// ---
-
-#define GET_PBS_PTR(pDrvCtl, index) ((FSPartitionBootSector*)((pDrvCtl)->ctrl_p.unk_20BA4 + (index)))
 
 extern DrvCtl FS_drv_ctl[2];
 
