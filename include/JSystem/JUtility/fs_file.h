@@ -24,34 +24,46 @@ typedef struct UnknownStruct3 {
 } UnknownStruct3; // size = 0x54
 
 typedef struct UnknownStruct2 {
-    /* 0x000 */ u32 pad_unk_000[0x60C / 4];
-    /* 0x60C */ u16* unk_60C;
-    /* 0x610 */ char pad_unk_610[0x810 - 0x610];
-    /* 0x810 */ u32 unk_810;
-    /* 0x814 */ char pad_unk_814[0xC18 - 0x814];
-    /* 0xC18 */ u8* unk_C18;
-} UnknownStruct2; // size = ?
+    /* 0x000 */ u32 unk_000[0x102];
+    /* 0x408 */ u16 unk_408[0x102];
+    /* 0x60C */ u16 unk_60C[0x102];
+    /* 0x810 */ u16 unk_810[0x102];
+    /* 0xA14 */ u16 unk_A14[0x102];
+    /* 0xC18 */ u16 unk_C18[0x102];
+} UnknownStruct2; // size = 0xE1C
 
 typedef struct SDDriveInfo {
     /* 0x000 */ u16 nChan;
     /* 0x002 */ u16 unk_02;
     /* 0x004 */ u16 unk_04;
     /* 0x006 */ u16 unk_06;
-    /* 0x008 */ char pad_unk_08[0x1C - 0x08];
+    /* 0x008 */ u32 unk_08;
+    /* 0x00C */ u8 unk_0C;
+    /* 0x00D */ u8 unk_0D;
+    /* 0x00E */ u16 unk_0E;
+    /* 0x010 */ u8 unk_10;
+    /* 0x011 */ u8 unk_11;
+    /* 0x012 */ u16 unk_12;
+    /* 0x014 */ u32 unk_14;
+    /* 0x018 */ u32 unk_18;
     /* 0x01C */ u16 unk_1C;
-    /* 0x01E */ u16 unk_1E[1];
-    /* 0x020 */ char pad_unk_20[0x28 - 0x20];
+    /* 0x01E */ u16 unk_1E;
+    /* 0x020 */ u16 unk_20;
+    /* 0x022 */ u16 unk_22;
+    /* 0x024 */ u16 unk_24;
+    /* 0x026 */ u16 unk_26;
     /* 0x028 */ u16 unk_28;
     /* 0x02A */ u16 unk_2A;
     /* 0x02C */ u16 unk_2C;
     /* 0x02E */ u16 unk_2E;
-    /* 0x030 */ u16 unk_30;
-    /* 0x032 */ u16 unk_32;
+    /* 0x030 */ u32 unk_30;
     /* 0x034 */ u32 unk_34;
-    /* 0x038 */ u16 unk_38;
-    /* 0x03A */ u16 unk_3A;
+    /* 0x038 */ u32 unk_38;
     /* 0x03C */ u16 unk_3C;
-    /* 0x03E */ char pad_unk_3E[0x58 - 0x3E];
+    /* 0x03E */ char unk_3E[12];
+    /* 0x04A */ char unk_4A[9];
+    /* 0x058 */ u8 unk_53;
+    /* 0x058 */ u32 unk_54;
     /* 0x058 */ u32 unk_58;
     /* 0x05C */ u32 unk_5C;
     /* 0x060 */ s32 nSector;
@@ -68,10 +80,9 @@ typedef struct SDDriveInfo {
     /* 0x0BC */ u16 unk_BC;
     /* 0x0BE */ u16 unk_BE;
     /* 0x0C0 */ u16 unk_C0;
-    /* 0x0C2 */ char unk_C2[0x20];
+    /* 0x0C2 */ char unk_C2[32];
     /* 0x0E2 */ u16 unk_E2;
-    /* 0x0E4 */ char unk_E4;
-    /* 0x0E5 */ char unk_E5;
+    /* 0x0E4 */ u16 unk_E4;
     /* 0x0E6 */ char unk_E6;
     /* 0x0E7 */ char unk_E7;
     /* 0x0E8 */ u8* unk_E8;
@@ -83,7 +94,8 @@ typedef struct SDDriveInfo {
     /* 0x0F8 */ u16 unk_F8;
     /* 0x0FA */ u16 unk_FA;
     /* 0x0FC */ u32 unk_FC;
-    /* 0x100 */ u32 pad_unk_100;
+    /* 0x100 */ u16 unk_100;
+    /* 0x100 */ u16 unk_102;
 } SDDriveInfo; // size = 0x104
 
 typedef struct SDDirInfo {
@@ -118,18 +130,6 @@ typedef struct SDFileInfo {
     /* 0x7A */ u8 pad_unk_7A;
     /* 0x7B */ u8 pad_unk_7B;
 } SDFileInfo; // size = 0x7C
-
-typedef struct UnkStruct_20BA4_2 {
-    /* 0x00 */ u16 unk_00;
-    /* 0x00 */ u16 unk_02;
-    /* 0x00 */ u16 unk_04;
-} UnkStruct_20BA4_2;
-
-typedef struct UnkStruct_24BA4 {
-    /* 0x00 */ u16 unk_00;
-    /* 0x00 */ u16 unk_02;
-    /* 0x00 */ u16 unk_04;
-} UnkStruct_24BA4;
 
 // size = 0x200? (see 80254D0C)
 typedef struct UnkStruct_20BA4 {
@@ -167,8 +167,7 @@ typedef struct DrvCtl_unk_20000 {
     /* 0x4BB0 */ u32 unk_4BB0;
     /* 0x4BB4 */ u16 unk_4BB4;
     /* 0x4BB6 */ u16 unk_4BB6;
-    /* 0x4BB8 */ UnknownStruct2* unk_4BB8; // TBD
-    /* 0x4BBC */ char pad_unk_4BBC[0x4DA4 - 0x4BBC];
+    /* 0x4BB8 */ UnknownStruct2 unk_4BB8;
 } DrvCtl_unk_20000; // size = 0x4DA4
 
 typedef struct DrvCtl {
@@ -176,9 +175,9 @@ typedef struct DrvCtl {
     /* 0x00008 */ SDDriveInfo unk_08[2];
     /* 0x00210 */ SDFileInfo unk_210[5];
     /* 0x0047C */ SDFileInfo unk_47C[3];
-    /* 0x005F0 */ char pad_unk_6E8[0x20000 - 0x5F0];
+    /* 0x005F0 */ u32 unk_5F0;
+    /* 0x005F4 */ char unk_5F2[0x20000 - 0x5F4];
     /* 0x20000 */ DrvCtl_unk_20000 ctrl_p;
-    /* 0x24DA4 */ char pad_unk_24DA4[0x259D4 - 0x24DA4];
     /* 0x259D4 */ s32 unk_259D4;
     /* 0x259D8 */ u32 unk_259D8;
     /* 0x259DC */ u16 unk_259DC;
