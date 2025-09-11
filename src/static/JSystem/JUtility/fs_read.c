@@ -281,7 +281,7 @@ u16 FS_ReadIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4, 
     if (param4 == 0 && temp_r19 == (param4 + param5)) {
         if (someValue & 1) {
             status = FS_read_sub(NULL, temp_r31->unk_F6, temp_r26, param6, temp_r31->unk_04, temp_r31->nChan);
-            FS_strncpy(param2, (char*)temp_r24->ctrl_p.unk_20BA4, param5);
+            FS_strncpy(param2, (char*)temp_r24->unk_20BA4, param5);
         } else {
             status = FS_read_sub(param2, temp_r31->unk_F6, temp_r26, param6, temp_r31->unk_04, temp_r31->nChan);
         }
@@ -289,7 +289,7 @@ u16 FS_ReadIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4, 
         if (someValue & 1) {
             status = FS_read_sub(NULL, (param5 / 512) & 0xFFFF, temp_r26 + (param4 / 512), param6, temp_r31->unk_04,
                                  temp_r31->nChan);
-            FS_strncpy(param2, (char*)temp_r24->ctrl_p.unk_20BA4, param5);
+            FS_strncpy(param2, (char*)temp_r24->unk_20BA4, param5);
         } else {
             status = FS_read_sub(param2, (param5 / 512) & 0xFFFF, temp_r26 + (param4 / 512), param6, temp_r31->unk_04,
                                  temp_r31->nChan);
@@ -305,7 +305,7 @@ u16 FS_ReadIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4, 
         if (status != 0) {
             param6->unk_04 = 0;
         } else {
-            FS_strncpy(param2, (char*)&temp_r24->ctrl_p.unk_20BA4[param4 % 512], param5);
+            FS_strncpy(param2, (char*)&temp_r24->unk_20BA4[param4 % 512], param5);
             param6->unk_04 = param5;
         }
     }

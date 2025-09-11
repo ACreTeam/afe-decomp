@@ -120,7 +120,7 @@ u16 FS_Mkdir_sub(SDDriveInfo* pDriveInfo, const char* param2) {
         return status;
     }
 
-    temp_r29 = (FSDirEntry*)&temp_r27->ctrl_p.unk_20BA4[(sp72 / (u16)sizeof(FSDirEntry)) * sizeof(FSDirEntry)];
+    temp_r29 = (FSDirEntry*)&temp_r27->unk_20BA4[(sp72 / (u16)sizeof(FSDirEntry)) * sizeof(FSDirEntry)];
     FS_memset(temp_r29, 0, sizeof(FSDirEntry));
 
     status = FS_entry_name_set(temp_r29->DIR_Name, sp50[sp76 - 1]);
@@ -157,9 +157,9 @@ u16 FS_initialize_directory_data(SDDriveInfo* pDriveInfo, u16 param2, u16 param3
     (void)pad1;
 
     temp_r26 = &FS_drv_ctl[pDriveInfo->nChan];
-    FS_memset(temp_r26->ctrl_p.unk_20BA4, 0, sizeof(temp_r26->ctrl_p.unk_20BA4));
+    FS_memset(temp_r26->unk_20BA4, 0, sizeof(temp_r26->unk_20BA4));
 
-    temp_r31 = (FSDirEntry*)temp_r26->ctrl_p.unk_20BA4;
+    temp_r31 = (FSDirEntry*)temp_r26->unk_20BA4;
     FS_strncpy(temp_r31->DIR_Name, ".          ", sizeof(temp_r31->DIR_Name));
     temp_r31->DIR_Attr = FAT_ATTR_DIRECTORY;
     FS_set_now_date(temp_r31, pNowData);
@@ -190,7 +190,7 @@ u16 FS_initialize_directory_data(SDDriveInfo* pDriveInfo, u16 param2, u16 param3
     }
 
     var_r29 = var_r29 + var_r28;
-    FS_memset(temp_r26->ctrl_p.unk_20BA4, 0, 0x40);
+    FS_memset(temp_r26->unk_20BA4, 0, 0x40);
 
     for (var_r25 = 0; var_r25 < (pDriveInfo->unk_1E / (u16)var_r28) - 1; var_r25++) {
         status = FS_write_sub(NULL, var_r28, var_r29, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);

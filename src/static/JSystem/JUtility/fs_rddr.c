@@ -110,7 +110,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
 
             if (var_r31->DIR_Name[0] == FAT_FLAG_DELETED || VOLUME_ID(var_r31) ||
                 CHECK_ATTR(var_r31, 0x0F, FAT_ATTR_LFN)) {
-                if ((u8*)var_r31 == (u8*)&temp_r20->ctrl_p.unk_20BA4 - 0x20 + (u16)(var_r23 * sp20->unk_1C) &&
+                if ((u8*)var_r31 == (u8*)&temp_r20->unk_20BA4 - 0x20 + (u16)(var_r23 * sp20->unk_1C) &&
                     var_r21 != var_r25 - 1) {
                     var_r24 += var_r23;
 
@@ -120,7 +120,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
                     }
 
                     // ?
-                    var_r31 = (FSDirEntry*)&temp_r20->ctrl_p.unk_20BA4;
+                    var_r31 = (FSDirEntry*)&temp_r20->unk_20BA4;
                     var_r31--;
                 }
             } else {
@@ -207,7 +207,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
             }
         }
 
-        var_r31 = (FSDirEntry*)temp_r20->ctrl_p.unk_20BA4;
+        var_r31 = (FSDirEntry*)temp_r20->unk_20BA4;
         var_r25 = ((sp20->unk_1E * sp20->unk_1C) / 32);
 
         if (sp34[0] == '\\' && sp34[1] == '\0') {

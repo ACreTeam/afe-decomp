@@ -66,9 +66,9 @@ u16 FS_Opendir_sub(SDDriveInfo* pDriveInfo, SDDirInfo** ppDirInfo, const char* p
     var_r31 = NULL;
 
     if (pDriveInfo->unk_04 == 1) {
-        var_r28 = temp_r25->ctrl_p.unk_20A00;
+        var_r28 = temp_r25->unk_20A00;
     } else {
-        var_r28 = temp_r25->ctrl_p.unk_20AFC;
+        var_r28 = temp_r25->unk_20AFC;
     }
 
     for (var_r26 = 0; var_r26 < GET_DIR_INFO_COUNT2(temp_r25, pDriveInfo); var_r26++, var_r28++) {
@@ -98,9 +98,9 @@ u16 FS_Opendir_sub(SDDriveInfo* pDriveInfo, SDDirInfo** ppDirInfo, const char* p
             }
         } else if (var_r31 == NULL) {
             if (pDriveInfo->unk_04 == 1) {
-                var_r31 = &temp_r25->ctrl_p.unk_20A00[var_r26];
+                var_r31 = &temp_r25->unk_20A00[var_r26];
             } else {
-                var_r31 = &temp_r25->ctrl_p.unk_20AFC[var_r26];
+                var_r31 = &temp_r25->unk_20AFC[var_r26];
             }
             var_r31->pDriveInfo = pDriveInfo;
         }

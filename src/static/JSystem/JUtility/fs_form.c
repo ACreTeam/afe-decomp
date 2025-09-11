@@ -120,7 +120,7 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
         return 0xA037;
     }
 
-    FS_memset(temp_r25->ctrl_p.unk_20BA4, 0, sizeof(temp_r25->ctrl_p.unk_20BA4));
+    FS_memset(temp_r25->unk_20BA4, 0, sizeof(temp_r25->unk_20BA4));
     FS_memset(sp18, 0, sizeof(sp18));
 
     if (param1 != NULL) {
@@ -269,7 +269,7 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
     }
 
     if (param2 == 1) {
-        FS_memset(temp_r25->ctrl_p.unk_20BA4, 0xFF, sizeof(temp_r25->ctrl_p.unk_20BA4));
+        FS_memset(temp_r25->unk_20BA4, 0xFF, sizeof(temp_r25->unk_20BA4));
         sp34 = FS_FAT_SSA + FS_FAT_MBR;
 
         for (var_r31 = 0; var_r31 < ((u32)((FS_FAT_MAX - 1) * FS_FAT_SC) >> 5); var_r31++) {
@@ -286,7 +286,7 @@ u16 FS_Format_sub(const char* param1, u16 param2, u16 param3, u16 param4, u16 pa
 
         if (var_r27 != 0) {
             if (param4 == 1) {
-                status = FS_DrvSel_Write(temp_r25->ctrl_p.unk_20BA4, var_r27, sp34, 0, &sp38, temp_r25->unk_00[1]);
+                status = FS_DrvSel_Write(temp_r25->unk_20BA4, var_r27, sp34, 0, &sp38, temp_r25->unk_00[1]);
             } else {
                 status = 0xA047;
             }
@@ -437,64 +437,64 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     temp_r31 = &FS_drv_ctl[arg5];
     index = ((FS_FAT_MBR % 32) * sizeof(FSPartitionBootSector));
 
-    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_0 + index)] = 0xEB;
-    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_1 + index)] = 0x00;
-    temp_r31->ctrl_p.unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_2 + index)] = 0x90;
+    temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_0 + index)] = 0xEB;
+    temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_1 + index)] = 0x00;
+    temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_2 + index)] = 0x90;
 
-    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20,
+    FS_memset(&temp_r31->unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20,
               membersize(FSPartitionBootSector16, BS_OEMName));
-    FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index], "        ",
+    FS_strncpy((char*)&temp_r31->unk_20BA4[OFFSET_BS_OEM_NAME + index], "        ",
                membersize(FSPartitionBootSector16, BS_OEMName));
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_0 + index] = 0;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_1 + index] = 2;
+    temp_r31->unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_0 + index] = 0;
+    temp_r31->unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_1 + index] = 2;
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_SEC_PER_CLUS + index] = FS_LCS / sizeof(FSPartitionBootSector);
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_0 + index] = FS_FAT_RSC;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_1 + index] = FS_FAT_RSC >> 8;
+    temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_CLUS + index] = FS_LCS / sizeof(FSPartitionBootSector);
+    temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_0 + index] = FS_FAT_RSC;
+    temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_1 + index] = FS_FAT_RSC >> 8;
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_NUM_FATS + index] = 2;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_ROOT_ENT_CNT_INDEX_0 + index] = 0;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_ROOT_ENT_CNT_INDEX_1 + index] = 2;
+    temp_r31->unk_20BA4[OFFSET_BPB_NUM_FATS + index] = 2;
+    temp_r31->unk_20BA4[OFFSET_BPB_ROOT_ENT_CNT_INDEX_0 + index] = 0;
+    temp_r31->unk_20BA4[OFFSET_BPB_ROOT_ENT_CNT_INDEX_1 + index] = 2;
 
     if ((arg1 - FS_FAT_MBR) < 0x10000) {
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_0 + index] = arg1 - FS_FAT_MBR;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_1 + index] = (arg1 - FS_FAT_MBR) >> 8;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_0 + index] = arg1 - FS_FAT_MBR;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_1 + index] = (arg1 - FS_FAT_MBR) >> 8;
     } else {
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_0 + index] = 0;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_1 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_0 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_16_INDEX_1 + index] = 0;
     }
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_MEDIA + index] = 0xF8;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_FAT_SZ_16_INDEX_0 + index] = FS_FAT_SF;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_FAT_SZ_16_INDEX_1 + index] = FS_FAT_SF >> 8;
+    temp_r31->unk_20BA4[OFFSET_BPB_MEDIA + index] = 0xF8;
+    temp_r31->unk_20BA4[OFFSET_BPB_FAT_SZ_16_INDEX_0 + index] = FS_FAT_SF;
+    temp_r31->unk_20BA4[OFFSET_BPB_FAT_SZ_16_INDEX_1 + index] = FS_FAT_SF >> 8;
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_SEC_PER_TRK_INDEX_0 + index] = FS_TRACK_PER_SECTOR;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_SEC_PER_TRK_INDEX_1 + index] = FS_TRACK_PER_SECTOR >> 8;
+    temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_TRK_INDEX_0 + index] = FS_TRACK_PER_SECTOR;
+    temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_TRK_INDEX_1 + index] = FS_TRACK_PER_SECTOR >> 8;
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_0 + index] = FS_HEAD_NUM;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_1 + index] = FS_HEAD_NUM >> 8;
+    temp_r31->unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_0 + index] = FS_HEAD_NUM;
+    temp_r31->unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_1 + index] = FS_HEAD_NUM >> 8;
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_0 + index] = (FS_FAT_MBR >> 0) & 0xFF;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_1 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 8) & 0xFF;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_2 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 16) & 0xFF;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_3 + index] = (FS_FAT_MBR >> 24) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_0 + index] = (FS_FAT_MBR >> 0) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_1 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 8) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_2 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 16) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_3 + index] = (FS_FAT_MBR >> 24) & 0xFF;
 
     if ((arg1 - FS_FAT_MBR) > 0xFFFF) {
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = (arg1 - FS_FAT_MBR) >> 0;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = (arg1 - FS_FAT_MBR) >> 8;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = (arg1 - FS_FAT_MBR) >> 16;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_3 + index] = (arg1 - FS_FAT_MBR) >> 24;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = (arg1 - FS_FAT_MBR) >> 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = (arg1 - FS_FAT_MBR) >> 8;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = (arg1 - FS_FAT_MBR) >> 16;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_3 + index] = (arg1 - FS_FAT_MBR) >> 24;
     } else {
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = 0;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = 0;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = 0;
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_3 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = 0;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_3 + index] = 0;
     }
 
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_DRV_NUM + index] = 0x80;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_RESERVED_1 + index] = 0;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_SIG + index] = 0x29;
+    temp_r31->unk_20BA4[OFFSET_BS_DRV_NUM + index] = 0x80;
+    temp_r31->unk_20BA4[OFFSET_BS_RESERVED_1 + index] = 0;
+    temp_r31->unk_20BA4[OFFSET_BS_BOOT_SIG + index] = 0x29;
 
     if (temp_r31->unk_259DC == 0) {
         FS_srand(GetRandomSeed(), arg5);
@@ -503,33 +503,33 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     status = FS_rand(0xFF, arg5) * 256;
     // tmp = FS_rand(0xFF, arg5);
     status *= (temp_r29 = FS_rand(0xFF, arg5));
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = status;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = (status >> 8) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = status;
+    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = (status >> 8) & 0xFF;
 
     status = FS_rand(0xFF, arg5) * 256;
     // tmp = FS_rand(0xFF, arg5);
     status *= (temp_r29 = FS_rand(0xFF, arg5));
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = status;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = status;
+    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;
 
     if (arg0[0] != '\0') {
-        FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], 0x20,
+        FS_memset(&temp_r31->unk_20BA4[OFFSET_BS_VOL_LAB + index], 0x20,
                   membersize(FSPartitionBootSector16, BS_VolLab));
-        FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], arg0, FS_strlen(arg0));
+        FS_strncpy((char*)&temp_r31->unk_20BA4[OFFSET_BS_VOL_LAB + index], arg0, FS_strlen(arg0));
     } else {
-        FS_strcpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_VOL_LAB + index], "NO NAME    ");
+        FS_strcpy((char*)&temp_r31->unk_20BA4[OFFSET_BS_VOL_LAB + index], "NO NAME    ");
     }
 
     if (FS_FAT_MODE == MODE_FAT12) {
-        FS_strcpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_FIL_SYS_TYPE + index], "FAT12   ");
+        FS_strcpy((char*)&temp_r31->unk_20BA4[OFFSET_BS_FIL_SYS_TYPE + index], "FAT12   ");
     } else {
-        FS_strcpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_FIL_SYS_TYPE + index], "FAT16   ");
+        FS_strcpy((char*)&temp_r31->unk_20BA4[OFFSET_BS_FIL_SYS_TYPE + index], "FAT16   ");
     }
 
-    FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_CODE + index], 0,
+    FS_memset(&temp_r31->unk_20BA4[OFFSET_BS_BOOT_CODE + index], 0,
               membersize(FSPartitionBootSector16, BS_BootCode));
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_0 + index] = 0x55;
-    temp_r31->ctrl_p.unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_1 + index] = 0xAA;
+    temp_r31->unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_0 + index] = 0x55;
+    temp_r31->unk_20BA4[OFFSET_BS_BOOT_SIGN_INDEX_1 + index] = 0xAA;
 
     if (FS_BUF_POS_FDC != FS_BUF_POS_FAT1) {
         status = FS_format_write_sub(arg2, arg3, arg5);
@@ -537,7 +537,7 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
             return status;
         }
 
-        FS_memset(temp_r31->ctrl_p.unk_20BA4, 0, sizeof(temp_r31->ctrl_p.unk_20BA4));
+        FS_memset(temp_r31->unk_20BA4, 0, sizeof(temp_r31->unk_20BA4));
 
         for (var_r24 = FS_BUF_POS_FDC; var_r24 < (FS_BUF_POS_FAT1 - 1); var_r24++) {
             status = FS_format_write_sub(arg2, arg3, arg5);
@@ -572,12 +572,12 @@ u16 FS_init_fat(s32* arg0, u16 arg1, u16 nChan) {
             var_r27 = FS_BUF_POS_RDE;
         }
 
-        temp_r29->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_0 + index] = 0xF8;
-        temp_r29->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_1 + index] = 0xFF;
-        temp_r29->ctrl_p.unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_2 + index] = 0xFF;
+        temp_r29->unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_0 + index] = 0xF8;
+        temp_r29->unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_1 + index] = 0xFF;
+        temp_r29->unk_20BA4[OFFSET_BS_JMP_BOOT_INDEX_2 + index] = 0xFF;
 
         if (FS_FAT_MODE == MODE_UNK_1) {
-            temp_r29->ctrl_p.unk_20BA4[OFFSET_BS_OEM_NAME + index] = 0xFF;
+            temp_r29->unk_20BA4[OFFSET_BS_OEM_NAME + index] = 0xFF;
         }
 
         if (var_r28 != var_r27) {
@@ -586,7 +586,7 @@ u16 FS_init_fat(s32* arg0, u16 arg1, u16 nChan) {
                 return status;
             }
 
-            FS_memset(temp_r29->ctrl_p.unk_20BA4, 0, sizeof(temp_r29->ctrl_p.unk_20BA4));
+            FS_memset(temp_r29->unk_20BA4, 0, sizeof(temp_r29->unk_20BA4));
 
             for (var_r25 = var_r28; var_r25 < (var_r27 - 1); var_r25++) {
                 status = FS_format_write_sub(arg0, arg1, nChan);
@@ -617,10 +617,10 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
     temp_r30 = ((FS_FAT_MBR + FS_FAT_RSC + FS_FAT_SF * 2) * sizeof(FSPartitionBootSector)) & 0x3E00;
 
     if (pArg0[0] != '\0') {
-        FS_memset(&temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_NAME + temp_r30], 0x20, membersize(FSDirEntry, DIR_Name));
-        FS_strncpy((char*)&temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_NAME + temp_r30], arg0, FS_strlen(arg0));
-        temp_r31->ctrl_p.unk_20BA4[OFFSET_DIR_ATTR + temp_r30] = 0x28;
-        FS_set_now_date((FSDirEntry*)&temp_r31->ctrl_p.unk_20BA4[temp_r30], NULL);
+        FS_memset(&temp_r31->unk_20BA4[OFFSET_DIR_NAME + temp_r30], 0x20, membersize(FSDirEntry, DIR_Name));
+        FS_strncpy((char*)&temp_r31->unk_20BA4[OFFSET_DIR_NAME + temp_r30], arg0, FS_strlen(arg0));
+        temp_r31->unk_20BA4[OFFSET_DIR_ATTR + temp_r30] = 0x28;
+        FS_set_now_date((FSDirEntry*)&temp_r31->unk_20BA4[temp_r30], NULL);
     }
 
     var_r29 = sizeof(FSDirEntry);
@@ -633,7 +633,7 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
             return status;
         }
 
-        FS_memset(temp_r31->ctrl_p.unk_20BA4, 0, sizeof(temp_r31->ctrl_p.unk_20BA4));
+        FS_memset(temp_r31->unk_20BA4, 0, sizeof(temp_r31->unk_20BA4));
         var_r29 -= sizeof(FSDirEntry);
     }
 
@@ -652,10 +652,10 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
     temp_r29 = &FS_drv_ctl[nChan];
     test = PTR_BOOT_SECTOR_ENTRY(temp_r29, 0);
 
-    // pBuffer = temp_r29->ctrl_p.unk_20BA4;
+    // pBuffer = temp_r29->unk_20BA4;
     // !pBuffer;
 
-    temp_r29->ctrl_p.unk_20BA4[0x1BE] = 0;
+    temp_r29->unk_20BA4[0x1BE] = 0;
     test->FAT16.BS_BootCode[/* 0x1BF */ 0x181] =
         (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
 
@@ -668,7 +668,7 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
     test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] |= (((temp_r5 & 0xFFFF) >> 8) << 6);
     test->FAT16.BS_BootCode[/* 0x1C1 */ 0x183] = temp_r5;
 
-    temp_r31 = &temp_r29->ctrl_p.unk_20BA4[0x1BE];
+    temp_r31 = &temp_r29->unk_20BA4[0x1BE];
 
     if ((param1 - FS_FAT_MBR) < 0x7FA8) {
         temp_r31[4] = 1;
@@ -687,18 +687,18 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
     temp_r31[6] &= 0x3F;
     temp_r31[7] = temp_r5;
 
-    temp_r29->ctrl_p.unk_20BA4[0x1C6] = (FS_FAT_MBR >> 0);
-    temp_r29->ctrl_p.unk_20BA4[0x1C7] = (FS_FAT_MBR >> 8);
-    temp_r29->ctrl_p.unk_20BA4[0x1C8] = (FS_FAT_MBR >> 16);
-    temp_r29->ctrl_p.unk_20BA4[0x1C9] = (FS_FAT_MBR >> 24);
+    temp_r29->unk_20BA4[0x1C6] = (FS_FAT_MBR >> 0);
+    temp_r29->unk_20BA4[0x1C7] = (FS_FAT_MBR >> 8);
+    temp_r29->unk_20BA4[0x1C8] = (FS_FAT_MBR >> 16);
+    temp_r29->unk_20BA4[0x1C9] = (FS_FAT_MBR >> 24);
 
-    temp_r29->ctrl_p.unk_20BA4[0x1CA] = ((param1 - FS_FAT_MBR) >> 0);
-    temp_r29->ctrl_p.unk_20BA4[0x1CB] = ((param1 - FS_FAT_MBR) >> 8);
-    temp_r29->ctrl_p.unk_20BA4[0x1CC] = ((param1 - FS_FAT_MBR) >> 16);
-    temp_r29->ctrl_p.unk_20BA4[0x1CD] = ((param1 - FS_FAT_MBR) >> 24);
+    temp_r29->unk_20BA4[0x1CA] = ((param1 - FS_FAT_MBR) >> 0);
+    temp_r29->unk_20BA4[0x1CB] = ((param1 - FS_FAT_MBR) >> 8);
+    temp_r29->unk_20BA4[0x1CC] = ((param1 - FS_FAT_MBR) >> 16);
+    temp_r29->unk_20BA4[0x1CD] = ((param1 - FS_FAT_MBR) >> 24);
 
-    temp_r29->ctrl_p.unk_20BA4[0x1FE] = 0x55;
-    temp_r29->ctrl_p.unk_20BA4[0x1FF] = 0xAA;
+    temp_r29->unk_20BA4[0x1FE] = 0x55;
+    temp_r29->unk_20BA4[0x1FF] = 0xAA;
 
     if (FS_BUF_POS_FDC != 0) {
         status = FS_format_write_sub(param2, param3, nChan);
@@ -706,7 +706,7 @@ u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
             return status;
         }
 
-        FS_memset(temp_r29->ctrl_p.unk_20BA4, 0, sizeof(temp_r29->ctrl_p.unk_20BA4));
+        FS_memset(temp_r29->unk_20BA4, 0, sizeof(temp_r29->unk_20BA4));
 
         for (var_r26 = 0; var_r26 < (FS_BUF_POS_FDC - 1); var_r26++) {
             status = FS_format_write_sub(param2, param3, nChan);
@@ -779,7 +779,7 @@ u16 FS_format_write_sub(s32* param1, u16 param2, u16 nChan) {
     sp10.unk_04 = 0;
 
     if (param2 == 1) {
-        status = FS_DrvSel_Write(temp_r31->ctrl_p.unk_20BA4, 0x20, *param1, 0, &sp10, temp_r31->unk_00[1]);
+        status = FS_DrvSel_Write(temp_r31->unk_20BA4, 0x20, *param1, 0, &sp10, temp_r31->unk_00[1]);
 
         if (status != 0) {
             return status;

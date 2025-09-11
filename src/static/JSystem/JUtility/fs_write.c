@@ -309,7 +309,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
 
     if (param4 == 0 && temp_r24 == (param4 + param5)) {
         if (someValue & 1) {
-            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)param2, param5);
+            FS_strncpy((char*)temp_r19->unk_20BA4, (char*)param2, param5);
             var_r28 = FS_write_sub(NULL, temp_r30->unk_F6, temp_r26, param6, temp_r30->unk_04, 1,
                                    pFileInfo->pDriveInfo->nChan);
         } else {
@@ -318,7 +318,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
         }
     } else if (param4 % 512 == 0 && param5 % 512 == 0) {
         if (someValue & 1) {
-            FS_strncpy((char*)temp_r19->ctrl_p.unk_20BA4, (char*)param2, param5);
+            FS_strncpy((char*)temp_r19->unk_20BA4, (char*)param2, param5);
             var_r28 = FS_write_sub(NULL, (param5 >> 9U) & 0x7F, temp_r26 + ((param4 >> 9U) & 0x7F), param6,
                                    temp_r30->unk_04, 1, pFileInfo->pDriveInfo->nChan);
         } else {
@@ -339,7 +339,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
                     return var_r28;
                 }
             } else {
-                FS_memset(&temp_r19->ctrl_p.unk_20BA4[(((param4 + param5) / 512) << 9) & 0xFE00], 0, 0x200);
+                FS_memset(&temp_r19->unk_20BA4[(((param4 + param5) / 512) << 9) & 0xFE00], 0, 0x200);
             }
         } else {
             var_r25 = ((param4 % 512) + param5) / 512;
@@ -355,7 +355,7 @@ u16 FS_WriteIODoing(SDFileInfo* pFileInfo, void* param2, u16 param3, u16 param4,
         }
 
         r20 = (param4 % 512);
-        FS_strncpy((char*)&temp_r19->ctrl_p.unk_20BA4[r20], (char*)param2, param5);
+        FS_strncpy((char*)&temp_r19->unk_20BA4[r20], (char*)param2, param5);
         var_r18 = ((param4 % 512) + param5) / 512;
 
         if (((param4 % 512) + param5) % 512 != 0) {

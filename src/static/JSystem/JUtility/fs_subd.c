@@ -477,12 +477,12 @@ u16 FS_allocate_entry(SDDriveInfo* pDriveInfo, u32 param1, u32* param2, u16* par
         return 0xA00C;
     }
 
-    if (temp_r26->ctrl_p.unk_4BAC == param1) {
-        *param2 = temp_r26->ctrl_p.unk_4BB0;
-        *param3 = temp_r26->ctrl_p.unk_4BB4;
-        temp_r26->ctrl_p.unk_4BAC = 0;
-        temp_r26->ctrl_p.unk_4BB0 = 0;
-        temp_r26->ctrl_p.unk_4BB4 = 0;
+    if (temp_r26->unk_24BAC == param1) {
+        *param2 = temp_r26->unk_24BB0;
+        *param3 = temp_r26->unk_24BB4;
+        temp_r26->unk_24BAC = 0;
+        temp_r26->unk_24BB0 = 0;
+        temp_r26->unk_24BB4 = 0;
         status = FS_read_sub(NULL, 1, *param2, NULL, pDriveInfo->unk_04 & 0xFF, pDriveInfo->nChan);
         return status;
     }
@@ -536,7 +536,7 @@ u16 FS_allocate_entry(SDDriveInfo* pDriveInfo, u32 param1, u32* param2, u16* par
                     return 0xA012;
                 }
 
-                FS_memset(temp_r26->ctrl_p.unk_20BA4, 0, sizeof(temp_r26->ctrl_p.unk_20BA4));
+                FS_memset(temp_r26->unk_20BA4, 0, sizeof(temp_r26->unk_20BA4));
 
                 var_r30 = FS_cluster_to_sector(pDriveInfo, sp18);
 
@@ -596,7 +596,7 @@ u16 FS_allocate_entry_sub(SDDriveInfo* pDriveInfo, u32 arg1, u32* arg2, u16* arg
         }
     }
 
-    var_r28 = (FSDirEntry*)temp_r27->ctrl_p.unk_20BA4;
+    var_r28 = (FSDirEntry*)temp_r27->unk_20BA4;
     var_r29 = 0;
     while (var_r29 < var_r24) {
         if (var_r28->DIR_Name[0] == FAT_FLAG_DELETED || var_r28->DIR_Name[0] == '\0') {
@@ -604,7 +604,7 @@ u16 FS_allocate_entry_sub(SDDriveInfo* pDriveInfo, u32 arg1, u32* arg2, u16* arg
             *arg3 = (u32)(var_r29 << 5) % pDriveInfo->unk_1C;
 
             if (*arg2 != arg1) {
-                FS_strncpy((char*)temp_r27->ctrl_p.unk_20BA4, (char*)&temp_r27->ctrl_p.unk_20BA4[((*arg2 - arg1) * 0x200)], 0x200);
+                FS_strncpy((char*)temp_r27->unk_20BA4, (char*)&temp_r27->unk_20BA4[((*arg2 - arg1) * 0x200)], 0x200);
             }
 
             return 0;
@@ -645,7 +645,7 @@ u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 par
             var_r26->DIR_Name[0] = FAT_FLAG_DELETED;
         }
 
-        if (var_r26 == (FSDirEntry*)temp_r24->ctrl_p.unk_20BA4) {
+        if (var_r26 == (FSDirEntry*)temp_r24->unk_20BA4) {
             if (var_r30 < pDriveInfo->unk_64) {
                 if (var_r30 == pDriveInfo->nSector) {
                     break;
@@ -679,7 +679,7 @@ u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 par
             
             if (var_r27 == (var_r30 - 1) && var_r29 < 0x20) {
                 for (var_r23 = 0; var_r23 < var_r29; var_r23++) {
-                    FS_strncpy((char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23) * 0x200], (char*)&temp_r24->ctrl_p.unk_20BA4[(var_r29 - var_r23 - 1) * 0x200], 0x200);
+                    FS_strncpy((char*)&temp_r24->unk_20BA4[(var_r29 - var_r23) * 0x200], (char*)&temp_r24->unk_20BA4[(var_r29 - var_r23 - 1) * 0x200], 0x200);
                 }
             } else {
                 status = FS_write_sub(NULL, var_r29, var_r30, NULL, pDriveInfo->unk_04, 0, pDriveInfo->nChan);
@@ -695,7 +695,7 @@ u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 par
                 return status;
             }
 
-            var_r26 = (FSDirEntry*)&temp_r24->ctrl_p.unk_20BA4[0x200];
+            var_r26 = (FSDirEntry*)&temp_r24->unk_20BA4[0x200];
             var_r29++;
             var_r30 = var_r27;
         }
@@ -780,12 +780,12 @@ u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2) {
         }
     }
 
-    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->ctrl_p.unk_20A00) : ARRAY_COUNT(pDrvCtl->ctrl_p.unk_20AFC);
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_20A00) : ARRAY_COUNT(pDrvCtl->unk_20AFC);
     for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
         if (pDriveInfo->unk_04 == 1) {
-            var_r28 = &pDrvCtl->ctrl_p.unk_20A00[var_r30];
+            var_r28 = &pDrvCtl->unk_20A00[var_r30];
         } else {
-            var_r28 = &pDrvCtl->ctrl_p.unk_20AFC[var_r30];
+            var_r28 = &pDrvCtl->unk_20AFC[var_r30];
         }
 
         if (var_r28->pDriveInfo != NULL) {
@@ -878,12 +878,12 @@ u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2) {
         }
     }
 
-    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->ctrl_p.unk_20A00) : ARRAY_COUNT(pDrvCtl->ctrl_p.unk_20AFC);
+    nArrayCount = pDriveInfo->unk_04 == 1 ? ARRAY_COUNT(pDrvCtl->unk_20A00) : ARRAY_COUNT(pDrvCtl->unk_20AFC);
     for (var_r30 = 0; var_r30 < nArrayCount; var_r30++) {
         if (pDriveInfo->unk_04 == 1) {
-            var_r29 = &pDrvCtl->ctrl_p.unk_20A00[var_r30];
+            var_r29 = &pDrvCtl->unk_20A00[var_r30];
         } else {
-            var_r29 = &pDrvCtl->ctrl_p.unk_20AFC[var_r30];
+            var_r29 = &pDrvCtl->unk_20AFC[var_r30];
         }
 
         if (var_r29->pDriveInfo != NULL) {
@@ -1078,11 +1078,11 @@ u16 FS_read_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 
     }
 
     if (param4 == NULL) {
-        param4 = &pDrvCtl->ctrl_p.unk_24BA4;
+        param4 = &pDrvCtl->unk_24BA4;
     }
 
     if (param1 == NULL) {
-        param1 = pDrvCtl->ctrl_p.unk_20BA4;
+        param1 = pDrvCtl->unk_20BA4;
     }
 
     param4->unk_00 = 0x1000;
@@ -1120,11 +1120,11 @@ u16 FS_write_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16
     }
 
     if (param4 == NULL) {
-        param4 = &pDrvCtl->ctrl_p.unk_24BA4;
+        param4 = &pDrvCtl->unk_24BA4;
     }
 
     if (param1 == NULL) {
-        param1 = pDrvCtl->ctrl_p.unk_20BA4;
+        param1 = pDrvCtl->unk_20BA4;
     }
 
     param4->unk_00 = 0x2000;
@@ -1320,19 +1320,19 @@ u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4) {
 }
 
 // params not sure
-u16 FS_fat_strcmp(UnkStruct_20BA4 *arg0, UnkStruct_20BA4 *arg1) {
+u16 FS_fat_strcmp(FSDirEntry *arg0, FSDirEntry *arg1) {
     u16 var_r31 = 0;
 
     while (var_r31 < 5) {
         //! TODO: u16 vs u8 oddity, see `FS_Delete_Entry`
-        if (((u16*)arg0->unk_00)[var_r31] != ((u16*)arg1->unk_00)[var_r31]) {
+        if (((u16*)arg0->DIR_Name)[var_r31] != ((u16*)arg1->DIR_Name)[var_r31]) {
             return 0xA02B;
         }
 
         var_r31++;
     }
 
-    if (arg0->unk_0A != arg1->unk_0A) {
+    if (arg0->DIR_Name[10] != arg1->DIR_Name[10]) {
         return 0xA02B;
     }
 

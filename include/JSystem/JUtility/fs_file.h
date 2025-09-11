@@ -131,44 +131,11 @@ typedef struct SDFileInfo {
     /* 0x7B */ u8 pad_unk_7B;
 } SDFileInfo; // size = 0x7C
 
-// size = 0x200? (see 80254D0C)
-typedef struct UnkStruct_20BA4 {
-    /* 0x00 */ u8 unk_00[2]; //! TODO: accessed either as u8 or u16??
-    /* 0x04 */ u32 unk_04;
-    /* 0x08 */ u16 pad_unk_08;
-    /* 0x0A */ u8 unk_0A;
-    /* 0x0B */ u8 unk_0B;
-    /* 0x0C */ char unk_0C[10];
-    /* 0x16 */ u8 unk_16[2];
-    /* 0x18 */ u8 unk_18[2];
-    /* 0x1A */ u8 unk_1A;
-    /* 0x1B */ u8 unk_1B;
-    /* 0x1C */ u8 unk_1C;
-    /* 0x1D */ u8 unk_1D;
-    /* 0x1E */ u8 unk_1E;
-    /* 0x1F */ u8 unk_1F;
-} UnkStruct_20BA4; // size = 0x20
-
 typedef struct UnknownStruct1 {
     /* 0x00 */ u16 unk_00;
     /* 0x02 */ u16 unk_02;
     /* 0x04 */ u32 unk_04;
 } UnknownStruct1; // size = 0x08
-
-typedef struct DrvCtl_unk_20000 {
-    /* 0x0000 */ char pad_unk_000[0x9F8];
-    /* 0x09F8 */ void* unk_09F8;
-    /* 0x0000 */ char pad_unk_9FC[0x0A00 - 0x9FC];
-    /* 0x0A00 */ SDDirInfo unk_20A00[3];
-    /* 0x0AFC */ SDDirInfo unk_20AFC[2];
-    /* 0x0BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
-    /* 0x4BA4 */ UnknownStruct1 unk_24BA4;
-    /* 0x4BAC */ u32 unk_4BAC;
-    /* 0x4BB0 */ u32 unk_4BB0;
-    /* 0x4BB4 */ u16 unk_4BB4;
-    /* 0x4BB6 */ u16 unk_4BB6;
-    /* 0x4BB8 */ UnknownStruct2 unk_4BB8;
-} DrvCtl_unk_20000; // size = 0x4DA4
 
 typedef struct DrvCtl {
     /* 0x00000 */ u16 unk_00[4]; // note sure if it's the same array
@@ -176,8 +143,18 @@ typedef struct DrvCtl {
     /* 0x00210 */ SDFileInfo unk_210[5];
     /* 0x0047C */ SDFileInfo unk_47C[3];
     /* 0x005F0 */ u32 unk_5F0;
-    /* 0x005F4 */ char unk_5F2[0x20000 - 0x5F4];
-    /* 0x20000 */ DrvCtl_unk_20000 ctrl_p;
+    /* 0x005F4 */ char unk_5F2[0x209F8 - 0x5F4];
+    /* 0x209F8 */ void* unk_209F8;
+    /* 0x20000 */ char pad_unk_209FC[4];
+    /* 0x20A00 */ SDDirInfo unk_20A00[3];
+    /* 0x20AFC */ SDDirInfo unk_20AFC[2];
+    /* 0x20BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
+    /* 0x24BA4 */ UnknownStruct1 unk_24BA4;
+    /* 0x24BAC */ u32 unk_24BAC;
+    /* 0x24BB0 */ u32 unk_24BB0;
+    /* 0x24BB4 */ u16 unk_24BB4;
+    /* 0x24BB6 */ u16 unk_24BB6;
+    /* 0x24BB8 */ UnknownStruct2 unk_24BB8;
     /* 0x259D4 */ s32 unk_259D4;
     /* 0x259D8 */ u32 unk_259D8;
     /* 0x259DC */ u16 unk_259DC;
@@ -185,8 +162,8 @@ typedef struct DrvCtl {
 } DrvCtl; // size = 0x25E48
 
 #define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
-#define GET_DIR_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20A00) : ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20AFC)))
-#define GET_DIR_INFO_COUNT2(pDrvCtl, pDriveInfo) (((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20A00) : ARRAY_COUNT((pDrvCtl)->ctrl_p.unk_20AFC)))
+#define GET_DIR_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
+#define GET_DIR_INFO_COUNT2(pDrvCtl, pDriveInfo) (((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
 
 extern DrvCtl FS_drv_ctl[2];
 

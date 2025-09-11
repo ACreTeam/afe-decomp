@@ -12,10 +12,10 @@ extern "C" {
 #define MODE_UNK_1 1
 #define MODE_FAT12 2
 
-#define PTR_BOOT_SECTOR_ENTRY(pDrvCtl, index) ((FSPartitionBootSector*)((u32)pDrvCtl->ctrl_p.unk_20BA4 + index))
+#define PTR_BOOT_SECTOR_ENTRY(pDrvCtl, index) ((FSPartitionBootSector*)((u32)pDrvCtl->unk_20BA4 + index))
 #define PBS_COUNT 32
 
-#define PTR_ROOT_DIR_ENTRY(pDrvCtl, index) ((FSDirEntry*)((u32)pDrvCtl->ctrl_p.unk_20BA4 + index))
+#define PTR_ROOT_DIR_ENTRY(pDrvCtl, index) ((FSDirEntry*)((u32)pDrvCtl->unk_20BA4 + index))
 #define FAT_FLAG_DELETED 0xE5
 
 #define FAT_ATTR_READ_ONLY 0x01

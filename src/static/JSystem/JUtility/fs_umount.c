@@ -48,13 +48,13 @@ u16 FS_Umount_sub(SDDriveInfo* pDriveInfo) {
     var_r26 = 0;
 
     while (var_r30 < temp_r29->unk_5F0 / 512) {
-        if (temp_r29->ctrl_p.unk_4BB8.unk_408[var_r30] == pDriveInfo->unk_04) {
-            temp_r29->ctrl_p.unk_4BB8.unk_60C[var_r30] = 0;
-            temp_r29->ctrl_p.unk_4BB8.unk_810[var_r30] = 0;
-            temp_r29->ctrl_p.unk_4BB8.unk_A14[var_r30] = 0;
-            temp_r29->ctrl_p.unk_4BB8.unk_C18[var_r30] = 0;
-            temp_r29->ctrl_p.unk_4BB8.unk_408[var_r30] = 3;
-            temp_r29->ctrl_p.unk_4BB8.unk_000[var_r30] = 0;
+        if (temp_r29->unk_24BB8.unk_408[var_r30] == pDriveInfo->unk_04) {
+            temp_r29->unk_24BB8.unk_60C[var_r30] = 0;
+            temp_r29->unk_24BB8.unk_810[var_r30] = 0;
+            temp_r29->unk_24BB8.unk_A14[var_r30] = 0;
+            temp_r29->unk_24BB8.unk_C18[var_r30] = 0;
+            temp_r29->unk_24BB8.unk_408[var_r30] = 3;
+            temp_r29->unk_24BB8.unk_000[var_r30] = 0;
             var_r26++;
         }
 
@@ -73,8 +73,8 @@ u16 FS_Umount_sub(SDDriveInfo* pDriveInfo) {
         var_r25 = 0;
 
         while (var_r30 < temp_r29->unk_5F0 / 512) {
-            if (temp_r29->ctrl_p.unk_4BB8.unk_A14[var_r30] != 0) {
-                spC[temp_r29->ctrl_p.unk_4BB8.unk_A14[var_r30]] = var_r30;
+            if (temp_r29->unk_24BB8.unk_A14[var_r30] != 0) {
+                spC[temp_r29->unk_24BB8.unk_A14[var_r30]] = var_r30;
                 var_r25++;
             }
 
@@ -86,7 +86,7 @@ u16 FS_Umount_sub(SDDriveInfo* pDriveInfo) {
 
         while (var_r30 < temp_r29->unk_5F0 / 512 + 1) {
             if (spC[var_r30] != 0xFFFF) {
-                temp_r29->ctrl_p.unk_4BB8.unk_A14[spC[var_r30]] = var_r27;
+                temp_r29->unk_24BB8.unk_A14[spC[var_r30]] = var_r27;
                 var_r27++;
             }
 
