@@ -4,24 +4,15 @@
 #include "JSystem/JUtility/fs_form.h"
 #include "types.h"
 
-// #include <dolphin.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct UnknownStruct3 {
-    /* 0x00 */ char unk_00[64];
-    /* 0x40 */ u32 unk_40;
-    /* 0x44 */ u16 unk_44; 
-    /* 0x46 */ u16 unk_46; 
-    /* 0x48 */ u16 unk_48; 
-    /* 0x4A */ u16 unk_4A; 
-    /* 0x4C */ u16 unk_4C; 
-    /* 0x4E */ u16 unk_4E; 
-    /* 0x50 */ u16 unk_50; 
-    /* 0x52 */ u16 unk_52; 
-} UnknownStruct3; // size = 0x54
+typedef struct UnknownStruct1 {
+    /* 0x00 */ u16 unk_00;
+    /* 0x02 */ u16 unk_02;
+    /* 0x04 */ u32 unk_04;
+} UnknownStruct1; // size = 0x08
 
 typedef struct UnknownStruct2 {
     /* 0x000 */ u32 unk_000[0x102];
@@ -31,6 +22,19 @@ typedef struct UnknownStruct2 {
     /* 0xA14 */ u16 unk_A14[0x102];
     /* 0xC18 */ u16 unk_C18[0x102];
 } UnknownStruct2; // size = 0xE1C
+
+typedef struct UnknownStruct3 {
+    /* 0x00 */ char unk_00[64];
+    /* 0x40 */ u32 unk_40;
+    /* 0x44 */ u16 unk_44;
+    /* 0x46 */ u16 unk_46;
+    /* 0x48 */ u16 unk_48;
+    /* 0x4A */ u16 unk_4A;
+    /* 0x4C */ u16 unk_4C;
+    /* 0x4E */ u16 unk_4E;
+    /* 0x50 */ u16 unk_50;
+    /* 0x52 */ u16 unk_52;
+} UnknownStruct3; // size = 0x54
 
 typedef struct SDDriveInfo {
     /* 0x000 */ u16 nChan;
@@ -86,7 +90,7 @@ typedef struct SDDriveInfo {
     /* 0x0E6 */ char unk_E6;
     /* 0x0E7 */ char unk_E7;
     /* 0x0E8 */ u8* unk_E8;
-    /* 0x0EC */ UnknownStruct2* unk_EC;    
+    /* 0x0EC */ UnknownStruct2* unk_EC;
     /* 0x0F0 */ u16 unk_F0;
     /* 0x0F0 */ u16 unk_F2;
     /* 0x0F4 */ u16 unk_F4;
@@ -131,19 +135,14 @@ typedef struct SDFileInfo {
     /* 0x7B */ u8 pad_unk_7B;
 } SDFileInfo; // size = 0x7C
 
-typedef struct UnknownStruct1 {
-    /* 0x00 */ u16 unk_00;
-    /* 0x02 */ u16 unk_02;
-    /* 0x04 */ u32 unk_04;
-} UnknownStruct1; // size = 0x08
-
 typedef struct DrvCtl {
     /* 0x00000 */ u16 unk_00[4]; // note sure if it's the same array
     /* 0x00008 */ SDDriveInfo unk_08[2];
     /* 0x00210 */ SDFileInfo unk_210[5];
     /* 0x0047C */ SDFileInfo unk_47C[3];
     /* 0x005F0 */ u32 unk_5F0;
-    /* 0x005F4 */ char unk_5F2[0x209F8 - 0x5F4];
+    /* 0x005F0 */ u32 unk_5F4;
+    /* 0x005F8 */ char unk_5F8[0x209F8 - 0x5F8];
     /* 0x209F8 */ void* unk_209F8;
     /* 0x20000 */ char pad_unk_209FC[4];
     /* 0x20A00 */ SDDirInfo unk_20A00[3];
@@ -161,9 +160,12 @@ typedef struct DrvCtl {
     /* 0x259DE */ char pad_unk_259DE[0x25E48 - 0x259DE];
 } DrvCtl; // size = 0x25E48
 
-#define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
-#define GET_DIR_INFO_COUNT(pDrvCtl, pDriveInfo) ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
-#define GET_DIR_INFO_COUNT2(pDrvCtl, pDriveInfo) (((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
+#define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) \
+    ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
+#define GET_DIR_INFO_COUNT(pDrvCtl, pDriveInfo) \
+    ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
+#define GET_DIR_INFO_COUNT2(pDrvCtl, pDriveInfo) \
+    (((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_20A00) : ARRAY_COUNT((pDrvCtl)->unk_20AFC)))
 
 extern DrvCtl FS_drv_ctl[2];
 

@@ -11,13 +11,14 @@ extern "C" {
 
 #define MODE_UNK_1 1
 #define MODE_FAT12 2
-
-#define PTR_BOOT_SECTOR_ENTRY(pDrvCtl, index) ((FSPartitionBootSector*)((u32)pDrvCtl->unk_20BA4 + index))
 #define PBS_COUNT 32
 
+#define PTR_BOOT_SECTOR_ENTRY(pDrvCtl, index) ((FSPartitionBootSector*)((u32)pDrvCtl->unk_20BA4 + index))
 #define PTR_ROOT_DIR_ENTRY(pDrvCtl, index) ((FSDirEntry*)((u32)pDrvCtl->unk_20BA4 + index))
-#define FAT_FLAG_DELETED 0xE5
+#define PTR_MBR(pDrvCtl, index) ((FSMasterBootRecord*)((u32)pDrvCtl->unk_20BA4 + index))
 
+#define FDC_ATTR_EXTENDED_BOOT 0x29
+#define FAT_FLAG_DELETED 0xE5
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
 #define FAT_ATTR_SYSTEM 0x04
@@ -133,6 +134,46 @@ typedef struct FSDirEntry {
     /* 0x1A */ u8_u16 DIR_FstClusLO;  // Low 16 bits of first cluster
     /* 0x1C */ u8_u32 DIR_FileSize;   // File size in bytes
 } FSDirEntry;                         // size = 0x20
+
+typedef struct MBRPartitionEntry {
+    /* 0x00 */ u8 status;               // Partition status (e.g., 0x80 for active)
+    /* 0x01 */ u8 chs_start_head;       // Starting head (C/H/S addressing)
+    /* 0x02 */ u8_u16 chs_start_sector; // Starting sector & cylinder (C/H/S)
+    /* 0x04 */ u8 partition_type;       // Partition type (e.g., 0x0C for FAT32)
+    /* 0x05 */ u8 chs_end_head;         // Ending head (C/H/S)
+    /* 0x06 */ u8_u16 chs_end_sector;   // Ending sector & cylinder (C/H/S)
+    /* 0x08 */ u8_u32 lba_start_sector; // Starting sector using LBA
+    /* 0x0C */ u8_u32 total_sectors;    // Total number of sectors in the partition
+} MBRPartitionEntry;                    // size = 0x10
+
+typedef struct FSMasterBootRecord {
+    /* 0x000 */ u8 bootstrap[446];                    // The MBR bootstrap program
+    /* 0x1BE */ MBRPartitionEntry partition_table[4]; // The partition table with up to 4 entries
+    /* 0x1FE */ u8_u16 signature;                     // The MBR signature (0xAA55)
+} FSMasterBootRecord;                                 // size = 0x200
+
+typedef struct FSDescriptor {
+    /* 0x000 */ u8 jump_code[3];
+    /* 0x003 */ char oem_name[8];
+    /* 0x00B */ u8_u16 bytes_per_sector;
+    /* 0x00D */ u8 sectors_per_cluster;
+    /* 0x00E */ u8_u16 reserved_sectors;
+    /* 0x010 */ u8 fat_count;
+    /* 0x011 */ u8_u16 root_dir_entries;
+    /* 0x013 */ u8_u16 total_sectors;
+    /* 0x015 */ u8 media_type;
+    /* 0x016 */ u8_u16 sectors_per_fat;
+    /* 0x018 */ u8_u16 sectors_per_track;
+    /* 0x01A */ u8_u16 num_heads;
+    /* 0x01C */ u8_u32 hidden_sectors;
+    /* 0x020 */ u8_u32 total_sectors_32;
+    /* 0x024 */ u8 drive_number;
+    /* 0x025 */ u8 reserved;
+    /* 0x026 */ u8 extended_boot_sig;
+    /* 0x027 */ u8_u32 volume_id;
+    /* 0x02B */ char volume_label[11];
+    /* 0x036 */ char fs_type[8];
+} FSDescriptor; // size = 0x3E
 
 #pragma pack(pop)
 
