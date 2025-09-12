@@ -1671,9 +1671,9 @@ char *FS_strncpy(char *dest, const char *src, size_t num) {
 
 size_t FS_strlen(const char *s) {
     const char* pChar = s;
-    size_t length;
+    u16 length;
 
-    for (length = 0; length < -1; length++) {
+    for (length = 0; length < 0xFFFF; length++) {
         if (pChar[length] == '\0') {
             return length;
         }
@@ -1682,7 +1682,7 @@ size_t FS_strlen(const char *s) {
     return -1;
 }
 
-u16 FS_strncmp(const char *s1, const char *s2, size_t n) {
+u16 FS_strncmp(const char *s1, const char *s2, u16 n) {
     int i;
 
     for (i = 0; i < n; i++) {

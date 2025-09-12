@@ -49,7 +49,7 @@ extern void *FS_memset(void *dest, u16 ch, size_t count);
 extern char *FS_strcpy(char *dest, const char *src);
 extern char *FS_strncpy(char *dest, const char *src, size_t num);
 extern size_t FS_strlen(const char *s);
-extern u16 FS_strncmp(const char *s1, const char *s2, size_t n);
+extern u16 FS_strncmp(const char *s1, const char *s2, u16 n);
 extern void FS_srand(u16 arg0, u16 arg1);
 extern u16 FS_rand(u16 arg0, u16 arg1);
 
