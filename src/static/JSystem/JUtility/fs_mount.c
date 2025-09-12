@@ -3,7 +3,6 @@
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_subd.h"
-#include "macros.h"
 
 u16 FS_Mount(SDDriveInfo** ppDriveInfo, u16 nChan) {
     DrvCtl* temp_r29;
@@ -248,7 +247,7 @@ u16 FS_ReadMBR(SDDriveInfo* pDriveInfo) {
         return status;
     }
 
-    status = FS_ChkMBR(pDriveInfo, (FSMasterBootRecord*)temp_r28, ptr2);
+    status = FS_ChkMBR(pDriveInfo, (FSMasterBootRecord*)temp_r28, (FSDescriptor*)ptr2);
     if (status != 0) {
         if (status == 0xA01A || (status & 0xFF00) != 0xA000) {
             return status;
@@ -260,7 +259,7 @@ u16 FS_ReadMBR(SDDriveInfo* pDriveInfo) {
     return status;
 }
 
-u16 FS_ChkMBR(SDDriveInfo* pDriveInfo, FSMasterBootRecord* pStart, u8* pEnd) {
+u16 FS_ChkMBR(SDDriveInfo* pDriveInfo, FSMasterBootRecord* pMBR, FSDescriptor* pFDC) {
     u16 status2;
     u16 status;
     DrvCtl* temp_r25;
@@ -274,44 +273,44 @@ u16 FS_ChkMBR(SDDriveInfo* pDriveInfo, FSMasterBootRecord* pStart, u8* pEnd) {
     r27 = 1;
     temp_r25 = &FS_drv_ctl[pDriveInfo->nChan];
 
-    if (pStart == NULL) {
-        pStart = (FSMasterBootRecord*)&temp_r25->unk_20BA4[0];
+    if (pMBR == NULL) {
+        pMBR = (FSMasterBootRecord*)&temp_r25->unk_20BA4[0];
     }
 
-    if (pEnd == NULL) {
-        pEnd = &temp_r25->unk_20BA4[sizeof(FSMasterBootRecord)];
+    if (pFDC == NULL) {
+        pFDC = (FSDescriptor*)&temp_r25->unk_20BA4[sizeof(FSMasterBootRecord)];
     }
 
-    temp_r24 = LOAD_LE_u32(pStart->partition_table[0].lba_start_sector.data_u32);
+    temp_r24 = LOAD_LE_u32(pMBR->partition_table[0].lba_start_sector.data_u32);
     if ((r27 > pDriveInfo->unk_FC) || ((r27 + temp_r24) > pDriveInfo->unk_FC)) {
         pDriveInfo->unk_102 |= 1;
         return 0xA01A;
     }
 
-    status = FS_read_sub(pEnd, r27, temp_r24, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
+    status = FS_read_sub((u8*)pFDC, r27, temp_r24, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
     if (status != 0) {
         pDriveInfo->unk_102 |= 2;
         return 0xA01D;
     }
 
-    status2 = FS_ChkFDC(pDriveInfo, pEnd, 1);
+    status2 = FS_ChkFDC(pDriveInfo, pFDC, 1);
     status = status2;
     if (status != 0) {
         pDriveInfo->unk_102 &= ~5;
         pDriveInfo->unk_102 |= 2;
         status2 = 0xA01D;
-    } else if ((pStart->partition_table[0].chs_start_sector.data_u8[0] == 0x80) ||
-               (pStart->partition_table[0].chs_start_sector.data_u8[0] == 0)) {
-        if (*(u32*)&pStart->partition_table[0].total_sectors.data_u8[2] < 0x7FA8) {
-            if (pStart->partition_table[0].chs_end_sector.data_u8[0] != 1) {
+    } else if ((pMBR->partition_table[0].chs_start_sector.data_u8[0] == 0x80) ||
+               (pMBR->partition_table[0].chs_start_sector.data_u8[0] == 0)) {
+        if (*(u32*)&pMBR->partition_table[0].total_sectors.data_u8[2] < 0x7FA8) {
+            if (pMBR->partition_table[0].chs_end_sector.data_u8[0] != 1) {
                 goto exit;
             }
-        } else if (*(u32*)&pStart->partition_table[0].total_sectors.data_u8[2] < 0x10000) {
-            if (pStart->partition_table[0].chs_end_sector.data_u8[0] != 4) {
+        } else if (*(u32*)&pMBR->partition_table[0].total_sectors.data_u8[2] < 0x10000) {
+            if (pMBR->partition_table[0].chs_end_sector.data_u8[0] != 4) {
                 goto exit;
             }
         } else {
-            if (pStart->partition_table[0].chs_end_sector.data_u8[0] != 6) {
+            if (pMBR->partition_table[0].chs_end_sector.data_u8[0] != 6) {
                 goto exit;
             }
         }
@@ -336,7 +335,7 @@ u16 FS_ReadFDC(SDDriveInfo* pDriveInfo) {
         return status;
     }
 
-    status = FS_ChkFDC(pDriveInfo, NULL, 7U);
+    status = FS_ChkFDC(pDriveInfo, NULL, 7);
     if (pDriveInfo->unk_102 & 1) {
         return status;
     }
@@ -418,6 +417,62 @@ void FS_SetFDC(SDDriveInfo* pDriveInfo) {
     pDriveInfo->unk_3C = 8;
 }
 
+u16 FS_SetFATkind(SDDriveInfo* pDriveInfo) {
+    u32 uVar2;
+
+    if (pDriveInfo->unk_1E == 0) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    uVar2 = (pDriveInfo->unk_68 - pDriveInfo->unk_64) / pDriveInfo->unk_1E;
+
+    if (uVar2 < 0xFF5) {
+        if (pDriveInfo->unk_3C != 2) {
+            if (pDriveInfo->unk_3C == 1) {
+                pDriveInfo->unk_3C = 2;
+                pDriveInfo->unk_102 |= 2;
+                return 0xA01D;
+            }
+
+            if (pDriveInfo->unk_3C == 8) {
+                pDriveInfo->unk_3C = 2;
+            }
+        }
+    } else if (uVar2 == 0xFF5) {
+        if (pDriveInfo->unk_3C == 2) {
+            pDriveInfo->unk_3C = 1;
+            pDriveInfo->unk_102 |= 2;
+            return 0xA01D;
+        }
+
+        if (pDriveInfo->unk_3C != 1 && pDriveInfo->unk_3C == 8) {
+            if (pDriveInfo->unk_2E == 0xC) {
+                pDriveInfo->unk_3C = 2;
+            } else {
+                if (pDriveInfo->unk_2E == 0x10) {
+                    pDriveInfo->unk_3C = 1;
+                } else {
+                    pDriveInfo->unk_102 |= 1;
+                    return 0xA01A;
+                }
+            }
+        }
+    } else if (uVar2 > 0xFF5) {
+        if (pDriveInfo->unk_3C == 2) {
+            pDriveInfo->unk_3C = 1;
+            pDriveInfo->unk_102 |= 2;
+            return 0xA01D;
+        }
+
+        if (pDriveInfo->unk_3C != 1 && pDriveInfo->unk_3C == 8) {
+            pDriveInfo->unk_3C = 1;
+        }
+    }
+
+    return 0;
+}
+
 u16 FS_SetFATsecN(SDDriveInfo* pDriveInfo) {
     u16 status;
 
@@ -486,6 +541,239 @@ u16 FS_ReadFAT(SDDriveInfo* pDriveInfo) {
     return status;
 }
 
+u16 FS_ReadFATSetCacheInfo(SDDriveInfo* pDriveInfo, SDDriveInfo* param2) {
+    DrvCtl* temp_r28;
+    u16 status;
+
+    (void)param2;
+
+    status = 0;
+    temp_r28 = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (pDriveInfo->unk_06 == 2 || (pDriveInfo->unk_06 == 2 && param2->unk_06 == 2)) {
+        status = FS_Flush(pDriveInfo);
+
+        if (status != 0) {
+            pDriveInfo->unk_102 |= 1;
+            return status;
+        }
+    } else if (pDriveInfo->unk_06 == 1 && param2->unk_06 == 1) {
+        if (pDriveInfo->unk_2E * pDriveInfo->unk_1C > temp_r28->unk_5F0) {
+            pDriveInfo->unk_BA = 0;
+            pDriveInfo->unk_F0 = 1;
+        } else {
+            pDriveInfo->unk_BA = 0;
+            pDriveInfo->unk_F0 = 0x102;
+        }
+    } else if (param2->unk_06 == 2) {
+        if (pDriveInfo->unk_1C * (pDriveInfo->unk_2E + param2->unk_2E) > temp_r28->unk_5F0) {
+            status = FS_Flush(param2);
+
+            if (status != 0) {
+                pDriveInfo->unk_102 |= 1;
+                return status;
+            }
+
+            pDriveInfo->unk_BA = param2->unk_BA = 0;
+            pDriveInfo->unk_F0 = param2->unk_F0 = 1;
+        } else {
+            if (param2->unk_BA != 0) {
+                pDriveInfo->unk_BA = 0;
+            } else {
+                pDriveInfo->unk_BA = temp_r28->unk_5F0 / pDriveInfo->unk_1C - pDriveInfo->unk_2E;
+            }
+
+            pDriveInfo->unk_F0 = 0x102;
+        }
+    }
+
+    return status;
+}
+
+u16 FS_ReadFATSetFATinfo(SDDriveInfo* pDriveInfo) {
+    u16 status = 0;
+
+    if ((pDriveInfo->unk_F0 & 0xF00) == 0x100) {
+        status = FS_ReadFATSetFAT(pDriveInfo);
+        pDriveInfo->unk_F0 &= ~0x100;
+
+        if (pDriveInfo->unk_102 & 1) {
+            return status;
+        }
+    } else {
+        pDriveInfo->unk_B8 = 1;
+        pDriveInfo->unk_BE = 2;
+
+        if (pDriveInfo->unk_1E != 0) {
+            pDriveInfo->unk_BC = ((pDriveInfo->unk_68 - pDriveInfo->unk_64) / pDriveInfo->unk_1E) + 2;
+        } else {
+            pDriveInfo->unk_102 |= 1;
+            status = 0xA01A;
+        }
+    }
+
+    if ((pDriveInfo->unk_F0 & 0xF00) == 0x100) {
+        status = 0xA02D;
+        pDriveInfo->unk_102 |= 1;
+    }
+
+    return status;
+}
+
+void FS_ReadFATSetMemSize(SDDriveInfo* pDriveInfo, SDDriveInfo* param2) {
+    DrvCtl* temp_r31 = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (pDriveInfo->unk_F0 == 2 && param2->unk_F0 == 2) {
+        temp_r31->unk_259D4 = 0;
+        return;
+    }
+
+    if (pDriveInfo->unk_F0 == 2) {
+        temp_r31->unk_259D4 = temp_r31->unk_5F0 - pDriveInfo->unk_2E * pDriveInfo->unk_1C;
+        return;
+    }
+
+    if (param2->unk_F0 == 2) {
+        temp_r31->unk_259D4 = temp_r31->unk_5F0 - param2->unk_2E * param2->unk_1C;
+        return;
+    }
+
+    temp_r31->unk_259D4 = temp_r31->unk_5F0;
+}
+
+u16 FS_ReadFATSetFAT(SDDriveInfo* pDriveInfo) {
+    DrvCtl* temp_r30;
+    u16 temp_r3;
+    u16 temp_r3_2;
+    u16 status;
+    void* var_r28;
+
+    temp_r30 = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (pDriveInfo->unk_04 == 1) {
+        temp_r30->unk_209F8 = PTR_UNK(temp_r30, pDriveInfo->unk_BA * pDriveInfo->unk_1C);
+        pDriveInfo->unk_E8 = temp_r30->unk_209F8;
+        var_r28 = temp_r30->unk_209F8;
+    } else {
+        temp_r30->unk_209FC = PTR_UNK(temp_r30, pDriveInfo->unk_BA * pDriveInfo->unk_1C);
+        pDriveInfo->unk_E8 = temp_r30->unk_209FC;
+        var_r28 = temp_r30->unk_209FC;
+    }
+
+    pDriveInfo->unk_B8 = 1;
+    status = FS_read_sub(var_r28, pDriveInfo->unk_2E, pDriveInfo->unk_58, 0, pDriveInfo->unk_04, pDriveInfo->nChan);
+
+    if (status != 0) {
+        pDriveInfo->unk_B8 = 2;
+        status = FS_read_sub(var_r28, pDriveInfo->unk_2E, pDriveInfo->unk_5C, 0, pDriveInfo->unk_04, pDriveInfo->nChan);
+
+        if (status != 0) {
+            pDriveInfo->unk_102 |= 1;
+            return status;
+        }
+    }
+
+    pDriveInfo->unk_BE = 2;
+
+    if (pDriveInfo->unk_1E != 0) {
+        pDriveInfo->unk_BC = ((pDriveInfo->unk_68 - pDriveInfo->unk_64) / pDriveInfo->unk_1E) + 2;
+    } else {
+        pDriveInfo->unk_102 |= 1;
+        status = 0xA01A;
+    }
+
+    return status;
+}
+
+u16 FS_ChkFDC(SDDriveInfo* pDriveInfo, FSDescriptor* pFDC, u16 param3) {
+    u16 status;
+
+    if (param3 & 1) {
+        status = FS_ChkFDCfatal(pDriveInfo, pFDC);
+        if (status != 0) {
+            return status;
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_ChkFDCfatal(SDDriveInfo* pDriveInfo, FSDescriptor* pFDC) {
+    FSDescriptor* var_r28;
+    DrvCtl* pDrvCtl;
+    u8* var_r30;
+    u16 temp_r27;
+
+    (void)var_r30;
+
+    var_r28 = pFDC;
+    pDrvCtl = &FS_drv_ctl[pDriveInfo->nChan];
+
+    if (var_r28 == NULL) {
+        pFDC = (FSDescriptor*)pDrvCtl->unk_20BA4;
+        var_r28 = (FSDescriptor*)pFDC;
+    }
+
+    if (LOAD_LE_u16(var_r28->bytes_per_sector.data_u16) != 0x200) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    if (LOAD_LE_u16(pFDC->bytes_per_sector.data_u16) != LOAD_LE_u16(var_r28->bytes_per_sector.data_u16)) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    var_r30 = (u8*)((u32)var_r28 + offsetof(FSDescriptor, sectors_per_cluster));
+    if ((*var_r30 != 1) && (*var_r30 != 2) && (*var_r30 != 4) && (*var_r30 != 8) && (*var_r30 != 0x10) &&
+        (*var_r30 != 0x20) && (*var_r30 != 0x40)) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    if (var_r28->fat_count != 2) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    if (LOAD_LE_u16(var_r28->root_dir_entries.data_u16) != 0x200) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    temp_r27 = LOAD_LE_u16(var_r28->total_sectors.data_u16);
+
+    if (var_r28->extended_boot_sig != FDC_ATTR_EXTENDED_BOOT) {
+        if (temp_r27 == 0) {
+            pDriveInfo->unk_102 |= 1;
+            return 0xA01A;
+        }
+    } else {
+        if (LOAD_LE_u32(var_r28->total_sectors_32.data_u32) == 0 && temp_r27 == 0) {
+            pDriveInfo->unk_102 |= 1;
+            return 0xA01A;
+        }
+    }
+
+    if (LOAD_LE_u16(var_r28->sectors_per_fat.data_u16) == 0) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    if (FS_strncmp(var_r28->fs_type, "FAT32   ", sizeof(var_r28->fs_type)) == 0) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    var_r30 = (u8*)((u32)pFDC + offsetof(FSDescriptor, fs_type));
+    if (FS_strncmp((char*)var_r30, "FAT32   ", sizeof(var_r28->fs_type)) == 0) {
+        pDriveInfo->unk_102 |= 1;
+        return 0xA01A;
+    }
+
+    return 0;
+}
+
 u16 FS_ChkMnt(SDDriveInfo* pDriveInfo) {
     int pad;
     u32 sp14;
@@ -517,6 +805,7 @@ u16 FS_ChkMnt(SDDriveInfo* pDriveInfo) {
         return status;
     }
 
+    !pad;
     status = FS_ChkMntOther(pDriveInfo);
     return status;
 }

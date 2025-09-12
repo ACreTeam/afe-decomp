@@ -144,7 +144,7 @@ typedef struct DrvCtl {
     /* 0x005F0 */ u32 unk_5F4;
     /* 0x005F8 */ char unk_5F8[0x209F8 - 0x5F8];
     /* 0x209F8 */ void* unk_209F8;
-    /* 0x20000 */ char pad_unk_209FC[4];
+    /* 0x20000 */ void* unk_209FC;
     /* 0x20A00 */ SDDirInfo unk_20A00[3];
     /* 0x20AFC */ SDDirInfo unk_20AFC[2];
     /* 0x20BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
@@ -159,6 +159,8 @@ typedef struct DrvCtl {
     /* 0x259DC */ u16 unk_259DC;
     /* 0x259DE */ char pad_unk_259DE[0x25E48 - 0x259DE];
 } DrvCtl; // size = 0x25E48
+
+#define PTR_UNK(pDrvCtl, index) ((void*)((u32)pDrvCtl->unk_5F8 + index))
 
 #define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) \
     ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))
