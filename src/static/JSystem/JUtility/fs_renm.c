@@ -36,8 +36,8 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
     u16 sp74;
     FSDirEntry sp54;
     FSDirEntry sp34;
-    int sp30;
-    int sp2C;
+    u32 sp30;
+    u32 sp2C;
     u16 sp28;
     u16 sp26;
     u16 sp24;
@@ -106,7 +106,7 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
             var_r28 = pDriveInfo->nSector;
         } else {
             var_r28 = FS_cluster_to_sector(pDriveInfo, sp22);
-            if ((var_r28 + 0x10000) == 0xFFFF) {
+            if (var_r28 == -1) {
                 return 0xA032;
             }
         }
@@ -125,7 +125,7 @@ u16 FS_Rename_sub(SDDriveInfo *pDriveInfo, char *arg1, char *arg2) {
             temp_r29->DIR_Attr = sp54.DIR_Attr;
 
             // sets DIR_NTRes, DIR_CrtTimeTenth, DIR_CrtTime, DIR_CrtDate, DIR_LstAccDate and DIR_FstClusHI
-            FS_strncpy((char*)&temp_r29->DIR_NTRes, (char*)&sp54.DIR_NTRes, offsetof(FSDirEntry, DIR_WrtTime) - offsetof(FSDirEntry, DIR_NTRes));
+            FS_strncpy((char*)&temp_r29->DIR_NTRes, (char*)&sp54.DIR_NTRes, OFFSET_DIR_WRT_TIME - OFFSET_DIR_NT_RES);
             
             temp_r29->DIR_WrtTime.data_u8[0] = sp54.DIR_WrtTime.data_u16 >> 0;
             temp_r29->DIR_WrtTime.data_u8[1] = sp54.DIR_WrtTime.data_u16 >> 8;

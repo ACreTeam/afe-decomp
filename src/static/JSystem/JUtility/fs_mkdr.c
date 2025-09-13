@@ -108,7 +108,7 @@ u16 FS_Mkdir_sub(SDDriveInfo* pDriveInfo, const char* param2) {
         var_r28 = pDriveInfo->nSector;
     } else {
         var_r28 = FS_cluster_to_sector(pDriveInfo, sp70);
-        if ((var_r28 + 0x10000) == 0xFFFF) {
+        if (var_r28 == -1) {
             FS_release_space(pDriveInfo, sp74, sp74);
             return 0xA02A;
         }
@@ -174,7 +174,7 @@ u16 FS_initialize_directory_data(SDDriveInfo* pDriveInfo, u16 param2, u16 param3
     temp_r31->DIR_FstClusLO.data_u8[1] = (param3 >> 8);
 
     var_r29 = FS_cluster_to_sector(pDriveInfo, param2);
-    if ((var_r29 + 0x10000) == 0xFFFF) {
+    if (var_r29 == -1) {
         return 0xA029;
     }
 

@@ -39,5 +39,19 @@
            ((((u8*)&(v))[0] & 0xFF) << 0)))
 
 #define LOAD_LE_u16(v) ((u16)(((((u8*)&(v))[1] << 8) & 0xFF00) | ((((u8*)&(v))[0] & 0xFF) << 0)))
+#define LOAD_LE_u8(v) ((((((u8*)&(v))[1] << 8) & 0xFF00) | ((((u8*)&(v))[0] & 0xFF) << 0)))
+
+#define EXTRACT_BITS(v, size, shift) (((v) & (((1 << (size)) - 1U)) << (shift)) >> (shift))
+
+// clears high bits, so CLEAR_HIBITS(0xFFFF, 8) becomes 0x00FF
+#define CLEAR_HIBITS(v, shift) (((v) << (shift)) >> (shift))
+
+// clears  low bits, so CLEAR_LOBITS(0xFFFF, 8) becomes 0xFF00
+#define CLEAR_LOBITS(v, shift) (((v) >> (shift)) << (shift))
+
+#define U16_HIBYTE(arr, ofs) ((u8*)(arr) + 0 + (ofs))
+#define U16_LOBYTE(arr, ofs) ((u8*)(arr) + 1 + (ofs))
+
+#define TERNARY(cond, a, b) ((cond) ? (a) : (b))
 
 #endif // _H_MACROS_

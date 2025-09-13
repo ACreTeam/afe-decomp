@@ -60,7 +60,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
         return 0xA003;
     }
 
-    if ((pDirInfo->unk_0C + 0x10000) == 0xFFFF) {
+    if (pDirInfo->unk_0C == -1) {
         return 0xA030;
     }
 
@@ -202,7 +202,7 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
             sp2C = FS_cluster_to_sector(sp20, temp_r30);
             var_r24 = sp2C;
 
-            if ((var_r24 + 0x10000) == 0xFFFF) {
+            if (var_r24 == -1) {
                 return 0xA030;
             }
         }

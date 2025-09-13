@@ -164,7 +164,7 @@ u16 FS_CreateFile_Open(SDDriveInfo* pDriveInfo, SDFileInfo** ppFileInfo, char* p
         var_r27 = pDriveInfo->nSector;
     } else {
         var_r27 = FS_cluster_to_sector(pDriveInfo, sp1C);
-        if ((var_r27 + 0x10000) == 0xFFFF) {
+        if (var_r27 == -1) {
             return 0xA032;
         }
     }
@@ -337,8 +337,7 @@ u16 FS_ExistFile_InfoPrc(SDDriveInfo* pDriveInfo, SDFileInfo** ppFileInfo, FSDir
     var_r30->unk_13 = pDirEntry->DIR_Attr;
 
     // copies DIR_NTRes, DIR_CrtTimeTenth, DIR_CrtTime, DIR_CrtDate, DIR_LstAccDate and DIR_FstClusHI
-    FS_strncpy(var_r30->unk_14, (char*)&pDirEntry->DIR_NTRes,
-               offsetof(FSDirEntry, DIR_WrtTime) - offsetof(FSDirEntry, DIR_NTRes));
+    FS_strncpy(var_r30->unk_14, (char*)&pDirEntry->DIR_NTRes, OFFSET_DIR_WRT_TIME - OFFSET_DIR_NT_RES);
 
     var_r30->unk_1E = pDirEntry->DIR_WrtTime.data_u16;
     var_r30->unk_20 = pDirEntry->DIR_WrtDate.data_u16;
@@ -388,7 +387,7 @@ u16 FS_SetDirEntry(SDDriveInfo* pDriveInfo, u32 param2, u16 param3, char** param
     temp_r30->DIR_Attr = FAT_ATTR_ARCHIVE;
 
     // sets DIR_NTRes, DIR_CrtTimeTenth, DIR_CrtTime, DIR_CrtDate, DIR_LstAccDate and DIR_FstClusHI
-    FS_memset((char*)&temp_r30->DIR_NTRes, 0, offsetof(FSDirEntry, DIR_WrtTime) - offsetof(FSDirEntry, DIR_NTRes));
+    FS_memset((char*)&temp_r30->DIR_NTRes, 0, OFFSET_DIR_WRT_TIME - OFFSET_DIR_NT_RES);
 
     temp_r30->DIR_FstClusLO.data_u8[0] = param6;
     temp_r30->DIR_FstClusLO.data_u8[1] = (param6 >> 8);
@@ -517,14 +516,14 @@ u16 FS_check_same_FILE(SDDriveInfo* pDriveInfo, char* param2, u16 param3) {
         //! @bug: should be `ARRAY_COUNT(temp_r30->unk_47C)`?
         for (var_r31 = 0; var_r31 < ARRAY_COUNT(temp_r30->unk_210); var_r31++) {
             if (temp_r30->unk_47C[var_r31].unk_00 != 0xFFFF &&
-                FS_strncmp(temp_r30->unk_47C[var_r31].path, param2, FS_strlen(param2)) == 0) {
+                FS_strncmp(temp_r30->unk_47C[var_r31].path, param2, (u16)FS_strlen(param2)) == 0) {
                 return 0xA018;
             }
         }
     } else {
         for (var_r31 = 0; var_r31 < ARRAY_COUNT(temp_r30->unk_210); var_r31++) {
             if (temp_r30->unk_210[var_r31].unk_00 != 0xFFFF &&
-                FS_strncmp(temp_r30->unk_210[var_r31].path, param2, FS_strlen(param2)) == 0) {
+                FS_strncmp(temp_r30->unk_210[var_r31].path, param2, (u16)FS_strlen(param2)) == 0) {
                 return 0xA018;
             }
         }

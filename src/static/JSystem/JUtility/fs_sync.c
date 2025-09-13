@@ -81,8 +81,7 @@ u16 FS_Sync_DirEntry(SDFileInfo* pFileInfo) {
     temp_r29->DIR_FstClusLO.data_u8[1] = (pFileInfo->unk_22 >> 8);
 
     // sets DIR_NTRes, DIR_CrtTimeTenth, DIR_CrtTime, DIR_CrtDate, DIR_LstAccDate and DIR_FstClusHI
-    FS_strncpy((char*)&temp_r29->DIR_NTRes, pFileInfo->unk_14,
-                offsetof(FSDirEntry, DIR_WrtTime) - offsetof(FSDirEntry, DIR_NTRes));
+    FS_strncpy((char*)&temp_r29->DIR_NTRes, pFileInfo->unk_14, OFFSET_DIR_WRT_TIME - OFFSET_DIR_NT_RES);
 
     FS_set_now_date(temp_r29, NULL);
 

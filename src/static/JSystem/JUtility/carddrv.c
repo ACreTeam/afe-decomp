@@ -4,6 +4,8 @@
 #include "JSystem/JUtility/carddrv.h"
 #include "JSystem/JUtility/exidrv.h"
 
+#define CARD_SECTOR_SIZE 64
+
 RES SD_RES[CARD_NUM_CHANS];
 CMD SD_CMD[CARD_NUM_CHANS];
 CID SD_CID[CARD_NUM_CHANS];
@@ -125,7 +127,7 @@ u16 CARD_Reset() {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    CARD_SectorSize[CARD_ExiChannel] = SECTOR_SIZE * 8;
+    CARD_SectorSize[CARD_ExiChannel] = CARD_SECTOR_SIZE * 8;
     CARD_SetBlockLength(CARD_SectorSize[CARD_ExiChannel]);
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
         return CARD_ErrStatus[CARD_ExiChannel];
@@ -276,7 +278,7 @@ u16 CARD_SD_Status() {
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
     iVar3 = CARD_SectorSize[CARD_ExiChannel];
-    CARD_SectorSize[CARD_ExiChannel] = SECTOR_SIZE;
+    CARD_SectorSize[CARD_ExiChannel] = CARD_SECTOR_SIZE;
     CARD_SetBlockLength(CARD_SectorSize[CARD_ExiChannel]);
 
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {

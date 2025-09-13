@@ -14,12 +14,14 @@ extern "C" {
 
 extern u16 FS_get_space(SDDriveInfo* pDriveInfo, u16 nCluster, u16* param3);
 extern u16 FS_get_space_cache(SDDriveInfo* pDriveInfo, u16 param2, u16 param3, u16* param4);
+extern u16 FS_find_fat_memory(SDDriveInfo* pDriveInfo, u16 param2, u16* param3, u16* param4);
+extern void FS_set_frequency(SDDriveInfo* pDriveInfo, u16 param2);
+extern u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_get_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16* param3);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* param1);
 extern u16 FS_FAT_onmemory_check(SDDriveInfo* pDriveInfo);
 extern u16 FS_Flush(SDDriveInfo* pFile);
 extern u16 FS_get_entry(SDDriveInfo* param1, FSDirEntry* param2, char** param3, u16 param4, void* param5, void* param6, void* param7);
-extern u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, int param3);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* pDriveInfo);
 extern u16 FS_fat_sync(SDDriveInfo* pDriveInfo);
 extern u16 FS_allocate_entry(SDDriveInfo* pDriveInfo, u32 param1, u32* param2, u16* param3);
@@ -49,7 +51,7 @@ extern void *FS_memset(void *dest, u16 ch, size_t count);
 extern char *FS_strcpy(char *dest, const char *src);
 extern char *FS_strncpy(char *dest, const char *src, size_t num);
 extern size_t FS_strlen(const char *s);
-extern u16 FS_strncmp(const char *s1, const char *s2, u16 n);
+extern u16 FS_strncmp(const char *s1, const char *s2, size_t n);
 extern void FS_srand(u16 arg0, u16 arg1);
 extern u16 FS_rand(u16 arg0, u16 arg1);
 

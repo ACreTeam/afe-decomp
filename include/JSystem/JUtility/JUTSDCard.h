@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-#define SECTOR_SIZE 64
-
 enum SDCommands {
     // Block Read
     /* 0x11 */ READ_SINGLE_BLOCK = 17,

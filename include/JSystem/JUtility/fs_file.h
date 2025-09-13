@@ -8,6 +8,9 @@
 extern "C" {
 #endif
 
+#define MAX_SECTORS 258
+#define SECTOR_SIZE 512
+
 typedef struct UnknownStruct1 {
     /* 0x00 */ u16 unk_00;
     /* 0x02 */ u16 unk_02;
@@ -15,12 +18,12 @@ typedef struct UnknownStruct1 {
 } UnknownStruct1; // size = 0x08
 
 typedef struct UnknownStruct2 {
-    /* 0x000 */ u32 unk_000[0x102];
-    /* 0x408 */ u16 unk_408[0x102];
-    /* 0x60C */ u16 unk_60C[0x102];
-    /* 0x810 */ u16 unk_810[0x102];
-    /* 0xA14 */ u16 unk_A14[0x102];
-    /* 0xC18 */ u16 unk_C18[0x102];
+    /* 0x000 */ u8* unk_000[MAX_SECTORS];
+    /* 0x408 */ u16 unk_408[MAX_SECTORS];
+    /* 0x60C */ u16 unk_60C[MAX_SECTORS];
+    /* 0x810 */ u16 unk_810[MAX_SECTORS];
+    /* 0xA14 */ u16 unk_A14[MAX_SECTORS];
+    /* 0xC18 */ u16 unk_C18[MAX_SECTORS];
 } UnknownStruct2; // size = 0xE1C
 
 typedef struct UnknownStruct3 {
@@ -89,7 +92,7 @@ typedef struct SDDriveInfo {
     /* 0x0E4 */ u16 unk_E4;
     /* 0x0E6 */ char unk_E6;
     /* 0x0E7 */ char unk_E7;
-    /* 0x0E8 */ u8* unk_E8;
+    /* 0x0E8 */ u8* unk_E8; // pointer to unk_5F8 (indirectly)
     /* 0x0EC */ UnknownStruct2* unk_EC;
     /* 0x0F0 */ u16 unk_F0;
     /* 0x0F0 */ u16 unk_F2;
@@ -142,9 +145,9 @@ typedef struct DrvCtl {
     /* 0x0047C */ SDFileInfo unk_47C[3];
     /* 0x005F0 */ u32 unk_5F0;
     /* 0x005F0 */ u32 unk_5F4;
-    /* 0x005F8 */ char unk_5F8[0x209F8 - 0x5F8];
-    /* 0x209F8 */ void* unk_209F8;
-    /* 0x20000 */ void* unk_209FC;
+    /* 0x005F8 */ u8 unk_5F8[SECTOR_SIZE * MAX_SECTORS]; // FAT cache?
+    /* 0x209F8 */ u8* unk_209F8; // pointers to unk_5F8
+    /* 0x20000 */ u8* unk_209FC; // pointers to unk_5F8
     /* 0x20A00 */ SDDirInfo unk_20A00[3];
     /* 0x20AFC */ SDDirInfo unk_20AFC[2];
     /* 0x20BA4 */ u8 unk_20BA4[sizeof(FSPartitionBootSector) * PBS_COUNT];
@@ -154,13 +157,13 @@ typedef struct DrvCtl {
     /* 0x24BB4 */ u16 unk_24BB4;
     /* 0x24BB6 */ u16 unk_24BB6;
     /* 0x24BB8 */ UnknownStruct2 unk_24BB8;
-    /* 0x259D4 */ s32 unk_259D4;
+    /* 0x259D4 */ u32 unk_259D4;
     /* 0x259D8 */ u32 unk_259D8;
     /* 0x259DC */ u16 unk_259DC;
     /* 0x259DE */ char pad_unk_259DE[0x25E48 - 0x259DE];
 } DrvCtl; // size = 0x25E48
 
-#define PTR_UNK(pDrvCtl, index) ((void*)((u32)pDrvCtl->unk_5F8 + index))
+#define PTR_UNK(pDrvCtl, index) ((u8*)((u32)pDrvCtl->unk_5F8 + index))
 
 #define GET_FILE_INFO_COUNT(pDrvCtl, pDriveInfo) \
     ((u16)((pDriveInfo)->unk_04 == 1 ? ARRAY_COUNT((pDrvCtl)->unk_210) : ARRAY_COUNT((pDrvCtl)->unk_47C)))

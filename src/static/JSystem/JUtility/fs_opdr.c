@@ -142,7 +142,7 @@ u16 FS_Opendir_sub(SDDriveInfo* pDriveInfo, SDDirInfo** ppDirInfo, const char* p
     }
 
     var_r31->unk_04 = FS_cluster_to_sector(pDriveInfo, sp80.DIR_FstClusLO.data_u16);
-    if ((var_r31->unk_04 + 0x10000) == 0xFFFF) {
+    if (var_r31->unk_04 == -1) {
         return 0xA032;
     }
 
