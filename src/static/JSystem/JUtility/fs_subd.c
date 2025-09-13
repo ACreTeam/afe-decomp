@@ -430,8 +430,6 @@ void FS_set_frequency(SDDriveInfo* arg0, u16 arg1) {
     }
 }
 
-extern u16 FS_fat_modify_sector_check(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
-
 u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16 param3) {
     u16 status;
     u32 temp_r29;
@@ -527,6 +525,121 @@ u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16 param3) {
     return 0;
 }
 
+u16 FS_fat_modify_sector_check(SDDriveInfo* arg0, u16 arg1, u16 arg2) {
+    u16 var_r24;
+    u32 var_r23;
+    u16 var_r22;
+    u16 temp_r0 = 0;
+    u16 var_r20 = 0;
+    u16 var_r19 = 0;
+    u8 var = 0;
+    u16 temp_r3;
+    u16 var_r29;
+    u32 var_r28;
+    u16 var_r27;
+    u16 var_r26;
+    u16 var_r25;
+
+    (void)arg1;
+
+    var_r19 = 0;
+    var_r22 = 0;
+
+    if (arg0->unk_3C == 1) {
+        var_r23 = (arg1 >> 8);
+    } else {
+        var_r23 = ((arg1 * 3u) >> 10) & 0xFFFFFF;
+
+        if ((((arg1 * 3u) & 0x3FF) >> 1) == 0x1FF) {
+            var_r19 = 1;
+        }
+    }
+
+    if (var_r23 > 0xFF) {
+        return 0xA02D;
+    }
+
+    var_r29 = var_r23;
+
+    if (var_r19 == 0) {
+        var_r20 = 2;
+    } else {
+        var_r20 = 4;
+    }
+
+    var_r27 = 0;
+    while (var_r27 < var_r20) {
+        if ((var_r27 == 0) || (var_r27 == 2)) {
+            var_r28 = arg0->unk_58;
+        } else {
+            var_r28 = arg0->unk_5C;
+        }
+
+        var = 0x80;
+        var >>= (var_r29 % 8);
+
+        if (!(arg0->unk_C2[var_r29 / 8] & var)) {
+            temp_r0 = var_r28 % arg0->unk_1E;
+
+            if (var_r29 < (u32)(arg0->unk_1E - temp_r0)) {
+                var_r24 = 0;
+                var_r25 = (arg0->unk_1E - temp_r0) - 1;
+
+                if (var_r25 >= arg0->unk_2E) {
+                    var_r25 = arg0->unk_2E - 1;
+                }
+            } else if (((var_r28 + var_r29) / arg0->unk_1E) == ((var_r28 + arg0->unk_2E) / arg0->unk_1E)) {
+                var_r24 = (arg0->unk_1E * ((var_r28 + var_r29) / arg0->unk_1E)) - var_r28;
+                var_r25 = arg0->unk_2E - 1;
+            } else {
+                var_r24 = (arg0->unk_1E * ((var_r28 + var_r29) / arg0->unk_1E)) - var_r28;
+                var_r25 = var_r24 + arg0->unk_1E - 1;
+            }
+
+            var_r26 = var_r24;
+            while (var_r26 <= var_r25) {
+                var = 0x80;
+                var >>= (var_r26 % 8);
+                if (arg0->unk_C2[var_r26 / 8] & var) {
+                    var_r26 = 0xFFFF;
+                    break;
+                }
+                
+                var_r26++;
+            }
+
+            if (var_r26 != 0xFFFF) {
+                var_r22++;
+            }
+
+            if ((arg2 == 1) && ((var_r27 == 1) || (var_r27 == 3))) {
+                var = 0x80;
+                var >>= (var_r29 % 8);
+                arg0->unk_C2[var_r29 / 8] |= var;
+            }
+        }
+
+        if (var_r27 == 1) {
+            var_r29++;
+        }
+
+        var_r27++;
+    }
+
+    if (arg2 == 0) {
+        if ((arg0->unk_E2 + var_r22) > arg0->unk_E4) {
+            temp_r3 = FS_Flush(arg0);
+            if (temp_r3 != 0) {
+                return temp_r3;
+            }
+        }
+    } else {
+        arg0->unk_E2 += var_r22;
+    }
+
+    return 0;
+}
+
 u16 FS_get_fat_entry(SDDriveInfo* arg0, u16 arg1, u16* arg2) {
     u16 status;
     u32 temp_r29;
@@ -547,7 +660,7 @@ u16 FS_get_fat_entry(SDDriveInfo* arg0, u16 arg1, u16* arg2) {
             *arg2 = LOAD_LE_u8(arg0->unk_E8[arg1 * 2]);
         } else {
             *arg2 = TERNARY(arg1 % 2,
-                ((*U16_LOBYTE(arg0->unk_E8, (arg1 * 3) / 2) << 4) & 0xFF0) | ((*U16_HIBYTE(arg0->unk_E8, (arg1 * 3) / 2) >> 4) & 0x00F),
+                ((*U16_LOBYTE(arg0->unk_E8, (arg1 * 3) / 2) << 4) & 0xFF0) | EXTRACT_BITS((*U16_HIBYTE(arg0->unk_E8, (arg1 * 3) / 2)), 4, 4),
                 ((*U16_LOBYTE(arg0->unk_E8, (arg1 * 3) / 2) << 8) & 0xF00) | (CLEAR_HIBITS(*U16_HIBYTE(arg0->unk_E8, (arg1 * 3) / 2), 1) & 0x0FF)
             );
         }
@@ -567,8 +680,8 @@ u16 FS_get_fat_entry(SDDriveInfo* arg0, u16 arg1, u16* arg2) {
 
             if (temp_r29 != 0x1FF) {
                 *arg2 = TERNARY(arg1 % 2,
-                    ((*U16_LOBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29) << 4) & 0xFF0) | ((*U16_HIBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29) >> 4) & 0x00F),
-                    ((*U16_LOBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29) << 8) & 0xF00) | (CLEAR_HIBITS(*U16_HIBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29), 1) & 0x0FF)
+                    ((*U16_LOBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29) << 4) & 0xFF0) | EXTRACT_BITS((*U16_HIBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29)), 4, 4),
+                    ((*U16_LOBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29) << 8) & 0xF00) | (CLEAR_HIBITS(*U16_HIBYTE(arg0->unk_EC->unk_000[sp1C], temp_r29), 8) & 0xFF)
                 );
             } else {
                 sp18 = arg0->unk_EC->unk_000[sp1C][temp_r29];

@@ -16,6 +16,7 @@ extern u16 FS_get_space(SDDriveInfo* pDriveInfo, u16 nCluster, u16* param3);
 extern u16 FS_get_space_cache(SDDriveInfo* pDriveInfo, u16 param2, u16 param3, u16* param4);
 extern u16 FS_find_fat_memory(SDDriveInfo* pDriveInfo, u16 param2, u16* param3, u16* param4);
 extern void FS_set_frequency(SDDriveInfo* pDriveInfo, u16 param2);
+extern u16 FS_fat_modify_sector_check(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_get_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16* param3);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* param1);
