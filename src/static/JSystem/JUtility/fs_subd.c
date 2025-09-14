@@ -6,7 +6,6 @@
 #include "JSystem/JUtility/fs_form.h"
 #include "JSystem/JUtility/fs_sync.h"
 #include "JSystem/JUtility/time.h"
-#include "macros.h"
 
 u16 FS_get_space(SDDriveInfo* pDriveInfo, u16 nCluster, u16* param3) {
     u16 nCurCluster;
@@ -736,6 +735,214 @@ u16 FS_fat_clear(u16 param2, SDDriveInfo* pDriveInfo) {
     return 0xA029;
 }
 
+u16 FS_fat_sync(SDDriveInfo* arg0) {
+    DrvCtl* temp_r28;
+    u16 status;
+    u16 var_r29;
+
+    (void)arg0;
+
+    temp_r28 = &FS_drv_ctl[arg0->nChan];
+
+    if (FS_FAT_onmemory_check(arg0) != 0) {
+        if (arg0->unk_C0 != 1) {
+            return 0;
+        }
+
+        status = FS_fat_sync_sub(arg0, 1);
+        if (status != 0) {
+            return status;
+        }
+
+        status = FS_fat_sync_sub(arg0, 2);
+        if (status != 0) {
+            return status;
+        }
+
+        FS_memset(arg0->unk_C2, 0, sizeof(arg0->unk_C2));
+        arg0->unk_E2 = 0;
+        arg0->unk_C0 = 0;
+        return 0;
+    }
+
+    for (var_r29 = 0; var_r29 < temp_r28->unk_259D4 >> 9; var_r29++) {
+        if (arg0->unk_EC->unk_C18[var_r29] == 1) {
+            status = FS_fat_sync_cache(arg0, var_r29, 1U);
+            if (status != 0) {
+                return status;
+            }
+        }
+    }
+
+    for (var_r29 = 0; var_r29 < temp_r28->unk_259D4 >> 9; var_r29++) {
+        if (arg0->unk_EC->unk_C18[var_r29] == 1) {
+            status = FS_fat_sync_cache(arg0, var_r29, 2U);
+            if (status != 0) {
+                return status;
+            }
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_fat_sync_sub(SDDriveInfo* arg0, u16 arg1) {
+    u16 var_r31;
+    u16 var_r30;
+    u32 var_r28;
+    u16 temp_r27;
+    u32 var_r26;
+    u16 status;
+    u16 temp_r22;
+    u8 var = 0;
+    u8* ptr = NULL;
+
+    (void)var_r31;
+
+    var_r31 = 0;
+    temp_r22 = arg0->unk_1E;
+    temp_r27 = arg0->unk_2E;
+
+    if (arg1 == 1) {
+        var_r28 = arg0->unk_58;
+    } else {
+        var_r28 = arg0->unk_5C;
+    }
+
+    if (arg0->unk_3C == 1) {
+        ptr = arg0->unk_E8;
+    } else {
+        ptr = arg0->unk_E8;
+    }
+
+    while (var_r31 < temp_r27) {
+        for (var_r30 = var_r31; var_r30 < temp_r27; var_r30++) {
+            var = 0x80;
+            var >>= var_r30 % 8;
+            if (arg0->unk_C2[var_r30 / 8] & var) {
+                break;
+            }
+        }
+
+        var_r31 = var_r30;
+
+        if (var_r30 != temp_r27) {
+            var_r26 = 0;
+            var_r30 = var_r31;
+
+            while (var_r30 < temp_r27) {
+                if ((var_r28 + var_r31) / temp_r22 != (var_r28 + var_r31 + var_r26) / temp_r22) {
+                    break;
+                }
+
+                var_r30++;
+                var_r26++;
+            }
+
+            status = FS_write_sub(&ptr[var_r31 << 9], var_r26, var_r28 + var_r31, NULL, arg0->unk_04, 0, arg0->nChan);
+            if (status != 0) {
+                return status;
+            }
+
+            var_r31 = var_r30;
+        }
+    }
+
+    return 0;
+}
+
+u16 FS_fat_sync_cache(SDDriveInfo* arg0, u16 arg1, u16 arg2) {
+    u32 var_r29;
+    u16 status;
+    u8* var_r27;
+    u16 unk_810;
+    u16 unk_60C;
+
+    if (arg0->unk_04 != arg0->unk_EC->unk_408[arg1]) {
+        return 0;
+    }
+
+    if (arg2 == 1) {
+        var_r29 = arg0->unk_58;
+    } else {
+        var_r29 = arg0->unk_5C;
+    }
+
+    unk_810 = arg0->unk_EC->unk_810[arg1];
+    unk_60C = arg0->unk_EC->unk_60C[arg1];
+
+    if (arg0->unk_3C == 1) {
+        var_r27 = arg0->unk_EC->unk_000[arg1];
+    } else {
+        var_r27 = arg0->unk_EC->unk_000[arg1];
+    }
+
+    status = FS_write_sub(var_r27, unk_810, var_r29 + unk_60C, NULL, arg0->unk_04, 0, arg0->nChan);
+    if (status != 0) {
+        return status;
+    }
+
+    if (arg2 == 2) {
+        arg0->unk_EC->unk_C18[arg1] = 0;
+    }
+
+    return 0;
+}
+
+
+u16 FS_release_space(SDDriveInfo* pDriveInfo, u16 param2, u16 param3) {
+    u16 status;
+    u16 temp_r3_2;
+    u16 temp_r3_3;
+    u16 var_r27;
+    u16 var_r24;
+    u16 temp_r23;
+
+    (void)temp_r3_2;
+    (void)temp_r3_2;
+
+    if (param2 < 2 || param2 >= pDriveInfo->unk_BC) {
+        return 0xA00C;
+    }
+
+    if (param3 < 2 || param3 >= pDriveInfo->unk_BC) {
+        return 0xA00C;
+    }
+
+    temp_r23 = (pDriveInfo->unk_68 - pDriveInfo->unk_64) / pDriveInfo->unk_1E;
+    var_r27 = param2;
+
+    if (param2 == param3) {
+        return FS_set_fat_entry(pDriveInfo, param3, 0);
+    }
+
+    for (var_r24 = 0; var_r24 < temp_r23; var_r24++) {
+        temp_r3_2 = FS_get_next_cluster(pDriveInfo, var_r27);
+        temp_r3_3 = FS_get_next_cluster(pDriveInfo, temp_r3_2);
+
+        if (temp_r3_3 >= 0xFFF7 && temp_r3_3 < 0xFFFF) {
+            return 0xA029;
+        }
+
+        if (temp_r3_3 == 0xFFFF) {
+            if (temp_r3_2 != param3) {
+                return 0xA00C;
+            }
+
+            status = FS_set_fat_entry(pDriveInfo, var_r27, 0xFFFF);
+            if (status != 0) {
+                return status;
+            }
+
+            return FS_set_fat_entry(pDriveInfo, param3, 0);
+        }
+
+        var_r27 = temp_r3_2;
+    }
+
+    return 0xA029;
+}
+
 u16 FS_FAT_onmemory_check(SDDriveInfo* pDriveInfo) {
     if (pDriveInfo->unk_F0 == 1) {
         return 0;
@@ -748,7 +955,273 @@ u16 FS_Flush(SDDriveInfo* pDriveInfo) {
     return FS_Sync_sub(pDriveInfo);
 }
 
-u16 FS_get_entry(SDDriveInfo* pDriveInfo, FSDirEntry* param2, char** param3, u16 param4, void* param5, void* param6, void* param7) {}
+u16 FS_get_entry(SDDriveInfo* pDriveInfo, FSDirEntry* param2, char** param3, u16 param4, u32* param5, u16* param6, u16* param7) {
+    FSDirEntry* sp34;
+    u16 sp30;
+    u16 sp2E;
+    u16 sp2C;
+    DrvCtl* temp_r31;
+    u32 var_r24;
+    u16 status;
+    u16 var_r29;
+
+    sp34 = NULL;
+    sp30 = 0;
+    sp2C = 0;
+    temp_r31 = &FS_drv_ctl[pDriveInfo->nChan];
+    *param7 = 0;
+    temp_r31->unk_24BAC = 0;
+    temp_r31->unk_24BB0 = 0;
+    temp_r31->unk_24BB4 = 0;
+    status = 0;
+
+    if (param4 == 0) {
+        return 0xA00C;
+    }
+
+    for (var_r29 = 0; var_r29 < param4; var_r29++) {
+        if (*param3[var_r29] == FAT_FLAG_DELETED) {
+            return 0xA00C;
+        }
+    }
+
+    for (var_r29 = 1; var_r29 <= param4; var_r29++) {
+        if (var_r29 == 1) {
+            switch (FS_current_check(pDriveInfo, param3, param4, &sp2E)) {
+                case 2:
+                    status = FS_read_sub(NULL, 1, pDriveInfo->unk_6C, NULL, pDriveInfo->unk_04, pDriveInfo->nChan);
+                    if (status != 0) {
+                        return status;
+                    }
+
+                    sp34 = (FSDirEntry*)&temp_r31->unk_20BA4[(((pDriveInfo->unk_70 / 32) << 5))];
+                    *param7 = pDriveInfo->unk_72;
+                    *param5 = pDriveInfo->unk_6C;
+                    *param6 = pDriveInfo->unk_70;
+                    sp2C = 0;
+                    goto end;
+                case 3:
+                    sp30 = pDriveInfo->unk_74;
+                    var_r29 = sp2E;
+                    if (var_r29 == (param4 - 1)) {
+                        *param7 = pDriveInfo->unk_74;
+                        temp_r31->unk_24BAC = FS_cluster_to_sector(pDriveInfo, *param7);
+                    }
+                    continue;
+                default:
+                    var_r24 = pDriveInfo->nSector;
+                    if (param4 == 1) {
+                        temp_r31->unk_24BAC = var_r24;
+                    }
+
+                    break;
+            }
+        } else {
+            var_r24 = FS_cluster_to_sector(pDriveInfo, sp30);
+
+            if (var_r24 == -1) {
+                if (temp_r31->unk_24BB0 == 0) {
+                    temp_r31->unk_24BAC = 0;
+                }
+
+                return 0xA02A;
+            }
+        }
+
+        status = FS_get_entry_sub(pDriveInfo, &sp34, var_r24, param5, param6, &sp2C, &sp30, param3[var_r29 - 1], var_r29);
+        if (status == 0) {
+            if (var_r29 == (param4 - 1) && DIRECTORY(sp34)) {
+                *param7 = LOAD_LE_u16(sp34->DIR_FstClusLO.data_u16);
+                temp_r31->unk_24BAC = FS_cluster_to_sector(pDriveInfo, *param7);
+            }
+
+            continue;
+        }
+
+        *param5 = 0;
+        *param6 = 0;
+
+        if (temp_r31->unk_24BB0 == 0) {
+            temp_r31->unk_24BAC = 0;
+        }
+
+        return status;
+    }
+
+end:
+    FS_strncpy(param2->DIR_Name, sp34->DIR_Name, sizeof(param2->DIR_Name));
+    param2->DIR_Attr = sp34->DIR_Attr;
+
+    // sets DIR_NTRes, DIR_CrtTimeTenth, DIR_CrtTime, DIR_CrtDate, DIR_LstAccDate and DIR_FstClusHI
+    FS_strncpy((char*)&param2->DIR_NTRes, (char*)&sp34->DIR_NTRes, OFFSET_DIR_WRT_TIME - OFFSET_DIR_NT_RES);
+
+    param2->DIR_WrtTime.data_u16 = LOAD_LE_u16(sp34->DIR_WrtTime.data_u16);
+    param2->DIR_WrtDate.data_u16 = LOAD_LE_u16(sp34->DIR_WrtDate.data_u16);
+    param2->DIR_FstClusLO.data_u16 = LOAD_LE_u16(sp34->DIR_FstClusLO.data_u16);
+    param2->DIR_FileSize.data_u32 = LOAD_LE_u32(sp34->DIR_FileSize.data_u32);
+
+    if (temp_r31->unk_24BB0 == 0) {
+        temp_r31->unk_24BAC = 0;
+    }
+
+    if (sp2C != 0) {
+        FS_strncpy((char*)&temp_r31->unk_20BA4[0], (char*)&temp_r31->unk_20BA4[sp2C << 9], 512);
+    }
+
+    return 0;
+}
+
+u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u32* param4, u16* param5, u16* param6, u16* param7, char* param8, u16 param9) {
+    FSDirEntry sp28;
+    u16 var_r31;
+    u16 var_r29;
+    FSDirEntry* var_r28;
+    u16 var_r27;
+    DrvCtl* temp_r26;
+    u16 var_r24;
+    u32 temp_r23;
+    u16 status;
+    u32 var_r20;
+    u32 var_r19;
+    u16 temp_r3_2;
+
+    (void)status;
+
+    var_r19 = 0;
+    var_r27 = 0;
+    var_r20 = 0;
+    temp_r26 = &FS_drv_ctl[pDriveInfo->nChan];
+    temp_r23 = pDriveInfo->unk_F6;
+    var_r24 = (temp_r23 * 0x10) & 0xFFF0;
+
+    if (param9 == 1) {
+        var_r27 = pDriveInfo->unk_28;
+
+        if (var_r24 > var_r27) {
+            var_r24 = var_r27;
+        }
+    }
+
+    var_r31 = 0;
+    var_r29 = 0;
+
+    while (var_r31 < 12) {
+        if (param8[var_r31] == '\0') {
+            while (var_r29 < sizeof(sp28.DIR_Name)) {
+                sp28.DIR_Name[var_r29] = 0x20;
+                var_r29++;
+            }
+
+            break;
+        } 
+
+        if (param8[var_r31] == '.') {
+            while (var_r29 < sizeof(sp28.DIR_Name) - 3) {
+                sp28.DIR_Name[var_r29] = 0x20;
+                var_r29++;
+            }
+
+            var_r29--;
+        } else {
+            sp28.DIR_Name[var_r29] = param8[var_r31];
+        }
+
+        var_r31++;
+        var_r29++;
+    }
+
+    sp28.DIR_Attr = FAT_ATTR_NONE;
+    var_r29 = 0;
+
+    while (var_r29 < 0xFFFF) {
+        status = FS_read_sub(NULL, temp_r23, param3, NULL, pDriveInfo->unk_04 & 0xFF, pDriveInfo->nChan);
+        if (status != 0) {
+            return status;
+        }
+
+        var_r28 = (FSDirEntry*)temp_r26->unk_20BA4;
+        var_r31 = 0;
+
+        while (var_r31 < var_r24) {
+            if (var_r28->DIR_Name[0] == '\0') {
+                if (temp_r26->unk_24BB0 == 0) {
+                    temp_r26->unk_24BB0 = param3 + ((var_r31 * 32u) / pDriveInfo->unk_1C);
+                    temp_r26->unk_24BB4 = (var_r31 * 32u) % pDriveInfo->unk_1C;
+                }
+
+                return 0xA02A;
+            }
+
+            if (temp_r26->unk_24BAC != 0 && temp_r26->unk_24BB0 == 0 && var_r28->DIR_Name[0] == FAT_FLAG_DELETED) {
+                temp_r26->unk_24BB0 = param3 + ((var_r31 * 32u) / pDriveInfo->unk_1C);
+                temp_r26->unk_24BB4 = (var_r31 * 32u) % pDriveInfo->unk_1C;
+            }
+
+            if (!VOLUME_ID(var_r28) && FS_fat_strcmp(&sp28, var_r28) == 0) {
+                if (DIRECTORY(var_r28)) {
+                    *param7 = LOAD_LE_u16(var_r28->DIR_FstClusLO.data_u16);
+                } else {
+                    *param7 = 0xFFFF;
+                }
+
+                *param2 = var_r28;
+                *param4 = param3 + ((var_r31 * 32u) / pDriveInfo->unk_1C);
+                *param5 = (var_r31 * 32u) % pDriveInfo->unk_1C;
+                *param6 = (*param4 & 0xFFFF) - (param3 & 0xFFFF);
+                return 0;
+            }
+
+            var_r31++;
+            var_r28++;
+        }
+
+        if (param9 == 1) {
+            param3 += temp_r23;
+
+            if (var_r27 > var_r24) {
+                var_r27 -= var_r24;
+
+                if (var_r27 < var_r24) {
+                    var_r24 = var_r27;
+                }
+            } else {
+                return 0xA02A;
+            }
+        } else {
+            var_r20 += temp_r23;
+
+            if (var_r20 < pDriveInfo->unk_1E) {
+                param3 += temp_r23;
+            } else {
+                var_r20 = 0;
+
+                temp_r3_2 = FS_sector_to_cluster(pDriveInfo, param3);
+                if (temp_r3_2 == 0xFFFF) {
+                    return 0xA02A;
+                }
+
+                temp_r3_2 = FS_get_next_cluster(pDriveInfo, temp_r3_2);
+                if (temp_r3_2 >= 0xFFF7) {
+                    return 0xA02A;
+                }
+
+                param3 = FS_cluster_to_sector(pDriveInfo, temp_r3_2);
+                if (param3 == -1) {
+                    return 0xA02A;
+                }
+            }
+        }
+
+        var_r19 += temp_r23 * 0x10;
+        if (var_r19 >= 0x10000) {
+            return 0xA02A;
+        }
+
+        var_r29++;
+    }
+
+    return 0xA02A;
+}
 
 u16 FS_current_check(SDDriveInfo* pDriveInfo, char** param2, u16 param3, u16* param4) {
     char sp38[64];

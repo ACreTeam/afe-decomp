@@ -16,34 +16,34 @@ extern u16 FS_get_space(SDDriveInfo* pDriveInfo, u16 nCluster, u16* param3);
 extern u16 FS_get_space_cache(SDDriveInfo* pDriveInfo, u16 param2, u16 param3, u16* param4);
 extern u16 FS_find_fat_memory(SDDriveInfo* pDriveInfo, u16 param2, u16* param3, u16* param4);
 extern void FS_set_frequency(SDDriveInfo* pDriveInfo, u16 param2);
-extern u16 FS_fat_modify_sector_check(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_set_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
+extern u16 FS_fat_modify_sector_check(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_get_fat_entry(SDDriveInfo* pDriveInfo, u16 param2, u16* param3);
-extern u16 FS_fat_clear(u16 param2, SDDriveInfo* param1);
-extern u16 FS_FAT_onmemory_check(SDDriveInfo* pDriveInfo);
-extern u16 FS_Flush(SDDriveInfo* pFile);
-extern u16 FS_get_entry(SDDriveInfo* param1, FSDirEntry* param2, char** param3, u16 param4, void* param5, void* param6, void* param7);
 extern u16 FS_fat_clear(u16 param2, SDDriveInfo* pDriveInfo);
 extern u16 FS_fat_sync(SDDriveInfo* pDriveInfo);
+extern u16 FS_fat_sync_sub(SDDriveInfo* pDriveInfo, u16 param1);
+extern u16 FS_fat_sync_cache(SDDriveInfo* pDriveInfo, u16 param1, u16 param2);
+extern u16 FS_release_space(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
+extern u16 FS_FAT_onmemory_check(SDDriveInfo* pDriveInfo);
+extern u16 FS_Flush(SDDriveInfo* pFile);
+extern u16 FS_get_entry(SDDriveInfo* pDriveInfo, FSDirEntry* param2, char** param3, u16 param4, u32* param5, u16* param6, u16* param7);
+extern u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u32* param4, u16* param5, u16* param6, u16* param7, char* param8, u16 param9);
+extern u16 FS_current_check(SDDriveInfo* pDriveInfo, char** param2, u16 param3, u16* param4);
 extern u16 FS_allocate_entry(SDDriveInfo* pDriveInfo, u32 param1, u32* param2, u16* param3);
 extern u16 FS_allocate_entry_sub(SDDriveInfo* pDriveInfo, u32 arg1, u32* arg2, u16* arg3);
-extern u16 FS_delete_lfn_entry(SDDriveInfo* pFile, u32 param1, int param2, u16 param3);
+extern u16 FS_delete_lfn_entry(SDDriveInfo* pDriveInfo, u32 param1, int param2, u16 param3);
 extern u32 FS_set_now_date(FSDirEntry *param1, void *param2);
 extern u16 FS_open_check_parent(SDDriveInfo *pDriveInfo, char* param2);
 extern u16 FS_open_check_all(SDDriveInfo *pDriveInfo, char* param2);
-
-extern u16 FS_release_space(SDDriveInfo* pDriveInfo, u16 param2, u16 param3);
-
 extern u16 FS_get_next_cluster(SDDriveInfo *pDriveInfo, u16 param2);
 extern u16 FS_get_previous_cluster(SDDriveInfo *pDriveInfo, u16 param2, u16 param3);
 extern u16 FS_sector_to_cluster(SDDriveInfo *pDriveInfo, u32 param2);
 extern u32 FS_cluster_to_sector(SDDriveInfo* pDriveInfo, u16 param2);
-
 extern u16 FS_read_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6);
 extern u16 FS_write_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6, u16 nChan);
 extern u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan);
 extern u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4);
-extern u16 FS_fat_strcmp(FSDirEntry *arg0, FSDirEntry *arg1); // matched but param types not 100% confirmed
+extern u16 FS_fat_strcmp(FSDirEntry *arg0, FSDirEntry *arg1);
 extern u16 FS_entry_name_set(char* param1, char* param2);
 extern void FS_entname_to_stdname(char* param1);
 extern u16 FS_uchar_to_dchar(char* param1);

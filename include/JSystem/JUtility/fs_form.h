@@ -19,6 +19,7 @@ extern "C" {
 
 #define FDC_ATTR_EXTENDED_BOOT 0x29
 #define FAT_FLAG_DELETED 0xE5
+#define FAT_ATTR_NONE 0x00
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
 #define FAT_ATTR_SYSTEM 0x04

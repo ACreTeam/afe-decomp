@@ -28,7 +28,7 @@ u16 FS_Chdir(SDDriveInfo* pDriveInfo, char* arg1) {
 u16 FS_Chdir_sub(SDDriveInfo* pDriveInfo, char* arg1) {
     u16 status;
     FSDirEntry sp80;
-    s32 sp7C;
+    u32 sp7C;
     u16 sp78[2];
     u16 sp76;
     u16 sp74;

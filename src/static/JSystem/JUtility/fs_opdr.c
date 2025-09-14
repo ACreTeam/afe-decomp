@@ -37,8 +37,7 @@ u16 FS_Opendir_sub(SDDriveInfo* pDriveInfo, SDDirInfo** ppDirInfo, const char* p
     u16 var_r29;
     DrvCtl* temp_r25;
     FSDirEntry sp80;
-    u16 sp7C;
-    u16 pad;
+    u32 sp7C;
     u16 sp78;
     u16 sp76;
     u16 sp74;
