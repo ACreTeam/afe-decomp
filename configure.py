@@ -302,7 +302,7 @@ config.libs = [
             Object(Matching, "JSystem/JUtility/fs_vara.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
             Object(NonMatching, "JSystem/JUtility/fs_form.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(NonMatching, "JSystem/JUtility/fs_subd.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(Matching, "JSystem/JUtility/fs_subd.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_drv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/time.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_init.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),

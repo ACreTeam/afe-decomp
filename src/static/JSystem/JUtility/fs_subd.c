@@ -889,17 +889,16 @@ u16 FS_fat_sync_cache(SDDriveInfo* arg0, u16 arg1, u16 arg2) {
     return 0;
 }
 
-
 u16 FS_release_space(SDDriveInfo* pDriveInfo, u16 param2, u16 param3) {
-    u16 status;
-    u16 temp_r3_2;
-    u16 temp_r3_3;
-    u16 var_r27;
+    u16 status = 0;
+    u16 temp_r3_3 = 0;
+    u16 var_r27 = 0;
+    u16 temp_r3_2 = 0;
     u16 var_r24;
     u16 temp_r23;
-
-    (void)temp_r3_2;
-    (void)temp_r3_2;
+    
+    (void)status;
+    (void)status;
 
     if (param2 < 2 || param2 >= pDriveInfo->unk_BC) {
         return 0xA00C;
@@ -1072,7 +1071,7 @@ end:
 }
 
 u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u32* param4, u16* param5, u16* param6, u16* param7, char* param8, u16 param9) {
-    FSDirEntry sp28;
+    char name[8 + 4];
     u16 var_r31;
     u16 var_r29;
     FSDirEntry* var_r28;
@@ -1080,13 +1079,18 @@ u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u
     DrvCtl* temp_r26;
     u16 var_r24;
     u32 temp_r23;
-    u16 status;
+    u16 status = 0;
     u32 var_r20;
     u32 var_r19;
     u16 temp_r3_2;
 
     (void)status;
+    (void)status;
 
+    (void)var_r27;
+    (void)var_r27;
+    (void)temp_r26;
+    
     var_r19 = 0;
     var_r27 = 0;
     var_r20 = 0;
@@ -1107,8 +1111,8 @@ u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u
 
     while (var_r31 < 12) {
         if (param8[var_r31] == '\0') {
-            while (var_r29 < sizeof(sp28.DIR_Name)) {
-                sp28.DIR_Name[var_r29] = 0x20;
+            while (var_r29 < sizeof(name) - 1) {
+                name[var_r29] = 0x20;
                 var_r29++;
             }
 
@@ -1116,21 +1120,21 @@ u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u
         } 
 
         if (param8[var_r31] == '.') {
-            while (var_r29 < sizeof(sp28.DIR_Name) - 3) {
-                sp28.DIR_Name[var_r29] = 0x20;
+            while (var_r29 < sizeof(name) - 4) {
+                name[var_r29] = 0x20;
                 var_r29++;
             }
 
             var_r29--;
         } else {
-            sp28.DIR_Name[var_r29] = param8[var_r31];
+            name[var_r29] = param8[var_r31];
         }
 
         var_r31++;
         var_r29++;
     }
 
-    sp28.DIR_Attr = FAT_ATTR_NONE;
+    name[11] = '\0'; // this is the null byte
     var_r29 = 0;
 
     while (var_r29 < 0xFFFF) {
@@ -1157,7 +1161,7 @@ u16 FS_get_entry_sub(SDDriveInfo* pDriveInfo, FSDirEntry** param2, u32 param3, u
                 temp_r26->unk_24BB4 = (var_r31 * 32u) % pDriveInfo->unk_1C;
             }
 
-            if (!VOLUME_ID(var_r28) && FS_fat_strcmp(&sp28, var_r28) == 0) {
+            if (!VOLUME_ID(var_r28) && FS_fat_strcmp(name, var_r28->DIR_Name) == 0) {
                 if (DIRECTORY(var_r28)) {
                     *param7 = LOAD_LE_u16(var_r28->DIR_FstClusLO.data_u16);
                 } else {
@@ -2124,20 +2128,18 @@ u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4) {
     return 0;
 }
 
-// params not sure
-u16 FS_fat_strcmp(FSDirEntry *arg0, FSDirEntry *arg1) {
+u16 FS_fat_strcmp(char *arg0, char *arg1) {
     u16 var_r31 = 0;
 
     while (var_r31 < 5) {
-        //! TODO: u16 vs u8 oddity, see `FS_Delete_Entry`
-        if (((u16*)arg0->DIR_Name)[var_r31] != ((u16*)arg1->DIR_Name)[var_r31]) {
+        if (((u16*)arg0)[var_r31] != ((u16*)arg1)[var_r31]) {
             return 0xA02B;
         }
 
         var_r31++;
     }
 
-    if (arg0->DIR_Name[10] != arg1->DIR_Name[10]) {
+    if (arg0[10] != arg1[10]) {
         return 0xA02B;
     }
 

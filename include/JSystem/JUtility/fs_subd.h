@@ -43,7 +43,7 @@ extern u16 FS_read_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param
 extern u16 FS_write_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16 param5, u16 param6, u16 nChan);
 extern u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan);
 extern u16 FS_divide_fpathname(char* param1, char** param2, u16* param3, u16 param4);
-extern u16 FS_fat_strcmp(FSDirEntry *arg0, FSDirEntry *arg1);
+extern u16 FS_fat_strcmp(char *arg0, char *arg1);
 extern u16 FS_entry_name_set(char* param1, char* param2);
 extern void FS_entname_to_stdname(char* param1);
 extern u16 FS_uchar_to_dchar(char* param1);
