@@ -813,32 +813,30 @@ u16 FS_ChkMnt(SDDriveInfo* pDriveInfo) {
 u16 FS_ChkMntOther(SDDriveInfo* pDriveInfo) {
     u32 var_r31;
 
-    if ((pDriveInfo->unk_2A != 0 && (u32)pDriveInfo->unk_2A > 0x400000) ||
-        (pDriveInfo->unk_34 != 0 && pDriveInfo->unk_34 > 0x400000)) {
+    if ((pDriveInfo->unk_2A != 0 && pDriveInfo->unk_2A > 0x400000u) ||
+        (pDriveInfo->unk_34 != 0 && pDriveInfo->unk_34 > 0x400000u)) {
         pDriveInfo->unk_102 |= 1;
         return 0xA01A;
-    }
-
-    if ((pDriveInfo->unk_3C != 2) && (pDriveInfo->unk_3C != 1)) {
+    } else if ((pDriveInfo->unk_3C != 2) && (pDriveInfo->unk_3C != 1)) {
         pDriveInfo->unk_102 |= 1;
         return 0xA01A;
-    }
-
-    if (pDriveInfo->unk_2E == 0) {
+    } else if (pDriveInfo->unk_2E == 0) {
         pDriveInfo->unk_102 |= 1;
         return 0xA01A;
     }
 
     if (pDriveInfo->unk_3C == 1) {
-        var_r31 = ((pDriveInfo->unk_BC * 2) + 0x1FF) >> 9;
+        var_r31 = (u32)((pDriveInfo->unk_BC << 1) + 0x1FF) / 0x200;
     } else {
-        var_r31 = ((((pDriveInfo->unk_BC * 3) + 1) >> 1) + 0x1FF) >> 9;
+        var_r31 = (u32)(((u32)(pDriveInfo->unk_BC * 3 + 1) >> 1) + 0x1FF) / 0x200;
     }
 
-    if (var_r31 > pDriveInfo->unk_2E) {
+    if (var_r31 > (pDriveInfo->unk_2E)) {
         pDriveInfo->unk_102 |= 1;
         return 0xA01A;
     }
+
+    if (pDriveInfo->unk_18 < pDriveInfo->unk_1C) {}
 
     if (pDriveInfo->unk_FC < pDriveInfo->unk_68) {
         pDriveInfo->unk_102 |= 1;
