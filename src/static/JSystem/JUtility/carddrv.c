@@ -73,9 +73,9 @@ u16 CARD_SelectedNo() {
     return CARD_ExiChannel;
 }
 
-u16 CARD_Select(u16 param_1) {
-    if (CARD_ExiChannel != param_1) {
-        CARD_ExiChannel = param_1;
+u16 CARD_Select(u16 nDrive) {
+    if (CARD_ExiChannel != nDrive) {
+        CARD_ExiChannel = nDrive;
     }
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;

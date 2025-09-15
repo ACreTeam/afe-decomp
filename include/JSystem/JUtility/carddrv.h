@@ -3,8 +3,6 @@
 
 
 #include "JSystem/JUtility/fs_file.h"
-#include "JSystem/JUtility/fs_form.h"
-#include "types.h"
 #include "JSystem/JUtility/JUTSDCard.h"
 
 #include <dolphin.h>
@@ -40,7 +38,7 @@ enum CardErrorStatus {
 extern u16 CARD_IF_Reset();
 extern u16 CARD_InitD(int param_1, int param_2);
 extern u16 CARD_SelectedNo();
-extern u16 CARD_Select(u16 param_1);
+extern u16 CARD_Select(u16 nDrive);
 extern u16 CARD_Reset();
 extern u16 CARD_Getstatus(u16* param1);
 extern u16 CARD_Getinfo(SDInfos* param1);

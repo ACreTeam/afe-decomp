@@ -11,7 +11,7 @@ extern "C" {
 extern u16 CARD_Write(u8* param1, u32 param2, int param3, u32 param4, UnknownStruct1* param5);
 extern u16 CARD_Read(u8* param1, u32 param2, int param3, u32 param4, UnknownStruct1* param5);
 extern u16 CARD_Init(int param1, int param2);
-extern u16 SDTerm(u16 param1);
+extern u16 SDTerm(u16 nDrive);
 
 #ifdef __cplusplus
 };

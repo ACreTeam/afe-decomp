@@ -40,17 +40,17 @@ u16 CARD_Init(int param1, int param2) {
     return CARD_InitD(0, 0);
 }
 
-u16 SDTerm(u16 param1) {
-    u16 ret;
+u16 SDTerm(u16 nDrive) {
+    u16 status;
 
-    if (param1 > 1) {
+    if (nDrive > 1) {
         return 0xA00C;
     }
 
-    ret = CARD_Select(param1);
+    status = CARD_Select(nDrive);
 
-    if (ret != 0) {
-        return ret;
+    if (status != 0) {
+        return status;
     }
 
     return CARD_Term();

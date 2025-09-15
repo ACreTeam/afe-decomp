@@ -32,7 +32,7 @@ u16 FS_Delete_sub(SDDriveInfo* pDriveInfo, const char* param2) {
     char* sp48[8];
     u16 sp44[2];
     FSDirEntry sp24;
-    int sp20;
+    u32 sp20;
     u16 sp1E;
     u16 sp1C;
     DrvCtl* ptr;
