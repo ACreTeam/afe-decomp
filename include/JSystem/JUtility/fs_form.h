@@ -15,7 +15,9 @@ extern "C" {
 
 #define PTR_BOOT_SECTOR_ENTRY(pDrvCtl, index) ((FSPartitionBootSector*)((u32)pDrvCtl->unk_20BA4 + index))
 #define PTR_ROOT_DIR_ENTRY(pDrvCtl, index) ((FSDirEntry*)((u32)pDrvCtl->unk_20BA4 + index))
-#define PTR_MBR(pDrvCtl, index) ((FSMasterBootRecord*)((u32)pDrvCtl->unk_20BA4 + index))
+#define PTR_MBR_BASE(pDrvCtl, index) ((void*)((u32)((pDrvCtl)->unk_20BA4) + (index)))
+#define PTR_MBR(pMBRBase) ((FSMasterBootRecord*)pMBRBase)
+#define PTR_MBR_ENTRY(pMBRBase) ((MBRPartitionEntry*)pMBRBase)
 
 #define FDC_ATTR_EXTENDED_BOOT 0x29
 #define FAT_FLAG_DELETED 0xE5

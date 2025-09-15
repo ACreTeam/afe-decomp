@@ -4,6 +4,7 @@
 #include "JSystem/JUtility/fs_drvsel.h"
 #include "JSystem/JUtility/fs_subd.h"
 #include "JSystem/JUtility/time.h"
+#include "macros.h"
 
 #include <stddef.h>
 
@@ -420,26 +421,52 @@ u16 FS_calc_parameter(u32* param1, u16 param2) {
     return 0xA01E;
 }
 
+inline void test(DrvCtl* temp_r31, u32 arg1, u16 index) {
+
+}
+
+u32 GET_FS_LCS() { return FS_LCS; };
+u16 GET_FS_TRACK_PER_SECTOR() { return FS_TRACK_PER_SECTOR; };
+u16 GET_FS_HEAD_NUM() { return FS_HEAD_NUM; };
+u32 GET_FS_gl_partition_size() { return FS_gl_partition_size; };
+u16 GET_FS_gl_card_size() { return FS_gl_card_size; };
+u16 GET_FS_format_fat_mode() { return FS_format_fat_mode; };
+u16 GET_FS_gl_bu() { return FS_gl_bu; };
+u8 GET_FS_FAT_MODE() { return FS_FAT_MODE; };
+u16 GET_FS_FAT_SC() { return FS_FAT_SC; };
+u32 GET_FS_FAT_MAX() { return FS_FAT_MAX; };
+u16 GET_FS_FAT_SF() { return FS_FAT_SF; };
+u16 GET_FS_FAT_SSA() { return FS_FAT_SSA; };
+u16 GET_FS_FAT_RSC() { return FS_FAT_RSC; };
+u16 GET_FS_FAT_MBR() { return FS_FAT_MBR; };
+u16 GET_FS_BUF_POS_FDC() { return FS_BUF_POS_FDC; };
+u16 GET_FS_BUF_POS_FAT1() { return FS_BUF_POS_FAT1; };
+u16 GET_FS_BUF_POS_FAT2() { return FS_BUF_POS_FAT2; };
+u16 GET_FS_BUF_POS_RDE() { return FS_BUF_POS_RDE; };
+
 u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     DrvCtl* temp_r31;
     u16 index;
     u16 status;
     u16 var_r24;
-    u16 temp_r29;
-    u32 tmp;
+    u16 temp_r29=0;
+    u16 tmp;
 
     (void)arg4;
     (void)temp_r29; // this is actually r25
     (void)temp_r29; // this is actually r25
-    // (void)status;
-    // (void)status;
+    (void)status;
+    (void)status;
 
     temp_r31 = &FS_drv_ctl[arg5];
     index = ((FS_FAT_MBR % 32) * sizeof(FSPartitionBootSector));
 
+    // test(temp_r31, arg1, index);
+
     temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_0 + index)] = 0xEB;
     temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_1 + index)] = 0x00;
     temp_r31->unk_20BA4[(OFFSET_BS_JMP_BOOT_INDEX_2 + index)] = 0x90;
+
 
     FS_memset(&temp_r31->unk_20BA4[OFFSET_BS_OEM_NAME + index], 0x20,
               membersize(FSPartitionBootSector16, BS_OEMName));
@@ -451,7 +478,7 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
 
     temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_CLUS + index] = FS_LCS / sizeof(FSPartitionBootSector);
     temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_0 + index] = FS_FAT_RSC;
-    temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_1 + index] = FS_FAT_RSC >> 8;
+    temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_1 + index] = (FS_FAT_RSC >> 8);
 
     temp_r31->unk_20BA4[OFFSET_BPB_NUM_FATS + index] = 2;
     temp_r31->unk_20BA4[OFFSET_BPB_ROOT_ENT_CNT_INDEX_0 + index] = 0;
@@ -475,15 +502,15 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     temp_r31->unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_0 + index] = FS_HEAD_NUM;
     temp_r31->unk_20BA4[OFFSET_BPB_NUM_HEADS_INDEX_1 + index] = FS_HEAD_NUM >> 8;
 
-    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_0 + index] = (FS_FAT_MBR >> 0) & 0xFF;
-    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_1 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 8) & 0xFF;
-    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_2 + index] = ((FS_FAT_MBR & 0xFFFFFFF) >> 16) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_0 + index] = FS_FAT_MBR & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_1 + index] = EXTRACT_BITS(FS_FAT_MBR, 8, 8);
+    temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_2 + index] = EXTRACT_BITS(FS_FAT_MBR, 8, 16);
     temp_r31->unk_20BA4[OFFSET_BPB_HIDD_SEC_INDEX_3 + index] = (FS_FAT_MBR >> 24) & 0xFF;
 
     if ((arg1 - FS_FAT_MBR) > 0xFFFF) {
         temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = (arg1 - FS_FAT_MBR) >> 0;
-        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = (arg1 - FS_FAT_MBR) >> 8;
-        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = (arg1 - FS_FAT_MBR) >> 16;
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_1 + index] = EXTRACT_BITS(arg1 - FS_FAT_MBR, 8, 8);
+        temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_2 + index] = EXTRACT_BITS(arg1 - FS_FAT_MBR, 8, 16);
         temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_3 + index] = (arg1 - FS_FAT_MBR) >> 24;
     } else {
         temp_r31->unk_20BA4[OFFSET_BPB_TOT_SEC_32_INDEX_0 + index] = 0;
@@ -504,12 +531,13 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     // tmp = FS_rand(0xFF, arg5);
     status *= (temp_r29 = FS_rand(0xFF, arg5));
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = status;
-    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = (status >> 8) & 0xFF;
+    temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = EXTRACT_BITS(status, 8, 8);
 
     status = FS_rand(0xFF, arg5) * 256;
     // tmp = FS_rand(0xFF, arg5);
     status *= (temp_r29 = FS_rand(0xFF, arg5));
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = status;
+    // temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = EXTRACT_BITS(status, 8, 8);
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;
 
     if (arg0[0] != '\0') {
@@ -641,51 +669,51 @@ u16 FS_init_rde(char* arg0, s32* arg1, u16 arg2, u16 nChan) {
 }
 
 u16 FS_init_mbr(u32 param1, s32* param2, u16 param3, u16 nChan) {
-    DrvCtl* temp_r29;
-    u32 temp_r5;
+    u8* temp_r31;
+    u8* pMBR;
+    u16 temp_r5;
     u16 status;
     u16 var_r26;
-    u8* temp_r31;
-    u8* pBuffer;
-    FSPartitionBootSector* test;
+    DrvCtl* temp_r29;
+
+    (void)temp_r5;
+    (void)temp_r5;
+    (void)temp_r5;
+    (void)temp_r5;
 
     temp_r29 = &FS_drv_ctl[nChan];
-    test = PTR_BOOT_SECTOR_ENTRY(temp_r29, 0);
-
-    // pBuffer = temp_r29->unk_20BA4;
-    // !pBuffer;
-
-    temp_r29->unk_20BA4[0x1BE] = 0;
-    test->FAT16.BS_BootCode[/* 0x1BF */ 0x181] =
-        (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
+    pMBR = PTR_MBR_BASE(temp_r29, 0);
+    temp_r31 = PTR_MBR_BASE(temp_r29, 0);
+    PTR_MBR(temp_r31)->partition_table[0].status = 0;
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_head = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
 
     temp_r5 = (FS_FAT_MBR % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1;
-    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] &= 0xC0;
-    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] |= temp_r5 & 0x3F;
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_sector.data_u8[0] &= 0xC0;
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_sector.data_u8[0] |= temp_r5 & 0x3F;
 
-    temp_r5 = FS_FAT_MBR / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM);
-    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] &= 0x3F;
-    test->FAT16.BS_BootCode[/* 0x1C0 */ 0x182] |= (((temp_r5 & 0xFFFF) >> 8) << 6);
-    test->FAT16.BS_BootCode[/* 0x1C1 */ 0x183] = temp_r5;
+    temp_r5 = (FS_FAT_MBR / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) & 0xFFFF;
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_sector.data_u8[0] &= 0x3F;
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_sector.data_u8[0] |= (((u32)(temp_r5 >> 8) & 3) << 6);
+    PTR_MBR(temp_r31)->partition_table[0].chs_start_sector.data_u8[1] = temp_r5;
 
-    temp_r31 = &temp_r29->unk_20BA4[0x1BE];
-
+    temp_r31 = (u8*)&PTR_MBR(temp_r31)->partition_table[0];
     if ((param1 - FS_FAT_MBR) < 0x7FA8) {
-        temp_r31[4] = 1;
+        PTR_MBR_ENTRY(temp_r31)->partition_type = 1;
     } else if ((param1 - FS_FAT_MBR) < 0x10000) {
-        temp_r31[4] = 4;
+        PTR_MBR_ENTRY(temp_r31)->partition_type = 4;
     } else {
-        temp_r31[4] = 6;
+        PTR_MBR_ENTRY(temp_r31)->partition_type = 6;
     }
 
-    temp_r31[5] = ((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
-    temp_r31[6] |= (((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1) & 0x3F;
-    temp_r31[6] &= 0xC0;
+    PTR_MBR_ENTRY(temp_r31)->chs_end_head = ((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) / FS_TRACK_PER_SECTOR;
+    temp_r5 = (((param1 - 1) % (FS_TRACK_PER_SECTOR * FS_HEAD_NUM)) % FS_TRACK_PER_SECTOR + 1);
+    PTR_MBR_ENTRY(temp_r31)->chs_end_sector.data_u8[0] &= 0xC0;
+    PTR_MBR_ENTRY(temp_r31)->chs_end_sector.data_u8[0] |= temp_r5 & 0x3F;
 
     temp_r5 = (param1 - 1) / (FS_TRACK_PER_SECTOR * FS_HEAD_NUM);
-    temp_r31[6] |= (((temp_r5 >> 8) << 6) & 0xC0);
-    temp_r31[6] &= 0x3F;
-    temp_r31[7] = temp_r5;
+    PTR_MBR_ENTRY(temp_r31)->chs_end_sector.data_u8[0] &= 0x3F;
+    PTR_MBR_ENTRY(temp_r31)->chs_end_sector.data_u8[0] |= (((u32)(temp_r5 >> 8) & 3) << 6);
+    PTR_MBR_ENTRY(temp_r31)->chs_end_sector.data_u8[1] = temp_r5;
 
     temp_r29->unk_20BA4[0x1C6] = (FS_FAT_MBR >> 0);
     temp_r29->unk_20BA4[0x1C7] = (FS_FAT_MBR >> 8);
