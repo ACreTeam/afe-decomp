@@ -103,10 +103,3 @@
 .set cr7gt, 29
 .set cr7eq, 30
 .set cr7un, 31
-
-# glabel
-.macro glabel label
-    .global \label
-    \label:
-.endm
-
