@@ -24,7 +24,7 @@ extern "C" {
 #define FONT_SIZE 256
 */
 
-#define POLY_OPA_SIZE 9952
+#define POLY_OPA_SIZE 9824
 #define POLY_XLU_SIZE 2048
 #define OVERLAY_SIZE 1024
 #define WORK_SIZE 128
@@ -34,6 +34,7 @@ extern "C" {
 #define LIGHT_SIZE 256
 #define NEW0_SIZE 512
 #define NEW1_SIZE 256
+#define NEW2_SIZE 128
 
 typedef struct dynamic_s {
     u16 start_magic;
@@ -46,6 +47,7 @@ typedef struct dynamic_s {
     Gfx font[FONT_SIZE];
     Gfx shadow[SHADOW_SIZE];
     Gfx light[LIGHT_SIZE];
+    Gfx new2[NEW2_SIZE];
     Gfx new0[NEW0_SIZE];
     Gfx new1[NEW1_SIZE];
 

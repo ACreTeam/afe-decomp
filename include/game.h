@@ -18,19 +18,20 @@ struct game_s {
   /* 0x0000 */ GRAPH* graph;
   /* 0x0004 */ void (*exec)(struct game_s* );
   /* 0x0008 */ void (*cleanup)(struct game_s*);
-  /* 0x000C */ void (*next_game_init)(struct game_s*);
-  /* 0x0010 */ size_t next_game_class_size;
-  /* 0x0014 */ pad_t pads[MAXCONTROLLERS];
-  /* 0x0074 */ int pad_initialized;
-  /* 0x0078 */ THA tha;
-  /* 0x0088 */ GameAlloc gamealloc;
-  /* 0x009C */ u8 doing_point;
-  /* 0x009D */ u8 doing_point_specific; /* game class specific? */
-  /* 0x009E */ u8 disable_display;
-  /* 0x009F */ u8 doing;
-  /* 0x00A0 */ u32 frame_counter;
-  /* 0x00A4 */ int disable_prenmi;
-  /* 0x00A8 */ MCON mcon;
+  /* 0x000C */ int game_dlf_no;
+  /* 0x0010 */ void (*next_game_init)(struct game_s*);
+  /* 0x0014 */ size_t next_game_class_size;
+  /* 0x0018 */ pad_t pads[MAXCONTROLLERS];
+  /* 0x0078 */ int pad_initialized;
+  /* 0x007C */ THA tha;
+  /* 0x008C */ GameAlloc gamealloc;
+  /* 0x00A0 */ u8 doing_point;
+  /* 0x00A1 */ u8 doing_point_specific; /* game class specific? */
+  /* 0x00A2 */ u8 disable_display;
+  /* 0x00A3 */ u8 doing;
+  /* 0x00A4 */ u32 frame_counter;
+  /* 0x00A8 */ int disable_prenmi;
+  /* 0x00AC */ MCON mcon;
 };
 
 #define GAME_HYRAL_SIZE (0x100000)
@@ -63,7 +64,7 @@ extern void game_get_controller(GAME* game);
 extern void SetGameFrame(int frame);
 extern void game_main(GAME* game);
 extern void game_resize_hyral(GAME* game, int size);
-extern void game_ct(GAME* game, void (*init)(GAME*), GRAPH* graph);
+extern void game_ct(GAME* game, void (*init)(GAME*), GRAPH* graph, int dlf_no);
 extern void game_dt(GAME* game);
 extern void (*game_get_next_game_init(GAME* game))(GAME*);
 #ifndef MUST_MATCH

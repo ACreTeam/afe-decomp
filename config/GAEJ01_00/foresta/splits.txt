@@ -10,7 +10,7 @@ executor.c:
 	.text       start:0x00000000 end:0x00000060
 	.bss        start:0x00000000 end:0x00000008
 
-sys_vimgr.c:
+system/sys_vimgr.c:
 	.text       start:0x00000060 end:0x00000080
 
 c_keyframe.c:
@@ -667,11 +667,11 @@ padmgr.c:
 	.data       start:0x00014D10 end:0x00014D28
 	.bss        start:0x000E0100 end:0x000E0570
 
-sys_math.c:
+system/sys_math.c:
 	.text       start:0x000B5440 end:0x000B5544
 	.rodata     start:0x00002CA0 end:0x00002CB0
 
-sys_math3d.c:
+system/sys_math3d.c:
 	.text       start:0x000B5544 end:0x000B893C
 	.text       start:0x000B893C end:0x000B893C
 	.text       start:0x000B893C end:0x000B89EC
@@ -679,19 +679,19 @@ sys_math3d.c:
 	.data       start:0x00014D28 end:0x00014D40
 	.bss        start:0x000E0570 end:0x000E0738
 
-sys_math_atan.c:
+system/sys_math_atan.c:
 	.text       start:0x000B89EC end:0x000B8C04
 	.rodata     start:0x00002CF0 end:0x00002D08
 	.data       start:0x00014D40 end:0x00015548
 
-sys_matrix.c:
+system/sys_matrix.c:
 	.text       start:0x000B8C04 end:0x000BB258
 	.text       start:0x000BB258 end:0x000BB258
 	.rodata     start:0x00002D08 end:0x00002D30
 	.data       start:0x00015548 end:0x000155C8
 	.bss        start:0x000E0738 end:0x000E0740
 
-sys_stacks.c:
+system/sys_stacks.c:
 	.text       start:0x000BB258 end:0x000BB258
 	.bss        start:0x000E0740 end:0x000E5B40
 
@@ -700,7 +700,7 @@ zurumode.c:
 	.data       start:0x000155C8 end:0x00015608
 	.bss        start:0x000E5B40 end:0x000E5B48
 
-sys_ucode.c:
+system/sys_ucode.c:
 	.text       start:0x000BB7DC end:0x000BB81C
 	.data       start:0x00015608 end:0x00015618
 	.bss        start:0x000E5B48 end:0x000E5B68
@@ -3697,7 +3697,7 @@ effect/ef_yukihane.c:
 	.rodata     start:0x0000CC28 end:0x0000CC48
 	.data       start:0x00060980 end:0x000609B8
 
-sys_dynamic.c:
+system/sys_dynamic.c:
 	.text       start:0x00300B18 end:0x00300B18
 	.bss        start:0x00151070 end:0x00171480
 
@@ -3709,7 +3709,7 @@ m_select.c:
 first_game.c:
 	.text       start:0x00302848 end:0x003028EC
 
-sys_romcheck.c:
+system/sys_romcheck.c:
 	.text       start:0x003028EC end:0x0030292C
 
 m_play.c:

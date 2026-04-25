@@ -444,7 +444,27 @@ config.libs = [
             Object(Matching, "Famicom/famicom_nesinfo.cpp"),
         ],
     },
-        Rel(
+    Rel(
+        "system",
+        [
+            Object(Matching, "system/sys_dynamic.c"),
+            Object(Matching, "system/sys_math.c"),
+            Object(Matching, "system/sys_math3d.c"),
+            Object(Matching, "system/sys_math_atan.c"),
+            Object(Matching, "system/sys_matrix.c"),
+            Object(Matching, "system/sys_romcheck.c"),
+            Object(Matching, "system/sys_stacks.c"),
+            Object(Matching, "system/sys_ucode.c"),
+            Object(Matching, "system/sys_vimgr.c"),
+        ],
+    ),
+    Rel(
+        "foresta",
+        [
+            Object(NonMatching, "graph.c"),
+        ],
+    ),
+    Rel(
         "effect",
         [
             Object(NonMatching, "effect/ef_ami_mizu.c"),

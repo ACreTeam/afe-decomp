@@ -10,6 +10,8 @@
 #define SQRTF_LINKAGE static
 #endif
 
+#pragma cplusplus on
+
 /**
  * Float square root implementation.
  *
@@ -36,6 +38,8 @@ SQRTF_LINKAGE inline float sqrtf(float x) {
 
     return x;
 }
+
+#pragma cplusplus reset
 
 #ifdef SQRTF_LINKAGE
 #undef SQRTF_LINKAGE

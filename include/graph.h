@@ -39,6 +39,8 @@ typedef enum {
 
 #define GRAPH_MSG_BUF_COUNT 8
 
+typedef void (*GRAPH_TASK_END_CALLBACK)(struct graph_s*, void*);
+
 typedef struct graph_s {
     /* 0x0000 */ Gfx* Gfx_list00; /* polygon opaque */
     /* 0x0004 */ Gfx* Gfx_list01; /* polygon translucent */
@@ -48,44 +50,47 @@ typedef struct graph_s {
     /* 0x0014 */ Gfx* Gfx_list07; /* font */
     /* 0x0018 */ Gfx* Gfx_list08; /* shadow */
     /* 0x001C */ Gfx* Gfx_list09; /* light */
-    /* 0x0020 */ Gfx* gfxsave;
-    /* 0x0024 */ u8 _unk24[32];
-    /* 0x0044 */ OSMessage graphReplyMesgBuf[GRAPH_MSG_BUF_COUNT];
-    /* 0x0064 */ OSMessageQueue* schedMesgQueue;
-    /* 0x0068 */ OSMessageQueue graphReplyMesgQueue;
-    /* 0x0088 */ u8 _unused_ossctask00p[0x68]; /* real type = OSScTask */
-    /* 0x00F0 */ u8 _unused_ossctask01p[0x68]; /* real type = OSScTask */
-    /* 0x0158 */ u8 _unused_ossctask02p[0x68]; /* real type = OSScTask */
-    /* 0x01C0 */ Gfx* Gfx_list05;              /* work */
-    /* 0x01C4 */ THA_GA work_thaga;
-    /* 0x01D4 */ u8 _unk1D4[0xBC]; /* Maybe related to more OSScTask stuff? */
-    /* 0x0290 */ void* scheduler;  /* Actually points to OSSched struct, only used in DnM? */
-    /* 0x0294 */ void* vimode;     /* Actually points to OSViMode struct, not used in AC. */
-    /* 0x0298 */ THA_GA line_opaque_thaga;
-    /* 0x02A8 */ THA_GA line_translucent_thaga;
-    /* 0x02B8 */ THA_GA overlay_thaga;
-    /* 0x02C8 */ THA_GA polygon_opaque_thaga;
-    /* 0x02D8 */ THA_GA polygon_translucent_thaga;
-    /* 0x02E8 */ THA_GA font_thaga;
-    /* 0x02F8 */ THA_GA shadow_thaga;
-    /* 0x0308 */ THA_GA light_thaga;
-    /* 0x0318 */ THA_GA bg_opaque_thaga;
-    /* 0x0328 */ THA_GA bg_translucent_thaga;
-    /* 0x0338 */ int frame_counter;
-    /* 0x033C */ u16* frameBuffer;
-    /* 0x0340 */ u16* renderBuffer;
-    /* 0x0344 */ u32 vispecial;
-    /* 0x0348 */ u8 doing_point;
-    /* 0x0349 */ u8 _unk349;
-    /* 0x034A */ u8 need_viupdate;
-    /* 0x034B */ u8 cfb_bank;
-    /* 0x034C */ void (*taskEndCallback)(struct graph_s*, void*);
-    /* 0x0350 */ void* taskEndData;
-    /* 0x0354 */ f32 vixscale;
-    /* 0x0358 */ f32 viyscale;
-    /* 0x035C */ Gfx* last_dl;
-    /* 0x0360 */ Gfx* Gfx_list10; /* new0 (highlight/reflections?) */
-    /* 0x0364 */ Gfx* Gfx_list11; /* new1 (highlight/reflections?) */
+    /* 0x0020 */ Gfx* Gfx_list12; /* new2 */
+    /* 0x0024 */ Gfx* gfxsave;
+    /* 0x0028 */ u8 _unk24[32];
+    /* 0x0048 */ OSMessage graphReplyMesgBuf[GRAPH_MSG_BUF_COUNT];
+    /* 0x0068 */ OSMessageQueue* schedMesgQueue;
+    /* 0x006C */ OSMessageQueue graphReplyMesgQueue;
+    /* 0x008C */ u8 _unused_ossctask00p[0x68]; /* real type = OSScTask */
+    /* 0x00F4 */ u8 _unused_ossctask01p[0x68]; /* real type = OSScTask */
+    /* 0x015C */ u8 _unused_ossctask02p[0x68]; /* real type = OSScTask */
+    /* 0x01C4 */ u8 _1C4[0x4]; // idk where this goes
+    /* 0x01C8 */ Gfx* Gfx_list05;              /* work */
+    /* 0x01CC */ THA_GA work_thaga;
+    /* 0x01DC */ u8 _unk1D4[0xBC]; /* Maybe related to more OSScTask stuff? */
+    /* 0x0298 */ void* scheduler;  /* Actually points to OSSched struct, only used in DnM? */
+    /* 0x029C */ void* vimode;     /* Actually points to OSViMode struct, not used in AC. */
+    /* 0x02A0 */ THA_GA line_opaque_thaga;
+    /* 0x02B0 */ THA_GA line_translucent_thaga;
+    /* 0x02C0 */ THA_GA overlay_thaga;
+    /* 0x02D0 */ THA_GA polygon_opaque_thaga;
+    /* 0x02E0 */ THA_GA polygon_translucent_thaga;
+    /* 0x02F0 */ THA_GA font_thaga;
+    /* 0x0300 */ THA_GA shadow_thaga;
+    /* 0x0310 */ THA_GA light_thaga;
+    /* 0x0320 */ THA_GA new2_thaga;
+    /* 0x0330 */ THA_GA bg_opaque_thaga;
+    /* 0x0340 */ THA_GA bg_translucent_thaga;
+    /* 0x0350 */ int frame_counter;
+    /* 0x0354 */ u16* frameBuffer;
+    /* 0x0358 */ u16* renderBuffer;
+    /* 0x035C */ u32 vispecial;
+    /* 0x0360 */ u8 doing_point;
+    /* 0x0361 */ u8 _unk349;
+    /* 0x0362 */ u8 need_viupdate;
+    /* 0x0363 */ u8 cfb_bank;
+    /* 0x0364 */ GRAPH_TASK_END_CALLBACK taskEndCallback;
+    /* 0x0368 */ void* taskEndData;
+    /* 0x036C */ f32 vixscale;
+    /* 0x0370 */ f32 viyscale;
+    /* 0x0374 */ Gfx* last_dl;
+    /* 0x0378 */ Gfx* Gfx_list10; /* new0 (highlight/reflections?) */
+    /* 0x037C */ Gfx* Gfx_list11; /* new1 (highlight/reflections?) */
 } GRAPH ATTRIBUTE_ALIGN(8);       // one of the missing structs is likely aligned to 8 bytes.
 
 extern void graph_proc(void* arg);
@@ -126,6 +131,7 @@ extern void graph_dt(GRAPH* graph);
 #define NEXT_LIGHT_DISP NEXT_DISP(&__graph->light_thaga)
 #define NEXT_BG_OPA_DISP NEXT_DISP(&__graph->bg_opaque_thaga)
 #define NEXT_BG_XLU_DISP NEXT_DISP(&__graph->bg_translucent_thaga)
+#define NEXT_NEW2_DISP NEXT_DISP(&__graph->new2_thaga)
 
 #define NOW_POLY_OPA_DISP (Gfx*)NOW_DISP(&__graph->polygon_opaque_thaga)
 #define NOW_POLY_XLU_DISP (Gfx*)NOW_DISP(&__graph->polygon_translucent_thaga)
@@ -136,6 +142,7 @@ extern void graph_dt(GRAPH* graph);
 #define NOW_LIGHT_DISP (Gfx*)NOW_DISP(&__graph->light_thaga)
 #define NOW_BG_OPA_DISP (Gfx*)NOW_DISP(&__graph->bg_opaque_thaga)
 #define NOW_BG_XLU_DISP (Gfx*)NOW_DISP(&__graph->bg_translucent_thaga)
+#define NOW_NEW2_DISP (Gfx*)NOW_DISP(&__graph->new2_thaga)
 
 #define SET_POLY_OPA_DISP(p) SET_DISP(&__graph->polygon_opaque_thaga, p)
 #define SET_POLY_XLU_DISP(p) SET_DISP(&__graph->polygon_translucent_thaga, p)
@@ -146,6 +153,7 @@ extern void graph_dt(GRAPH* graph);
 #define SET_LIGHT_DISP(p) SET_DISP(&__graph->light_thaga, p)
 #define SET_BG_OPA_DISP(p) SET_DISP(&__graph->bg_opaque_thaga, p)
 #define SET_BG_XLU_DISP(p) SET_DISP(&__graph->bg_translucent_thaga, p)
+#define SET_NEW2_DISP(p) SET_DISP(&__graph->new2_thaga, p)
 
 // clang-format off
 #define OPEN_POLY_OPA_DISP(g)               \
