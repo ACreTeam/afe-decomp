@@ -2,7 +2,7 @@
 [![Build Status]][actions] [![DOL Progress]][Progress] [![REL Progress]][Progress] [![Discord Badge]][discord]
 =============
 
-[<img src="https://decomp.dev/ACreTeam/ac-decomp.svg?w=512&h=256" width="512" height="256">][Progress]
+[<img src="https://decomp.dev/ACreTeam/afe-decomp.svg?w=512&h=256" width="512" height="256">][Progress]
 
 [Build Status]: https://github.com/ACreTeam/afe-decomp/actions/workflows/build.yml/badge.svg
 [actions]: https://github.com/ACreTeam/afe-decomp/actions/workflows/build.yml
