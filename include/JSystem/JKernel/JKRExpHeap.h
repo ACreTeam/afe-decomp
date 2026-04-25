@@ -75,12 +75,12 @@ class JKRExpHeap : public JKRHeap {
     virtual void state_register(TState*, u32) const;                // _48
     virtual bool state_compare(const TState&, const TState&) const; // _4C
 
-    virtual u8 do_getCurrentGroupId() {
-        return mCurrentGroupID;
-    } // _44 (weak)
     virtual u32 getHeapType() {
         return 'EXPH';
     } // _30 (weak)
+    virtual u8 do_getCurrentGroupId() {
+        return mCurrentGroupID;
+    } // _44 (weak)
 
     void* allocFromHead(u32, int);
     void* allocFromHead(u32);

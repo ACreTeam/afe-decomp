@@ -361,7 +361,7 @@ config.libs = [
             Object(NonMatching, "JSystem/JKernel/JKRDvdArchive.cpp"),
             Object(NonMatching, "JSystem/JKernel/JKRDvdFile.cpp"),
             Object(NonMatching, "JSystem/JKernel/JKRDvdRipper.cpp"),
-            Object(NonMatching, "JSystem/JKernel/JKRExpHeap.cpp"),
+            Object(Matching, "JSystem/JKernel/JKRExpHeap.cpp"),
             Object(NonMatching, "JSystem/JKernel/JKRFileFinder.cpp"),
             Object(NonMatching, "JSystem/JKernel/JKRFileLoader.cpp"),
             Object(Equivalent, "JSystem/JKernel/JKRHeap.cpp"), # Maybe need PCH for this?
