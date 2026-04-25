@@ -461,8 +461,16 @@ config.libs = [
     Rel(
         "foresta",
         [
+            Object(NonMatching, "c_keyframe.c"),
+            Object(Matching, "first_game.c"),
             Object(Matching, "game.c"),
+            Object(Matching, "gamealloc.c"),
+            Object(Matching, "gfxalloc.c"),
             Object(Matching, "graph.c"),
+            Object(NonMatching, "second_game.c"),
+            Object(Matching, "THA_GA.c"),
+            Object(Matching, "TwoHeadArena.c"),
+            Object(Matching, "zurumode.c"),
         ],
     ),
     Rel(

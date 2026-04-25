@@ -21,6 +21,7 @@ extern void HotResetIplMenu();
 
 extern void* boot_copyDate;
 extern void* HotStartEntry;
+extern void (*zurumode_onFaultCallback)(void* param);
 extern OSTime InitialStartTime;
 extern u8 boot_sound_initializing;
 

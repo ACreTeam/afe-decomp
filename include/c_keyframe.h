@@ -64,35 +64,35 @@ enum {
 };
 
 typedef struct frame_control_s {
-    f32 start_frame;
-    f32 end_frame;
-    f32 max_frames;
-    f32 speed;
-    f32 current_frame;
-    int mode;
+    /* 0x00 */ f32 start_frame;
+    /* 0x04 */ f32 end_frame;
+    /* 0x08 */ f32 max_frames;
+    /* 0x0C */ f32 speed;
+    /* 0x10 */ f32 current_frame;
+    /* 0x14 */ int mode;
 } cKF_FrameControl_c;
 
 typedef struct skeleton_info_s {
-    cKF_FrameControl_c frame_control;
-    cKF_Skeleton_R_c* skeleton;
-    cKF_Animation_R_c* animation;
+    /* 0x00 */ cKF_FrameControl_c frame_control;
+    /* 0x18 */ cKF_Skeleton_R_c* skeleton;
+    /* 0x1C */ cKF_Animation_R_c* animation;
 
-    f32 morph_counter;
-    s_xyz* current_joint;
-    s_xyz* target_joint;
-    s_xyz* rotation_diff_table;
+    /* 0x20 */ f32 morph_counter;
+    /* 0x24 */ s_xyz* current_joint;
+    /* 0x28 */ s_xyz* target_joint;
+    /* 0x2C */ s_xyz* rotation_diff_table;
 
-    int animation_enabled;
-    xyz_t base_world_position;
-    s16 base_angle_y;
+    /* 0x30 */ int animation_enabled;
+    /* 0x34 */ xyz_t base_world_position;
+    /* 0x40 */ s16 base_angle_y;
 
-    xyz_t base_model_translation;
-    s_xyz base_model_rotation;
-    s_xyz updated_base_model_rotation;
+    /* 0x44 */ xyz_t base_model_translation;
+    /* 0x50 */ s_xyz base_model_rotation;
+    /* 0x56 */ s_xyz updated_base_model_rotation;
 
-    f32 fixed_counter;
-    xyz_t model_world_position_correction;
-    s16 model_angle_correction;
+    /* 0x5C */ f32 fixed_counter;
+    /* 0x60 */ xyz_t model_world_position_correction;
+    /* 0x6C */ s16 model_angle_correction;
 } cKF_SkeletonInfo_R_c;
 
 typedef struct combine_work_set_s {
@@ -383,9 +383,10 @@ extern void cKF_SkeletonInfo_R_combine_work_set(cKF_SkeletonInfo_R_combine_work_
  * @param flag Pointer to the current joint flag.
  * @param combine Pointer to the combine work set structure.
  * @param part_table Pointer to the current part table.
+ * @param combine_cnt Number of combine work sets to use.
  */
 extern void cKF_SkeletonInfo_R_combine_translation(s16** joint, int* flag, cKF_SkeletonInfo_R_combine_work_c* combine,
-                                                   s8* part_table);
+                                                   s8* part_table, int combine_cnt);
 
 /**
  * Combines rotation data from multiple animation layers for a joint, modifying it based on animation flags.
@@ -394,9 +395,10 @@ extern void cKF_SkeletonInfo_R_combine_translation(s16** joint, int* flag, cKF_S
  * @param flag Pointer to the animation flag affecting the current joint.
  * @param combine Pointer to the combine work set structure containing animation layer data.
  * @param part_table Pointer to the current part table.
+ * @param combine_cnt Number of combine work sets to use.
  */
 extern void cKF_SkeletonInfo_R_combine_rotation(s16** joint, int* flag, cKF_SkeletonInfo_R_combine_work_c* combine,
-                                                s8* part_table);
+                                                s8* part_table, int combine_cnt);
 
 /**
  * Combines and plays two sets of animation data, applying translations and rotations from both.
