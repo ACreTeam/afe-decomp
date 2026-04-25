@@ -359,7 +359,7 @@ config.libs = [
         "progress_category": "famicom",
         "src_dir": "src/static",
         "objects": [
-            Object(NonMatching, "Famicom/ks_nes_core.cpp"),
+            Object(Matching, "Famicom/ks_nes_core.cpp"),
             Object(NonMatching, "Famicom/ks_nes_draw.cpp"),
             Object(NonMatching, "Famicom/famicom.cpp"),
             Object(Matching, "Famicom/famicom_nesinfo.cpp"),
