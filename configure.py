@@ -295,7 +295,7 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
 def JSystemLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
-        "mw_version": "GC/2.6",
+        "mw_version": "GC/1.3.2",
         "cflags": [*cflags_base, "-O4,s", "-char signed"],
         "progress_category": "jsystem",
         "src_dir": "src/static",
