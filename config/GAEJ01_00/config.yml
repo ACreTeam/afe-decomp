@@ -24,6 +24,19 @@ modules:
   symbols: config/GAEJ01_00/foresta/symbols.txt
   splits: config/GAEJ01_00/foresta/splits.txt
   # map: orig/GAEJ01_00/files/foresta.map
+  extract:
+  - symbol: ef_coin_gold_pal
+    binary: assets/ef_coin_gold_pal.bin
+    header: assets/ef_coin_gold_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: ef_coin_silver_pal
+    binary: assets/ef_coin_silver_pal.bin
+    header: assets/ef_coin_silver_pal.inc
+    header_type: none
+    custom_type: pal16
+
 - object: files/forestd.rel
   hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb
   symbols: config/GAEJ01_00/forestd/symbols.txt

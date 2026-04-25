@@ -522,6 +522,9 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 #define IS_ITEM_STONE(item) ((item) >= ROCK_A && (item) <= ROCK_E)
 #define IS_ITEM_STONE_TC(item) (((item) >= MONEY_ROCK_A && (item) <= MONEY_ROCK_E) || (item) == MONEY_FLOWER_SEED) /* TC is ten coin */
 #define IS_ITEM_ROCK(item) (((item) >= ROCK_A && (item) <= ROCK_E) || ((item) >= MONEY_ROCK_A && (item) <= MONEY_ROCK_E) || (item) == MONEY_FLOWER_SEED)
+#define IS_ITEM_RST_STONE(item) ((item) >= RST_ROCK_A && (item) <= RST_ROCK_E)
+#define IS_ITEM_CRACKED_STONE(item) ((item) >= C_ROCK_A && (item) <= C_ROCK_E)
+#define IS_ITEM_RESET_HOLE(item) ((item) >= RST_HOLE_A && (item) <= RST_HOLE_E)
 
 #define IS_ITEM_GRASS(item) ((item) >= GRASS_A && (item) <= GRASS_C) /* aka IS_ITEM_WEED */
 
@@ -701,10 +704,30 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 #define GOLD_TREE_STUMP003 (EMPTY_NO + 125)
 #define GOLD_TREE_STUMP004 (EMPTY_NO + 126)
 
-#define GOLD_TREE_BELLS 0x007F
-#define GOLD_TREE_FTR (GOLD_TREE_BELLS + 1)
-#define GOLD_TREE_BEES (GOLD_TREE_FTR + 1)
-#define CEDAR_TREE_LIGHTS (GOLD_TREE_BEES + 1)
+#define GOLD_TREE_BELLS (EMPTY_NO + 127)
+#define GOLD_TREE_FTR (EMPTY_NO + 128)
+#define GOLD_TREE_BEES (EMPTY_NO + 129)
+#define CEDAR_TREE_LIGHTS (EMPTY_NO + 130)
+
+#define RST_ROCK_A (EMPTY_NO + 131)
+#define RST_ROCK_B (EMPTY_NO + 132)
+#define RST_ROCK_C (EMPTY_NO + 133)
+#define RST_ROCK_D (EMPTY_NO + 134)
+#define RST_ROCK_E (EMPTY_NO + 135)
+
+#define C_ROCK_A (EMPTY_NO + 136)
+#define C_ROCK_B (EMPTY_NO + 137)
+#define C_ROCK_C (EMPTY_NO + 138)
+#define C_ROCK_D (EMPTY_NO + 139)
+#define C_ROCK_E (EMPTY_NO + 140)
+
+#define RST_HOLE_A (EMPTY_NO + 141)
+#define RST_HOLE_B (EMPTY_NO + 142)
+#define RST_HOLE_C (EMPTY_NO + 143)
+#define RST_HOLE_D (EMPTY_NO + 144)
+#define RST_HOLE_E (EMPTY_NO + 145)
+
+#define FLOWER_JACOBS_LADDER (EMPTY_NO + 146)
 
 /* begin environmental/nature objects */
 #define ENV_START 0x0800
