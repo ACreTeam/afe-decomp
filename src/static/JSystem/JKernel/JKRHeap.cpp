@@ -18,6 +18,7 @@ void* JKRHeap::mUserRamEnd;
 u32 JKRHeap::mMemorySize;
 
 bool JKRHeap::sDefaultFillFlag = true;
+bool JKRHeap::sDefaultFillCheckFlag = false;
 
 JKRHeap::JKRHeap(void* data, u32 size, JKRHeap* heap, bool errorFlag)
     : JKRDisposer(), mChildTree(this), mDisposerList() {
@@ -39,6 +40,7 @@ JKRHeap::JKRHeap(void* data, u32 size, JKRHeap* heap, bool errorFlag)
     if (mErrorFlag == true && mErrorHandler == nullptr)
         mErrorHandler = JKRDefaultMemoryErrorRoutine;
     mDebugFill = sDefaultFillFlag;
+    mCheckMemoryFilled = sDefaultFillCheckFlag;
     mInitFlag = false;
 }
 
@@ -92,11 +94,13 @@ void JKRHeap::destroy(JKRHeap* heap) {
 }
 
 void* JKRHeap::alloc(u32 byteCount, int padding, JKRHeap* heap) {
-    void* memory = nullptr;
+    void* memory;
     if (heap) {
-        memory = heap->do_alloc(byteCount, padding);
+        memory = heap->alloc(byteCount, padding);
     } else if (sCurrentHeap) {
-        memory = sCurrentHeap->do_alloc(byteCount, padding);
+        memory = sCurrentHeap->alloc(byteCount, padding);
+    } else {
+        memory = nullptr;
     }
     return memory;
 }
@@ -161,19 +165,30 @@ s32 JKRHeap::changeGroupID(u8 newGroupID) {
     return do_changeGroupID(newGroupID);
 }
 
+u32 JKRHeap::getMaxAllocatableSize(int alignment) {
+    u32 maxFreeBlock = (uintptr_t)do_getMaxFreeBlock();
+    u32 ptrOffset = (alignment - 1) & alignment - (maxFreeBlock & 0xf);
+    return ~(alignment - 1) & (getFreeSize() - ptrOffset);
+}
+
 u8 JKRHeap::getCurrentGroupId() {
     return do_getCurrentGroupId();
 }
 
 JKRHeap* JKRHeap::findFromRoot(void* ptr) {
-    if (sRootHeap != nullptr)
-        return sRootHeap->find(ptr);
+    if (sRootHeap == nullptr) {
+        return nullptr;
+    }
 
-    return nullptr;
+    if ((u32)sRootHeap->mStart <= (u32)ptr && (u32)ptr < (u32)sRootHeap->mEnd) {
+        return sRootHeap->find(ptr);
+    }
+
+    return sRootHeap->findAllHeap(ptr);
 }
 
 JKRHeap* JKRHeap::find(void* memory) const {
-    if ((mStart <= memory) && (memory <= mEnd)) {
+    if ((mStart <= memory) && (memory < mEnd)) {
         if (mChildTree.getNumChildren() != 0) {
             for (JSUTreeIterator<JKRHeap> iterator(mChildTree.getFirstChild()); iterator != mChildTree.getEndChild();
                  ++iterator) {
@@ -264,7 +279,7 @@ void JKRHeap::copyMemory(void* dst, void* src, u32 size) {
 void JKRDefaultMemoryErrorRoutine(void* heap, u32 size, int alignment) {
     // OSReport("Error: Cannot allocate memory %d(0x%x)byte in %d byte alignment from %08x\n", size, size, alignment,
     // heap);
-    OSErrorLine(710, "abort\n");
+    OSErrorLine(830, "abort\n");
 }
 
 JKRHeapErrorHandler* JKRHeap::setErrorHandler(JKRHeapErrorHandler* newHandler) {

@@ -296,14 +296,14 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "cflags": cflags_rel,
         "progress_category": "game",
         "objects": objects,
-    }
+}
 
 
 def JSystemLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
         "mw_version": "GC/1.3.2",
-        "cflags": [*cflags_base, "-O4,p", "-inline auto", "-RTTI on", "-enum int", "-char signed"],
+        "cflags": [*cflags_base, "-O4,p", "-inline auto", "-RTTI on", "-enum int", "-char signed", "-sym on"],
         "progress_category": "jsystem",
         "src_dir": "src/static",
         "objects": objects,
@@ -344,7 +344,7 @@ config.libs = [
                 Object(NonMatching, "JSystem/JKernel/JKRExpHeap.cpp"),
                 Object(NonMatching, "JSystem/JKernel/JKRFileFinder.cpp"),
                 Object(NonMatching, "JSystem/JKernel/JKRFileLoader.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRHeap.cpp"),
+                Object(Equivalent, "JSystem/JKernel/JKRHeap.cpp"), # Maybe need PCH for this?
                 Object(NonMatching, "JSystem/JKernel/JKRMemArchive.cpp"),
                 Object(NonMatching, "JSystem/JKernel/JKRThread.cpp"),
             ],

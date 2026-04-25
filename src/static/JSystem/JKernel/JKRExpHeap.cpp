@@ -85,6 +85,25 @@ JKRExpHeap* JKRExpHeap::create(void* ptr, u32 size, JKRHeap* parent, bool errorF
     return newHeap;
 }
 
+void JKRExpHeap::do_destroy() {
+    if (!_6E) {
+        JKRHeap* heap = getParent();
+        if (heap) {
+            this->~JKRExpHeap();
+            JKRFreeToHeap(heap, this);
+        }
+    } else {
+        u8* r28 = (u8*)_70;
+        u32 r27 = _74;
+        this->~JKRExpHeap();
+#if DEBUG
+        if (mDebugFill) {
+            JKRFillMemory(r28, r27, JKRValue_DEBUGFILL_NOTUSE);
+        }
+#endif
+    }
+}
+
 JKRExpHeap::JKRExpHeap(void* p1, u32 p2, JKRHeap* p3, bool p4) : JKRHeap(p1, p2, p3, p4) {
     mCurrentAllocMode = 0;
     mCurrentGroupID = 0xFF;
@@ -417,6 +436,16 @@ void JKRExpHeap::do_freeTail() {
     unlock();
 }
 
+void JKRExpHeap::do_fillFreeArea() {
+    #if DEBUG
+        lock();
+        for (CMemBlock* block = mHeadFreeList; block; block = block->mNext) {
+            JKRFillMemory((u8*)block->getContent(), block->size, JKRValue_DEBUGFILL_DELETE);
+        }
+        unlock();
+    #endif
+    }
+
 s32 JKRExpHeap::do_resize(void* ptr, u32 size) {
     lock();
     CMemBlock* block = CMemBlock::getHeapBlock(ptr);
@@ -485,6 +514,20 @@ s32 JKRExpHeap::do_getFreeSize() {
     }
     unlock();
     return maxFreeSize;
+}
+
+void* JKRExpHeap::do_getMaxFreeBlock() {
+    lock();
+    s32 size = 0;
+    CMemBlock* res = NULL;
+    for (CMemBlock* block = mHead; block; block = block->mNext) {
+        if (size < (s32)block->mAllocatedSpace) {
+            size = block->mAllocatedSpace;
+            res = block;
+        }
+    }
+    unlock();
+    return res;
 }
 
 s32 JKRExpHeap::do_getTotalFreeSize() {
