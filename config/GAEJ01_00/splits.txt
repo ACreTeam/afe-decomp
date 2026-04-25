@@ -978,7 +978,7 @@ JSystem/JSupport/JSUFileStream.cpp:
 	.data       start:0x80102BE0 end:0x80102C88
 	.sdata      start:0x80290FD8 end:0x80290FF8
 
-JSystem/JSystem/JGadget/linklist.cpp:
+JSystem/JGadget/linklist.cpp:
 	.text       start:0x80074904 end:0x8007495C
 	.text       start:0x8007495C end:0x80074A44
 

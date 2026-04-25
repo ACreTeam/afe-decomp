@@ -26,7 +26,7 @@ s32 JFWSystem::CSetUpParam::decompPriority = 7;
 s32 JFWSystem::CSetUpParam::aPiecePriority = 6;
 const ResFONT* JFWSystem::CSetUpParam::systemFontRes = &JUTResFONT_Ascfont_fix12;
 const _GXRenderModeObj* JFWSystem::CSetUpParam::renderMode = &GXNtsc480IntDf;
-u32 JFWSystem::CSetUpParam::exConsoleBufferSize = 0x24F8;
+u32 JFWSystem::CSetUpParam::exConsoleBufferSize = 0x24FC;
 
 JKRHeap* JFWSystem::rootHeap;
 JKRHeap* JFWSystem::systemHeap;
@@ -73,7 +73,7 @@ void JFWSystem::init() {
         systemConsole->setFontSize(systemFont->getWidth() * 0.85f, systemFont->getHeight() * 0.5f);
         systemConsole->setPosition(20, 25);
     } else {
-        systemConsole->setFontSize(systemFont->getWidth() * 0.85f, systemFont->getHeight());
+        systemConsole->setFontSize(systemFont->getWidth(), systemFont->getHeight());
         systemConsole->setPosition(20, 50);
     }
     systemConsole->setHeight(25);

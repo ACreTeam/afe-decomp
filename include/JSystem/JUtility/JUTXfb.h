@@ -22,10 +22,10 @@ class JUTXfb {
 
     void clearIndex();
     void common_init(int);
-    JUTXfb(const GXRenderModeObj*, JKRHeap*, JUTXfb::EXfbNumber);
+    JUTXfb(JKRHeap*, JUTXfb::EXfbNumber);
     ~JUTXfb();
     void delXfb(int);
-    static JUTXfb* createManager(const GXRenderModeObj* rmode, JKRHeap*, JUTXfb::EXfbNumber);
+    static JUTXfb* createManager(JKRHeap*, JUTXfb::EXfbNumber);
     static void destroyManager();
     void initiate(u16, u16, JKRHeap*, JUTXfb::EXfbNumber);
     u32 accumeXfbSize();

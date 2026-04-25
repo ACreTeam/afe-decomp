@@ -57,7 +57,7 @@ void JFWDisplay::ctor_subroutine(const GXRenderModeObj* rmode, bool enableAlpha)
 
 JFWDisplay::JFWDisplay(const _GXRenderModeObj* rmode, JKRHeap* heap, JUTXfb::EXfbNumber bufferCount, bool p3) {
     ctor_subroutine(rmode, p3);
-    mXfb = JUTXfb::createManager(rmode, heap, bufferCount);
+    mXfb = JUTXfb::createManager(heap, bufferCount);
 }
 
 JFWDisplay::~JFWDisplay() {

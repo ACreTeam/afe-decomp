@@ -64,8 +64,8 @@ JUTConsole::JUTConsole(uint p1, uint maxLines, bool p3) {
 
     mFont = nullptr;
     mIsVisible = true;
-    _65 = false;
-    _66 = false;
+    _69 = false;
+    _6A = false;
     mOutput = 1;
 
     _5C = JUtility::TColor(0, 0, 0, 100);
@@ -193,7 +193,7 @@ void JUTConsole::print(char const* param_0) {
         const u8* r29 = (const u8*)param_0;
         u8* r28 = getLinePtr(_38) + _3C;
         while (*r29 != 0) {
-            if (_66 && _34 == nextIndex(_38)) {
+            if (_6A && _34 == nextIndex(_38)) {
                 break;
             }
             if (*r29 == '\n') {
@@ -279,7 +279,7 @@ void JUTConsole::dumpToTerminal(unsigned int n) {
         if ((u8)line[-1] == 0) {
             break;
         }
-        if (_65) {
+        if (_69) {
             OSReport("[%03d] %s\n", i, line);
         } else {
             OSReport("%s\n", line);

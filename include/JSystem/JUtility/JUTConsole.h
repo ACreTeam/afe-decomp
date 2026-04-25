@@ -142,9 +142,11 @@ class JUTConsole : JKRDisposer {
     u32 mOutput;                  // _58
     JUtility::TColor _5C;         // _5C
     JUtility::TColor _60;         // _60
-    bool mIsVisible;              // _64
-    bool _65;                     // _65
-    bool _66;                     // _66
+    int _64;                      // _64
+    bool mIsVisible;              // _68
+    bool _69;                     // _69
+    bool _6A;                     // _6A
+    bool _6B;                     // _6B
 }; // Size: 0x6C
 
 class JUTConsoleManager {

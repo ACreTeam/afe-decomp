@@ -58,7 +58,45 @@ class JKRThreadSwitch {
 };
 
 class JKRThread : public JKRDisposer {
-  public:
+public:
+class TLoad {
+    public:
+        TLoad() {
+            clear();
+            mValid = false;
+            mThreadId = 0;
+        }
+
+        bool isValid() const { return mValid; }
+        u32 getCost() const { return mCost; }
+        u32 getCount() const { return mSwitchCount; }
+        s32 getId() const { return mThreadId; }
+
+        void setValid(bool valid) { mValid = valid; }
+        void setId(s32 id) { mThreadId = id; }
+        void setCurrentTime() { mLastTick = OSGetTick(); }
+
+        void resetCost() { mCost = 0; }
+        void resetCount() { mSwitchCount = 0; }
+
+        void incCount() { mSwitchCount++; }
+        void addCurrentCost() { mCost = mCost + (OSGetTick() - mLastTick); }
+
+        void clear() {
+            resetCount();
+            resetCost();
+            mLastTick = 0;
+        }
+
+    private:
+        /* 0x00 */ bool mValid;
+        /* 0x01 */ u8 _01[3];
+        /* 0x04 */ u32 mCost;
+        /* 0x08 */ u32 mSwitchCount;
+        /* 0x0C */ OSTick mLastTick;
+        /* 0x10 */ s32 mThreadId;
+    };
+
     JKRThread(u32 stackSize, int msgCount, int threadPrio);
     JKRThread(OSThread* osThread, int msgCount);
 
@@ -106,15 +144,18 @@ class JKRThread : public JKRDisposer {
 
     static JSUList<JKRThread> sThreadList;
 
-  protected:
-    JSULink<JKRThread> mLink;
-    JKRHeap* mHeap;
-    OSThread* mThreadRecord;
-    OSMessageQueue mMesgQueue;
-    OSMessage* mMesgBuffer;
-    int mMesgCount;
-    void* mStackMemory;
-    u32 mStackSize;
+protected:
+    /* 0x18 */ JSULink<JKRThread> mLink;
+    /* 0x28 */ JKRHeap* mHeap;
+    /* 0x2C */ OSThread* mThreadRecord;
+    /* 0x30 */ OSMessageQueue mMesgQueue;
+    /* 0x50 */ OSMessage* mMesgBuffer;
+    /* 0x54 */ s32 mMesgCount;
+    /* 0x58 */ void* mStackMemory;
+    /* 0x5C */ u32 mStackSize;
+    /* 0x60 */ TLoad mLoadInfo;
+    /* 0x74 */ JKRHeap* mCurrentHeap;
+    /* 0x78 */ s32 mCurrentHeapError;
 };
 
 // Unused class, function definitions from Sunshine and MKDD

@@ -19,18 +19,14 @@ void JUTXfb::common_init(int xfbNum) {
     mSDrawingFlag = 99;
 }
 
-JUTXfb::JUTXfb(const GXRenderModeObj* rmode, JKRHeap* heap, JUTXfb::EXfbNumber number) {
+JUTXfb::JUTXfb(JKRHeap* heap, JUTXfb::EXfbNumber number) {
     common_init(number);
 
-    if (rmode) {
-        initiate(rmode->fbWidth, rmode->xfbHeight, heap, number);
-    } else {
-        u16 efbWidth = JUTVideo::getManager()->getRenderMode()->fbWidth;
-        u16 xfbHeight = JUTVideo::getManager()->getRenderMode()->xfbHeight;
-        u16 efbHeight = JUTVideo::getManager()->getRenderMode()->efbHeight;
+    u16 efbWidth = JUTVideo::getManager()->getRenderMode()->fbWidth;
+    u16 xfbHeight = JUTVideo::getManager()->getRenderMode()->xfbHeight;
+    u16 efbHeight = JUTVideo::getManager()->getRenderMode()->efbHeight;
 
-        initiate(efbWidth, xfbHeight, heap, number);
-    }
+    initiate(efbWidth, xfbHeight, heap, number);
 }
 
 JUTXfb::~JUTXfb() {
@@ -46,10 +42,10 @@ void JUTXfb::delXfb(int xfbIdx) {
     }
 }
 
-JUTXfb* JUTXfb::createManager(const GXRenderModeObj* rmode, JKRHeap* heap, JUTXfb::EXfbNumber number) {
+JUTXfb* JUTXfb::createManager(JKRHeap* heap, JUTXfb::EXfbNumber number) {
     JUT_CONFIRM_MESSAGE(sManager == 0);
     if (sManager == nullptr) {
-        sManager = new JUTXfb(rmode, heap, number);
+        sManager = new JUTXfb(heap, number);
     }
     return sManager;
 }

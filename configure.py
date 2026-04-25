@@ -323,31 +323,51 @@ def MatchingFor(*versions):
 config.warn_missing_config = True
 config.warn_missing_source = False
 config.libs = [
-        JSystemLib(
-            "JKernel",
-            [
-                Object(NonMatching, "JSystem/JKernel/JKRAram.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRAramArchive.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRAramBlock.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRAramHeap.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRAramPiece.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRAramStream.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRArchivePri.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRArchivePub.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRCompArchive.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRDecomp.cpp"),
-                Object(Matching, "JSystem/JKernel/JKRDisposer.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRDvdAramRipper.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRDvdArchive.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRDvdFile.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRDvdRipper.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRExpHeap.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRFileFinder.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRFileLoader.cpp"),
-                Object(Equivalent, "JSystem/JKernel/JKRHeap.cpp"), # Maybe need PCH for this?
-                Object(NonMatching, "JSystem/JKernel/JKRMemArchive.cpp"),
-                Object(NonMatching, "JSystem/JKernel/JKRThread.cpp"),
-            ],
+    JSystemLib(
+        "J2DGraph",
+        [
+            Object(NonMatching, "JSystem/J2DGraph/J2DGrafContext.cpp"),
+            Object(NonMatching, "JSystem/J2DGraph/J2DOrthoGraph.cpp"),
+        ],
+    ),
+    JSystemLib(
+        "JFramework",
+        [
+            Object(NonMatching, "JSystem/JFramework/JFWDisplay.cpp"),
+            Object(Matching, "JSystem/JFramework/JFWSystem.cpp"),
+        ],
+    ),
+    JSystemLib(
+        "JGadget",
+        [
+            Object(Matching, "JSystem/JGadget/linklist.cpp"),
+        ],
+    ),
+    JSystemLib(
+        "JKernel",
+        [
+            Object(NonMatching, "JSystem/JKernel/JKRAram.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRAramArchive.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRAramBlock.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRAramHeap.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRAramPiece.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRAramStream.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRArchivePri.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRArchivePub.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRCompArchive.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRDecomp.cpp"),
+            Object(Matching, "JSystem/JKernel/JKRDisposer.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRDvdAramRipper.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRDvdArchive.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRDvdFile.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRDvdRipper.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRExpHeap.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRFileFinder.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRFileLoader.cpp"),
+            Object(Equivalent, "JSystem/JKernel/JKRHeap.cpp"), # Maybe need PCH for this?
+            Object(NonMatching, "JSystem/JKernel/JKRMemArchive.cpp"),
+            Object(NonMatching, "JSystem/JKernel/JKRThread.cpp"),
+        ],
     ),
     JSystemLib(
         "JSupport",
