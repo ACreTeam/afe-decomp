@@ -74,7 +74,7 @@ Building
   git clone --recursive https://github.com/ACreTeam/afe-decomp.git
   ```
 
-- Copy your game's disc image to `orig/GAEJ01`.
+- Copy your game's disc image to `orig/GAEJ01_00`.
   - Supported formats: ISO (GCM), RVZ, WIA, WBFS, CISO, NFS, GCZ, TGC
   - After the initial build, the disc image can be deleted to save space.
 
@@ -84,7 +84,7 @@ Building
   python configure.py
   ```
 
-  To use a version other than `GAEJ01` (JP rev0), specify it with `--version`.
+  To use a version other than `GAEJ01_00` (JP rev0), specify it with `--version`.
 
 - Build:
 

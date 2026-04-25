@@ -32,7 +32,7 @@ from tools.project import (
 # Game versions
 DEFAULT_VERSION = 0
 VERSIONS = [
-    "GAEJ01",  # 0
+    "GAEJ01_00",  # 0
 ]
 
 parser = argparse.ArgumentParser()
