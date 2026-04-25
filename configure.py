@@ -266,6 +266,7 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
+config.sdk_linker_version = "GC/1.3.2"
 config.linker_version = "GC/2.6"
 
 
@@ -326,20 +327,20 @@ config.libs = [
     ),
     {
         "lib": "Runtime.PPCEABI.H",
-        "mw_version": config.linker_version,
+        "mw_version": config.sdk_linker_version,
         "cflags": [*cflags_runtime, "-inline auto,deferred", "-use_lmw_stmw on", "-char signed", "-fp_contract on"],
         "progress_category": "sdk",
         "src_dir": "src/static",
         "objects": [
-            Object(NonMatching, "Runtime.PPCEABI.H/__va_arg.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/CPlusLibPPC.cp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/NMWException.cp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/ptmf.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/__mem.c"),
+            Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
+            Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/CPlusLibPPC.cp"),
+            Object(Matching, "Runtime.PPCEABI.H/NMWException.cp"),
+            Object(Matching, "Runtime.PPCEABI.H/ptmf.c"),
+            Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
+            Object(Matching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
+            Object(Matching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cp"),
+            Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
         ],
     },
 ]
