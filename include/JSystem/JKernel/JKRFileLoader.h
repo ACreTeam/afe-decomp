@@ -69,5 +69,9 @@ class JKRFileLoader : public JKRDisposer {
     u32 mMountCount;                        // 0x34
 };
 
+inline size_t JKRReadResource(void* resourceBuffer, u32 bufferSize, const char* path, JKRExpandSwitch expandSwitch) {
+    return JKRFileLoader::readGlbResource(resourceBuffer, bufferSize, path, expandSwitch);
+}
+
 #endif
 #endif
