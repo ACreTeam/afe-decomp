@@ -16,6 +16,7 @@ JUTResFont::JUTResFont() {
 
 JUTResFont::JUTResFont(const ResFONT* resource, JKRHeap* heap) {
     initialize_state();
+    JUTFont::initialize_state();
     JUTResFont::initiate(resource, heap);
 }
 
