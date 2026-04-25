@@ -399,6 +399,7 @@ config.libs = [
             Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp"),
             Object(Matching, "JSystem/JUtility/JUTSDFile.cpp"),
             Object(Matching, "JSystem/JUtility/EXIBios.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-O3,p", "-inline all"]),
+            Object(NonMatching, "JSystem/JUtility/JUTTiff.cpp", mw_version="GC/1.3"),
         ],
     ),
     {
@@ -424,7 +425,7 @@ config.libs = [
         "mw_version": "GC/1.3.2",
         "cflags": [
             *cflags_static,
-        "-inline off",
+            "-inline off",
             "-sdata 0",
             "-sdata2 0",
             "-sym on",
