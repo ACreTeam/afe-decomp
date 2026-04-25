@@ -103,6 +103,12 @@ parser.add_argument(
     help="path to sjiswrap.exe (optional)",
 )
 parser.add_argument(
+    "--ninja",
+    metavar="BINARY",
+    type=Path,
+    help="path to ninja binary (optional)",
+)
+parser.add_argument(
     "--verbose",
     action="store_true",
     help="print verbose output",
@@ -112,6 +118,13 @@ parser.add_argument(
     dest="non_matching",
     action="store_true",
     help="builds equivalent (but non-matching) or modded objects",
+)
+parser.add_argument(
+    "--warn",
+    dest="warn",
+    type=str,
+    choices=["all", "off", "error"],
+    help="how to handle warnings",
 )
 parser.add_argument(
     "--no-progress",
@@ -134,6 +147,7 @@ config.compilers_path = args.compilers
 config.generate_map = args.map
 config.non_matching = args.non_matching
 config.sjiswrap_path = args.sjiswrap
+config.ninja_path = args.ninja
 config.progress = args.progress
 if not is_windows():
     config.wrapper = args.wrapper
@@ -142,12 +156,12 @@ if not config.non_matching:
     config.asm_dir = None
 
 # Tool versions
-config.binutils_tag = "2.42-1"
-config.compilers_tag = "20240706"
-config.dtk_tag = "v1.3.0"
-config.objdiff_tag = "v2.4.0"
-config.sjiswrap_tag = "v1.2.0"
-config.wibo_tag = "0.6.11"
+config.binutils_tag = "2.42-2"
+config.compilers_tag = "20251118"
+config.dtk_tag = "v1.8.3"
+config.objdiff_tag = "v3.6.1"
+config.sjiswrap_tag = "v1.2.2"
+config.wibo_tag = "1.0.3"
 
 # Project
 config.config_path = Path("config") / config.version / "config.yml"
@@ -158,7 +172,6 @@ config.asflags = [
     "-I include",
     f"-I build/{config.version}/include",
     f"--defsym BUILD_VERSION={version_num}",
-    f"--defsym VERSION_{config.version}",
 ]
 config.ldflags = [
     "-fp hardware",
@@ -216,6 +229,14 @@ if args.debug:
 else:
     cflags_base.append("-DNDEBUG=1")
 
+# Warning flags
+if args.warn == "all":
+    cflags_base.append("-W all")
+elif args.warn == "off":
+    cflags_base.append("-W off")
+elif args.warn == "error":
+    cflags_base.append("-W error")
+
 cflags_common = [
     # Needed for N64 SDK
     "-d _LANGUAGE_C",
@@ -245,7 +266,7 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
-config.linker_version = "GC/1.3.2"
+config.linker_version = "GC/2.6"
 
 
 # Helper function for Dolphin libraries
@@ -264,7 +285,7 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
 def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
-        "mw_version": "GC/1.3.2",
+        "mw_version": "GC/2.6",
         "cflags": cflags_rel,
         "progress_category": "game",
         "objects": objects,
@@ -274,7 +295,7 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
 def JSystemLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
-        "mw_version": "GC/1.3.2",
+        "mw_version": "GC/2.6",
         "cflags": [*cflags_base, "-O4,s", "-char signed"],
         "progress_category": "jsystem",
         "src_dir": "src/static",
@@ -298,8 +319,8 @@ config.libs = [
     JSystemLib(
         "JUtility",
         [
-            Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
-            Object(Matching, "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
+            Object(NonMatching, "JSystem/JUtility/JUTSDDrive.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
+            Object(NonMatching, "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
             Object(Matching, "JSystem/JUtility/EXIBios.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-O3,p", "-inline all"]),
         ],
     ),
@@ -310,15 +331,15 @@ config.libs = [
         "progress_category": "sdk",
         "src_dir": "src/static",
         "objects": [
-            Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
-            Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(Matching, "Runtime.PPCEABI.H/CPlusLibPPC.cp"),
-            Object(Matching, "Runtime.PPCEABI.H/NMWException.cp"),
-            Object(Matching, "Runtime.PPCEABI.H/ptmf.c"),
-            Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
-            Object(Matching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
-            Object(Matching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cp"),
-            Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/__va_arg.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/CPlusLibPPC.cp"),
+            Object(NonMatching, "Runtime.PPCEABI.H/NMWException.cp"),
+            Object(NonMatching, "Runtime.PPCEABI.H/ptmf.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
+            Object(NonMatching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cp"),
+            Object(NonMatching, "Runtime.PPCEABI.H/__mem.c"),
         ],
     },
 ]
@@ -337,6 +358,7 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
         return objects + ["dummy.c"]
     return objects
 
+
 # Uncomment to enable the link order callback.
 # config.link_order_callback = link_order_callback
 
@@ -349,12 +371,18 @@ config.progress_categories = [
     ProgressCategory("jsystem", "JSystem"),
 ]
 config.progress_each_module = args.verbose
+# Optional extra arguments to `objdiff-cli report generate`
+config.progress_report_args = [
+    # Marks relocations as mismatching if the target value is different
+    # Default is "functionRelocDiffs=none", which is most lenient
+    # "--config functionRelocDiffs=data_value",
+]
 
 if args.mode == "configure":
     # Write build.ninja and objdiff.json
     generate_build(config)
 elif args.mode == "progress":
-    # Print progress and write progress.json
+    # Print progress information
     calculate_progress(config)
 else:
     sys.exit("Unknown mode: " + args.mode)
