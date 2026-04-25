@@ -1,4 +1,4 @@
-どうぶつの森 e+
+どうぶつの森 e+  
 [![Build Status]][actions] [![DOL Progress]][Progress] [![REL Progress]][Progress] [![Discord Badge]][discord]
 =============
 
