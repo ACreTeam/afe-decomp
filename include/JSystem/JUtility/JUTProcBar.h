@@ -8,6 +8,28 @@
 
 #include "types.h"
 
+enum JUTProcBarProcessBarMode {
+    PROCESS_BAR_MODE_SEPARATE_WITH_PEAK = 0,
+    PROCESS_BAR_MODE_STACKED_TIMELINE   = 1,
+};
+
+enum JUTProcBarHeapBarMode {
+    HEAP_BAR_MODE_WITH_WATCH_OVERLAY = 0,
+};
+
+enum {
+    JUTProcBar_USER0,
+    JUTProcBar_USER1,
+    JUTProcBar_USER2,
+    JUTProcBar_USER3,
+    JUTProcBar_USER4,
+    JUTProcBar_USER5,
+    JUTProcBar_USER6,
+    JUTProcBar_USER7,
+
+    JUTProcBar_USER_MAX
+};
+
 #ifdef __cplusplus
 class JUTProcBar {
   public:
@@ -18,8 +40,8 @@ class JUTProcBar {
 
         void clear() {
             mCost = 0;
-            _08 = 0;
-            _0C = 0;
+            mPeakCost = 0;
+            mPeakAgeCounter = 0;
         }
 
         void start(u8 red, u8 green, u8 blue) {
@@ -36,10 +58,9 @@ class JUTProcBar {
         }
 
         void accumePeek() {
-            // u32 prev = ++_0C;
-            if (++_0C >= 0x10 || mCost >= _08) {
-                _08 = mCost;
-                _0C = 0;
+            if (++mPeakAgeCounter >= 16 || mCost >= mPeakCost) {
+                mPeakCost = mCost;
+                mPeakAgeCounter = 0;
             }
         }
 
@@ -47,10 +68,14 @@ class JUTProcBar {
             return mCost * p1 / p2;
         }
 
+        void setCost(u32 cost) {
+            mCost = cost;
+        }
+
         u32 mStartTick; // _00
         u32 mCost;      // _04
-        u32 _08;        // _08
-        u32 _0C;        // _0C
+        u32 mPeakCost;        // _08
+        u32 mPeakAgeCounter;        // _0C
         u8 mR;          // _10
         u8 mG;          // _11
         u8 mB;          // _12
@@ -153,9 +178,21 @@ class JUTProcBar {
     void setHeapBarVisible(bool visible) {
         mHeapBarVisible = visible;
     }
-    void userStart(int idx, u8 p2, u8 p3, u8 p4) {
-        sManager->mUsers[idx].start(p2, p3, p4);
-        sManager->_108 |= 1 << idx;
+    void userStart(int idx, u8 r, u8 g, u8 b) {
+        sManager->mUsers[idx].start(r, g, b);
+        sManager->mActiveUserMask |= 1 << idx;
+    }
+    void userEnd(int idx) {
+        sManager->mUsers[idx].end();
+        // drawProcessBar clears active user mask
+    }
+
+    void setUserCost(int idx, u32 cost, u8 r, u8 g, u8 b) {
+        sManager->mUsers[idx].setCost(cost);
+        sManager->mUsers[idx].mR = r;
+        sManager->mUsers[idx].mG = g;
+        sManager->mUsers[idx].mB = b;
+        sManager->mActiveUserMask |= 1 << idx;
     }
 
     inline u32 calcGPUTime() { // fabricated
@@ -164,6 +201,13 @@ class JUTProcBar {
 
     int calcBarHeight() { // fabricated
         return mParams.mBarWidth * 2;
+    }
+
+    void setProcessBarMode(JUTProcBarProcessBarMode mode) {
+        mProcessBarMode = mode;
+    }
+    void setHeapBarMode(JUTProcBarHeapBarMode mode) {
+        mHeapBarMode = mode;
     }
 
     static JUTProcBar* sManager; // might be private too
@@ -175,14 +219,18 @@ class JUTProcBar {
     CTime mWholeLoop;     // _50
     CTime mUsers[8];      // _64
     int mCostFrame;       // _104
-    u32 _108;             // _108, active users?
+    u32 mActiveUserMask;             // _108, active users?
     bool mVisible;        // _10C
-    int _110;             // _110
+    int mProcessBarMode;             // _110
     CParamSet mParams;    // _114
-    int _128;             // _128
+    int mHeapBarMode;             // _128
     JKRHeap* mWatchHeap;  // _12C
     bool mHeapBarVisible; // _130
 }; // 0x134 size
+
+inline void JUTEnableProcessBar(bool enable) {
+    JUTProcBar::getManager()->setVisible(enable);
+}
 #endif
 
 #endif

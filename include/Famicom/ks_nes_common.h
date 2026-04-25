@@ -37,7 +37,7 @@ extern "C" {
 #define KS_NES_WRAM_SIZE 0x800 // 2kb
 #define KS_NES_PPU_NAMETABLE_RAM_SIZE 0x800 // 2kb
 
-#define KS_NES_EMU_STACK_SIZE 0x1000 // 4kb for thread stack
+#define KS_NES_EMU_STACK_SIZE 0x2000 // 8kb for thread stack
 
 #define KS_NES_BYTES_PER_KB (1024)
 #define KS_NES_TO_KB(b) ((f32)b * (1.0f / (f32)KS_NES_BYTES_PER_KB))

@@ -14,6 +14,10 @@ symbols_known: true
 fill_gaps: true
 ldscript_template: config/GAEJ01_00/ldscript.tpl
 
+extract:
+- symbol: JUTResFONT_Ascfont_fix12
+  binary: assets/JSystem/JUtility/FontData/Ascfont_fix12.bfn
+
 modules:
 - object: files/foresta.rel
   hash: 83ef468f00e6374aa8e40b906e2da3e1dc6a9beb

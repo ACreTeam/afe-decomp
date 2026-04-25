@@ -25,6 +25,7 @@
 #include "JSystem/JUtility/JUTGamePad.h"
 #include "nintendo_hi_0.h"
 #include "m_nmibuf.h"
+#include "MSL_C/string.h"
 // #include "JSystem/J2D/J2DGrafContext.h" // needed for ~J2DOrthoGraph
 
 /* For some reason, there are a bunch of unused implicit one-byte 4-byte-aligned bss variables */
@@ -230,6 +231,8 @@ static void process_filer_mode() {
     // Vertex 3
     GXPosition2s16(0, -480);
     GXColor1u32(0x00000000);
+
+    GXEnd();
 
     int start_idx;
     if (nesrom_idx < 10 || nesrom_count < 18) {
@@ -603,19 +606,19 @@ static void SetupExternCommentImage(u8* embedded_save_comment_img, u8* dst, u8* 
             memcpy(dst, rom_file_comment_img, CARD_COMMENT_SIZE);
             u8 temp = dst[CARD_COMMENT_SIZE];
             dst[CARD_COMMENT_SIZE] = '\0';
-            char* image_name_end = strstr((char*)dst + 32, "] ROM ");
+            char* image_name_end = std::strstr((char*)dst + 32, "｣のカセット");
             dst[CARD_COMMENT_SIZE] = temp;
 
             if (image_name_end != nullptr) {
-                strncpy(image_name_end, "] SAVE", 6);
+                strncpy(image_name_end, "｣のセーブ　", 11);
                 dst += CARD_COMMENT_SIZE;
                 break;
             }
             // Fallthrough in the case where "] ROM " doesn't exist
         }
         case MEMCARD_COMMENT_TYPE_DEFAULT: {
-            strncpy((char*)dst, "Animal Crossing", 32);
-            strncpy((char*)dst + 32, "NES Cassette Save Data  ", 32);
+            strncpy((char*)dst, "どうぶつの森ｅ＋", 32);
+            strncpy((char*)dst + 32, "ファミコンカセットセーブ", 32);
             dst += CARD_COMMENT_SIZE;
             break;
         }
@@ -632,12 +635,11 @@ static void SetupExternCommentImage(u8* embedded_save_comment_img, u8* dst, u8* 
         case MEMCARD_BANNER_TYPE_NONE:
             break;
         case MEMCARD_BANNER_TYPE_DEFAULT: {
-            void* banner = JKRFileLoader::getGlbResource("/FAMICOM/newdisk_system.bti.szs");
-            ResTIMG* banner_data = (ResTIMG*)banner;
+            ResTIMG* banner_data = (ResTIMG*)JKRGetResource("/FAMICOM/newdisk_system.bti.szs");
             if (banner_data != nullptr) {
                 u8 banner_fmt;
                 SetupResBanner(banner_data, dst, 0x1800, &size, &banner_fmt);
-                JKRFileLoader::removeResource(banner_data, nullptr);
+                JKRRemoveResource(banner_data, nullptr);
                 dst += size;
                 famicomCommon.memcard_game_header.flags1.banner_fmt = banner_fmt;
             }
@@ -664,13 +666,12 @@ static void SetupExternCommentImage(u8* embedded_save_comment_img, u8* dst, u8* 
         case MEMCARD_ICON_TYPE_NONE:
             break;
         case MEMCARD_ICON_TYPE_DEFAULT: {
-            void* icon = JKRFileLoader::getGlbResource("/FAMICOM/newdisk.bti.szs");
-            ResTIMG* icon_data = (ResTIMG*)icon;
+            ResTIMG* icon_data = (ResTIMG*)JKRGetResource("/FAMICOM/famikon.bti.szs");
             if (icon_data != nullptr) {
                 u16 icon_fmts;
                 u16 icon_flags;
                 SetupResIcon(icon_data, dst, 0x800, nullptr, &icon_fmts, &icon_flags);
-                JKRFileLoader::removeResource(icon_data, nullptr);
+                JKRRemoveResource(icon_data, nullptr);
                 famicomCommon.memcard_game_header.icon_format = icon_fmts;
                 famicomCommon.memcard_game_header.icon_flags = icon_flags;
                 size = getIconSizeFromFormat(icon_fmts);
@@ -697,8 +698,8 @@ static void SetupInternalCommentImage(u8* data) {
 
     // Setup comment
     famicomCommon.memcard_game_header.flags0.comment_type = MEMCARD_COMMENT_TYPE_DEFAULT;
-    strncpy((char*)data, "Animal Crossing", 32);
-    strncpy((char*)data + 32, "NES Save Data           ", 32);
+    strncpy((char*)data, "どうぶつの森ｅ＋", 32);
+    strncpy((char*)data + 32, "ファミコンのセーブデータ", 32);
     data += CARD_COMMENT_SIZE;
 
     // Setup banner
@@ -706,14 +707,13 @@ static void SetupInternalCommentImage(u8* data) {
     famicomCommon.memcard_game_header.flags1.banner_fmt = CARD_STAT_BANNER_NONE;
 
     // Setup icon
-    void* icon = JKRFileLoader::getGlbResource("/FAMICOM/famikon.bti.szs");
-    ResTIMG* icon_res = (ResTIMG*)icon;
+    ResTIMG* icon_res = (ResTIMG*)JKRGetResource("/FAMICOM/famikon.bti.szs");
     if (icon_res != nullptr) {
         u16 icon_fmts;
         u16 icon_flags;
         
         SetupResIcon(icon_res, data, 0x800, nullptr, &icon_fmts, &icon_flags);
-        JKRFileLoader::removeResource(icon_res, nullptr);
+        JKRRemoveResource(icon_res, nullptr);
         famicomCommon.memcard_game_header.flags0.icon_type = MEMCARD_ICON_TYPE_DEFAULT;
         famicomCommon.memcard_game_header.icon_format = icon_fmts;
         famicomCommon.memcard_game_header.icon_flags = icon_flags;
@@ -1203,9 +1203,9 @@ static s32 memcard_game_load(
                     result = CARDGetStatus(chan, fileNo, &cardStatus);
                     if (result == CARD_RESULT_READY) {
                         if (
-                            memcmp(cardStatus.gameName, "GAFE", 4) == 0 &&
+                            memcmp(cardStatus.gameName, "GAEJ", 4) == 0 &&
                             memcmp(cardStatus.company, "01", 2) == 0 &&
-                            memcmp(cardStatus.fileName, "DobutsunomoriP_F_", 17) == 0 &&
+                            memcmp(cardStatus.fileName, "DobutsunomoriE_F_", 17) == 0 &&
                             strcmp(&cardStatus.fileName[17], "SAVE") != 0 /* filename can't be Doubutsunomori_P_F_SAVE* */
                         ) {
                             if (rom_idx == now_rom_idx) {
@@ -1324,7 +1324,7 @@ static s32 memcard_game_load(
                             }
                         }
                     }
-                    else if (result != CARD_RESULT_NOFILE) {
+                    else if (result != CARD_RESULT_NOFILE && result != CARD_RESULT_NOPERM) {
                         goto exit;
                     }
                 }
@@ -1402,17 +1402,17 @@ static s32 memcard_game_list(
                 result = CARDGetStatus(chan, fileNo, &cardStatus);
                 if (result == CARD_RESULT_READY) {
                     if (
-                        memcmp(cardStatus.gameName, "GAFE", 4) == 0 &&
+                        memcmp(cardStatus.gameName, "GAEJ", 4) == 0 &&
                         memcmp(cardStatus.company, "01", 2) == 0 &&
-                        memcmp(cardStatus.fileName, "DobutsunomoriP_F_", 17) == 0 &&
-                        strcmp(&cardStatus.fileName[17], "SAVE") != 0 /* filename can't be Doubutsunomori_P_F_SAVE* */
+                        memcmp(cardStatus.fileName, "DobutsunomoriE_F_", 17) == 0 &&
+                        strcmp(&cardStatus.fileName[17], "SAVE") != 0 /* filename can't be DoubutsunomoriE_F_SAVE* */
                     ) {
-                        if (namebuf_size >= 16) {
+                        if (namebuf_size >= MURA_GAME_NAME_SIZE) {
                             int invalid_game = FALSE;
 
                             /* Incorporate the contents of the file. */
                             OSReport("ファイルの内容を取り込む\n");
-                            static char brokenTitle[] = "##BROKEN GAME##";
+                            static u8 brokenTitle[] = {0x5C, 0x09, 0xC1, 0x7E, 0x0F, 0xD1, 0x90, 0xB1, 0x5C, 0x20}; // ⛶こわれたゲーム⛶ (broken game)
 
                             if (CARDFastOpen(chan, fileNo, &fileInfo) != CARD_RESULT_READY) {
                                 invalid_game = TRUE;
@@ -1455,7 +1455,7 @@ static s32 memcard_game_list(
                         game_count++;
                     }
                 }
-                else if (result != CARD_RESULT_NOFILE) {
+                else if (result != CARD_RESULT_NOFILE && result != CARD_RESULT_NOPERM) {
                     goto exit;
                 }
             }
@@ -1492,10 +1492,6 @@ exit:
     return result;
 }
 
-inline JKRFileFinder* getFirstFile(const char* dir) {
-    return JKRFileLoader::findFirstFile(dir);
-}
-
 static size_t entrylist(const char* dir, char* filename_strbuf) {
     char pathbuf[256];
     u8* filename_buf = (u8*)filename_strbuf;
@@ -1503,7 +1499,7 @@ static size_t entrylist(const char* dir, char* filename_strbuf) {
     s32 dir_path_len;
     size_t len;
     
-    fileFinder = getFirstFile(dir);
+    fileFinder = JKRFindFirstFile(dir);
     dir_path_len = strlen(dir);
 
     if (filename_strbuf != nullptr) {
@@ -1515,11 +1511,11 @@ static size_t entrylist(const char* dir, char* filename_strbuf) {
     nesrom_count++;
     len = dir_path_len + 2;
     if (fileFinder != nullptr) {
-        while (fileFinder->isAvailable()) {
+        while (JKRIsFileFinderAvailable(fileFinder)) {
             if (fileFinder->mBase.mFileName[0] != '.') {
                 snprintf(pathbuf, sizeof(pathbuf), "%s/%s", dir, fileFinder->mBase.mFileName);
                 dir_path_len = strlen(pathbuf);
-                if (fileFinder->mIsDir) {
+                if (JKRIsFileFinderDirectory(fileFinder)) {
                     len += entrylist(pathbuf, filename_strbuf != nullptr ? filename_strbuf + len : nullptr);
                 }
                 else {
@@ -1535,10 +1531,10 @@ static size_t entrylist(const char* dir, char* filename_strbuf) {
                 }
             }
 
-            fileFinder->findNextFile();
+            JKRFindNextFile(fileFinder);
         }
 
-        delete fileFinder;
+        JKRCloseFileFinder(fileFinder);
     }
 
     return len;
@@ -1560,7 +1556,7 @@ static void select_game() {
 
             if (nesrom_idx >= nesrom_count) {
                 if (nesrom_idx_loaded < 0) {
-                    OSPanic(__FILE__, 4239, "no nesfile specified");
+                    OSPanic(__FILE__, 4231, "no nesfile specified");
                     continue;
                 }
 
@@ -1654,7 +1650,7 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
         famicomCommon.rom_no = rom_idx;
 
         if (famicomCommon.save_pl_no >= 0 && save_game_image == 0) {
-            famicomCommon.save_data_name = (u8*)"GAFEFSC\x1A";
+            famicomCommon.save_data_name = (u8*)"GAEJFSC\x1A";
             famicomCommon.save_data_single_size = 0x660;
             famicomCommon.save_data_total_size = sizeof(FamicomSaveDataHeader) + 0x660 * PLAYER_NUM;
             famicomCommon.save_data_header = (FamicomSaveDataHeader*)famicomCommonSave;
@@ -1662,8 +1658,8 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
         }
 
         nesrom_idx = famicomCommon.rom_no + 1;
-        strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriP_MURA", 32);
-        strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriP_F_SAVE", 32);
+        strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriE_MURA", 32);
+        strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriE_F_SAVE", 32);
         famicomCommon.unused_save_data_start_ofs = 0x640;
     }
     else if (rom_idx < 0) {
@@ -1682,17 +1678,17 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
     slow_mode = 0;
     slow_mode_sub = 0;
     speed_show = 0;
-    JKRFileLoader::changeDirectory("/FAMICOM/");
+    JKRChangeDirectory("/FAMICOM/");
     size_t unused_totalfreesize = my_gettotalfreesize();
 
-    MALLOC_MALLOC(u8, CHR_TO_I8_BUF_SIZE, famicomCommon.chr_to_i8_bufp, 4497);
-    MALLOC_MALLOC(u8, KS_NES_NESFILE_HEADER_SIZE + KS_NES_PRGROM_SIZE + KS_NES_CHRROM_SIZE, famicomCommon.nesromp, 4499);
-    MALLOC_MALLOC(ksNesCommonWorkObj, sizeof(ksNesCommonWorkObj), famicomCommon.wp, 4501);
-    MALLOC_MALLOC(ksNesStateObj, sizeof(ksNesStateObj), famicomCommon.sp, 4502);
-    MALLOC_MALLOC(u8, KS_NES_CHRRAM_SIZE, famicomCommon.chrramp, 4505);
-    MALLOC_MALLOC(u8, KS_NES_BBRAM_SIZE, famicomCommon.bbramp, 4510);
-    MALLOC_MALLOC(u8, KS_NES_NOISE_DATA_SIZE, famicomCommon.noise_bufp, 4515);
-    MALLOC_MALLOC(u8, KS_NES_DRAW_RESULT_BUF_SIZE, famicomCommon.result_bufp, 4517);
+    MALLOC_MALLOC(u8, CHR_TO_I8_BUF_SIZE, famicomCommon.chr_to_i8_bufp, 4492);
+    MALLOC_MALLOC(u8, KS_NES_NESFILE_HEADER_SIZE + KS_NES_PRGROM_SIZE + KS_NES_CHRROM_SIZE, famicomCommon.nesromp, 4494);
+    MALLOC_MALLOC(ksNesCommonWorkObj, sizeof(ksNesCommonWorkObj), famicomCommon.wp, 4496);
+    MALLOC_MALLOC(ksNesStateObj, sizeof(ksNesStateObj), famicomCommon.sp, 4497);
+    MALLOC_MALLOC(u8, KS_NES_CHRRAM_SIZE, famicomCommon.chrramp, 4500);
+    MALLOC_MALLOC(u8, KS_NES_BBRAM_SIZE, famicomCommon.bbramp, 4505);
+    MALLOC_MALLOC(u8, KS_NES_NOISE_DATA_SIZE, famicomCommon.noise_bufp, 4510);
+    MALLOC_MALLOC(u8, KS_NES_DRAW_RESULT_BUF_SIZE, famicomCommon.result_bufp, 4512);
 
     famicomCommon.memcard_save_comment = commentImageBuffer;
 
@@ -1720,7 +1716,7 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
         CONV_BYTE_KB(my_getmemblocksize(famicomCommon.result_bufp))
     );
 
-    if (famicomCommon.noise_bufp == nullptr || JKRFileLoader::readGlbResource(famicomCommon.noise_bufp, KS_NES_NOISE_DATA_SIZE, "noise.bin.szs", EXPAND_SWITCH_DECOMPRESS)) {
+    if (famicomCommon.noise_bufp == nullptr || JKRReadResource(famicomCommon.noise_bufp, KS_NES_NOISE_DATA_SIZE, "noise.bin.szs", EXPAND_SWITCH_DECOMPRESS)) {
         if (famicomCommon.noise_bufp != nullptr) {
             EmuSound_Start(famicomCommon.noise_bufp + 0x2000);
         }
@@ -1736,8 +1732,8 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
                         goto exit;
                     }
 
-                    MALLOC_MALLOC(u8 *, nesrom_count * sizeof(u8*), nesrom_filename_ptrs, 4676);
-                    MALLOC_MALLOC(char, length, nesrom_filename_strbuf, 4677);
+                    MALLOC_MALLOC(u8 *, nesrom_count * sizeof(u8*), nesrom_filename_ptrs, 4671);
+                    MALLOC_MALLOC(char, length, nesrom_filename_strbuf, 4672);
                 }
             }
         }
@@ -1746,7 +1742,7 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
         }
 
         select_game();
-        JUTProcBar::getManager()->setVisible(false);
+        JUTEnableProcessBar(false);
         famicomCommon.low_res_mode = true;
         JW_SetFamicomMode(TRUE);
         JW_SetLowResoMode(famicomCommon.low_res_mode);
@@ -1814,7 +1810,7 @@ static int SetupResBanner(const ResTIMG* img, u8* dst, size_t max_size, size_t* 
     int banner_type;
 
     if (img != nullptr) {
-        banner_size = img->getWidth() * img->getHeight();
+        banner_size = img->mSizeX * img->mSizeY;
         if (img->mTextureFormat != ResTIMG_FORMAT_C8) {
             banner_size *= sizeof(u16);
             banner_type = CARD_STAT_BANNER_RGB5A3;
@@ -1861,7 +1857,7 @@ static int SetupResIcon(const ResTIMG* img, u8* dst, size_t max_size, size_t* si
     int j;
 
     if (img != nullptr) {
-        icon_size = img->getWidth() * img->getHeight();
+        icon_size = img->mSizeX * img->mSizeY;
         icon_count = icon_size / 0x400;
 
         if (img->mTextureFormat != ResTIMG_FORMAT_C8) {
@@ -2046,7 +2042,7 @@ static int famicom_rom_load() {
         const char* filename = (char*)nesrom_filename_ptrs[nesrom_idx];
         OSReport("%d:<%s>\n", nesrom_idx, filename);
         bzero(famicomCommon.nesromp, nesrom_buffer_size);
-        size_t loaded_size = JKRFileLoader::readGlbResource(famicomCommon.nesromp, nesrom_buffer_size, filename, EXPAND_SWITCH_DECOMPRESS);
+        size_t loaded_size = JKRReadResource(famicomCommon.nesromp, nesrom_buffer_size, filename, EXPAND_SWITCH_DECOMPRESS);
         if (loaded_size == 0) {
             return -1;
         }
@@ -2091,7 +2087,7 @@ static int famicom_rom_load() {
     }
 
     if (famicomCommon.nesrom_memcard && famicomCommon.save_pl_no >= 0) {
-        famicomCommon.save_data_name = (u8*)"GAFEFSE\x1A";
+        famicomCommon.save_data_name = (u8*)"GAEJFSE\x1A";
         famicomCommon.save_data_single_size = max_ofs + 0xB;
         famicomCommon.save_data_total_size = famicomCommon.save_data_single_size * PLAYER_NUM + sizeof(FamicomSaveDataHeader);
         famicomCommon.save_data_header = (FamicomSaveDataHeader*)nintendo_hi_0; // overwritten for use with save data
@@ -2211,6 +2207,7 @@ static void famicom_key_convert() {
 static void famicom_draw() {
     GXTexObj famicomTexObj;
 
+    __GXSetIndirectMask(0);
     GXSetScissor(0, 0, 640, 480);
     GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
     ksNesDrawInit(famicomCommon.wp);
@@ -2226,7 +2223,7 @@ static void famicom_draw() {
     GXInitTexObj(&famicomTexObj, famicomCommon.wp->result_bufp, (u16)KS_NES_WIDTH, (u16)KS_NES_HEIGHT, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     GXInitTexObjLOD(&famicomTexObj, GX_NEAR, GX_NEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     GXLoadTexObj(&famicomTexObj, GX_TEXMAP0);
-    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
     GXSetTexCoordScaleManually(GX_TEXCOORD0, GX_FALSE, 0, 0);
     GXSetTevDirect(GX_TEVSTAGE0);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
@@ -2256,19 +2253,21 @@ static void famicom_draw() {
 
     // vertex 0
     GXPosition2s16(320 - n3, -8 - n1);
-    GXTexCoord2s16(512, 0);
+    GXTexCoord2u16(512, 0);
     
     // vertex 1
     GXPosition2s16(320 - n3, -8 - n1 - n0);
-    GXTexCoord2s16(512, 512);
+    GXTexCoord2u16(512, 512);
     
     // vertex 2
     GXPosition2s16(320 - n3 - n2, -8 - n1 - n0);
-    GXTexCoord2s16(0, 512);
+    GXTexCoord2u16(0, 512);
 
     // vertex 3
     GXPosition2s16(320 - n3 - n2, -8 - n1);
-    GXTexCoord2s16(0, 0);
+    GXTexCoord2u16(0, 0);
+
+    GXEnd();
 
     ksNesDrawEnd();
 }
@@ -2326,7 +2325,6 @@ static int ksnes_thread_exec(u32 flags) {
     }
 }
 
-#pragma dont_inline on // @HACK - necessary to not inline JUTGamePad::getPortStatus
 static void nogbaInput() {
     int port;
     u32 disconnected_ports = 0;
@@ -2339,14 +2337,13 @@ static void nogbaInput() {
             case PAD_ERR_NONE:
             {
                 InputValid[port] = true;
-
-                InputData[port] = ((JUTGamePad*)gamePad)[port].mButtons.mButton;
+                InputData[port] = ((JUTGamePad*)gamePad)[port].getButton();
                 
-                if (((JUTGamePad*)gamePad)[port].mButtons.mAnalogL != 0) {
+                if (((JUTGamePad*)gamePad)[port].getAnalogL() != 0) {
                     InputData[port] |= JUTGamePad::L;
                 }
 
-                if (((JUTGamePad*)gamePad)[port].mButtons.mAnalogR != 0) {
+                if (((JUTGamePad*)gamePad)[port].getAnalogR() != 0) {
                     InputData[port] |= JUTGamePad::R;
                 }
                 break;
@@ -2394,7 +2391,6 @@ static void nogbaInput() {
         }
     }
 }
-#pragma dont_inline reset
 
 // @HACK - we need to force J2DOrthoGraph's dtor to emit
 static void fake() {
@@ -2460,14 +2456,13 @@ extern void famicom_1frame() {
         
         if (APPNMI_ZURUMODE_GET() && (InputButton[0] & JUTGamePad::L)) {
             /* When zurumode 1 is enabled, L + C-Stick (Left/Right) adjusts emulation speed */
-            JUTGamePad* pad = (JUTGamePad*)&gamePad[0];
-            if (pad->mSubStick.mX > 0.1) {
-                hispeed_mode = 2.0f + (pad->mSubStick.mX - 0.1f) * 8.9f;
+            if (((JUTGamePad*)&gamePad[0])->getSubStickX() > 0.1) {
+                hispeed_mode = 2.0f + (((JUTGamePad*)&gamePad[0])->getSubStickX() - 0.1f) * 8.9f;
                 slow_mode = 0;
                 speed_show = 60;
             }
-            else if (pad->mSubStick.mX < -0.1) {
-                slow_mode = 2.0f + (-pad->mSubStick.mX - 0.1f) * 3.4f;
+            else if (((JUTGamePad*)&gamePad[0])->getSubStickX() < -0.1) {
+                slow_mode = 2.0f + (-((JUTGamePad*)&gamePad[0])->getSubStickX() - 0.1f) * 3.4f;
                 hispeed_mode = 0;
                 speed_show = 60;
             }
@@ -2544,7 +2539,7 @@ extern void famicom_1frame() {
     famicom_draw();
 
     /* If filer mode is enabled, controller 4 L press toggles process profiling bar */
-    if (filer_mode_enable && (((JUTGamePad*)gamePad)[3].mButtons.mTrigger & JUTGamePad::L)) {
+    if (filer_mode_enable && (((JUTGamePad*)gamePad)[3].testTrigger(JUTGamePad::L))) {
         JUTProcBar::getManager()->setVisible(JUTProcBar::getManager()->isVisible() ? FALSE : TRUE);
     }
 
@@ -2597,7 +2592,7 @@ extern int famicom_rom_load_check() {
             nesrom_idx++;
             if (nesrom_idx >= nesrom_count) {
                 if (nesrom_idx_loaded < 0) {
-                    OSPanic(__FILE__, 6072, "no nesfile specified");
+                    OSPanic(__FILE__, 6063, "no nesfile specified");
                     continue;
                 }
 
@@ -2645,9 +2640,9 @@ extern int famicom_internal_data_load() {
     famicom_mount_archive_wait();
     bzero(&famicomCommon, sizeof(FamicomCommon));
     famicomCommon.nesrom_memcard = FALSE;
-    strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriP_MURA", 32);
-    strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriP_F_SAVE", 32);
-    famicomCommon.save_data_name = (u8*)"GAFEFSC\x1A";
+    strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriE_MURA", 32);
+    strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriE_F_SAVE", 32);
+    famicomCommon.save_data_name = (u8*)"GAEJFSC\x1A";
     famicomCommon.save_data_single_size = 0x660;
     famicomCommon.save_data_total_size = sizeof(FamicomSaveDataHeader) + 0x660 * PLAYER_NUM;
     famicomCommon.save_data_header = (FamicomSaveDataHeader*)famicomCommonSave;
@@ -2688,9 +2683,9 @@ extern int famicom_internal_data_save() {
     famicom_mount_archive_wait();
     bzero(&famicomCommon, sizeof(FamicomCommon));
     famicomCommon.nesrom_memcard = FALSE;
-    strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriP_MURA", 32);
-    strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriP_F_SAVE", 32);
-    famicomCommon.save_data_name = (u8*)"GAFEFSC\x1A";
+    strncpy((char*)famicomCommon.mura_save_name, "DobutsunomoriE_MURA", 32);
+    strncpy((char*)famicomCommon.famicom_save_name, "DobutsunomoriE_F_SAVE", 32);
+    famicomCommon.save_data_name = (u8*)"GAEJFSC\x1A";
     famicomCommon.save_data_single_size = 0x660;
     famicomCommon.save_data_total_size = sizeof(FamicomSaveDataHeader) + 0x660 * PLAYER_NUM;
     famicomCommon.save_data_header = (FamicomSaveDataHeader*)famicomCommonSave;

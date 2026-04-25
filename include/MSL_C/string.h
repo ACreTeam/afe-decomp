@@ -27,10 +27,16 @@ char* strstr(const char* str, const char* pat);
 
 #ifdef __cplusplus
 };
+#endif
 
+#ifdef __cplusplus
 namespace std {
 using ::strlen;
 using ::strrchr;
+
+char* strstr(const char* str, const char* pat) {
+    return ::strstr(str, pat);
+}
 }; // namespace std
 #endif
 
