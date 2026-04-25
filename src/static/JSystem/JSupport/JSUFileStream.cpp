@@ -14,6 +14,10 @@ int JSUFileInputStream::readData(void* buf, s32 len) {
 
         if (len > 0) {
             read = ((JKRFile*)this->mObject)->readData(buf, len, this->mPosition);
+            if (read < 0) {
+                return 0;
+            }
+
             this->mPosition += read;
         }
     }

@@ -303,7 +303,7 @@ def JSystemLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
         "mw_version": "GC/1.3.2",
-        "cflags": [*cflags_base, "-O4,s", "-char signed"],
+        "cflags": [*cflags_base, "-O4,p", "-inline auto", "-RTTI on", "-enum int", "-char signed"],
         "progress_category": "jsystem",
         "src_dir": "src/static",
         "objects": objects,
@@ -353,9 +353,9 @@ config.libs = [
         "JSupport",
         [
             
-            Object(NonMatching, "JSystem/JSupport/JSUFileStream.cpp"),
-            Object(NonMatching, "JSystem/JSupport/JSUInputStream.cpp"),
-            Object(NonMatching, "JSystem/JSupport/JSUList.cpp"),
+            Object(Matching, "JSystem/JSupport/JSUFileStream.cpp"),
+            Object(Matching, "JSystem/JSupport/JSUInputStream.cpp"),
+            Object(Matching, "JSystem/JSupport/JSUList.cpp"),
         ],
     ),
     JSystemLib(
@@ -376,8 +376,8 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/JUTResFont.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTVideo.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTXfb.cpp"),
-            Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
-            Object(Matching, "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
+            Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp"),
+            Object(Matching, "JSystem/JUtility/JUTSDFile.cpp"),
             Object(Matching, "JSystem/JUtility/EXIBios.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-O3,p", "-inline all"]),
         ],
     ),
