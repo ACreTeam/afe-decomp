@@ -56,24 +56,14 @@ macOS
   brew install ninja
   ```
 
-- Install [wine-crossover](https://github.com/Gcenx/homebrew-wine):
-
-  ```sh
-  brew install --cask --no-quarantine gcenx/wine/wine-crossover
-  ```
-
-After OS upgrades, if macOS complains about `Wine Crossover.app` being unverified, you can unquarantine it using:
-
-```sh
-sudo xattr -rd com.apple.quarantine '/Applications/Wine Crossover.app'
-```
+[wibo](https://github.com/decompals/wibo), a minimal 32-bit Windows binary wrapper, will be automatically downloaded and used.
 
 Linux
 ------
 
 - Install [ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages).
-- For non-x86(_64) platforms: Install wine from your package manager.
-  - For x86(_64), [wibo](https://github.com/decompals/wibo), a minimal 32-bit Windows binary wrapper, will be automatically downloaded and used.
+
+[wibo](https://github.com/decompals/wibo), a minimal 32-bit Windows binary wrapper, will be automatically downloaded and used.
 
 Building
 ========
@@ -81,17 +71,12 @@ Building
 - Clone the repository:
 
   ```sh
-  git clone --recursive https://github.com/Prakxo/ac-decomp.git
+  git clone --recursive https://github.com/ACreTeam/afe-decomp.git
   ```
 
-- Update and Initialize submodules:
-
-  ```sh
-  git submodule update --init --recursive
-  ```
-
-- Copy your game's disc image to `orig/GAFE01_00`.
-  - Supported formats: ISO (GCM), RVZ, WIA, WBFS, CISO, GCZ
+- Copy your game's disc image to `orig/GAEJ01`.
+  - Supported formats: ISO (GCM), RVZ, WIA, WBFS, CISO, NFS, GCZ, TGC
+  - After the initial build, the disc image can be deleted to save space.
 
 - Configure:
 
@@ -99,7 +84,7 @@ Building
   python configure.py
   ```
 
-  To use a version other than `GAFE01_00` (USA), specify it with `--version`.
+  To use a version other than `GAEJ01` (JP rev0), specify it with `--version`.
 
 - Build:
 
