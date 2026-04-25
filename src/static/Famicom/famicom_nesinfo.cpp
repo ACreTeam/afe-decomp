@@ -58,14 +58,9 @@ enum famicom_games {
     FAMICOM_GAME_EXCITEBIKE,
     FAMICOM_GAME_SOCCER,
     FAMICOM_GAME_WARIOS_WOODS,
-    FAMICOM_GAME_ICE_CLIMBER,
-    FAMICOM_GAME_MARIO_BROS,
-    FAMICOM_GAME_SUPER_MARIO_BROS,
-    FAMICOM_GAME_LEGEND_OF_ZELDA,
+    FAMICOM_GAME_GOMOKU_NARABE,
+    FAMICOM_GAME_MAHJONG,
     FAMICOM_GAME_NUM,
-
-    FAMICOM_GAME_GOMOKU_NARABE = 22,
-    FAMICOM_GAME_MAHJONG = 23,
 
     FAMICOM_GAME_EXTERNAL = 31
 };
@@ -101,9 +96,9 @@ static u8 tags_table_balloon_fight[] = {
     GNM_TAG(13), 'B', 'A', 'L', 'L', 'O', 'O', 'N', ' ', 'F', 'I', 'G', 'H', 'T',
     GNO_TAG(), FAMICOM_GAME_BALLOON_FIGHT,
     OFS_TAG(), OFS_U16(0x0004),
-    HSC_TAG(5), OFS_U16(0x0629), 0, 0, 0, 1, 0,
-    HSC_TAG(5), OFS_U16(0x062E), 0, 0, 0, 1, 0,
-    HSC_TAG(5), OFS_U16(0x0633), 0, 0, 5, 2, 0,
+    HSC_TAG(5), OFS_U16(0x8629), 0, 0, 0, 1, 0,
+    HSC_TAG(5), OFS_U16(0x862E), 0, 0, 0, 1, 0,
+    HSC_TAG(5), OFS_U16(0x8633), 0, 0, 5, 2, 0,
     END_TAG(),
 };
 
@@ -214,7 +209,7 @@ static u8 tags_table_gomoku_narabe[] = {
 
 static u8 tags_table_mahjong[] = {
     GID_TAG(2), 'M', 'J',
-    GNM_TAG(6), 'M', 'A', 'H', 'J', 'O', 'N', 'G', // @BUG - should be GNM_TAG(7)
+    GNM_TAG(7), 'M', 'A', 'H', 'J', 'O', 'N', 'G',
     GNO_TAG(), FAMICOM_GAME_MAHJONG,
     END_TAG(),
 };
@@ -233,63 +228,63 @@ static u8 tags_table_wario_no_mori[] = {
     BBR_TAG(), OFS_U16(0x1B74), OFS_U16(0x0002), //  2 bytes from 0x1B74
     
     /* Was this data saved at a later date and therefore had to have its offset much further? */
-    OFS_TAG(), OFS_U16(0x0655),
+    OFS_TAG(), OFS_U16(0x0127),
     BBR_TAG(), OFS_U16(0x1B6D), OFS_U16(0x0002), //  2 bytes from 0x1B6D
     END_TAG(),
 };
 
-static u8 tags_table_ice_climber[] = {
-    GID_TAG(2), 'I', 'C',
-    GNM_TAG(11), 'I', 'C', 'E', ' ', 'C', 'L', 'I', 'M', 'B', 'E', 'R',
-    GNO_TAG(), FAMICOM_GAME_ICE_CLIMBER,
+// static u8 tags_table_ice_climber[] = {
+//     GID_TAG(2), 'I', 'C',
+//     GNM_TAG(11), 'I', 'C', 'E', ' ', 'C', 'L', 'I', 'M', 'B', 'E', 'R',
+//     GNO_TAG(), FAMICOM_GAME_ICE_CLIMBER,
     
-    OFS_TAG(), OFS_U16(0x0128),
-    HSC_TAG(3), OFS_U16(0x87ED), 0, 0, 0,
-    END_TAG(),
-};
+//     OFS_TAG(), OFS_U16(0x0128),
+//     HSC_TAG(3), OFS_U16(0x87ED), 0, 0, 0,
+//     END_TAG(),
+// };
 
-static u8 tags_table_mario_bros[] = {
-    GID_TAG(2), 'M', 'A',
-    GNM_TAG(11), 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S', '.',
-    GNO_TAG(), FAMICOM_GAME_MARIO_BROS,
+// static u8 tags_table_mario_bros[] = {
+//     GID_TAG(2), 'M', 'A',
+//     GNM_TAG(11), 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S', '.',
+//     GNO_TAG(), FAMICOM_GAME_MARIO_BROS,
     
-    OFS_TAG(), OFS_U16(0x012B),
-    HSC_TAG(3), OFS_U16(0x0091), 0, 0, 0,
-    END_TAG(),
-};
+//     OFS_TAG(), OFS_U16(0x012B),
+//     HSC_TAG(3), OFS_U16(0x0091), 0, 0, 0,
+//     END_TAG(),
+// };
 
-static u8 tags_table_super_mario_bros[] = {
-    GID_TAG(2), 'S', 'M',
-    GNM_TAG(16), 'S', 'U', 'P', 'E', 'R', ' ', 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S',
-    GNO_TAG(), FAMICOM_GAME_SUPER_MARIO_BROS,
+// static u8 tags_table_super_mario_bros[] = {
+//     GID_TAG(2), 'S', 'M',
+//     GNM_TAG(16), 'S', 'U', 'P', 'E', 'R', ' ', 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S',
+//     GNO_TAG(), FAMICOM_GAME_SUPER_MARIO_BROS,
     
-    OFS_TAG(), OFS_U16(0x0131),
-    HSC_TAG(6), OFS_U16(0x87D7), 0, 0, 0, 0, 0, 0,
-    HSC_TAG(1), OFS_U16(0x07FC), 0,
-    HSC_TAG(1), OFS_U16(0x87FD), 0,
-    END_TAG(),
-};
+//     OFS_TAG(), OFS_U16(0x0131),
+//     HSC_TAG(6), OFS_U16(0x87D7), 0, 0, 0, 0, 0, 0,
+//     HSC_TAG(1), OFS_U16(0x07FC), 0,
+//     HSC_TAG(1), OFS_U16(0x87FD), 0,
+//     END_TAG(),
+// };
 
-static u8 tags_table_legend_of_zelda_disk[] = {
-    GID_TAG(2), 'Z', 'L',
-    GNM_TAG(15), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A',
-    GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
+// static u8 tags_table_legend_of_zelda_disk[] = {
+//     GID_TAG(2), 'Z', 'L',
+//     GNM_TAG(15), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A',
+//     GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
     
-    OFS_TAG(), OFS_U16(0x0139),
-    QDS_TAG(), OFS_U24(0x01BAFD), OFS_U16(0x051C), // Save 0x51C bytes from 0x1BAFD
-    END_TAG(),
-};
+//     OFS_TAG(), OFS_U16(0x0139),
+//     QDS_TAG(), OFS_U24(0x01BAFD), OFS_U16(0x051C), // Save 0x51C bytes from 0x1BAFD
+//     END_TAG(),
+// };
 
-static u8 tags_table_legend_of_zelda_rom[] = {
-    GID_TAG(2), 'Z', 'L',
-    GNM_TAG(16), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A', '1',
-    GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
+// static u8 tags_table_legend_of_zelda_rom[] = {
+//     GID_TAG(2), 'Z', 'L',
+//     GNM_TAG(16), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A', '1',
+//     GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
     
-    OFS_TAG(), OFS_U16(0x0139),
-    BBR_TAG(), OFS_U16(0x0002), OFS_U16(0x051C), // Save 0x51C bytes from BBR+0x0002
-    SPE_TAG(), 1,
-    END_TAG(),
-};
+//     OFS_TAG(), OFS_U16(0x0139),
+//     BBR_TAG(), OFS_U16(0x0002), OFS_U16(0x051C), // Save 0x51C bytes from BBR+0x0002
+//     SPE_TAG(), 1,
+//     END_TAG(),
+// };
 
 static u8 tags_table_soccer[] = {
     GID_TAG(2), 'S', 'C',
@@ -298,41 +293,11 @@ static u8 tags_table_soccer[] = {
     END_TAG(),
 };
 
-static u8 tags_table_excite_bike[] = {
+static u8 tags_table_excite_bike_design[] = {
     GID_TAG(2), 'E', 'B',
     GNM_TAG(10), 'E', 'X', 'C', 'I', 'T', 'E', 'B', 'I', 'K', 'E',
     GNO_TAG(), FAMICOM_GAME_EXCITEBIKE,
     OFS_TAG(), OFS_U16(0x0096),
-    HSC_TAG(3), OFS_U16(0x8580), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x8583), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x8586), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x8589), 1, 12, 0,
-    HSC_TAG(3), OFS_U16(0x858C), 1, 6, 0,
-    HSC_TAG(3), OFS_U16(0x8590), 1, 24, 0,
-    HSC_TAG(3), OFS_U16(0x8593), 1, 22, 0,
-    HSC_TAG(3), OFS_U16(0x8596), 1, 10, 0,
-    HSC_TAG(3), OFS_U16(0x8599), 1, 20, 0,
-    HSC_TAG(3), OFS_U16(0x859C), 1, 6, 0,
-    HSC_TAG(3), OFS_U16(0x85A0), 10, 0, 0,
-    HSC_TAG(3), OFS_U16(0x85A3), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x85A6), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x85A9), 1, 16, 0,
-    HSC_TAG(3), OFS_U16(0x85AC), 1, 12, 0,
-    HSC_TAG(3), OFS_U16(0x85AF), 1, 6, 0,
-    HSC_TAG(3), OFS_U16(0x85B3), 1, 24, 0,
-    HSC_TAG(3), OFS_U16(0x85B6), 1, 22, 0,
-    HSC_TAG(3), OFS_U16(0x85B9), 1, 10, 0,
-    HSC_TAG(3), OFS_U16(0x85BC), 1, 20, 0,
-    HSC_TAG(3), OFS_U16(0x85BF), 1, 6, 0,
-    HSC_TAG(3), OFS_U16(0x85C3), 10, 0, 0,
-    END_TAG(),
-};
-
-static u8 tags_table_excite_bike_design[] = {
-    GID_TAG(2), 'E', 'B',
-    GNM_TAG(10), 'E', 'X', 'C', 'I', 'T', 'E', 'B', 'I', 'K', 'E',
-    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
-    OFS_TAG(), OFS_U16(0x0000),
     HSC_TAG(3), OFS_U16(0x8580), 1, 16, 0, 
     HSC_TAG(3), OFS_U16(0x8583), 1, 16, 0, 
     HSC_TAG(3), OFS_U16(0x8586), 1, 16, 0, 
@@ -355,6 +320,7 @@ static u8 tags_table_excite_bike_design[] = {
     HSC_TAG(3), OFS_U16(0x85BC), 1, 20, 0, 
     HSC_TAG(3), OFS_U16(0x85BF), 1, 6, 0, 
     HSC_TAG(3), OFS_U16(0x85C3), 10, 0, 0, 
+    OFS_TAG(), OFS_U16(0x0129),
     HSC_TAG(240), OFS_U16(0x86E0), 1, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     END_TAG(),
 };
@@ -398,19 +364,6 @@ static u8 tags_table_external_default[] = {
     END_TAG(),
 };
 
-static u8 tags_table_balloon_fight_jpn[] = {
-    TCS_TAG(), OFS_U16(0x0000),
-    ICS_TAG(), OFS_U16(0x0000),
-    GID_TAG(2), 'B', 'F', 
-    GNM_TAG(13), 'B', 'A', 'L', 'L', 'O', 'O', 'N', ' ', 'F', 'I', 'G', 'H', 'T', 
-    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
-    OFS_TAG(), OFS_U16(0x0000),
-    HSC_TAG(5), OFS_U16(0x8629), 0, 0, 0, 1, 0, 
-    HSC_TAG(5), OFS_U16(0x862E), 0, 0, 0, 1, 0, 
-    HSC_TAG(5), OFS_U16(0x8633), 0, 0, 5, 2, 0, 
-    END_TAG(),
-};
-
 typedef struct nesinfo_tag_s {
     u8* tags_table;
     size_t tags_size;
@@ -419,43 +372,44 @@ typedef struct nesinfo_tag_s {
 } nesinfo_tag_info;
 
 static const nesinfo_tag_info tags_table_table[FAMICOM_INTERNAL_ROM_NUM] = {
-    { tags_table_cluclu_land, sizeof(tags_table_cluclu_land), "Clu Clu Land", "Clu Clu Land" },
-    { tags_table_balloon_fight, sizeof(tags_table_balloon_fight), "Balloon Fight", "Balloon Fight" },
-    { tags_table_donkey_kong, sizeof(tags_table_donkey_kong), "Donkey Kong", "Donkey Kong" },
-    { tags_table_sansu_asobi, sizeof(tags_table_sansu_asobi), "Donkey Jr Math", "Donkey Jr Math" },
-    { tags_table_pinball, sizeof(tags_table_pinball), "Pinball", "Pinball" },
-    { tags_table_tennis, sizeof(tags_table_tennis), "Tennis", "Tennis" },
-    { tags_table_golf, sizeof(tags_table_golf), "Golf", "Golf" },
-    { tags_table_punchout, sizeof(tags_table_punchout), "Punch Out", "Punch Out" },
-    { tags_table_baseball, sizeof(tags_table_baseball), "Base Ball", "Base Ball" },
-    { tags_table_cluclu_land_disk, sizeof(tags_table_cluclu_land_disk), "New Clu Clu Land", "New Clu Clu Land" },
-    { tags_table_donkey_kong_3, sizeof(tags_table_donkey_kong_3), "Donkey Kong 3", "Donkey Kong 3" },
-    { tags_table_donkey_kong_jr, sizeof(tags_table_donkey_kong_jr), "Donkey Kong Jr", "Donkey Kong Jr" },
-    { tags_table_soccer, sizeof(tags_table_soccer), "Soccer", "Soccer" },
-    { tags_table_excite_bike, sizeof(tags_table_excite_bike), "Excitebike", "Excitebike" },
-    { tags_table_wario_no_mori, sizeof(tags_table_wario_no_mori), "Wario's Woods", "Wario's Woods" },
-    { tags_table_ice_climber, sizeof(tags_table_ice_climber), "Ice Climber", "Ice Climber" },
-    { tags_table_mario_bros, sizeof(tags_table_mario_bros), "Mario Bros", "Mario Bros" },
+    { tags_table_cluclu_land, sizeof(tags_table_cluclu_land), "Clu Clu Land", "クルクルランド" },
+    { tags_table_balloon_fight, sizeof(tags_table_balloon_fight), "Balloon Fight", "バルーンファイト" },
+    { tags_table_donkey_kong, sizeof(tags_table_donkey_kong), "Donkey Kong", "ドンキーコング" },
+    { tags_table_sansu_asobi, sizeof(tags_table_sansu_asobi), "Sansuu Asobi", "算数遊び" },
+    { tags_table_pinball, sizeof(tags_table_pinball), "Pinball", "ピンボール" },
+    { tags_table_tennis, sizeof(tags_table_tennis), "Tennis", "テニス" },
+    { tags_table_golf, sizeof(tags_table_golf), "Golf", "ゴルフ" },
+    { tags_table_punchout, sizeof(tags_table_punchout), "Punch Out", "パンチアウト" },
+    { tags_table_baseball, sizeof(tags_table_baseball), "Base Ball", "ベースボール" },
+    { tags_table_cluclu_land_disk, sizeof(tags_table_cluclu_land_disk), "New Clu Clu Land", "クルクルランドＤ" },
+    { tags_table_donkey_kong_3, sizeof(tags_table_donkey_kong_3), "Donkey Kong 3", "ドンキーコング３" },
+    { tags_table_donkey_kong_jr, sizeof(tags_table_donkey_kong_jr), "Donkey Kong Jr", "ドンキーコングJR" },
+    { tags_table_soccer, sizeof(tags_table_soccer), "Soccer", "サッカー" },
+    { tags_table_excite_bike_design, sizeof(tags_table_excite_bike_design), "Excitebike", "エキサイトバイク" },
+    { tags_table_wario_no_mori, sizeof(tags_table_wario_no_mori), "Wario No Mori", "ワリオの森" },
+    { tags_table_gomoku_narabe, sizeof(tags_table_gomoku_narabe), "Gomoku Narabe", "五目ならべ" },
+    { tags_table_mahjong, sizeof(tags_table_mahjong), "Mahjong", "マージャン" },
 };
 
+// TODO: We should be using charmap.h instead of bytes
 static u8 moriNameTable[FAMICOM_INTERNAL_ROM_NUM][10] = {
-    { 'C', 'l', 'u', ' ', 'C', 'l', 'u', ' ', 'L', 'a',  },
-    { 'B', 'a', 'l', 'l', 'o', 'o', 'n', ' ', 'F', 'i',  },
-    { 'D', 'o', 'n', 'k', 'e', 'y', ' ', 'K', 'o', 'n',  },
-    { 'D', 'o', 'n', 'k', 'e', 'y', ' ', 'J', 'r', ' ',  },
-    { 'P', 'i', 'n', 'b', 'a', 'l', 'l', ' ', ' ', ' ',  },
-    { 'T', 'e', 'n', 'n', 'i', 's', ' ', ' ', ' ', ' ',  },
-    { 'G', 'o', 'l', 'f', ' ', ' ', ' ', ' ', ' ', ' ',  },
-    { 'P', 'u', 'n', 'c', 'h', ' ', 'O', 'u', 't', ' ',  },
-    { 'B', 'a', 's', 'e', ' ', 'B', 'a', 'l', 'l', ' ',  },
-    { 'N', 'e', 'w', ' ', 'C', 'l', 'u', ' ', 'C', 'l',  },
-    { 'D', 'o', 'n', 'k', 'e', 'y', ' ', 'K', 'o', 'n',  },
-    { 'D', 'o', 'n', 'k', 'e', 'y', ' ', 'K', 'o', 'n',  },
-    { 'S', 'o', 'c', 'c', 'e', 'r', ' ', ' ', ' ', ' ',  },
-    { 'E', 'x', 'c', 'i', 't', 'e', 'b', 'i', 'k', 'e',  },
-    { 'W', 'a', 'r', 'i', 'o', '\'', 's', ' ', 'W', 'o'  },
-    { 'I', 'c', 'e', ' ', 'C', 'l', 'i', 'm', 'b', 'e',  },
-    { 'M', 'a', 'r', 'i', 'o', ' ', 'B', 'r', 'o', 's',  },
+    {0x98, 0xB9, 0x98, 0xB9, 0xB7, 0xBD, 0xDC, 0x20, 0x20, 0x20}, // FAMICOM_GAME_CLU_CLU_LAND
+    {0xDD, 0xB9, 0x90, 0xBD, 0xAC, 0x87, 0x92, 0xA4, 0x20, 0x20}, // FAMICOM_GAME_BALLOON_FIGHT
+    {0xDC, 0xBD, 0x97, 0x90, 0x9A, 0xBD, 0xD0, 0x20, 0x20, 0x20}, // FAMICOM_GAME_DONKEY_KONG
+    {0x0A, 0xC3, 0x0C, 0x02, 0x00, 0x0E, 0xF7, 0x20, 0x20, 0x20}, // FAMICOM_GAME_DONKEY_KONG_JR_MATH
+    {0xE3, 0xBD, 0xE1, 0x90, 0xB9, 0x20, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_PINBALL
+    {0xA3, 0xA6, 0x9D, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_TENNIS
+    {0xD2, 0xB9, 0xAC, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_GOLF
+    {0xE2, 0xBD, 0xA1, 0x91, 0x93, 0xA4, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_PUNCHOUT
+    {0xE0, 0x90, 0x9D, 0xE1, 0x90, 0xB9, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_BASEBALL
+    {0xA6, 0x8D, 0x90, 0x98, 0xB9, 0x98, 0xB9, 0xB7, 0xBD, 0xDC}, // FAMICOM_GAME_CLU_CLU_LAND_D
+    {0xDC, 0xBD, 0x97, 0x90, 0x9A, 0xBD, 0xD0, 0x33, 0x20, 0x20}, // FAMICOM_GAME_DONKEY_KONG_3
+    {0xDC, 0xBD, 0x97, 0x90, 0x9A, 0xBD, 0xD0, 0x4A, 0x72, 0x2E}, // FAMICOM_GAME_DONKEY_KONG_JR
+    {0x9B, 0x8F, 0x96, 0x90, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_EXCITEBIKE
+    {0x94, 0x97, 0x9B, 0x92, 0xA4, 0xDD, 0x92, 0x98, 0x20, 0x20}, // FAMICOM_GAME_SOCCER
+    {0xBC, 0xB8, 0x95, 0x18, 0x5B, 0x7C, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_WARIOS_WOODS
+    {0xEB, 0x5B, 0x07, 0x14, 0x7B, 0xF9, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_GOMOKU_NARABE
+    {0xAF, 0x90, 0xD4, 0x8C, 0xBD, 0x20, 0x20, 0x20, 0x20, 0x20}, // FAMICOM_GAME_MAHJONG
 };
 
 // clang-format on

@@ -362,7 +362,7 @@ config.libs = [
             Object(NonMatching, "Famicom/ks_nes_core.cpp"),
             Object(NonMatching, "Famicom/ks_nes_draw.cpp"),
             Object(NonMatching, "Famicom/famicom.cpp"),
-            Object(NonMatching, "Famicom/famicom_nesinfo.cpp"),
+            Object(Matching, "Famicom/famicom_nesinfo.cpp"),
         ],
     },
 ]
