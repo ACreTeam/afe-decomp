@@ -392,7 +392,7 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/JUTFontData_Ascfont_fix12.s"),
             Object(NonMatching, "JSystem/JUtility/JUTGamePad.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTGraphFifo.cpp"),
-            Object(NonMatching, "JSystem/JUtility/JUTProcBar.cpp"),
+            Object(Matching, "JSystem/JUtility/JUTProcBar.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTResFont.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTVideo.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTXfb.cpp"),

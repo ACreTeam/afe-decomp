@@ -22,10 +22,10 @@ struct JUTVideo {
     static void postRetraceProc(unsigned long);
     static void drawDoneCallback();
 
-    u32 getEfbHeight() const {
+    int getEfbHeight() const {
         return mRenderModeObj->efbHeight;
     }
-    u32 getXfbHeight() const {
+    int getXfbHeight() const {
         return mRenderModeObj->xfbHeight & 0xffff;
     }
     u32 getFbWidth() const {
