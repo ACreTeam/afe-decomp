@@ -863,7 +863,7 @@ JSystem/JKernel/JKRAramBlock.cpp:
 	.data       start:0x80102308 end:0x80102328
 	.sdata      start:0x80290E70 end:0x80290E78
 
-JKernel/JKRAramPiece.cpp:
+JSystem/JKernel/JKRAramPiece.cpp:
 	.text       start:0x8006C028 end:0x8006C478
 	.ctors      start:0x800D0420 end:0x800D0424
 	.data       start:0x80102328 end:0x80102380
