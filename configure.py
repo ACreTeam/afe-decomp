@@ -461,7 +461,8 @@ config.libs = [
     Rel(
         "foresta",
         [
-            Object(NonMatching, "graph.c"),
+            Object(Matching, "game.c"),
+            Object(Matching, "graph.c"),
         ],
     ),
     Rel(

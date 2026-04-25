@@ -36,8 +36,8 @@ typedef struct controller_s {
 #define STICK_UNCORRECTED_SCALE (1.0f / STICK_MAX)
 #define STICK_CORRECTED_SCALE (1.0f / (STICK_MAX - STICK_MIN))
 
-extern void mCon_ct();
-extern void mCon_dt();
+extern void mCon_ct(GAME* game);
+extern void mCon_dt(GAME* game);
 extern void mCon_calc(MCON* mcon, f32 stick_x, f32 stick_y);
 extern void mCon_main(GAME* game);
 

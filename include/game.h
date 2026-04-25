@@ -34,7 +34,7 @@ struct game_s {
   /* 0x00AC */ MCON mcon;
 };
 
-#define GAME_HYRAL_SIZE (0x100000)
+#define GAME_HYRAL_SIZE (0x1000)
 #define GAME_FRAME (1)
 
 #define GAME_NEXT_GAME(game, init_name, class_name) \
