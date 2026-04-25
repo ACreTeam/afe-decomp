@@ -4,17 +4,17 @@ J2DOrthoGraph::J2DOrthoGraph() : J2DGrafContext(0.0f, 0.0f, 0.0f, 0.0f) {
     setLookat();
 }
 
-J2DOrthoGraph::J2DOrthoGraph(f32 left, f32 top, f32 right, f32 bottom, f32 near, f32 far)
-    : J2DGrafContext(left, top, right, bottom) {
-    mOrtho = JGeometry::TBox2f(0, 0, right, bottom);
-    mNear = near;
-    mFar = far;
-    setLookat();
+J2DOrthoGraph::J2DOrthoGraph(f32 x, f32 y, f32 width, f32 height, f32 far, f32 near)
+    : J2DGrafContext(x, y, width, height) {
+    mOrtho = JGeometry::TBox2f(0, 0, width, height);
+    mNear = -near;
+    mFar = -far;
+    this->setLookat();
 }
 
 void J2DOrthoGraph::setPort() {
     J2DGrafContext::setPort();
-    C_MTXOrtho(mMtx44, mOrtho.i.y, 0.5f + mOrtho.f.y, mOrtho.i.x, mOrtho.f.x, mNear, mFar);
+    C_MTXOrtho(mMtx44, mOrtho.i.y, mOrtho.f.y, mOrtho.i.x, mOrtho.f.x, mNear, mFar);
     GXSetProjection(mMtx44, GX_ORTHOGRAPHIC);
 }
 

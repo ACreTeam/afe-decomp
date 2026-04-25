@@ -12,16 +12,26 @@ void J2DGrafContext::setPort() {
     setScissor();
     setup2D();
 
-    GXSetViewport(mBounds.i.x, mBounds.i.y, mBounds.f.x - mBounds.i.x, mBounds.f.y - mBounds.i.y, 0.0f, 1.0f);
+    JGeometry::TBox2<float> bounds(mBounds);
+
+    if (bounds.i.x < 0.0f) {
+        bounds.i.x = 0.0f;
+    }
+    if (bounds.i.y < 0.0f) {
+        bounds.i.y = 0.0f;
+    }
+
+    GXSetViewport(bounds.i.x, bounds.i.y, bounds.getWidth(), bounds.getHeight(), 0.0f, 1.0f);
 }
 
 void J2DGrafContext::setup2D() {
     GXSetNumIndStages(0);
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < GX_MAX_TEVSTAGE; i++) {
         GXSetTevDirect((GXTevStageID)i);
     }
 
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_OR, GX_GREATER, 0);
     GXSetZMode(0, GX_LEQUAL, 0);
     GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
 
@@ -40,10 +50,10 @@ void J2DGrafContext::setup2D() {
     GXSetChanCtrl(GX_COLOR1A1, 0, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
 
     GXSetCurrentMtx(0);
-    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 60, 0, 125);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_POS_XYZ, GX_RGBA8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_RGBA4, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_POS_XYZ, GX_RGBA8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_POS_XYZ, GX_RGBX8, 0xF);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_POS_XYZ, GX_RGBX8, 0xF);
 
@@ -56,15 +66,16 @@ void J2DGrafContext::setup2D() {
 }
 
 void J2DGrafContext::setScissor() {
-    JGeometry::TBox2f hardBounds(0, 0, 1024, 1000);
-    JGeometry::TBox2f newBounds(mScissorBounds);
-
-    mScissorBounds.intersect(hardBounds);
-    newBounds.absolute();
-    newBounds.addPos(0.0f, -1.0f);
-
-    if (newBounds.intersect(hardBounds)) {
-        GXSetScissor(newBounds.i.x, newBounds.i.y, newBounds.getWidth(), newBounds.getHeight());
+    JGeometry::TBox2<f32> bounds(0, 0, 1024, 1024);
+    JGeometry::TBox2<f32> curBounds(mScissorBounds);
+    mScissorBounds.intersect(bounds);
+    curBounds.absolute();
+    if (curBounds.intersect(bounds)) {
+        curBounds.i.x = (u32)curBounds.i.x;
+        curBounds.i.y = (u32)curBounds.i.y;
+        curBounds.f.x = ceil(curBounds.f.x);
+        curBounds.f.y = ceil(curBounds.f.y);
+        GXSetScissor(curBounds.i.x, curBounds.i.y, curBounds.getWidth(), curBounds.getHeight());
     } else {
         GXSetScissor(0, 0, 0, 0);
     }
