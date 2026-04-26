@@ -86,7 +86,9 @@ typedef struct Save_s {
     /* 0x00002C */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
     /* 0x00002D */ u8 remove_animal_idx;
     /* 0x00002E */ u16 copy_protect; /* 'unique' value between [1, 65520] used for copy protection */
-    /* 0x000030 */ u8 _000030[0x1C0 - 0x030]; // TODO: this has to do with SD card stuff
+    /* 0x000030 */ u8 _000030[0x188 - 0x030]; // TODO: this has to do with SD card stuff
+    /* 0x000188 */ OSTime nukegara_time;
+    /* 0x000190 */ u8 _000190[0x1C0 - 0x0190]; // TODO: this has to do with SD card stuff
     /* 0x0001C0 */ Private_c private_data[PLAYER_NUM];                   /* player data */
     /* 0x009C40 */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
     /* 0x009CE4 */ u8 pad_9CE4[4];
