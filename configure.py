@@ -623,6 +623,7 @@ config.libs = [
         "game",
         [
             Object(NonMatching, "game/m_play.c"),
+            Object(Matching, "game/m_prenmi.c"),
             Object(NonMatching, "game/m_trademark.c"),
             Object(NonMatching, "game/m_select.c"),
         ],
