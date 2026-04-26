@@ -364,6 +364,7 @@ extern void mFI_SetClimate(int climate);
 extern int mFI_CheckBeforeScenePerpetual();
 extern void mFI_ChangeClimate_ForEventNotice();
 extern void mFI_PullTanukiPathTrees();
+extern void mFI_InitClimate(void);
 
 #ifdef __cplusplus
 }

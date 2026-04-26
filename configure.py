@@ -462,11 +462,15 @@ config.libs = [
         "foresta",
         [
             Object(NonMatching, "c_keyframe.c"),
+            Object(NonMatching, "famicom_emu.c"),
             Object(Matching, "first_game.c"),
             Object(Matching, "game.c"),
             Object(Matching, "gamealloc.c"),
             Object(Matching, "gfxalloc.c"),
             Object(Matching, "graph.c"),
+            Object(NonMatching, "player_select.c"),
+            Object(NonMatching, "reload_data.c"),
+            Object(NonMatching, "save_menu.c"),
             Object(NonMatching, "second_game.c"),
             Object(Matching, "THA_GA.c"),
             Object(Matching, "TwoHeadArena.c"),
@@ -619,6 +623,8 @@ config.libs = [
         "game",
         [
             Object(NonMatching, "game/m_play.c"),
+            Object(NonMatching, "game/m_trademark.c"),
+            Object(NonMatching, "game/m_select.c"),
         ],
     ),
 ]

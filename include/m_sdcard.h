@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 extern void S_CRV32SET(int v);
+extern void mSD_static_clear(void);
 
 #ifdef __cplusplus
 }

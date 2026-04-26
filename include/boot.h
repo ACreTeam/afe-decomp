@@ -10,6 +10,15 @@
 extern "C" {
 #endif
 
+enum {
+    BOOT_IorO_TYPE_DEFAULT,
+    BOOT_IorO_TYPE_OUTSIDE,
+    BOOT_IorO_TYPE_INSIDE,
+    BOOT_IorO_TYPE_PLAYERSELECT,
+
+    BOOT_IorO_TYPE_NUM
+};
+
 typedef struct boot_tbl_s {
   const char* msg;
   u16 param_upper;
@@ -18,6 +27,7 @@ typedef struct boot_tbl_s {
 
 extern u32 convert_partial_address(u32 partial_addr);
 extern void HotResetIplMenu();
+extern void ReloadLink_module_IorO(int outSideType);
 
 extern void* boot_copyDate;
 extern void* HotStartEntry;

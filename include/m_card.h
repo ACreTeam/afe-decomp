@@ -320,6 +320,7 @@ extern int mCD_save_data_aram_to_main(void* dst, u32 size, u32 idx);
 extern int mCD_save_data_main_to_aram(void* src, u32 size, u32 idx);
 
 extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size);
+extern void mCD_SD_static_clear(void);
 
 #ifdef __cplusplus
 }

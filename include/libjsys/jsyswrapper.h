@@ -25,6 +25,7 @@ extern void* JC_JUTVideo_getManager();
 extern u32 JC_JUTVideo_getFbWidth(void* manager);
 extern u32 JC_JUTVideo_getEfbHeight(void* manager);
 extern void JC_JUTVideo_setRenderMode(void* manager, GXRenderModeObj* renderMode);
+extern const GXRenderModeObj* JC_JUTVideo_getRenderMode(void* manager);
 
 extern void JC_JKRAramHeap_dump(void* heap);
 extern void* JC_JKRAram_getAramHeap();
@@ -88,7 +89,7 @@ extern void JC_JFWDisplay_beginRender(void* manager);
 extern void JC_JFWDisplay_endRender(void* manager);
 extern void JC_JFWDisplay_setClearColor(void* manager, GXColor color);
 extern int JC_JFWDisplay_startFadeOut(void* manager, int fadeout);
-extern void JC_JFWDisplay_clearEfb(void* manager, GXColor* color);
+extern void JC_JFWDisplay_clearEfb(void* manager, GXColor color);
 extern const GXRenderModeObj* JC_JFWDisplay_getRenderMode(void* manager);
 extern void* JC_JFWDisplay_changeToSingleXfb(void* manager, int index);
 extern void* JC_JFWDisplay_changeToDoubleXfb(void* manager);
@@ -116,6 +117,7 @@ extern void* JC_JUTFader_new(int ul_x, int ul_y, int br_x, int br_y, u32* color)
 extern void JC_JUTFader_delete(void* fader);
 
 extern void* JC__JKRGetResource(const char* resourceName);
+extern int JC__JKRReadResource(void* dst, size_t dst_size, const char* src, int expandSwitch);
 
 extern void JC__JKRRemoveResource(void* res);
 

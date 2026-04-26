@@ -128,6 +128,8 @@ extern void play_cleanup(GAME*);
 extern void play_init(GAME*);
 extern void play_main(GAME*);
 
+extern u8* getP_prbuf(void);
+
 #ifdef __cplusplus
 }
 #endif
