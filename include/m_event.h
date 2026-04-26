@@ -579,7 +579,7 @@ typedef struct event_place_s {
 
 typedef struct event_area_s {
     mEv_info_c info;
-    int data[11];
+    int data[10];
 } mEv_area_c;
 
 #define mEv_AREA_NUM 5
@@ -594,7 +594,10 @@ typedef struct event_common_s {
     mEv_place_c place[mEv_PLACE_NUM];
     s16 fieldday_event_id;
     s16 fieldday_event_over_status;
-    u32 unused[2];
+    lbRTC_time_c alarm_time;
+    int _21C;
+    u16 exist_flags0;
+    u16 exist_flags1;
 } mEv_common_data_c;
 
 typedef struct event_save_event_info_s {

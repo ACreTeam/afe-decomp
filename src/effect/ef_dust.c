@@ -43,6 +43,7 @@ static rgba_t eDT_prim_table[] = {
     {230, 230, 100, 255},
     {255, 255, 255, 255},
     {255, 255, 255, 255},
+    {255, 255, 255, 255},
     // clang-format on
 };
 
@@ -58,53 +59,79 @@ static void eDT_init(xyz_t pos, int prio, s16 angle, GAME* game, u16 item_name, 
     f32 rad_angle_y = SHORT2RAD_ANGLE2(angle);
 
     data.velocity.x = 0.0f;
-
-    if (arg1 != 4) {
-        data.velocity.y = 1.0f;
-    } else {
-        data.velocity.y = 0.0f;
-        pos.y += 5.0f;
+    switch (arg1) {
+        case 4:
+        case 10:
+            pos.y += 5.0f;
+            data.velocity.y = 0.0f;
+            break;
+        default:
+            data.velocity.y = 1.0f;
+            break;
     }
 
-    if (arg1 == 8) {
-        data.velocity.z = -2.0f;
-    } else if (arg1 == 1) {
-        data.velocity.z = -1.5f;
-    } else if (arg1 == 2) {
-        data.velocity.z = -1.0f;
-    } else if (arg1 == 3 || arg1 == 5) {
-        data.velocity.z = 0.0f;
-    } else if (arg1 == 0) {
-        data.velocity.z = 0.5f;
-        pos.x += 15.0f * sin_s(angle);
-        pos.z += 15.0f * cos_s(angle);
-        pos.y += -15.0f;
-    } else if (arg1 == 9) {
-        data.velocity.z = 0.75f;
-        pos.x += 25.0f * sin_s(angle);
-        pos.z += 25.0f * cos_s(angle);
-    } else {
-        data.velocity.z = 0.25f;
+    switch (arg1) {
+        case 8:
+            data.velocity.z = -2.0f;
+            break;
+        case 1:
+            data.velocity.z = -1.5f;
+            break;
+            case 2:
+            data.velocity.z = -1.0f;
+            break;
+        case 3:
+        case 5:
+            data.velocity.z = 0.0f;
+            break;
+        case 0:
+            data.velocity.z = 0.5f;
+            pos.x += 15.0f * sin_s(angle);
+            pos.z += 15.0f * cos_s(angle);
+            pos.y += -15.0f;
+            break;
+        case 9:
+            data.velocity.z = 0.75f;
+            pos.x += 25.0f * sin_s(angle);
+            pos.z += 25.0f * cos_s(angle);
+            break;
+        case 4:
+        case 10:
+            data.velocity.z = 0.25f;
+            break;
     }
 
-    if (arg1 == 4) {
-        data.acceleration.x = 0.0f;
-        data.acceleration.y = 0.1f;
-        data.acceleration.z = 0.0f;
-    } else if (arg1 == 0) {
-        data.acceleration = ZeroVec;
-    } else {
-        data.acceleration.x = 0.0f;
-        data.acceleration.y = -0.05f;
-        data.acceleration.z = 0.075f;
+    switch (arg1) {
+        case 4:
+        case 10:
+            data.acceleration.x = 0.0f;
+            data.acceleration.y = 0.1f;
+            data.acceleration.z = 0.0f;
+            break;
+        case 0:
+            data.acceleration = ZeroVec;
+            break;
+        default:
+            data.acceleration.x = 0.0f;
+            data.acceleration.y = -0.05f;
+            data.acceleration.z = 0.075f;
+            break;
     }
 
-    if (arg1 == 4) {
-        data.scale = 0.015f;
-    } else if (arg1 == 0 || arg1 == 9) {
-        data.scale = 0.007f;
-    } else {
-        data.scale = 0.01f;
+    switch (arg1) {
+        case 4:
+            data.scale = 0.015f;
+            break;
+        case 10:
+            data.scale = 0.01f * 2.25f;
+            break;
+        case 0:
+        case 9:
+            data.scale = 0.007f;
+            break;
+        default:
+            data.scale = 0.01f;
+            break;
     }
 
     eEC_CLIP->vector_rotate_y_proc(&data.velocity, rad_angle_y);
@@ -124,16 +151,27 @@ static void eDT_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg) {
 }
 
 static void eDT_mv(eEC_Effect_c* effect, GAME* game) {
-    if (effect->arg1 == 4) {
-        s16 counter = 18 - effect->timer;
-
-        effect->scale.x = eEC_CLIP->calc_adjust_proc(counter, 0, 17, 0.012f, 0.015f);
-        effect->scale.y = effect->scale.x;
-        effect->scale.z = effect->scale.x;
-    } else if (effect->arg1 == 0 || effect->arg1 == 9) {
-        effect->velocity.x *= sqrtf(0.85f);
-        effect->velocity.y *= sqrtf(0.85f);
-        effect->velocity.z *= sqrtf(0.85f);
+    s16 counter = 18 - effect->timer;
+    switch (effect->arg1) {
+        case 4: {
+            effect->scale.x = eEC_CLIP->calc_adjust_proc(counter, 0, 17, 0.012f, 0.015f);
+            effect->scale.y = effect->scale.x;
+            effect->scale.z = effect->scale.x;
+        }
+        break;
+        case 10: {
+            effect->scale.x = eEC_CLIP->calc_adjust_proc(counter, 0, 17, 0.018f, 0.01f * 2.25f);
+            effect->scale.y = effect->scale.x;
+            effect->scale.z = effect->scale.x;
+        }
+        break;
+        case 0:
+        case 9: {
+            effect->velocity.x *= sqrtf(0.85f);
+            effect->velocity.y *= sqrtf(0.85f);
+            effect->velocity.z *= sqrtf(0.85f);
+        }
+        break;
     }
 
     xyz_t_add(&effect->velocity, &effect->acceleration, &effect->velocity);
@@ -189,7 +227,7 @@ static void eDT_dw(eEC_Effect_c* effect, GAME* game) {
 
     counter = CLAMP(counter, 0, 9);
 
-    
+
     tex0 = eDT_2tile_texture_idx[counter].tex0;
     tex1 = eDT_2tile_texture_idx[counter].tex1;
     
@@ -199,7 +237,7 @@ static void eDT_dw(eEC_Effect_c* effect, GAME* game) {
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_1_TXT_SEG, eDT_texture_table[tex0]);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_2_TXT_SEG, eDT_texture_table[tex1]);
 
-    if (effect->arg1 >= 0 && effect->arg1 < 10) {
+    if (effect->arg1 >= 0 && effect->arg1 < 11) {
         gDPSetPrimColor(NEXT_POLY_XLU_DISP, 0, eDT_prim_f[counter], eDT_prim_table[effect->arg1].r, eDT_prim_table[effect->arg1].g, eDT_prim_table[effect->arg1].b, eDT_AlphaPtn[counter]);
     } else {
         gDPSetPrimColor(NEXT_POLY_XLU_DISP, 0, eDT_prim_f[counter], 255, 255, 255, eDT_AlphaPtn[counter]);

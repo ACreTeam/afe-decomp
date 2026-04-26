@@ -29,7 +29,13 @@ static void eSwing_Net_Hanabira_Make(eEC_Effect_c* effect, GAME* game) {
 
         if (IS_ITEM_GROWN_FLOWER(item)) {
             int i;
-            s16 arg = item - FLOWER_PANSIES0;
+            s16 arg;
+
+            if (item != FLOWER_JACOBS_LADDER) {
+                arg = (s16)(item - FLOWER_PANSIES0);
+            } else {
+                arg = 7;
+            }
 
             for (i = 0; i < 2; i++) {
                 eEC_CLIP->effect_make_proc(eEC_EFFECT_HANABIRA, effect->position, effect->prio, 0, game, effect->item_name, arg, 2);

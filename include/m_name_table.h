@@ -248,7 +248,7 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 #define GET_NAME_ITEM1_CATEGORY(f) (((f) & 0x0F00) >> 8)
 
 #define IS_ITEM_FLOWER(item) ((item) >= FLOWER_LEAVES_PANSIES0 && (item) <= FLOWER_TULIP2)
-#define IS_ITEM_GROWN_FLOWER(item) ((item) >= FLOWER_PANSIES0 && (item) <= FLOWER_TULIP2)
+#define IS_ITEM_GROWN_FLOWER(item) (((item) >= FLOWER_PANSIES0 && (item) <= FLOWER_TULIP2) || (item) == FLOWER_JACOBS_LADDER)
 #define IS_ITEM_ALIVE_TREE(item) \
   (((item) >= TREE_SAPLING && (item) <= TREE_30000BELLS) || \
    ((item) >= TREE_100BELLS_SAPLING && (item) <= TREE_PALM_FRUIT) || \
@@ -559,6 +559,8 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 
 #define ITEM_IS_DUMMY_MAILBOX(item) ((item) >= DUMMY_MAILBOX0 && (item) <= DUMMY_MAILBOX3)
 #define ITEM_IS_SIGN(item) ((item) == DUMMY_RESERVE || ITEM_IS_SIGNBOARD(item))
+
+#define IS_ITEM_LOST_ITEM(item) ((item) >= ITM_QST_LOST_CLOTH && (item) <= ITM_QST_LOST_GYROID)
 
 #define BG_CATEGORY 0
 #define ENV_CATEGORY 8
@@ -2438,14 +2440,14 @@ enum {
 
 #define ITM_ETC_START 0x2500
 #define ITM_QST_LETTER (ITM_ETC_START + 0)
-#define ITM_QST_CLOTH (ITM_ETC_START + 1)
-#define ITM_QST_MONEY (ITM_ETC_START + 2)
-#define ITM_QST_VIDEOTAPE (ITM_ETC_START + 3)
-#define ITM_QST_ORGANIZER (ITM_ETC_START + 4)
-#define ITM_QST_POKEMON_PIKACHU (ITM_ETC_START + 5)
-#define ITM_QST_COMIC_BOOK (ITM_ETC_START + 6)
-#define ITM_QST_PICTURE_BOOK (ITM_ETC_START + 7)
-#define ITM_QST_GAME_BOY (ITM_ETC_START + 8)
+#define ITM_QST_LOST_CLOTH (ITM_ETC_START + 1)
+#define ITM_QST_LOST_ROD (ITM_ETC_START + 2)
+#define ITM_QST_LOST_NET (ITM_ETC_START + 3)
+#define ITM_QST_LOST_SHOVEL (ITM_ETC_START + 4)
+#define ITM_QST_LOST_AXE (ITM_ETC_START + 5)
+#define ITM_QST_LOST_PINWHEEL (ITM_ETC_START + 6)
+#define ITM_QST_LOST_FAN (ITM_ETC_START + 7)
+#define ITM_QST_LOST_GYROID (ITM_ETC_START + 8)
 #define ITM_QST_CAMREA (ITM_ETC_START + 9)
 #define ITM_QST_WATCH (ITM_ETC_START + 10)
 #define ITM_QST_HANDKERCHIEF (ITM_ETC_START + 11)
@@ -3904,7 +3906,7 @@ enum ftr1_e {
 #define DUMMY_COUNT 0xF10E
 #define DUMMY_COUNT02 0xF10F
 #define DUMMY_TAMA 0xF110
-#define DUMMY_TURI 0xF111
+#define DUMMY_TURI 0xF124
 #define DUMMY_KOINOBORI 0xF114
 #define DUMMY_WINDMILL 0xF116
 #define DUMMY_LOTUS 0xF11B

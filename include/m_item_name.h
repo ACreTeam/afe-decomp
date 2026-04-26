@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define mIN_ITEM_NAME_LEN 16
+#define mIN_ITEM_NAME_LEN 10
 
 extern u8 itemName_paper[];
 extern u8 itemName_money[];

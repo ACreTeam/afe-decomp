@@ -36,7 +36,7 @@ static void eAS2_init(xyz_t pos, int prio, s16 angle, GAME* game, u16 item_name,
     offs.x = 0.0f;
     offs.y = 0.0f;
     offs.z = 30.0f;
-    eEC_CLIP->make_effect_proc(eEC_EFFECT_ASE2, pos, &offs, game, NULL, item_name, prio, 0, 0);
+    eEC_CLIP->make_effect_proc(eEC_EFFECT_ASE2, pos, &offs, game, NULL, item_name, prio, arg0, arg1);
 }
 
 static void eAS2_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg) {
@@ -50,7 +50,10 @@ static void eAS2_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg) {
 static void eAS2_mv(eEC_Effect_c* effect, GAME* game) {
     eEC_CLIP->set_continious_env_proc(effect, 26, 52);
     effect->effect_specific[0]++;
-    sAdo_OngenPos((u32)effect, 0x29, &effect->position);
+
+    if (effect->arg1 == 0) {
+        sAdo_OngenPos((u32)effect, 0x29, &effect->position);
+    }
 }
 
 static void eAS2_dw(eEC_Effect_c* effect, GAME* game) {

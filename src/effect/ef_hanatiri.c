@@ -26,8 +26,14 @@ static void eHanatiri_init(xyz_t pos, int prio, s16 angle, GAME* game, u16 item_
 static void eHanatiri_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg) {
     int i;
 
-    if (effect->arg0 >= FLOWER_PANSIES0 && effect->arg0 <= FLOWER_TULIP2) {
-        s16 flower_idx = effect->arg0 - FLOWER_PANSIES0;
+    if (IS_ITEM_GROWN_FLOWER(effect->arg0)) {
+        s16 flower_idx;
+
+        if (effect->arg0 != FLOWER_JACOBS_LADDER) {
+            flower_idx = (s16)(effect->arg0 - FLOWER_PANSIES0);
+        } else {
+            flower_idx = 7;
+        }
         
         for (i = 0; i < 5; i++) {
             eEC_CLIP->effect_make_proc(eEC_EFFECT_HANABIRA, effect->position, effect->prio, 0, game, effect->item_name, flower_idx, 5);
@@ -48,4 +54,3 @@ static void eHanatiri_mv(eEC_Effect_c* effect, GAME* game) {
 static void eHanatiri_dw(eEC_Effect_c* effect, GAME* game) {
     // empty
 }
-

@@ -7,6 +7,20 @@
 #include "sys_matrix.h"
 #include "libultra/libultra.h"
 
+extern Gfx ef_present1_model[];
+extern Gfx ef_present2_model[];
+extern Gfx ef_present3_model[];
+extern Gfx ef_present4_model[];
+extern Gfx ef_present5_model[];
+
+static Gfx* ePOP_model_table[] = {
+    ef_present1_model,
+    ef_present2_model,
+    ef_present3_model,
+    ef_present4_model,
+    ef_present5_model,
+};
+
 static void ePOP_init(xyz_t pos, int prio, s16 angle, GAME* game, u16 item_name, s16 arg0, s16 arg1);
 static void ePOP_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg);
 static void ePOP_mv(eEC_Effect_c* effect, GAME* game);
@@ -69,20 +83,6 @@ static void ePOP_mv(eEC_Effect_c* effect, GAME* game) {
     xyz_t_add(&effect->velocity, &effect->acceleration, &effect->velocity);
     xyz_t_add(&effect->position, &effect->velocity, &effect->position);
 }
-
-extern Gfx ef_present1_model[];
-extern Gfx ef_present2_model[];
-extern Gfx ef_present3_model[];
-extern Gfx ef_present4_model[];
-extern Gfx ef_present5_model[];
-
-static Gfx* ePOP_model_table[] = {
-    ef_present1_model,
-    ef_present2_model,
-    ef_present3_model,
-    ef_present4_model,
-    ef_present5_model,
-};
 
 static void ePOP_dw(eEC_Effect_c* effect, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;

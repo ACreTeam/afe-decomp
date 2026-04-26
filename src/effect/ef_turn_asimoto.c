@@ -31,7 +31,13 @@ static void eTurn_Hanabira_Make(eEC_Effect_c* effect, GAME* game) {
         if (IS_ITEM_GROWN_FLOWER(item)) {
             xyz_t pos = effect->position;
             int i;
-            s16 arg = item - FLOWER_PANSIES0;
+            s16 arg;
+
+            if (item != FLOWER_JACOBS_LADDER) {
+                arg = (s16)(item - FLOWER_PANSIES0);
+            } else {
+                arg = 7;
+            }
 
             pos.x += sin_s(effect->effect_specific[0]) * 30.0f;
             pos.z += cos_s(effect->effect_specific[0]) * 30.0f;

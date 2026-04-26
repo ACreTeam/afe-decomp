@@ -39,7 +39,7 @@ static void eResetbreak_Dust_init(xyz_t pos, int prio, s16 angle, GAME* game, u1
 
 static void eResetbreak_Dust_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg) {
     s16 angle = effect->arg0;
-    f32 scale = 0.018f + RANDOM_F(0.0054f);
+    f32 scale = 0.018f + RANDOM_F(0.0053999983f);
     f32 vel_z = 0.15f + RANDOM_F(0.15f);
 
     bzero(&effect->velocity, sizeof(effect->velocity));

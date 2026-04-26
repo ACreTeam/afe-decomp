@@ -41,24 +41,24 @@ static void aResetbreak_make_rock_parts(eEC_Effect_c* effect, GAME* game) {
 
 static void aResetbreak_make_dust(eEC_Effect_c* effect, GAME* game, int dir) {
     xyz_t pos = effect->position;
-    s16 angle = RANDOM(65536.0f) + (s16)(dir * DEG2SHORT_ANGLE2(90.0f));
+    int angle = RANDOM(65536);
+    s16 angle_s = angle + (s16)(dir * DEG2SHORT_ANGLE2(90.0f));
 
     pos.y += 10.0f + RANDOM_F(15.0f);
-    pos.x += 18.0f * sin_s(angle);
-    pos.z += 10.0f + 20.0f * cos_s(angle);
-    eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK_DUST, pos, effect->prio, angle, game, effect->item_name, 0, 0);
+    pos.x += 18.0f * sin_s(angle_s);
+    pos.z += 10.0f + 20.0f * cos_s(angle_s);
+    eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK_DUST, pos, effect->prio, angle_s, game, effect->item_name, 0, 0);
 }
 
 static void aResetbreak_make_rock_piece(eEC_Effect_c* effect, GAME* game) {
-    s16 angle = 0;
     int i;
 
-    for (i = 0, angle = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
+        s16 angle = i * DEG2SHORT_ANGLE(72.0f);
         xyz_t pos = effect->position;
 
         pos.y += 15.0f;
-        eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK_PIECE, pos, effect->prio, (s16)angle, game, effect->item_name, 0, 0);
-        angle += DEG2SHORT_ANGLE2(72.0f);
+        eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK_PIECE, pos, effect->prio, angle, game, effect->item_name, 0, 0);
     }
 }
 

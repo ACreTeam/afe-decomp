@@ -255,6 +255,8 @@ typedef struct common_data_s {
     /* 0x0285C6 */ u8 event_title_flags;
     /* 0x0285C7 */ u8 event_title_fade_in_progress;
     /* 0x0285C8 */ mEv_common_data_c event_common;
+    u16 resetcenter_flags;
+    int _2F6E0;
     /* 0x0287F8 */ s8 current_famicom_rom;
     /* 0x0287F9 */ s8 famicom_287F9;
     /* 0x0287FA */ u8 _287FA[0x28838 - 0x0287FA];

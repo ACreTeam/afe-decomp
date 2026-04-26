@@ -13,7 +13,7 @@ static void ePO_mv(eEC_Effect_c* effect, GAME* game);
 static void ePO_dw(eEC_Effect_c* effect, GAME* game);
 
 // clang-format off
-eEC_PROFILE_c iam_ef_presentopen_parts = {
+eEC_PROFILE_c iam_ef_presentopen = {
     &ePO_init,
     &ePO_ct,
     &ePO_mv,

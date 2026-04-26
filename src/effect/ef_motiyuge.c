@@ -8,7 +8,7 @@ extern u8 ef_mitiyuge01_0_int_i4[];
 extern u8 ef_motiyuge01_1_int_i4[];
 extern u8 ef_motiyuge01_2_int_i4[];
 
-static u8* eMotiyuge_yuge_texture_table[] = {
+static u8* eMotiyuge_tex_tbl[] = {
     ef_mitiyuge01_0_int_i4, ef_motiyuge01_1_int_i4, ef_motiyuge01_2_int_i4,
 };
 
@@ -66,7 +66,7 @@ extern Gfx ef_motiyuge01_00_modelT[];
 
 static void eMotiyuge_dw(eEC_Effect_c* effect, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
-    u8* tex_p = eMotiyuge_yuge_texture_table[effect->effect_specific[1]];
+    u8* tex_p = eMotiyuge_tex_tbl[effect->effect_specific[1]];
     u8 a = (int)eEC_CLIP->calc_adjust_proc(effect->timer, 0, 16, 0.0f, 100.0f);
 
     OPEN_DISP(game->graph);

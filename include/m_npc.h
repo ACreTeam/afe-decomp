@@ -34,7 +34,7 @@ extern "C" {
 #define mNpc_ISLAND_FTR_SAVE_NUM 4
 #define mNpc_ISLAND_FTR_NUM 16
 #define mNpc_EVENT_NPC_NUM 5
-#define mNpc_MASK_NPC_NUM 3
+#define mNpc_MASK_NPC_NUM 2
 #define mNpc_ISLANDER_NO ANIMAL_NUM_MAX
 
 enum {

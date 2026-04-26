@@ -30,12 +30,18 @@ static xyz_t eDahsAsimoto_GetMakeOffset(xyz_t pos, s16 angle_y) {
 static void eDashAsimoto_Hanabira_Make(eEC_Effect_c* effect, GAME* game) {
     mActor_name_t* item_p = mFI_GetUnitFG(effect->position);
 
-    if (item_p != NULL && *item_p >= FLOWER_PANSIES0 && *item_p <= FLOWER_TULIP2) {
+    if (item_p != NULL && IS_ITEM_GROWN_FLOWER(*item_p)) {
+        s16 idx;
         int i;
 
+        if (*item_p != FLOWER_JACOBS_LADDER) {
+            idx = (s16)(*item_p - FLOWER_PANSIES0);
+        } else {
+            idx = 7;
+        }
+        
         for (i = 0; i < 2; i++) {
-            eEC_CLIP->effect_make_proc(eEC_EFFECT_HANABIRA, effect->position, effect->prio, 0, game, effect->item_name,
-                                       *item_p - FLOWER_PANSIES0, 0);
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_HANABIRA, effect->position, effect->prio, 0, game, effect->item_name, idx, 0);
         }
     }
 }
