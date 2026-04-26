@@ -112,11 +112,15 @@ enum {
     mQst_DELIVERY_KIND_NUM
 };
 
-/* sizeof(mQst_delivery_c) == 0x28 */
+/* sizeof(mQst_delivery_c) == 0x58 */
 typedef struct quest_delivery_s {
     /* 0x00 */ mQst_base_c base;          /* quest base info */
     /* 0x0C */ AnmPersonalID_c recipient; /* villager who will receive it */
-    /* 0x1A */ AnmPersonalID_c sender;    /* villager who sent it */
+    /* 0x20 */ AnmPersonalID_c sender;    /* villager who sent it */
+    /* 0x34 */ AnmPersonalID_c _34;
+    /* 0x48 */ u8 _48[ANIMAL_NAME_LEN];
+    /* 0x4E */ u8 _4E[ANIMAL_NAME_LEN];
+    /* 0x54 */ mActor_name_t item;
 } mQst_delivery_c;
 
 /* Errand Quest */
@@ -172,15 +176,15 @@ typedef union {
     mQst_firstjob_c first_job;
 } mQst_errand_info_u;
 
-/* sizeof(mQst_errand_c) == 0x58 */
+/* sizeof(mQst_errand_c) == 0x78 */
 typedef struct quest_errand_s {
     /* 0x00 */ mQst_base_c base;          /* quest base info */
     /* 0x0C */ AnmPersonalID_c recipient; /* villager who will receive it */
-    /* 0x1A */ AnmPersonalID_c sender;    /* villager who sent it */
-    /* 0x28 */ mActor_name_t item;        /* errand item */
-    /* 0x2A */ s8 pockets_idx : 5;        /* index in player pockets where the errand item is */
-    /* 0x2A */ s8 errand_type : 3;        /* errand type */
-    /* 0x2C */ mQst_errand_info_u info;   /* errand type-specific data */
+    /* 0x20 */ AnmPersonalID_c sender;    /* villager who sent it */
+    /* 0x34 */ mActor_name_t item;        /* errand item */
+    /* 0x36 */ s8 pockets_idx : 5;        /* index in player pockets where the errand item is */
+    /* 0x36 */ s8 errand_type : 3;        /* errand type */
+    /* 0x38 */ mQst_errand_info_u info;   /* errand type-specific data */
 } mQst_errand_c;
 
 /* 'Not Saved' Quest */

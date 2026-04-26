@@ -541,6 +541,7 @@ typedef struct santa_event_s {
 typedef union {
     mEv_broker_common_c broker;
     mEv_santa_event_common_c santa;
+    u8 force_size[0x18];
 } mEv_event_common_u;
 
 typedef struct event_s {

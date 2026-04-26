@@ -80,16 +80,15 @@ typedef struct lighthouse_s {
 
 typedef struct Save_s {
     /* 0x000000 */ mFRm_chk_t save_check; /* save information */
-    /* 0x000014 */ int scene_no;          /* current 'scene' id */
-    /* 0x000018 */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
-    /* 0x000019 */ u8
-        remove_animal_idx; /* index of the villager which is scheduled to leave town, 0xFF when none selected */
-    /* 0x00001A */ u16
-        copy_protect; /* 'unique' value between [1, 65520] used for copy protection (see mCD_get_land_copyProtect) */
-    /* 0x00001C */ u8 pad_1C[4];
-    /* 0x000020 */ Private_c private_data[PLAYER_NUM];                   /* player data */
-    /* 0x009120 */ mLd_land_info_c land_info;                            /* town name & id */
-    /* 0x00912C */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
+    /* 0x000014 */ mLd_land_info_c land_info;                            /* town name & id */
+    /* 0x00001E */ u8 sd_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
+    /* 0x000028 */ int scene_no;          /* current 'scene' id */
+    /* 0x00002C */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
+    /* 0x00002D */ u8 remove_animal_idx;
+    /* 0x00002E */ u16 copy_protect; /* 'unique' value between [1, 65520] used for copy protection */
+    /* 0x000030 */ u8 _000030[0x1C0 - 0x030]; // TODO: this has to do with SD card stuff
+    /* 0x0001C0 */ Private_c private_data[PLAYER_NUM];                   /* player data */
+    /* 0x009C40 */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
     /* 0x009CE4 */ u8 pad_9CE4[4];
     /* 0x009CE8 */ mHm_hs_c homes[PLAYER_NUM];                              /* player house data */
     /* 0x0137A8 */ mFM_fg_c fg[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];             /* fg items (fg = foreground?) */
@@ -114,11 +113,9 @@ typedef struct Save_s {
     /* 0x020F19 */ u8 weather;                       /* upper nibble is intensity, lower nibble is type */
     /* 0x020F1A */ u8 save_exist;        /* unsure, set in mCD_SaveHome_bg_set_data (1) & mCD_SaveHome_bg (bss) */
     /* 0x020F1B */ u8 npc_force_go_home; /* when set to 1, forces the 'm_go_home' code to activate */
-    /* 0x020F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM]
-                              [UT_Z_NUM];       /* flags for which items are buried around town */
+    /* 0x020F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM] [UT_Z_NUM]; // buried item flags
     /* 0x0212DC */ lbRTC_time_c last_grow_time; /* last time that a new villager moved into town */
-    /* 0x0212E4 */ mPr_mother_mail_info_c
-        mother_mail[PLAYER_NUM];              /* info on when mom sent player letters and what event was sent */
+    /* 0x0212E4 */ mPr_mother_mail_info_c mother_mail[PLAYER_NUM];  /* info on when mom sent player letters */
     /* 0x02131C */ mMsr_time_c mushroom_time; /* last time mushroom season info was updated */
     /* 0x021322 */ lbRTC_ymd_c _021322;
     /* 0x021326 */ u16 _021326[20];
@@ -170,8 +167,9 @@ typedef struct Save_s {
     /* 0x02418B */ u8 _2418B[0x24198 - 0x2418B];
     /* 0x024198 */ OSTime travel_hard_time;
     /* 0x0241A0 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
-    /* 0x0241A8 */ u8 _241A8[0x242A0 - 0x241A8];
+    /* 0x0241A8 */ u8 _241A8[0x8000];
 } Save_t;
+
 
 typedef union save_u {
     Save_t save;
@@ -188,13 +186,13 @@ typedef struct transition_s {
 /* sizeof(common_data_t) == 0x2DC00 */
 typedef struct common_data_s {
     /* 0x000000 */ Save save;
-    /* 0x026000 */ u8 game_started;
-    /* 0x026001 */ u8 field_type;
-    /* 0x026002 */ u8 field_draw_type;
-    /* 0x026003 */ u8 player_no;
-    /* 0x026004 */ int last_scene_no;
-    /* 0x026008 */ int player_data_mode;
-    /* 0x02600C */ Clip_c clip;
+    /* 0x02E000 */ u8 game_started;
+    /* 0x02E001 */ u8 field_type;
+    /* 0x02E002 */ u8 field_draw_type;
+    /* 0x02E003 */ u8 player_no;
+    /* 0x02E004 */ int last_scene_no;
+    /* 0x02E008 */ int player_data_mode;
+    /* 0x02E00C */ Clip_c clip;
     /* 0x026110 */ Time_c time;
     /* 0x02613C */ Private_c* now_private;
     /* 0x026140 */ mHm_hs_c* now_home;

@@ -8,6 +8,9 @@
 #include "audio.h"
 #include "lb_rtc.h"
 #include "m_mail.h"
+#include "m_island_h.h"
+#include "m_needlework.h"
+#include "m_npc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +18,7 @@ extern "C" {
 
 #define HOME_MAILBOX_SIZE 10
 #define HANIWA_ITEM_HOLD_NUM 4
-#define HANIWA_MESSAGE_LEN 128
+#define HANIWA_MESSAGE_LEN 64
 #define mHm_LAYER_NUM 4
 
 enum {
@@ -96,11 +99,28 @@ typedef struct home_haniwa_item_s {
     /* 0x04 */ u32 extra_data;     /* trade related data */
 } Haniwa_Item_c;
 
-/* sizeof(Haniwa_c) == 0xA4 */
+enum {
+    mHm_HANIWA_ALARM_MODE_ON_PLAY,
+    mHm_HANIWA_ALARM_MODE_AT_TIME,
+
+    mHm_HANIWA_ALARM_MODE_NUM
+};
+
+/* sizeof(HaniwaAlarmInfo_c) == 0x4 */
+typedef struct home_haniwa_alarm_info_s {
+    /* 0x00 */ u8 enabled;
+    /* 0x01 */ u8 mode;
+    /* 0x02 */ u8 hour;
+    /* 0x03 */ u8 minute;
+} HaniwaAlarmInfo_c;
+
+/* sizeof(Haniwa_c) == 0x74 */
 typedef struct home_haniwa_s {
     /* 0x00 */ Haniwa_Item_c items[HANIWA_ITEM_HOLD_NUM]; /* held items */
     /* 0x20 */ u8 message[HANIWA_MESSAGE_LEN];            /* message for visitors */
-    /* 0xA0 */ u32 bells;                                 /* held bells from selling items */
+    /* 0x60 */ u8 _060[12];
+    /* 0x6C */ u32 bells;                                 /* held bells from selling items */
+    /* 0x70 */ HaniwaAlarmInfo_c alarm_info;
 } Haniwa_c;
 
 /* sizeof(mHm_wf_c) == 2 */
@@ -152,31 +172,7 @@ typedef struct home_flags_s {
     u8 bit_7 : 1;         /* unused */
 } mHm_flg_c;
 
-/* sizeof(mHm_hs_c) == 0x26B0 */
-typedef struct home_s {
-    /* 0x0000 */ PersonalID_c ownerID; /* owner player's ID */
-    /* 0x0014 */ u8 unk_14[6];
-    /* 0x001A */ TempoBeat_c haniwa_tempo;  /* unsure about this */
-    /* 0x001C */ lbRTC_ymd_c hra_mark_time; /* last HRA judge date */
-    /* 0x0020 */ u32 hra_mark_info;         /* bitfield of HRA info pulled when HRA mails letter */
-    /* 0x0024 */ mHm_flg_c flags;
-    /* 0x0026 */ mHm_rmsz_c size_info;   /* home size info */
-    /* 0x002C */ u8 outlook_pal;         /* current house palette */
-    /* 0x002D */ u8 ordered_outlook_pal; /* house palette ordered at Nook's via upgrade */
-    /* 0x002E */ u8
-        next_outlook_pal; /* next house palette set via all other means (villager, Wisp, paint @ Nook's, ...) */
-    /* 0x002F */ u8
-        door_original;         /* player design shown on door, apparently called 'original', maybe 'original design'? */
-    /* 0x0030 */ u8 unk_30[8]; /* unused? */
-    /* 0x0038 */ mHm_flr_c floors[mHm_ROOM_NUM];    /* house floors, might be a union idk */
-    /* 0x1A30 */ Mail_c mailbox[HOME_MAILBOX_SIZE]; /* mailbox */
-    /* 0x25D4 */ Haniwa_c haniwa;                   /* gyroid info */
-    /* 0x2678 */ mHm_goki_c goki;                   /* cockroach info */
-    /* 0x2684 */ u32 music_box[2];                  /* bitfield of inserted music */
-    /* 0x268C */ u8 unk_286C[36];                   /* unused? */
-} mHm_hs_c;
-
-/* sizeof(mHm_cottage_c) == 0x8C8 */
+/* sizeof(mHm_cottage_c) == 0x8D8 */
 typedef struct home_cottage_s {
     /* 0x000 */ mHm_wf_c unused_wall_floor; /* Has wallpaper & flooring bounds checks in sChk_CheckSaveData_Cattage */
     /* 0x002 */ u8 unk_2[2];                /* struct/array that is two bytes long, maybe another wall floor? */
@@ -184,8 +180,51 @@ typedef struct home_cottage_s {
     /* 0x005 */ u8 unk_5;                   /* direct copy in agb_to_gc_cottage, GBA only? */
     /* 0x008 */ mHm_flr_c room;             /* Cottage room */
     /* 0x8B0 */ mHm_goki_c goki;            /* Cottage cockroaches */
-    /* 0x8BC */ u32 music_box[2];           /* Cottage music storage... separate from main home? */
+    /* 0x8BC */ u32 music_box[6];           /* Cottage music storage... separate from main home? */
 } mHm_cottage_c;
+
+/* sizeof(Island_c) == 0x1620 */
+typedef struct island_s {
+    /* 0x0000 */ u8 name[mISL_ISLAND_NAME_LEN]; /* island name */
+    /* 0x0006 */ mLd_land_info_c landinfo; /* land info for town */
+    /* 0x0010 */ mFM_fg_c fgblock[mISL_FG_BLOCK_Z_NUM][mISL_FG_BLOCK_X_NUM]; /* island item actor data */
+    /* 0x0410 */ mHm_cottage_c cottage; /* player shared cottage data */
+    /* 0x0D00 */ mNW_original_design_c flag_design; /* island flag design */
+    /* 0x0F20 */ IslandAnimal_c animal; /* islander info */
+    /* 0x15A0 */ u16 deposit[mISL_FG_BLOCK_X_NUM * mISL_FG_BLOCK_Z_NUM][UT_Z_NUM]; /* buried item bitfield */
+    /* 0x15E0 */ u8 bg_data[mISL_ISLAND_BLOCK_NUM]; /* island acre ids */
+    /* 0x15E2 */ lbRTC_time_c renew_time; /* last time island was visited? */
+    /* 0x15EA */ u8 unused_15EA[14]; /* unused */
+    /* 0x15F8 */ u8 grass_tex_type; /* grass type */
+    /* 0x15F9 */ u8 last_song_to_island; /* last song kapp'n sang to the island */
+    /* 0x15FA */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
+    /* 0x15FB */ u8 flags;
+    /* 0x15FC */ lbRTC_ymd_c islander_spawn_date; // date the islander spawned via e-Reader card
+    /* 0x15FC */ u8 unused_15FC[24]; // unused
+} Island_c;
+
+/* sizeof(mHm_hs_c) == 0x3860 */
+typedef struct home_s {
+    /* 0x0000 */ PersonalID_c ownerID; /* owner player's ID */
+    /* 0x0010 */ u8 _0010[6];
+    /* 0x0016 */ TempoBeat_c haniwa_tempo;  /* unsure about this */
+    /* 0x0018 */ lbRTC_ymd_c hra_mark_time; /* last HRA judge date */
+    /* 0x001C */ u32 hra_mark_info;         /* bitfield of HRA info pulled when HRA mails letter */
+    /* 0x0020 */ mHm_flg_c flags;
+    /* 0x0022 */ mHm_rmsz_c size_info;   /* home size info */
+    /* 0x0028 */ u8 outlook_pal;         /* current house palette */
+    /* 0x0029 */ u8 ordered_outlook_pal; /* house palette ordered at Nook's via upgrade */
+    /* 0x002A */ u8 next_outlook_pal; /* next house palette set via all other means */
+    /* 0x002B */ u8 door_original;         /* player design shown on door */
+    /* 0x002C */ u8 _002C[4]; /* 8-byte align padding for 'floors' */
+    /* 0x0030 */ mHm_flr_c floors[mHm_ROOM_NUM];    /* house floors, might be a union idk */
+    /* 0x1A28 */ Mail_c mailbox[HOME_MAILBOX_SIZE]; /* mailbox */
+    /* 0x216C */ Haniwa_c haniwa;                   /* gyroid info */
+    /* 0x21E0 */ mHm_goki_c goki;                   /* cockroach info */
+    /* 0x21EC */ u32 music_box[6];                  /* bitfield of inserted music */
+    /* 0x2220 */ Island_c island;
+    /* 0x3840 */ u8 _3840[32];                   /* unused/padding */
+} mHm_hs_c;
 
 #ifdef __cplusplus
 }

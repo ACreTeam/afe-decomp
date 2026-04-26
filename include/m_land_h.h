@@ -11,11 +11,11 @@ extern "C" {
 #define LAND_NAME_SIZE 6
 #define LAND_NAME_MURA_SIZE (LAND_NAME_SIZE + 2)
 
-/* sizeof(mLd_land_info_c) == 0x0C */
+/* sizeof(mLd_land_info_c) == 0x0A */
 typedef struct land_info_s {
   /* 0x00 */ u8 name[LAND_NAME_SIZE];
-  /* 0x08 */ s8 exists;
-  /* 0x0A */ u16 id;
+  /* 0x06 */ s8 exists;
+  /* 0x08 */ u16 id;
 } mLd_land_info_c;
 
 #ifdef __cplusplus

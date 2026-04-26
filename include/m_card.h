@@ -25,6 +25,8 @@ extern "C" {
 #define mCD_SAVE_DATA_OFS 0x1440
 #define mCD_LAND_PROTECT_CODE_MAGIC0 0x3C1C
 
+#define mCD_SD_FILE_NAME_SAVE_SIZE 8
+
 enum {
     mCD_SLOT_A,
     mCD_SLOT_B,

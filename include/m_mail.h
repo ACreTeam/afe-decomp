@@ -65,24 +65,24 @@ enum {
     mMl_TYPE_NUM
 };
 
-/* sizeof(Mail_nm_c) == 0x16 */
+/* sizeof(Mail_nm_c) == 0x12 */
 typedef struct mail_nm_s {
     /* 0x00 */ PersonalID_c personalID;
-    /* 0x14 */ u8 type;
+    /* 0x10 */ u8 type;
 } Mail_nm_c;
 
-/* sizeof(mail_header_save_s) == 0x3A */
+/* sizeof(mail_header_save_s) == 0x36 */
 typedef struct mail_header_save_s {
     /* 0x00 */ s8 header_back_start;
     /* 0x01 */ u8 unknown;
-    /* 0x02 */ u8 header[MAIL_HEADER_LEN];
-    /* 0x1A */ u8 footer[MAIL_FOOTER_LEN];
+    /* 0x02 */ u16 header[MAIL_HEADER_LEN];
+    /* 0x16 */ u16 footer[MAIL_FOOTER_LEN];
 } Mail_hs_c;
 
-/* sizeof(Mail_hdr_c) == 0x2C */
+/* sizeof(Mail_hdr_c) == 0x24 */
 typedef struct mail_header_s {
     /* 0x00 */ Mail_nm_c recipient;
-    /* 0x16 */ Mail_nm_c sender;
+    /* 0x12 */ Mail_nm_c sender;
 } Mail_hdr_c;
 
 typedef struct mail_text_content_s {
