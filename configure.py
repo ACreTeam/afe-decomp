@@ -471,7 +471,7 @@ config.libs = [
             Object(Matching, "player_select.c"),
             Object(Matching, "reload_data.c"),
             Object(NonMatching, "save_menu.c"),
-            Object(NonMatching, "second_game.c"),
+            Object(Matching, "second_game.c"),
             Object(Matching, "THA_GA.c"),
             Object(Matching, "TwoHeadArena.c"),
             Object(Matching, "zurumode.c"),
@@ -629,7 +629,7 @@ config.libs = [
             Object(Matching, "game/m_train_control.c"),
             Object(NonMatching, "game/m_vibctl.c"),
             Object(Matching, "game/m_view.c"),
-            Object(NonMatching, "game/m_watch_my_step.c"),
+            Object(Matching, "game/m_watch_my_step.c"),
         ],
     ),
 ]

@@ -91,6 +91,7 @@ static namefunc_t nf_tbl[SCENE_NUM] = {
     { nf_str("50:", "start demo 3"), &game_next_play, SCENE_START_DEMO3 },
     { nf_str("51:", "LIGHTHOUSE"), &game_next_play, SCENE_LIGHTHOUSE },
     { nf_str("52:", "In Tent"), &game_next_play, SCENE_TENT },
+    { nf_str("53:", "ﾘｾｯﾄｾﾝﾀｰ"), &game_next_play, SCENE_RESET_HOUSE },
 };
 
 static u8 data2fcode(u8 data) {
