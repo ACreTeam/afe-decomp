@@ -281,6 +281,7 @@ extern Scene_Word_u npc_room_island_info[];
 extern Scene_Word_u start_demo3_info[];
 extern Scene_Word_u lighthouse_info[];
 extern Scene_Word_u tent_info[];
+extern Scene_Word_u reset_house_info[];
 
 extern char* mSc_secure_exchange_keep_bank(Object_Exchange_c* exchange, s16 bank_id, size_t size);
 extern void mSc_background_dmacopy_controller(Object_Bank_c* bank);

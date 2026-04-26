@@ -145,6 +145,13 @@ enum {
     mSM_BD_OPEN_NUM
 };
 
+enum {
+    mSM_CAPTURE_DISPLAY_MODE_SUBMENU,
+    mSM_CAPTURE_DISPLAY_MODE_FILM,
+
+    mSM_CAPTURE_DISPLAY_MODE_NUM
+};
+
 #define mSM_CHECK_OPEN_MAP() (chkTrigger(mSM_MAP_BUTTON) && Common_Get(map_flag) == TRUE)
 
 typedef struct submenu_item_s {
@@ -187,18 +194,19 @@ struct submenu_s {
     /* 0x034 */ SUBMENU_GAME_PROC draw_proc;
 
     /* 0x038 */ Mail_c mail;   /* selected mail */
-    /* 0x162 */ u8 open_flag;  // only set to 0 or 1, checked at least once in aQMgr_actor_move_talk_sub_hand_item_wait
-    /* 0x163 */ u8 after_mode; /* relates to code which runs after the submenu process */
-    /* 0x164 */ u8 unk_164;    // only set to 0 in mSM_move_LINKWait in AC
-    /* 0x165 */ u8 start_refuse;       /* when set to TRUE, the START button input will be ignored */
-    /* 0x166 */ u8 start_refuse_timer; /* timer for when to disable the start button ignore flag */
-    /* 0x168 */ xyz_t water_pos;       /* calculated to the nearest water position to the player for releasing fish */
-    /* 0x174 */ Submenu_Item_c*
-        item_p;               /* pointer to a 'Submenu_Item_c' array, seemingly only points to Submenu::items */
-    /* 0x178 */ s16 item_num; /* number of items in the item array */
-    /* 0x17A */ s16 selected_item_num; /* number of selected items in the item array */
-    /* 0x17C */ Submenu_Item_c
-        items[mPr_POCKETS_SLOT_COUNT]; /* item buffer, entries are only set when an item is selected by the player */
+    /* 0x0F2 */ u8 open_flag;  // only set to 0 or 1, checked at least once in aQMgr_actor_move_talk_sub_hand_item_wait
+    /* 0x0F3 */ u8 after_mode; /* relates to code which runs after the submenu process */
+    /* 0x0F4 */ u8 unk_164;    // only set to 0 in mSM_move_LINKWait in AC
+    /* 0x0F5 */ u8 start_refuse;       /* when set to TRUE, the START button input will be ignored */
+    /* 0x0F6 */ u8 start_refuse_timer; /* timer for when to disable the start button ignore flag */
+    /* 0x0F7 */ u8 capture_display_mode; // 0 = submenu, 1 = film (screenshot)
+    /* 0x0F8 */ xyz_t water_pos;       /* calculated to the nearest water position to the player for releasing fish */
+    /* 0x104 */ Submenu_Item_c* item_p;
+    /* 0x108 */ s16 item_num; /* number of items in the item array */
+    /* 0x10A */ s16 selected_item_num; /* number of selected items in the item array */
+    /* 0x10C */ Submenu_Item_c items[mPr_POCKETS_SLOT_COUNT];
+    /* 0x148 */ u16 receive_mail_bitfield;
+    /* 0x14A */ u8 _14A[0x150 - 0x14A];
 };
 
 extern int mSM_COLLECT_INSECT_GET(int idx);

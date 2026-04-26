@@ -76,6 +76,7 @@ extern void game_goto_next_game_play(GAME* game);
 #ifndef MUST_MATCH
 extern void game_goto_next_game_famicom_emu(GAME* game);
 #endif
+extern void game_goto_next_game_reload_data(GAME* game);
 
 extern GAME* gamePT;
 

@@ -118,6 +118,7 @@ extern int mGcgba_Read(u8* read_buf, size_t read_buf_size, u8 prog_type);
 extern int mGcgba_CheckRecv(u8* recv_bufp, size_t recv_buf_size);
 extern int mGcgba_Send(u8* send_bufp, size_t send_buf_size);
 extern int mGcgba_send_eAppri(u8* eappli_p, size_t eappli_size);
+extern void mGcgba_Finish();
 
 #ifdef __cplusplus
 }

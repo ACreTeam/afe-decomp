@@ -615,6 +615,12 @@ config.libs = [
             Object(NonMatching, "effect/ef_yukihane.c"),
         ],
     ),
+    Rel(
+        "game",
+        [
+            Object(NonMatching, "game/m_play.c"),
+        ],
+    ),
 ]
 
 

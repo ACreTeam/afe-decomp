@@ -10,10 +10,10 @@
 extern "C" {
 #endif
 
-#define MAIL_HEADER_BASE_LEN 32
+#define MAIL_HEADER_BASE_LEN 16
 #define MAIL_HEADER_LEN (MAIL_HEADER_BASE_LEN - PLAYER_NAME_LEN)
-#define MAIL_FOOTER_LEN 32
-#define MAIL_BODY_LEN 192
+#define MAIL_FOOTER_LEN 16
+#define MAIL_BODY_LEN 96
 
 #define MAIL_FOOTER2_LEN 48
 #define MAIL_HEADER2_LEN (MAIL_FOOTER2_LEN - PLAYER_NAME_LEN)
@@ -85,23 +85,36 @@ typedef struct mail_header_s {
     /* 0x16 */ Mail_nm_c sender;
 } Mail_hdr_c;
 
-/* sizeof(Mail_ct_c) == 0xFC */
+typedef struct mail_text_content_s {
+    /* 0x00 */ u8 header[MAIL_HEADER_LEN];
+    /* 0x0A */ u8 _0A[4];
+    /* 0x0E */ u8 body[MAIL_BODY_LEN];
+    /* 0x6E */ u8 _56[14];
+    /* 0x7C */ u8 footer[MAIL_FOOTER_LEN];
+} Mail_text_content_c;
+
+typedef union {
+    Mail_text_content_c split;
+    u8 all[0x90];
+} Mail_text_u;
+
+/* sizeof(Mail_ct_c) == 0x94 */
 typedef struct mail_content_s {
     /* 0x00 */ u8 font;
     /* 0x01 */ u8 header_back_start;
     /* 0x02 */ u8 mail_type;
     /* 0x03 */ u8 paper_type;
-    /* 0x04 */ u8 header[MAIL_HEADER_LEN];
-    /* 0x1C */ u8 body[MAIL_BODY_LEN];
-    /* 0xDC */ u8 footer[MAIL_FOOTER_LEN];
+    /* 0x04 */ Mail_text_u text;
 } Mail_ct_c;
 
-/* sizeof(Mail_c) == 0x12A */
+/* sizeof(Mail_c) == 0xBA */
 typedef struct mail_s {
     /* 0x000 */ Mail_hdr_c header;
     /* 0x02C */ mActor_name_t present;
-    /* 0x02E */ Mail_ct_c content;
+    /* 0x026 */ Mail_ct_c content;
 } Mail_c;
+
+
 
 extern int mMl_strlen(u8* str, int size, u8 end_char);
 extern int mMl_strlen2(int* found, u8* str, int size, u8 end_char);

@@ -267,6 +267,8 @@ extern void mSP_SelectRandomItemToAGB();
 extern const char* mSP_ShopStatus2String(int status);
 extern mActor_name_t mSP_GetRandomStationToyItemNo();
 
+extern void mSP_init_check_door(void);
+
 #ifdef __cplusplus
 }
 #endif

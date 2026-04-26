@@ -14,7 +14,7 @@ extern "C" {
 #define FOREIGNER_NUM 1
 #define TOTAL_PLAYER_NUM (PLAYER_NUM + FOREIGNER_NUM)
 
-#define PLAYER_NAME_LEN 8
+#define PLAYER_NAME_LEN 6
 
 /* sizeof(PersonalID_c) == 0x14 */
 typedef struct personal_id_s {
