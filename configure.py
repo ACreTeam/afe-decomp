@@ -970,7 +970,7 @@ config.libs = [
             Object(Matching, "game/m_fbdemo_fade.c"),
             Object(Matching, "game/m_fbdemo_triforce.c"),
             Object(Matching, "game/m_fbdemo_wipe1.c"),
-            Object(NonMatching, "game/m_field_assessment.c"),
+            Object(Matching, "game/m_field_assessment.c"),
             Object(NonMatching, "game/m_field_info.c"),
             Object(NonMatching, "game/m_field_make.c"),
             Object(NonMatching, "game/m_fishrecord.c"),

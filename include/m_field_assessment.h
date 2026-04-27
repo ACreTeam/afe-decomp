@@ -5,6 +5,7 @@
 #include "libu64/gfxprint.h"
 #include "m_time.h"
 #include "m_random_field_h.h"
+#include "m_actor_type.h"
 
 
 #ifdef __cplusplus
@@ -19,26 +20,26 @@ extern "C" {
 #define mFAs_TREE_RANK_COUNT 5
 
 enum {
-  mFAs_FIELDRANK_ZERO,
-  mFAs_FIELDRANK_ONE,
-  mFAs_FIELDRANK_TWO,
-  mFAs_FIELDRANK_THREE,
-  mFAs_FIELDRANK_FOUR,
-  mFAs_FIELDRANK_FIVE,
-  mFAs_FIELDRANK_SIX,
+    mFAs_FIELDRANK_ZERO,
+    mFAs_FIELDRANK_ONE,
+    mFAs_FIELDRANK_TWO,
+    mFAs_FIELDRANK_THREE,
+    mFAs_FIELDRANK_FOUR,
+    mFAs_FIELDRANK_FIVE,
+    mFAs_FIELDRANK_SIX,
 
-  mFAs_FIELDRANK_NUM
+    mFAs_FIELDRANK_NUM
 };
 
 enum {
-  mFAs_CONDITION_NONE = -1,
-  mFAs_CONDITION_DUST_OVER = 0,
-  mFAs_CONDITION_TREE_LESS,
-  mFAs_CONDITION_TREE_OVER,
-  mFAs_CONDITION_GRASS_OVER,
-  mFAs_CONDITION_NO_CASE,
+    mFAs_CONDITION_NONE = -1,
+    mFAs_CONDITION_DUST_OVER = 0,
+    mFAs_CONDITION_TREE_LESS,
+    mFAs_CONDITION_TREE_OVER,
+    mFAs_CONDITION_GRASS_OVER,
+    mFAs_CONDITION_NO_CASE,
 
-  mFAs_CONDITION_NUM
+    mFAs_CONDITION_NUM
 };
 
 /* sizeof(mFAs_GoodField_c) == 0xC */
@@ -54,6 +55,7 @@ extern int mFAs_GetFieldRank_Condition(int* rank, int* block_x, int* block_z);
 extern void mFAs_SetFieldRank();
 extern int mFAs_GetFieldRank();
 extern void mFAs_PrintFieldAssessment(gfxprint_t* gfxprint);
+extern int mFAs_CheckDust(mActor_name_t item);
 
 #ifdef __cplusplus
 }

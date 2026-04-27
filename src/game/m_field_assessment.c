@@ -75,7 +75,7 @@ static int mFAs_GetIdx(u8* points_by_rank, u8 total_points, int ranks_count) {
     return res;
 }
 
-static int mFAs_CheckDust(mActor_name_t item) {
+extern int mFAs_CheckDust(mActor_name_t item) {
     int res = FALSE;
 
     if (item == ITM_DUST0_EMPTY_CAN || item == ITM_DUST1_BOOT || item == ITM_DUST2_OLD_TIRE) {
