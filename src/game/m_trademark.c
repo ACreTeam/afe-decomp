@@ -32,6 +32,7 @@
 #include "m_common_data.h"
 #include "m_play.h"
 #include "m_sdcard.h"
+#include "reload_data.h"
 
 static int mTR_first_flag = TRUE;
 
@@ -144,7 +145,7 @@ static void trademark_goto_demo_scene(GAME_TRADEMARK* trademark) {
     Save_Set(scene_no, SCENE_TITLE_DEMO);
     mTM_set_season();
     Common_Set(submenu_disabled, TRUE);
-    GAME_GOTO_NEXT((GAME*)trademark, play, PLAY);
+    GAME_GOTO_NEXT((GAME*)trademark, reload_data, RELOAD_DATA);
 }
 
 static void nintendo_logo_move(GAME_TRADEMARK* trademark) {

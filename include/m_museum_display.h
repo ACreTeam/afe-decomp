@@ -12,13 +12,13 @@ extern "C" {
 
 #define mMmd_FOSSIL_BIT_NUM 13
 #define mMmd_ART_BIT_NUM 8
-#define mMmd_FISH_BIT_NUM 21
-#define mMmd_INSECT_BIT_NUM 21
+#define mMmd_FISH_BIT_NUM 25
+#define mMmd_INSECT_BIT_NUM 25
 
 #define mMmd_FOSSIL_NUM 25
 #define mMmd_ART_NUM 15
-#define mMmd_INSECT_NUM 40
-#define mMmd_FISH_NUM 40
+#define mMmd_INSECT_NUM 48
+#define mMmd_FISH_NUM 48
 
 enum {
     mMmd_DISPLAY_CANNOT_DONATE,   /* Item cannot be donated */

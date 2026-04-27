@@ -153,11 +153,7 @@ static void mTRC_mati_init() {
 
     pos.x = 2367.0f;
     pos.z = 740.0f;
-#if VERSION >= VER_GAFU01_00
     pos.y = mRF_CheckFieldStep3() ? 300 : 180;
-#else
-    pos.y = 180.0f;
-#endif
     Common_Set(train_position, pos);
 }
 

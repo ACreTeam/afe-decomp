@@ -79,97 +79,98 @@ typedef struct lighthouse_s {
 } LightHouse_c;
 
 typedef struct Save_s {
-    /* 0x000000 */ mFRm_chk_t save_check; /* save information */
-    /* 0x000014 */ mLd_land_info_c land_info;                            /* town name & id */
-    /* 0x00001E */ u8 sd_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
-    /* 0x000028 */ int scene_no;          /* current 'scene' id */
-    /* 0x00002C */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
-    /* 0x00002D */ u8 remove_animal_idx;
-    /* 0x00002E */ u16 copy_protect; /* 'unique' value between [1, 65520] used for copy protection */
-    /* 0x000030 */ u8 _000030[0x188 - 0x030]; // TODO: this has to do with SD card stuff
-    /* 0x000188 */ OSTime nukegara_time;
-    /* 0x000190 */ u8 _000190[0x1C0 - 0x0190]; // TODO: this has to do with SD card stuff
-    /* 0x0001C0 */ Private_c private_data[PLAYER_NUM];                   /* player data */
-    /* 0x009C40 */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
-    /* 0x009CE4 */ u8 pad_9CE4[4];
-    /* 0x009CE8 */ mHm_hs_c homes[PLAYER_NUM];                              /* player house data */
-    /* 0x0137A8 */ mFM_fg_c fg[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];             /* fg items (fg = foreground?) */
-    /* 0x0173A8 */ mFM_combination_c combi_table[BLOCK_Z_NUM][BLOCK_X_NUM]; /* acre 'combination' data */
-    /* 0x017438 */ Animal_c animals[ANIMAL_NUM_MAX];                        /* villagers in town */
-    /* 0x020330 */ AnmPersonalID_c last_removed_animal_id;                  /* ID of last villager who left town */
-    /* 0x020340 */ Shop_c shop;                                             /* Nook's shop */
-    /* 0x020480 */ Kabu_price_c kabu_price_schedule;                        /* Stalk Market info */
-    /* 0x020498 */ mEv_event_save_c event_save_data;
-    /* 0x020554 */ mEv_save_common_data_c event_save_common;
-    /* 0x020688 */ mActor_name_t fruit;  /* town fruit type */
-    /* 0x02068A */ u8 house_arrangement; /* 2 bits for each player for the # of house they own */
-    /* 0x02068B */ u8 num_statues;       /* number of statues built for players who have paid off their debts */
-    /* 0x02068C */ lbRTC_time_c all_grow_renew_time; /* renewal time for fg items handled by mAgrw_RenewalFgItem_ovl */
-    /* 0x020694 */ PostOffice_c post_office;         /* post office data */
-    /* 0x020ED0 */ PoliceBox_c police_box;           /* police station lost & found */
-    /* 0x020EF8 */ mSN_snowman_save_c snowmen;       /* saved snowmen data */
-    /* 0x020F08 */ u64 melody;                       /* town tune, each nibble is a note (16 notes) */
-    /* 0x020F10 */ Config_c config;                  /* saved config for sound mode, voice mode, and vibration */
-    /* 0x020F14 */ lbRTC_ymd_c renew_time;           /* next renew date */
-    /* 0x020F18 */ u8 station_type;                  /* train station type */
-    /* 0x020F19 */ u8 weather;                       /* upper nibble is intensity, lower nibble is type */
-    /* 0x020F1A */ u8 save_exist;        /* unsure, set in mCD_SaveHome_bg_set_data (1) & mCD_SaveHome_bg (bss) */
-    /* 0x020F1B */ u8 npc_force_go_home; /* when set to 1, forces the 'm_go_home' code to activate */
-    /* 0x020F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM] [UT_Z_NUM]; // buried item flags
-    /* 0x0212DC */ lbRTC_time_c last_grow_time; /* last time that a new villager moved into town */
-    /* 0x0212E4 */ mPr_mother_mail_info_c mother_mail[PLAYER_NUM];  /* info on when mom sent player letters */
-    /* 0x02131C */ mMsr_time_c mushroom_time; /* last time mushroom season info was updated */
-    /* 0x021322 */ lbRTC_ymd_c _021322;
-    /* 0x021326 */ u16 _021326[20];
-    /* 0x02134E */ u8 npc_used_tbl[32];
-    /* 0x02136E */ lbRTC_time_c _02136E;
-    /* 0x021376 */ u8 cheated_flag;
-    /* 0x021377 */ u8 _021377[7];
-    /* 0x02137E */ lbRTC_time_c treasure_buried_time;  /* last time treasure was actually buried */
-    /* 0x021386 */ lbRTC_time_c treasure_checked_time; /* last time check to bury treasure was executed */
-    /* 0x02138E */ u8 saved_rom_debug;                 /* flag to set save to 'debug rom' mode */
-    /* 0x02138F */ u8 snowman_year;                    /* year last snowman was built */
-    /* 0x021390 */ u8 snowman_month;                   /* month last snowman was built */
-    /* 0x021391 */ u8 snowman_day;                     /* day last snowman was built */
-    /* 0x021392 */ u8 snowman_hour;                    /* hour last snowman was built */
-    /* 0x021393 */ u8 haniwa_scheduled;                /* when set, gyroids will be spwaned */
-    /* 0x021394 */ u8 dust_flag; /* set by field assessment for too much 'dust' (garbage) around town, causes immediate
-                                    fail of town ranking */
-    /* 0x021395 */ u8 clear_grass; /* set by Wisp, removes all weeds */
-    /* 0x021396 */ u8 _021396[2];
-    /* 0x021398 */ s16 event_year;
-    /* 0x02139A */ u8 unused_2139C[6];
-    /* 0x0213A0 */ u8 keep_house_size[PLAYER_NUM]; /* saved flags for house sizes */
-    /* 0x0213A4 */ lbRTC_ymd_c force_remove_date;  /* last time the NPC force remove timer was updated */
-    /* 0x0213A8 */ mMmd_info_c museum_display;     /* museum display bits */
-    /* 0x0213E7 */ u8 _tmp6[0x213F0 - 0x213E7];
-    /* 0x0213F0 */ PlusBridge_c bridge;         /* additional bridge info */
-    /* 0x021400 */ mNW_needlework_c needlework; /* Able Sisters' designs */
-    /* 0x022500 */ u8 _tmp7[0x22528 - 0x22500];
-    /* 0x022528 */ OSTime time_delta; /* time delta against GC RTC */
-    /* 0x022540 */ Island_c island;   /* island data */
-    /* 0x023E40 */ mAGrw_AllGrow_c allgrow_ss_pos_info;
-    /* 0x023E68 */ mFR_record_c fishRecord[mFR_RECORD_NUM];
-    /* 0x023F20 */ MaskCat_c mask_cat;
-    /* 0x024160 */ Anmret_c return_animal;  /* information about villager which moved back in to your town after moving
-                                               to someone else's town */
-    /* 0x02416C */ LightHouse_c LightHouse; /* info for tracking the light house quest */
-    /* 0x024174 */ u8 insect_term;          /* current insect term idx */
-    /* 0x024175 */ u8 insect_term_transition_offset; /* days offset from end of term to begin transition */
-    /* 0x024176 */ u8 gyoei_term;                    /* current fish term idx */
-    /* 0x024177 */ u8 gyoei_term_transition_offset;  /* days offset from end of term to begin transition */
-    /* 0x024178 */ mFAs_GoodField_c good_field;      /* field assessment last info */
-    /* 0x024184 */ u8 bg_tex_idx;                    /* Grass type */
-    /* 0x024185 */ lbRTC_month_t rainbow_month;
-    /* 0x024186 */ lbRTC_day_t rainbow_day;
-    /* 0x024187 */ u8 rainbow_reserved;
-    /* 0x024188 */ u8 _24188;
-    /* 0x024189 */ u8 first_present;
-    /* 0x02418A */ u8 town_day;
-    /* 0x02418B */ u8 _2418B[0x24198 - 0x2418B];
-    /* 0x024198 */ OSTime travel_hard_time;
-    /* 0x0241A0 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
-    /* 0x0241A8 */ u8 _241A8[0x8000];
+    /* 0x00000 */ mFRm_chk_t save_check; /* save information */
+    /* 0x00014 */ mLd_land_info_c land_info;                            /* town name & id */
+    /* 0x0001E */ u8 sd_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
+    /* 0x00028 */ int scene_no;          /* current 'scene' id */
+    /* 0x0002C */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
+    /* 0x0002D */ u8 remove_animal_idx;
+    /* 0x0002E */ u16 copy_protect; /* 'unique' value between [1, 65520] used for copy protection */
+    /* 0x00030 */ u8 _000030[0x188 - 0x030]; // TODO: this has to do with SD card stuff
+    /* 0x00188 */ OSTime nukegara_time;
+    /* 0x00190 */ u8 _000190[0x1C0 - 0x0190]; // TODO: this has to do with SD card stuff
+    /* 0x001C0 */ Private_c private_data[PLAYER_NUM];                   /* player data */
+    /* 0x09C40 */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
+    // /* 0x0A32A */ u8 pad_9CE4[22]; // pad for mHm_hs_c 32 byte alignment (my_original)
+    /* 0x0A340 */ mHm_hs_c homes[PLAYER_NUM];                              /* player house data */
+    /* 0x184C0 */ mFM_fg_c fg[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];             /* fg items (fg = foreground?) */
+    /* 0x1C0C0 */ mFM_combination_c combi_table[BLOCK_Z_NUM][BLOCK_X_NUM]; /* acre 'combination' data */
+    // /* 0x1C14C */ u8 _1C14C[4]; // pad for Animal_c 8 byte alignment (u64)
+    /* 0x1C150 */ Animal_c animals[ANIMAL_NUM_MAX];                        /* villagers in town */
+    /* 0x222D0 */ AnmPersonalID_c last_removed_animal_id;                  /* ID of last villager who left town */
+    /* 0x222E4 */ u8 last_removed_animal_mem_town_name[LAND_NAME_SIZE];
+    /* 0x222EC */ Shop_c shop;                                             /* Nook's shop */
+    /* 0x223C4 */ u8 _223C4[4]; // unused? Shouldn't be padding/alignment.
+    /* 0x222C8 */ Kabu_price_c kabu_price_schedule;                        /* Stalk Market info */
+    /* 0x223E0 */ mEv_event_save_c event_save_data;
+    /* 0x2247C */ mEv_save_common_data_c event_save_common;
+    /* 0x20688 */ mActor_name_t fruit;  /* town fruit type */
+    /* 0x2068A */ u8 house_arrangement; /* 2 bits for each player for the # of house they own */
+    /* 0x2068B */ u8 num_statues;       /* number of statues built for players who have paid off their debts */
+    /* 0x2068C */ lbRTC_time_c all_grow_renew_time; /* renewal time for fg items handled by mAgrw_RenewalFgItem_ovl */
+    /* 0x20694 */ PostOffice_c post_office;         /* post office data */
+    /* 0x20ED0 */ PoliceBox_c police_box;           /* police station lost & found */
+    /* 0x20EF8 */ mSN_snowman_save_c snowmen;       /* saved snowmen data */
+    /* 0x20F08 */ u64 melody;                       /* town tune, each nibble is a note (16 notes) */
+    /* 0x20F10 */ Config_c config;                  /* saved config for sound mode, voice mode, and vibration */
+    /* 0x20F14 */ lbRTC_ymd_c renew_time;           /* next renew date */
+    /* 0x20F18 */ u8 station_type;                  /* train station type */
+    /* 0x20F19 */ u8 weather;                       /* upper nibble is intensity, lower nibble is type */
+    /* 0x20F1A */ u8 save_exist;        /* unsure, set in mCD_SaveHome_bg_set_data (1) & mCD_SaveHome_bg (bss) */
+    /* 0x20F1B */ u8 npc_force_go_home; /* when set to 1, forces the 'm_go_home' code to activate */
+    /* 0x20F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM] [UT_Z_NUM]; // buried item flags
+    /* 0x212DC */ lbRTC_time_c last_grow_time; /* last time that a new villager moved into town */
+    /* 0x212E4 */ mPr_mother_mail_info_c mother_mail[PLAYER_NUM];  /* info on when mom sent player letters */
+    /* 0x2131C */ mMsr_time_c mushroom_time; /* last time mushroom season info was updated */
+    /* 0x21322 */ lbRTC_ymd_c _021322;
+    /* 0x21326 */ u16 _021326[20];
+    /* 0x2134E */ u8 npc_used_tbl[32];
+    /* 0x2136E */ lbRTC_time_c _02136E;
+    /* 0x21376 */ u8 cheated_flag;
+    /* 0x21377 */ u8 _021377[7];
+    /* 0x2137E */ lbRTC_time_c treasure_buried_time;  /* last time treasure was actually buried */
+    /* 0x21386 */ lbRTC_time_c treasure_checked_time; /* last time check to bury treasure was executed */
+    /* 0x2138E */ u8 saved_rom_debug;                 /* flag to set save to 'debug rom' mode */
+    /* 0x2138F */ u8 snowman_year;                    /* year last snowman was built */
+    /* 0x21390 */ u8 snowman_month;                   /* month last snowman was built */
+    /* 0x21391 */ u8 snowman_day;                     /* day last snowman was built */
+    /* 0x21392 */ u8 snowman_hour;                    /* hour last snowman was built */
+    /* 0x21393 */ u8 haniwa_scheduled;                /* when set, gyroids will be spwaned */
+    /* 0x21394 */ u8 dust_flag; /* set by field assessment for too much 'dust' (garbage) */
+    /* 0x21395 */ u8 clear_grass; /* set by Wisp, removes all weeds */
+    /* 0x21396 */ u8 _021396[2];
+    /* 0x21398 */ s16 event_year;
+    /* 0x2139A */ u8 unused_2139C[6];
+    /* 0x213A0 */ u8 keep_house_size[PLAYER_NUM]; /* saved flags for house sizes */
+    /* 0x213A4 */ lbRTC_ymd_c force_remove_date;  /* last time the NPC force remove timer was updated */
+    /* 0x213A8 */ mMmd_info_c museum_display;     /* museum display bits */
+    /* 0x213E7 */ u8 _tmp6[0x213F0 - 0x213E7];
+    /* 0x213F0 */ PlusBridge_c bridge;         /* additional bridge info */
+    /* 0x21400 */ mNW_needlework_c needlework; /* Able Sisters' designs */
+    /* 0x22500 */ u8 _tmp7[0x22528 - 0x22500];
+    /* 0x22528 */ OSTime time_delta; /* time delta against GC RTC */
+    // /* 0x22540 */ Island_c island;   /* island data */
+    /* 0x23E40 */ mAGrw_AllGrow_c allgrow_ss_pos_info;
+    /* 0x23E68 */ mFR_record_c fishRecord[mFR_RECORD_NUM];
+    /* 0x23F20 */ MaskCat_c mask_cat;
+    /* 0x24160 */ Anmret_c return_animal;  /* information about villager which moved back in to your town */
+    /* 0x2416C */ LightHouse_c LightHouse; /* info for tracking the light house quest */
+    /* 0x24174 */ u8 insect_term;          /* current insect term idx */
+    /* 0x24175 */ u8 insect_term_transition_offset; /* days offset from end of term to begin transition */
+    /* 0x24176 */ u8 gyoei_term;                    /* current fish term idx */
+    /* 0x24177 */ u8 gyoei_term_transition_offset;  /* days offset from end of term to begin transition */
+    /* 0x24178 */ mFAs_GoodField_c good_field;      /* field assessment last info */
+    /* 0x24184 */ u8 bg_tex_idx;                    /* Grass type */
+    /* 0x24185 */ lbRTC_month_t rainbow_month;
+    /* 0x24186 */ lbRTC_day_t rainbow_day;
+    /* 0x24187 */ u8 rainbow_reserved;
+    /* 0x24188 */ u8 _24188;
+    /* 0x24189 */ u8 first_present;
+    /* 0x2418A */ u8 town_day;
+    /* 0x2418B */ u8 _2418B[0x24198 - 0x2418B];
+    /* 0x24198 */ OSTime travel_hard_time;
+    /* 0x241A0 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
+    /* 0x241A8 */ u8 _241A8[0x8000];
 } Save_t;
 
 

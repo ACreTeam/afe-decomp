@@ -173,7 +173,7 @@ typedef struct player_ecard_data_s {
                                                               sent to the player [0, 366] */
 } mPr_carde_data_c;
 
-#define mPr_MOTHER_MAIL_NORMAL_NUM 7
+#define mPr_MOTHER_MAIL_NORMAL_NUM 8
 #define mPr_MOTHER_MAIL_MONTHLY_NUM 2
 
 typedef struct private_mother_mail_data_s {
