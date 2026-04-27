@@ -476,7 +476,7 @@ config.libs = [
             Object(Matching, "irqmgr.c"),
             Object(Matching, "lb_rtc.c"),
             Object(Matching, "lb_reki.c"),
-            Object(NonMatching, "main.c"),
+            Object(Matching, "main.c"),
             Object(Matching, "padmgr.c"),
             Object(Matching, "player_select.c"),
             Object(Matching, "PreRender.c"),

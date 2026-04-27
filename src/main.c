@@ -29,12 +29,6 @@ int ScreenWidth = SCREEN_WIDTH;
 int ScreenHeight = SCREEN_HEIGHT;
 
 extern void mainproc(void* val) {
-
-    irqmgr_client_t irqClient;
-    OSMessageQueue irqMgrMsgQueue;
-    OSMessage irqMsgBuf[10];
-    OSMessage msg;
-
     ScreenWidth = SCREEN_WIDTH;
     ScreenHeight = SCREEN_HEIGHT;
 
@@ -43,9 +37,7 @@ extern void mainproc(void* val) {
     mCD_init_card();
 
     osCreateMesgQueue(&l_serialMsgQ, &serialMsgBuf, 1);
-    osCreateMesgQueue(&irqMgrMsgQueue, irqMsgBuf, 10);
     CreateIRQManager(irqmgrStack + IRQMGR_STACK_SIZE, IRQMGR_STACK_SIZE, 18, 1);
-    irqmgr_AddClient(&irqClient, &irqMgrMsgQueue);
     memset(padmgrStack, 0xEB, PADMGR_STACK_SIZE);
 
     padmgr_Create(&l_serialMsgQ, 7, 15, padmgrStack + PADMGR_STACK_SIZE, PADMGR_STACK_SIZE);
@@ -59,21 +51,17 @@ extern void mainproc(void* val) {
     osSetThreadPri(NULL, 5);
 
     JW_Init3();
+    JW_Init4();
     mMsg_aram_init2();
     mLd_StartFlagOn();
     famicom_mount_archive();
 
     JC_JKRAramHeap_dump(JC_JKRAram_getAramHeap());
-    osSetThreadPri(NULL, 13);
+    osSetThreadPri(NULL, 0);
 
     do {
-        msg = NULL;
-        while (irqMgrMsgQueue.usedCount != 0) {
-            osRecvMesg(&irqMgrMsgQueue, NULL, 0);
-        }
-
-        osRecvMesg(&irqMgrMsgQueue, &msg, 1);
-    } while (msg != NULL);
+        osYieldThread();
+    } while (TRUE);
 }
 
 u32 entry(void) {
@@ -87,6 +75,6 @@ u32 entry(void) {
 }
 
 void main(void) {
-    OSReport("どうぶつの森 main2 開始\n");
+    OSReport("どうぶつの森 main 開始\n");
     HotStartEntry = &entry;
 }
