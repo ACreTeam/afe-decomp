@@ -304,7 +304,7 @@
 #define CHAR_PP_040 40  // (
 #define CHAR_PP_041 41  // )
 #define CHAR_PP_042 42  // ~
-#define CHAR_PP_043 43  // ♥
+#define CHAR_PP_043 43  // heart
 #define CHAR_PP_044 44  // ,
 #define CHAR_PP_045 45  // -
 #define CHAR_PP_046 46  // .
@@ -320,7 +320,7 @@
 #define CHAR_PP_056 56  // 8
 #define CHAR_PP_057 57  // 9
 #define CHAR_PP_058 58  // :
-#define CHAR_PP_059 59  // 💧
+#define CHAR_PP_059 59  // water droplet
 #define CHAR_PP_060 60  // <
 #define CHAR_PP_061 61  // +
 #define CHAR_PP_062 62  // >
@@ -353,7 +353,7 @@
 #define CHAR_PP_089 89  // Y
 #define CHAR_PP_090 90  // Z
 #define CHAR_PP_091 91  // も
-#define CHAR_PP_092 92  // ⛶
+#define CHAR_PP_092 92  // anger symbol
 #define CHAR_PP_093 93  // や
 #define CHAR_PP_094 94  // ゆ
 #define CHAR_PP_095 95  // _
@@ -388,8 +388,8 @@
 #define CHAR_PP_124 124 // り
 #define CHAR_PP_125 125 // る
 #define CHAR_PP_126 126 // れ
-#define CHAR_PP_127 127 // � (control code)
-#define CHAR_PP_128 128 // □ (message tag)
+#define CHAR_PP_127 127 // control code
+#define CHAR_PP_128 128 // message tag
 #define CHAR_PP_129 129 // 。
 #define CHAR_PP_130 130 // ｢
 #define CHAR_PP_131 131 // ｣
@@ -452,7 +452,7 @@
 #define CHAR_PP_188 188 // ワ
 #define CHAR_PP_189 189 // ン
 #define CHAR_PP_190 190 // ヴ
-#define CHAR_PP_191 191 // ☺
+#define CHAR_PP_191 191 // smile
 #define CHAR_PP_192 192 // ろ
 #define CHAR_PP_193 193 // わ
 #define CHAR_PP_194 194 // を
@@ -519,37 +519,37 @@
 #define CHAR_PP_255 255 // ぽ
 
 // Kanji/Symbol map 0
-#define CHAR_PP_KANJI0_000 0   // 😮
-#define CHAR_PP_KANJI0_001 1   // 😄
-#define CHAR_PP_KANJI0_002 2   // 😠
-#define CHAR_PP_KANJI0_003 3   // 😣
-#define CHAR_PP_KANJI0_004 4   // 🐾
-#define CHAR_PP_KANJI0_005 5   // ⚷
-#define CHAR_PP_KANJI0_006 6   // ✉
-#define CHAR_PP_KANJI0_007 7   // 💰
-#define CHAR_PP_KANJI0_008 8   // ★
-#define CHAR_PP_KANJI0_009 9   // ☀
-#define CHAR_PP_KANJI0_010 10  // ☁
-#define CHAR_PP_KANJI0_011 11  // ☂
-#define CHAR_PP_KANJI0_012 12  // ☃
-#define CHAR_PP_KANJI0_013 13  // 🌬
-#define CHAR_PP_KANJI0_014 14  // ×
-#define CHAR_PP_KANJI0_015 15  // ÷
-#define CHAR_PP_KANJI0_016 16  // 🐶
-#define CHAR_PP_KANJI0_017 17  // 🐱
-#define CHAR_PP_KANJI0_018 18  // 🐰
-#define CHAR_PP_KANJI0_019 19  // 🐦
-#define CHAR_PP_KANJI0_020 20  // 🐮
-#define CHAR_PP_KANJI0_021 21  // 🐷
-#define CHAR_PP_KANJI0_022 22  // 🐟
-#define CHAR_PP_KANJI0_023 23  // 🐞
-#define CHAR_PP_KANJI0_024 24  // 💀
-#define CHAR_PP_KANJI0_025 25  // 🍀
+#define CHAR_PP_KANJI0_000 0   // surprise
+#define CHAR_PP_KANJI0_001 1   // laugh
+#define CHAR_PP_KANJI0_002 2   // angry
+#define CHAR_PP_KANJI0_003 3   // scared
+#define CHAR_PP_KANJI0_004 4   // paw prints
+#define CHAR_PP_KANJI0_005 5   // key
+#define CHAR_PP_KANJI0_006 6   // letter
+#define CHAR_PP_KANJI0_007 7   // bell bag
+#define CHAR_PP_KANJI0_008 8   // star
+#define CHAR_PP_KANJI0_009 9   // sun
+#define CHAR_PP_KANJI0_010 10  // cloud
+#define CHAR_PP_KANJI0_011 11  // umbrella
+#define CHAR_PP_KANJI0_012 12  // snowman
+#define CHAR_PP_KANJI0_013 13  // wind
+#define CHAR_PP_KANJI0_014 14  // multiply
+#define CHAR_PP_KANJI0_015 15  // division
+#define CHAR_PP_KANJI0_016 16  // dog
+#define CHAR_PP_KANJI0_017 17  // cat
+#define CHAR_PP_KANJI0_018 18  // rabbit
+#define CHAR_PP_KANJI0_019 19  // bird
+#define CHAR_PP_KANJI0_020 20  // cow
+#define CHAR_PP_KANJI0_021 21  // pig
+#define CHAR_PP_KANJI0_022 22  // fish
+#define CHAR_PP_KANJI0_023 23  // insect
+#define CHAR_PP_KANJI0_024 24  // skull
+#define CHAR_PP_KANJI0_025 25  // clover
 #define CHAR_PP_KANJI0_026 26  // Gyroid
-#define CHAR_PP_KANJI0_027 27  // ○
-#define CHAR_PP_KANJI0_028 28  // 🗙
-#define CHAR_PP_KANJI0_029 29  // □
-#define CHAR_PP_KANJI0_030 30  // △
+#define CHAR_PP_KANJI0_027 27  // circle
+#define CHAR_PP_KANJI0_028 28  // cross
+#define CHAR_PP_KANJI0_029 29  // square
+#define CHAR_PP_KANJI0_030 30  // triangle
 #define CHAR_PP_KANJI0_031 31  // =
 #define CHAR_PP_KANJI0_032 32  // 予
 #define CHAR_PP_KANJI0_033 33  // 岸
