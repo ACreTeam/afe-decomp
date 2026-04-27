@@ -1,0 +1,157 @@
+
+static void aEMJ_schedule_proc(NPC_ACTOR*, GAME_PLAY*, int);
+static void aEMJ_setup_think_proc(EV_MAJIN_ACTOR*, int);
+static void aEMJ_force_talk_request(ACTOR*, GAME*);
+
+static void aEMJ_set_request_act(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
+    majin->npc_class.request.act_priority = 4;
+    majin->npc_class.request.act_idx = aNPC_ACT_SPECIAL;
+    majin->npc_class.request.act_type = aNPC_ACT_TYPE_SEARCH;
+}
+
+static void aEMJ_act_init_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+
+    majin->npc_class.action.step = 0;
+}
+
+static void aEMJ_act_proc(NPC_ACTOR* actor, GAME_PLAY* play, int idx) {
+    static aNPC_SUB_PROC act_proc[] = { aEMJ_act_init_proc, (aNPC_SUB_PROC)none_proc1,
+                                        (aNPC_SUB_PROC)none_proc1, };
+
+    (*act_proc[idx])(actor, play);
+}
+
+static void aEMJ_appear(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
+    if (majin->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
+        aEMJ_setup_think_proc(majin, aEMJ_ACT_WAIT);
+    }
+}
+
+static void aEMJ_retire(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
+    if (majin->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
+        GROUNDHOG_CONTROL_ACTOR* ctrl = (GROUNDHOG_CONTROL_ACTOR*)majin->npc_class.actor_class.parent_actor;
+
+        ctrl->event_state = aGHC_EVENT_STATE_MAJIN_DONE;
+        Actor_delete((ACTOR*)majin);
+    }
+}
+
+static void aEMJ_think_main_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+
+    if (actor->action.idx == aNPC_ACT_SPECIAL) {
+        (*majin->act_proc)(majin, play);
+    } else {
+        if (actor->action.step == aNPC_ACTION_END_STEP) {
+            aEMJ_set_request_act(majin, play);
+        }
+    }
+}
+
+static void aEMJ_think_init_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+
+    majin->npc_class.action.act_proc = aEMJ_act_proc;
+    aEMJ_set_request_act(majin, play);
+    eEC_CLIP->effect_make_proc(eEC_EFFECT_RESET_HOLE, actor->actor_class.world.position, 3, actor->actor_class.shape_info.rotation.y,
+                                                   &play->game, RSV_NO, 0, 0);
+    aEMJ_setup_think_proc(majin, aEMJ_ACT_APPEAR);
+}
+
+typedef struct {
+    aEMJ_PROC act_proc;
+    aNPC_TALK_REQUEST_PROC talk_request_proc;
+} aEMJ_talk_data_c;
+
+static void aEMJ_setup_think_proc(EV_MAJIN_ACTOR* majin, int idx) {
+    static aEMJ_talk_data_c dt_tbl[] = {
+        { aEMJ_appear, (aNPC_TALK_REQUEST_PROC)none_proc1 },
+        { (aEMJ_PROC)none_proc1, aEMJ_force_talk_request },
+        { aEMJ_retire, (aNPC_TALK_REQUEST_PROC)none_proc1 },
+    };
+    aEMJ_talk_data_c* data_p = &dt_tbl[idx];
+
+    majin->action = idx;
+    majin->act_proc = data_p->act_proc;
+    majin->npc_class.talk_info.talk_request_proc = data_p->talk_request_proc;
+    aEMJ_set_animation(majin, idx);
+}
+
+static void aEMJ_think_proc(NPC_ACTOR* actor, GAME_PLAY* play, int idx) {
+    static aNPC_SUB_PROC think_proc[] = {
+        aEMJ_think_init_proc,
+        aEMJ_think_main_proc,
+    };
+
+    (*think_proc[idx])(actor, play);
+}
+
+static void aEMJ_schedule_init_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+
+    majin->npc_class.think.think_proc = aEMJ_think_proc;
+    majin->npc_class.condition_info.hide_request = FALSE;
+    majin->npc_class.palActorIgnoreTimer = -1;
+    majin->npc_class.actor_class.world.position.x += 20.0f;
+    majin->npc_class.actor_class.world.position.z += 20.0f;
+    NPC_CLIP->think_proc(actor, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
+}
+
+static void aEMJ_schedule_main_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+    if (NPC_CLIP->think_proc(actor, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
+        NPC_CLIP->think_proc(actor, play, -1, aNPC_THINK_TYPE_MAIN);
+    }
+}
+
+static void aEMJ_schedule_proc(NPC_ACTOR* actor, GAME_PLAY* play, int idx) {
+    static aNPC_SUB_PROC sche_proc[] = { aEMJ_schedule_init_proc, aEMJ_schedule_main_proc };
+
+    (*sche_proc[idx])(actor, play);
+}
+
+static void aEMJ_set_force_talk_info(ACTOR* actor) {
+    int msg_num;
+
+    switch (Common_Get(weather)) {
+        case mEnv_WEATHER_CLEAR:
+            msg_num = 0x3DAF + RANDOM(3);
+            break;
+
+        case mEnv_WEATHER_SNOW:
+            msg_num = 0x3DB2 + RANDOM(3);
+            break;
+
+        default:
+        case mEnv_WEATHER_RAIN:
+            msg_num = 0x3DAF;
+            break;
+    }
+
+    mDemo_Set_msg_num(msg_num);
+}
+
+static void aEMJ_force_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_SPEECH, actorx, aEMJ_set_force_talk_info);
+}
+
+int aEMJ_talk_init(ACTOR* actor, GAME* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+
+    majin->npc_class.talk_info.talk_request_proc = (mActor_proc)none_proc1;
+    mDemo_Set_ListenAble();
+    return TRUE;
+}
+
+int aEMJ_talk_end_chk(ACTOR* actor, GAME* play) {
+    EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
+    int res = FALSE;
+
+    if (!mDemo_Check(mDemo_TYPE_SPEECH, actor)) {
+        aEMJ_setup_think_proc(majin, aEMJ_ACT_RETIRE);
+        res = TRUE;
+    }
+
+    return res;
+}

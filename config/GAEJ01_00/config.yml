@@ -91,6 +91,12 @@ modules:
     header_type: none
     custom_type: vtx
 
+  - symbol: mbg_v
+    binary: assets/mbg_v.bin
+    header: assets/mbg_v.inc
+    header_type: none
+    custom_type: vtx
+
   - symbol: tol_sponge_1_v
     binary: assets/tol_sponge_1_v.bin
     header: assets/tol_sponge_1_v.inc
@@ -107,6 +113,72 @@ modules:
     binary: assets/tol_sponge_1_main1_tex_txt.bin
     header: assets/tol_sponge_1_main1_tex_txt.inc
     header_type: raw
+
+  - symbol: aKOI_obj_e_koinobori_a_pal
+    binary: assets/aKOI_obj_e_koinobori_a_pal.bin
+    header: assets/aKOI_obj_e_koinobori_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_e_koinobori_b_pal
+    binary: assets/obj_e_koinobori_b_pal.bin
+    header: assets/obj_e_koinobori_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: aLOT_obj_01_lotus_pal
+    binary: assets/aLOT_obj_01_lotus_pal.bin
+    header: assets/aLOT_obj_01_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_02_lotus_pal
+    binary: assets/obj_02_lotus_pal.bin
+    header: assets/obj_02_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_03_lotus_pal
+    binary: assets/obj_03_lotus_pal.bin
+    header: assets/obj_03_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_04_lotus_pal
+    binary: assets/obj_04_lotus_pal.bin
+    header: assets/obj_04_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_05_lotus_pal
+    binary: assets/obj_05_lotus_pal.bin
+    header: assets/obj_05_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_06_lotus_pal
+    binary: assets/obj_06_lotus_pal.bin
+    header: assets/obj_06_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_07_lotus_pal
+    binary: assets/obj_07_lotus_pal.bin
+    header: assets/obj_07_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_08_lotus_pal
+    binary: assets/obj_08_lotus_pal.bin
+    header: assets/obj_08_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_09_lotus_pal
+    binary: assets/obj_09_lotus_pal.bin
+    header: assets/obj_09_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
 
 - object: files/forestd.rel
   hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb

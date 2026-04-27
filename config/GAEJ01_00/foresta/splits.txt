@@ -705,35 +705,35 @@ system/sys_ucode.c:
 	.data       start:0x00015608 end:0x00015618
 	.bss        start:0x000E5B48 end:0x000E5B68
 
-ac_sample.c:
+actor/ac_sample.c:
 	.text       start:0x000BB81C end:0x000BBDE8
 	.rodata     start:0x00002D30 end:0x00002D38
 	.data       start:0x00015618 end:0x000156A8
 	.bss        start:0x000E5B68 end:0x000E5BA8
 
-ac_airplane.c:
+actor/ac_airplane.c:
 	.text       start:0x000BBDE8 end:0x000BC01C
 	.text       start:0x000BC01C end:0x000BCC80
 	.rodata     start:0x00002D38 end:0x00002DE8
 	.data       start:0x000156A8 end:0x00015770
 
-ac_animal_logo.c:
+actor/ac_animal_logo.c:
 	.text       start:0x000BCC80 end:0x000BCC80
 	.text       start:0x000BCC80 end:0x000BE338
 	.text       start:0x000BE338 end:0x000BE5B8
 	.rodata     start:0x00002DE8 end:0x00003100
 	.data       start:0x00015770 end:0x000157E8
 
-ac_arrange_ftr.c:
+actor/ac_arrange_ftr.c:
 	.text       start:0x000BE5B8 end:0x000BE5C8
 	.data       start:0x000157E8 end:0x00015810
 
-ac_arrange_room.c:
+actor/ac_arrange_room.c:
 	.text       start:0x000BE5C8 end:0x000BEABC
 	.rodata     start:0x00003100 end:0x00003108
 	.data       start:0x00015810 end:0x00015838
 
-ac_ball.c:
+actor/ac_ball.c:
 	.text       start:0x000BEABC end:0x000C0BC8
 	.text       start:0x000C0BC8 end:0x000C0BC8
 	.text       start:0x000C0BC8 end:0x000C0BC8
@@ -741,91 +741,91 @@ ac_ball.c:
 	.data       start:0x00015838 end:0x00015898
 	.bss        start:0x000E5BA8 end:0x000E5BB0
 
-ac_balloon.c:
+actor/ac_balloon.c:
 	.text       start:0x000C0BC8 end:0x000C1284
 	.text       start:0x000C1284 end:0x000C1284
 	.rodata     start:0x000031C8 end:0x000031E0
 	.data       start:0x00015898 end:0x000158F0
 
-ac_birth_control.c:
+actor/ac_birth_control.c:
 	.text       start:0x000C1284 end:0x000C1B40
 	.rodata     start:0x000031E0 end:0x000031E8
 	.data       start:0x000158F0 end:0x00015968
 
-ac_boat_demo.c:
+actor/ac_boat_demo.c:
 	.text       start:0x000C1B40 end:0x000C1C18
 	.text       start:0x000C1C18 end:0x000C28A0
 	.rodata     start:0x000031E8 end:0x000031F0
 	.data       start:0x00015968 end:0x00015A78
 	.bss        start:0x000E5BB0 end:0x000E5BB8
 
-ac_boxManager.c:
+actor/ac_boxManager.c:
 	.text       start:0x000C28A0 end:0x000C28B0
 	.data       start:0x00015A78 end:0x00015AA0
 
-ac_boxMove.c:
+actor/ac_boxMove.c:
 	.text       start:0x000C28B0 end:0x000C28C0
 	.data       start:0x00015AA0 end:0x00015AC8
 
-ac_boxTrick01.c:
+actor/ac_boxTrick01.c:
 	.text       start:0x000C28C0 end:0x000C28CC
 	.data       start:0x00015AC8 end:0x00015AF0
 
-ac_broker_design.c:
+actor/ac_broker_design.c:
 	.text       start:0x000C28CC end:0x000C2BCC
 	.data       start:0x00015AF0 end:0x00015B30
 
-ac_cottage.c:
+actor/ac_cottage.c:
 	.text       start:0x000C2BCC end:0x000C4310
 	.rodata     start:0x000031F0 end:0x00003400
 	.data       start:0x00015B30 end:0x00015C70
 
-ac_effectbg.c:
+actor/ac_effectbg.c:
 	.text       start:0x000C4310 end:0x000C6328
 	.text       start:0x000C6328 end:0x000C6328
 	.rodata     start:0x00003400 end:0x00003450
 	.data       start:0x00015C70 end:0x00015FE0
 	.bss        start:0x000E5BB8 end:0x000E5BC0
 
-ac_event_manager.c:
+actor/ac_event_manager.c:
 	.text       start:0x000C6328 end:0x000D0BA8
 	.rodata     start:0x00003450 end:0x00003528
 	.data       start:0x00015FE0 end:0x00016C20
 	.bss        start:0x000E5BC0 end:0x000E5D18
 
-ac_field_draw.c:
+actor/ac_field_draw.c:
 	.text       start:0x000D0BA8 end:0x000D1C0C
 	.rodata     start:0x00003528 end:0x000035B0
 	.data       start:0x00016C20 end:0x00016DA8
 	.bss        start:0x000E5D18 end:0x000E6078
 
-ac_fieldm_draw.c:
+actor/ac_fieldm_draw.c:
 	.text       start:0x000D1C0C end:0x000D1C1C
 	.data       start:0x00016DA8 end:0x00016DD0
 
-ac_flag.c:
+actor/ac_flag.c:
 	.text       start:0x000D1C1C end:0x000D29E8
 	.rodata     start:0x000035B0 end:0x000035E8
 	.data       start:0x00016DD0 end:0x00016E40
 
-ac_garagara.c:
+actor/ac_garagara.c:
 	.text       start:0x000D29E8 end:0x000D2FC0
 	.text       start:0x000D2FC0 end:0x000D34F0
 	.rodata     start:0x000035E8 end:0x00003630
 	.data       start:0x00016E40 end:0x00016E98
 
-ac_gyo_kage.c:
+actor/ac_gyo_kage.c:
 	.text       start:0x000D34F0 end:0x000D3CE8
 	.rodata     start:0x00003630 end:0x00003660
 	.data       start:0x00016E98 end:0x00016F38
 
-ac_gyo_release.c:
+actor/ac_gyo_release.c:
 	.text       start:0x000D3CE8 end:0x000D4894
 	.text       start:0x000D4894 end:0x000D4894
 	.rodata     start:0x00003660 end:0x000036C0
 	.data       start:0x00016F38 end:0x000175E0
 
-ac_handOverItem.c:
+actor/ac_handOverItem.c:
 	.text       start:0x000D4894 end:0x000D48D4
 	.text       start:0x000D48D4 end:0x000D4B48
 	.text       start:0x000D4B48 end:0x000D5114
@@ -836,13 +836,13 @@ ac_handOverItem.c:
 	.data       start:0x000175E0 end:0x000181C0
 	.bss        start:0x000E6078 end:0x000E60A0
 
-ac_haniwa.c:
+actor/ac_haniwa.c:
 	.text       start:0x000D558C end:0x000D57E8
 	.text       start:0x000D57E8 end:0x000D701C
 	.rodata     start:0x000036D8 end:0x00003718
 	.data       start:0x000181C0 end:0x00018358
 
-ac_hatumode_control.c:
+actor/ac_hatumode_control.c:
 	.text       start:0x000D701C end:0x000D70F4
 	.text       start:0x000D70F4 end:0x000D7640
 	.text       start:0x000D7640 end:0x000D7C84
@@ -850,67 +850,67 @@ ac_hatumode_control.c:
 	.rodata     start:0x00003718 end:0x00003730
 	.data       start:0x00018358 end:0x00018538
 
-ac_house_clock.c:
+actor/ac_house_clock.c:
 	.text       start:0x000D8378 end:0x000D8A3C
 	.rodata     start:0x00003730 end:0x00003748
 	.data       start:0x00018538 end:0x000186C8
 
-ac_intro_demo.c:
+actor/ac_intro_demo.c:
 	.text       start:0x000D8A3C end:0x000D8B9C
 	.text       start:0x000D8B9C end:0x000D9734
 	.rodata     start:0x00003748 end:0x00003778
 	.data       start:0x000186C8 end:0x000187A0
 	.bss        start:0x000E60A0 end:0x000E60C0
 
-ac_kamakura_indoor.c:
+actor/ac_kamakura_indoor.c:
 	.text       start:0x000D9734 end:0x000DA0F0
 	.rodata     start:0x00003778 end:0x000037A8
 	.data       start:0x000187A0 end:0x00018EC8
 
-ac_lighthouse_switch.c:
+actor/ac_lighthouse_switch.c:
 	.text       start:0x000DA0F0 end:0x000DB350
 	.text       start:0x000DB350 end:0x000DB350
 	.text       start:0x000DB350 end:0x000DB350
 	.rodata     start:0x000037A8 end:0x00003810
 	.data       start:0x00018EC8 end:0x00018F10
 
-ac_mailbox.c:
+actor/ac_mailbox.c:
 	.text       start:0x000DB350 end:0x000DB5F0
 	.text       start:0x000DB5F0 end:0x000DBDEC
 	.rodata     start:0x00003810 end:0x00003830
 	.data       start:0x00018F10 end:0x00019070
 
-ac_mbg.c:
+actor/ac_mbg.c:
 	.text       start:0x000DBDEC end:0x000DC014
 	.rodata     start:0x00003830 end:0x00003850
 	.data       start:0x00019070 end:0x00019178
 
-ac_misin.c:
+actor/ac_misin.c:
 	.text       start:0x000DC014 end:0x000DCC2C
 	.rodata     start:0x00003850 end:0x000038A0
 	.data       start:0x00019178 end:0x000191E0
 
-ac_mural.c:
+actor/ac_mural.c:
 	.text       start:0x000DCC2C end:0x000DCF0C
 	.rodata     start:0x000038A0 end:0x000038B8
 	.data       start:0x000191E0 end:0x00019208
 	.bss        start:0x000E60C0 end:0x000E82C0
 
-ac_museum_fossil.c:
+actor/ac_museum_fossil.c:
 	.text       start:0x000DCF0C end:0x000DD258
 	.text       start:0x000DD258 end:0x000DD258
 	.rodata     start:0x000038B8 end:0x000038D8
 	.data       start:0x00019208 end:0x000192F8
 	.bss        start:0x000E82C0 end:0x000E82D0
 
-ac_museum_picture.c:
+actor/ac_museum_picture.c:
 	.text       start:0x000DD258 end:0x000DD810
 	.text       start:0x000DD810 end:0x000DD810
 	.rodata     start:0x000038D8 end:0x00003918
 	.data       start:0x000192F8 end:0x00019418
 	.bss        start:0x000E82D0 end:0x000E82E0
 
-ac_museum_fish.c:
+actor/ac_museum_fish.c:
 	.text       start:0x000DD810 end:0x000DF470
 	.text       start:0x000DF470 end:0x000E54E0
 	.text       start:0x000E54E0 end:0x000E54E0
@@ -944,12 +944,12 @@ ac_museum_fish.c:
 	.data       start:0x00019418 end:0x0001AB08
 	.bss        start:0x000E82E0 end:0x000E82F8
 
-ac_museum_indoor.c:
+actor/ac_museum_indoor.c:
 	.text       start:0x00101E10 end:0x0010229C
 	.rodata     start:0x00003BF0 end:0x00003C08
 	.data       start:0x0001AB08 end:0x0001AB48
 
-ac_museum_insect.c:
+actor/ac_museum_insect.c:
 	.text       start:0x0010229C end:0x00102B54
 	.text       start:0x00102B54 end:0x00103BB8
 	.text       start:0x00103BB8 end:0x001050D4
@@ -977,12 +977,12 @@ ac_museum_insect.c:
 	.data       start:0x0001AB48 end:0x0001BAF8
 	.bss        start:0x000E82F8 end:0x000E8308
 
-ac_my_indoor.c:
+actor/ac_my_indoor.c:
 	.text       start:0x00116DA4 end:0x00118230
 	.rodata     start:0x000040B0 end:0x000040C0
 	.data       start:0x0001BAF8 end:0x0001BDF0
 
-ac_my_room.c:
+actor/ac_my_room.c:
 	.text       start:0x00118230 end:0x0011C890
 	.text       start:0x0011C890 end:0x0011F990
 	.text       start:0x0011F990 end:0x00126A70
@@ -994,31 +994,31 @@ ac_my_room.c:
 	.data       start:0x0001BDF0 end:0x0001EE38
 	.bss        start:0x000E8308 end:0x000E8B88
 
-ac_needlework_indoor.c:
+actor/ac_needlework_indoor.c:
 	.text       start:0x0012AFF0 end:0x0012BCE4
 	.rodata     start:0x00004240 end:0x00004248
 	.data       start:0x0001EE38 end:0x0001EED0
 	.bss        start:0x000E8B88 end:0x000E8B90
 
-ac_present_demo.c:
+actor/ac_present_demo.c:
 	.text       start:0x0012BCE4 end:0x0012BD84
 	.text       start:0x0012BD84 end:0x0012C2DC
 	.data       start:0x0001EED0 end:0x0001EF18
 	.bss        start:0x000E8B90 end:0x000E8B98
 
-ac_psnowman.c:
+actor/ac_psnowman.c:
 	.text       start:0x0012C2DC end:0x0012C8D8
 	.rodata     start:0x00004248 end:0x00004278
 	.data       start:0x0001EF18 end:0x0001EF40
 
-ac_pterminal.c:
+actor/ac_pterminal.c:
 	.text       start:0x0012C8D8 end:0x0012D868
 	.text       start:0x0012D868 end:0x0012D868
 	.rodata     start:0x00004278 end:0x00004298
 	.data       start:0x0001EF40 end:0x0001EFE0
 	.bss        start:0x000E8B98 end:0x000E9468
 
-ac_quest_manager.c:
+actor/ac_quest_manager.c:
 	.text       start:0x0012D868 end:0x00130174
 	.text       start:0x00130174 end:0x001303F0
 	.text       start:0x001303F0 end:0x00130A70
@@ -1026,53 +1026,53 @@ ac_quest_manager.c:
 	.data       start:0x0001EFE0 end:0x00020000
 	.bss        start:0x000E9468 end:0x000E9480
 
-ac_quest_talk_fj_init.c:
+actor/ac_quest_talk_fj_init.c:
 	.text       start:0x00130A70 end:0x001314CC
 	.data       start:0x00020000 end:0x00020050
 	.bss        start:0x000E9480 end:0x000E9540
 
-ac_quest_talk_greeting.c:
+actor/ac_quest_talk_greeting.c:
 	.text       start:0x001314CC end:0x001335A8
 	.rodata     start:0x000042A0 end:0x000042A8
 	.data       start:0x00020050 end:0x000205D0
 	.bss        start:0x000E9540 end:0x000E95C8
 
-ac_quest_talk_init.c:
+actor/ac_quest_talk_init.c:
 	.text       start:0x001335A8 end:0x0013AB10
 	.rodata     start:0x000042A8 end:0x00004318
 	.data       start:0x000205D0 end:0x00021210
 	.bss        start:0x000E95C8 end:0x000E9978
 
-ac_quest_talk_island.c:
+actor/ac_quest_talk_island.c:
 	.text       start:0x0013AB10 end:0x0013EA34
 	.rodata     start:0x00004318 end:0x00004358
 	.data       start:0x00021210 end:0x00021478
 	.bss        start:0x000E9978 end:0x000E9A80
 
-ac_quest_talk_normal_init.c:
+actor/ac_quest_talk_normal_init.c:
 	.text       start:0x0013EA34 end:0x00143B08
 	.rodata     start:0x00004358 end:0x000043A8
 	.data       start:0x00021478 end:0x00021A70
 	.bss        start:0x000E9A80 end:0x000E9CB0
 
-ac_reset_chair.c:
+actor/ac_reset_chair.c:
 	.text       start:0x00143B08 end:0x00143DC0
 	.rodata     start:0x000043A8 end:0x000043B8
 	.data       start:0x00021A70 end:0x00021AA8
 
-ac_resetcenter_indoor.c:
+actor/ac_resetcenter_indoor.c:
 	.text       start:0x00143DC0 end:0x0014541C
 	.rodata     start:0x000043B8 end:0x00004420
 	.data       start:0x00021AA8 end:0x00021B18
 	.bss        start:0x000E9CB0 end:0x000E9CB8
 
-ac_reset_demo.c:
+actor/ac_reset_demo.c:
 	.text       start:0x0014541C end:0x001458F4
 	.rodata     start:0x00004420 end:0x00004428
 	.data       start:0x00021B18 end:0x00021B68
 	.bss        start:0x000E9CB8 end:0x000E9CC0
 
-ac_ride_off_demo.c:
+actor/ac_ride_off_demo.c:
 	.text       start:0x001458F4 end:0x00145994
 	.text       start:0x00145994 end:0x00145E7C
 	.text       start:0x00145E7C end:0x00145E7C
@@ -1081,259 +1081,259 @@ ac_ride_off_demo.c:
 	.data       start:0x00021B68 end:0x00021BC0
 	.bss        start:0x000E9CC0 end:0x000E9CC8
 
-ac_rope.c:
+actor/ac_rope.c:
 	.text       start:0x00145E7C end:0x00146190
 	.rodata     start:0x00004448 end:0x00004450
 	.data       start:0x00021BC0 end:0x00021C20
 
-ac_set_manager.c:
+actor/ac_set_manager.c:
 	.text       start:0x00146190 end:0x00146628
 	.rodata     start:0x00004450 end:0x00004460
 	.data       start:0x00021C20 end:0x00021C58
 
-ac_set_npc_manager.c:
+actor/ac_set_npc_manager.c:
 	.text       start:0x00146628 end:0x00148D30
 	.rodata     start:0x00004460 end:0x00004468
 	.data       start:0x00021C58 end:0x00021D30
 	.bss        start:0x000E9CC8 end:0x000E9CE8
 
-ac_set_ovl_gyoei.c:
+actor/ac_set_ovl_gyoei.c:
 	.text       start:0x00148D30 end:0x0014A340
 	.rodata     start:0x00004468 end:0x00004498
 	.data       start:0x00021D30 end:0x00023218
 	.bss        start:0x000E9CE8 end:0x000EA030
 
-ac_set_ovl_insect.c:
+actor/ac_set_ovl_insect.c:
 	.text       start:0x0014A340 end:0x0014CEB8
 	.rodata     start:0x00004498 end:0x000044C8
 	.data       start:0x00023218 end:0x00025088
 	.bss        start:0x000EA030 end:0x000EA260
 
-ac_shop_design.c:
+actor/ac_shop_design.c:
 	.text       start:0x0014CEB8 end:0x0014DEC0
 	.data       start:0x00025088 end:0x00026D88
 
-ac_shop_goods.c:
+actor/ac_shop_goods.c:
 	.text       start:0x0014DEC0 end:0x0014F098
 	.rodata     start:0x000044C8 end:0x000053C8
 	.data       start:0x00026D88 end:0x00026DB0
 	.bss        start:0x000EA260 end:0x000EA470
 
-ac_shop_indoor.c:
+actor/ac_shop_indoor.c:
 	.text       start:0x0014F098 end:0x0014FE94
 	.rodata     start:0x000053C8 end:0x000053F0
 	.data       start:0x00026DB0 end:0x00026E78
 	.bss        start:0x000EA470 end:0x000EA478
 
-ac_shop_level.c:
+actor/ac_shop_level.c:
 	.text       start:0x0014FE94 end:0x0015093C
 	.data       start:0x00026E78 end:0x00027060
 
-ac_shop_manekin.c:
+actor/ac_shop_manekin.c:
 	.text       start:0x0015093C end:0x00151450
 	.rodata     start:0x000053F0 end:0x00005410
 	.data       start:0x00027060 end:0x00027098
 	.bss        start:0x000EA478 end:0x000EA480
 
-ac_shop_umbrella.c:
+actor/ac_shop_umbrella.c:
 	.text       start:0x00151450 end:0x00151CF4
 	.rodata     start:0x00005410 end:0x00005438
 	.data       start:0x00027098 end:0x000271D8
 	.bss        start:0x000EA480 end:0x000EA488
 
-ac_sign.c:
+actor/ac_sign.c:
 	.text       start:0x00151CF4 end:0x00153E68
 	.text       start:0x00153E68 end:0x00153E68
 	.text       start:0x00153E68 end:0x00153E68
 	.rodata     start:0x00005438 end:0x00005498
 	.data       start:0x000271D8 end:0x00027240
 
-ac_snowman.c:
+actor/ac_snowman.c:
 	.text       start:0x00153E68 end:0x00157E50
 	.text       start:0x00157E50 end:0x00157E50
 	.text       start:0x00157E50 end:0x00157E50
 	.rodata     start:0x00005498 end:0x000055A8
 	.data       start:0x00027240 end:0x00027320
 
-ac_t_anrium1.c:
+actor/tool/ac_t_anrium1.c:
 	.text       start:0x00157E50 end:0x00157FA4
 	.data       start:0x00027320 end:0x00027360
 
-ac_t_bag1.c:
+actor/tool/ac_t_bag1.c:
 	.text       start:0x00157FA4 end:0x001580F8
 	.data       start:0x00027360 end:0x000273A0
 
-ac_t_bag2.c:
+actor/tool/ac_t_bag2.c:
 	.text       start:0x001580F8 end:0x0015824C
 	.data       start:0x000273A0 end:0x000273E0
 
-ac_t_biscus1.c:
+actor/tool/ac_t_biscus1.c:
 	.text       start:0x0015824C end:0x001583A0
 	.data       start:0x000273E0 end:0x00027420
 
-ac_t_biscus2.c:
+actor/tool/ac_t_biscus2.c:
 	.text       start:0x001583A0 end:0x001584F4
 	.data       start:0x00027420 end:0x00027460
 
-ac_t_biscus3.c:
+actor/tool/ac_t_biscus3.c:
 	.text       start:0x001584F4 end:0x00158648
 	.data       start:0x00027460 end:0x000274A0
 
-ac_t_biscus4.c:
+actor/tool/ac_t_biscus4.c:
 	.text       start:0x00158648 end:0x0015879C
 	.data       start:0x000274A0 end:0x000274E0
 
-ac_t_cobra1.c:
+actor/tool/ac_t_cobra1.c:
 	.text       start:0x0015879C end:0x001588F0
 	.data       start:0x000274E0 end:0x00027520
 
-ac_t_cracker.c:
+actor/tool/ac_t_cracker.c:
 	.text       start:0x001588F0 end:0x00158B54
 	.rodata     start:0x000055A8 end:0x000055B0
 	.data       start:0x00027520 end:0x00027580
 
-ac_t_flag.c:
+actor/tool/ac_t_flag.c:
 	.text       start:0x00158B54 end:0x00158F34
 	.rodata     start:0x000055B0 end:0x000055C8
 	.data       start:0x00027580 end:0x000275A8
 
-ac_t_hanabi.c:
+actor/tool/ac_t_hanabi.c:
 	.text       start:0x00158F34 end:0x0015919C
 	.rodata     start:0x000055C8 end:0x000055D0
 	.data       start:0x000275A8 end:0x00027608
 
-ac_t_hasu1.c:
+actor/tool/ac_t_hasu1.c:
 	.text       start:0x0015919C end:0x001592F0
 	.data       start:0x00027608 end:0x00027648
 
-ac_t_hatAthletic1.c:
+actor/tool/ac_t_hatAthletic1.c:
 	.text       start:0x001592F0 end:0x00159444
 	.data       start:0x00027648 end:0x00027688
 
-ac_t_hatAthletic2.c:
+actor/tool/ac_t_hatAthletic2.c:
 	.text       start:0x00159444 end:0x00159598
 	.data       start:0x00027688 end:0x000276C8
 
-ac_t_hatChristmas1.c:
+actor/tool/ac_t_hatChristmas1.c:
 	.text       start:0x00159598 end:0x001596EC
 	.data       start:0x000276C8 end:0x00027708
 
-ac_t_hatHarvest1.c:
+actor/tool/ac_t_hatHarvest1.c:
 	.text       start:0x001596EC end:0x00159840
 	.data       start:0x00027708 end:0x00027748
 
-ac_t_hatHarvest2.c:
+actor/tool/ac_t_hatHarvest2.c:
 	.text       start:0x00159840 end:0x00159994
 	.data       start:0x00027748 end:0x00027788
 
-ac_t_hatParty1.c:
+actor/tool/ac_t_hatParty1.c:
 	.text       start:0x00159994 end:0x00159AE8
 	.data       start:0x00027788 end:0x000277C8
 
-ac_t_hatParty2.c:
+actor/tool/ac_t_hatParty2.c:
 	.text       start:0x00159AE8 end:0x00159C3C
 	.data       start:0x000277C8 end:0x00027808
 
-ac_t_hatParty3.c:
+actor/tool/ac_t_hatParty3.c:
 	.text       start:0x00159C3C end:0x00159D90
 	.data       start:0x00027808 end:0x00027848
 
-ac_t_hatParty4.c:
+actor/tool/ac_t_hatParty4.c:
 	.text       start:0x00159D90 end:0x00159EE4
 	.data       start:0x00027848 end:0x00027888
 
-ac_t_hat1.c:
+actor/tool/ac_t_hat1.c:
 	.text       start:0x00159EE4 end:0x0015A038
 	.data       start:0x00027888 end:0x000278C8
 
-ac_t_hat2.c:
+actor/tool/ac_t_hat2.c:
 	.text       start:0x0015A038 end:0x0015A18C
 	.data       start:0x000278C8 end:0x00027908
 
-ac_t_hat3.c:
+actor/tool/ac_t_hat3.c:
 	.text       start:0x0015A18C end:0x0015A2E0
 	.data       start:0x00027908 end:0x00027948
 
-ac_t_keitai.c:
+actor/tool/ac_t_keitai.c:
 	.text       start:0x0015A2E0 end:0x0015A63C
 	.rodata     start:0x000055D0 end:0x000055E0
 	.data       start:0x00027948 end:0x000279F0
 
-ac_t_npc_sao.c:
+actor/tool/ac_t_npc_sao.c:
 	.text       start:0x0015A63C end:0x0015A8E8
 	.rodata     start:0x000055E0 end:0x000055F8
 	.data       start:0x000279F0 end:0x00027A30
 
-ac_t_pistol.c:
+actor/tool/ac_t_pistol.c:
 	.text       start:0x0015A8E8 end:0x0015AB4C
 	.rodata     start:0x000055F8 end:0x00005600
 	.data       start:0x00027A30 end:0x00027A90
 
-ac_t_rei1.c:
+actor/tool/ac_t_rei1.c:
 	.text       start:0x0015AB4C end:0x0015ACA0
 	.data       start:0x00027A90 end:0x00027AD0
 
-ac_t_rei2.c:
+actor/tool/ac_t_rei2.c:
 	.text       start:0x0015ACA0 end:0x0015ADF4
 	.data       start:0x00027AD0 end:0x00027B10
 
-ac_t_tama.c:
+actor/tool/ac_t_tama.c:
 	.text       start:0x0015ADF4 end:0x0015AFB8
 	.rodata     start:0x00005600 end:0x00005610
 	.data       start:0x00027B10 end:0x00027B78
 
-ac_t_tumbler.c:
+actor/tool/ac_t_tumbler.c:
 	.text       start:0x0015AFB8 end:0x0015B218
 	.rodata     start:0x00005610 end:0x00005618
 	.data       start:0x00027B78 end:0x00027BD8
 
-ac_t_umbrella.c:
+actor/tool/ac_t_umbrella.c:
 	.text       start:0x0015B218 end:0x0015B7BC
 	.rodata     start:0x00005618 end:0x00005630
 	.data       start:0x00027BD8 end:0x00027EA8
 
-ac_t_utiwa.c:
+actor/tool/ac_t_utiwa.c:
 	.text       start:0x0015B7BC end:0x0015BA20
 	.rodata     start:0x00005630 end:0x00005638
 	.data       start:0x00027EA8 end:0x00027F08
 
-ac_t_zinnia1.c:
+actor/tool/ac_t_zinnia1.c:
 	.text       start:0x0015BA20 end:0x0015BB74
 	.data       start:0x00027F08 end:0x00027F48
 
-ac_t_zinnia2.c:
+actor/tool/ac_t_zinnia2.c:
 	.text       start:0x0015BB74 end:0x0015BCC8
 	.data       start:0x00027F48 end:0x00027F88
 
-ac_tokyoso_control.c:
+actor/ac_tokyoso_control.c:
 	.text       start:0x0015BCC8 end:0x0015C334
 	.text       start:0x0015C334 end:0x0015D328
 	.rodata     start:0x00005638 end:0x00005690
 	.data       start:0x00027F88 end:0x000280A8
 
-ac_tools.c:
+actor/ac_tools.c:
 	.text       start:0x0015D328 end:0x0015D36C
 	.text       start:0x0015D36C end:0x0015D5F0
 	.rodata     start:0x00005690 end:0x00005698
 	.data       start:0x000280A8 end:0x000282A0
 	.bss        start:0x000EA488 end:0x000EA498
 
-ac_train_door.c:
+actor/ac_train_door.c:
 	.text       start:0x0015D5F0 end:0x0015D828
 	.rodata     start:0x00005698 end:0x000056A8
 	.data       start:0x000282A0 end:0x000282E0
 
-ac_train_window.c:
+actor/ac_train_window.c:
 	.text       start:0x0015D828 end:0x0015E740
 	.rodata     start:0x000056A8 end:0x000056F8
 	.data       start:0x000282E0 end:0x00028510
 
-ac_tunahiki_control.c:
+actor/ac_tunahiki_control.c:
 	.text       start:0x0015E740 end:0x0015EA3C
 	.rodata     start:0x000056F8 end:0x00005710
 	.data       start:0x00028510 end:0x00028540
 
-ac_uki.c:
+actor/ac_uki.c:
 	.text       start:0x0015EA3C end:0x0015EBE0
 	.text       start:0x0015EBE0 end:0x001609E0
 	.text       start:0x001609E0 end:0x00160E18
@@ -1612,26 +1612,26 @@ ev_cherry_manager.c:
 	.text       start:0x001BDAD0 end:0x001BDB04
 	.data       start:0x00038930 end:0x00038958
 
-ac_house_goki.c:
+actor/ac_house_goki.c:
 	.text       start:0x001BDB04 end:0x001BEA54
 	.text       start:0x001BEA54 end:0x001BEA54
 	.text       start:0x001BEA54 end:0x001BEA54
 	.rodata     start:0x000086D8 end:0x00008740
 	.data       start:0x00038958 end:0x000389B0
 
-ac_ant.c:
+actor/ac_ant.c:
 	.text       start:0x001BEA54 end:0x001BEFF0
 	.rodata     start:0x00008740 end:0x00008760
 	.data       start:0x000389B0 end:0x000389F0
 
-ac_bee.c:
+actor/ac_bee.c:
 	.text       start:0x001BEFF0 end:0x001BFEC4
 	.text       start:0x001BFEC4 end:0x001BFEC4
 	.text       start:0x001BFEC4 end:0x001BFEC4
 	.rodata     start:0x00008760 end:0x000087C8
 	.data       start:0x000389F0 end:0x00038A50
 
-ac_fuusen.c:
+actor/ac_fuusen.c:
 	.text       start:0x001BFEC4 end:0x001C11FC
 	.text       start:0x001C11FC end:0x001C11FC
 	.text       start:0x001C11FC end:0x001C11FC
@@ -1642,7 +1642,7 @@ game/m_mail_check_ovl.c:
 	.text       start:0x001C11FC end:0x001C1498
 	.data       start:0x00038BE0 end:0x00039E88
 
-ac_dummy.c:
+actor/ac_dummy.c:
 	.text       start:0x001C1498 end:0x001C14A8
 	.data       start:0x00039E88 end:0x00039EB0
 
@@ -1652,66 +1652,66 @@ game/m_all_grow_ovl.c:
 	.data       start:0x00039EB0 end:0x0003A158
 	.bss        start:0x000EE3D0 end:0x000EE810
 
-ac_aprilfool_control.c:
+actor/ac_aprilfool_control.c:
 	.text       start:0x001C7964 end:0x001C7BEC
 	.data       start:0x0003A158 end:0x0003A1D8
 
-ac_groundhog_control.c:
+actor/ac_groundhog_control.c:
 	.text       start:0x001C7BEC end:0x001C82B4
 	.data       start:0x0003A1D8 end:0x0003A220
 
-ac_mscore_control.c:
+actor/ac_mscore_control.c:
 	.text       start:0x001C82B4 end:0x001C8D80
 	.data       start:0x0003A220 end:0x0003A288
 
-ac_countdown_npc0.c:
+actor/npc/ac_countdown_npc0.c:
 	.text       start:0x001C8D80 end:0x001C8FD8
 	.text       start:0x001C8FD8 end:0x001C9024
 	.text       start:0x001C9024 end:0x001C9AD4
 	.rodata     start:0x000088E0 end:0x000088E8
 	.data       start:0x0003A288 end:0x0003A378
 
-ac_countdown_npc1.c:
+actor/npc/ac_countdown_npc1.c:
 	.text       start:0x001C9AD4 end:0x001C9CDC
 	.text       start:0x001C9CDC end:0x001C9D28
 	.text       start:0x001C9D28 end:0x001CACF0
 	.rodata     start:0x000088E8 end:0x00008918
 	.data       start:0x0003A378 end:0x0003A4A0
 
-ac_ev_angler.c:
+actor/npc/event/ac_ev_angler.c:
 	.text       start:0x001CACF0 end:0x001CAEA0
 	.text       start:0x001CAEA0 end:0x001CC108
 	.rodata     start:0x00008918 end:0x00008930
 	.data       start:0x0003A4A0 end:0x0003A538
 
-ac_ev_artist.c:
+actor/npc/event/ac_ev_artist.c:
 	.text       start:0x001CC108 end:0x001CC2A4
 	.text       start:0x001CC2A4 end:0x001CCA94
 	.data       start:0x0003A538 end:0x0003A5E0
 
-ac_ev_broker.c:
+actor/npc/event/ac_ev_broker.c:
 	.text       start:0x001CCA94 end:0x001CCD0C
 	.text       start:0x001CCD0C end:0x001CD610
 	.rodata     start:0x00008930 end:0x00008948
 	.data       start:0x0003A5E0 end:0x0003A668
 
-ac_ev_broker2.c:
+actor/npc/event/ac_ev_broker2.c:
 	.text       start:0x001CD610 end:0x001CD808
 	.text       start:0x001CD808 end:0x001CEB44
 	.rodata     start:0x00008948 end:0x00008980
 	.data       start:0x0003A668 end:0x0003A768
 
-ac_ev_carpetPeddler.c:
+actor/npc/event/ac_ev_carpetPeddler.c:
 	.text       start:0x001CEB44 end:0x001CECC0
 	.text       start:0x001CECC0 end:0x001CF8AC
 	.data       start:0x0003A768 end:0x0003A858
 
-ac_ev_castaway.c:
+actor/npc/event/ac_ev_castaway.c:
 	.text       start:0x001CF8AC end:0x001CFBB8
 	.rodata     start:0x00008980 end:0x00008988
 	.data       start:0x0003A858 end:0x0003A8B0
 
-ac_ev_designer.c:
+actor/npc/event/ac_ev_designer.c:
 	.text       start:0x001CFBB8 end:0x001CFDB0
 	.text       start:0x001CFDB0 end:0x001CFF18
 	.text       start:0x001CFF18 end:0x001D0814
@@ -1719,19 +1719,19 @@ ac_ev_designer.c:
 	.rodata     start:0x00008988 end:0x000089A8
 	.data       start:0x0003A8B0 end:0x0003AA80
 
-ac_ev_dokutu.c:
+actor/npc/event/ac_ev_dokutu.c:
 	.text       start:0x001D0E4C end:0x001D0FC4
 	.text       start:0x001D0FC4 end:0x001D1080
 	.data       start:0x0003AA80 end:0x0003AAC0
 
-ac_ev_dozaemon.c:
+actor/npc/event/ac_ev_dozaemon.c:
 	.text       start:0x001D1080 end:0x001D13F0
 	.text       start:0x001D13F0 end:0x001D1B24
 	.text       start:0x001D1B24 end:0x001D1F70
 	.rodata     start:0x000089A8 end:0x000089B8
 	.data       start:0x0003AAC0 end:0x0003AB58
 
-ac_ev_ghost.c:
+actor/npc/event/ac_ev_ghost.c:
 	.text       start:0x001D1F70 end:0x001D2514
 	.text       start:0x001D2514 end:0x001D313C
 	.text       start:0x001D313C end:0x001D3C1C
@@ -1739,63 +1739,63 @@ ac_ev_ghost.c:
 	.data       start:0x0003AB58 end:0x0003ADF0
 	.bss        start:0x000EE810 end:0x000EE858
 
-ac_ev_gypsy.c:
+actor/npc/event/ac_ev_gypsy.c:
 	.text       start:0x001D3C1C end:0x001D3E1C
 	.text       start:0x001D3E1C end:0x001D4330
 	.rodata     start:0x000089F8 end:0x00008A08
 	.data       start:0x0003ADF0 end:0x0003AEB0
 
-ac_ev_kabuPeddler.c:
+actor/npc/event/ac_ev_kabuPeddler.c:
 	.text       start:0x001D4330 end:0x001D44AC
 	.text       start:0x001D44AC end:0x001D4C5C
 	.data       start:0x0003AEB0 end:0x0003AF90
 
-ac_ev_miko.c:
+actor/npc/event/ac_ev_miko.c:
 	.text       start:0x001D4C5C end:0x001D4E70
 	.text       start:0x001D4E70 end:0x001D55F4
 	.rodata     start:0x00008A08 end:0x00008A20
 	.data       start:0x0003AF90 end:0x0003B018
 	.bss        start:0x000EE858 end:0x000EE8A0
 
-ac_ev_pumpkin.c:
+actor/npc/event/ac_ev_pumpkin.c:
 	.text       start:0x001D55F4 end:0x001D57D0
 	.text       start:0x001D57D0 end:0x001D63C0
 	.rodata     start:0x00008A20 end:0x00008A38
 	.data       start:0x0003B018 end:0x0003B098
 
-ac_ev_santa.c:
+actor/npc/event/ac_ev_santa.c:
 	.text       start:0x001D63C0 end:0x001D65A0
 	.text       start:0x001D65A0 end:0x001D6F3C
 	.rodata     start:0x00008A38 end:0x00008A40
 	.data       start:0x0003B098 end:0x0003B1F0
 
-ac_ev_soncho.c:
+actor/npc/event/ac_ev_soncho.c:
 	.text       start:0x001D6F3C end:0x001D7148
 	.text       start:0x001D7148 end:0x001D7684
 	.rodata     start:0x00008A40 end:0x00008A48
 	.data       start:0x0003B1F0 end:0x0003B240
 
-ac_ev_soncho2.c:
+actor/npc/event/ac_ev_soncho2.c:
 	.text       start:0x001D7684 end:0x001D794C
 	.text       start:0x001D794C end:0x001D7F00
 	.text       start:0x001D7F00 end:0x001D87A4
 	.rodata     start:0x00008A48 end:0x00008A60
 	.data       start:0x0003B240 end:0x0003B330
 
-ac_ev_yomise.c:
+actor/npc/event/ac_ev_yomise.c:
 	.text       start:0x001D87A4 end:0x001D8A74
 	.text       start:0x001D8A74 end:0x001D95AC
 	.rodata     start:0x00008A60 end:0x00008A78
 	.data       start:0x0003B330 end:0x0003B3B8
 
-ac_go_home_npc.c:
+actor/npc/ac_go_home_npc.c:
 	.text       start:0x001D95AC end:0x001D973C
 	.text       start:0x001D973C end:0x001D9970
 	.rodata     start:0x00008A78 end:0x00008A80
 	.data       start:0x0003B3B8 end:0x0003B3F8
 	.bss        start:0x000EE8A0 end:0x000EE8E8
 
-ac_halloween_npc.c:
+actor/npc/ac_halloween_npc.c:
 	.text       start:0x001D9970 end:0x001D9B10
 	.text       start:0x001D9B10 end:0x001D9BE4
 	.text       start:0x001D9BE4 end:0x001DA748
@@ -1803,57 +1803,57 @@ ac_halloween_npc.c:
 	.rodata     start:0x00008A80 end:0x00008AA0
 	.data       start:0x0003B3F8 end:0x0003B4B0
 
-ac_hanabi_npc0.c:
+actor/npc/ac_hanabi_npc0.c:
 	.text       start:0x001DAC20 end:0x001DADBC
 	.text       start:0x001DADBC end:0x001DAE14
 	.text       start:0x001DAE14 end:0x001DB740
 	.rodata     start:0x00008AA0 end:0x00008AC0
 	.data       start:0x0003B4B0 end:0x0003B558
 
-ac_hanabi_npc1.c:
+actor/npc/ac_hanabi_npc1.c:
 	.text       start:0x001DB740 end:0x001DB8E4
 	.text       start:0x001DB8E4 end:0x001DB93C
 	.text       start:0x001DB93C end:0x001DC088
 	.rodata     start:0x00008AC0 end:0x00008AD8
 	.data       start:0x0003B558 end:0x0003B668
 
-ac_hanami_npc0.c:
+actor/npc/ac_hanami_npc0.c:
 	.text       start:0x001DC088 end:0x001DC224
 	.text       start:0x001DC224 end:0x001DC270
 	.text       start:0x001DC270 end:0x001DC87C
 	.rodata     start:0x00008AD8 end:0x00008AE8
 	.data       start:0x0003B668 end:0x0003B728
 
-ac_hanami_npc1.c:
+actor/npc/ac_hanami_npc1.c:
 	.text       start:0x001DC87C end:0x001DCA18
 	.text       start:0x001DCA18 end:0x001DCA64
 	.text       start:0x001DCA64 end:0x001DD260
 	.rodata     start:0x00008AE8 end:0x00008B08
 	.data       start:0x0003B728 end:0x0003B7C8
 
-ac_hatumode_npc0.c:
+actor/npc/ac_hatumode_npc0.c:
 	.text       start:0x001DD260 end:0x001DD54C
 	.text       start:0x001DD54C end:0x001DD7F8
 	.text       start:0x001DD7F8 end:0x001DE444
 	.rodata     start:0x00008B08 end:0x00008B20
 	.data       start:0x0003B7C8 end:0x0003B880
 
-ac_island_npc.c:
+actor/npc/ac_island_npc.c:
 	.text       start:0x001DE444 end:0x001DE5C0
 	.text       start:0x001DE5C0 end:0x001DF170
 	.rodata     start:0x00008B20 end:0x00008B40
 	.data       start:0x0003B880 end:0x0003B950
 
-ac_kamakura_npc0.c:
+actor/npc/ac_kamakura_npc0.c:
 	.text       start:0x001DF170 end:0x001DF314
 	.text       start:0x001DF314 end:0x001DF3D8
 	.data       start:0x0003B950 end:0x0003B990
 
-ac_normal_npc.c:
+actor/npc/ac_normal_npc.c:
 	.text       start:0x001DF3D8 end:0x001DF568
 	.data       start:0x0003B990 end:0x0003B9D0
 
-ac_npc.c:
+actor/npc/ac_npc.c:
 	.text       start:0x001DF568 end:0x001DF568
 	.text       start:0x001DF568 end:0x001DFE10
 	.text       start:0x001DFE10 end:0x001E0F3C
@@ -1907,7 +1907,7 @@ ac_npc.c:
 	.data       start:0x0003B9D0 end:0x0003DBC0
 	.bss        start:0x000EE8E8 end:0x0010AD58
 
-ac_npc2.c:
+actor/npc/ac_npc2.c:
 	.text       start:0x001F0ED8 end:0x001F0ED8
 	.text       start:0x001F0ED8 end:0x001F1780
 	.text       start:0x001F1780 end:0x001F2894
@@ -1949,72 +1949,72 @@ ac_npc2.c:
 	.data       start:0x0003DBC0 end:0x0003FA10
 	.bss        start:0x0010AD58 end:0x0010B250
 
-ac_npc_conv_master.c:
+actor/npc/ac_npc_conv_master.c:
 	.text       start:0x001FCF10 end:0x001FD0C0
 	.text       start:0x001FD0C0 end:0x001FD42C
 	.text       start:0x001FD42C end:0x00204BFC
 	.rodata     start:0x00008CB8 end:0x00008D18
 	.data       start:0x0003FA10 end:0x00040A98
 
-ac_npc_curator.c:
+actor/npc/ac_npc_curator.c:
 	.text       start:0x00204BFC end:0x00204DCC
 	.text       start:0x00204DCC end:0x00206DB0
 	.rodata     start:0x00008D18 end:0x00008D20
 	.data       start:0x00040A98 end:0x00041070
 
-ac_npc_depart_master.c:
+actor/npc/ac_npc_depart_master.c:
 	.text       start:0x00206DB0 end:0x00206FC0
 	.text       start:0x00206FC0 end:0x002073D8
 	.text       start:0x002073D8 end:0x0020EBA8
 	.rodata     start:0x00008D20 end:0x00008D98
 	.data       start:0x00041070 end:0x00042100
 
-ac_npc_engineer.c:
+actor/npc/ac_npc_engineer.c:
 	.text       start:0x0020EBA8 end:0x0020ED80
 	.data       start:0x00042100 end:0x00042140
 
-ac_npc_guide.c:
+actor/npc/ac_npc_guide.c:
 	.text       start:0x0020ED80 end:0x0020EFE4
 	.text       start:0x0020EFE4 end:0x0020F06C
 	.text       start:0x0020F06C end:0x00211418
 	.rodata     start:0x00008D98 end:0x00008E18
 	.data       start:0x00042140 end:0x00042510
 
-ac_npc_guide2.c:
+actor/npc/ac_npc_guide2.c:
 	.text       start:0x00211418 end:0x00211630
 	.text       start:0x00211630 end:0x00211680
 	.text       start:0x00211680 end:0x00213728
 	.rodata     start:0x00008E18 end:0x00008E98
 	.data       start:0x00042510 end:0x000427E8
 
-ac_npc_hem.c:
+actor/npc/ac_npc_hem.c:
 	.text       start:0x00213728 end:0x0021388C
 	.text       start:0x0021388C end:0x00213EEC
 	.rodata     start:0x00008E98 end:0x00008EA0
 	.data       start:0x000427E8 end:0x00042858
 
-ac_npc_majin.c:
+actor/npc/ac_npc_majin.c:
 	.text       start:0x00213EEC end:0x0021414C
 	.text       start:0x0021414C end:0x00214554
 	.text       start:0x00214554 end:0x00214AF4
 	.rodata     start:0x00008EA0 end:0x00008EC0
 	.data       start:0x00042858 end:0x000429A0
 
-ac_npc_majin2.c:
+actor/npc/ac_npc_majin2.c:
 	.text       start:0x00214AF4 end:0x00214D54
 	.text       start:0x00214D54 end:0x00215020
 	.text       start:0x00215020 end:0x00215724
 	.rodata     start:0x00008EC0 end:0x00008ED0
 	.data       start:0x000429A0 end:0x00042B08
 
-ac_npc_majin3.c:
+actor/npc/ac_npc_majin3.c:
 	.text       start:0x00215724 end:0x00215984
 	.text       start:0x00215984 end:0x00215E80
 	.text       start:0x00215E80 end:0x0021647C
 	.rodata     start:0x00008ED0 end:0x00008EE8
 	.data       start:0x00042B08 end:0x00042C58
 
-ac_npc_majin4.c:
+actor/npc/ac_npc_majin4.c:
 	.text       start:0x0021647C end:0x00216920
 	.text       start:0x00216920 end:0x00216AE0
 	.text       start:0x00216AE0 end:0x002171F0
@@ -2022,13 +2022,13 @@ ac_npc_majin4.c:
 	.data       start:0x00042C58 end:0x00042D90
 	.bss        start:0x0010B250 end:0x0010B260
 
-ac_npc_majin5.c:
+actor/npc/ac_npc_majin5.c:
 	.text       start:0x002171F0 end:0x00217518
 	.text       start:0x00217518 end:0x002176F0
 	.rodata     start:0x00008F10 end:0x00008F18
 	.data       start:0x00042D90 end:0x00042DD0
 
-ac_npc_mamedanuki.c:
+actor/npc/ac_npc_mamedanuki.c:
 	.text       start:0x002176F0 end:0x00217964
 	.text       start:0x00217964 end:0x00217D80
 	.text       start:0x00217D80 end:0x0021E4FC
@@ -2036,19 +2036,19 @@ ac_npc_mamedanuki.c:
 	.data       start:0x00042DD0 end:0x00046788
 	.bss        start:0x0010B260 end:0x0010B280
 
-ac_npc_mask_cat.c:
+actor/npc/ac_npc_mask_cat.c:
 	.text       start:0x0021E4FC end:0x0021E6A4
 	.text       start:0x0021E6A4 end:0x0021E860
 	.rodata     start:0x00008F70 end:0x00008F78
 	.data       start:0x00046788 end:0x000467C8
 
-ac_npc_mask_cat2.c:
+actor/npc/ac_npc_mask_cat2.c:
 	.text       start:0x0021E860 end:0x0021EB3C
 	.text       start:0x0021EB3C end:0x002207F4
 	.rodata     start:0x00008F78 end:0x00008FE8
 	.data       start:0x000467C8 end:0x00046AC8
 
-ac_npc_needlework.c:
+actor/npc/ac_npc_needlework.c:
 	.text       start:0x002207F4 end:0x00220A2C
 	.text       start:0x00220A2C end:0x00220FE8
 	.text       start:0x00220FE8 end:0x00225788
@@ -2057,14 +2057,14 @@ ac_npc_needlework.c:
 	.data       start:0x00046AC8 end:0x000470A8
 	.bss        start:0x0010B280 end:0x0010C510
 
-ac_npc_p_sel.c:
+actor/npc/ac_npc_p_sel.c:
 	.text       start:0x00226DC8 end:0x00227178
 	.text       start:0x00227178 end:0x002274A8
 	.text       start:0x002274A8 end:0x00227BD4
 	.rodata     start:0x00009040 end:0x00009078
 	.data       start:0x000470A8 end:0x00047140
 
-ac_npc_p_sel2.c:
+actor/npc/ac_npc_p_sel2.c:
 	.text       start:0x00227BD4 end:0x00227F78
 	.text       start:0x00227F78 end:0x002280EC
 	.text       start:0x002280EC end:0x0022D224
@@ -2072,32 +2072,32 @@ ac_npc_p_sel2.c:
 	.data       start:0x00047140 end:0x00047FC0
 	.bss        start:0x0010C510 end:0x0010C6A8
 
-ac_npc_police.c:
+actor/npc/ac_npc_police.c:
 	.text       start:0x0022D224 end:0x0022D49C
 	.text       start:0x0022D49C end:0x0022E58C
 	.rodata     start:0x00009098 end:0x000090B0
 	.data       start:0x00047FC0 end:0x000480F8
 
-ac_npc_police2.c:
+actor/npc/ac_npc_police2.c:
 	.text       start:0x0022E58C end:0x0022E71C
 	.text       start:0x0022E71C end:0x0022F8D8
 	.rodata     start:0x000090B0 end:0x000090E8
 	.data       start:0x000480F8 end:0x000481F8
 
-ac_npc_post_girl.c:
+actor/npc/ac_npc_post_girl.c:
 	.text       start:0x0022F8D8 end:0x0022FB94
 	.text       start:0x0022FB94 end:0x0023230C
 	.rodata     start:0x000090E8 end:0x000090F0
 	.data       start:0x000481F8 end:0x000486C8
 
-ac_npc_post_man.c:
+actor/npc/ac_npc_post_man.c:
 	.text       start:0x0023230C end:0x00232598
 	.text       start:0x00232598 end:0x002325E8
 	.text       start:0x002325E8 end:0x00233964
 	.rodata     start:0x000090F0 end:0x00009148
 	.data       start:0x000486C8 end:0x00048910
 
-ac_npc_rcn_guide.c:
+actor/npc/ac_npc_rcn_guide.c:
 	.text       start:0x00233964 end:0x00233B64
 	.text       start:0x00233B64 end:0x00233D0C
 	.text       start:0x00233D0C end:0x00234230
@@ -2105,7 +2105,7 @@ ac_npc_rcn_guide.c:
 	.rodata     start:0x00009148 end:0x00009170
 	.data       start:0x00048910 end:0x00048B68
 
-ac_npc_rcn_guide2.c:
+actor/npc/ac_npc_rcn_guide2.c:
 	.text       start:0x00234BB4 end:0x00234D78
 	.text       start:0x00234D78 end:0x00234ECC
 	.text       start:0x00234ECC end:0x002366C4
@@ -2113,14 +2113,14 @@ ac_npc_rcn_guide2.c:
 	.rodata     start:0x00009170 end:0x00009178
 	.data       start:0x00048B68 end:0x00049090
 
-ac_npc_reset.c:
+actor/npc/ac_npc_reset.c:
 	.text       start:0x00236F2C end:0x002375F4
 	.text       start:0x002375F4 end:0x002382DC
 	.text       start:0x002382DC end:0x00238DEC
 	.rodata     start:0x00009178 end:0x000091B8
 	.data       start:0x00049090 end:0x000493F8
 
-ac_npc_restart.c:
+actor/npc/ac_npc_restart.c:
 	.text       start:0x00238DEC end:0x002390D8
 	.text       start:0x002390D8 end:0x002393C0
 	.text       start:0x002393C0 end:0x00239DE0
@@ -2128,34 +2128,34 @@ ac_npc_restart.c:
 	.data       start:0x000493F8 end:0x00049548
 	.bss        start:0x0010C6A8 end:0x0010C6F0
 
-ac_npc_rtc.c:
+actor/npc/ac_npc_rtc.c:
 	.text       start:0x00239DE0 end:0x0023A15C
 	.text       start:0x0023A15C end:0x0023A5A4
 	.text       start:0x0023A5A4 end:0x0023AF0C
 	.rodata     start:0x000091D0 end:0x00009208
 	.data       start:0x00049548 end:0x00049688
 
-ac_npc_sendo.c:
+actor/npc/ac_npc_sendo.c:
 	.text       start:0x0023AF0C end:0x0023B0E8
 	.text       start:0x0023B0E8 end:0x0023C804
 	.rodata     start:0x00009208 end:0x00009220
 	.data       start:0x00049688 end:0x00049978
 	.bss        start:0x0010C6F0 end:0x0010C730
 
-ac_npc_shasho.c:
+actor/npc/ac_npc_shasho.c:
 	.text       start:0x0023C804 end:0x0023C9E0
 	.text       start:0x0023C9E0 end:0x0023D040
 	.rodata     start:0x00009220 end:0x00009250
 	.data       start:0x00049978 end:0x00049A70
 
-ac_npc_shop_master.c:
+actor/npc/ac_npc_shop_master.c:
 	.text       start:0x0023D040 end:0x0023D1F0
 	.text       start:0x0023D1F0 end:0x0023D4F0
 	.text       start:0x0023D4F0 end:0x00244CC0
 	.rodata     start:0x00009250 end:0x000092B0
 	.data       start:0x00049A70 end:0x0004AA28
 
-ac_npc_shop_mastersp.c:
+actor/npc/ac_npc_shop_mastersp.c:
 	.text       start:0x00244CC0 end:0x00244E20
 	.text       start:0x00244E20 end:0x0024521C
 	.text       start:0x0024521C end:0x00246020
@@ -2163,21 +2163,21 @@ ac_npc_shop_mastersp.c:
 	.rodata     start:0x000092B0 end:0x000092D0
 	.data       start:0x0004AA28 end:0x0004AD48
 
-ac_npc_sleep_obaba.c:
+actor/npc/ac_npc_sleep_obaba.c:
 	.text       start:0x00246BB0 end:0x00246D7C
 	.text       start:0x00246D7C end:0x00246DC8
 	.text       start:0x00246DC8 end:0x00247130
 	.rodata     start:0x000092D0 end:0x000092E0
 	.data       start:0x0004AD48 end:0x0004ADC0
 
-ac_npc_soncho.c:
+actor/npc/ac_npc_soncho.c:
 	.text       start:0x00247130 end:0x0024738C
 	.text       start:0x0024738C end:0x00247558
 	.text       start:0x00247558 end:0x00247824
 	.rodata     start:0x000092E0 end:0x000092E8
 	.data       start:0x0004ADC0 end:0x0004AE30
 
-ac_npc_station_master.c:
+actor/npc/ac_npc_station_master.c:
 	.text       start:0x00247824 end:0x002479E0
 	.text       start:0x002479E0 end:0x00247AAC
 	.text       start:0x00247AAC end:0x00247EE0
@@ -2185,27 +2185,27 @@ ac_npc_station_master.c:
 	.rodata     start:0x000092E8 end:0x00009308
 	.data       start:0x0004AE30 end:0x0004AFC8
 
-ac_npc_super_master.c:
+actor/npc/ac_npc_super_master.c:
 	.text       start:0x00248F10 end:0x002490C0
 	.text       start:0x002490C0 end:0x0024952C
 	.text       start:0x0024952C end:0x00250CFC
 	.rodata     start:0x00009308 end:0x00009380
 	.data       start:0x0004AFC8 end:0x0004C320
 
-ac_npc_totakeke.c:
+actor/npc/ac_npc_totakeke.c:
 	.text       start:0x00250CFC end:0x00251148
 	.text       start:0x00251148 end:0x002522C8
 	.text       start:0x002522C8 end:0x00252F24
 	.rodata     start:0x00009380 end:0x000093A0
 	.data       start:0x0004C320 end:0x0004C4C0
 
-ac_present_npc.c:
+actor/npc/ac_present_npc.c:
 	.text       start:0x00252F24 end:0x002530C0
 	.text       start:0x002530C0 end:0x00253C00
 	.rodata     start:0x000093A0 end:0x000093C0
 	.data       start:0x0004C4C0 end:0x0004C5C0
 
-ac_taisou_npc0.c:
+actor/npc/ac_taisou_npc0.c:
 	.text       start:0x00253C00 end:0x00253F18
 	.text       start:0x00253F18 end:0x00254020
 	.text       start:0x00254020 end:0x00254D5C
@@ -2213,14 +2213,14 @@ ac_taisou_npc0.c:
 	.data       start:0x0004C5C0 end:0x0004C818
 	.bss        start:0x0010C730 end:0x0010C740
 
-ac_tamaire_npc0.c:
+actor/npc/ac_tamaire_npc0.c:
 	.text       start:0x00254D5C end:0x00254FD8
 	.text       start:0x00254FD8 end:0x002551A8
 	.text       start:0x002551A8 end:0x00255814
 	.rodata     start:0x000093F0 end:0x00009400
 	.data       start:0x0004C818 end:0x0004C8D8
 
-ac_tamaire_npc1.c:
+actor/npc/ac_tamaire_npc1.c:
 	.text       start:0x00255814 end:0x00255C50
 	.text       start:0x00255C50 end:0x00255DF0
 	.text       start:0x00255DF0 end:0x00256B9C
@@ -2228,49 +2228,49 @@ ac_tamaire_npc1.c:
 	.data       start:0x0004C8D8 end:0x0004C9E8
 	.bss        start:0x0010C740 end:0x0010C748
 
-ac_tokyoso_npc0.c:
+actor/npc/ac_tokyoso_npc0.c:
 	.text       start:0x00256B9C end:0x00256F54
 	.text       start:0x00256F54 end:0x002570F4
 	.text       start:0x002570F4 end:0x002578F4
 	.rodata     start:0x00009448 end:0x00009458
 	.data       start:0x0004C9E8 end:0x0004CAC8
 
-ac_tokyoso_npc1.c:
+actor/npc/ac_tokyoso_npc1.c:
 	.text       start:0x002578F4 end:0x00257BD4
 	.text       start:0x00257BD4 end:0x00257DAC
 	.text       start:0x00257DAC end:0x00258EE8
 	.rodata     start:0x00009458 end:0x00009470
 	.data       start:0x0004CAC8 end:0x0004CBE8
 
-ac_tukimi_npc0.c:
+actor/npc/ac_tukimi_npc0.c:
 	.text       start:0x00258EE8 end:0x00259084
 	.text       start:0x00259084 end:0x002590C4
 	.text       start:0x002590C4 end:0x002595C8
 	.rodata     start:0x00009470 end:0x00009480
 	.data       start:0x0004CBE8 end:0x0004CCC0
 
-ac_tukimi_npc1.c:
+actor/npc/ac_tukimi_npc1.c:
 	.text       start:0x002595C8 end:0x00259764
 	.text       start:0x00259764 end:0x002597B0
 	.text       start:0x002597B0 end:0x00259D98
 	.rodata     start:0x00009480 end:0x00009490
 	.data       start:0x0004CCC0 end:0x0004CDD0
 
-ac_tunahiki_npc0.c:
+actor/npc/ac_tunahiki_npc0.c:
 	.text       start:0x00259D98 end:0x0025A144
 	.text       start:0x0025A144 end:0x0025A2E8
 	.text       start:0x0025A2E8 end:0x0025A70C
 	.rodata     start:0x00009490 end:0x000094A8
 	.data       start:0x0004CDD0 end:0x0004CE58
 
-ac_tunahiki_npc1.c:
+actor/npc/ac_tunahiki_npc1.c:
 	.text       start:0x0025A70C end:0x0025AAB0
 	.text       start:0x0025AAB0 end:0x0025AD34
 	.text       start:0x0025AD34 end:0x0025B77C
 	.rodata     start:0x000094A8 end:0x00009508
 	.data       start:0x0004CE58 end:0x0004CF08
 
-ac_turi_npc0.c:
+actor/npc/ac_turi_npc0.c:
 	.text       start:0x0025B77C end:0x0025B9C0
 	.text       start:0x0025B9C0 end:0x0025BA3C
 	.text       start:0x0025BA3C end:0x0025C00C
@@ -2278,44 +2278,44 @@ ac_turi_npc0.c:
 	.data       start:0x0004CF08 end:0x0004CFF0
 	.bss        start:0x0010C748 end:0x0010C760
 
-ac_groundhog_npc0.c:
+actor/npc/ac_groundhog_npc0.c:
 	.text       start:0x0025C00C end:0x0025C214
 	.text       start:0x0025C214 end:0x0025C300
 	.text       start:0x0025C300 end:0x0025C97C
 	.rodata     start:0x00009510 end:0x00009538
 	.data       start:0x0004CFF0 end:0x0004D0A0
 
-ac_harvest_npc0.c:
+actor/npc/ac_harvest_npc0.c:
 	.text       start:0x0025C97C end:0x0025CBEC
 	.text       start:0x0025CBEC end:0x0025D2C0
 	.rodata     start:0x00009538 end:0x00009548
 	.data       start:0x0004D0A0 end:0x0004D180
 
-ac_harvest_npc1.c:
+actor/npc/ac_harvest_npc1.c:
 	.text       start:0x0025D2C0 end:0x0025D50C
 	.text       start:0x0025D50C end:0x0025D9D0
 	.rodata     start:0x00009548 end:0x00009550
 	.data       start:0x0004D180 end:0x0004D208
 
-ac_ev_majin.c:
+actor/npc/event/ac_ev_majin.c:
 	.text       start:0x0025D9D0 end:0x0025DC30
 	.text       start:0x0025DC30 end:0x0025E0F0
 	.rodata     start:0x00009550 end:0x00009558
 	.data       start:0x0004D208 end:0x0004D288
 
-ac_ev_speech_soncho.c:
+actor/npc/event/ac_ev_speech_soncho.c:
 	.text       start:0x0025E0F0 end:0x0025E2E8
 	.text       start:0x0025E2E8 end:0x0025E98C
 	.rodata     start:0x00009558 end:0x00009568
 	.data       start:0x0004D288 end:0x0004D338
 
-ac_ev_turkey.c:
+actor/npc/event/ac_ev_turkey.c:
 	.text       start:0x0025E98C end:0x0025FAB8
 	.text       start:0x0025FAB8 end:0x0025FAB8
 	.rodata     start:0x00009568 end:0x000095B0
 	.data       start:0x0004D338 end:0x0004D3E8
 
-ac_insect.c:
+actor/ac_insect.c:
 	.text       start:0x0025FAB8 end:0x0025FB9C
 	.text       start:0x0025FB9C end:0x002604E0
 	.text       start:0x002604E0 end:0x00260F14
@@ -2326,100 +2326,100 @@ ac_insect.c:
 	.data       start:0x0004D3E8 end:0x0004DC98
 	.bss        start:0x0010C760 end:0x00111BD0
 
-ac_ins_amenbo.c:
+actor/ac_ins_amenbo.c:
 	.text       start:0x00261604 end:0x002620A0
 	.text       start:0x002620A0 end:0x002620A0
 	.text       start:0x002620A0 end:0x002620A0
 	.rodata     start:0x00009620 end:0x00009698
 	.data       start:0x0004DC98 end:0x0004DCD0
 
-ac_ins_batta.c:
+actor/ac_ins_batta.c:
 	.text       start:0x002620A0 end:0x002633C8
 	.text       start:0x002633C8 end:0x002633C8
 	.rodata     start:0x00009698 end:0x00009720
 	.data       start:0x0004DCD0 end:0x0004DD58
 
-ac_ins_dango.c:
+actor/ac_ins_dango.c:
 	.text       start:0x002633C8 end:0x002648EC
 	.rodata     start:0x00009720 end:0x00009798
 	.data       start:0x0004DD58 end:0x0004DE20
 
-ac_ins_chou.c:
+actor/ac_ins_chou.c:
 	.text       start:0x002648EC end:0x00265FA0
 	.text       start:0x00265FA0 end:0x00265FA0
 	.text       start:0x00265FA0 end:0x00265FA0
 	.rodata     start:0x00009798 end:0x00009800
 	.data       start:0x0004DE20 end:0x0004DEF0
 
-ac_ins_goki.c:
+actor/ac_ins_goki.c:
 	.text       start:0x00265FA0 end:0x002673CC
 	.rodata     start:0x00009800 end:0x00009880
 	.data       start:0x0004DEF0 end:0x0004DFA8
 
-ac_ins_hitodama.c:
+actor/ac_ins_hitodama.c:
 	.text       start:0x002673CC end:0x00267DDC
 	.text       start:0x00267DDC end:0x00267DDC
 	.text       start:0x00267DDC end:0x00267DDC
 	.rodata     start:0x00009880 end:0x000098E0
 	.data       start:0x0004DFA8 end:0x0004DFF8
 
-ac_ins_hotaru.c:
+actor/ac_ins_hotaru.c:
 	.text       start:0x00267DDC end:0x00268B3C
 	.text       start:0x00268B3C end:0x00268B3C
 	.text       start:0x00268B3C end:0x00268B3C
 	.rodata     start:0x000098E0 end:0x00009960
 	.data       start:0x0004DFF8 end:0x0004E098
 
-ac_ins_ka.c:
+actor/ac_ins_ka.c:
 	.text       start:0x00268B3C end:0x002693B4
 	.rodata     start:0x00009960 end:0x000099A8
 	.data       start:0x0004E098 end:0x0004E0C8
 
-ac_ins_kabuto.c:
+actor/ac_ins_kabuto.c:
 	.text       start:0x002693B4 end:0x00269BE0
 	.rodata     start:0x000099A8 end:0x000099E0
 	.data       start:0x0004E0C8 end:0x0004E158
 
-ac_ins_kani.c:
+actor/ac_ins_kani.c:
 	.text       start:0x00269BE0 end:0x0026BAF8
 	.rodata     start:0x000099E0 end:0x00009A80
 	.data       start:0x0004E158 end:0x0004E220
 
-ac_ins_kera.c:
+actor/ac_ins_kera.c:
 	.text       start:0x0026BAF8 end:0x0026C81C
 	.rodata     start:0x00009A80 end:0x00009AC8
 	.data       start:0x0004E220 end:0x0004E278
 
-ac_ins_mino.c:
+actor/ac_ins_mino.c:
 	.text       start:0x0026C81C end:0x0026DB5C
 	.text       start:0x0026DB5C end:0x0026DB5C
 	.text       start:0x0026DB5C end:0x0026DB5C
 	.rodata     start:0x00009AC8 end:0x00009B50
 	.data       start:0x0004E278 end:0x0004E318
 
-ac_ins_nomi.c:
+actor/ac_ins_nomi.c:
 	.text       start:0x0026DB5C end:0x0026E0A8
 	.rodata     start:0x00009B50 end:0x00009B88
 	.data       start:0x0004E318 end:0x0004E330
 
-ac_ins_semi.c:
+actor/ac_ins_semi.c:
 	.text       start:0x0026E0A8 end:0x0026E94C
 	.rodata     start:0x00009B88 end:0x00009BD0
 	.data       start:0x0004E330 end:0x0004E368
 
-ac_ins_tentou.c:
+actor/ac_ins_tentou.c:
 	.text       start:0x0026E94C end:0x0026F598
 	.rodata     start:0x00009BD0 end:0x00009C38
 	.data       start:0x0004E368 end:0x0004E3D8
 
-ac_ins_tonbo.c:
+actor/ac_ins_tonbo.c:
 	.text       start:0x0026F598 end:0x002709C8
 	.text       start:0x002709C8 end:0x002709C8
 	.text       start:0x002709C8 end:0x002709C8
 	.rodata     start:0x00009C38 end:0x00009CB0
 	.data       start:0x0004E3D8 end:0x0004E430
 
-ac_gyoei.c:
+actor/ac_gyoei.c:
 	.text       start:0x002709C8 end:0x00270AA0
 	.text       start:0x00270AA0 end:0x00271224
 	.text       start:0x00271224 end:0x0027156C
@@ -2428,60 +2428,60 @@ ac_gyoei.c:
 	.data       start:0x0004E430 end:0x0004EB70
 	.bss        start:0x00111BD0 end:0x001193D8
 
-ac_gyo_test.c:
+actor/ac_gyo_test.c:
 	.text       start:0x00271BA4 end:0x00273B68
 	.text       start:0x00273B68 end:0x00273B68
 	.text       start:0x00273B68 end:0x00273B68
 	.rodata     start:0x00009D18 end:0x00009D98
 	.data       start:0x0004EB70 end:0x0004EF00
 
-ac_gyo_kaseki.c:
+actor/ac_gyo_kaseki.c:
 	.text       start:0x00273B68 end:0x00275A54
 	.text       start:0x00275A54 end:0x00275A54
 	.text       start:0x00275A54 end:0x00275A54
 	.rodata     start:0x00009D98 end:0x00009E18
 	.data       start:0x0004EF00 end:0x0004F2D8
 
-ac_boat.c:
+actor/ac_boat.c:
 	.text       start:0x00275A54 end:0x00275F38
 	.text       start:0x00275F38 end:0x002772D0
 	.rodata     start:0x00009E18 end:0x00009E98
 	.data       start:0x0004F2D8 end:0x0004F3F8
 
-ac_br_shop.c:
+actor/ac_br_shop.c:
 	.text       start:0x002772D0 end:0x002774CC
 	.text       start:0x002774CC end:0x00277F24
 	.text       start:0x00277F24 end:0x002781D8
 	.rodata     start:0x00009E98 end:0x00009EC8
 	.data       start:0x0004F3F8 end:0x0004F520
 
-ac_bridge_a.c:
+actor/ac_bridge_a.c:
 	.text       start:0x002781D8 end:0x00278A04
 	.rodata     start:0x00009EC8 end:0x00009F38
 	.data       start:0x0004F520 end:0x0004F5C8
 
-ac_buggy.c:
+actor/ac_buggy.c:
 	.text       start:0x00278A04 end:0x00278B7C
 	.text       start:0x00278B7C end:0x002795C4
 	.text       start:0x002795C4 end:0x002798A0
 	.rodata     start:0x00009F38 end:0x00009F70
 	.data       start:0x0004F5C8 end:0x0004F6F0
 
-ac_conveni.c:
+actor/ac_conveni.c:
 	.text       start:0x002798A0 end:0x00279AA0
 	.text       start:0x00279AA0 end:0x0027A4C8
 	.text       start:0x0027A4C8 end:0x0027A764
 	.rodata     start:0x00009F70 end:0x00009FD8
 	.data       start:0x0004F6F0 end:0x0004F8D8
 
-ac_count02.c:
+actor/ac_count02.c:
 	.text       start:0x0027A764 end:0x0027A858
 	.text       start:0x0027A858 end:0x0027ACE8
 	.text       start:0x0027ACE8 end:0x0027AF70
 	.rodata     start:0x00009FD8 end:0x0000A000
 	.data       start:0x0004F8D8 end:0x0004F948
 
-ac_countdown.c:
+actor/ac_countdown.c:
 	.text       start:0x0027AF70 end:0x0027B00C
 	.text       start:0x0027B00C end:0x0027B08C
 	.text       start:0x0027B08C end:0x0027B528
@@ -2490,84 +2490,84 @@ ac_countdown.c:
 	.data       start:0x0004F948 end:0x0004FA48
 	.bss        start:0x001193D8 end:0x001193E0
 
-ac_depart.c:
+actor/ac_depart.c:
 	.text       start:0x0027B7D0 end:0x0027B9DC
 	.text       start:0x0027B9DC end:0x0027C404
 	.text       start:0x0027C404 end:0x0027C6E4
 	.rodata     start:0x0000A008 end:0x0000A070
 	.data       start:0x0004FA48 end:0x0004FC98
 
-ac_douzou.c:
+actor/ac_douzou.c:
 	.text       start:0x0027C6E4 end:0x0027C814
 	.text       start:0x0027C814 end:0x0027D38C
 	.text       start:0x0027D38C end:0x0027D710
 	.rodata     start:0x0000A070 end:0x0000A098
 	.data       start:0x0004FC98 end:0x0004FEC0
 
-ac_dump.c:
+actor/ac_dump.c:
 	.text       start:0x0027D710 end:0x0027D78C
 	.text       start:0x0027D78C end:0x0027DBCC
 	.text       start:0x0027DBCC end:0x0027DCF4
 	.rodata     start:0x0000A098 end:0x0000A0B8
 	.data       start:0x0004FEC0 end:0x0004FFC8
 
-ac_fallS.c:
+actor/ac_fallS.c:
 	.text       start:0x0027DCF4 end:0x0027DD50
 	.text       start:0x0027DD50 end:0x0027DF90
 	.rodata     start:0x0000A0B8 end:0x0000A0E0
 	.data       start:0x0004FFC8 end:0x0004FFF0
 
-ac_fallSESW.c:
+actor/ac_fallSESW.c:
 	.text       start:0x0027DF90 end:0x0027DFEC
 	.text       start:0x0027DFEC end:0x0027E284
 	.rodata     start:0x0000A0E0 end:0x0000A108
 	.data       start:0x0004FFF0 end:0x00050058
 
-ac_ghog.c:
+actor/ac_ghog.c:
 	.text       start:0x0027E284 end:0x0027E4D0
 	.rodata     start:0x0000A108 end:0x0000A118
 	.data       start:0x00050058 end:0x000500A8
 
-ac_goza.c:
+actor/ac_goza.c:
 	.text       start:0x0027E4D0 end:0x0027E51C
 	.text       start:0x0027E51C end:0x0027E80C
 	.text       start:0x0027E80C end:0x0027E928
 	.rodata     start:0x0000A118 end:0x0000A128
 	.data       start:0x000500A8 end:0x000501E8
 
-ac_house.c:
+actor/ac_house.c:
 	.text       start:0x0027E928 end:0x0027EB04
 	.text       start:0x0027EB04 end:0x0027F92C
 	.text       start:0x0027F92C end:0x00280090
 	.rodata     start:0x0000A128 end:0x0000A158
 	.data       start:0x000501E8 end:0x000504C8
 
-ac_htable.c:
+actor/ac_htable.c:
 	.text       start:0x00280090 end:0x002809F8
 	.rodata     start:0x0000A158 end:0x0000A1F8
 	.data       start:0x000504C8 end:0x000505F8
 
-ac_kago.c:
+actor/ac_kago.c:
 	.text       start:0x002809F8 end:0x00280A58
 	.text       start:0x00280A58 end:0x00280C48
 	.text       start:0x00280C48 end:0x00280D40
 	.data       start:0x000505F8 end:0x00050650
 
-ac_kamakura.c:
+actor/ac_kamakura.c:
 	.text       start:0x00280D40 end:0x00280DD4
 	.text       start:0x00280DD4 end:0x00281580
 	.text       start:0x00281580 end:0x002817A8
 	.rodata     start:0x0000A1F8 end:0x0000A228
 	.data       start:0x00050650 end:0x00050740
 
-ac_koinobori.c:
+actor/ac_koinobori.c:
 	.text       start:0x002817A8 end:0x00281844
 	.text       start:0x00281844 end:0x002819B8
 	.text       start:0x002819B8 end:0x00281AD0
 	.rodata     start:0x0000A228 end:0x0000A240
 	.data       start:0x00050740 end:0x000507E0
 
-ac_lotus.c:
+actor/ac_lotus.c:
 	.text       start:0x00281AD0 end:0x00281BD4
 	.text       start:0x00281BD4 end:0x00281EB4
 	.text       start:0x00281EB4 end:0x00282000
@@ -2575,7 +2575,7 @@ ac_lotus.c:
 	.data       start:0x000507E0 end:0x000509F8
 	.bss        start:0x001193E0 end:0x00119400
 
-ac_mikanbox.c:
+actor/ac_mikanbox.c:
 	.text       start:0x00282000 end:0x002820F8
 	.text       start:0x002820F8 end:0x002833F0
 	.text       start:0x002833F0 end:0x00283450
@@ -2584,23 +2584,23 @@ ac_mikanbox.c:
 	.data       start:0x000509F8 end:0x00050A60
 	.bss        start:0x00119400 end:0x00119718
 
-ac_mikuji.c:
+actor/ac_mikuji.c:
 	.text       start:0x00283680 end:0x002836A4
 	.text       start:0x002836A4 end:0x00283928
 	.text       start:0x00283928 end:0x002839F8
 	.data       start:0x00050A60 end:0x00050AF0
 
-ac_monument.c:
+actor/ac_monument.c:
 	.text       start:0x002839F8 end:0x002845A0
 	.rodata     start:0x0000A2C0 end:0x0000A2E8
 	.data       start:0x00050AF0 end:0x000511D8
 
-ac_museum.c:
+actor/ac_museum.c:
 	.text       start:0x002845A0 end:0x00284DD0
 	.rodata     start:0x0000A2E8 end:0x0000A338
 	.data       start:0x000511D8 end:0x000512F8
 
-ac_my_house.c:
+actor/ac_my_house.c:
 	.text       start:0x00284DD0 end:0x0028506C
 	.text       start:0x0028506C end:0x00285E18
 	.text       start:0x00285E18 end:0x002864D8
@@ -2608,59 +2608,59 @@ ac_my_house.c:
 	.data       start:0x000512F8 end:0x00051648
 	.bss        start:0x00119718 end:0x00119728
 
-ac_nameplate.c:
+actor/ac_nameplate.c:
 	.text       start:0x002864D8 end:0x002866A0
 	.data       start:0x00051648 end:0x00051670
 
-ac_needlework_shop.c:
+actor/ac_needlework_shop.c:
 	.text       start:0x002866A0 end:0x00286834
 	.text       start:0x00286834 end:0x0028713C
 	.text       start:0x0028713C end:0x00287414
 	.rodata     start:0x0000A388 end:0x0000A3D0
 	.data       start:0x00051670 end:0x00051808
 
-ac_police_box.c:
+actor/ac_police_box.c:
 	.text       start:0x00287414 end:0x0028747C
 	.text       start:0x0028747C end:0x00287970
 	.text       start:0x00287970 end:0x00287BE8
 	.rodata     start:0x0000A3D0 end:0x0000A400
 	.data       start:0x00051808 end:0x000518F8
 
-ac_post_office.c:
+actor/ac_post_office.c:
 	.text       start:0x00287BE8 end:0x00287D58
 	.text       start:0x00287D58 end:0x0028858C
 	.text       start:0x0028858C end:0x00288958
 	.rodata     start:0x0000A400 end:0x0000A440
 	.data       start:0x000518F8 end:0x00051A90
 
-ac_radio.c:
+actor/ac_radio.c:
 	.text       start:0x00288958 end:0x0028899C
 	.text       start:0x0028899C end:0x00288C74
 	.text       start:0x00288C74 end:0x00288D58
 	.rodata     start:0x0000A440 end:0x0000A450
 	.data       start:0x00051A90 end:0x00051AD8
 
-ac_reserve.c:
+actor/ac_reserve.c:
 	.text       start:0x00288D58 end:0x00288DB4
 	.text       start:0x00288DB4 end:0x00289048
 	.text       start:0x00289048 end:0x002891A4
 	.data       start:0x00051AD8 end:0x00051B40
 
-ac_s_car.c:
+actor/ac_s_car.c:
 	.text       start:0x002891A4 end:0x0028922C
 	.text       start:0x0028922C end:0x0028955C
 	.text       start:0x0028955C end:0x00289750
 	.rodata     start:0x0000A450 end:0x0000A470
 	.data       start:0x00051B40 end:0x00051C08
 
-ac_shop.c:
+actor/ac_shop.c:
 	.text       start:0x00289750 end:0x00289990
 	.text       start:0x00289990 end:0x0028A38C
 	.text       start:0x0028A38C end:0x0028A6E0
 	.rodata     start:0x0000A470 end:0x0000A4B8
 	.data       start:0x00051C08 end:0x00051D90
 
-ac_shrine.c:
+actor/ac_shrine.c:
 	.text       start:0x0028A6E0 end:0x0028A908
 	.text       start:0x0028A908 end:0x0028A990
 	.text       start:0x0028A990 end:0x0028D07C
@@ -2669,7 +2669,7 @@ ac_shrine.c:
 	.data       start:0x00051D90 end:0x00051F40
 	.bss        start:0x00119728 end:0x001290B0
 
-ac_station.c:
+actor/ac_station.c:
 	.text       start:0x0028D650 end:0x0028D78C
 	.text       start:0x0028D78C end:0x0028D8D8
 	.text       start:0x0028D8D8 end:0x0028DAE0
@@ -2678,33 +2678,33 @@ ac_station.c:
 	.data       start:0x00051F40 end:0x00052488
 	.bss        start:0x001290B0 end:0x001290C0
 
-ac_structure.c:
+actor/ac_structure.c:
 	.text       start:0x0028F360 end:0x0028F5C0
 	.text       start:0x0028F5C0 end:0x0028FAE4
 	.rodata     start:0x0000A500 end:0x0000A510
 	.data       start:0x00052488 end:0x00052850
 	.bss        start:0x001290C0 end:0x0013EF30
 
-ac_super.c:
+actor/ac_super.c:
 	.text       start:0x0028FAE4 end:0x0028FCF0
 	.text       start:0x0028FCF0 end:0x002906E4
 	.text       start:0x002906E4 end:0x00290980
 	.rodata     start:0x0000A510 end:0x0000A558
 	.data       start:0x00052850 end:0x00052AB0
 
-ac_tama.c:
+actor/ac_tama.c:
 	.text       start:0x00290980 end:0x002909A8
 	.text       start:0x002909A8 end:0x00290B10
 	.text       start:0x00290B10 end:0x00290BF8
 	.rodata     start:0x0000A558 end:0x0000A560
 	.data       start:0x00052AB0 end:0x00052AE0
 
-ac_tent.c:
+actor/ac_tent.c:
 	.text       start:0x00290BF8 end:0x0029158C
 	.rodata     start:0x0000A560 end:0x0000A590
 	.data       start:0x00052AE0 end:0x00052BA0
 
-ac_toudai.c:
+actor/ac_toudai.c:
 	.text       start:0x0029158C end:0x00291900
 	.text       start:0x00291900 end:0x00292244
 	.text       start:0x00292244 end:0x00292244
@@ -2713,7 +2713,7 @@ ac_toudai.c:
 	.rodata     start:0x0000A590 end:0x0000A5F0
 	.data       start:0x00052BA0 end:0x00052C70
 
-ac_train0.c:
+actor/ac_train0.c:
 	.text       start:0x00292540 end:0x00292678
 	.text       start:0x00292678 end:0x00292E40
 	.text       start:0x00292E40 end:0x00292E40
@@ -2722,7 +2722,7 @@ ac_train0.c:
 	.rodata     start:0x0000A5F0 end:0x0000A648
 	.data       start:0x00052C70 end:0x00052CA0
 
-ac_train1.c:
+actor/ac_train1.c:
 	.text       start:0x00292F74 end:0x0029303C
 	.text       start:0x0029303C end:0x002935BC
 	.text       start:0x002935BC end:0x002935BC
@@ -2731,14 +2731,14 @@ ac_train1.c:
 	.rodata     start:0x0000A648 end:0x0000A678
 	.data       start:0x00052CA0 end:0x00052D28
 
-ac_tukimi.c:
+actor/ac_tukimi.c:
 	.text       start:0x00293680 end:0x00293738
 	.text       start:0x00293738 end:0x0029396C
 	.text       start:0x0029396C end:0x00293B60
 	.rodata     start:0x0000A678 end:0x0000A688
 	.data       start:0x00052D28 end:0x00052DA0
 
-ac_turi.c:
+actor/ac_turi.c:
 	.text       start:0x00293B60 end:0x00293BE8
 	.text       start:0x00293BE8 end:0x00294084
 	.text       start:0x00294084 end:0x002943A0
@@ -2746,13 +2746,13 @@ ac_turi.c:
 	.data       start:0x00052DA0 end:0x00052F90
 	.bss        start:0x0013EF30 end:0x0013EF40
 
-ac_windmill.c:
+actor/ac_windmill.c:
 	.text       start:0x002944A4 end:0x002944DC
 	.text       start:0x002944DC end:0x0029471C
 	.text       start:0x0029471C end:0x00294720
 	.data       start:0x00052F90 end:0x00053078
 
-ac_yatai.c:
+actor/ac_yatai.c:
 	.text       start:0x00294720 end:0x00294754
 	.text       start:0x00294754 end:0x00294A50
 	.text       start:0x00294A50 end:0x00294B68
@@ -3003,31 +3003,31 @@ game/m_film_ovl.c:
 	.data       start:0x0005D718 end:0x0005E8C8
 	.bss        start:0x00150FE8 end:0x00151070
 
-ac_weather.c:
+actor/ac_weather.c:
 	.text       start:0x002D9684 end:0x002DABD8
 	.rodata     start:0x0000B5E0 end:0x0000B600
 	.data       start:0x0005E8C8 end:0x0005E918
 
-ac_weather_fine.c:
+actor/ac_weather_fine.c:
 	.text       start:0x002DABD8 end:0x002DABD8
 	.data       start:0x0005E918 end:0x0005E930
 
-ac_weather_rain.c:
+actor/ac_weather_rain.c:
 	.text       start:0x002DABD8 end:0x002DB1FC
 	.rodata     start:0x0000B600 end:0x0000B628
 	.data       start:0x0005E930 end:0x0005E970
 
-ac_weather_snow.c:
+actor/ac_weather_snow.c:
 	.text       start:0x002DB1FC end:0x002DB8AC
 	.rodata     start:0x0000B628 end:0x0000B680
 	.data       start:0x0005E970 end:0x0005E988
 
-ac_weather_sakura.c:
+actor/ac_weather_sakura.c:
 	.text       start:0x002DB8AC end:0x002DBF74
 	.rodata     start:0x0000B680 end:0x0000B6E0
 	.data       start:0x0005E988 end:0x0005E9A0
 
-ac_weather_leaf.c:
+actor/ac_weather_leaf.c:
 	.text       start:0x002DBF74 end:0x002DC620
 	.rodata     start:0x0000B6E0 end:0x0000B738
 	.data       start:0x0005E9A0 end:0x0005E9C0

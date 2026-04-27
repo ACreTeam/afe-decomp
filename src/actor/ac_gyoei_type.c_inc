@@ -1,0 +1,55 @@
+typedef struct gyoei_type_s {
+    short size;
+    short search_area;
+    int bite_time;
+} aGYO_type_c;
+
+// clang-format off
+static aGYO_type_c gyoei_type[] = {
+    { aGYO_SIZE_XS, 3, 4 }, // aGYO_TYPE_CRUCIAN_CARP
+    { aGYO_SIZE_S, 3, 2 }, // aGYO_TYPE_BROOK_TROUT
+    { aGYO_SIZE_L, 2, 3 }, // aGYO_TYPE_CARP
+    { aGYO_SIZE_L, 2, 3 }, // aGYO_TYPE_KOI
+    { aGYO_SIZE_L, 3, 4 }, // aGYO_TYPE_CATFISH
+    { aGYO_SIZE_XS, 3, 3 }, // aGYO_TYPE_SMALL_BASS
+    { aGYO_SIZE_M, 2, 2 }, // aGYO_TYPE_BASS
+    { aGYO_SIZE_L, 1, 1 }, // aGYO_TYPE_LARGE_BASS
+    { aGYO_SIZE_XS, 4, 4 }, // aGYO_TYPE_BLUEGILL
+    { aGYO_SIZE_XL, 2, 4 }, // aGYO_TYPE_GIANT_CATFISH
+    { aGYO_SIZE_XL, 2, 1 }, // aGYO_TYPE_GIANT_SNAKEHEAD
+    { aGYO_SIZE_L, 2, 3 }, // aGYO_TYPE_BARBEL_STEED
+    { aGYO_SIZE_M, 3, 3 }, // aGYO_TYPE_DACE
+    { aGYO_SIZE_XS, 3, 3 }, // aGYO_TYPE_PALE_CHUB
+    { aGYO_SIZE_XXS, 2, 1 }, // aGYO_TYPE_BITTERLING
+    { aGYO_SIZE_XXS, 3, 3 }, // aGYO_TYPE_LOACH
+    { aGYO_SIZE_XXS, 3, 3 }, // aGYO_TYPE_POND_SMELT
+    { aGYO_SIZE_XS, 2, 1 }, // aGYO_TYPE_SWEETFISH
+    { aGYO_SIZE_XS, 1, 1 }, // aGYO_TYPE_CHERRY_SALMON
+    { aGYO_SIZE_L, 1, 1 }, // aGYO_TYPE_LARGE_CHAR
+    { aGYO_SIZE_M, 2, 2 }, // aGYO_TYPE_RAINBOW_TROUT
+    { aGYO_SIZE_XL, 1, 1 }, // aGYO_TYPE_STRINGFISH
+    { aGYO_SIZE_L, 2, 1 }, // aGYO_TYPE_SALMON
+    { aGYO_SIZE_XXS, 2, 3 }, // aGYO_TYPE_GOLDFISH
+    { aGYO_SIZE_XS, 4, 3 }, // aGYO_TYPE_PIRANHA
+    { aGYO_SIZE_M, 3, 2 }, // aGYO_TYPE_AROWANA
+    { aGYO_SIZE_S, 1, 1 }, // aGYO_TYPE_EEL
+    { aGYO_SIZE_XS, 2, 4 }, // aGYO_TYPE_FRESHWATER_GOBY
+    { aGYO_SIZE_XS, 2, 2 }, // aGYO_TYPE_ANGELFISH
+    { aGYO_SIZE_XXS, 2, 3 }, // aGYO_TYPE_GUPPY
+    { aGYO_SIZE_XXS, 2, 3 }, // aGYO_TYPE_POPEYED_GOLDFISH
+    { aGYO_SIZE_XL, 2, 0 }, // aGYO_TYPE_COELACANTH
+    { aGYO_SIZE_XS, 4, 4 }, // aGYO_TYPE_CRAWFISH
+    { aGYO_SIZE_XXS, 4, 3 }, // aGYO_TYPE_FROG
+    { aGYO_SIZE_XXS, 2, 2 }, // aGYO_TYPE_KILLIFISH
+    { aGYO_SIZE_M, 2, 4 }, // aGYO_TYPE_JELLYFISH
+    { aGYO_SIZE_L, 3, 2 }, // aGYO_TYPE_SEA_BASS
+    { aGYO_SIZE_L, 2, 1 }, // aGYO_TYPE_RED_SNAPPER
+    { aGYO_SIZE_L, 2, 0 }, // aGYO_TYPE_BARRED_KNIFEJAW
+    { aGYO_SIZE_XXL, 1, 1 }, // aGYO_TYPE_ARAPAIMA
+    { aGYO_SIZE_WHALE, 1, 1 }, // aGYO_TYPE_WHALE
+    { aGYO_SIZE_XXS, 1, 3 }, // aGYO_TYPE_EMPTY_CAN
+    { aGYO_SIZE_M, 2, 4 }, // aGYO_TYPE_BOOT
+    { aGYO_SIZE_L, 2, 4 }, // aGYO_TYPE_OLD_TIRE
+    { aGYO_SIZE_L, 2, 1 }, // aGYO_TYPE_SALMON2
+};
+// clang-format on

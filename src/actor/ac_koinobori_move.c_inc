@@ -1,0 +1,30 @@
+static void aKOI_wait(STRUCTURE_ACTOR* actorx, GAME_PLAY* play) {
+}
+
+static void aKOI_setup_action(KOINOBORI_ACTOR* koinobori, int action) {
+    static aSTR_MOVE_PROC process[8] = { &aKOI_wait, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+
+    cKF_SkeletonInfo_R_init(&koinobori->structure_class.keyframe, koinobori->structure_class.keyframe.skeleton,
+                            &cKF_ba_r_obj_e_koinobori, 1.0f, 1.0f, 1.0f, 0.5f, 0.0f, TRUE, NULL);
+    koinobori->structure_class.action_proc = process[action];
+    koinobori->structure_class.action = action;
+}
+
+static void aKOI_actor_move(ACTOR* actor, GAME* game) {
+    GAME_PLAY* game_play = (GAME_PLAY*)game;
+    KOINOBORI_ACTOR* koinobori = (KOINOBORI_ACTOR*)actor;
+
+    GET_PLAYER_ACTOR(game_play);
+    cKF_SkeletonInfo_R_play(&koinobori->structure_class.keyframe);
+    koinobori->structure_class.action_proc(&koinobori->structure_class, game_play);
+
+    sAdo_OngenPos((u32)actor, 0x35, &actor->world.position);
+}
+
+static void aKOI_actor_init(ACTOR* actor, GAME* game) {
+    xyz_t pos = actor->home.position;
+
+    mFI_SetFG_common(DUMMY_KOINOBORI, pos, FALSE);
+    aKOI_actor_move(actor, game);
+    actor->mv_proc = aKOI_actor_move;
+}
