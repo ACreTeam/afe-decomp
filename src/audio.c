@@ -249,6 +249,16 @@ extern void sAdo_Tenki(u8 mode) {
     Na_Tenki(mode);
 }
 
+extern void sAdo_FuushaOngenPos(u32 id, const xyz_t* pos, f32 speed) {
+    if (S_ongenpos_refuse_fg == 0) {
+        u16 angle;
+        f32 dist;
+
+        sAdo_Calc_MicPosition_forLevel(&dist, &angle, pos);
+        Na_FuushaOngenPos(id, angle, dist, speed);
+    }
+}
+
 extern void sAdos_KishaStatusTrg(u8 state) {
     Na_KishaStatusTrg(state);
 }
@@ -292,11 +302,11 @@ extern void sAdo_LevSeEcho(u8 b) {
 }
 
 extern u8 sAdo_BgmFadeoutCheck() {
-    Na_BgmFadeoutCheck();
+    return Na_BgmFadeoutCheck();
 }
 
 extern u8 sAdo_SeFadeoutCheck() {
-    Na_SeFadeoutCheck();
+    return Na_SeFadeoutCheck();
 }
 
 extern void sAdo_RoomType(u8 type) {
@@ -305,6 +315,10 @@ extern void sAdo_RoomType(u8 type) {
 
 extern void sAdo_Museum(u8 type) {
     Na_Museum(type);
+}
+
+extern void sAdo_PrivateIslandStatus(u8 status) {
+    Na_PrivateIslandStatus(status);
 }
 
 extern void sAdo_SoftReset() {

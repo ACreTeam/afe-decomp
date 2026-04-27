@@ -113,6 +113,7 @@ extern void sAdo_SubGameEnd();
 extern int sAdo_SubGameOK();
 
 extern void sAdo_Tenki(u8 mode);
+extern void sAdo_FuushaOngenPos(u32 id, const xyz_t* pos, f32 speed);
 
 extern void sAdos_KishaStatusTrg(u8 state);
 extern void sAdos_KishaStatusLevel(f32 speed, u32 ongenNum1, f32 distance1, u16 angle1, u32 ongenNum2,
@@ -134,6 +135,7 @@ extern u8 sAdo_SeFadeoutCheck();
 
 extern void sAdo_RoomType(u8 type);
 extern void sAdo_Museum(u8 type);
+extern void sAdo_PrivateIslandStatus(u8 status);
 
 extern void sAdo_SoftReset();
 

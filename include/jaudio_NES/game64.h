@@ -69,6 +69,8 @@ extern u8 Na_CheckNeosBoot();
 extern void Na_Museum(u8 museumType);
 extern int Na_GetSoundFrameCounter();
 extern void Na_kazagurumaLevel(f32 kazagurumaSpeed);
+extern void Na_FuushaOngenPos(u32 id, u16 angle, f32 distance, f32 speed);
+extern void Na_PrivateIslandStatus(u8 status);
 
 // __declspec(weak) extern int OSAttention(const char* msg, ...) {
 //     va_list marker;
