@@ -626,6 +626,7 @@ config.libs = [
     Rel(
         "game",
         [
+            Object(Matching, "game/m_actor.c"), # std::strstr appears too early in splits
             Object(NonMatching, "game/m_play.c"),
             Object(Matching, "game/m_prenmi.c"),
             Object(NonMatching, "game/m_select.c"),

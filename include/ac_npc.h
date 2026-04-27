@@ -341,14 +341,15 @@ typedef struct npc_info_s {
     mNPS_schedule_c* schedule;
     mNpc_EventNpc_c* event;
     mNpc_MaskNpc_c* mask;
+    Animal_c* animal_bak;
     mActor_name_t npc_name;
 } NpcActorInfo_c;
 
 typedef struct npc_animation_s {
+    int _00;
     cKF_SkeletonInfo_R_c keyframe;
     s_xyz work[27];
     s_xyz morph[27];
-    int _1B4;
     s8 animation_id;
 } aNPC_ANIMATION_c;
 
@@ -378,7 +379,7 @@ typedef struct {
     aNPC_other_se_data_c other_se[aNPC_OTHER_SE_NUM];
 } aNPC_se_c;
 
-typedef struct {
+typedef struct npc_tex_anim_s {
     u8 seq_type;
     u8 last_seq_type;
     u8 seq_pattern;
@@ -406,7 +407,9 @@ typedef struct npc_draw_info_s {
     /* 0x014 */ aNPC_ANIMATION_c main_animation;
     /* 0x1D0 */ aNPC_ANIMATION_c sub_animation0;
     /* 0x38C */ aNPC_ANIMATION_c sub_animation1;
+    aNPC_ANIMATION_c sub_animation2;
     /* 0x548 */ aNPC_se_c se;
+    int _73C;
     /* 0x580 */ int animation_id;
     /* 0x584 */ int texture_bank_idx;
     /* 0x588 */ aNPC_tex_anim_c tex_anim[aNPC_TEX_ANIM_NUM]; // eye -> mouth
@@ -427,8 +430,6 @@ typedef struct npc_draw_info_s {
     /* 0x5C2 */ s16 effect_type;
     /* 0x5C4 */ aNPC_feel_effect_c* feel_effect;
     /* 0x5C8 */ f32 feel_effect_counter;
-    /* 0x5CC */ s16 shape_bank;
-    /* 0x5CE */ s16 tex_bank;
     /* 0x5D0 */ f32 frame_speed;
     /* 0x5D4 */ f32 frame_sub_speed;
     /* 0x5D8 */ xyz_t shadow_pos;
@@ -752,14 +753,13 @@ typedef struct npc_condition_s {
     mActor_name_t* under_fg_p;
     int ut_x;
     int ut_z;
+    int uzai_step;
+    u8 uzai_tool;
+    u8 uzai_flag;
+    u8 uzai_cross;
+    u8 can_say_hello;
+    u8 move_type;
 } aNPC_condition_info_c;
-
-typedef struct npc_uzai_s {
-    int step;
-    u8 tool;
-    u8 flag;
-    u8 cross;
-} aNPC_uzai_c;
 
 enum {
     aNPC_ITEM_TYPE_NONE,
@@ -851,6 +851,7 @@ typedef struct npc_movement_s {
     s16 mv_add_angl;
     f32 arrival_area_radius;
     ACTOR* target;
+    float speed_percent;
     s8 movement_ut_x;
     s8 movement_ut_z;
     s16 body_angle;
@@ -916,6 +917,8 @@ typedef struct npc_actor_talk_info_s {
     u8 feel;
     u8 memory;
     u8 kutipaku_timer; // frames of mouth movement animation
+    u8 look_target;
+    int group_talk_wait_timer;
 } aNPC_talk_info_c;
 
 typedef struct npc_accessory_s {
@@ -949,33 +952,36 @@ enum {
     aNPC_SCHEDULE_PROC_NUM
 };
 
+/* sizeof(npc_actor_s) == 0xB68 */
 struct npc_actor_s {
-    ACTOR actor_class;
-    s_xyz _174;
-    NpcActorInfo_c npc_info;
-    aNPC_draw_info_c draw;
-    aNPC_think_info_c think;
-    aNPC_schedule_info_c schedule;
-    aNPC_action_c action;
-    aNPC_request_c request;
-    f32 eye_y;
-    aNPC_condition_info_c condition_info;
-    aNPC_uzai_c uzai;
-    aNPC_hand_c left_hand;
-    aNPC_hand_c right_hand;
-    aNPC_head_c head;
-    xyz_t feet[aNPC_FOOT_NUM];
-    mActor_proc move_proc;
-    mActor_proc draw_proc;
-    ACTOR* palActor;
-    int palActorIgnoreTimer;
-    aNPC_movement_c movement;
-    aNPC_collision_c collision;
-    aNPC_talk_info_c talk_info;
-    aNPC_accessory_c accessory;
-    int act_react_tool_timer;
-    int _98C;
-    int _990;
+    /* 0x000 */ ACTOR actor_class;
+    /* 0x174 */ s_xyz _174;
+    /* 0x17C */ NpcActorInfo_c npc_info;
+    /* 0x198 */ aNPC_draw_info_c draw;
+    /* 0x984 */ aNPC_think_info_c think;
+    /* 0x99C */ aNPC_schedule_info_c schedule;
+    /* 0x9B4 */ aNPC_action_c action;
+    /* 0x9C8 */ aNPC_request_c request;
+    /* 0x9EC */ f32 eye_y;
+    /* 0x9F0 */ aNPC_condition_info_c condition_info;
+    /* 0xA40 */ aNPC_hand_c left_hand;
+    /* 0xA5C */ aNPC_hand_c right_hand;
+    /* 0xA78 */ aNPC_head_c head;
+    /* 0xA94 */ xyz_t feet[aNPC_FOOT_NUM];
+    /* 0xAAC */ mActor_proc move_proc;
+    /* 0xAB0 */ mActor_proc draw_proc;
+    /* 0xAB4 */ ACTOR* palActor;
+    /* 0xAB8 */ int palActorIgnoreTimer;
+    /* 0xABC */ aNPC_movement_c movement;
+    /* 0xB00 */ aNPC_collision_c collision;
+    /* 0xB2C */ aNPC_talk_info_c talk_info;
+    /* 0xB4C */ aNPC_accessory_c accessory;
+    /* 0xB54 */ ACTOR* insect_actor;
+    /* 0xB58 */ int remove_insect;
+    /* 0xB5C */ int act_react_tool_timer;
+    /* 0xB60 */ int nomi_itchy_voice_idx;
+    /* 0xB64 */ s16 nomi_looks_type;
+    /* 0xB66 */ s16 hello_talk_flag;
 };
 
 typedef struct {
