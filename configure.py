@@ -925,6 +925,7 @@ config.libs = [
             Object(Matching, "game/m_actor.c"), # std::strstr appears too early in splits
             Object(NonMatching, "game/m_actor_dlftbls.c"),
             Object(Matching, "game/m_actor_shadow.c"),
+            Object(NonMatching, "game/m_add_npc.c"),
             Object(NonMatching, "game/m_address_ovl.c"),
             Object(NonMatching, "game/m_all_grow.c"),
             Object(NonMatching, "game/m_all_grow_ovl.c"),

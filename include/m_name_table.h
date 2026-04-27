@@ -17,24 +17,24 @@ extern "C" {
 // clang-format off
 
 enum {
-  NAME_TYPE_ITEM0,  /* Scenery items */
-  NAME_TYPE_FTR0,   /* Furniture 0 */
-  NAME_TYPE_ITEM1,  /* Obtainable items */
-  NAME_TYPE_FTR1,   /* Furniture 1 */
-  NAME_TYPE_WARP,   /* Loading zones */
-  NAME_TYPE_STRUCT, /* Structures */
-  NAME_TYPE_PAD6,   /* Unused? */
-  NAME_TYPE_PAD7,   /* Unused? */
-  NAME_TYPE_ITEM2,  /* Misc items */
-  NAME_TYPE_ACTOR,  /* Actors */
-  NAME_TYPE_PROPS,  /* Props */
-  NAME_TYPE_PADB,   /* Unused? */
-  NAME_TYPE_PADC,   /* Unused? */
-  NAME_TYPE_SPNPC,  /* Special NPCs */
-  NAME_TYPE_NPC,    /* Villager NPCs */
-  NAME_TYPE_PAD15,  /* Unused? */
+    NAME_TYPE_ITEM0,  /* Scenery items */
+    NAME_TYPE_FTR0,   /* Furniture 0 */
+    NAME_TYPE_ITEM1,  /* Obtainable items */
+    NAME_TYPE_FTR1,   /* Furniture 1 */
+    NAME_TYPE_WARP,   /* Loading zones */
+    NAME_TYPE_STRUCT, /* Structures */
+    NAME_TYPE_PAD6,   /* Unused? */
+    NAME_TYPE_PAD7,   /* Unused? */
+    NAME_TYPE_ITEM2,  /* Misc items */
+    NAME_TYPE_ACTOR,  /* Actors */
+    NAME_TYPE_PROPS,  /* Props */
+    NAME_TYPE_PADB,   /* Unused? */
+    NAME_TYPE_PADC,   /* Unused? */
+    NAME_TYPE_SPNPC,  /* Special NPCs */
+    NAME_TYPE_NPC,    /* Villager NPCs */
+    NAME_TYPE_PAD15,  /* Unused? */
 
-  NAME_TYPE_NUM
+    NAME_TYPE_NUM
 };
 
 #define ITEM0_CAT_OBJ 0
@@ -42,105 +42,105 @@ enum {
 #define ITEM0_CAT_SIGN 9
 
 enum {
-  ITEM1_CAT_PAPER,
-  ITEM1_CAT_MONEY,
-  ITEM1_CAT_TOOL,
-  ITEM1_CAT_FISH,
-  ITEM1_CAT_CLOTH,
-  ITEM1_CAT_ETC,
-  ITEM1_CAT_CARPET,
-  ITEM1_CAT_WALL,
-  ITEM1_CAT_FRUIT,
-  ITEM1_CAT_PLANT,
-  ITEM1_CAT_MINIDISK,
-  ITEM1_CAT_DUMMY, /* diaries */
-  ITEM1_CAT_TICKET,
-  ITEM1_CAT_INSECT,
-  ITEM1_CAT_HUKUBUKURO,
-  ITEM1_CAT_KABU,
+    ITEM1_CAT_PAPER,
+    ITEM1_CAT_MONEY,
+    ITEM1_CAT_TOOL,
+    ITEM1_CAT_FISH,
+    ITEM1_CAT_CLOTH,
+    ITEM1_CAT_ETC,
+    ITEM1_CAT_CARPET,
+    ITEM1_CAT_WALL,
+    ITEM1_CAT_FRUIT,
+    ITEM1_CAT_PLANT,
+    ITEM1_CAT_MINIDISK,
+    ITEM1_CAT_DUMMY, /* diaries */
+    ITEM1_CAT_TICKET,
+    ITEM1_CAT_INSECT,
+    ITEM1_CAT_HUKUBUKURO,
+    ITEM1_CAT_KABU,
 
-  ITEM1_CAT_NUM
+    ITEM1_CAT_NUM
 };
 
 enum {
-  mNT_TREE_TYPE_NORMAL,
-  mNT_TREE_TYPE_PALM,
-  mNT_TREE_TYPE_CEDAR,
-  mNT_TREE_TYPE_GOLD,
+    mNT_TREE_TYPE_NORMAL,
+    mNT_TREE_TYPE_PALM,
+    mNT_TREE_TYPE_CEDAR,
+    mNT_TREE_TYPE_GOLD,
 
-  mNT_TREE_TYPE_NUM
+    mNT_TREE_TYPE_NUM
 };
 
 enum {
-  mNT_ITEM_TYPE_NONE,
-  mNT_ITEM_TYPE_APPLE,
-  mNT_ITEM_TYPE_ORANGE,
-  mNT_ITEM_TYPE_PEACH,
-  mNT_ITEM_TYPE_PEAR,
-  mNT_ITEM_TYPE_NUTS,
-  mNT_ITEM_TYPE_MATSUTAKE,
-  mNT_ITEM_TYPE_KABU,
-  mNT_ITEM_TYPE_FISH,
-  mNT_ITEM_TYPE_BAG,
-  mNT_ITEM_TYPE_LEAF,
-  mNT_ITEM_TYPE_ROLL,
-  mNT_ITEM_TYPE_BOX,
-  mNT_ITEM_TYPE_PACK,
-  mNT_ITEM_TYPE_PRESENT,
-  mNT_ITEM_TYPE_SEED,
-  mNT_ITEM_TYPE_HANIWA,
-  mNT_ITEM_TYPE_ETC,
-  mNT_ITEM_TYPE_CAGE,
-  mNT_ITEM_TYPE_TOOL,
-  mNT_ITEM_TYPE_FOSSIL,
-  mNT_ITEM_TYPE_TRASH,
-  mNT_ITEM_TYPE_LETTER,
-  mNT_ITEM_TYPE_OTOSI,
-  mNT_ITEM_TYPE_SHELLA,
-  mNT_ITEM_TYPE_SHELLB,
-  mNT_ITEM_TYPE_SHELLC,
-  mNT_ITEM_TYPE_CANDY,
-  mNT_ITEM_TYPE_COCONUT,
-  mNT_ITEM_TYPE_OMIKUJI,
-  mNT_ITEM_TYPE_CLOTH,
-  mNT_ITEM_TYPE_CARPET,
-  mNT_ITEM_TYPE_WALL,
-  mNT_ITEM_TYPE_AXE,
-  mNT_ITEM_TYPE_NET,
-  mNT_ITEM_TYPE_ROD,
-  mNT_ITEM_TYPE_SHOVEL,
-  mNT_ITEM_TYPE_AXE2,
-  mNT_ITEM_TYPE_NET2,
-  mNT_ITEM_TYPE_ROD2,
-  mNT_ITEM_TYPE_SHOVEL2,
-  mNT_ITEM_TYPE_UMBRELLA,
-  mNT_ITEM_TYPE_KAZA,
-  mNT_ITEM_TYPE_UTIWA,
-  mNT_ITEM_TYPE_PAPER,
-  mNT_ITEM_TYPE_FLOWER_SEED,
-  mNT_ITEM_TYPE_HUKUBUKURO,
-  mNT_ITEM_TYPE_TAISOU,
-  mNT_ITEM_TYPE_MD,
-  mNT_ITEM_TYPE_TICKET,
-  mNT_ITEM_TYPE_BONE,
-  mNT_ITEM_TYPE_DIARY,
-  mNT_ITEM_TYPE_FORK_ON,
+    mNT_ITEM_TYPE_NONE,
+    mNT_ITEM_TYPE_APPLE,
+    mNT_ITEM_TYPE_ORANGE,
+    mNT_ITEM_TYPE_PEACH,
+    mNT_ITEM_TYPE_PEAR,
+    mNT_ITEM_TYPE_NUTS,
+    mNT_ITEM_TYPE_MATSUTAKE,
+    mNT_ITEM_TYPE_KABU,
+    mNT_ITEM_TYPE_FISH,
+    mNT_ITEM_TYPE_BAG,
+    mNT_ITEM_TYPE_LEAF,
+    mNT_ITEM_TYPE_ROLL,
+    mNT_ITEM_TYPE_BOX,
+    mNT_ITEM_TYPE_PACK,
+    mNT_ITEM_TYPE_PRESENT,
+    mNT_ITEM_TYPE_SEED,
+    mNT_ITEM_TYPE_HANIWA,
+    mNT_ITEM_TYPE_ETC,
+    mNT_ITEM_TYPE_CAGE,
+    mNT_ITEM_TYPE_TOOL,
+    mNT_ITEM_TYPE_FOSSIL,
+    mNT_ITEM_TYPE_TRASH,
+    mNT_ITEM_TYPE_LETTER,
+    mNT_ITEM_TYPE_OTOSI,
+    mNT_ITEM_TYPE_SHELLA,
+    mNT_ITEM_TYPE_SHELLB,
+    mNT_ITEM_TYPE_SHELLC,
+    mNT_ITEM_TYPE_CANDY,
+    mNT_ITEM_TYPE_COCONUT,
+    mNT_ITEM_TYPE_OMIKUJI,
+    mNT_ITEM_TYPE_CLOTH,
+    mNT_ITEM_TYPE_CARPET,
+    mNT_ITEM_TYPE_WALL,
+    mNT_ITEM_TYPE_AXE,
+    mNT_ITEM_TYPE_NET,
+    mNT_ITEM_TYPE_ROD,
+    mNT_ITEM_TYPE_SHOVEL,
+    mNT_ITEM_TYPE_AXE2,
+    mNT_ITEM_TYPE_NET2,
+    mNT_ITEM_TYPE_ROD2,
+    mNT_ITEM_TYPE_SHOVEL2,
+    mNT_ITEM_TYPE_UMBRELLA,
+    mNT_ITEM_TYPE_KAZA,
+    mNT_ITEM_TYPE_UTIWA,
+    mNT_ITEM_TYPE_PAPER,
+    mNT_ITEM_TYPE_FLOWER_SEED,
+    mNT_ITEM_TYPE_HUKUBUKURO,
+    mNT_ITEM_TYPE_TAISOU,
+    mNT_ITEM_TYPE_MD,
+    mNT_ITEM_TYPE_TICKET,
+    mNT_ITEM_TYPE_BONE,
+    mNT_ITEM_TYPE_DIARY,
+    mNT_ITEM_TYPE_FORK_ON,
 
-  mNT_ITEM_TYPE_NUM
+    mNT_ITEM_TYPE_NUM
 };
 
 enum {
-  mNT_TREE_SIZE_FULL,
-  mNT_TREE_SIZE_S2,
-  mNT_TREE_SIZE_S1,
-  mNT_TREE_SIZE_S0,
+    mNT_TREE_SIZE_FULL,
+    mNT_TREE_SIZE_S2,
+    mNT_TREE_SIZE_S1,
+    mNT_TREE_SIZE_S0,
 
-  mNT_TREE_SIZE_NUM
+    mNT_TREE_SIZE_NUM
 };
 
 typedef struct offset_table_s {
-  int type;
-  mCoBG_OffsetTable_c table;
+    int type;
+    mCoBG_OffsetTable_c table;
 } mNT_offset_table_c;
 
 /* TODO: these should be calculated via definitions later */
@@ -561,6 +561,7 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 #define ITEM_IS_SIGN(item) ((item) == DUMMY_RESERVE || ITEM_IS_SIGNBOARD(item))
 
 #define IS_ITEM_LOST_ITEM(item) ((item) >= ITM_QST_LOST_CLOTH && (item) <= ITM_QST_LOST_GYROID)
+#define IS_NPC_ADD_NPC(item) ((item) >= NPC_ADD_START && (item) <= NPC_ADD_END)
 
 #define BG_CATEGORY 0
 #define ENV_CATEGORY 8
@@ -3626,10 +3627,32 @@ enum ftr1_e {
 #define NPC_PIGLEG   (NPC_START + 233) // 0xE0E9
 #define NPC_ANKHA    (NPC_START + 234) // 0xE0EA
 #define NPC_PUNCHY   (NPC_START + 235) // 0xE0EB
-#define NPC_END      (NPC_START + 236) // 0xE0EC
-#define NPC_TEST0    (NPC_START + 236) // 0xE0EC
-#define NPC_TEST1    (NPC_START + 237) // 0xE0ED
-#define NPC_ALL_END  (NPC_START + 238) // 0xE0EE
+#define NPC_ADD_START (NPC_START + 236) // 0xE0EC
+#define NPC_ADD_00   (NPC_ADD_START + 0) // 0xE0EC
+#define NPC_ADD_01   (NPC_ADD_START + 1) // 0xE0ED
+#define NPC_ADD_02   (NPC_ADD_START + 2) // 0xE0EE
+#define NPC_ADD_03   (NPC_ADD_START + 3) // 0xE0EF
+#define NPC_ADD_04   (NPC_ADD_START + 4) // 0xE0F0
+#define NPC_ADD_05   (NPC_ADD_START + 5) // 0xE0F1
+#define NPC_ADD_06   (NPC_ADD_START + 6) // 0xE0F2
+#define NPC_ADD_07   (NPC_ADD_START + 7) // 0xE0F3
+#define NPC_ADD_08   (NPC_ADD_START + 8) // 0xE0F4
+#define NPC_ADD_09   (NPC_ADD_START + 9) // 0xE0F5
+#define NPC_ADD_10   (NPC_ADD_START + 10) // 0xE0F6
+#define NPC_ADD_11   (NPC_ADD_START + 11) // 0xE0F7
+#define NPC_ADD_12   (NPC_ADD_START + 12) // 0xE0F8
+#define NPC_ADD_13   (NPC_ADD_START + 13) // 0xE0F9
+#define NPC_ADD_14   (NPC_ADD_START + 14) // 0xE0FA
+#define NPC_ADD_15   (NPC_ADD_START + 15) // 0xE0FB
+#define NPC_ADD_16   (NPC_ADD_START + 16) // 0xE0FC
+#define NPC_ADD_17   (NPC_ADD_START + 17) // 0xE0FD
+#define NPC_ADD_18   (NPC_ADD_START + 18) // 0xE0FE
+#define NPC_ADD_19   (NPC_ADD_START + 19) // 0xE0FF
+#define NPC_ADD_END  NPC_ADD_19           // 0xE100
+#define NPC_END      (NPC_START + 256) // 0xE100
+#define NPC_TEST0    (NPC_START + 257) // 0xE101
+#define NPC_TEST1    (NPC_START + 258) // 0xE102
+#define NPC_ALL_END  (NPC_START + 259) // 0xE103
 
 #define DUMMY_START 0xF000
 #define DUMMY_MAILBOX0 (DUMMY_START + 1) // 0xF001

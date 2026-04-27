@@ -324,6 +324,18 @@ typedef struct npc_default_data_s {
     s8 umbrella;
 } mNpc_Default_Data_c;
 
+/* sizeof(mNpc_SickInfo_c) == 0x80 */
+typedef struct npc_sick_info_s {
+    /* 0x00 */ AnmPersonalID_c id;
+    /* 0x14 */ lbRTC_time_c heal_time;
+    /* 0x1C */ lbRTC_time_c sick_level_change_time;
+    /* 0x24 */ lbRTC_time_c recovery_time;
+    /* 0x2C */ PersonalID_c id_gave_medicine[TOTAL_PLAYER_NUM];
+    /* 0x7C */ u8 healed;
+    /* 0x7D */ u8 gave_medicine;
+    /* 0x7E */ u8 sick_level;
+} mNpc_SickInfo_c;
+
 extern void mNpc_AddNowNpcMax(u8* npc_max);
 extern void mNpc_SubNowNpcMax(u8* npc_max);
 extern void mNpc_ClearAnimalPersonalID(AnmPersonalID_c* pid);

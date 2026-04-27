@@ -35,6 +35,7 @@
 #include "m_card.h"
 #include "m_demo.h"
 #include "m_add_npc.h"
+#include "m_monument.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +80,7 @@ typedef struct lighthouse_s {
     u8 players_completed;
 } LightHouse_c;
 
+/* sizeof(Save_s) == 0x2D800 */
 typedef struct Save_s {
     /* 0x00000 */ mFRm_chk_t save_check; /* save information */
     /* 0x00014 */ mLd_land_info_c land_info;                            /* town name & id */
@@ -168,12 +170,26 @@ typedef struct Save_s {
     /* 0x24188 */ u8 _24188;
     /* 0x24189 */ u8 first_present;
     /* 0x2418A */ u8 town_day;
-    /* 0x2418B */ u8 _2418B[0x24198 - 0x2418B];
-    /* 0x24198 */ OSTime travel_hard_time;
-    /* 0x241A0 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
-    /* 0x241A8 */ u8 _241A8[0x8000];
+    /* 0x2418B */ u8 reserve_sign_count; // number of 'reserve' signs in town
+    /* 0x2418C */ u8 monument_set; // the monumentset available from Nook in this town
+    /* 0x24190 */ u32 compress_info_table;
+    /* 0x24194 */ u8 add_npc_compress_info_table[mAN_ANIMAL_NUM][mAN_COMPRESS_INFO_TABLE_MAX_SIZE];
+    /* 0x2CF00 */ int new_comer_set;
+    /* 0x2CF04 */ PersonalID_c new_comer_inviter_pid; // player who invited the animal
+    /* 0x2CF14 */ lbRTC_ymd_c new_comer_invite_date; // date the animal was invited
+    /* 0x2CF16 */ mActor_name_t new_comer_npc_id; // npc id of the animal that was invited
+    /* 0x2CF18 */ u8 new_comer_data[mAN_COMPRESS_INFO_TABLE_MAX_SIZE]; // compressed data for new comer
+    /* 0x2D664 */ u16 song_cards_scanned; // bitfield tracking which song cards have been scanned
+    /* 0x2D666 */ u8 _2D666[10];
+    /* 0x2D670 */ OSTime travel_hard_time;
+    /* 0x2D678 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
+    /* 0x2D680 */ mMM_order_c monument_order; // current monument order
+    /* 0x2D688 */ int monument_count; // number of monuments in the town
+    /* 0x2D68C */ mNpc_SickInfo_c sick_info; // sick info for current sick villager
+    /* 0x2D70C */ u8 _2D70C[0x2D7E8 - 0x2D70C]; // pad?
+    /* 0x2D7E8 */ u64 rnd_hash; // used in mCDsd_set_SD_playcode
+    /* 0x2D7F0 */ u8 _2D7F0[0x2D800 - 0x2D7F0]; // pad
 } Save_t;
-
 
 typedef union save_u {
     Save_t save;

@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #define mAN_ANIMAL_NUM (ANIMAL_NUM_MAX + ANIMAL_ISLAND_NUM)
+#define mAN_COMPRESS_INFO_TABLE_MAX_SIZE 0x749
 
 typedef struct add_npc_data_s {
     /* 0x00 */ u8 id;
@@ -35,12 +36,12 @@ typedef struct add_npc_data_s {
     /* 0x1F */ u8 _1F;
     /* 0x20 */ u8 agb_param[8];
     /* 0x40 */ u8 texture[0x1A80] ATTRIBUTE_ALIGN(32);
-} AddNpcData_c;
+} AnimalInfo_c;
 
 /* sizeof(AddNpcInfo_c) == 0x1FC60 */
 typedef struct add_npc_info_s {
-    /* 0x00000 */ AddNpcData_c data[mAN_ANIMAL_NUM]; // aligned to 32 bytes
-    /* 0x1FC40 */ int set_bitfield;
+    /* 0x00000 */ AnimalInfo_c info[mAN_ANIMAL_NUM]; // aligned to 32 bytes
+    /* 0x1FC40 */ int compress_info_table;
 } AddNpcInfo_c;
 
 #ifdef __cplusplus
