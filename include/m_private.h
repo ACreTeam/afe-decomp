@@ -89,9 +89,14 @@ enum {
 
 #define mPr_ORIGINAL_DESIGN_IDX_VALID(idx) ((idx) >= 0 && (idx) < mPr_ORIGINAL_DESIGN_COUNT)
 
+#if 0
 #define mPr_GET_ITEM_COND(all_cond, slot_no) (((all_cond) >> (((u32)(slot_no)) << 1)) & mPr_ITEM_COND_NUM)
 #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) \
     (((all_cond) & ~((u32)mPr_ITEM_COND_NUM << ((u32)(slot_no) << 1))) | ((u32)(cond) << ((u32)(slot_no) << 1)))
+#endif
+
+#define mPr_GET_ITEM_COND(all_cond, slot_no) ((all_cond)[slot_no])
+#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
 
 enum {
     mPr_SUNBURN_RANK_MIN,

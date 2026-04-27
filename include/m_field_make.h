@@ -338,7 +338,7 @@ extern void mFM_DecideBgTexIdx(u8* bg_tex_idx);
 extern void mFM_SetFieldInitData(int bg_disp_num, int bg_disp_size);
 extern void mFM_FieldInit(GAME_PLAY* play);
 extern void mFM_Field_dt();
-extern void mFM_SetBlockKindLoadCombi();
+extern void mFM_SetBlockKindLoadCombi(GAME* game);
 extern void mFM_InitFgCombiSaveData(GAME* game);
 extern void mFM_RenewalReserve();
 extern mActor_name_t mFM_GetReseveName(int bx, int bz);

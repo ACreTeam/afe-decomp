@@ -37,6 +37,77 @@ modules:
     header_type: none
     custom_type: pal16
 
+  - symbol: con_waku_swaku3_tex
+    binary: assets/con_waku_swaku3_tex.bin
+    header: assets/con_waku_swaku3_tex.inc
+    header_type: raw
+
+  - symbol: con_sentaku2_v
+    binary: assets/con_sentaku2_v.bin
+    header: assets/con_sentaku2_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: wipe1_v!.data:0x00006530
+    binary: assets/wipe1_v.bin
+    header: assets/wipe1_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: g_wipe1_txt
+    binary: assets/g_wipe1_txt.bin
+    header: assets/g_wipe1_txt.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w1_tex
+    binary: assets/msg/con_kaiwa2_w1_tex.bin
+    header: assets/msg/con_kaiwa2_w1_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w2_tex
+    binary: assets/msg/con_kaiwa2_w2_tex.bin
+    header: assets/msg/con_kaiwa2_w2_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w3_tex
+    binary: assets/msg/con_kaiwa2_w3_tex.bin
+    header: assets/msg/con_kaiwa2_w3_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_v
+    binary: assets/msg/con_kaiwa2_v.bin
+    header: assets/msg/con_kaiwa2_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: con_namefuti_TXT
+    binary: assets/msg/con_namefuti_TXT.bin
+    header: assets/msg/con_namefuti_TXT.inc
+    header_type: raw
+
+  - symbol: con_kaiwaname_v
+    binary: assets/msg/con_kaiwaname_v.bin
+    header: assets/msg/con_kaiwaname_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: tol_sponge_1_v
+    binary: assets/tol_sponge_1_v.bin
+    header: assets/tol_sponge_1_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: tol_sponge_1_pal
+    binary: assets/tol_sponge_1_pal.bin
+    header: assets/tol_sponge_1_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: tol_sponge_1_main1_tex_txt
+    binary: assets/tol_sponge_1_main1_tex_txt.bin
+    header: assets/tol_sponge_1_main1_tex_txt.inc
+    header_type: raw
+
 - object: files/forestd.rel
   hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb
   symbols: config/GAEJ01_00/forestd/symbols.txt

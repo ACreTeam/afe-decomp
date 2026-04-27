@@ -51,7 +51,7 @@ extern int mPO_receipt_proc(Mail_c* mail, int send_type);
 extern int mPO_delivery_one_address(int house_no);
 extern void mPO_delivery_all_address_proc();
 extern void mPO_business_proc(GAME_PLAY* play);
-extern void mPO_first_work();
+extern void mPO_first_work(GAME_PLAY* play);
 extern void mPO_post_office_init();
 
 #ifdef __cplusplus
