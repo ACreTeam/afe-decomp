@@ -6,7 +6,8 @@
 
 #define DEFAULT_ARRANGEMENT ((mHS_HOUSE3 << 6) | (mHS_HOUSE2 << 4) | (mHS_HOUSE1 << 2) | (mHS_HOUSE0 << 0))
 
-#define ARRANGE_GET(player_no) (((u32)Save_Get(house_arrangement) >> ((player_no) * 2)) & 3)
+#define ARRANGE_GET(arrangement, player_no) (((u32)arrangement >> ((player_no) << 1)) & 3)
+#define ARRANGE_GET_NOW() ARRANGE_GET(Save_Get(house_arrangement), player_no)
 #define ARRANGE_MOVE(player_no, house_no) ((house_no) << ((player_no) * 2))
 
 /**
@@ -28,7 +29,14 @@ extern void mHS_house_init() {
  * @return The house index for the player.
  **/
 extern int mHS_get_arrange_idx(int player_no) {
-    return ARRANGE_GET(player_no);
+    u32 arrangement = Save_Get(house_arrangement);
+    int shift = player_no << 1;
+    int idx = -1;
+
+    if (mLd_PlayerManKindCheckNo(player_no) == NATIVE) {
+        idx = arrangement >> shift & 3;
+    }
+    return idx;
 }
 
 /**

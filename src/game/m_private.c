@@ -768,7 +768,7 @@ extern int mPr_LoadPak_and_SetPrivateInfo2(Private_c* unused_private, u8 player_
             house = Save_GetPointer(homes[mHS_get_arrange_idx(player_no)]);
             loan = priv->inventory.loan;
             mPr_CopyPrivateInfo(priv, &g_foreigner_private);
-            if (mHm_CheckKeepHouseSize(player_no) == FALSE || house->size_info.next_size == mHm_HOMESIZE_STATUE) {
+            if (mHm_CheckKeepHouseSize(player_no) == FALSE || house->size_info.next_size == mHm_HOMESIZE_FINAL_STATUE) {
                 priv->inventory.loan = loan;
             }
 
@@ -792,7 +792,7 @@ extern int mPr_LoadPak_and_SetPrivateInfo2(Private_c* unused_private, u8 player_
                 g_foreigner_private.museum_record.contacted = priv->museum_record.contacted;
                 mPr_CopyPrivateInfo(priv, &g_foreigner_private);
 
-                if (mHm_CheckKeepHouseSize(i) == FALSE || house->size_info.next_size == mHm_HOMESIZE_STATUE) {
+                if (mHm_CheckKeepHouseSize(i) == FALSE || house->size_info.next_size == mHm_HOMESIZE_FINAL_STATUE) {
                     priv->inventory.loan = loan;
                 }
 

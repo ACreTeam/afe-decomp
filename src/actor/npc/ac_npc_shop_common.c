@@ -1642,7 +1642,7 @@ static void aNSC_set_talk_info_start_wait(ACTOR* actorx) {
         Now_Private->inventory.loan = next_loan;
         size->renew = FALSE;
     } else {
-        if (size->statue_ordered == TRUE && size->next_size == mHm_HOMESIZE_STATUE) {
+        if (size->statue_ordered == TRUE && size->next_size == mHm_HOMESIZE_FINAL_STATUE) {
             msg_no = aNSC_MSG_STATUE_BUILT;
             size->statue_ordered = FALSE;
         } else {

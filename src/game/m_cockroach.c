@@ -61,12 +61,12 @@ extern void mCkRh_InitGokiSaveData_1Room_ByHomeData(mHm_hs_c* home) {
 /**
  * @brief Initializes island cottage cockroach data.
  **/
-extern void mCkRh_InitGokiSaveData_IslandPlayerRoom() {
-    // Save_Set(island.cottage.goki.num, 0);
-    // Save_Set(island.cottage.goki.pad, 0);
-    // Save_Set(island.cottage.goki.time.year, 0);
-    // Save_Set(island.cottage.goki.time.month, 0);
-    // Save_Set(island.cottage.goki.time.day, 0);
+extern void mCkRh_InitGokiSaveData_IslandPlayerRoom(mHm_cottage_c* cottage) {
+    cottage->goki.num = 0;
+    cottage->goki.pad = 0;
+    cottage->goki.time.year = 0;
+    cottage->goki.time.month = 0;
+    cottage->goki.time.day = 0;
 }
 #else
 /**

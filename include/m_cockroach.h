@@ -16,7 +16,7 @@ extern "C" {
 extern void mCkRh_InitGokiSaveData_InitNewPlayer();
 extern void mCkRh_InitGokiSaveData_1Room(int home_no);
 extern void mCkRh_InitGokiSaveData_1Room_ByHomeData(mHm_hs_c* home);
-extern void mCkRh_InitGokiSaveData_IslandPlayerRoom();
+extern void mCkRh_InitGokiSaveData_IslandPlayerRoom(mHm_cottage_c* cottage);
 extern void mCkRh_InitGokiSaveData_AllRoom();
 extern void mCkRh_SetGoingOutCottageTime(int scene_id);
 extern void mCkRh_SavePlayTime(int player_no);

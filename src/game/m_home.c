@@ -221,8 +221,8 @@ static mActor_name_t l_proom_cottage_tmp[UT_X_NUM * UT_Z_NUM] = {
  * @param home_no Index of the home which will be cleared (0-3).
  **/
 extern void mHm_ClearHomeInfo(int home_no) {
-    static int haniwa_msg[HANIWA_MSG_LINES] = { 0x76A, 0x76B, 0x76C,
-                                                0x76D }; /* These are probably defines somewhere from auto-gen */
+    // static int haniwa_msg[HANIWA_MSG_LINES] = { 0x76A, 0x76B, 0x76C,
+    //                                             0x76D }; /* These are probably defines somewhere from auto-gen */
 
     int no;
     mHm_hs_c* home;
@@ -230,7 +230,6 @@ extern void mHm_ClearHomeInfo(int home_no) {
     u16* item_p;
     u16* src_p;
     int i;
-    u8* haniwa_msg_p;
     int j;
 
     no = home_no & 3;
@@ -259,20 +258,15 @@ extern void mHm_ClearHomeInfo(int home_no) {
     Save_Set(homes[no].next_outlook_pal, no);
     mCkRh_InitGokiSaveData_1Room_ByHomeData(home);
     mHm_SetDefaultPlayerRoomData(no);
-
-    haniwa_msg_p = home->haniwa.message;
-    for (j = 0; j < HANIWA_MSG_LINES; j++) {
-        int len;
-
-        mString_Load_StringFromRom(haniwa_msg_buf, HANIWA_MESSAGE_LEN, haniwa_msg[j]);
-        len = mMl_strlen(haniwa_msg_buf, HANIWA_MESSAGE_LEN, CHAR_SPACE);
-        haniwa_msg_buf[len] = CHAR_NEW_LINE;
-        mem_copy(haniwa_msg_p, haniwa_msg_buf, len + 1);
-        haniwa_msg_p += len + 1;
-    }
-
+    mString_Load_StringFromRom(haniwa_msg_buf, HANIWA_MESSAGE_LEN, 0x55C);
+    mem_copy(home->haniwa.message, haniwa_msg_buf, HANIWA_MESSAGE_LEN);
+    home->haniwa.alarm_info.enabled = FALSE;
+    home->haniwa.alarm_info.mode = mHm_HANIWA_ALARM_MODE_ON_PLAY;
+    home->haniwa.alarm_info.hour = 0;
+    home->haniwa.alarm_info.minute = 5;
     Save_Set(keep_house_size[no], 0);
     Save_Set(homes[no].door_original, 0xFF);
+    mISL_init(&home->island);
 }
 
 /**
@@ -419,7 +413,8 @@ static void mHm_RehouseWallDoor(mHm_hs_c* home, int home_size) {
         mHm_ROOMTYPE_MEDIUM, /* mHm_HOMESIZE_MEDIUM */
         mHm_ROOMTYPE_LARGE,  /* mHm_HOMESIZE_LARGE */
         mHm_ROOMTYPE_LARGE,  /* mHm_HOMESIZE_UPPER */
-        mHm_ROOMTYPE_SMALL   /* mHm_HOMESIZE_STATUE */
+        mHm_ROOMTYPE_SMALL,  /* mHm_HOMESIZE_FINAL_STATUE */
+        mHm_ROOMTYPE_SMALL, /* mHm_HOMESIZE_FINAL_NO_STATUE */
     };
 
     int new_size;
@@ -457,7 +452,7 @@ extern void mHm_CheckRehouseOrder() {
                 home->outlook_pal = home->next_outlook_pal;
             }
 
-            if (home->size_info.size != home->size_info.next_size && home->size_info.next_size < mHm_HOMESIZE_STATUE) {
+            if (home->size_info.size != home->size_info.next_size && home->size_info.next_size < mHm_HOMESIZE_FINAL_STATUE) {
                 if (CHECK_ORDER_DATE(home, rtc_time)) {
                     home->outlook_pal = home->ordered_outlook_pal;
                     home->next_outlook_pal = home->ordered_outlook_pal;
@@ -473,7 +468,7 @@ extern void mHm_CheckRehouseOrder() {
                     }
                 } else if (home->size_info.statue_ordered == TRUE) {
                     if (CHECK_ORDER_DATE(home, rtc_time)) {
-                        home->size_info.next_size = mHm_HOMESIZE_STATUE;
+                        home->size_info.next_size = mHm_HOMESIZE_FINAL_NO_STATUE;
                     }
                 }
             }
@@ -589,7 +584,7 @@ extern void mHm_InitCottage(mHm_cottage_c* cottage) {
     if (cottage != NULL) {
         bzero(cottage, sizeof(mHm_cottage_c));
         mHm_SetWallDoor((u16*)cottage->room.layer_main.items, mHm_ROOMTYPE_COTTAGE);
-        mCkRh_InitGokiSaveData_IslandPlayerRoom();
+        mCkRh_InitGokiSaveData_IslandPlayerRoom(cottage);
         mHm_SetDefaultCottageData(cottage);
     }
 }

@@ -227,12 +227,12 @@ extern u16 mLd_MakeLandId() {
  * @return TRUE if the player is a foreigner, FALSE otherwise.
  */
 extern int mLd_PlayerManKindCheckNo(u8 player_no) {
-    int foreigner = TRUE;
+    int type = FOREIGN;
     if (player_no < PLAYER_NUM) {
-        foreigner = FALSE;
+        type = NATIVE;
     }
 
-    return foreigner;
+    return type;
 }
 
 /**
