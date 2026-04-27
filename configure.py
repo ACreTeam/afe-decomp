@@ -959,7 +959,7 @@ config.libs = [
             Object(NonMatching, "game/m_debug_mode.c"),
             Object(NonMatching, "game/m_demo.c"),
             Object(NonMatching, "game/m_design_ovl.c"),
-            Object(NonMatching, "game/m_diary.c"),
+            Object(Equivalent, "game/m_diary.c"), # matching but needs investigation
             Object(NonMatching, "game/m_diary_ovl.c"),
             Object(NonMatching, "game/m_eappli.c"),
             Object(NonMatching, "game/m_editEndChk_ovl.c"),

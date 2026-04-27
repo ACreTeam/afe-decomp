@@ -19,7 +19,7 @@ extern int mDi_strlen(u8* str, int max_len, u8 end_char) {
 }
 
 static void mDi_clear_diary(mDi_entry_c* entry_p) {
-    bzero(entry_p->text, sizeof(entry_p->text));
+    bzero(entry_p->text, 0x45E); // TODO: why does this differ from the size in mem_clear?
     mem_clear(entry_p->text, sizeof(entry_p->text), CHAR_SPACE);
 }
 
