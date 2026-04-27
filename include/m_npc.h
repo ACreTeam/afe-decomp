@@ -187,7 +187,10 @@ typedef struct animal_memory_s {
 
 /* sizeof(anmuni) == 8 */
 typedef union {
-    u8 previous_land_name[LAND_NAME_SIZE];
+    struct {
+        u8 previous_land_name[LAND_NAME_SIZE];
+        u16 previous_land_id;
+    };
     mActor_name_t island_ftr[mNpc_ISLAND_FTR_SAVE_NUM];
 } anmuni_u;
 
@@ -205,14 +208,13 @@ typedef struct animal_s {
     /* 0x595 */ u8 catchphrase[ANIMAL_CATCHPHRASE_LEN]; /* may be called 'word_ending' */
     /* 0x59C */ mQst_contest_c contest_quest;           /* current contest quest information */
     /* 0x5C0 */ PersonalID_c parent_id; // ID of the player who 'spawned' the villager in
-    /* 0x5D0 */ u8 previous_land_name[LAND_NAME_SIZE]; // name of the previous town the villager lived in
-    /* 0x5D6 */ u16 previous_land_id; /* id of the previous town the villager lived in */
+    /* 0x5D0 */ anmuni_u anmuni;
     /* 0x5D8 */ u8 mood;              /* probably called 'feel' based on code */
     /* 0x5D9 */ u8 mood_time;         /* probably called 'feel_tim' based on code */
     /* 0x5DA */ mActor_name_t cloth;  /* shirt the villager is wearing */
     /* 0x5DC */ u16 remove_info;      /* info about villager moving between towns? kinda stubbed */
     /* 0x5DE */ u8 is_home;           /* TRUE when the villager is home, otherwise FALSE */
-    /* 0x5DF */ u8 moved_in; /* TRUE when the villager moved in after town creation, FALSE if they started out in town */
+    /* 0x5DF */ u8 moved_in; /* 0 = starting, 1 = moved in, 2 = invited (add_npc) */
     /* 0x5E0 */ u8 removing; /* TRUE when the villager is leaving town, FALSE otherwise */
     /* 0x5E1 */ u8 cloth_original_id; /* 0xFF when not wearing an Able Sister's pattern, otherwise 0-3 indicating which pattern */
     /* 0x5E2 */ u8 umbrella_id; /* 0xFF when no umbrella, 0-31 when a standard umbrella, 32-35 when using an Able Sister's pattern */
@@ -223,32 +225,6 @@ typedef struct animal_s {
     /* 0x666 */ u8 race; // species
     /* 0x000 */ u8 unused[24];                           /* unknown usage/unused */
 } Animal_c;
-
-/* sizeof(IslandAnimal_c) == 0x680 */
-typedef struct island_animal_s {
-    /* 0x000 */ AnmPersonalID_c id;                     /* this villager's ID */
-    /* 0x018 */ Anmmem_c memories[ANIMAL_MEMORY_NUM];   /* memories of players who've spoken to this villager */
-    /* 0x590 */ Anmhome_c home_info;                    /* home position info */
-    /* 0x595 */ u8 catchphrase[ANIMAL_CATCHPHRASE_LEN]; /* may be called 'word_ending' */
-    /* 0x59C */ mQst_contest_c contest_quest;           /* current contest quest information */
-    /* 0x5C0 */ PersonalID_c parent_id; // ID of the player who 'spawned' the villager in
-    /* 0x5D0 */ mActor_name_t island_ftr[mNpc_ISLAND_FTR_SAVE_NUM];
-    /* 0x5D8 */ u8 mood;              /* probably called 'feel' based on code */
-    /* 0x5D9 */ u8 mood_time;         /* probably called 'feel_tim' based on code */
-    /* 0x5DA */ mActor_name_t cloth;  /* shirt the villager is wearing */
-    /* 0x5DC */ u16 remove_info;      /* info about villager moving between towns? kinda stubbed */
-    /* 0x5DE */ u8 is_home;           /* TRUE when the villager is home, otherwise FALSE */
-    /* 0x5DF */ u8 moved_in; /* TRUE when the villager moved in after town creation, FALSE if they started out in town */
-    /* 0x5E0 */ u8 removing; /* TRUE when the villager is leaving town, FALSE otherwise */
-    /* 0x5E1 */ u8 cloth_original_id; /* 0xFF when not wearing an Able Sister's pattern, otherwise 0-3 indicating which pattern */
-    /* 0x5E2 */ u8 umbrella_id; /* 0xFF when no umbrella, 0-31 when a standard umbrella, 32-35 when using an Able Sister's pattern */
-    /* 0x5E3 */ u8 unk_8ED;     /* Exists according to mISL_gc_to_agb_animal, but seems unused in practice */
-    /* 0x5E4 */ mActor_name_t present_cloth; /* The most recently received shirt from a letter */
-    /* 0x5E6 */ s8 animal_relations[ANIMAL_NUM_MAX]; /* relationships between all villagers in town */
-    /* 0x5F6 */ AnmHPMail_c hp_mail[ANIMAL_HP_MAIL_NUM]; /* mail password info storage */
-    /* 0x666 */ u8 race; // species
-    /* 0x000 */ u8 unused[24];      
-} IslandAnimal_c;
 
 /*
   Struct for keeping track of an event where a villager can briefly return to your town after
@@ -422,6 +398,9 @@ extern u8 mNpc_GetLooks(mActor_name_t npc_id);
 extern void mNpc_SetDefAnimalCloth(Animal_c* animal);
 extern void mNpc_SetDefAnimalUmbrella(Animal_c* animal);
 extern void mNpc_SetDefAnimal(Animal_c* animal, mActor_name_t npc_id, mNpc_Default_Data_c* def_data);
+extern void mNpc_SetHaveAppeared(mActor_name_t npc_id);
+extern void mNpc_SetNpcNameID(Animal_c* animal, int count);
+extern void mNpc_SetDefAnimal_name(Animal_c* animal, mActor_name_t npc_id);
 extern void mNpc_SetAnimalTitleDemo(mNpc_demo_npc_c* demo_npc, Animal_c* animal, GAME* game);
 extern int mNpc_GetReservedUtNum(int* ut_x, int* ut_z, mActor_name_t* item);
 extern int mNpc_BlockNum2ReservedUtNum(int* ut_x, int* ut_z, int bx, int bz);
@@ -443,7 +422,9 @@ extern void mNpc_ClearInAnimal();
 extern Animal_c* mNpc_GetInAnimalP();
 extern void mNpc_SetRemoveAnimalNo(u8* remove_animal_no, Animal_c* animal, int ignored_idx);
 extern int mNpc_GetGoodbyAnimalIdx(int ignored_idx);
+extern void mNpc_DestroyHouse(Anmhome_c* home);
 extern void mNpc_FirstClearGoodbyMail();
+extern void mNpc_SetGoodbyAnimalMail(AnmPersonalID_c* anm_id);
 extern void mNpc_SendRegisteredGoodbyMail();
 extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, int moving_out);
 extern void mNpc_SetReturnAnimal(Animal_c* return_animal);
@@ -532,6 +513,11 @@ extern void mNpc_set_addd_edit_bit(int bit);
 extern void mNpc_set_addd_edit_info(int mtype, int disp_add);
 extern void mNpc_SetTalkAnimalIdx_fdebug(AnmPersonalID_c* anm_id);
 extern void mNpc_PrintFriendship_fdebug(gfxprint_t* gfxprint);
+
+extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 card_id);
+extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id);
+extern void mNpc_EraseIslandAnimal(int island_idx);
+extern void mNpc_RenewRemoveHistory(void);
 
 #ifdef __cplusplus
 }

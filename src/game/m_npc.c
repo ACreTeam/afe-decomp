@@ -853,7 +853,7 @@ extern void mNpc_ClearAnimalInfo(Animal_c* animal) {
     mNpc_ClearBufSpace1(animal->catchphrase, ANIMAL_CATCHPHRASE_LEN);
     mQst_ClearContest(&animal->contest_quest);
     // mLd_ClearLandName(animal->anmuni.previous_land_name);
-    animal->previous_land_id = 0;
+    animal->anmuni.previous_land_id = 0;
     animal->remove_info = 0;
     animal->is_home = TRUE;
     // mPr_ClearPlayerName(animal->parent_name);
@@ -2322,7 +2322,7 @@ extern void mNpc_SetDefAnimal(Animal_c* animal, mActor_name_t npc_id, mNpc_Defau
     }
 }
 
-static void mNpc_SetHaveAppeared(mActor_name_t npc_id) {
+extern void mNpc_SetHaveAppeared(mActor_name_t npc_id) {
     u8* used_tbl = Save_Get(npc_used_tbl);
     int idx;
     int i;
@@ -2678,7 +2678,7 @@ static void mNpc_BuildHouseBeforeFieldct(mActor_name_t npc_id, int bx, int bz, i
     }
 }
 
-static void mNpc_DestroyHouse(Anmhome_c* home) {
+extern void mNpc_DestroyHouse(Anmhome_c* home) {
     u8 bx = home->block_x - 1;
     u8 bz = home->block_z - 1;
     u8 ut_x = home->ut_x;
@@ -3454,7 +3454,7 @@ extern void mNpc_FirstClearGoodbyMail() {
     mNpc_ClearGoodbyMail(&l_mnpc_goodby_mail);
 }
 
-static void mNpc_SetGoodbyAnimalMail(Anm_GoodbyMail_c* goodby_mail, AnmPersonalID_c* anm_id) {
+static void mNpc_SetGoodbyAnimalMail_common(Anm_GoodbyMail_c* goodby_mail, AnmPersonalID_c* anm_id) {
     Private_c* priv = Save_Get(private_data);
     int i;
 
@@ -3470,6 +3470,10 @@ static void mNpc_SetGoodbyAnimalMail(Anm_GoodbyMail_c* goodby_mail, AnmPersonalI
             priv++;
         }
     }
+}
+
+extern void mNpc_SetGoodbyAnimalMail(AnmPersonalID_c* anm_id) {
+    mNpc_SetGoodbyAnimalMail_common(&l_mnpc_goodby_mail, anm_id);
 }
 
 static int mNpc_SetGoodbyMailData(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id) {
@@ -3621,7 +3625,7 @@ extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, int moving_out) 
 
                 animal += free_animal_idx;
                 mNpc_DestroyHouse(&animal->home_info);
-                mNpc_SetGoodbyAnimalMail(&l_mnpc_goodby_mail, &animal->id);
+                mNpc_SetGoodbyAnimalMail_common(&l_mnpc_goodby_mail, &animal->id);
                 mNpc_SendRegisteredGoodbyMail();
             } else {
                 animal += free_animal_idx;
@@ -3635,7 +3639,7 @@ extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, int moving_out) 
             animal->home_info.ut_x = 0xFF;
             animal->home_info.ut_z = 0xFF;
             // mLd_CopyLandName(animal->anmuni.previous_land_name, Common_Get(now_private)->player_ID.land_name);
-            animal->previous_land_id = Common_Get(now_private)->player_ID.land_id;
+            animal->anmuni.previous_land_id = Common_Get(now_private)->player_ID.land_id;
             mQst_ClearContest(&animal->contest_quest);
             mNpc_ClearHPMail(animal->hp_mail, ANIMAL_HP_MAIL_NUM);
             transferring_animal->removing = TRUE;
@@ -3696,7 +3700,7 @@ extern void mNpc_SetReturnAnimal(Animal_c* return_animal) {
                 }
 
                 found_animal = &animals[found_animal_idx];
-                mNpc_SetGoodbyAnimalMail(&l_mnpc_goodby_mail, &found_animal->id);
+                mNpc_SetGoodbyAnimalMail_common(&l_mnpc_goodby_mail, &found_animal->id);
                 mNpc_DestroyHouse(&found_animal->home_info);
                 (*now_npc_max)--;
 
@@ -3750,7 +3754,7 @@ extern void mNpc_AddActor_inBlock(mFM_move_actor_c* move_actor_list, u8 bx, u8 b
     mNpc_AddNpc_inBlock(move_actor_list, bx, bz);
 }
 
-static void mNpc_SetNpcNameID(Animal_c* animal, int num) {
+extern void mNpc_SetNpcNameID(Animal_c* animal, int num) {
     int i;
 
     for (i = 0; i < num; i++) {
@@ -4491,7 +4495,7 @@ extern void mNpc_ForceRemove() {
 
                 if (mNpc_CheckFreeAnimalInfo(animal) == FALSE) {
                     mNpc_DestroyHouse(&animal->home_info);
-                    mNpc_SetGoodbyAnimalMail(&l_mnpc_goodby_mail, &animal->id);
+                    mNpc_SetGoodbyAnimalMail_common(&l_mnpc_goodby_mail, &animal->id);
                     mNpc_SendRegisteredGoodbyMail();
                     mNpc_ClearAnimalInfo(animal);
                     mNpc_SubNowNpcMax(Save_GetPointer(now_npc_max));
@@ -6567,7 +6571,7 @@ extern mActor_name_t mNpc_GetPlayerFtr(PersonalID_c* pid) {
     // return best_ftr;
 }
 
-static int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id) {
+extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id) {
     int res = FALSE;
 
     if (ITEM_NAME_GET_TYPE(npc_id) == NAME_TYPE_NPC && (npc_id & 0xFFF) < NPC_NUM &&

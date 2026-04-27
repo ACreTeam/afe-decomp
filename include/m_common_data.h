@@ -172,13 +172,7 @@ typedef struct Save_s {
     /* 0x2418A */ u8 town_day;
     /* 0x2418B */ u8 reserve_sign_count; // number of 'reserve' signs in town
     /* 0x2418C */ u8 monument_set; // the monumentset available from Nook in this town
-    /* 0x24190 */ u32 compress_info_table;
-    /* 0x24194 */ u8 add_npc_compress_info_table[mAN_ANIMAL_NUM][mAN_COMPRESS_INFO_TABLE_MAX_SIZE];
-    /* 0x2CF00 */ int new_comer_set;
-    /* 0x2CF04 */ PersonalID_c new_comer_inviter_pid; // player who invited the animal
-    /* 0x2CF14 */ lbRTC_ymd_c new_comer_invite_date; // date the animal was invited
-    /* 0x2CF16 */ mActor_name_t new_comer_npc_id; // npc id of the animal that was invited
-    /* 0x2CF18 */ u8 new_comer_data[mAN_COMPRESS_INFO_TABLE_MAX_SIZE]; // compressed data for new comer
+    /* 0x24490 */ AddNpc_c add_npc;
     /* 0x2D664 */ u16 song_cards_scanned; // bitfield tracking which song cards have been scanned
     /* 0x2D666 */ u8 _2D666[10];
     /* 0x2D670 */ OSTime travel_hard_time;
@@ -357,8 +351,8 @@ typedef struct common_data_s {
     /* 0x4F4AC */ u8 cur_kanji_lv;
     /* 0x4F4AD */ u8 turkey_talk_flg; // set when player has spoken to Franklin
     /* 0x4F4AE */ u16 now_md;
-    /* 0x4F4B0 */ u8 islander_start_ux; // x unit islander spawned on
-    /* 0x4F4B1 */ u8 islander_start_uz; // z unit islander spawned on
+    /* 0x4F4B0 */ s8 islander_start_ux; // x unit islander spawned on
+    /* 0x4F4B1 */ s8 islander_start_uz; // z unit islander spawned on
     /* 0x4F4B2 */ u8 _4F4B2; // unused?
     /* 0x4F4B3 */ u8 heli_se_flags;
     /* 0x4F4B4 */ xyz_t heli_se_pos;

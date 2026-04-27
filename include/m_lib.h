@@ -124,6 +124,8 @@ extern void Game_play_Projection_Trans(GAME_PLAY* const play, xyz_t* world_pos, 
 
 extern f32 get_percent(const int max, const int min, const int x);
 
+extern void decode_szs(u8* src, u8* dst);
+
 #ifdef __cplusplus
 }
 #endif

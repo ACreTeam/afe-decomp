@@ -144,9 +144,9 @@ typedef struct ac_npc_draw_data_tex_s {
     /* 0x04 */ u16* palette; // palette for animal
     /* 0x08 */ u8* eye_texture[aNPC_EYE_TEX_NUM];
     /* 0x28 */ u8* mouth_texture[aNPC_MOUTH_TEX_NUM];
-    /* 0x40 */ int _40;
-    /* 0x44 */ int _44;
-    /* 0x48 */ int _48;
+    /* 0x40 */ int eye_tex_pos;
+    /* 0x44 */ int mouth_tex_pos;
+    /* 0x48 */ int cloth_tex_pos;
 } aNPC_draw_tex_data_c;
 
 /* sizeof(aNPC_draw_data_c) == 0x6C */
@@ -168,6 +168,22 @@ typedef struct npc_draw_data_s {
     /* 0x68 */ s16 accessory_type;  // type of accessory
     /* 0x6A */ s16 accessory_joint; // joint the accessory is attached to
 } aNPC_draw_data_c;
+
+typedef struct npc_race_data_s {
+    cKF_Skeleton_R_c* skeleton;
+    int eye_tex_pos;
+    int mouth_tex_pos;
+    int cloth_tex_pos;
+    float scale;
+    u8 eye_height;
+    u8 talk_anm_type;
+    u8 _16;
+    u8 _17;
+    s16 col_radius;
+    s16 col_height;
+} mNpc_RaceData_c;
+
+extern mNpc_RaceData_c npc_race_data_tbl[];
 
 enum {
     aNPC_ATTENTION_TYPE_NONE,

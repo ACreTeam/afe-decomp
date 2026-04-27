@@ -32,7 +32,7 @@ typedef struct animal_personal_id_s {
   /* 0x0C */ u8 name_id; /* lower byte of the id */
   /* 0x0D */ u8 looks; /* internal name for personality */
   /* 0x0E */ u8 name[ANIMAL_NAME_LEN];
-  /* 0x12 */ u8 _12;
+  /* 0x12 */ u8 add_npc_id;
 } AnmPersonalID_c;
 
 #ifdef __cplusplus

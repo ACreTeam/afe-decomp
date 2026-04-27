@@ -190,7 +190,7 @@ typedef struct island_s {
     /* 0x0010 */ mFM_fg_c fgblock[mISL_FG_BLOCK_Z_NUM][mISL_FG_BLOCK_X_NUM]; /* island item actor data */
     /* 0x0410 */ mHm_cottage_c cottage; /* player shared cottage data */
     /* 0x0D00 */ mNW_original_design_c flag_design; /* island flag design */
-    /* 0x0F20 */ IslandAnimal_c animal; /* islander info */
+    /* 0x0F20 */ Animal_c animal; /* islander info */
     /* 0x15A0 */ u16 deposit[mISL_FG_BLOCK_X_NUM * mISL_FG_BLOCK_Z_NUM][UT_Z_NUM]; /* buried item bitfield */
     /* 0x15E0 */ u8 bg_data[mISL_ISLAND_BLOCK_NUM]; /* island acre ids */
     /* 0x15E2 */ lbRTC_time_c renew_time; /* last time island was visited? */
@@ -199,8 +199,9 @@ typedef struct island_s {
     /* 0x15F9 */ u8 last_song_to_island; /* last song kapp'n sang to the island */
     /* 0x15FA */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
     /* 0x15FB */ u8 flags;
-    /* 0x15FC */ lbRTC_ymd_c islander_spawn_date; // date the islander spawned via e-Reader card
-    /* 0x15FC */ u8 unused_15FC[24]; // unused
+    /* 0x15FC */ int house_idx;
+    /* 0x1600 */ lbRTC_ymd_c islander_spawn_date; // date the islander spawned via e-Reader card
+    /* 0x1604 */ u8 unused_15FC[28]; // unused
 } Island_c;
 
 /* sizeof(mHm_hs_c) == 0x3860 */
