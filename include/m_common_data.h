@@ -347,7 +347,7 @@ typedef struct common_data_s {
     /* 0x4F4A4 */ u8 shop_force_opend;
     /* 0x4F4A5 */ u8 shop_force_open_door_flag;
     /* 0x4F4A6 */ u8 prev_shop_force_open_door_flag;
-    /* 0x4F4A8 */ Island_c* cur_island_p;
+    /* 0x4F4A8 */ mHm_hs_c* cur_island_house_p;
     /* 0x4F4AC */ u8 cur_kanji_lv;
     /* 0x4F4AD */ u8 turkey_talk_flg; // set when player has spoken to Franklin
     /* 0x4F4AE */ u16 now_md;

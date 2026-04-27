@@ -27,6 +27,9 @@ build.ninja
 ctx.*
 *.ctx
 
+# decomp-permuter (import.py) output
+nonmatchings/
+
 # Generated configs
 objdiff.json
 compile_commands.json
@@ -34,3 +37,5 @@ compile_commands.json
 # Miscellaneous
 /*.txt
 *.exe
+
+tools/permuter/*

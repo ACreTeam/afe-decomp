@@ -77,6 +77,7 @@ extern void mISL_SetPlayerAction(PersonalID_c* pid, u32 action);
 extern void mISL_SetNowPlayerAction(u32 action);
 extern int mISL_CheckPlayerAction(PersonalID_c* pid, u32 action);
 extern int mISL_CheckNowPlayerAction(u32 action);
+extern void mISL_MoveNowPlayerAction(void);
 
 /* NOTE: a lot of these seem to be padded to 4-bytes and should be redone in the future */
 

@@ -1,0 +1,11 @@
+# Decomp permuter (https://github.com/simonlindholm/decomp-permuter) project settings.
+# Prereqs:  python3 -m pip install -r tools/decomp-permuter-requirements.txt
+#            (optional) pynacl  — permuter@home;  Levenshtein — alternate diff
+# Build:     python configure.py  &&  ninja  (produces build.ninja at repo root)
+# Import:  python tools/decomp-permuter/import.py <path/to/file.c> <path/to/asm.s>
+# Run:     python tools/decomp-permuter/permuter.py <permuter-output-dir> -j
+# Example: python tools/permuter/mFI_GetOtherFruit_cancel/build_target.py
+#          python tools/decomp-permuter/permuter.py tools/permuter/mFI_GetOtherFruit_cancel -j
+
+build_system = "ninja"
+compiler_type = "mwcc"

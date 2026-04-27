@@ -141,6 +141,8 @@ extern f32 mFI_GetBlockWidth() {
                     return 240.0f;
                 case mFI_FIELD_ROOM_TENT:
                     return 240.0f;
+                case mFI_FIELD_ROOM_RESET_HOUSE:
+                    return 340.0f;
                 default:
                     return 320.0f;
             }
@@ -216,6 +218,8 @@ extern f32 mFI_GetBlockHeight() {
                     return 260.0f;
                 case mFI_FIELD_ROOM_TENT:
                     return 260.0f;
+                case mFI_FIELD_ROOM_RESET_HOUSE:
+                    return 260.0f;
                 default:
                     return 320.0f;
             }
@@ -268,7 +272,7 @@ extern int mFI_BlockCheck(int block_x, int block_z) {
     int num = mFI_GetBlockNum(block_x, block_z);
 
     if (block_x < 0 || block_x >= mFI_GetBlockXMax() || block_z < 0 || block_z >= mFI_GetBlockZMax() ||
-        g_fdinfo->block_info[num].bg_info.bg_id.combination_type == BG_TYPE_292) {
+        g_fdinfo->block_info[num].bg_info.bg_id.combination_type == BG_TYPE_293) {
         return FALSE;
     }
 
@@ -1087,7 +1091,7 @@ extern void mFI_BGDisplayListRefresh(xyz_t wpos) {
     if (mFI_Wpos2BlockNum(&bx, &bz, wpos)) {
         num = mFI_GetBlockNum(bx, bz);
 
-        if (g_fdinfo->block_info[num].bg_info.bg_id.combination_type != BG_TYPE_292) {
+        if (g_fdinfo->block_info[num].bg_info.bg_id.combination_type != BG_TYPE_293) {
             mFI_BGDispMake(&disp_bitfield, bx, bz);
         }
     }
@@ -1181,6 +1185,16 @@ extern int mFI_CheckInJustIslandOutdoor() {
 
 extern u32 mFI_CheckPlayerBlockInfo() {
     return l_mfi_player_bk_kind;
+}
+
+extern mActor_name_t* mFI_BkNum2UtFGTop_field(int bx, int bz) {
+    mActor_name_t* fg_top = NULL;
+
+    if (bx > 0 && bx <= FG_BLOCK_X_NUM && bz > 0 && bz <= FG_BLOCK_Z_NUM) {
+        fg_top = Save_Get(fg[bz - 1][bx - 1]).items[0];
+    }
+
+    return fg_top;
 }
 
 extern mActor_name_t* mFI_BkNumtoUtFGTop(int bx, int bz) {
@@ -1352,7 +1366,7 @@ extern int mFI_UtNumtoFGSet_common(mActor_name_t item, int ut_x, int ut_z, int u
 #endif
 
     g_fdinfo->block_info[block_num].fg_info.items_p[ut_num] = item;
-    
+
     if (update) {
         mFI_SetFGUpData();
     }
@@ -1747,14 +1761,18 @@ extern int mFI_GetItemNumField_BCT(mActor_name_t min_item, mActor_name_t max_ite
     for (bz = 0; bz < FG_BLOCK_Z_NUM; bz++) {
         int bx;
         for (bx = 0; bx < FG_BLOCK_X_NUM; bx++) {
-            int i;
             items_p = fg->items[0];
-            for (i = 0; i < UT_TOTAL_NUM; i++) {
-                if (items_p[0] >= min_item && items_p[0] <= max_item) {
-                    num++;
-                }
 
-                items_p++;
+            // Why did the add this NULL check? fg is guaranteed to exist
+            if (items_p != NULL) {
+                int i;
+                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                    if (items_p[0] >= min_item && items_p[0] <= max_item) {
+                        num++;
+                    }
+
+                    items_p++;
+                }
             }
 
             fg++;
@@ -2147,7 +2165,7 @@ extern int mFI_GetLineDeposit(u16* deposit, int ut_x) {
     if (deposit != NULL) {
         ret = ((*deposit) >> ut_x) & 1;
     }
-    
+
     return ret;
 }
 #else
@@ -2208,12 +2226,9 @@ extern void mFI_BkUtNum2DepositOFF(int bx, int bz, int ut_x, int ut_z) {
     mFI_BkUtNum2SetDeposit(bx, bz, ut_x, ut_z, mFI_DEPOSIT_OFF);
 }
 
-/* @unused @fabricated */
-/*
-extern MATCH_FORCESTRIP int mFI_BkUtNum2DepositGet(int bx, int bz, int ut_x, int ut_z) {
-  return mFI_BkUtNum2SetDeposit(bx, bz, ut_x, ut_z, mFI_DEPOSIT_GET);
+extern int mFI_BkUtNum2DepositGet(int bx, int bz, int ut_x, int ut_z) {
+    return mFI_BkUtNum2SetDeposit(bx, bz, ut_x, ut_z, mFI_DEPOSIT_GET);
 }
-*/
 
 static int mFI_UtNum2SetDeposit(int ut_x, int ut_z, int type) {
     int res = FALSE;
@@ -2314,12 +2329,11 @@ static int mFI_CheckDigNoItem(mActor_name_t* item, xyz_t wpos) {
 static int mFI_CheckDigRemoveItem(mActor_name_t* item, xyz_t wpos) {
     int res = FALSE;
 
-    if ((*item >= FLOWER_LEAVES_PANSIES0 && *item <= FLOWER_TULIP2) ||
-        (*item >= TREE_STUMP001 && *item <= TREE_STUMP004) || (*item >= GRASS_A && *item <= GRASS_C) ||
-        (*item == TREE_SAPLING) || (*item == TREE_APPLE_SAPLING) || (*item == TREE_ORANGE_SAPLING) ||
-        (*item == TREE_PEACH_SAPLING) || (*item == TREE_PEAR_SAPLING) || (*item == TREE_CHERRY_SAPLING) ||
-        (*item == TREE_1000BELLS_SAPLING) || (*item == TREE_10000BELLS_SAPLING) || (*item == TREE_30000BELLS_SAPLING) ||
-        (*item == TREE_100BELLS_SAPLING) || (*item == DEAD_SAPLING) ||
+    if (IS_ITEM_FLOWER(*item) || (*item >= TREE_STUMP001 && *item <= TREE_STUMP004) ||
+        (*item >= GRASS_A && *item <= GRASS_C) || (*item == TREE_SAPLING) || (*item == TREE_APPLE_SAPLING) ||
+        (*item == TREE_ORANGE_SAPLING) || (*item == TREE_PEACH_SAPLING) || (*item == TREE_PEAR_SAPLING) ||
+        (*item == TREE_CHERRY_SAPLING) || (*item == TREE_1000BELLS_SAPLING) || (*item == TREE_10000BELLS_SAPLING) ||
+        (*item == TREE_30000BELLS_SAPLING) || (*item == TREE_100BELLS_SAPLING) || (*item == DEAD_SAPLING) ||
         (*item >= TREE_PALM_STUMP001 && *item <= TREE_PALM_STUMP004) || (*item == TREE_PALM_SAPLING) ||
         (*item == DEAD_PALM_SAPLING) || (*item >= CEDAR_TREE_STUMP001 && *item <= CEDAR_TREE_STUMP004) ||
         (*item == CEDAR_TREE_SAPLING) || (*item == DEAD_CEDAR_SAPLING) ||
@@ -2366,15 +2380,18 @@ typedef int (*mFI_DIG_CHECK_PROC)(mActor_name_t*, xyz_t);
 extern int mFI_GetDigStatus(mActor_name_t* item, xyz_t wpos, int golden_shovel) {
     int status = mFI_DIGSTATUS_CANCEL;
     mActor_name_t* dig_item_p = mFI_GetUnitFG(wpos);
-    item[0] = EMPTY_NO;
+    *item = EMPTY_NO;
 
     if (dig_item_p != NULL) {
-        item[0] = dig_item_p[0];
+        *item = *dig_item_p;
 
-        if (mCoBG_CheckHole(wpos) == TRUE) {
-            static mFI_DIG_CHECK_PROC dig_check[mFI_DIGSTATUS_NUM] = { &mFI_CheckNothing,       &mFI_CheckDigHole,
-                                                                       &mFI_CheckDigHoleFillin, &mFI_CheckDigNoItem,
-                                                                       &mFI_CheckDigRemoveItem, &mFI_CheckDigGetItem };
+        if (IS_ITEM_RST_HOLE(*item)) {
+            status = mFI_DIGSTATUS_MISS;
+        } else if (mCoBG_CheckHole(wpos) == TRUE) {
+            static mFI_DIG_CHECK_PROC dig_check[mFI_DIGSTATUS_NUM] = {
+                &mFI_CheckNothing,   &mFI_CheckDigHole,       &mFI_CheckDigHoleFillin,
+                &mFI_CheckDigNoItem, &mFI_CheckDigRemoveItem, &mFI_CheckDigGetItem,
+            };
 
             static xyz_t old_pos = { 0.0f, 0.0f, 0.0f };
 
@@ -2395,7 +2412,7 @@ extern int mFI_GetDigStatus(mActor_name_t* item, xyz_t wpos, int golden_shovel) 
                         /* 10% chance of getting 100 bells with golden shovel */
                         if (mFI_CheckDigDiffPosArea(wpos, old_pos) == TRUE && RANDOM(10) == 1) {
                             status = mFI_DIGSTATUS_GET_ITEM;
-                            item[0] = ITM_MONEY_100;
+                            *item = ITM_MONEY_100;
                         }
                     }
 
@@ -2403,16 +2420,22 @@ extern int mFI_GetDigStatus(mActor_name_t* item, xyz_t wpos, int golden_shovel) 
                     break;
                 }
             }
-#if VERSION >= VER_GAFU01_00
         } else if (mCoBG_CheckAirSwing(wpos) == TRUE) {
-#else
-        } else if (mCoBG_CheckAirSwing(wpos) == TRUE) {
-#endif
             status = mFI_DIGSTATUS_MISS;
         }
     }
 
     return status;
+}
+
+static mActor_name_t mFI_RestoreRstStone(mActor_name_t item) {
+    if (IS_ITEM_CRACKED_STONE(item)) {
+        return item - C_ROCK_A + RST_ROCK_A;
+    } else if (IS_ITEM_RST_HOLE(item)) {
+        return item - RST_HOLE_A + ROCK_A;
+    }
+
+    return item;
 }
 
 static void mFI_ClearHoleBlock_sub(mActor_name_t* fg_items_p) {
@@ -2424,9 +2447,11 @@ static void mFI_ClearHoleBlock_sub(mActor_name_t* fg_items_p) {
 
     for (i = 0; i < UT_TOTAL_NUM; i++) {
         if (*fg_items_p >= HOLE_START && *fg_items_p <= HOLE_END) {
-            fg_items_p[0] = EMPTY_NO;
+            *fg_items_p = EMPTY_NO;
         } else if (*fg_items_p == HOLE_SHINE) {
-            fg_items_p[0] = EMPTY_NO;
+            *fg_items_p = EMPTY_NO;
+        } else if (IS_ITEM_RST_STONE(*fg_items_p) || IS_ITEM_CRACKED_STONE(*fg_items_p) || IS_ITEM_RST_HOLE(*fg_items_p)) {
+            *fg_items_p = mFI_RestoreRstStone(*fg_items_p);
         }
 
         fg_items_p++;
@@ -2464,200 +2489,169 @@ static void mFI_SetFGStructureKeep(mActor_name_t* item_p, mActor_name_t replace_
     *item_p = replace_item;
 }
 
+static void mFI_ChangeFgStructureUnit(mActor_name_t* fg_p, mActor_name_t replace_item, int bx, int bz, int ux, int uz, int destroy_flag) {
+    int ut = mFI_GetUtNum(ux, uz);
+
+    if (ux < 0 || ux >= UT_X_NUM || uz < 0 || uz >= UT_Z_NUM) {
+        return;
+    }
+
+    fg_p += ut;
+    mFI_SetFGStructureKeep(fg_p, replace_item, destroy_flag);
+    mFI_BkUtNum2DepositOFF(bx, bz, ux, uz);
+    mCoBG_Ut2SetDefaultOffset(ux + bx * UT_X_NUM, uz + bz * UT_Z_NUM);
+}
+
 static mActor_name_t l_set_fg_table[3 * 3];
 
-static int mFI_SetStructure11(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    fg_items_p += mFI_GetUtNum(ut_x, ut_z);
-    mFI_SetFGStructureKeep(fg_items_p, replace_item, destroy_item);
-    mFI_BkUtNum2DepositOFF(bx, bz, ut_x, ut_z);
-    mCoBG_Ut2SetDefaultOffset(ut_x + bx * UT_X_NUM, ut_z + bz * UT_Z_NUM);
-    return TRUE;
-}
-
-static int mFI_SetStructure21(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x >= 0 && ut_x < UT_X_NUM - 1 && ut_z >= 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-
-        for (i = 0; i < 2; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[0] = replace_item;
-        for (i = 0; i < 2; i++) {
-            mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + i, ut_z, destroy_item);
-            set_fg_table++;
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mFI_SetStructure22(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x >= 0 && ut_x < UT_X_NUM - 1 && ut_z >= 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-        int j;
-
-        for (i = 0; i < 2 * 2; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[0] = replace_item;
-        for (i = 0; i < 2; i++) {
-            for (j = 0; j < 2; j++) {
-                mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + j, ut_z + i, destroy_item);
-                set_fg_table++;
-            }
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mFI_SetStructure23(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x >= 0 && ut_x < UT_X_NUM - 1 && ut_z > 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-        int j;
-
-        for (i = 0; i < 2 * 3; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[2] = replace_item;
-        for (i = -1; i < 2; i++) {
-            for (j = 0; j < 2; j++) {
-                mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + j, ut_z + i, destroy_item);
-                set_fg_table++;
-            }
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mFI_SetStructure32(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x >= 0 && ut_x < UT_X_NUM - 1 && ut_z > 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-        int j;
-
-        for (i = 0; i < 3 * 2; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[1] = replace_item;
-        for (i = 0; i < 2; i++) {
-            for (j = -1; j < 2; j++) {
-                mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + j, ut_z + i, destroy_item);
-                set_fg_table++;
-            }
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mFI_SetStructure33(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item, int bx,
-                              int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x > 0 && ut_x < UT_X_NUM - 1 && ut_z > 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-        int j;
-
-        for (i = 0; i < 3 * 3; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[4] = replace_item;
-        for (i = -1; i < 2; i++) {
-            for (j = -1; j < 2; j++) {
-                mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + j, ut_z + i, destroy_item);
-                set_fg_table++;
-            }
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mFI_SetStructure33_main_back(mActor_name_t* fg_items_p, mActor_name_t replace_item, mActor_name_t fill_item,
-                                        int bx, int bz, int ut_x, int ut_z, int destroy_item) {
-    mActor_name_t* set_fg_table = l_set_fg_table;
-    int res = FALSE;
-
-    if (ut_x > 0 && ut_x < UT_X_NUM - 1 && ut_z > 0 && ut_z < UT_Z_NUM - 1) {
-        int i;
-        int j;
-
-        for (i = 0; i < 3 * 3; i++) {
-            set_fg_table[i] = fill_item;
-        }
-
-        set_fg_table[1] = replace_item;
-        for (i = -1; i < 2; i++) {
-            for (j = -1; j < 2; j++) {
-                mFI_SetStructure11(fg_items_p, *set_fg_table, fill_item, bx, bz, ut_x + j, ut_z + i, destroy_item);
-                set_fg_table++;
-            }
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
 static u8 l_structure_set_type[STRUCTURE_END - STRUCTURE_START] = {
-    0x0c, 0x0c, 0x0c, 0x0c, 0x05, 0x05, 0x05, 0x05, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x0c, 0x0a, 0x0a, 0x0a, 0x0a, 0x05, 0x05, 0x00, 0x06, 0x06, 0x05, 0x05, 0x06, 0x05,
-    0x00, 0x06, 0x06, 0x00, 0x00, 0x05, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x01, 0x05, 0x05, 0x04, 0x0a, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c
+    0x0E, 0x0E, 0x0E, 0x0E, 0x05, 0x05, 0x05, 0x05,
+    0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0A, 0x0A,
+    0x0A, 0x0A, 0x05, 0x05, 0x00, 0x06, 0x06, 0x05,
+    0x05, 0x06, 0x05, 0x00, 0x06, 0x06, 0x00, 0x00,
+    0x05, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x05, 0x05,
+    0x04, 0x0A, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E,
+    0x0E, 0x0E, 0x0E, 0x07, 0x07, 0x07, 0x0A, 0x0A,
+    0x07, 0x0C, 0x0A, 0x0A, 0x0D, 0x0A, 0x0A, 0x07,
+    0x08, 0x0A, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+    0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+    0x07, 0x00
 };
+
+#define mFI_SET_SKIP 0 // skip the unit
+#define mFI_SET_FILL 1 // put 'fill item' in the unit
+#define mFI_SET_MAIN 2 // put 'main item' in the unit
+
+static int mFI_ChangeFgStructure(mActor_name_t* fg_p, mActor_name_t structure_name, mActor_name_t fill_name, int bx, int bz, int ux, int uz, int destroy_flag, u8 type) {
+    static u8 l_chg_fg[][3 * 3] = {
+        // clang-format off
+        {
+            0x00, 0x00, 0x00,
+            0x00, 0x02, 0x00,
+            0x00, 0x00, 0x00,
+        },
+        {
+            0x00, 0x00, 0x00,
+            0x00, 0x02, 0x01,
+            0x00, 0x00, 0x00,
+        },
+        {
+            0x00, 0x00, 0x00,
+            0x00, 0x02, 0x01,
+            0x00, 0x01, 0x01,
+        },
+        {
+            0x00, 0x01, 0x01,
+            0x00, 0x02, 0x01,
+            0x00, 0x01, 0x01,
+        },
+        {
+            0x00, 0x00, 0x00,
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x01,
+        },
+        {
+            0x01, 0x01, 0x01,
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x01,
+        },
+        {
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x01,
+            0x01, 0x01, 0x01,
+        },
+        {
+            0x00, 0x00, 0x00,
+            0x00, 0x02, 0x00,
+            0x00, 0x00, 0x00,
+        },
+        {
+            0x00, 0x00, 0x00,
+            0x00, 0x02, 0x01,
+            0x00, 0x01, 0x01,
+        },
+        {
+            0x00, 0x01, 0x01,
+            0x00, 0x02, 0x01,
+            0x00, 0x01, 0x01,
+        },
+        {
+            0x01, 0x01, 0x01,
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x01,
+        },
+        {
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x01,
+            0x01, 0x01, 0x01,
+        },
+        {
+            0x01, 0x01, 0x00,
+            0x01, 0x02, 0x01,
+            0x00, 0x01, 0x01,
+        },
+        {
+            0x00, 0x01, 0x01,
+            0x01, 0x02, 0x01,
+            0x01, 0x01, 0x00,
+        },
+        // clang-format on
+    };
+
+    mActor_name_t* set_fg_table = l_set_fg_table;
+    u8* chg_fg = l_chg_fg[type];
+    int res = FALSE;
+
+    if (ux >= 0 && ux < UT_X_NUM - 1 && uz >= 0 && uz < UT_Z_NUM - 1) {
+        int i;
+        int j;
+
+        for (i = 0; i < 3 * 3; i++) {
+            switch (*chg_fg) {
+                case mFI_SET_FILL:
+                    set_fg_table[i] = fill_name;
+                    break;
+                case mFI_SET_MAIN:
+                    set_fg_table[i] = structure_name;
+                    break;
+                default:
+                    set_fg_table[i] = RSV_WALL_NO;
+                    break;
+            }
+
+            chg_fg++;
+        }
+
+        for (i = -1; i < 2; i++) {
+            for (j = -1; j < 2; j++) {
+                if (*set_fg_table != RSV_WALL_NO) {
+                    mFI_ChangeFgStructureUnit(fg_p, *set_fg_table, bx, bz, ux + j, uz + i, destroy_flag);
+                }
+
+                set_fg_table++;
+            }
+        }
+
+        res = TRUE;
+    }
+
+    return res;
+}
 
 typedef int (*mFI_SET_STRUCTURE_PROC)(mActor_name_t*, mActor_name_t, mActor_name_t, int, int, int, int, int);
 
 extern int mFI_SetFGStructure_common(mActor_name_t structure_name, int bx, int bz, int ut_x, int ut_z, int set_type) {
-    static mFI_SET_STRUCTURE_PROC set_structure[12] = {
-        &mFI_SetStructure11,          &mFI_SetStructure21, &mFI_SetStructure22,           &mFI_SetStructure23,
-        &mFI_SetStructure32,          &mFI_SetStructure33, &mFI_SetStructure33_main_back,
-
-        &mFI_SetStructure11,          &mFI_SetStructure22, &mFI_SetStructure23,           &mFI_SetStructure33,
-        &mFI_SetStructure33_main_back
-    };
-
     static mActor_name_t fill_name_table[mFI_SET_STRUCTURE_NUM] = { RSV_NO, EMPTY_NO };
     static int keep_status_table[mFI_SET_STRUCTURE_NUM] = { FALSE, TRUE };
 
+    mActor_name_t fill_name;
     mActor_name_t* fg_p = NULL;
     int keep_status = keep_status_table[set_type];
+    u8 structure_type;
     int res = FALSE;
 
     if (mFI_CheckFieldData() == TRUE) {
@@ -2675,10 +2669,10 @@ extern int mFI_SetFGStructure_common(mActor_name_t structure_name, int bx, int b
         }
 
         if (fg_p != NULL) {
-            u8 structure_type = l_structure_set_type[(int)(structure_name - STRUCTURE_START)];
+            structure_type = l_structure_set_type[(int)(structure_name - STRUCTURE_START)];
 
-            if (structure_type < 0xC) {
-                mActor_name_t fill_name = fill_name_table[set_type];
+            if (structure_type < 14) {
+                fill_name = fill_name_table[set_type];
 
                 if (set_type == mFI_SET_STRUCTURE_REMOVE) {
                     if (structure_type >= 7) {
@@ -2688,8 +2682,7 @@ extern int mFI_SetFGStructure_common(mActor_name_t structure_name, int bx, int b
                     }
                 }
 
-                res =
-                    (*set_structure[structure_type])(fg_p, structure_name, fill_name, bx, bz, ut_x, ut_z, keep_status);
+                res = mFI_ChangeFgStructure(fg_p, structure_name, fill_name, bx, bz, ut_x, ut_z, keep_status, structure_type);
 
                 if (res == TRUE) {
                     mFI_SetFGUpData();
@@ -2703,11 +2696,22 @@ extern int mFI_SetFGStructure_common(mActor_name_t structure_name, int bx, int b
 
 extern int mFI_CheckStructureArea(int ut_x, int ut_z, mActor_name_t structure_name, int structure_ut_x,
                                   int structure_ut_z) {
-    static s8 set_area_table[12][4] = { { 0, 0, 0, 0 },   { 0, 1, 0, 0 },   { 0, 1, 0, 1 },   { -1, 1, 0, 1 },
-                                        { -1, 1, -1, 1 }, { -1, 1, -1, 1 }, { 0, 0, 0, 0 },
-
-                                        { 0, 1, 0, 1 },   { -1, 1, -1, 1 }, { -1, 1, -1, 1 }, { 0, 0, 0, 0 },
-                                        { 0, 0, 0, 0 } };
+    static s8 set_area_table[14][4] = {
+        {0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x01, 0x00, 0x00},
+        {0x00, 0x01, 0x00, 0x01},
+        {0xFF, 0x01, 0x00, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x01, 0x00, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0xFF, 0x01, 0xFF, 0x01},
+        {0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00},
+    };
 
     int start_x = structure_ut_x;
     int start_z = structure_ut_z;
@@ -2720,7 +2724,7 @@ extern int mFI_CheckStructureArea(int ut_x, int ut_z, mActor_name_t structure_na
     if (ITEM_NAME_GET_TYPE(structure_name) == NAME_TYPE_STRUCT) {
         structure_type = l_structure_set_type[(int)(structure_name - STRUCTURE_START)];
 
-        if (structure_type < 12) {
+        if (structure_type < 14) {
             set_area = set_area_table[structure_type];
 
             start_x += set_area[0];
@@ -2740,6 +2744,42 @@ extern int mFI_CheckStructureArea(int ut_x, int ut_z, mActor_name_t structure_na
     }
 
     return FALSE;
+}
+
+extern mActor_name_t mFI_GetOtherFruit_cancel(mActor_name_t ignore_fruit) {
+    mActor_name_t other_fruit;
+    int removed = FALSE;
+    int fruit_num = 4;
+    u64 rng;
+    mActor_name_t town_fruit;
+    
+    if (ignore_fruit >= ITM_FOOD_APPLE && ignore_fruit <= ITM_FOOD_ORANGE && ignore_fruit != Save_Get(fruit)) {
+        removed = TRUE;
+        fruit_num = 3;
+    }
+
+    // this smells like a fakematch
+    rng = RANDOM(fruit_num);
+    other_fruit = rng;
+    other_fruit = other_fruit | ITM_FOOD_START;
+    town_fruit = Save_Get(fruit);
+    if (other_fruit >= town_fruit) {
+        other_fruit++;
+
+        if (removed == TRUE && other_fruit >= ignore_fruit) {
+            other_fruit++;
+        }
+    } else {
+        if (removed == TRUE && other_fruit >= ignore_fruit) {
+            other_fruit++;
+
+            if (other_fruit >= town_fruit) {
+                other_fruit++;
+            }
+        }
+    }
+
+    return other_fruit;
 }
 
 /*
@@ -2788,7 +2828,7 @@ extern int mFI_CheckFGNpcOn(mActor_name_t item) {
                     (item == TREE_1000BELLS_SAPLING) || (item == TREE_10000BELLS_SAPLING) ||
                     (item == TREE_30000BELLS_SAPLING) || (item == TREE_100BELLS_SAPLING) ||
                     (item == TREE_PALM_SAPLING) || (item == CEDAR_TREE_SAPLING) || (item == GOLD_TREE_SAPLING) ||
-                    (item >= FLOWER_LEAVES_PANSIES0 && item <= FLOWER_TULIP2) || (item >= GRASS_A && item <= GRASS_C)) {
+                    IS_ITEM_FLOWER(item) || (item >= GRASS_A && item <= GRASS_C)) {
                     res = TRUE;
                 }
 
@@ -3309,6 +3349,11 @@ extern void mFI_FieldMove(xyz_t player_pos) {
     mFI_SetPlayerBlockKind(player_pos);
     mFI_SetShell(player_pos);
     mMsr_SetMushroom(player_pos);
+
+    if (mFI_CheckPlayerWade(mFI_WADE_START) == TRUE) {
+        mISL_MoveNowPlayerAction();
+    }
+
     mFRm_save_data_check();
 
     if (mFI_CheckFieldData() == TRUE) {
@@ -3351,6 +3396,11 @@ extern void mFI_PrintFgAttr(gfxprint_t* gfxprint) {
         attribute = mCoBG_Wpos2BgAttribute_Original(player->actor_class.world.position);
 
         gfxprint_color(gfxprint, 200, 200, 250, 255);
+
+        if (Common_Get(cur_island_house_p) != NULL && mPr_CheckCmpPersonalID(&Common_Get(cur_island_house_p)->ownerID, &Now_Private->player_ID) == FALSE) {
+            gfxprint_color(gfxprint, 225, 0, 0, 255);
+        }
+
         gfxprint_locate8x8(gfxprint, 3, 8);
         gfxprint_printf(gfxprint, "%d,%d - %4x - %d - %d", ut_x, ut_z, item, attribute, plant);
     }
@@ -3473,6 +3523,10 @@ extern int mFI_SetTreasure(int* selected_bx, int* selected_bz, mActor_name_t ite
 }
 
 static int l_mFI_climate;
+
+extern void mFI_InitClimate(void) {
+    l_mFI_climate = mFI_CLIMATE_0;
+}
 
 extern int mFI_GetClimate() {
     switch (l_mFI_climate) {

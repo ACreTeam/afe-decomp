@@ -524,7 +524,7 @@ extern int mNT_check_unknown(mActor_name_t item_no);
 #define IS_ITEM_ROCK(item) (((item) >= ROCK_A && (item) <= ROCK_E) || ((item) >= MONEY_ROCK_A && (item) <= MONEY_ROCK_E) || (item) == MONEY_FLOWER_SEED)
 #define IS_ITEM_RST_STONE(item) ((item) >= RST_ROCK_A && (item) <= RST_ROCK_E)
 #define IS_ITEM_CRACKED_STONE(item) ((item) >= C_ROCK_A && (item) <= C_ROCK_E)
-#define IS_ITEM_RESET_HOLE(item) ((item) >= RST_HOLE_A && (item) <= RST_HOLE_E)
+#define IS_ITEM_RST_HOLE(item) ((item) >= RST_HOLE_A && (item) <= RST_HOLE_E)
 
 #define IS_ITEM_GRASS(item) ((item) >= GRASS_A && (item) <= GRASS_C) /* aka IS_ITEM_WEED */
 
@@ -3947,7 +3947,7 @@ enum ftr1_e {
 #define DUMMY_STATION 0xF100
 #define DUMMY_POLICE_STATION 0xF101
 #define DUMMY_RESERVE 0xF102
-#define DUMMY_SHRINE 0xF103
+#define DUMMY_SHRINE 0xF116
 #define DUMMY_BROKER_SHOP 0xF104
 #define DUMMY_BUGGY 0xF105
 #define DUMMY_CAR 0xF106
