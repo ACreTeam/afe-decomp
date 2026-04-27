@@ -14,7 +14,7 @@ extern "C" {
 
 #define mMsg_MSG_BUF_MAX 1536
 #define mMsg_MSG_BUF_SIZE 1600
-#define mMsg_FREE_STRING_LEN 16
+#define mMsg_FREE_STRING_LEN 66
 #define mMsg_MAIL_STRING_LEN 132
 #define mMsg_MAX_LINE 4
 

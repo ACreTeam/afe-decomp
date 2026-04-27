@@ -154,11 +154,11 @@ extern void mLd_CopyLandName(u8* dst, u8* src) {
  * @return The length of the new town name with "Mura" (むら/村) added.
  */
 extern int mLd_AddMuraString(u8* name, int name_len) {
-    u8 buf[16];
+    u8 buf[mMsg_FREE_STRING_LEN];
     int size;
 
-    mString_Load_StringFromRom(buf, 16, 484); /* TODO: str_no should probably be enum or something */
-    size = mMsg_Get_Length_String(buf, 16);
+    mString_Load_StringFromRom(buf, mMsg_FREE_STRING_LEN, 484); /* TODO: str_no should probably be enum or something */
+    size = mMsg_Get_Length_String(buf, mMsg_FREE_STRING_LEN);
     mem_copy(name + name_len, buf, size);
 
     return size + name_len;
@@ -177,7 +177,7 @@ extern int mLd_GetLandNameStringAddMura(u8* buf) {
     mem_copy(buf, name, size);
     mura_size = mLd_AddMuraString(buf, size);
 
-    for (i = mura_size; i < LAND_NAME_MURA_SIZE; i++) {
+    for (i = mura_size; i < (mMsg_FREE_STRING_LEN + LAND_NAME_SIZE); i++) {
         buf[i] = CHAR_SPACE;
     }
 
@@ -190,12 +190,12 @@ extern int mLd_GetLandNameStringAddMura(u8* buf) {
  * @param free_str_no The number of the free string.
  */
 extern void mLd_SetFreeStrLandMuraName(u8* name, int free_str_no) {
-    u8 str[16];
+    u8 str[mMsg_FREE_STRING_LEN + LAND_NAME_SIZE];
     int name_len;
     int mura_len;
     int i;
 
-    for (i = 0; i < LAND_NAME_MURA_SIZE; i++) {
+    for (i = 0; i < (mMsg_FREE_STRING_LEN + LAND_NAME_SIZE); i++) {
         str[i] = CHAR_SPACE;
     }
 
@@ -250,7 +250,9 @@ extern int mLd_PlayerManKindCheck() {
  * @return TRUE if the town name and ID match the current town, FALSE otherwise.
  */
 extern int mLd_CheckThisLand(u8* other_name, u16 other_id) {
-    return mLd_CheckCmpLand(other_name, other_id, Save_Get(land_info.name), Save_Get(land_info.id));
+    mLd_land_info_c* land_info = Save_GetPointer(land_info);
+
+    return mLd_CheckCmpLand(other_name, other_id, land_info->name, land_info->id);
 }
 
 /**
