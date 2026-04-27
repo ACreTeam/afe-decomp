@@ -440,7 +440,7 @@ config.libs = [
         "objects": [
             Object(Matching, "Famicom/ks_nes_core.cpp"),
             Object(NonMatching, "Famicom/ks_nes_draw.cpp"),
-            Object(NonMatching, "Famicom/famicom.cpp"),
+            Object(Equivalent, "Famicom/famicom.cpp"), # std::strstr appears too early in splits
             Object(Matching, "Famicom/famicom_nesinfo.cpp"),
         ],
     },

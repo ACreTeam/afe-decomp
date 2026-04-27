@@ -21,7 +21,7 @@ int strncmp(const char *s1, const char *s2, size_t n);
 char *strncat(char *dest, const char *src, size_t n);
 char *strchr(const char *str, int c);
 char* strrchr(const char* str, int chr );
-char* strstr(const char* str, const char* pat);
+char* strstr(char* str, const char* pat);
 char* strcat(char* dst, const char* src);
 
 #ifdef __cplusplus
