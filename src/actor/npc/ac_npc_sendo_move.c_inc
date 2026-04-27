@@ -425,7 +425,7 @@ static int aSEN_chk_exist_island_data_in_ram() {
 static void aSEN_set_island_info_for_agb(Island_c* dst, Island_c* src) {
     bcopy(src, dst, sizeof(Island_c));
     mAGrw_SpoilKabuIsland(dst);
-    mISL_gc_to_agb(Common_GetPointer(agb_island), dst);
+    // mISL_gc_to_agb(Common_GetPointer(agb_island), dst);
 }
 
 static void aSEN_setup_pl_ride_on(NPC_SENDO_ACTOR* sendo) {
@@ -644,39 +644,39 @@ static void aSEN_trans_data_for_agb_start_wait_talk_proc(NPC_SENDO_ACTOR* sendo,
 static void aSEN_trans_data_for_agb_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
 
-    switch (mGcgba_Send((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully sent to GBA */
-            aSEN_agb_trans_se_proc(sendo, FALSE);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3083));
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_Set_ForceNext(msg_p);
-            // bcopy(Common_GetPointer(transfer_island), Save_GetPointer(island), sizeof(Island_c));
-            aSEN_setup_pl_ride_on(sendo);
-            mGcgba_EndComm();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            break;
-        }
+    // switch (mGcgba_Send((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
+    //     case GBA2_GBA_STATE_SUCCESS: {
+    //         /* Successfully sent to GBA */
+    //         aSEN_agb_trans_se_proc(sendo, FALSE);
+    //         mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3083));
+    //         mMsg_Unset_LockContinue(msg_p);
+    //         mMsg_Set_ForceNext(msg_p);
+    //         // bcopy(Common_GetPointer(transfer_island), Save_GetPointer(island), sizeof(Island_c));
+    //         aSEN_setup_pl_ride_on(sendo);
+    //         mGcgba_EndComm();
+    //         aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
+    //         break;
+    //     }
 
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Sending data to GBA */
-            aSEN_agb_trans_se_proc(sendo, TRUE);
-            break;
-        }
+    //     case GBA2_GBA_STATE_TRANSMITTING: {
+    //         /* Sending data to GBA */
+    //         aSEN_agb_trans_se_proc(sendo, TRUE);
+    //         break;
+    //     }
 
-        default: {
-            /* Failed to send data to GBA */
-            aSEN_agb_trans_se_proc(sendo, FALSE);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x308A));
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_Set_ForceNext(msg_p);
-            // bcopy(Save_GetPointer(island), Common_GetPointer(transfer_island), sizeof(Island_c));
-            sendo->next_action = 2;
-            mGcgba_EndComm();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            break;
-        }
-    }
+    //     default: {
+    //         /* Failed to send data to GBA */
+    //         aSEN_agb_trans_se_proc(sendo, FALSE);
+    //         mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x308A));
+    //         mMsg_Unset_LockContinue(msg_p);
+    //         mMsg_Set_ForceNext(msg_p);
+    //         // bcopy(Save_GetPointer(island), Common_GetPointer(transfer_island), sizeof(Island_c));
+    //         sendo->next_action = 2;
+    //         mGcgba_EndComm();
+    //         aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
+    //         break;
+    //     }
+    // }
 }
 
 static void aSEN_trans_prg_for_agb_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
