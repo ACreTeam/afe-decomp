@@ -1341,7 +1341,7 @@ actor/ac_uki.c:
 	.rodata     start:0x00005710 end:0x000057B8
 	.data       start:0x00028540 end:0x000289A0
 
-bg_cherry_item.c:
+bg_item/bg_cherry_item.c:
 	.text       start:0x00160E18 end:0x00161080
 	.text       start:0x00161080 end:0x001613F4
 	.text       start:0x001613F4 end:0x00168114
@@ -1353,7 +1353,7 @@ bg_cherry_item.c:
 	.data       start:0x000289A0 end:0x0002BBF8
 	.bss        start:0x000EA498 end:0x000EA928
 
-bg_item.c:
+bg_item/bg_item.c:
 	.text       start:0x00168248 end:0x00168498
 	.text       start:0x00168498 end:0x0016880C
 	.text       start:0x0016880C end:0x0016F52C
@@ -1365,7 +1365,7 @@ bg_item.c:
 	.data       start:0x0002BBF8 end:0x0002EE30
 	.bss        start:0x000EA928 end:0x000EADB8
 
-bg_police_item.c:
+bg_item/bg_police_item.c:
 	.text       start:0x0016F660 end:0x0016F660
 	.text       start:0x0016F660 end:0x0016FA14
 	.text       start:0x0016FA14 end:0x0016FBB8
@@ -1373,12 +1373,12 @@ bg_police_item.c:
 	.data       start:0x0002EE30 end:0x0002F078
 	.bss        start:0x000EADB8 end:0x000EADD8
 
-bg_post_item.c:
+bg_item/bg_post_item.c:
 	.text       start:0x0016FBB8 end:0x0016FD24
 	.rodata     start:0x00005900 end:0x00005908
 	.data       start:0x0002F078 end:0x0002F0B0
 
-bg_winter_item.c:
+bg_item/bg_winter_item.c:
 	.text       start:0x0016FD24 end:0x00170020
 	.text       start:0x00170020 end:0x00170394
 	.text       start:0x00170394 end:0x001770B4
@@ -1390,7 +1390,7 @@ bg_winter_item.c:
 	.data       start:0x0002F0B0 end:0x00032308
 	.bss        start:0x000EADD8 end:0x000EB268
 
-bg_xmas_item.c:
+bg_item/bg_xmas_item.c:
 	.text       start:0x001771E8 end:0x001774CC
 	.text       start:0x001774CC end:0x00177840
 	.text       start:0x00177840 end:0x0017E560
