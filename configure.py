@@ -931,7 +931,7 @@ config.libs = [
             Object(NonMatching, "game/m_bank_ovl.c"),
             Object(NonMatching, "game/m_banti.c"),
             Object(Matching, "game/m_bg_item.c"),
-            Object(Matching, "game/m_bg_tex.c"),
+            Object(NonMatching, "game/m_bg_tex.c"),
             Object(NonMatching, "game/m_bgm.c"),
             Object(NonMatching, "game/m_birthday_ovl.c"),
             Object(NonMatching, "game/m_board_ovl.c"),
