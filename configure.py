@@ -1198,6 +1198,7 @@ N64_SDK_files = [
 OWNER = "decompals"
 REPO = "ultralib"
 BRANCH = "main"
+N64_SDK_MTIME = 946684800  # 2000-01-01; keeps downloaded headers older than cached objects.
 
 
 def fetch_file_raw(path):
@@ -1231,6 +1232,9 @@ for file_path in N64_SDK_files:
             print(f"Failed to fetch {file_path}: HTTP {e.code} {e.reason}")
         except Exception as e:
             print(f"Error fetching {file_path}: {e}")
+
+    if os.path.exists(local_path):
+        os.utime(local_path, (N64_SDK_MTIME, N64_SDK_MTIME))
 
 
 # Optional callback to adjust link order. This can be used to add, remove, or reorder objects.
