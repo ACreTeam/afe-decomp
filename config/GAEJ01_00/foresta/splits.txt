@@ -1402,39 +1402,39 @@ bg_item/bg_xmas_item.c:
 	.data       start:0x00032308 end:0x000355E8
 	.bss        start:0x000EB268 end:0x000EB6F8
 
-ef_effect_control.c:
+effect/ef_effect_control.c:
 	.text       start:0x0017E8C0 end:0x0017F3C4
 	.text       start:0x0017F3C4 end:0x001800AC
 	.rodata     start:0x00005A48 end:0x00005AA8
 	.data       start:0x000355E8 end:0x000358D0
 	.bss        start:0x000EB6F8 end:0x000EDBC0
 
-ef_lamp_light.c:
+effect/ef_lamp_light.c:
 	.text       start:0x001800AC end:0x0018037C
 	.rodata     start:0x00005AA8 end:0x00005AB8
 	.data       start:0x000358D0 end:0x00035928
 
-ef_room_sunshine.c:
+effect/ef_room_sunshine.c:
 	.text       start:0x0018037C end:0x00180BD4
 	.rodata     start:0x00005AB8 end:0x00005B00
 	.data       start:0x00035928 end:0x00035950
 
-ef_room_sunshine_police.c:
+effect/ef_room_sunshine_police.c:
 	.text       start:0x00180BD4 end:0x001813DC
 	.rodata     start:0x00005B00 end:0x00005B50
 	.data       start:0x00035950 end:0x00035978
 
-ef_room_sunshine_posthouse.c:
+effect/ef_room_sunshine_posthouse.c:
 	.text       start:0x001813DC end:0x00181B54
 	.rodata     start:0x00005B50 end:0x00005B98
 	.data       start:0x00035978 end:0x000359A0
 
-ef_room_sunshine_museum.c:
+effect/ef_room_sunshine_museum.c:
 	.text       start:0x00181B54 end:0x0018238C
 	.rodata     start:0x00005B98 end:0x00005BE8
 	.data       start:0x000359A0 end:0x000359C8
 
-ef_room_sunshine_minsect.c:
+effect/ef_room_sunshine_minsect.c:
 	.text       start:0x0018238C end:0x0018307C
 	.rodata     start:0x00005BE8 end:0x00005C38
 	.data       start:0x000359C8 end:0x000359F0
