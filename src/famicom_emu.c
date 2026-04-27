@@ -123,7 +123,7 @@ extern void famicom_emu_init(GAME* game) {
     u32 fbWidth;
     u32 efbHeight;
     u32 xfbHeight;
-    u32 numXfbLines;
+    u16 numXfbLines;
 
     famicom_done = FALSE;
     famicom_done_countdown = 0;
@@ -154,7 +154,7 @@ extern void famicom_emu_init(GAME* game) {
     efbHeight = render->efbHeight;
     xfbHeight = render->xfbHeight;
     numXfbLines = GXGetNumXfbLines(efbHeight, GXGetYScaleFactor(efbHeight, xfbHeight));
-    freeXfbSize = numXfbLines * (u16)ALIGN_NEXT(fbWidth, 16) * sizeof(u16);
+    freeXfbSize = (u16)ALIGN_NEXT(fbWidth, 16) * numXfbLines * sizeof(u16);
     DCInvalidateRange(freeXfbBase, freeXfbSize);
     my_alloc_init(game, freeXfbBase, freeXfbSize);
 

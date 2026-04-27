@@ -26,6 +26,7 @@ extern "C" {
 
 #define ANIMAL_NUM_MIN 5
 #define ANIMAL_NUM_MAX 15 /* Maximum number of villagers possible in town */
+#define ANIMAL_ISLAND_NUM PLAYER_NUM
 #define ANIMAL_MEMORY_NUM 7
 #define ANIMAL_CATCHPHRASE_LEN 4
 #define ANIMAL_HP_MAIL_NUM PLAYER_NUM
