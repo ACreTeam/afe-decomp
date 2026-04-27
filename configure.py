@@ -463,6 +463,7 @@ config.libs = [
         [
             Object(NonMatching, "c_keyframe.c"),
             Object(Matching, "evw_anime.c"),
+            Object(NonMatching, "f_furniture.c"),
             Object(NonMatching, "famicom_emu.c"),
             Object(Matching, "first_game.c"),
             Object(Matching, "game.c"),

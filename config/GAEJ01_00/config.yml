@@ -180,6 +180,240 @@ modules:
     header_type: none
     custom_type: pal16
 
+  - symbol: int_nog_kamakura_off_pal
+    binary: assets/int_nog_kamakura_off_pal.bin
+    header: assets/int_nog_kamakura_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kamakura_on_pal
+    binary: assets/int_nog_kamakura_on_pal.bin
+    header: assets/int_nog_kamakura_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kouban_on_pal
+    binary: assets/int_nog_kouban_on_pal.bin
+    header: assets/int_nog_kouban_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kouban_off_pal
+    binary: assets/int_nog_kouban_off_pal.bin
+    header: assets/int_nog_kouban_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_museum_off_pal
+    binary: assets/int_nog_museum_off_pal.bin
+    header: assets/int_nog_museum_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_museum_on_pal
+    binary: assets/int_nog_museum_on_pal.bin
+    header: assets/int_nog_museum_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_a_pal
+    binary: assets/int_nog_station1_a_pal.bin
+    header: assets/int_nog_station1_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_b_pal
+    binary: assets/int_nog_station1_b_pal.bin
+    header: assets/int_nog_station1_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_c_pal
+    binary: assets/int_nog_station1_c_pal.bin
+    header: assets/int_nog_station1_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_d_pal
+    binary: assets/int_nog_station1_d_pal.bin
+    header: assets/int_nog_station1_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_e_pal
+    binary: assets/int_nog_station1_e_pal.bin
+    header: assets/int_nog_station1_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_a_pal
+    binary: assets/int_nog_station2_a_pal.bin
+    header: assets/int_nog_station2_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_b_pal
+    binary: assets/int_nog_station2_b_pal.bin
+    header: assets/int_nog_station2_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_c_pal
+    binary: assets/int_nog_station2_c_pal.bin
+    header: assets/int_nog_station2_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_d_pal
+    binary: assets/int_nog_station2_d_pal.bin
+    header: assets/int_nog_station2_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_e_pal
+    binary: assets/int_nog_station2_e_pal.bin
+    header: assets/int_nog_station2_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_a_pal
+    binary: assets/int_nog_station3_a_pal.bin
+    header: assets/int_nog_station3_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_b_pal
+    binary: assets/int_nog_station3_b_pal.bin
+    header: assets/int_nog_station3_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_c_pal
+    binary: assets/int_nog_station3_c_pal.bin
+    header: assets/int_nog_station3_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_d_pal
+    binary: assets/int_nog_station3_d_pal.bin
+    header: assets/int_nog_station3_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_e_pal
+    binary: assets/int_nog_station3_e_pal.bin
+    header: assets/int_nog_station3_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_shop1_on_pal
+    binary: assets/int_nog_shop1_on_pal.bin
+    header: assets/int_nog_shop1_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_shop1_off_pal
+    binary: assets/int_nog_shop1_off_pal.bin
+    header: assets/int_nog_shop1_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_uranai_off_pal
+    binary: assets/int_nog_uranai_off_pal.bin
+    header: assets/int_nog_uranai_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_uranai_on_pal
+    binary: assets/int_nog_uranai_on_pal.bin
+    header: assets/int_nog_uranai_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yamishop_off_pal
+    binary: assets/int_nog_yamishop_off_pal.bin
+    header: assets/int_nog_yamishop_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yamishop_on_pal
+    binary: assets/int_nog_yamishop_on_pal.bin
+    header: assets/int_nog_yamishop_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yubin_on_pal
+    binary: assets/int_nog_yubin_on_pal.bin
+    header: assets/int_nog_yubin_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yubin_off_pal
+    binary: assets/int_nog_yubin_off_pal.bin
+    header: assets/int_nog_yubin_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tailor_on_pal
+    binary: assets/int_tak_tailor_on_pal.bin
+    header: assets/int_tak_tailor_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tailor_off_pal
+    binary: assets/int_tak_tailor_off_pal.bin
+    header: assets/int_tak_tailor_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: radio_pal$6905
+    binary: assets/radio_pal.bin
+    header: assets/radio_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_yaz_fish_trophy_pal
+    binary: assets/int_yaz_fish_trophy_pal.bin
+    header: assets/int_yaz_fish_trophy_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tent_on_pal
+    binary: assets/int_tak_tent_on_pal.bin
+    header: assets/int_tak_tent_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tent_off_pal
+    binary: assets/int_tak_tent_off_pal.bin
+    header: assets/int_tak_tent_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_yaz_fish_trophy2_pal
+    binary: assets/int_yaz_fish_trophy2_pal.bin
+    header: assets/int_yaz_fish_trophy2_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_a_pal
+    binary: assets/int_nog_flower_a_pal.bin
+    header: assets/int_nog_flower_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_b_pal
+    binary: assets/int_nog_flower_b_pal.bin
+    header: assets/int_nog_flower_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_c_pal
+    binary: assets/int_nog_flower_c_pal.bin
+    header: assets/int_nog_flower_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
 - object: files/forestd.rel
   hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb
   symbols: config/GAEJ01_00/forestd/symbols.txt
