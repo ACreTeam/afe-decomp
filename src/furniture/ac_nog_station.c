@@ -22,7 +22,7 @@ static cKF_Animation_R_c* fNSN_station_anime_table[] = {
 
 static void fNSN_ct(FTR_ACTOR* ftr_actor, u8* data) {
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
-    int station_idx = (ftr_actor->name - 0x42A) & 15;
+    int station_idx = (ftr_actor->name - FTR_NOG_STATION00) & 15;
 
     cKF_SkeletonInfo_R_ct(keyframe, fNSN_station_skel_table[station_idx], fNSN_station_anime_table[station_idx],
                           ftr_actor->joint, ftr_actor->morph);
@@ -114,7 +114,7 @@ static void fNSN_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* 
     int mtx_idx = game->frame_counter & 1;
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
     Mtx* mtx = ftr_actor->skeleton_mtx[mtx_idx];
-    int station_idx = (ftr_actor->name - 0x42A) & 15;
+    int station_idx = (ftr_actor->name - FTR_NOG_STATION00) & 15;
     u16* pal = fMSM_palette_table[station_idx];
 
     OPEN_DISP(game->graph);

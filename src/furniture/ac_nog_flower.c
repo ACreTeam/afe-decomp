@@ -46,7 +46,7 @@ static fNLF_model_info_c fNFL_model_data[] = {
 };
 
 static void fNFL_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    int idx = ftr_actor->name - 0x4DE;
+    int idx = ftr_actor->name - FTR_NOG_FLOWER0;
     Gfx* model0 = fNFL_model_data[idx].model0;
     Gfx* model1 = fNFL_model_data[idx].model1;
     u16* pal = fNFL_model_data[idx].pal;

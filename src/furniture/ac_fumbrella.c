@@ -115,7 +115,7 @@ static void aFU_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* d
         Gfx* gfx;
         OPEN_DISP(game->graph);
 
-        idx = ((ftr_actor->name - 0x342) & 0x1F);
+        idx = ((ftr_actor->name - FTR_FUMBRELLA00) & 0x1F);
 
         gSPDisplayList(NEXT_POLY_OPA_DISP, aFU_data[idx].opaque);
 

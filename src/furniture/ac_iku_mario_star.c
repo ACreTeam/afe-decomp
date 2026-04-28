@@ -10,7 +10,7 @@ static void fIMS_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* 
         }
 
         if (ftr_actor->switch_changed_flag && ftr_actor->switch_bit == TRUE) {
-            aMR_SameFurnitureSwitchOFF(0x4C7);
+            aMR_SameFurnitureSwitchOFF(FTR_IKU_MARIO_STAR);
             ftr_actor->switch_bit = TRUE;
         }
     }

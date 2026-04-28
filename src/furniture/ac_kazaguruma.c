@@ -25,7 +25,7 @@ static Gfx* fKZ_model_table[] = {
 };
 
 static void fKZ_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    int windmill_idx = (ftr_actor->name - 0x45B) & 7;
+    int windmill_idx = (ftr_actor->name - FTR_KAZAGURUMA0) & 7;
 
     OPEN_DISP(game->graph);
 

@@ -3,24 +3,17 @@ static void fHF_ct(FTR_ACTOR* ftr_actor, u8* data) {
 }
 
 static void fHF_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    (*Common_Get(clip).my_room_clip->famicom_emu_common_move_proc)(ftr_actor, my_room_actor, game, 20, 20); // FDS LoZ
+    (*Common_Get(clip).my_room_clip->famicom_emu_common_move_proc)(ftr_actor, my_room_actor, game, 20, -1);
 }
 
-extern u8 int_tak_nes_ds_tex_rgb_i4[];
-extern u16 int_tak_nes_cl_pal[];
-extern Gfx int_tak_nes01_on_model[];
-extern Gfx int_tak_nes01_onT_model[];
-extern Gfx int_tak_nes01_game_on_model[];
+extern Gfx int_kob_disksystem8_on_model[];
+extern Gfx int_kob_disksystem8_onT_model[];
 
 static void fHF_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
     OPEN_DISP(game->graph);
 
-    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, int_tak_nes_ds_tex_rgb_i4);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, int_tak_nes_cl_pal);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, int_tak_nes01_on_model);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, int_tak_nes01_onT_model);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, int_tak_nes01_game_on_model);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, int_kob_disksystem8_on_model);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, int_kob_disksystem8_onT_model);
 
     CLOSE_DISP(game->graph);
 }

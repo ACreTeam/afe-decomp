@@ -28,7 +28,7 @@ static cKF_Animation_R_c* fNBC_balloon_anime_table[] = {
 
 static void fNBC_ct(FTR_ACTOR* ftr_actor, u8* data) {
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
-    int balloon_no = (ftr_actor->name - 0x3FC) & 7;
+    int balloon_no = (ftr_actor->name - FTR_NOG_BALLOON_COMMON0) & 7;
 
     cKF_SkeletonInfo_R_ct(keyframe, fNBC_balloon_skel_table[balloon_no], fNBC_balloon_anime_table[balloon_no],
                           ftr_actor->joint, ftr_actor->morph);

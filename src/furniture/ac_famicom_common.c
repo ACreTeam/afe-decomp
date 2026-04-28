@@ -83,7 +83,7 @@ static void fFC_ct(FTR_ACTOR* ftr_actor, u8* data) {
 }
 
 static void fFC_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    int ftr_idx = (ftr_actor->name >= 0x36A && ftr_actor->name <= 0x37D) ? (ftr_actor->name - 0x36A) : 0;
+    int ftr_idx = (ftr_actor->name >= FTR_FAMICOM_COMMON00 && ftr_actor->name <= FTR_KOB_DISKSYSTEM8) ? (ftr_actor->name - FTR_FAMICOM_COMMON00) : 0;
 
     (*Common_Get(clip).my_room_clip->famicom_emu_common_move_proc)(
         ftr_actor, my_room_actor, game, fFC_game_table[ftr_idx], fFC_agb_game_table[ftr_idx]);
@@ -97,7 +97,7 @@ extern Gfx int_tak_nes01_game_on_model[];
 static int fFC_reference_model_idx_table[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static void fFC_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    int ftr_idx = (ftr_actor->name >= 0x36A && ftr_actor->name <= 0x37D) ? (ftr_actor->name - 0x36A) : 0;
+    int ftr_idx = (ftr_actor->name >= FTR_FAMICOM_COMMON00 && ftr_actor->name <= FTR_KOB_DISKSYSTEM8) ? (ftr_actor->name - FTR_FAMICOM_COMMON00) : 0;
     u8* tex_p = fFC_texture_table[ftr_idx];
     u16* pal_p = fFC_palette_table[ftr_idx];
 

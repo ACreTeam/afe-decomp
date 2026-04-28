@@ -40,7 +40,7 @@ static Gfx* fGI_gfx_table[] = {
 };
 
 static void fGI_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
-    int tool_idx = (ftr_actor->name - 0x44F) & 3;
+    int tool_idx = (ftr_actor->name - FTR_GOLD_ITEM0) & 3;
 
     OPEN_DISP(game->graph);
 
@@ -48,7 +48,7 @@ static void fGI_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* d
     gSPDisplayList(NEXT_POLY_OPA_DISP, fGI_mat_table[tool_idx]);
     gSPDisplayList(NEXT_POLY_OPA_DISP, fGI_gfx_table[tool_idx]);
 
-    if (ftr_actor->name == 0x452) {
+    if (ftr_actor->name == FTR_GOLD_ITEM3) {
         gSPMatrix(NEXT_POLY_XLU_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(NEXT_POLY_XLU_DISP, obj_rod2T_mat_model);
         gSPDisplayList(NEXT_POLY_XLU_DISP, obj_rod2T_gfx_model);
