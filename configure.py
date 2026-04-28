@@ -869,7 +869,7 @@ config.libs = [
             Object(Matching, "effect/ef_resetbreak_piece.c"),
             Object(Matching, "effect/ef_reset_hole.c"),
             Object(Matching, "effect/ef_room_sunshine.c"),
-            Object(NonMatching, "effect/ef_room_sunshine_minsect.c"),
+            Object(Matching, "effect/ef_room_sunshine_minsect.c"),
             Object(Matching, "effect/ef_room_sunshine_museum.c"),
             Object(Matching, "effect/ef_room_sunshine_police.c"),
             Object(Matching, "effect/ef_room_sunshine_posthouse.c"),
