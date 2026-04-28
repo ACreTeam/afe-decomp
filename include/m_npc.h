@@ -114,6 +114,43 @@ enum {
     mNpc_PATIENCE_NUM
 };
 
+enum {
+    mNpc_SPECIES_CAT,
+    mNpc_SPECIES_ELEPHANT,
+    mNpc_SPECIES_SHEEP,
+    mNpc_SPECIES_BEAR,
+    mNpc_SPECIES_DOG,
+    mNpc_SPECIES_SQUIRREL,
+    mNpc_SPECIES_RABBIT,
+    mNpc_SPECIES_DUCK,
+    mNpc_SPECIES_HIPPO,
+    mNpc_SPECIES_WOLF,
+    mNpc_SPECIES_MOUSE,
+    mNpc_SPECIES_PIG,
+    mNpc_SPECIES_CHICKEN,
+    mNpc_SPECIES_BULL,
+    mNpc_SPECIES_COW,
+    mNpc_SPECIES_BIRD,
+    mNpc_SPECIES_FROG,
+    mNpc_SPECIES_CROCODILE,
+    mNpc_SPECIES_GOAT,
+    mNpc_SPECIES_TIGER,
+    mNpc_SPECIES_ANTEATER,
+    mNpc_SPECIES_KOALA,
+    mNpc_SPECIES_HORSE,
+    mNpc_SPECIES_OCTOPUS,
+    mNpc_SPECIES_LION,
+    mNpc_SPECIES_CHILD_BEAR,
+    mNpc_SPECIES_RHINO,
+    mNpc_SPECIES_GORILLA,
+    mNpc_SPECIES_OSTRICH,
+    mNpc_SPECIES_KANGAROO,
+    mNpc_SPECIES_BIG_BIRD,
+    mNpc_SPECIES_PENGUIN,
+
+    mNpc_SPECIES_NUM
+};
+
 /* sizeof(Anmremail_c) == 0x16 */
 typedef struct animal_remail_s {
     lbRTC_ymd_c date;             /* date sent */
