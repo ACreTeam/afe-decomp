@@ -279,6 +279,7 @@ extern int mFI_CheckInJustIslandOutdoor();
 extern u32 mFI_CheckPlayerBlockInfo();
 extern mActor_name_t* mFI_BkNumtoUtFGTop(int bx, int bz);
 extern mActor_name_t* mFI_BkNum2UtFGTop_layer(int bx, int bz, int layer);
+extern mActor_name_t* mFI_BkNum2UtFGTop_field(int bx, int bz);
 extern mActor_name_t* mFI_UtNum2UtFG(int ut_x, int ut_z);
 extern mActor_name_t* mFI_GetUnitFG(xyz_t wpos);
 extern mActor_name_t* mFI_GetUnitFG2(xyz_t wpos);
