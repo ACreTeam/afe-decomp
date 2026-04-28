@@ -13,7 +13,7 @@
 #include "m_common_data.h"
 
 static u8 l_museum_name_str[PLAYER_NAME_LEN] = {
-    CHAR_M, CHAR_u, CHAR_s, CHAR_e, CHAR_u, CHAR_m
+    CHAR_PP_025, CHAR_PP_007, CHAR_PP_248, CHAR_PP_017, CHAR_PP_005, CHAR_PP_195
 }; /* "Museum  " */
 
 static u8 present_name[mIN_ITEM_NAME_LEN]; /* TODO: reversed bss order */
