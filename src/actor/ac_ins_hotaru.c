@@ -227,6 +227,14 @@ static void aIHT_fuwafuwa(aINS_INSECT_ACTOR* insect, int fuwafuwa_flag) {
     insect->tools_actor.actor_class.position_speed.y = (insect->tools_actor.actor_class.home.position.y + ofs_y) - pos_y;
 }
 
+// Hack to get 35.0f to show after 1.0f but before 15.0f & 25.0f
+#ifdef MUST_MATCH
+extern void float_func(float f);
+FORCESTRIP static float order_floats() {
+    return (fabsf(1.0f) + fabsf(35.0f));
+}
+#endif
+
 /**
  * Handles the firefly's light effect processing.
  * Controls light radius, color and transitions.

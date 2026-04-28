@@ -94,6 +94,9 @@ extern void aIKB_actor_init(ACTOR* actorx, GAME* game) {
         case aINS_INSECT_TYPE_GIANT_BEETLE:
             insect->item = ITM_INSECT31;
             break;
+        case aINS_INSECT_TYPE_HERCULES_BEETLE:
+            insect->item = ITM_INSECT43;
+            break;
     }
 
     actorx->mv_proc = &aIKB_actor_move;
@@ -183,6 +186,7 @@ static int aIKB_check_patience(aINS_INSECT_ACTOR* insect) {
 static void aIKB_avoid(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     f32 grav;
+    u8 ongen_se;
 
     aIKB_anime_proc(insect);
     grav = actorx->gravity;
@@ -194,7 +198,16 @@ static void aIKB_avoid(ACTOR* actorx, GAME* game) {
 
     actorx->gravity = grav;
 
-    sAdo_OngenPos((u32)actorx, NA_SE_25, &actorx->world.position);
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_HERCULES_BEETLE:
+            ongen_se = 0x60;
+            break;
+        default:
+            ongen_se = 0x25;
+            break;
+    }
+
+    sAdo_OngenPos((u32)actorx, ongen_se, &actorx->world.position);
 
     if (insect->bg_type != 2) {
         int h_ut_x;
