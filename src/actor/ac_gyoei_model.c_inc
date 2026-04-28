@@ -1,7 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_gyoei.h"
+#endif
+
 typedef struct gyo_model_s {
-  Gfx* dl_a;
-  Gfx* dl_b;
-  Gfx* dl_c;
+    Gfx* dl_a;
+    Gfx* dl_b;
+    Gfx* dl_c;
 } aGYO_DL_c;
 
 extern Gfx act_f01_funa_aT_model[];
@@ -334,6 +338,63 @@ static aGYO_DL_c aGYO_piraluku_dl = {
   act_f34_piraluku_bT_model,
   act_f34_piraluku_cT_model,
 };
+extern Gfx act_f41_hari_aT_model[];
+extern Gfx act_f41_hari_bT_model[];
+extern Gfx act_f41_hari_cT_model[];
+extern Gfx act_f42_hirame_aT_model[];
+extern Gfx act_f42_hirame_bT_model[];
+extern Gfx act_f42_hirame_cT_model[];
+extern Gfx act_f43_ika_aT_model[];
+extern Gfx act_f43_ika_bT_model[];
+extern Gfx act_f43_ika_cT_model[];
+extern Gfx act_f44_kajiki_aT_model[];
+extern Gfx act_f44_kajiki_bT_model[];
+extern Gfx act_f44_kajiki_cT_model[];
+extern Gfx act_f45_karei_aT_model[];
+extern Gfx act_f45_karei_bT_model[];
+extern Gfx act_f45_karei_cT_model[];
+extern Gfx act_f46_tako_aT_model[];
+extern Gfx act_f46_tako_bT_model[];
+extern Gfx act_f46_tako_cT_model[];
+extern Gfx act_f47_tatu_aT_model[];
+extern Gfx act_f47_tatu_bT_model[];
+extern Gfx act_f47_tatu_cT_model[];
+extern Gfx act_f48_aji_aT_model[];
+extern Gfx act_f48_aji_bT_model[];
+extern Gfx act_f48_aji_cT_model[];
+
+static aGYO_DL_c aGYO_hari_dl = {
+    act_f41_hari_aT_model, act_f41_hari_bT_model, act_f41_hari_cT_model
+};
+
+static aGYO_DL_c aGYO_hirame_dl = {
+    act_f42_hirame_aT_model, act_f42_hirame_bT_model, act_f42_hirame_cT_model
+};
+
+static aGYO_DL_c aGYO_ika_dl = {
+    act_f43_ika_aT_model, act_f43_ika_bT_model, act_f43_ika_cT_model
+};
+
+static aGYO_DL_c aGYO_kajiki_dl = {
+    act_f44_kajiki_aT_model, act_f44_kajiki_bT_model, act_f44_kajiki_cT_model
+};
+
+static aGYO_DL_c aGYO_karei_dl = {
+    act_f45_karei_aT_model, act_f45_karei_bT_model, act_f45_karei_cT_model
+};
+
+static aGYO_DL_c aGYO_tako_dl = {
+    act_f46_tako_aT_model, act_f46_tako_bT_model, act_f46_tako_cT_model
+};
+
+static aGYO_DL_c aGYO_tatu_dl = {
+    act_f47_tatu_aT_model, act_f47_tatu_bT_model, act_f47_tatu_cT_model
+};
+
+static aGYO_DL_c aGYO_aji_dl = {
+    act_f48_aji_aT_model, act_f48_aji_bT_model, act_f48_aji_cT_model
+};
+
 static aGYO_DL_c aGYO_akikan_dl = {
   act_f28_akikanT_model,
   act_f28_akikanT_model,
@@ -351,7 +412,7 @@ static aGYO_DL_c aGYO_taiya_dl = {
 };
 
 
-static aGYO_DL_c* aGYO_displayList[45] = {
+static aGYO_DL_c* aGYO_displayList[] = {
   &aGYO_funa_dl,
   &aGYO_hera_dl,
   &aGYO_koi_dl,
@@ -392,9 +453,17 @@ static aGYO_DL_c* aGYO_displayList[45] = {
   &aGYO_tai_dl,
   &aGYO_ishidai_dl,
   &aGYO_piraluku_dl,
+  &aGYO_hari_dl,
+  &aGYO_hirame_dl,
+  &aGYO_ika_dl,
+  &aGYO_kajiki_dl,
+  &aGYO_karei_dl,
+  &aGYO_tako_dl,
+  &aGYO_tatu_dl,
+  &aGYO_aji_dl,
   &aGYO_piraluku_dl,
   &aGYO_akikan_dl,
   &aGYO_nagagutu_dl,
   &aGYO_taiya_dl,
-  NULL
+  &aGYO_piraluku_dl
 };

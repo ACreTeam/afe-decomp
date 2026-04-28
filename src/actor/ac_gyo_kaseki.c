@@ -48,23 +48,23 @@ static f32 aGKK_touch_distance[8] = {
    12.0f, 13.0f, 15.0f, 15.0f, 20.0f, 25.0f, 30.0f, 30.0f,
 };
 
-static f32 aGYO_shadow_scale[8] = {
+static f32 aGKK_shadow_scale[8] = {
    0.3f, 0.4f, 0.5f, 0.5f, 0.6f, 0.8f, 1.2f, 10.0f,
 };
 
-static f32 aGYO_search_area[][5] = {
+static f32 aGKK_search_area[][5] = {
    {40.0f, 40.0f, 40.0f, 50.0f, 60.0f}, // regular rod
    {40.0f, 40.0f, 40.0f, 50.0f, 60.0f}, // gold rod
 };
 
-static f32 aGYO_search_angle[][5] = {
+static f32 aGKK_search_angle[][5] = {
    {3.0f, 7.0f, 30.0f, 50.0f, 180.0f}, // regular rod
    {7.5f, 15.0f, 40.0f, 60.0f, 180.0f}, // gold rod
 };
 
-static f32 aGYO_bite_time[][5] = {
-   {10.0f, 11.0f, 12.0f, 15.0f, 45.0f}, // regular rod
-   {11.0f, 12.0f, 13.0f, 18.0f, 60.0f}, // gold rod
+static f32 aGKK_bite_time[][5] = {
+    {8.0f, 10.0f, 12.0f, 15.0f, 45.0f}, // regular rod
+    {11.0f, 12.0f, 13.0f, 18.0f, 60.0f}, // gold rod
 };
 
 extern void aGKK_actor_init(ACTOR* actorx, GAME* game) {
@@ -81,7 +81,7 @@ extern void aGKK_actor_init(ACTOR* actorx, GAME* game) {
     gyo->size_type = gyoei_type[gyo->gyo_type].size;
     gyo->action = aGKK_ACTION_SWIM;
     gyo->fwork0 = 19.0f;
-    scale = aGYO_shadow_scale[gyo->size_type] * 0.02f;
+    scale = aGKK_shadow_scale[gyo->size_type] * 0.02f;
     aGKK_set_scale(actorx, scale);
     aGKK_speed_reset(actorx);
     actorx->mv_proc = aGKK_actor_move;
@@ -307,9 +307,9 @@ static int aGKK_search_Uki(aGYO_CTRL_ACTOR* gyo, GAME* game) {
                 int rod_type = aGKK_get_uki_type();
 
                 if ((gyo->gyo_flags & 1) == 0 && uki->cast_timer == 0 &&
-                    target_dist < aGYO_search_area[rod_type][search_area] && fabsf(target_y) < 10.0f &&
-                    goal_angle > DEG2SHORT_ANGLE2(-aGYO_search_angle[rod_type][search_area]) &&
-                    goal_angle < DEG2SHORT_ANGLE2(aGYO_search_angle[rod_type][search_area])) {
+                    target_dist < aGKK_search_area[rod_type][search_area] && fabsf(target_y) < 10.0f &&
+                    goal_angle > DEG2SHORT_ANGLE2(-aGKK_search_angle[rod_type][search_area]) &&
+                    goal_angle < DEG2SHORT_ANGLE2(aGKK_search_angle[rod_type][search_area])) {
                     ret = TRUE;
                 }
             }
@@ -533,7 +533,7 @@ static void aGKK_near(ACTOR* actorx, GAME* game) {
     aGKK_set_angle(actorx, angle_y);
     target_dist = search_position_distance(&actorx->world.position, &uki->actor_class.world.position);
     target_y = actorx->world.position.y - uki->actor_class.world.position.y;
-    if (target_dist > aGYO_search_area[rod_type][search_area] || fabsf(target_y) > 10.0f) {
+    if (target_dist > aGKK_search_area[rod_type][search_area] || fabsf(target_y) > 10.0f) {
         aGKK_setupAction(gyo, aGKK_ACTION_WAIT);
     } else if (target_dist < aGKK_touch_distance[gyo->size_type]) {
         if (uki->gyo_status == 1) {
@@ -676,7 +676,23 @@ static void aGKK_comeback(ACTOR* actorx, GAME* game) {
     } else if (uki->gyo_status == 6) {
         gyo->gyo_flags |= 0x200;
         if (gyo->anim_frame == 1) {
-            sAdo_OngenTrgStart(NA_SE_11A, &actorx->world.position);
+            int sfx_se = -1;
+
+            switch (gyo->gyo_type) {
+                case aGYO_TYPE_OCTOPUS:
+                case aGYO_TYPE_SQUID:
+                    break; // no sfx
+                case aGYO_TYPE_SEAHORSE:
+                    sfx_se = 0x47D;
+                    break;
+                default:
+                    sfx_se = NA_SE_11A;
+                    break;
+            }
+
+            if (sfx_se != -1) {
+                sAdo_OngenTrgStart(sfx_se, &actorx->world.position);
+            }
         }
     } else if (uki->gyo_status == 8) {
         uki->gyo_status = 0;
@@ -697,7 +713,7 @@ static void aGKK_comeback(ACTOR* actorx, GAME* game) {
     } else if (gyo->draw_type == aGYO_DRAW_TYPE_FISH) {
         scale = 0.01f;
     } else {
-        scale = aGYO_shadow_scale[gyo->size_type] * 0.02f;
+        scale = aGKK_shadow_scale[gyo->size_type] * 0.02f;
     }
 
     aGKK_set_scale(actorx, scale);
@@ -759,7 +775,7 @@ static void aGKK_touch_init(aGYO_CTRL_ACTOR* gyo) {
 }
 
 static void aGKK_bite_init(aGYO_CTRL_ACTOR* gyo) {    
-    gyo->work0 = (int)(aGYO_bite_time[aGKK_get_uki_type()][gyoei_type[gyo->gyo_type].bite_time] * 2.0f);
+    gyo->work0 = (int)(aGKK_bite_time[aGKK_get_uki_type()][gyoei_type[gyo->gyo_type].bite_time] * 2.0f);
     gyo->swork0 = 6;
     aGKK_speed_reset((ACTOR*)gyo);
 }

@@ -58,7 +58,7 @@ static f32 aGYO_search_angle[][5] = {
 };
 
 static f32 aGYO_bite_time[][5] = {
-   {10.0f, 11.0f, 12.0f, 15.0f, 45.0f}, // regular rod
+   {8.0f, 10.0f, 12.0f, 15.0f, 45.0f}, // regular rod
    {11.0f, 12.0f, 13.0f, 18.0f, 60.0f}, // gold rod
 };
 

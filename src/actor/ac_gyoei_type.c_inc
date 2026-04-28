@@ -1,3 +1,7 @@
+#ifdef __INTELLISENSE__
+#include "ac_gyoei.h"
+#endif
+
 typedef struct gyoei_type_s {
     short size;
     short search_area;
@@ -5,7 +9,7 @@ typedef struct gyoei_type_s {
 } aGYO_type_c;
 
 // clang-format off
-static aGYO_type_c gyoei_type[] = {
+static aGYO_type_c gyoei_type[aGYO_TYPE_EXTENDED_NUM] = {
     { aGYO_SIZE_XS, 3, 4 }, // aGYO_TYPE_CRUCIAN_CARP
     { aGYO_SIZE_S, 3, 2 }, // aGYO_TYPE_BROOK_TROUT
     { aGYO_SIZE_L, 2, 3 }, // aGYO_TYPE_CARP
@@ -37,7 +41,7 @@ static aGYO_type_c gyoei_type[] = {
     { aGYO_SIZE_XS, 2, 2 }, // aGYO_TYPE_ANGELFISH
     { aGYO_SIZE_XXS, 2, 3 }, // aGYO_TYPE_GUPPY
     { aGYO_SIZE_XXS, 2, 3 }, // aGYO_TYPE_POPEYED_GOLDFISH
-    { aGYO_SIZE_XL, 2, 0 }, // aGYO_TYPE_COELACANTH
+    { aGYO_SIZE_XXL, 2, 0 }, // aGYO_TYPE_COELACANTH
     { aGYO_SIZE_XS, 4, 4 }, // aGYO_TYPE_CRAWFISH
     { aGYO_SIZE_XXS, 4, 3 }, // aGYO_TYPE_FROG
     { aGYO_SIZE_XXS, 2, 2 }, // aGYO_TYPE_KILLIFISH
@@ -46,10 +50,18 @@ static aGYO_type_c gyoei_type[] = {
     { aGYO_SIZE_L, 2, 1 }, // aGYO_TYPE_RED_SNAPPER
     { aGYO_SIZE_L, 2, 0 }, // aGYO_TYPE_BARRED_KNIFEJAW
     { aGYO_SIZE_XXL, 1, 1 }, // aGYO_TYPE_ARAPAIMA
-    { aGYO_SIZE_WHALE, 1, 1 }, // aGYO_TYPE_WHALE
-    { aGYO_SIZE_XXS, 1, 3 }, // aGYO_TYPE_EMPTY_CAN
-    { aGYO_SIZE_M, 2, 4 }, // aGYO_TYPE_BOOT
-    { aGYO_SIZE_L, 2, 4 }, // aGYO_TYPE_OLD_TIRE
-    { aGYO_SIZE_L, 2, 1 }, // aGYO_TYPE_SALMON2
+    { aGYO_SIZE_M, 2, 2 }, // aGYO_TYPE_PUFFER_FISH
+    { aGYO_SIZE_L, 1, 1 }, // aGYO_TYPE_FLOUNDER
+    { aGYO_SIZE_M, 3, 2 }, // aGYO_TYPE_SQUID
+    { aGYO_SIZE_XXL, 1, 0 }, // aGYO_TYPE_SWORDFISH
+    { aGYO_SIZE_L, 2, 2 }, // aGYO_TYPE_DAB
+    { aGYO_SIZE_L, 3, 2 }, // aGYO_TYPE_OCTOPUS
+    { aGYO_SIZE_XXS, 1, 1 }, // aGYO_TYPE_SEAHORSE
+    { aGYO_SIZE_M, 3, 3 }, // aGYO_TYPE_HORSE_MACKEREL
+    { aGYO_SIZE_WHALE, 1, 0 }, // aGYO_TYPE_WHALE
+    { aGYO_SIZE_XXS, 1, 0 }, // aGYO_TYPE_EMPTY_CAN
+    { aGYO_SIZE_M, 1, 0 }, // aGYO_TYPE_BOOT
+    { aGYO_SIZE_L, 1, 0 }, // aGYO_TYPE_OLD_TIRE
+    { aGYO_SIZE_L, 1, 0 }, // aGYO_TYPE_SALMON2
 };
 // clang-format on
