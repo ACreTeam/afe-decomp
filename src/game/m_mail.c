@@ -10,19 +10,17 @@
 #include "libultra/libultra.h"
 
 /* TODO: fix bss ordering*/
-static u8 free_str[16];
-static Mail_c l_ml_mail;
-static u8 footer[MAIL_FOOTER2_LEN];
-static u8 header[MAIL_HEADER2_LEN];
+// static u8 free_str[16];
+// static Mail_c l_ml_mail;
+// static u8 footer[MAIL_FOOTER2_LEN];
+// static u8 header[MAIL_HEADER2_LEN];
 
 extern int mMl_strlen(u8* str, int size, u8 end_char) {
-    u32 end_p = size + (u32)str;
+    u8* end_p = size - 1 + str;
     int i;
 
-    end_p--;
-    for (size; size != 0; size--) {
-
-        if (*(u8*)end_p != end_char) {
+    for (; size != 0; size--) {
+        if (*end_p != end_char) {
             return size;
         }
 
@@ -39,7 +37,7 @@ extern int mMl_strlen2(int* found, u8* str, int size, u8 end_char) {
         *found = FALSE;
     }
 
-    for (size; size != 0; size--) {
+    for (; size != 0; size--) {
         len++;
         if (*str == end_char) {
             if (found != NULL) {
@@ -52,6 +50,22 @@ extern int mMl_strlen2(int* found, u8* str, int size, u8 end_char) {
     }
 
     return len;
+}
+
+extern int mMl_strlenW(u16* str, int size, u16 end_char) {
+    u16* end_p = size - 1 + str;
+    int i;
+
+    for (; size != 0; size--) {
+
+        if (*end_p != end_char) {
+            return size;
+        }
+
+        end_p--;
+    }
+
+    return 0;
 }
 
 extern void mMl_clear_mail_header(Mail_hdr_c* header) {
@@ -142,11 +156,18 @@ extern void mMl_copy_mail(Mail_c* dst, Mail_c* src) {
     mem_copy((u8*)dst, (u8*)src, sizeof(Mail_c));
 }
 
+extern void mMlW_clear_buf(u16* buf, int size, u16 clear_char) {
+    while (--size >= 0) {
+        *buf = clear_char;
+        buf++;
+    }
+}
+
 extern void mMl_clear_mail_header_common(Mail_hs_c* header) {
     header->header_back_start = -1;
     header->unknown = 0;
-    mem_clear((u8*)header->header, sizeof(header->header), CHAR_SPACE);
-    mem_clear((u8*)header->footer, sizeof(header->footer), CHAR_SPACE);
+    mMlW_clear_buf(header->header, MAIL_HEADER_LEN, CHAR_SPACE);
+    mMlW_clear_buf(header->footer, MAIL_FOOTER_LEN, CHAR_SPACE);
 }
 
 extern void mMl_set_mail_name_npcinfo(Mail_nm_c* name, AnmPersonalID_c* anm_pid) {
@@ -157,7 +178,7 @@ extern void mMl_set_mail_name_npcinfo(Mail_nm_c* name, AnmPersonalID_c* anm_pid)
     mPr_CopyPlayerName(name->personalID.player_name, animal_name);
     name->personalID.land_id = anm_pid->land_id;
     mLd_CopyLandName(name->personalID.land_name, anm_pid->land_name);
-    name->personalID.player_id = (((anm_pid->npc_id & 0xFF) << 8) | anm_pid->name_id);
+    name->personalID.player_id = (((anm_pid->npc_id & 0xFF) << 8) | anm_pid->add_npc_id);
 }
 
 extern int mMl_get_npcinfo_from_mail_name(AnmPersonalID_c* anm_pid, Mail_nm_c* name) {
@@ -165,9 +186,10 @@ extern int mMl_get_npcinfo_from_mail_name(AnmPersonalID_c* anm_pid, Mail_nm_c* n
 
     if (name->type == mMl_NAME_TYPE_NPC) {
         anm_pid->npc_id = ((name->personalID.player_id & 0xFF00) >> 8) | NPC_START;
+        anm_pid->add_npc_id = name->personalID.player_id & 0xFF;
+        mem_copy(anm_pid->name, name->personalID.player_name, ANIMAL_NAME_LEN);
         anm_pid->land_id = name->personalID.land_id;
         mLd_CopyLandName(anm_pid->land_name, name->personalID.land_name);
-        anm_pid->name_id = name->personalID.player_id;
         anm_pid->looks = mNpc_GetLooks(anm_pid->npc_id);
 
         res = TRUE;
@@ -216,8 +238,8 @@ static void mMl_load_mail_data(Mail_c* mail, int mail_no) {
 
 /* TODO: fix bss ordering */
 static void mMl_load_mail_data2(Mail_c* mail, int mail_no) {
-    // static u8 header[MAIL_HEADER2_LEN];
-    // static u8 footer[MAIL_FOOTER2_LEN];
+    static u8 header[MAIL_HEADER2_LEN];
+    static u8 footer[MAIL_FOOTER2_LEN];
     int header_back_start;
 
     mHandbill_Load_HandbillFromRom2(header, MAIL_HEADER2_LEN, &header_back_start, footer, MAIL_FOOTER2_LEN,
@@ -286,6 +308,8 @@ static int mMl_send_mail_postoffice_com(Mail_c* mail, PersonalID_c* recipient_pi
     return res;
 }
 
+static Mail_c l_ml_mail;
+
 extern int mMl_send_mail_postoffice(PersonalID_c* recipient_pid, int player_no, mActor_name_t present,
                                     mActor_name_t paper, int mail_no, u8* sender_name, u32 proc_type, u8 mail_type) {
     return mMl_send_mail_postoffice_com(&l_ml_mail, recipient_pid, player_no, present, paper, mail_no, sender_name,
@@ -294,6 +318,7 @@ extern int mMl_send_mail_postoffice(PersonalID_c* recipient_pid, int player_no, 
 
 static int mMl_send_mail_com(PersonalID_c* recipient_pid, int player_no, mActor_name_t present, mActor_name_t paper,
                              int mail_no, u8* sender_name, u32 proc_type, u8 mail_type) {
+    
     Mail_c* mail = &l_ml_mail;
     int res = mMl_send_mail_box_com(recipient_pid, player_no, mail, present, paper, mail_no, sender_name, proc_type,
                                     mail_type);
@@ -327,6 +352,7 @@ static mMl_PostOffice_Info_c l_mml_postoffice_info[mMl_POSTOFFICE_GIFT_NUM] = {
 
 static void mMl_send_postoffice_mail() {
     // static u8 free_str[16]; // TODO: fix bss ordering
+    static u8 free_str[132];
     static u8 debug_name[PLAYER_NAME_LEN] = { 0x91, 0x92, 0x93, 0x94, 0x95, 0x91 };
 
     Private_c* priv = Save_Get(private_data);

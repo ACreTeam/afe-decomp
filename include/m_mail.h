@@ -15,7 +15,7 @@ extern "C" {
 #define MAIL_FOOTER_LEN 16
 #define MAIL_BODY_LEN 96
 
-#define MAIL_FOOTER2_LEN 48
+#define MAIL_FOOTER2_LEN 82
 #define MAIL_HEADER2_LEN (MAIL_FOOTER2_LEN - PLAYER_NAME_LEN)
 
 #define mMl_POSTOFFICE_GIFT_NUM 4
@@ -118,6 +118,8 @@ typedef struct mail_s {
 
 extern int mMl_strlen(u8* str, int size, u8 end_char);
 extern int mMl_strlen2(int* found, u8* str, int size, u8 end_char);
+extern int mMl_strlenW(u16* str, int size, u16 end_char);
+extern void mMlW_clear_buf(u16* buf, int size, u16 clear_char);
 extern void mMl_clear_mail_header(Mail_hdr_c* header);
 extern void mMl_clear_mail(Mail_c* mail);
 extern void mMl_clear_mail_box(Mail_c* mail, int num);
