@@ -1,3 +1,6 @@
+#include "m_collision_bg.h"
+#include "sys_math3d.h"
+
 extern void mCoBG_RotateY(f32* pos, f32 rad) {
     f32 p[2];
     f32 cos;
@@ -124,10 +127,10 @@ extern int mCoBG_GetCrossTriangleAndLine3D(xyz_t* cross, xyz_t v0, xyz_t v1, xyz
     cross->z = 0.0f;
 
     Math3DPlane(&v0, &v1, &v2, &nox, &noy, &noz, &dist);
-    t = (nox * line0.x + noy * line0.y + noz * line0.z) + dist;
     x = line0.x - line1.x;
     y = line0.y - line1.y;
     z = line0.z - line1.z;
+    t = (nox * line0.x + noy * line0.y + noz * line0.z) + dist;
     ldist = nox * x + noy * y + noz * z;
     if (!F32_IS_ZERO(ldist)) {
         int dim;
@@ -323,7 +326,7 @@ extern int mCoBG_GetCrossCircleAndLine2Dvector(f32* cross0, f32* cross1, f32* po
     return FALSE;
 }
 
-static int mCoBG_GetCrossCircleAndLine2DvectorPlaneXZ_Xyz(xyz_t* cross1, xyz_t* cross2, const xyz_t* point, const xyz_t* vec, const xyz_t* center, f32 radius) {
+int mCoBG_GetCrossCircleAndLine2DvectorPlaneXZ_Xyz(xyz_t* cross1, xyz_t* cross2, const xyz_t* point, const xyz_t* vec, const xyz_t* center, f32 radius) {
     static xyz_t cross0 = { 0.0f, 0.0f, 0.0f };
     f32 cross1_xz[2];
     f32 cross2_xz[2];
@@ -435,36 +438,6 @@ extern void mCoBG_GetNorm_By3Point(xyz_t* normal, f32* v0, f32* v1, f32* v2) {
     }
 }
 
-static u32 mCoBG_SelectBiggerUnint(u32 a, u32 b) {
-    if (a > b) {
-        return a;
-    } else {
-        return b;
-    }
-}
-
-static u32 mCoBG_SelectSmallerUnint(u32 a, u32 b) {
-    if (a < b) {
-        return a;
-    } else {
-        return b;
-    }
-}
-
-static u32 mCoBG_GetMaxOffset(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
-    return mCoBG_SelectBiggerUnint(
-        mCoBG_SelectBiggerUnint(mCoBG_SelectBiggerUnint(p0, p1), mCoBG_SelectBiggerUnint(p2, p3)),
-        p4
-    );
-}
-
-static u32 mCoBG_GetMinOffset(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
-    return mCoBG_SelectSmallerUnint(
-        mCoBG_SelectSmallerUnint(mCoBG_SelectSmallerUnint(p0, p1), mCoBG_SelectSmallerUnint(p2, p3)),
-        p4
-    );
-}
-
 extern int mCoBG_RangeCheckLinePoint(f32* start, f32* end, f32* point) {
     f32 normal01[2];
 
@@ -481,20 +454,4 @@ extern int mCoBG_RangeCheckLinePoint(f32* start, f32* end, f32* point) {
     }
 
     return FALSE;
-}
-
-static void mCoBG_SetLinePos(f32* line, f32 x, f32 z) {
-    line[0] = x;
-    line[1] = z;
-}
-
-static void mCoBG_PlusLinePos(f32* line, f32 x, f32 z) {
-    line[0] += x;
-    line[1] += z;
-}
-
-static void mCoBG_PlusEqualPos(xyz_t* p0, xyz_t* p1) {
-    p0->x += p1->x;
-    p0->y += p1->y;
-    p0->z += p1->z;
 }
