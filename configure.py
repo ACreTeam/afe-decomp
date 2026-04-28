@@ -1011,7 +1011,7 @@ config.libs = [
             Object(NonMatching, "game/m_mscore_ovl.c"),
             Object(NonMatching, "game/m_msg.c"),
             Object(Matching, "game/m_museum.c"),
-            Object(NonMatching, "game/m_museum_display.c"),
+            Object(Matching, "game/m_museum_display.c"),
             Object(Matching, "game/m_mushroom.c"),
             Object(NonMatching, "game/m_music_ovl.c"),
             Object(NonMatching, "game/m_name_table.c"),
