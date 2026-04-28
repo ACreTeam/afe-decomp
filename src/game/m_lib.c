@@ -54,6 +54,712 @@
 #include "sys_math.h"
 #include "sys_math3d.h"
 
+static u16 skip[256];
+static u32 countsum9[512+1];
+static u32 count9[512];
+static u32 countsum11[4096+1];
+static u32 count11[4096];
+
+static void initskip(u8* pattern, s32 pattern_len);
+static int mischarsearch(u8* pattern, int pattern_len, u8* text, int text_len);
+static void search2(u8 *data, int start_idx, int data_size, int *out_offset, int *out_length, int window_size);
+static int encode_asrsub(u8* compress_buf, u8* src, int size, int count11_size);
+
+extern int encode_asr(u8* compress_buf, u8* src, int size) {
+    int result = encode_asrsub(compress_buf, src, size, (1 << (11 + 1)));
+
+    compress_buf[0] = 'A';
+    compress_buf[1] = 'S';
+    compress_buf[2] = 'R';
+    compress_buf[3] = '0';
+    compress_buf[4] = 0x80 | ((size >> 24) & 0xFF);
+    compress_buf[5] = (size >> 16) & 0xFF;
+    compress_buf[6] = (size >> 8) & 0xFF;
+    compress_buf[7] = size & 0xFF;
+
+    return result;
+}
+
+int encode_asrsub(u8 *encodeBuffer, u8 *data, int size, int count11Size) {
+    /* --- ANSI C Declarations (No Initializations) --- */
+    u32 temp_size;
+    int dist_buf_offset;
+    int encodeSize;
+    int sym_count;
+    u32 low;
+    int dist_buf_pos;
+    u32 freq;
+    int lit_buf_pos;
+    u32 sym;
+    u32 step;
+    int total_syms;
+    int readIdx;
+    int total_matches;
+    int update_idx;
+    int rescale_count;
+    
+    // LZ77 Match Variables
+    int match_dist1;
+    int match_dist2;
+    int match_len1;
+    int match_len2;
+    
+    // Range/Temp Variables (Replicating register reuse)
+    u32 range;
+    u32 temp;
+    int flush_count;
+
+    /* --- Phase 1: LZ77 Parsing & Lazy Matching --- */
+    temp_size = size + 7;
+    total_matches = 0;
+    total_syms = 0;
+    
+    // Calculate memory offset for the temporary distance buffer
+    // Simplifies the decompiled division/sign bit arithmetic
+    dist_buf_offset = (temp_size / 8) + 8 + (size * 2);
+    
+    dist_buf_pos = 0;
+    lit_buf_pos = 0;
+    readIdx = 0;
+    
+    while (readIdx < size) {
+        search2(data, readIdx, size, &match_dist1, &match_len1, count11Size);
+        
+        if (match_len1 < 3) {
+            // Write Literal
+            readIdx = readIdx + 1;
+            total_syms = total_syms + 1;
+            *(u16 *)(encodeBuffer + lit_buf_pos + size * 2) = (u16)data[readIdx - 1];
+            lit_buf_pos = lit_buf_pos + 2;
+        }
+        else {
+            // Lazy Match Evaluation: Check if the *next* byte has a better string match
+            search2(data, readIdx + 1, size, &match_dist2, &match_len2, count11Size);
+            
+            if (match_len1 + 1 < match_len2) {
+                // Next byte is better. Write current as literal, advance to the next match.
+                total_syms = total_syms + 1;
+                *(u16 *)(encodeBuffer + lit_buf_pos + size * 2) = (u16)data[readIdx];
+                lit_buf_pos = lit_buf_pos + 2;
+                readIdx = readIdx + 1;
+                match_len1 = match_len2;
+                match_dist1 = match_dist2;
+            }
+            
+            total_syms = total_syms + 1;
+            total_matches = total_matches + 1;
+            match_dist1 = (readIdx - match_dist1) + -1;
+            
+            // Encode length: shift by 3 (min length) and flag it with the 0x100 bit
+            *(u16 *)(encodeBuffer + lit_buf_pos + size * 2) = (u16)(match_len1 - 3) | 0x100;
+            lit_buf_pos = lit_buf_pos + 2;
+            readIdx = readIdx + match_len1;
+            
+            // Encode distance
+            *(u16 *)(encodeBuffer + dist_buf_pos + dist_buf_offset * 2) = (u16)match_dist1;
+            dist_buf_pos = dist_buf_pos + 2;
+        }
+    }
+
+    /* --- Phase 2: Arithmetic Encode (Literals & Match Lengths) --- */
+    countsum9[0] = 0;
+    range = 0xFFFFFFFF;
+    low = 0;
+    update_idx = 0x200;
+    dist_buf_pos = 0; // Reusing variable as loop index
+    
+    // Initialize literal frequency model
+    do {
+        count9[dist_buf_pos] = 1;
+        countsum9[dist_buf_pos + 1] = countsum9[dist_buf_pos] + 1;
+        update_idx = update_idx + -1;
+        dist_buf_pos = dist_buf_pos + 1;
+    } while (update_idx != 0);
+    
+    sym_count = 0;
+    lit_buf_pos = 0; // Reusing to read back from temp literal buffer
+    encodeSize = 0xC; // Leave room for 12-byte header
+    
+    while (sym_count < total_syms) {
+        sym_count = sym_count + 1;
+        sym = (u32)*(u16 *)(encodeBuffer + lit_buf_pos + size * 2);
+        lit_buf_pos = lit_buf_pos + 2;
+        
+        step = range / countsum9[0x200];
+        freq = count9[sym];
+        count9[sym] = freq + 1;
+        range = step * freq;
+        low = low + step * countsum9[sym];
+        
+        update_idx = sym;
+        while (TRUE) {
+            update_idx = update_idx + 1;
+            if (update_idx > 0x200) break;
+            countsum9[update_idx] = countsum9[update_idx] + 1;
+        }
+        
+        if (countsum9[0x200] > 0xFFFF) {
+            countsum9[0] = 0;
+            rescale_count = 0x200;
+            update_idx = 0;
+            do {
+                count9[update_idx] = (count9[update_idx] >> 1) | 1;
+                countsum9[update_idx + 1] = countsum9[update_idx] + count9[update_idx];
+                rescale_count = rescale_count + -1;
+                update_idx = update_idx + 1;
+            } while (rescale_count != 0);
+        }
+        
+        // Renormalization Part 1
+        for (; (low & 0xFF000000) == ((low + range) & 0xFF000000); low = low << 8) {
+            encodeBuffer[encodeSize] = (u8)(low >> 24);
+            range = range << 8;
+            encodeSize = encodeSize + 1;
+        }
+        // Renormalization Part 2 (Underflow handler)
+        for (; range < 0x10000; range = (0x10000 - temp) * 0x100) {
+            temp = low & 0xFFFF;
+            encodeBuffer[encodeSize] = (u8)(low >> 24);
+            low = low << 8;
+            encodeSize = encodeSize + 1;
+        }
+    }
+
+    /* --- Phase 3 & 4: Flush stream 1 & Prepare Header --- */
+    flush_count = 4;
+    do {
+        temp = low >> 24;
+        low = low << 8;
+        encodeBuffer[encodeSize] = (u8)temp;
+        encodeSize = encodeSize + 1;
+        flush_count = flush_count + -1;
+    } while (flush_count != 0);
+    
+    // Write out the size of the literal stream (Big-Endian offsets)
+    encodeBuffer[8]  = (u8)((u32)encodeSize >> 24);
+    encodeBuffer[9]  = (u8)((u32)encodeSize >> 16);
+    encodeBuffer[10] = (u8)((u32)encodeSize >> 8);
+    encodeBuffer[11] = (u8)encodeSize;
+    
+    low = 0; // Reset low for pass 2
+    range = 0xFFFFFFFF; // Reset range for pass 2
+    /* --- Phase 5: Arithmetic Encode (Match Distances) --- */
+    countsum11[0] = 0;
+    dist_buf_pos = 0; // Resetting loop index
+    update_idx = count11Size;
+    
+    if (count11Size > 0) {
+        do {
+            count11[dist_buf_pos] = 1;
+            countsum11[dist_buf_pos + 1] = countsum11[dist_buf_pos] + 1;
+            update_idx = update_idx + -1;
+            dist_buf_pos = dist_buf_pos + 1;
+        } while (update_idx != 0);
+    }
+    
+    sym_count = 0;
+    dist_buf_pos = 0; // Reusing to read back from temp distance buffer
+    
+    while (sym_count < total_matches) {
+        sym_count = sym_count + 1;
+        sym = (u32)*(u16 *)(encodeBuffer + dist_buf_pos + dist_buf_offset * 2);
+        dist_buf_pos = dist_buf_pos + 2;
+        
+        step = range / countsum11[count11Size];
+        freq = count11[sym];
+        count11[sym] = freq + 1;
+        range = step * freq;
+        low = low + step * countsum11[sym];
+        
+        update_idx = sym;
+        while (TRUE) {
+            update_idx = update_idx + 1;
+            if (count11Size < update_idx) break;
+            countsum11[update_idx] = countsum11[update_idx] + 1;
+        }
+        
+        if (countsum11[count11Size] > 0xFFFF) {
+            countsum11[0] = 0;
+            update_idx = 0;
+            rescale_count = count11Size;
+            if (count11Size > 0) {
+                do {
+                    count11[update_idx] = (count11[update_idx] >> 1) | 1;
+                    countsum11[update_idx + 1] = countsum11[update_idx] + count11[update_idx];
+                    rescale_count = rescale_count + -1;
+                    update_idx = update_idx + 1;
+                } while (rescale_count != 0);
+            }
+        }
+        
+        // Renormalization Part 1
+        for (; (low & 0xFF000000) == ((low + range) & 0xFF000000); low = low << 8) {
+            encodeBuffer[encodeSize] = (u8)(low >> 24);
+            range = range << 8;
+            encodeSize = encodeSize + 1;
+        }
+        // Renormalization Part 2
+        for (; range < 0x10000; range = (0x10000 - temp) * 0x100) {
+            temp = low & 0xFFFF;
+            encodeBuffer[encodeSize] = (u8)(low >> 24);
+            low = low << 8;
+            encodeSize = encodeSize + 1;
+        }
+    }
+
+    /* --- Phase 6: Final Flush --- */
+    flush_count = 4;
+    do {
+        temp = low >> 24;
+        low = low << 8;
+        encodeBuffer[encodeSize] = (u8)temp;
+        encodeSize = encodeSize + 1;
+        flush_count = flush_count + -1;
+    } while (flush_count != 0);
+    
+    return encodeSize;
+}
+
+static void search2(u8 *data, int start_idx, int data_size, int *out_offset, int *out_length, int window_size) {
+    /* --- ANSI C Declarations (No Initializations) --- */
+    int rem_len;
+    int skip;
+    u8 *target_ptr;
+    u8 *match_ptr;
+    u32 max_len;
+    u32 best_len;
+    int best_offset;
+    u32 search_pos;
+
+    /* --- Execution & Initializations --- */
+    best_len = 3; 
+    
+    // Simplification of the bitwise artifact for max(0, start_idx - window_size)
+    search_pos = (start_idx > window_size) ? (start_idx - window_size) : 0;
+    
+    max_len = 0x102; // 258 bytes max match length (Standard Deflate/LZ77)
+    
+    // Clamp the max match length to the remaining buffer size
+    if (data_size - start_idx < 0x103) {
+        max_len = data_size - start_idx;
+    }
+    
+    // If fewer than 3 bytes remain in the buffer, a valid match is impossible
+    if ((int)max_len < 3) {
+        *out_length = 0;
+        *out_offset = 0;
+    }
+    else {
+        // Iterate through the sliding dictionary window
+        for (; (int)search_pos < start_idx; search_pos = skip + search_pos + 1) {
+            
+            // Search for a string matching the current best length
+            skip = mischarsearch(data + start_idx, best_len, data + search_pos, (start_idx + best_len) - search_pos);
+            
+            // Break if the skip pushes us past the starting index
+            if ((int)(start_idx - search_pos) <= skip) {
+                break;
+            }
+            
+            rem_len = max_len - best_len;
+            match_ptr = data + search_pos + best_len + skip;
+            target_ptr = data + start_idx + best_len;
+            
+            // Extend the match character by character
+            if ((int)best_len < (int)max_len) {
+                do {
+                    if (*match_ptr != *target_ptr) {
+                        break;
+                    }
+                    best_len = best_len + 1;
+                    target_ptr = target_ptr + 1;
+                    match_ptr = match_ptr + 1;
+                    rem_len = rem_len + -1;
+                } while (rem_len != 0);
+            }
+            
+            // If we hit the absolute maximum match limit, return immediately (Greedy Match)
+            if (best_len == max_len) {
+                *out_offset = search_pos + skip;
+                *out_length = max_len;
+                return;
+            }
+            
+            best_offset = search_pos + skip;
+            
+            // Increment best_len so the next loop searches for a LONGER match
+            best_len = best_len + 1; 
+        }
+        
+        *out_offset = best_offset;
+        
+        // Simplification of the bitwise artifact: if best_len - 1 >= 3, return it, else 0
+        *out_length = (best_len > 3) ? (best_len - 1) : 0;
+    }
+}
+
+int mischarsearch(u8* pattern, int pattern_len, u8* text, int text_len) {
+    /* --- ANSI C Declarations --- */
+    int shift_amount;
+    int chars_left;
+    u8* text_ptr;
+    u8* pattern_ptr;
+    int text_idx;
+    int text_cmp;
+    int pattern_cmp;
+
+    /* Only search if the pattern can actually fit inside the text */
+    if (pattern_len > text_len) {
+        return text_len;
+    }
+
+    initskip(pattern, pattern_len);
+
+    text_idx = pattern_len - 1;
+
+    while (1) {
+        /* Fast-forward loop: skip until the last character of the pattern matches */
+        do {
+            if (pattern[pattern_len - 1] == text[text_idx]) {
+                break;
+            }
+
+            text_idx = text_idx + skip[text[text_idx]];
+        } while (TRUE);
+
+        text_cmp = text_idx - 1;
+        pattern_cmp = pattern_len - 2;
+        chars_left = pattern_len - 1;
+
+        pattern_ptr = pattern + pattern_cmp;
+        text_ptr = text + text_cmp;
+
+        /* Original control flow: If the pattern length is 1, break the loop immediately */
+        if (pattern_cmp < 0) {
+            break;
+        }
+
+        /* A mismatch occurred. Calculate the shift amount based on the bad character rule */
+        shift_amount = skip[*text_ptr];
+
+        /* Ensure we only shift forward, never backward */
+        if (pattern_len - pattern_cmp > shift_amount) {
+            shift_amount = pattern_len - pattern_cmp;
+        }
+
+        text_idx = text_cmp + shift_amount;
+    }
+
+    /* Scan backwards to check the rest of the pattern */
+    for (; chars_left >= 0; chars_left--) {
+        if (*text_ptr != *pattern_ptr) {
+            break;
+        }
+
+        text_cmp = text_cmp - 1;
+        text_ptr = text_ptr - 1;
+        pattern_cmp = pattern_cmp - 1;
+        pattern_ptr = pattern_ptr - 1;
+        text_idx--;
+    }
+
+    return text_idx + 1;
+}
+
+static void initskip(u8* pattern, s32 pattern_len) {
+    int i;
+
+    // Step 1: Initialize the entire table to the maximum jump distance
+    // 0x100 is 256, representing all possible values of a 1-byte character.
+    for (i = 0; i < 256; i++) {
+        skip[i] = pattern_len;
+    }
+
+    // Step 2: Populate the skip distances for characters actually in the pattern
+    for (i = 0; i < pattern_len; i++) {
+        u8 current_char = pattern[i];
+        
+        // Calculate distance from the current character to the end of the pattern
+        skip[current_char] = pattern_len - i - 1;
+    }
+}
+
+int decode_asr(const u8 *in, u8 *out) {
+    /* --- ANSI C Declarations (No Initializations) --- */
+    int count11_size;
+    u32 targetSize;
+    u32 offset1;
+    u32 range2;
+    u32 range1;
+    u32 low2;
+    u32 low1;
+    int count;
+    int i;
+    u32 code1;
+    u32 code2;
+    int currentSize;
+    int in_pos1;
+    int in_pos2;
+    
+    int low_bound;
+    int high_bound;
+    int sym1;
+    int sym2;
+    u32 step1;
+    u32 target1;
+    u32 step2;
+    u32 target2;
+    u32 freq1;
+    u32 freq2;
+    int update_idx;
+    int j;
+    int rescale_count;
+    u32 temp;
+    int match_len;
+    u8 *dst;
+    u8 *src;
+
+    /* --- Execution and Initializations --- */
+    count11_size = 0x200;
+    
+    // Read uncompressed target size
+    targetSize = in[7] | (in[5] << 16) | (in[6] << 8);
+
+    // Read big-endian offsets
+    offset1 = (in[8] << 24) | (in[9] << 16) | (in[10] << 8) | in[11];
+
+    if ((in[4] & 0x80) != 0) {
+        count11_size = 0x1000;
+    }
+
+    countsum11[0] = 0;
+    range2 = 0xFFFFFFFF;
+    range1 = 0xFFFFFFFF;
+    countsum9[0] = 0;
+    low2 = 0;
+    low1 = 0;
+
+    // Initialize literal frequency tables
+    for (i = 0; i < 0x200; i++) {
+        count9[i] = 1;
+        countsum9[i + 1] = countsum9[i] + 1;
+    }
+
+    // Initialize distance frequency tables
+    for (i = 0; i < count11_size; i++) {
+        count11[i] = 1;
+        countsum11[i + 1] = countsum11[i] + 1;
+    }
+
+    // Read initial state codes (Big-Endian)
+    code1 = (in[12] << 24) | (in[13] << 16) | (in[14] << 8) | in[15];
+    code2 = (in[offset1] << 24) | (in[offset1 + 1] << 16) | (in[offset1 + 2] << 8) | in[offset1 + 3];
+
+    currentSize = 0;
+    in_pos1 = 0x10;
+    in_pos2 = offset1 + 4;
+
+    while (targetSize > currentSize) {
+        // --- DECODER 1: Literals and Match Lengths ---
+        low_bound = 0;
+        step1 = range1 / countsum9[0x200];
+        target1 = (code1 - low1) / step1;
+        high_bound = 0x200;
+        sym1 = 0;
+
+        // Binary search for symbol
+        while (low_bound < high_bound) {
+            sym1 = (low_bound + high_bound) >> 1;
+            if (countsum9[sym1] <= target1) {
+                low_bound = sym1 + 1;
+            } else {
+                high_bound = sym1;
+            }
+        }
+
+        low_bound = sym1 + 1;
+        if (sym1 > -1) {
+            do {
+                if ((countsum9[sym1] <= target1) && (target1 < countsum9[sym1 + 1])) break;
+                sym1--;
+                low_bound--;
+            } while (low_bound != 0);
+        }
+
+        freq1 = count9[sym1];
+        count9[sym1] = freq1 + 1;
+        range1 = step1 * freq1;
+        low1 = low1 + step1 * countsum9[sym1];
+
+        // Update cumulative frequencies
+        update_idx = sym1;
+        while (TRUE) {
+            update_idx++;
+            if (update_idx > 0x200) break;
+            countsum9[update_idx]++;
+        }
+
+        // Rescale frequencies to prevent overflow
+        if (countsum9[0x200] > 0xFFFF) {
+            countsum9[0] = 0;
+            j = 0;
+            rescale_count = 0x200;
+            do {
+                count9[j] = (count9[j] >> 1) | 1;
+                countsum9[j + 1] = countsum9[j] + count9[j];
+                rescale_count--;
+                j++;
+            } while (rescale_count != 0);
+        }
+
+        // Renormalize Decoder 1
+        for (; (low1 & 0xFF000000) == ((low1 + range1) & 0xFF000000); low1 <<= 8) {
+            range1 <<= 8;
+            code1 = (code1 << 8) | in[in_pos1++];
+        }
+        while (range1 < 0x10000) {
+            temp = low1 & 0xFFFF;
+            low1 <<= 8;
+            code1 = (code1 << 8) | in[in_pos1++];
+            range1 = (0x10000 - temp) * 0x100;
+        }
+
+        // If it's a literal, write to output and restart loop
+        if (sym1 < 0x100) {
+            out[currentSize++] = (u8)sym1;
+            continue;
+        }
+
+        // --- DECODER 2: Match Distances ---
+        step2 = range2 / countsum11[count11_size];
+        low_bound = 0;
+        target2 = (code2 - low2) / step2;
+        high_bound = count11_size;
+        sym2 = 0;
+
+        // Binary search for match distance
+        while (low_bound < high_bound) {
+            sym2 = (low_bound + high_bound) >> 1;
+            if (countsum11[sym2] <= target2) {
+                low_bound = sym2 + 1;
+            } else {
+                high_bound = sym2;
+            }
+        }
+
+        low_bound = sym2 + 1;
+        if (sym2 > -1) {
+            do {
+                if ((countsum11[sym2] <= target2) && (target2 < countsum11[sym2 + 1])) break;
+                sym2--;
+                low_bound--;
+            } while (low_bound != 0);
+        }
+
+        // Execute LZ77 Dictionary Copy
+        match_len = sym1 - 0xFD;
+        if (match_len > 0) {
+            dst = out + currentSize;
+            src = out + (currentSize - sym2) - 1;
+            do {
+                *dst++ = *src++;
+                currentSize++;
+                match_len--;
+            } while (match_len != 0);
+        }
+
+        freq2 = count11[sym2];
+        count11[sym2] = freq2 + 1;
+        range2 = step2 * freq2;
+        low2 = low2 + step2 * countsum11[sym2];
+
+        // Update cumulative frequencies for distances
+        update_idx = sym2;
+        while (TRUE) {
+            update_idx++;
+            if (count11_size < update_idx) break;
+            countsum11[update_idx]++;
+        }
+
+        // Rescale distance frequencies
+        if (countsum11[count11_size] > 0xFFFF) {
+            countsum11[0] = 0;
+            j = 0;
+            for (rescale_count = count11_size; rescale_count != 0; rescale_count--) {
+                count11[j] = (count11[j] >> 1) | 1;
+                countsum11[j + 1] = countsum11[j] + count11[j];
+                j++;
+            }
+        }
+
+        // Renormalize Decoder 2
+        for (; (low2 & 0xFF000000) == ((low2 + range2) & 0xFF000000); low2 <<= 8) {
+            range2 <<= 8;
+            code2 = (code2 << 8) | in[in_pos2++];
+        }
+        while (range2 < 0x10000) {
+            temp = low2 & 0xFFFF;
+            low2 <<= 8;
+            code2 = (code2 << 8) | in[in_pos2++];
+            range2 = (0x10000 - temp) * 0x100;
+        }
+
+    }
+
+    return currentSize;
+}
+
+extern void decode_szs(u8* compress_buf, u8* dst_buf) {
+    int link_info;
+    int offset_diff;
+    int copy_len;
+    int offset;
+    int now_size;
+    int final_size;
+    u8 chk_bit;
+
+    offset = 0x10;
+    chk_bit = 0;
+    now_size = 0;
+    final_size = (compress_buf[4] << 24) | (compress_buf[5] << 16) | (compress_buf[6] << 8) | (compress_buf[7]);
+
+    while (now_size < final_size) {
+        u8 bits;
+
+        if (chk_bit == 0) {
+            bits = compress_buf[offset];
+            offset++;
+            chk_bit = 0x80;
+        }
+
+        if ((bits & chk_bit) != 0) {
+            dst_buf[now_size++] = compress_buf[offset];
+            offset++;
+        } else {
+            int i;
+
+            link_info = (compress_buf[offset] << 8) | compress_buf[offset + 1];
+            offset += 2;
+            copy_len = link_info >> 12;
+            offset_diff = now_size - (link_info & 0xFFF);
+            if (copy_len == 0) {
+                copy_len = compress_buf[offset] + 0x12;
+                offset++;
+            } else {
+                copy_len += 2;
+            }
+            
+            for (i = 0; i < copy_len; i++) {
+                dst_buf[now_size] = dst_buf[offset_diff - 1];
+                now_size++;
+                offset_diff++;
+            }
+        }
+
+        chk_bit >>= 1;
+    }
+}
+
 /**
  * @brief Copy memory from the source buffer to the destination buffer.
  *
@@ -62,7 +768,7 @@
  * @param size Number of bytes to copy.
  */
 extern void mem_copy(u8* dst, u8* src, size_t size) {
-    for (size; size != 0; size--) {
+    for (; size != 0; size--) {
         *dst = *src;
         src++;
         dst++;
@@ -93,7 +799,7 @@ extern void mem_clear(u8* dst, size_t size, u8 val) {
  * @return TRUE if the memory buffers are equal, FALSE otherwise.
  */
 extern int mem_cmp(u8* p1, u8* p2, size_t size) {
-    for (size; size != 0; size--) {
+    for (; size != 0; size--) {
         if (*p1 != *p2) {
             return FALSE;
         }
