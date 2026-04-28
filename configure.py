@@ -843,7 +843,7 @@ config.libs = [
             Object(Matching, "effect/ef_lovelove.c"),
             Object(Matching, "effect/ef_lovelove2.c"),
             Object(Matching, "effect/ef_lovelove_heart.c"),
-            Object(NonMatching, "effect/ef_make_hem.c"),
+            Object(Matching, "effect/ef_make_hem.c"),
             Object(Matching, "effect/ef_mizutama.c"),
             Object(Matching, "effect/ef_motiyuge.c"),
             Object(Matching, "effect/ef_muka.c"),
