@@ -30,7 +30,6 @@
  * - mTM_rtcTime_limit_check(): Check if the RTC time is within the allowed limits and adjust if necessary
  */
 
-
 #include "m_time.h"
 
 #include "game.h"
@@ -45,115 +44,130 @@
 static int debug_disp = 0;
 static u8 l_renew_is = 0;
 
-
 const lbRTC_time_c mTM_rtcTime_clear_code = {
-  0xFF, 0xFF, 0xFF,
-  0xFF, 0xFF, 0xFF,
-  0xFFFF
+    // clang-format off
+    0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF,
+    0xFFFF
+    // clang-format on
+};
+
+const lbRTC_time_c mTM_rtcTime_zero_code = {
+    // clang-format off
+    0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00,
+    0x0000
+    // clang-format on
 };
 
 const lbRTC_ymd_c mTM_rtcTime_ymd_clear_code = {
-  0xFFFF,
-  0xFF, 0xFF
+    // clang-format off
+    0xFFFF,
+    0xFF, 0xFF
+    // clang-format on
 };
 
 const lbRTC_time_c mTM_rtcTime_default_code = {
-  0, 0, 12,
-  1, 6, 1,
-  2000
+    // clang-format off
+    0, 0, 12,
+    13, lbRTC_FRIDAY, lbRTC_JUNE,
+    2003
+    // clang-format on
 };
 
 static mTM_calendar_term_t mTM_calender[mTM_TERM_NUM] = {
-  {
-    2, 3,
-    mTM_SEASON_WINTER,
-    0x0050, 0x0025
-  },
-  {
-    2, 17,
-    mTM_SEASON_WINTER,
-    0x0050, 0x0025
-  },
+    // clang-format off
     {
-    2, 24,
-    mTM_SEASON_WINTER,
-    0x0050, 0x0025
-  },
-  {
-    3, 31,
-    mTM_SEASON_SPRING,
-    0x0001, 0x0004
-  },
-  {
-    4, 8,
-    mTM_SEASON_SPRING,
-    0x004f, 0x0024
-  },
-  {
-    5, 25,
-    mTM_SEASON_SPRING,
-    0x0001, 0x0004
-  },
-  {
-    7, 22,
-    mTM_SEASON_SUMMER,
-    0x0001, 0x0004
-  },
-  {
-    8, 31,
-    mTM_SEASON_SUMMER,
-    0x0001, 0x0004
-  },
-  {
-    9, 15,
-    mTM_SEASON_SUMMER,
-    0x0001, 0x0004
-  },
-  {
-    9, 30,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    10, 15,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    10, 29,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    11, 12,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    11, 28,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    12, 9,
-    mTM_SEASON_AUTUMN,
-    0x0001, 0x0004
-  },
-  {
-    12, 17,
-    mTM_SEASON_WINTER,
-    0x0051, 0x0026
-  },
-  {
-    12, 25,
-    mTM_SEASON_WINTER,
-    0x0051, 0x0026
-  },
-  {
-    12, 31,
-    mTM_SEASON_WINTER,
-    0x0050, 0x0025
-  }
+        lbRTC_FEBRUARY, 3,
+        mTM_SEASON_WINTER,
+        0x0050, 0x0025
+    },
+    {
+        lbRTC_FEBRUARY, 17,
+        mTM_SEASON_WINTER,
+        0x0050, 0x0025
+    },
+    {
+        lbRTC_FEBRUARY, 24,
+        mTM_SEASON_WINTER,
+        0x0050, 0x0025
+    },
+    {
+        lbRTC_MARCH, 31,
+        mTM_SEASON_SPRING,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_APRIL, 8,
+        mTM_SEASON_SPRING,
+        0x004f, 0x0024
+    },
+    {
+        lbRTC_MAY, 25,
+        mTM_SEASON_SPRING,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_JULY, 22,
+        mTM_SEASON_SUMMER,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_AUGUST, 31,
+        mTM_SEASON_SUMMER,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_SEPTEMBER, 15,
+        mTM_SEASON_SUMMER,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_SEPTEMBER, 30,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_OCTOBER, 15,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_OCTOBER, 29,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_NOVEMBER, 12,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_NOVEMBER, 30,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_DECEMBER, 10,
+        mTM_SEASON_AUTUMN,
+        0x0001, 0x0004
+    },
+    {
+        lbRTC_DECEMBER, 17,
+        mTM_SEASON_WINTER,
+        0x0051, 0x0026
+    },
+    {
+        lbRTC_DECEMBER, 25,
+        mTM_SEASON_WINTER,
+        0x0051, 0x0026
+    },
+    {
+        lbRTC_DECEMBER, 31,
+        mTM_SEASON_WINTER,
+        0x0050, 0x0025
+    },
+    // clang-format on
 };
 
 /**
@@ -162,23 +176,22 @@ static mTM_calendar_term_t mTM_calender[mTM_TERM_NUM] = {
  * @return The index of the current term.
  */
 static int mTM_get_termIdx() {
-  lbRTC_month_t month = Common_Get(time.rtc_time.month);
-  lbRTC_day_t day = Common_Get(time.rtc_time.day);
-  mTM_calendar_term_t* term_info = mTM_calender;
-  int term;
+    lbRTC_month_t month = Common_Get(time.rtc_time.month);
+    lbRTC_day_t day = Common_Get(time.rtc_time.day);
+    mTM_calendar_term_t* term_info = mTM_calender;
+    int term;
 
-
-  if (mFI_GetClimate() == mFI_CLIMATE_ISLAND) {
-    return mTM_TERM_7;
-  }
-  
-  for (term = 0; term < mTM_TERM_NUM; term_info++, term++) {
-    if (month < term_info->month || (month == term_info->month && day <= term_info->day)) {
-      return term;
+    if (mFI_GetClimate() == mFI_CLIMATE_ISLAND) {
+        return mTM_TERM_7;
     }
-  }
 
-  return -1;
+    for (term = 0; term < mTM_TERM_NUM; term_info++, term++) {
+        if (month < term_info->month || (month == term_info->month && day <= term_info->day)) {
+            return term;
+        }
+    }
+
+    return -1;
 }
 
 /**
@@ -187,26 +200,26 @@ static int mTM_get_termIdx() {
  * @param term_idx The index of the term used to set the season and associated properties.
  */
 extern void mTM_set_season_com(int term_idx) {
-  const mTM_calendar_term_t* term_info = mTM_calender + term_idx;
+    const mTM_calendar_term_t* term_info = mTM_calender + term_idx;
 
-  Common_Set(time.season, term_info->season);
-  Common_Set(time.term_idx, term_idx);
-  Common_Set(time.bgitem_profile, term_info->bgitem_profile);
-  Common_Set(time.bgitem_bank, term_info->bgitem_bank);
+    Common_Set(time.season, term_info->season);
+    Common_Set(time.term_idx, term_idx);
+    Common_Set(time.bgitem_profile, term_info->bgitem_profile);
+    Common_Set(time.bgitem_bank, term_info->bgitem_bank);
 }
 
 /**
  * Set the season and associated properties based on the current date and climate.
  */
 extern void mTM_set_season() {
-  mTM_set_season_com(mTM_get_termIdx());
+    mTM_set_season_com(mTM_get_termIdx());
 }
 
 /**
  * Clear the renewal flags.
  */
 extern void mTM_clear_renew_is() {
-  l_renew_is = 0;
+    l_renew_is = 0;
 }
 
 /**
@@ -216,13 +229,13 @@ extern void mTM_clear_renew_is() {
  * @return TRUE if the renew_flag is set, FALSE otherwise.
  */
 extern int mTM_check_renew_time(u8 renew_flag) {
-  int renew = FALSE;
-    
-  if (((l_renew_is >> renew_flag) & 1) == 1) {
-    renew = TRUE;
-  }
+    int renew = FALSE;
 
-  return renew;
+    if (((l_renew_is >> renew_flag) & 1) == 1) {
+        renew = TRUE;
+    }
+
+    return renew;
 }
 
 /**
@@ -241,7 +254,6 @@ extern void mTM_set_renew_is() {
     l_renew_is = mTM_RENEW_TIME_ALL;
 }
 
-
 /**
  * Set the renewal time based on the given lbRTC_time_c struct.
  *
@@ -249,9 +261,9 @@ extern void mTM_set_renew_is() {
  * @param time Pointer to the lbRTC_time_c struct from which the renewal time will be taken.
  */
 extern void mTM_set_renew_time(lbRTC_ymd_c* renew_time, lbRTC_time_c* time) {
-  renew_time->year = time->year;
-  renew_time->month = time->month;
-  renew_time->day = time->day;
+    renew_time->year = time->year;
+    renew_time->month = time->month;
+    renew_time->day = time->day;
 }
 
 /**
@@ -261,32 +273,29 @@ extern void mTM_set_renew_time(lbRTC_ymd_c* renew_time, lbRTC_time_c* time) {
  * @param ymd Pointer to the lbRTC_ymd_c struct containing the date to be converted.
  */
 extern void mTM_ymd_2_time(lbRTC_time_c* time, lbRTC_ymd_c* ymd) {
-  time->year = ymd->year;
-  time->month = ymd->month;
-  time->day = ymd->day;
-  time->hour = 0;
-  time->min = 0;
-  time->sec = 0;
-  time->weekday = lbRTC_Week(ymd->year, ymd->month, ymd->day);
+    time->year = ymd->year;
+    time->month = ymd->month;
+    time->day = ymd->day;
+    time->hour = 0;
+    time->min = 0;
+    time->sec = 0;
+    time->weekday = lbRTC_Week(ymd->year, ymd->month, ymd->day);
 }
 
 /**
  * Check if the renewal time has changed, and if so, update the renewal time and set renewal flags.
  */
 extern void mTM_renewal_renew_time() {
-  lbRTC_ymd_c* renew_time = Save_GetPointer(renew_time);
-  lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
-    
-  // Check if the renewal time has changed
-  if (
-    (renew_time->year != rtc_time->year) ||
-    (renew_time->month != rtc_time->month) ||
-    (renew_time->day != rtc_time->day)
-  ) {
-    // If the renewal time has changed, update the renewal time and set renewal flags
-    mTM_set_renew_time(renew_time, rtc_time);
-    mTM_set_renew_is();
-  }
+    lbRTC_ymd_c* renew_time = Save_GetPointer(renew_time);
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+
+    // Check if the renewal time has changed
+    if ((Common_Get(time.rtc_crashed) || Common_Get(time.rtc_enabled)) && ((renew_time->year != rtc_time->year) || (renew_time->month != rtc_time->month) ||
+        (renew_time->day != rtc_time->day))) {
+        // If the renewal time has changed, update the renewal time and set renewal flags
+        mTM_set_renew_time(renew_time, rtc_time);
+        mTM_set_renew_is();
+    }
 }
 
 /**
@@ -295,56 +304,56 @@ extern void mTM_renewal_renew_time() {
  * @param unused An unused parameter.
  */
 static void mTM_disp_time(int unused) {
-  static int disp;
+    static int disp;
 
-  // Check if debug mode is enabled and the appropriate button is pressed
-  if (Common_Get(time.add_idx) != 1 && zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
-    disp ^= TRUE;
-    Common_Set(time.disp, disp);
-  }
+    // Check if debug mode is enabled and the appropriate button is pressed
+    if (Common_Get(time.add_idx) != 1 && zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
+        disp ^= TRUE;
+        Common_Set(time.disp, disp);
+    }
 
-  // If the display flag is set, draw the time on screen
-  if (Common_Get(time.disp) == TRUE) {
-    gfxprint_t gfxprint;
-    GRAPH* g;
-    Gfx* poly_opaque;
-    Gfx* line_opa;
-    Gfx* gfx_temp;
+    // If the display flag is set, draw the time on screen
+    if (Common_Get(time.disp) == TRUE) {
+        gfxprint_t gfxprint;
+        GRAPH* g;
+        Gfx* poly_opaque;
+        Gfx* line_opa;
+        Gfx* gfx_temp;
 
-    g = gamePT->graph;
-    gfxprint_init(&gfxprint);
-    
-    OPEN_DISP(g);
+        g = gamePT->graph;
+        gfxprint_init(&gfxprint);
 
-    poly_opaque = NOW_POLY_OPA_DISP;
-    gfx_temp = gfxopen(poly_opaque);
-    
-    gSPDisplayList(NOW_OVERLAY_DISP++, gfx_temp);
+        OPEN_DISP(g);
 
-    /* Debug mode draw time in format: YYYY MM/DD hh:mm ss */
-    gfxprint_open(&gfxprint, gfx_temp);
-    gfxprint_color(&gfxprint, 255, 255, 255, 255); /* White */
-    gfxprint_locate8x8(&gfxprint, 3, 3);
-    gfxprint_printf(&gfxprint, "%04d", Common_Get(time.rtc_time.year));
-    gfxprint_locate8x8(&gfxprint, 8, 3);
-    gfxprint_printf(&gfxprint, "%02d/", Common_Get(time.rtc_time.month));
-    gfxprint_locate8x8(&gfxprint, 11, 3);
-    gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.day));
-    gfxprint_locate8x8(&gfxprint, 14, 3);
-    gfxprint_printf(&gfxprint, "%02d:", Common_Get(time.rtc_time.hour));
-    gfxprint_locate8x8(&gfxprint, 17, 3);
-    gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.min));
-    gfxprint_locate8x8(&gfxprint, 20, 3);
-    gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.sec));
+        poly_opaque = NOW_POLY_OPA_DISP;
+        gfx_temp = gfxopen(poly_opaque);
 
-    gfx_temp = gfxprint_close(&gfxprint);
-    gSPEndDisplayList(gfx_temp++);
-    gfxclose(poly_opaque, gfx_temp);
-    SET_POLY_OPA_DISP(gfx_temp);
-    gfxprint_cleanup(&gfxprint);
+        gSPDisplayList(NOW_OVERLAY_DISP++, gfx_temp);
 
-    CLOSE_DISP(g);
-  }
+        /* Debug mode draw time in format: YYYY MM/DD hh:mm ss */
+        gfxprint_open(&gfxprint, gfx_temp);
+        gfxprint_color(&gfxprint, 255, 255, 255, 255); /* White */
+        gfxprint_locate8x8(&gfxprint, 3, 3);
+        gfxprint_printf(&gfxprint, "%04d", Common_Get(time.rtc_time.year));
+        gfxprint_locate8x8(&gfxprint, 8, 3);
+        gfxprint_printf(&gfxprint, "%02d/", Common_Get(time.rtc_time.month));
+        gfxprint_locate8x8(&gfxprint, 11, 3);
+        gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.day));
+        gfxprint_locate8x8(&gfxprint, 14, 3);
+        gfxprint_printf(&gfxprint, "%02d:", Common_Get(time.rtc_time.hour));
+        gfxprint_locate8x8(&gfxprint, 17, 3);
+        gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.min));
+        gfxprint_locate8x8(&gfxprint, 20, 3);
+        gfxprint_printf(&gfxprint, "%02d", Common_Get(time.rtc_time.sec));
+
+        gfx_temp = gfxprint_close(&gfxprint);
+        gSPEndDisplayList(gfx_temp++);
+        gfxclose(poly_opaque, gfx_temp);
+        SET_POLY_OPA_DISP(gfx_temp);
+        gfxprint_cleanup(&gfxprint);
+
+        CLOSE_DISP(g);
+    }
 }
 
 #define mTM_TIMESTEP_NUM 4
@@ -355,41 +364,14 @@ static void mTM_disp_time(int unused) {
  * @return TRUE if the time step control is active, FALSE otherwise.
  */
 static int mTM_TimestepControl() {
-  // Define time step values and an index for tracking the current time step
-  static int timestep[mTM_TIMESTEP_NUM] = {2, 4, 120, 240};
-  static int id;
+    // Define time step values and an index for tracking the current time step
+    // static int timestep[mTM_TIMESTEP_NUM] = { 2, 4, 120, 240 };
+    static int id = 0;
 
-  int add_sec;
-  int tstep;
+    int add_sec;
+    int tstep;
 
-#if VERSION < VER_GAFU01_00
-  // Check if certain input conditions are met, and if so, adjust the time step and flags accordingly
-  if (zurumode_flag >= 2 && debug_disp == 1 && (gamePT->pads[1].on.button & BUTTON_R) == BUTTON_R) {
-    if (id < mTM_TIMESTEP_NUM) {
-      Common_Set(time.rtc_crashed, TRUE);
-
-      tstep = timestep[id];
-      Common_Set(time.add_sec, tstep);
-
-      add_sec = tstep - 1;
-      if (add_sec > 10) {
-        add_sec = 10;
-      }
-
-      SETREG(SREG, 3, add_sec);
-      id++;
-    } else {
-      Common_Set(time.rtc_crashed, FALSE);
-      Common_Set(time.add_idx, 0);
-      lbRTC_SetTime(Common_GetPointer(time.rtc_time));
-
-      SETREG(SREG, 3, 0);
-      id = 0;
-    }
-  }
-#endif
-
-  return id != 0;
+    return id != 0;
 }
 
 #define mTM_SECONDS_IN_HOUR_F 3600.0f
@@ -400,143 +382,141 @@ static int mTM_TimestepControl() {
  * Initialize time-related values.
  */
 extern void mTM_time_init() {
-  u8 day;
-  int add_sec;
-  int add_min;
-  int time_add_sec;
-  int temp;;
+    u8 day;
+    int add_sec;
+    int add_min;
+    int time_add_sec;
+    int temp;
+    ;
 
-  day = Common_Get(time.rtc_time.day);
-  if (Common_Get(time.rtc_enabled) == TRUE && Common_Get(time.rtc_crashed) == FALSE) {
-    // If the RTC is enabled and not crashed, get the current time
-    lbRTC_GetTime(Common_GetPointer(time.rtc_time));
-  }
-  else {
-    // Else, calculate the time based on the stored values
-    add_sec = Common_Get(time.under_sec);
-    add_sec += Common_Get(time.add_sec);
-    add_min = add_sec / mTM_SECONDS_IN_MINUTE;
+    day = Common_Get(time.rtc_time.day);
+    if (Common_Get(time.rtc_enabled) == TRUE && Common_Get(time.rtc_crashed) == FALSE) {
+        // If the RTC is enabled and not crashed, get the current time
+        lbRTC_GetTime(Common_GetPointer(time.rtc_time));
+    } else {
+        // Else, calculate the time based on the stored values
+        add_sec = Common_Get(time.under_sec);
+        add_sec += Common_Get(time.add_sec);
+        add_min = add_sec / mTM_SECONDS_IN_MINUTE;
 
-    for (time_add_sec = 0; add_sec >= 60; add_min--) {
-      add_sec -= mTM_SECONDS_IN_MINUTE;
-      time_add_sec++;
+        for (time_add_sec = 0; add_sec >= 60; add_min--) {
+            add_sec -= mTM_SECONDS_IN_MINUTE;
+            time_add_sec++;
+        }
+
+        lbRTC_Add_ss(Common_GetPointer(time.rtc_time), time_add_sec);
+        Common_Set(time.rtc_time.weekday, lbRTC_Week(Common_Get(time.rtc_time.year), Common_Get(time.rtc_time.month),
+                                                     Common_Get(time.rtc_time.day)));
+        Common_Set(time.under_sec, add_sec);
     }
 
+    // Update current time and trigger Stalk Market change if the day changed
+    Common_Set(time.now_sec, Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE +
+                                 Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR);
+    if (Common_Get(time.rtc_time.day) != day) {
+        Kabu_manager();
+    }
 
-    lbRTC_Add_ss(Common_GetPointer(time.rtc_time), time_add_sec);
-    Common_Set(time.rtc_time.weekday, lbRTC_Week(Common_Get(time.rtc_time.year), Common_Get(time.rtc_time.month), Common_Get(time.rtc_time.day)));
-    Common_Set(time.under_sec, add_sec);
-  }
-
-  // Update current time and trigger Stalk Market change if the day changed
-  Common_Set(time.now_sec, Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE + Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR);
-  if (Common_Get(time.rtc_time.day) != day) {
-    Kabu_manager();
-  }
-
-  // Calculate rad_hour and rad_min values for clock hands
-  temp = Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE;
-  Common_Set(time.rad_min, (temp / mTM_SECONDS_IN_HOUR_F) * SHORT_ANGLE_MAX);
-  Common_Set(time.rad_hour, ((temp + Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR) / mTM_SECONDS_IN_HALFDAY_F) * SHORT_ANGLE_MAX);
+    // Calculate rad_hour and rad_min values for clock hands
+    temp = Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE;
+    Common_Set(time.rad_min, (temp / mTM_SECONDS_IN_HOUR_F) * SHORT_ANGLE_MAX);
+    Common_Set(time.rad_hour,
+               ((temp + Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR) / mTM_SECONDS_IN_HALFDAY_F) *
+                   SHORT_ANGLE_MAX);
 }
 
 /**
  * Update time-related values and handle debug display.
  */
 extern void mTM_time() {
-  lbRTC_day_t day;
-  int add_sec;
-  int add_min;
-  int time_add_sec;
-  int temp;
+    lbRTC_day_t day;
+    int add_sec;
+    int add_min;
+    int time_add_sec;
+    int temp;
 
-  day = Common_Get(time.rtc_time.day);
+    day = Common_Get(time.rtc_time.day);
 
-  // Control the time step based on certain input conditions
-  mTM_TimestepControl();
+    // Control the time step based on certain input conditions
+    mTM_TimestepControl();
 
-  if (Common_Get(time.rtc_enabled) == TRUE && Common_Get(time.rtc_crashed) == FALSE) {
-    // If the RTC is enabled and not crashed, get the current time and handle debug display
-    lbRTC_GetTime(Common_GetPointer(time.rtc_time));
-    if (zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
-      debug_disp ^= TRUE;
+    if (Common_Get(time.rtc_enabled) == TRUE && Common_Get(time.rtc_crashed) == FALSE) {
+        // If the RTC is enabled and not crashed, get the current time and handle debug display
+        lbRTC_GetTime(Common_GetPointer(time.rtc_time));
+        if (zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
+            debug_disp ^= TRUE;
+        }
+
+        if (debug_disp == TRUE) {
+            mTM_disp_time(0);
+        }
+    } else {
+        // Else, calculate the time based on the stored values and handle debug display
+        add_sec = Common_Get(time.under_sec);
+        add_sec += Common_Get(time.add_sec);
+        add_min = add_sec / mTM_SECONDS_IN_MINUTE;
+
+        for (time_add_sec = 0; add_sec >= 60; add_min--) {
+            add_sec -= mTM_SECONDS_IN_MINUTE;
+            time_add_sec++;
+        }
+
+        lbRTC_Add_ss(Common_GetPointer(time.rtc_time), time_add_sec);
+        Common_Set(time.rtc_time.weekday, lbRTC_Week(Common_Get(time.rtc_time.year), Common_Get(time.rtc_time.month),
+                                                     Common_Get(time.rtc_time.day)));
+
+        Common_Set(time.under_sec, add_sec);
+
+        if (zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
+            debug_disp ^= TRUE;
+        }
+
+        if (debug_disp == TRUE) {
+            mTM_disp_time(add_sec);
+        }
     }
 
-    if (debug_disp == TRUE) {
-      mTM_disp_time(0);
-    }
-  }
-  else {
-    // Else, calculate the time based on the stored values and handle debug display
-    add_sec = Common_Get(time.under_sec);
-    add_sec += Common_Get(time.add_sec);
-    add_min = add_sec / mTM_SECONDS_IN_MINUTE;
+    Common_Set(time.now_sec, Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE +
+                                 Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR);
 
-    for (time_add_sec = 0; add_sec >= 60; add_min--) {
-      add_sec -= mTM_SECONDS_IN_MINUTE;
-      time_add_sec++;
+    // Update current time and trigger Stalk Market change if the day changed
+    if (Common_Get(time.rtc_time.day) != day) {
+        Kabu_manager();
     }
 
-    lbRTC_Add_ss(Common_GetPointer(time.rtc_time), time_add_sec);
-    Common_Set(
-      time.rtc_time.weekday,
-      lbRTC_Week(
-        Common_Get(time.rtc_time.year),
-        Common_Get(time.rtc_time.month),
-        Common_Get(time.rtc_time.day)
-      )
-    );
+    // Calculate rad_hour and rad_min values for clock hands
+    temp = Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE;
+    Common_Set(time.rad_min, (temp / mTM_SECONDS_IN_HOUR_F) * SHORT_ANGLE_MAX);
+    Common_Set(time.rad_hour,
+               ((temp + Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR) / mTM_SECONDS_IN_HALFDAY_F) *
+                   SHORT_ANGLE_MAX);
 
-    Common_Set(time.under_sec, add_sec);
-
-    if (zurumode_flag != 0 && (gamePT->pads[1].on.button & BUTTON_A) == BUTTON_A) {
-      debug_disp ^= TRUE;
-    }
-
-    if (debug_disp == TRUE) {
-      mTM_disp_time(add_sec);
-    }
-  }
-
-  Common_Set(
-    time.now_sec,
-    Common_Get(time.rtc_time.sec) +
-      Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE +
-      Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR
-  );
-
-  // Update current time and trigger Stalk Market change if the day changed
-  if (Common_Get(time.rtc_time.day) != day) {
-    Kabu_manager();
-  }
-
-  // Calculate rad_hour and rad_min values for clock hands
-  temp = Common_Get(time.rtc_time.sec) + Common_Get(time.rtc_time.min) * mTM_SECONDS_IN_MINUTE;
-  Common_Set(time.rad_min, (temp / mTM_SECONDS_IN_HOUR_F) * SHORT_ANGLE_MAX);
-  Common_Set(time.rad_hour, ((temp + Common_Get(time.rtc_time.hour) * mTM_SECONDS_IN_HOUR) / mTM_SECONDS_IN_HALFDAY_F) * SHORT_ANGLE_MAX);
-
-  // Check if the renewal time has changed, and if so, update the renewal time and set renewal flags
-  mTM_renewal_renew_time();
+    // Check if the renewal time has changed, and if so, update the renewal time and set renewal flags
+    mTM_renewal_renew_time();
 }
 
 /**
  * Check if the RTC time is within the allowed limits and adjust if necessary.
  */
 extern void mTM_rtcTime_limit_check() {
-  lbRTC_time_c time;
+    lbRTC_time_c time;
 
-  // Get the current time from the RTC
-  lbRTC_GetTime(&time);
+    if (mCD_castingoff_mura_chk()) {
+        return;
+    }
 
-  // Check if the year is within the allowed limits and adjust if necessary
-  if (time.year > mTM_MAX_YEAR) {
-    time.year = mTM_MAX_YEAR;
-    lbRTC_SetTime(&time);
-    return;
-  }
+    // Get the current time from the RTC
+    lbRTC_GetTime(&time);
 
-  if (time.year < mTM_MIN_YEAR) {
-    time.year = mTM_MIN_YEAR;
-    lbRTC_SetTime(&time);
-  }
+    // Check if the year is within the allowed limits and adjust if necessary
+    if (time.year > mTM_MAX_YEAR) {
+        time.year = mTM_MAX_YEAR;
+        lbRTC_SetTime(&time);
+        return;
+    }
+
+    if (time.year < mTM_MIN_YEAR) {
+        time.year = mTM_MIN_YEAR;
+        lbRTC_SetTime(&time);
+    }
 }
