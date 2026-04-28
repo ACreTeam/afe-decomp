@@ -12,15 +12,9 @@ extern "C" {
 #define mNpcW_GET_WALK_NUM(x) (int)((x) / 3)
 #define mNpcW_MAX mNpcW_GET_WALK_NUM(ANIMAL_NUM_MAX)
 
-typedef struct goal_data_s {
-  u8* types;
-  u8 count;
-  int end_time;
-} mNpcW_GoalData_c;
-
 typedef struct goal_data_table_s {
-  mNpcW_GoalData_c* data_p;
-  int count;
+    u8* data_p;
+    int count;
 } mNpcW_GoalDataTable_c;
 
 enum {

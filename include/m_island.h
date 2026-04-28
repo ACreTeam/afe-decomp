@@ -14,6 +14,16 @@
 extern "C" {
 #endif
 
+// TODO: verify these names
+enum {
+    mISL_NPC_DAY_TYPE_NOT_EXIST, // islander doesn't exist
+    mISL_NPC_DAY_TYPE_APPEARED_TODAY, // islander appeared today (player spoke to them)
+    mISL_NPC_DAY_TYPE_NORMAL, // normal
+    mISL_NPC_DAY_TYPE_LEAVING_TOMORROW, // islander is leaving tomorrow
+
+    mISL_NPC_DAY_TYPE_NUM
+};
+
 #define mISL_PLAYER_ACTION_NUM 32
 
 #define mISL_PLAYER_ACTION_DIG_SCOOP (1 << 0)
@@ -78,6 +88,7 @@ extern void mISL_SetNowPlayerAction(u32 action);
 extern int mISL_CheckPlayerAction(PersonalID_c* pid, u32 action);
 extern int mISL_CheckNowPlayerAction(u32 action);
 extern void mISL_MoveNowPlayerAction(void);
+extern int mISL_GetNpcDayType(Island_c* island);
 
 /* NOTE: a lot of these seem to be padded to 4-bytes and should be redone in the future */
 

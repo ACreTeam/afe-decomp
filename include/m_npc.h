@@ -518,6 +518,7 @@ extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 card_id);
 extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id);
 extern void mNpc_EraseIslandAnimal(int island_idx);
 extern void mNpc_RenewRemoveHistory(void);
+extern int mNpc_GetSickAnimalIdx(void);
 
 #ifdef __cplusplus
 }
