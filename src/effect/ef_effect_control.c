@@ -135,8 +135,8 @@ static eEC_PROFILE_c* profile_tbl[eEC_EFFECT_NUM] = {
     &iam_ef_make_hem_light, // eEC_EFFECT_MAKE_HEM_LIGHT
     &iam_ef_nomi, // eEC_EFFECT_NOMI
     &iam_ef_resetbreak, // eEC_EFFECT_RESETBREAK
-    &iam_ef_resetbreak_dust, // eEC_EFFECT_RESETBREAK_PARTS
-    &iam_ef_resetbreak_parts, // eEC_EFFECT_RESETBREAK_DUST
+    &iam_ef_resetbreak_parts, // eEC_EFFECT_RESETBREAK_PARTS
+    &iam_ef_resetbreak_dust, // eEC_EFFECT_RESETBREAK_DUST
     &iam_ef_resetbreak_piece, // eEC_EFFECT_RESETBREAK_PIECE
     &iam_ef_presentopen, // eEC_EFFECT_PRESENTOPEN
     &iam_ef_presentopen_parts, // eEC_EFFECT_PRESENTOPEN_PARTS
@@ -422,8 +422,10 @@ static void eEC_actor_ct(ACTOR* actorx, GAME* game) {
     eEC_MakeEffectLight(game);
     eEL_InitEffectLight();
 
-    if (Save_Get(scene_no) == SCENE_TENT) {
-        eEC_CLIP->effect_make_proc(eEC_EFFECT_TENT_LAMP, actorx->world.position, 3, 0, game, RSV_NO, 0, 0);
+    switch (Save_Get(scene_no)) {
+        case SCENE_TENT:
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_TENT_LAMP, actorx->world.position, 3, 0, game, RSV_NO, 0, 0);
+            break;
     }
 
     eMH_special_point_light_num = -1;

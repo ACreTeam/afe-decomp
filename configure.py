@@ -801,7 +801,7 @@ config.libs = [
             Object(Matching, "effect/ef_douzou_light.c"),
             Object(Matching, "effect/ef_doyon.c"),
             Object(Matching, "effect/ef_dust.c"),
-            Object(NonMatching, "effect/ef_effect_control.c"),
+            Object(Matching, "effect/ef_effect_control.c"),
             Object(Matching, "effect/ef_flash.c"),
             Object(Matching, "effect/ef_footprint.c"),
             Object(Matching, "effect/ef_furo_yuge.c"),
