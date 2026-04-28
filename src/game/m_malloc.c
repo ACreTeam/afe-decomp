@@ -30,6 +30,10 @@ extern size_t zelda_GetMemBlockSize(void* ptr) {
   return __osGetMemBlockSize(&zelda_arena, ptr);
 }
 
+extern int zelda_CheckArena(void) {
+    return __osCheckArena(&zelda_arena);
+}
+
 extern void zelda_InitArena(void* start, size_t size) {
   __osMallocInit(&zelda_arena, start, size);
 }
