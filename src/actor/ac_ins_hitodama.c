@@ -162,6 +162,14 @@ static void aIHD_calc_move_drt(aINS_INSECT_ACTOR* insect, GAME* game) {
     actorx->world.angle.y = angle2;
 }
 
+// Hack to get 35.0f to show after 1.0f but before 15.0f & 25.0f
+#ifdef MUST_MATCH
+extern void float_func(float f);
+FORCESTRIP static float order_floats() {
+    return (fabsf(1.0f) + fabsf(35.0f));
+}
+#endif
+
 static void aIHD_light_proc(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;

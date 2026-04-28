@@ -118,6 +118,7 @@ enum {
     mPlayer_INDEX_OUTDOOR,
     mPlayer_INDEX_INVADE,
     mPlayer_INDEX_HOLD,
+    mPlayer_INDEX_HOLD_LOCK, // e+
     mPlayer_INDEX_PUSH,
     mPlayer_INDEX_PULL,
     mPlayer_INDEX_ROTATE_FURNITURE,
@@ -210,6 +211,7 @@ enum {
     mPlayer_INDEX_SWING_FAN,
     mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE,
     mPlayer_INDEX_RADIO_EXERCISE,
+    mPlayer_INDEX_PULL_CRACKER, // e+
     mPlayer_INDEX_DEMO_GETON_BOAT,
     mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN,
     mPlayer_INDEX_DEMO_GETON_BOAT_WAIT,
@@ -219,6 +221,10 @@ enum {
     mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM,
     mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2,
     mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT,
+    mPlayer_INDEX_PICKUP_FLOWER, // e+
+    mPlayer_INDEX_READY_SECRETBASE, // e+
+    mPlayer_INDEX_FALL_SECRETBASE, // e+
+    mPlayer_INDEX_STRUGGLE_SECRETBASE, // e+
 
     mPlayer_INDEX_NUM
 };

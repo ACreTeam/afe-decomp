@@ -723,7 +723,7 @@ int Museum_Insect_GetMsgNo(ACTOR* actorx) {
     return msgNo;
 }
 
-f32 minsect_scale_tbl[40] = { 0.01f, 0.01f, 0.01f,  0.01f,  0.008f, 0.008f, 0.008f, 0.008f, 0.01f, 0.01f,
+f32 minsect_scale_tbl[aINS_INSECT_TYPE_NUM] = { 0.01f, 0.01f, 0.01f,  0.01f,  0.008f, 0.008f, 0.008f, 0.008f, 0.01f, 0.01f,
                               0.01f, 0.01f, 0.01f,  0.01f,  0.01f,  0.01f,  0.01f,  0.01f,  0.01f, 0.01f,
                               0.01f, 0.01f, 0.009f, 0.009f, 0.009f, 0.009f, 0.01f,  0.01f,  0.01f, 0.01f,
                               0.01f, 0.01f, 0.01f,  0.01f,  0.007f, 0.01f,  0.01f,  0.01f,  0.01f, 0.01f };

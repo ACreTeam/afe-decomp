@@ -88,6 +88,7 @@ typedef struct tools_s {
     /* 0x1C0 */ int work0;
     /* 0x1C4 */ int work1;
     /* 0x1C8 */ int work2;
+    /* 0x1CC */ int _1CC;
 } TOOLS_ACTOR;
 
 typedef ACTOR* (*ToolBirthProc)(int kind, int mode, ACTOR* parent_actor, GAME* game, s16 arg, int* bank_id);
