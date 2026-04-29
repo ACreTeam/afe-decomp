@@ -444,6 +444,19 @@ config.libs = [
             Object(Matching, "Famicom/famicom_nesinfo.cpp"),
         ],
     },
+    {
+        "lib": "libforest",
+        "mw_version": config.linker_version,
+        "cflags": cflags_static,
+        "progress_category": "library",
+        "src_dir": "src/static",
+        "objects": [
+            Object(NonMatching, "libforest/emu64/emu64.c", extra_cflags=["-lang=c++", "-O4,p", "-inline off", "-sym on"]),
+            # Object(Matching, "libforest/osreport.c"),
+            # Object(Matching, "libforest/fault.c"),
+            # Object(Matching, "libforest/ReconfigBATs.c"),
+        ],
+    },
     Rel(
         "system",
         [
@@ -1214,6 +1227,7 @@ config.progress_categories = [
     ProgressCategory("sdk", "SDK Code"),
     ProgressCategory("jsystem", "JSystem"),
     ProgressCategory("famicom", "NES Emulator"),
+    ProgressCategory("library", "Library Code"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

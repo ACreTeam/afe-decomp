@@ -78,6 +78,17 @@ extern inline double sqrt(double x) {
 }
 
 #ifdef __cplusplus
+namespace std {
+    double sqrt(double x) {
+        ::sqrt(x);
+    }
+    float sqrtf(float x) {
+        ::sqrtf(x);
+    }
+}
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

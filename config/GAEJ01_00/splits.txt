@@ -548,7 +548,7 @@ gba2/JoyBoot.cpp:
 	.data       start:0x800FE938 end:0x800FEA00
 	.bss        start:0x8021F080 end:0x80223EC0
 
-libforest/emu64.c:
+libforest/emu64/emu64.c:
 	.text       start:0x800507D0 end:0x8005C3F4
 	.text       start:0x8005C3F4 end:0x8005CB40
 	.text       start:0x8005CB40 end:0x8005CB40

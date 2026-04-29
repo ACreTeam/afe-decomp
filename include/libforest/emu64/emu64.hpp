@@ -130,10 +130,7 @@
 #define EMU64_TLUT_IA16 0x0000
 #define EMU64_TLUT_RGBA5551 0x8000
 
-/* TODO: figure out where this actually belongs */
-namespace std {
-typedef va_list __tag_va_List;
-}
+
 
 float fastcast_float(register unsigned char* s) {
     register float f;
@@ -296,7 +293,7 @@ inline unsigned int get_dol_tlut_siz(unsigned int count) {
 class aflags_c {
   public:
 #ifdef AFLAGS_DEBUG
-    static u32 getMaxArray() {
+    u32 getMaxArray() {
         return AFLAGS_MAX;
     }
     void set(unsigned int idx, u8 val) {
@@ -307,7 +304,7 @@ class aflags_c {
     } /* @fabricated */
 
 #else
-    static u32 getMaxArray() {
+    u32 getMaxArray() {
         return AFLAGS_MAX;
     }
     void set(unsigned int idx, u8 val) {
@@ -490,8 +487,12 @@ class emu64_print {
   protected:
     u8 print_flags;
 
-//   private:
-    // void Vprintf(const char* fmt, std::__tag_va_List va_list) const; // this is only in e+??
+  private:
+#ifdef __MWERKS__
+    void Vprintf(const char* fmt, std::__tag_va_List* va_list); // this is only in e+??
+#else
+    void Vprintf(const char* fmt, va_list va_list); // this is only in e+??
+#endif
 };
 
 #define EMU64_ASSERTLINE(cond, line)        \
@@ -571,7 +572,7 @@ class emu64_print {
 
 #define EMU64_CAN_DRAW_POLYGON()         \
     (aflags[AFLAGS_MAX_POLYGONS] == 0 || \
-     (aflags[AFLAGS_MIN_POLYGONS] <= this->polygons && this->polygons < aflags[AFLAGS_MAX_POLYGONS]))
+     (this->polygons >= aflags[AFLAGS_MIN_POLYGONS] && this->polygons < aflags[AFLAGS_MAX_POLYGONS]))
 
 class emu64 : public emu64_print {
   public:
