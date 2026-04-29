@@ -7,6 +7,8 @@
 #include "m_bgm.h"
 #include "m_event.h"
 #include "_mem.h"
+#include "m_house.h"
+#include "m_text.h"
 
 /* Z-X */
 static f32 direct_vector[mDemo_DIRECT_NUM][2] = { { -1.0f, 0.0f },      { -F_SQRT2, F_SQRT2 }, { 0.0f, 1.0f },
@@ -218,6 +220,7 @@ extern void mDemo_Set_talk_window_color(rgba_t* window_color) {
 
         case mDemo_TYPE_EVENTMSG:
         case mDemo_TYPE_EVENTMSG2:
+        case mDemo_TYPE_ALARM:
             demo->data.emsg.window_color = *window_color;
             break;
     }
@@ -227,7 +230,7 @@ extern void mDemo_Set_talk_window_color(rgba_t* window_color) {
 extern rgba_t* mDemo_Get_talk_window_color_p() {
     if (demo->current.type >= mDemo_TYPE_TALK && demo->current.type < mDemo_TYPE_OUTDOOR) {
         return &demo->data.talk.window_color;
-    } else if (demo->current.type >= mDemo_TYPE_EVENTMSG && demo->current.type < mDemo_TYPE_15) {
+    } else if (demo->current.type >= mDemo_TYPE_EVENTMSG && demo->current.type < mDemo_TYPE_16) {
         return &demo->data.emsg.window_color;
     }
 
@@ -280,7 +283,8 @@ static int change_camera(int camera_type) {
             xyz_t camera_wpos;
 
             switch (demo->current.type) {
-                case mDemo_TYPE_EVENTMSG: {
+                case mDemo_TYPE_EVENTMSG: 
+                case mDemo_TYPE_ALARM: {
                     Camera2_main_Simple_AngleDistStd(play, &angle, &dist);
                     Camera2_request_main_simple((GAME_PLAY*)gamePT, &player->actor_class.world.position, &angle, dist,
                                                 0, mDemo_CAMERA_PRIORITY);
@@ -420,7 +424,7 @@ static int wait_talk_start() {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR_NOW();
 
     if (demo->data.talk.change_player) {
-        if (mPlib_get_player_actor_main_index(gamePT) != 65 &&
+        if (mPlib_get_player_actor_main_index(gamePT) != mPlayer_INDEX_TALK &&
             mPlib_request_main_talk_type1(gamePT, demo->current.actor, demo->data.talk.turn, FALSE) == FALSE) {
             return FALSE;
         }
@@ -614,6 +618,8 @@ static s16 get_title_no_for_event(s16 event) {
             return 14;
         case mEv_EVENT_HARVEST_FESTIVAL:
             return 15;
+        case mEv_EVENT_76:
+            return 0;
         default:
             return -1;
     }
@@ -628,10 +634,13 @@ static int set_emsg_default() {
     title_no = get_title_no_for_event(event_id);
 
     if (title_no >= 0) {
-        if (flags == 1) {
-            demo->data.emsg.msg_no = 0x1743; // start message
-        } else {
-            demo->data.emsg.msg_no = 0x1799; // conclusion message
+        switch (flags) {
+            case 1:
+                demo->data.emsg.msg_no = 0x1743; // start message
+                break;
+            default:
+                demo->data.emsg.msg_no = 0x1799; // conclusion message
+                break;
         }
 
         demo->data.emsg.msg_no += title_no;
@@ -727,6 +736,174 @@ static int wait_emsg2_end() {
     return res;
 }
 
+static u16 mDemo_Alarm_Sub(int house_idx) {
+    const lbRTC_time_c* rtc_time = &Common_Get(time.rtc_time);
+    mHm_hs_c* home = Save_GetPointer(homes[house_idx]);
+    int hour;
+    int target_hour;
+    int min;
+    int target_min;
+
+    if (home->haniwa.alarm_info.mode == mHm_HANIWA_ALARM_MODE_ON_PLAY) {
+
+        // offset time
+        hour = Common_Get(event_common).alarm.start_hour + home->haniwa.alarm_info.hour;
+        min = Common_Get(event_common).alarm.start_min + home->haniwa.alarm_info.minute;
+
+        if (min >= lbRTC_MINUTES_PER_HOUR) {
+            min -= lbRTC_MINUTES_PER_HOUR;
+            hour++;
+        }
+
+        if (hour >= lbRTC_HOURS_PER_DAY) {
+            hour -= lbRTC_HOURS_PER_DAY;
+        }
+    } else {
+        // Absolute time
+        hour = home->haniwa.alarm_info.hour;
+        min = home->haniwa.alarm_info.minute;
+    }
+
+    hour = rtc_time->hour - hour;
+    min = rtc_time->min - min;
+
+    if (min < 0) {
+        min += lbRTC_MINUTES_PER_HOUR;
+        hour--;
+    }
+
+    if (hour < 0) {
+        hour += lbRTC_HOURS_PER_DAY;
+    }
+
+    return (hour << 8) + min;
+}
+
+static int mDemo_Alarm_Comp(int house_idx0, int house_idx1) {
+    u16 alarm0 = mDemo_Alarm_Sub(house_idx0);
+    u16 alarm1 = mDemo_Alarm_Sub(house_idx1);
+
+    if (alarm0 > alarm1) {
+        return 0;
+    } else if (alarm0 < alarm1) {
+        return 1;
+    }
+
+    return mHS_get_pl_no_detail(house_idx0) > mHS_get_pl_no_detail(house_idx1);
+}
+
+extern int mDemo_Alarm_Priority_Ready(void) {
+    int ret = -1;
+    int i;
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (alarm->house_alarm_state[i] == mEv_HOUSE_ALARM_STATE_READY) {
+            if (ret == -1) {
+                ret = i;
+            } else if (mDemo_Alarm_Comp(ret, i) != 0) {
+                ret = i;
+            }
+        }
+    }
+
+    return ret;
+}
+
+extern void mDemo_Alarm_Set_Msg(int house_idx) {
+    u16* buff = (u16*)mTxt_get_first_buff();
+
+    mTxt_conv_16bit(Save_Get(homes[house_idx]).haniwa.message, buff, HANIWA_MESSAGE_LEN);
+    mMsg_Set_mail_strW(mMsg_Get_base_window_p(), mMsg_MAIL_STR0, buff, HANIWA_MESSAGE_LEN);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(homes[house_idx]).ownerID.player_name,
+                      PLAYER_NAME_LEN);
+}
+
+static int mDemo_alarm_next_msg(void) {
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+    int house_idx = mDemo_Alarm_Priority_Ready();
+    int i;
+
+    if (house_idx == -1) {
+        return FALSE;
+    }
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (alarm->house_alarm_state[i] == mEv_HOUSE_ALARM_STATE_ACTIVE) {
+            alarm->house_alarm_state[i] = mEv_HOUSE_ALARM_STATE_FINISHED;
+        }
+    }
+
+    alarm->house_alarm_state[house_idx] = mEv_HOUSE_ALARM_STATE_ACTIVE;
+    mDemo_Alarm_Set_Msg(house_idx);
+    return TRUE;
+}
+
+static int set_alarm_default() {
+    memcpy(&demo->data.alarm.door_data, Common_GetPointer(event_door_data), sizeof(Door_data_c));
+    demo->data.alarm.msg_no = 0x0939;
+    demo->data.alarm.window_color.r = 235;
+    demo->data.alarm.window_color.g = 255;
+    demo->data.alarm.window_color.b = 235;
+    demo->data.alarm.window_color.a = 255;
+    demo->camera_type = CAMERA2_PROCESS_LOCK;
+    demo->data.alarm.start_timer = 45;
+    demo->data.alarm.end_timer = 30;
+    return TRUE;
+}
+
+static int wait_alarm_start() {
+    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
+
+    if (demo->data.alarm.start_timer == 45) {
+        sAdo_SysTrgStart(0x46C);
+        change_camera(demo->camera_type);
+        Common_Set(event_title_flags, 2);
+    }
+
+    if (demo->data.alarm.start_timer <= 0) {
+        if (demo->data.alarm.msg_no != 0) {
+            mMsg_request_main_appear(msg_win, NULL, FALSE, &demo->data.alarm.window_color, demo->data.alarm.msg_no,
+                                     mDemo_MSG_PRIORITY);
+        }
+
+        return TRUE;
+    } else {
+        demo->data.alarm.start_timer--;
+        return FALSE;
+    }
+}
+
+static int wait_alarm_end() {
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
+
+    if (mMsg_Check_main_hide(msg_win)) {
+        demo->data.alarm.end_timer--;
+    }
+
+    if (demo->data.alarm.end_timer <= 0 || demo->state == mDemo_STATE_STOP) {
+        if (mDemo_alarm_next_msg()) {
+            demo->data.alarm.start_timer = 0;
+            demo->data.alarm.end_timer = 30;
+            demo->state = mDemo_STATE_READY;
+            return FALSE;
+        }
+
+        if (goto_other_scene(play, &demo->data.alarm.door_data, FALSE)) {
+            play->fb_wipe_type = demo->data.alarm.door_data.wipe_type;
+            play->fb_fade_type = FADE_TYPE_EVENT;
+            Common_Set(transition.wipe_type, demo->data.alarm.door_data.wipe_type);
+            mBGMForce_inform_end();
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+}
+
 static f32 weight_of_talk_position(ACTOR* actor) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR_NOW();
     f32 actor_talk_dist;
@@ -802,11 +979,11 @@ static int speak_check() {
 typedef int (*mDemo_PROC)();
 
 static int choice_demo_sub() {
-    static const mDemo_PROC check_func[mDemo_TYPE_NUM] = { &allways_true, &scroll_check,  &allways_true, &door_check,
-                                                           &allways_true, &scroll2_check, &door2_check,  &talk_check,
-                                                           &speak_check,  &allways_true,  &allways_true, &outdoor_check,
-                                                           &allways_true, &allways_true,  &allways_true, &allways_true,
-                                                           &scroll3_check };
+    static const mDemo_PROC check_func[mDemo_TYPE_NUM] = {
+        &allways_true, &scroll_check, &allways_true, &door_check,   &allways_true,  &scroll2_check,
+        &door2_check,  &talk_check,   &speak_check,  &allways_true, &allways_true,  &outdoor_check,
+        &allways_true, &allways_true, &allways_true, &allways_true, &allways_true, &scroll3_check,
+    };
 
     f32 max_talk_weight = 0.0f;
     int i;
@@ -838,10 +1015,24 @@ static int choice_demo_sub() {
 
 static int choice_demo() {
     static const mDemo_PROC default_set_func[mDemo_TYPE_NUM] = {
-        &allways_true,       &allways_true,     &allways_true,     &set_door_default,  &allways_true,
-        &allways_true,       &set_door_default, &set_talk_default, &set_speak_default, &set_report_default,
-        &set_speech_default, &allways_true,     &allways_true,     &set_emsg_default,  &set_emsg2_default,
-        &allways_true,       &allways_true
+        &allways_true,       // mDemo_TYPE_NONE
+        &allways_true,       // mDemo_TYPE_SCROLL
+        &allways_true,       // mDemo_TYPE_EXITSCENE
+        &set_door_default,   // mDemo_TYPE_DOOR
+        &allways_true,       // mDemo_TYPE_4
+        &allways_true,       // mDemo_TYPE_SCROLL2
+        &set_door_default,   // mDemo_TYPE_DOOR2
+        &set_talk_default,   // mDemo_TYPE_TALK
+        &set_speak_default,  // mDemo_TYPE_SPEAK
+        &set_report_default, // mDemo_TYPE_REPORT
+        &set_speech_default, // mDemo_TYPE_SPEECH
+        &allways_true,       // mDemo_TYPE_OUTDOOR
+        &allways_true,       // mDemo_TYPE_12
+        &set_emsg_default,   // mDemo_TYPE_EVENTMSG
+        &set_emsg2_default,  // mDemo_TYPE_EVENTMSG2
+        &set_alarm_default,  // mDemo_TYPE_ALARM
+        &allways_true,       // mDemo_TYPE_16
+        &allways_true,       // mDemo_TYPE_SCROLL3
     };
 
     int request_idx = choice_demo_sub();
@@ -895,6 +1086,7 @@ static void init_demo() {
     switch (initial_demo_type) {
         case mDemo_TYPE_EVENTMSG:
         case mDemo_TYPE_EVENTMSG2:
+        case mDemo_TYPE_ALARM:
             mDemo_Request(initial_demo_type, NULL, &emsg_set);
             Common_Set(start_demo_request.type, mDemo_TYPE_NONE);
             break;
@@ -902,16 +1094,46 @@ static void init_demo() {
 }
 
 static const mDemo_PROC wait_start[mDemo_TYPE_NUM] = {
-    &allways_true,     &wait_scroll_start, &allways_true,     &wait_door_start, &allways_true,     &wait_scroll_start,
-    &wait_door2_start, &wait_talk_start,   &wait_talk_start,  &wait_talk_start, &wait_talk_start,  &allways_true,
-    &allways_true,     &wait_emsg_start,   &wait_emsg2_start, &allways_true,    &wait_scroll_start
+    &allways_true,      // mDemo_TYPE_NONE
+    &wait_scroll_start, // mDemo_TYPE_SCROLL
+    &allways_true,      // mDemo_TYPE_EXITSCENE
+    &wait_door_start,   // mDemo_TYPE_DOOR
+    &allways_true,      // mDemo_TYPE_4
+    &wait_scroll_start, // mDemo_TYPE_SCROLL2
+    &wait_door2_start,  // mDemo_TYPE_DOOR2
+    &wait_talk_start,   // mDemo_TYPE_TALK
+    &wait_talk_start,   // mDemo_TYPE_SPEAK
+    &wait_talk_start,   // mDemo_TYPE_REPORT
+    &wait_talk_start,   // mDemo_TYPE_SPEECH
+    &allways_true,      // mDemo_TYPE_OUTDOOR
+    &allways_true,      // mDemo_TYPE_12
+    &wait_emsg_start,   // mDemo_TYPE_EVENTMSG
+    &wait_emsg2_start,  // mDemo_TYPE_EVENTMSG2
+    &wait_alarm_start,  // mDemo_TYPE_ALARM
+    &allways_true,      // mDemo_TYPE_16
+    &wait_scroll_start, // mDemo_TYPE_SCROLL3
 };
 
-static const mDemo_PROC wait_end[mDemo_TYPE_NUM] = { &allways_false, &allways_false, &allways_false,  &allways_false,
-                                                     &allways_false, &allways_false, &allways_false,  &wait_talk_end,
-                                                     &wait_talk_end, &wait_talk_end, &wait_talk_end,  &allways_false,
-                                                     &allways_false, &wait_emsg_end, &wait_emsg2_end, &allways_false,
-                                                     &allways_false };
+static const mDemo_PROC wait_end[mDemo_TYPE_NUM] = {
+    &allways_false,  // mDemo_TYPE_NONE
+    &allways_false,  // mDemo_TYPE_SCROLL
+    &allways_false,  // mDemo_TYPE_EXITSCENE
+    &allways_false,  // mDemo_TYPE_DOOR
+    &allways_false,  // mDemo_TYPE_4
+    &allways_false,  // mDemo_TYPE_SCROLL2
+    &allways_false,  // mDemo_TYPE_DOOR2
+    &wait_talk_end,  // mDemo_TYPE_TALK
+    &wait_talk_end,  // mDemo_TYPE_SPEAK
+    &wait_talk_end,  // mDemo_TYPE_REPORT
+    &wait_talk_end,  // mDemo_TYPE_SPEECH
+    &allways_false,  // mDemo_TYPE_OUTDOOR
+    &allways_false,  // mDemo_TYPE_12
+    &wait_emsg_end,  // mDemo_TYPE_EVENTMSG
+    &wait_emsg2_end, // mDemo_TYPE_EVENTMSG2
+    &wait_alarm_end, // mDemo_TYPE_ALARM
+    &allways_false,  // mDemo_TYPE_16
+    &allways_false,  // mDemo_TYPE_SCROLL3
+};
 
 static void run_demo() {
     if (demo->state == mDemo_STATE_READY) {
@@ -979,15 +1201,21 @@ extern int mDemo_Request(int type, ACTOR* actor, mDemo_REQUEST_PROC req_proc) {
     if (request_num < mDemo_REQUEST_NUM) {
         if (type >= demo->priority_type) {
             mDemo_Request_c* req = &demo->request[request_num];
+            GAME_PLAY* play = (GAME_PLAY*)gamePT;
 
-            if (type == mDemo_TYPE_TALK) {
-                weight = weight_of_talk_position(actor);
+            switch (type) {
+                case mDemo_TYPE_TALK:
+                    weight = weight_of_talk_position(actor);
 
-                if (weight < 0.0f) {
-                    return FALSE;
-                }
-            } else if (type == mDemo_TYPE_SPEAK && mPlib_Check_able_force_speak_label(gamePT, actor) == FALSE) {
-                return FALSE;
+                    if (weight < 0.0f || (play->fb_fade_type != FADE_TYPE_NONE && play->fb_fade_type != FADE_TYPE_IN)) {
+                        return FALSE;
+                    }
+                    break;
+                case mDemo_TYPE_SPEAK:
+                    if (mPlib_Check_able_force_speak_label(gamePT, actor) == FALSE || (play->fb_fade_type != FADE_TYPE_NONE && play->fb_fade_type != FADE_TYPE_IN)) {
+                        return FALSE;
+                    }
+                    break;
             }
 
             demo->priority_type = type;
@@ -1050,16 +1278,27 @@ extern void mDemo_Init(GAME_PLAY* play) {
     init_demo();
 }
 
+extern int mDemo_CheckEventMsgDemo(void) {
+    switch (mDemo_CheckDemoType()) {
+        case mDemo_TYPE_EVENTMSG:
+        case mDemo_TYPE_EVENTMSG2:
+        case mDemo_TYPE_ALARM:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 extern int mDemo_CheckDemo() {
     return demo->state != mDemo_STATE_WAIT;
 }
 
 extern int mDemo_CheckDemo4Event() {
-
     switch (mDemo_CheckDemoType()) {
         case mDemo_TYPE_NONE:
         case mDemo_TYPE_EVENTMSG:
         case mDemo_TYPE_EVENTMSG2:
+        case mDemo_TYPE_ALARM:
             return FALSE;
     }
 

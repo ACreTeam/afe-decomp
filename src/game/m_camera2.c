@@ -442,6 +442,7 @@ static void Camera2_Get_GoalDistanceAndDirection(GAME_PLAY* play, f32* dist, s_x
         290.0f, /* CAMERA2_PROCESS_CUST_TALK */
         620.0f, /* CAMERA2_PROCESS_INTER */
         620.0f, /* CAMERA2_PROCESS_STAFF_ROLL */
+        620.0f, /* CAMERA2_PROCESS_STAFF_ROLL2 */
         620.0f  /* CAMERA2_PROCESS_INTER2 */
     };
 
@@ -456,6 +457,7 @@ static void Camera2_Get_GoalDistanceAndDirection(GAME_PLAY* play, f32* dist, s_x
         { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
         { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
         { DEG2SHORT_ANGLE(-165.2125f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
+        { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
         { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
         { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
         { DEG2SHORT_ANGLE(-135.0f), DEG2SHORT_ANGLE(-180.0f), DEG2SHORT_ANGLE(0.0f) },
@@ -2660,7 +2662,7 @@ static void Camera2_change_main_index(GAME_PLAY* play) {
         &Camera2_setup_main_Talk,      &Camera2_setup_main_Demo,   &Camera2_setup_main_Item,
         &Camera2_setup_main_Lock,      &Camera2_setup_main_Door,   &Camera2_setup_main_Simple,
         &Camera2_setup_main_Cust_talk, &Camera2_setup_main_Inter,  &Camera2_setup_main_Staff_roll,
-        &Camera2_setup_main_Inter,
+        &Camera2_setup_main_Staff_roll, &Camera2_setup_main_Inter,
     };
 
     if (play->camera.requested_main_index_flag != TRUE || play->camera.requested_main_index < CAMERA2_PROCESS_STOP ||
@@ -2678,7 +2680,7 @@ extern void Camera2_process(GAME_PLAY* play) {
         &Camera2_main_Stop,   &Camera2_main_Normal,    &Camera2_main_Wade,  &Camera2_main_Talk,
         &Camera2_main_Demo,   &Camera2_main_Item,      &Camera2_main_Lock,  &Camera2_main_Door,
         &Camera2_main_Simple, &Camera2_main_Cust_talk, &Camera2_main_Inter, &Camera2_main_Staff_roll,
-        &Camera2_main_Inter,
+        &Camera2_main_Staff_roll, &Camera2_main_Inter,
     };
 
     if (play->camera.now_main_index < CAMERA2_PROCESS_STOP || play->camera.now_main_index >= CAMERA2_PROCESS_NUM ||

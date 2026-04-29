@@ -342,6 +342,8 @@ extern void mMsg_sound_set_voice_click(mMsg_Window_c* msg_p);
 extern void mMsg_sound_set_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 extern void mMsg_sound_unset_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 
+extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, int str_len);
+
 /* Macros */
 
 #define mMsg_SET_CONTINUE_MSG_NUM(msg_no) mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), (msg_no))

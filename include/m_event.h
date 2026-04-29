@@ -7,6 +7,7 @@
 #include "m_private.h"
 #include "m_time.h"
 #include "m_olib.h"
+#include "m_house.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -363,10 +364,12 @@ enum event_table {
     mEv_EVENT_74, // unused?
 
     mEv_EVENT_KOINOBORI,
+    
+    mEv_EVENT_76, // TODO: new to e+
 
-    mEv_EVENT_76, // unused?
+    mEv_EVENT_77, // some unused rumor?
 
-    mEv_EVENT_NUM
+    mEv_EVENT_NUM = mEv_EVENT_77
 };
 
 enum {
@@ -585,6 +588,18 @@ typedef struct event_area_s {
 #define mEv_AREA_NUM 5
 #define mEv_PLACE_NUM 10
 
+#define mEv_HOUSE_ALARM_STATE_FINISHED 1
+#define mEv_HOUSE_ALARM_STATE_READY 2
+#define mEv_HOUSE_ALARM_STATE_ACTIVE 3
+
+typedef struct event_alarm_info_s {
+    u8 hour;
+    u8 min;
+    u8 start_hour;
+    u8 start_min;
+    u8 house_alarm_state[mHS_HOUSE_NUM];
+} mEv_alarm_info_c;
+
 typedef struct event_common_s {
     s16 _00;
     s16 area_use_bitfield;
@@ -594,7 +609,7 @@ typedef struct event_common_s {
     mEv_place_c place[mEv_PLACE_NUM];
     s16 fieldday_event_id;
     s16 fieldday_event_over_status;
-    lbRTC_time_c alarm_time;
+    mEv_alarm_info_c alarm;
     int _21C;
     u16 exist_flags0;
     u16 exist_flags1;
