@@ -325,6 +325,8 @@ struct ac_npc_clip_s {
     /* 0x06C */ aNPC_overlay_c keep_s_overlay[2];
     /* 0x07C */ aNPC_overlay_c keep_k_overlay[3];
     /* 0x094 */ aNPC_overlay_c keep_e_overlay[2];
+    int _0A4;
+    int _0A8;
     /* 0x0A4 */ aNPC_attention_c attention_request;
     /* 0x0B8 */ aNPC_attention_c attention;
     /* 0x0CC */ aNPC_BIRTH_CHECK_PROC birth_check_proc;
@@ -416,8 +418,8 @@ typedef struct {
 
 typedef struct npc_draw_info_s {
     /* 0x000 */ int main_animation_frame;
-    /* 0x004 */ int main_animation_state;
-    /* 0x008 */ int main_animation_frame_changed;
+    /* 0x004 */ int main_animation_frame_changed;
+    /* 0x008 */ int main_animation_state;
     /* 0x00C */ int sub_animation0_state;
     /* 0x010 */ int sub_animation1_state;
     /* 0x014 */ aNPC_ANIMATION_c main_animation;
