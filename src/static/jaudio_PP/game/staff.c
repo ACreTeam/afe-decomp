@@ -6,7 +6,7 @@
 
 static BOOL start_flag = FALSE;
 static s32 mouth_num = 0;
-static u32 seq_num = 0;
+static s32 seq_num = 0;
 
 extern void Na_StaffRollInit(void) {
     start_flag = FALSE;
@@ -18,7 +18,8 @@ extern void Na_StaffRollStart(s16 seq_no) {
     Nap_SetS8(NA_MAKE_COMMAND(AUDIOCMD_OP_GRP_SET_PORT, sou_now_bgm_handle, 0, 0), 0);
     Nap_SetS8(NA_MAKE_COMMAND(AUDIOCMD_OP_GRP_SET_PORT, sou_now_bgm_handle, 0, 1), 0);
     Nap_SetS8(NA_MAKE_COMMAND(AUDIOCMD_OP_GRP_SET_PORT, sou_now_bgm_handle, 0, 2), -1);
-
+    AG.groups[sou_now_bgm_handle].port[3] = -1;
+    mouth_num = 0;
     seq_num = seq_no;
     start_flag = TRUE;
 }
@@ -34,26 +35,45 @@ extern void Na_GetStaffRollInfo(StaffRollInfo_c* info) {
     s32 counter;
     s32 i;
 
-    if (AG.groups[sou_now_bgm_handle].flags.enabled) {
+    if (seq_num != 314) {
+        if (AG.groups[sou_now_bgm_handle].flags.enabled) {
+            start_flag = FALSE;
+            group = &AG.groups[sou_now_bgm_handle];
 
-        start_flag = FALSE;
-        group = &AG.groups[sou_now_bgm_handle];
-
-        if (group->port[2] == 0) {
-            info->staffroll_part = STAFFROLL_PART_MAIN;
-        } else if (group->port[2] == 1) {
-            info->staffroll_part = STAFFROLL_PART_FADEOUT;
+            if (group->port[2] == 0) {
+                info->staffroll_part = STAFFROLL_PART_MAIN;
+            } else if (group->port[2] == 1) {
+                info->staffroll_part = STAFFROLL_PART_FADEOUT;
+            } else {
+                info->staffroll_part = STAFFROLL_PART_INTRO;
+            }
         } else {
-            info->staffroll_part = STAFFROLL_PART_INTRO;
+            if (start_flag) {
+                info->staffroll_part = STAFFROLL_PART_START;
+            } else {
+                info->staffroll_part = STAFFROLL_PART_FINISH;
+            }
+
+            return;
         }
     } else {
-        if (start_flag) {
-            info->staffroll_part = STAFFROLL_PART_START;
+        if (AG.groups[sou_now_bgm_handle].flags.enabled) {
+            start_flag = FALSE;
+            group = &AG.groups[sou_now_bgm_handle];
+            info->staffroll_part = group->port[3];
+            if (info->staffroll_part >= 0) {
+                info->staffroll_part++;
+            } else {
+                info->staffroll_part = STAFFROLL_PART_INTRO;
+            }
         } else {
-            info->staffroll_part = STAFFROLL_PART_FINISH;
+            if (start_flag) {
+                info->staffroll_part = STAFFROLL_PART_START;
+            } else {
+                info->staffroll_part = STAFFROLL_PART_BIRTHDAY_11;
+            }
+            return;
         }
-
-        return;
     }
 
     for (i = 2; i < AUDIO_SUBTRACK_NUM; i++) {
@@ -198,20 +218,22 @@ extern void Na_GetStaffRollInfo(StaffRollInfo_c* info) {
     counter = group->counter;
 
     switch (seq_num) {
-        case 1:
-        case 2:
-        case 3:
-        case 14:
-        case 17:
-        case 19:
-        case 31:
-        case 32:
-        case 39:
-        case 44:
-        case 49:
-        case 52:
+        case 0x00AF: // BGM_TOTAKEKE_LIVE1
+        case 0x00B0: // BGM_TOTAKEKE_LIVE2
+        case 0x00B1: // BGM_TOTAKEKE_LIVE3
+        case 0x00BC: // BGM_TOTAKEKE_LIVE14
+        case 0x00BF: // BGM_TOTAKEKE_LIVE17
+        case 0x00C1: // BGM_TOTAKEKE_LIVE19
+        case 0x00CD: // BGM_TOTAKEKE_LIVE31
+        case 0x00CE: // BGM_TOTAKEKE_LIVE32
+        case 0x00D5: // BGM_TOTAKEKE_LIVE39
+        case 0x00DA: // BGM_TOTAKEKE_LIVE44
+        case 0x00DF: // BGM_TOTAKEKE_LIVE49
+        case 0x00E5: // BGM_TOTAKEKE_LIVE55
+        case 0x013A: // BGM_KK_HAPPY_BIRTHDAY
             info->beat = 3;
             break;
+    
         default:
             info->beat = 4;
             break;
@@ -221,4 +243,8 @@ extern void Na_GetStaffRollInfo(StaffRollInfo_c* info) {
     info->_01 = counter / temp;
     counter -= info->_01 * temp;
     info->percent = (f32)counter / temp;
+}
+
+extern void Na_SetBirthdayLoopCount(u8 count) {
+    Nap_SetS8(NA_MAKE_COMMAND(AUDIOCMD_OP_GRP_SET_PORT, sou_now_bgm_handle, 0, 4), count);
 }

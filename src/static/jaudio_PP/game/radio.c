@@ -9,7 +9,7 @@ int Na_GetRadioCounter(Radio_c* radio) {
     group* group = nullptr;
     int unused = 0;
 
-    if (AG.groups[sou_now_bgm_handle].flags.enabled != 0 && AG.groups[sou_now_bgm_handle].seq_id == 0xDA) {
+    if (AG.groups[sou_now_bgm_handle].flags.enabled != 0 && AG.groups[sou_now_bgm_handle].seq_id == 322) {
         group = &(AG.groups)[sou_now_bgm_handle];
 
     } else {

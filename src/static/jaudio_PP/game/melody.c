@@ -639,7 +639,7 @@ static void Na_MelodyStart(u16 voice, s16 subTrack, const u8* pData) {
     Nap_WaitVsync();
 
     u8* dst;
-    s16 seq_idx = 248;
+    s16 seq_idx = 352;
     u16 size = ((u16*)AG.groups[0].seq_data)[2];
 
     switch (subTrack) {
