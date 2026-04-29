@@ -79,10 +79,10 @@ extern inline double sqrt(double x) {
 
 #ifdef __cplusplus
 namespace std {
-    double sqrt(double x) {
+    static inline double sqrt(double x) {
         ::sqrt(x);
     }
-    float sqrtf(float x) {
+    static inline float sqrtf(float x) {
         ::sqrtf(x);
     }
 }
