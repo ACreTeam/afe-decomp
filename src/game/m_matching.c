@@ -60,10 +60,12 @@ static int mMG_get_character_point(u8 char0, u8 char1) {
 
 static int mMG_get_constellation_point(u8 constellation0, u8 constellation1) {
     static const u8 star_match_table[4][4] = {
-        {0x80, 0x30, 0x30, 0x00},
-        {0x30, 0x80, 0x00, 0x30},
-        {0x30, 0x00, 0x80, 0x30},
-        {0x00, 0x30, 0x30, 0x80},
+        // clang-format off
+        {128,  48,  48,   0},
+        { 48, 128,   0,  48},
+        { 48,   0, 128,  48},
+        {  0,  48,  48, 128},
+        // clang-format on
     };
 
     return star_match_table[constellation0 & 3][constellation1 & 3];
