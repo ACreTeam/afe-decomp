@@ -104,7 +104,7 @@ typedef struct adpcmloop_ {
 typedef struct adpcmbook_ {
     /* 0x00 */ s32 order;
     /* 0x04 */ s32 n_predictors;
-    /* 0x08 */ s16 codebook[0]; /* variable length */
+    /* 0x08 */ s16 codebook[0]; /* variable length, length = order * n_predictors * 8 (VADPCM) */
 } adpcmbook;
 
 typedef struct smzwavetable_ {
@@ -278,7 +278,7 @@ typedef struct driverch_ {
     /* 0x06 */ u8 comb_filter_needs_init;
     /* 0x07 */ u8 vel_conv_table_idx;
     /* 0x08 */ u16 sample_pos_fractional_part;
-    /* 0x0A */ u16 sound_effect_gain;
+    /* 0x0A */ u16 surround_effect_gain;
     /* 0x0C */ s32 sample_pos_integer_part;
     /* 0x10 */ synthparams* synth_params;
     /* 0x14 */ s16 current_volume_left;
@@ -322,7 +322,7 @@ typedef struct playbackch_ {
     /* 0x54 */ sweep portamento_sweep;
     /* 0x60 */ tmtable vibrato_tmtable;
     /* 0x7C */ s32 _7C;
-    /* 0x80 */ u8 _80;
+    /* 0x80 */ u8 vel_conv_table_idx;
     /* 0x84 */ u32 start_sample_pos;
     /* 0x88 */ u8 _88[0x18];
 } playbackch;
@@ -568,9 +568,9 @@ struct note_ {
     /* 0x00 */ u8 finished : 1;
     /* 0x00 */ u8 muted : 1;
     /* 0x00 */ u8 continuous : 1;
-    /* 0x00 */ u8 _00bit3 : 1;
+    /* 0x00 */ u8 channel_attached : 1;
     /* 0x00 */ u8 ignore_drum_pan : 1;
-    /* 0x00 */ u8 _00bit1 : 1;
+    /* 0x00 */ u8 continuous_channel_released : 1;
     /* 0x00 */ u8 note_properties_need_init : 1;
     /* 0x01 */ phase stereo_phase;
     /* 0x02 */ u8 inst_or_wave;
@@ -839,7 +839,7 @@ typedef struct AudioGlobals {
     /* 0x2854 */ ArcHeader* bank_header;
     /* 0x2858 */ ArcHeader* wave_header;
     /* 0x285C */ ArcHeader* data_header;
-    /* 0x2860 */ u16* map_header;
+    /* 0x2860 */ u8* map_header;
     /* 0x2864 */ u16 num_sequences;
     /* 0x2868 */ voiceinfo* voice_info;
     /* 0x286C */ audioparams audio_params;

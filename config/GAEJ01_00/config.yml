@@ -14,6 +14,10 @@ symbols_known: true
 fill_gaps: true
 ldscript_template: config/GAEJ01_00/ldscript.tpl
 
+block_relocations:
+# emu64
+- source: 0x800FF0F4
+
 add_relocations:
 # emu64
 - source: .text:0x80050824 # setup_texture_tile (inlined texture_cache_select)

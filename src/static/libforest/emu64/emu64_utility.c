@@ -3,6 +3,55 @@
 #include "boot.h"
 #include "terminal.h"
 #include "MSL_C/w_math.h"
+#include "PowerPC_EABI_Support/msl/MSL_C/PPC_EABI/cmath_gcn.h" // for std::sqrtf
+
+inline float fastcast_float(register unsigned char* s) {
+    register float f;
+
+#ifdef __MWERKS__ // clang-format off
+    asm {
+        psq_l f, 0(s), 1, 2
+    }
+#endif // clang-format on
+
+    return f;
+}
+
+inline float fastcast_float(register unsigned short* s) {
+    register float f;
+
+#ifdef __MWERKS__ // clang-format off
+    asm {
+        psq_l f, 0(s), 1, 3
+    }
+#endif // clang-format on
+
+    return f;
+}
+
+inline float fastcast_float(register signed char* s) {
+    register float f;
+
+#ifdef __MWERKS__ // clang-format off
+    asm {
+        psq_l f, 0(s), 1, 4
+    }
+#endif // clang-format on
+
+    return f;
+}
+
+inline float fastcast_float(register short* s) {
+    register float f;
+
+#ifdef __MWERKS__ // clang-format off
+    asm {
+        psq_l f, 0(s), 1, 5
+    }
+#endif // clang-format on
+
+    return f;
+}
 
 u32 emu64::seg2k0(u32 segadr) {
     u32 k0;

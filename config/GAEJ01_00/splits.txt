@@ -74,18 +74,18 @@ nintendo_hi_0.c:
 	.text       start:0x8000CC08 end:0x8000CC08
 	.data       start:0x800E6E00 end:0x800F0700
 
-jaudio_PP/dummyprobe.c:
+jaudio_PP/game/dummyprobe.c:
 	.text       start:0x8000CC08 end:0x8000CC10
 
-jaudio_PP/audioheaders.c:
+jaudio_PP/game/audioheaders.c:
 	.text       start:0x8000CC10 end:0x8000CC10
 	.data       start:0x800F0700 end:0x800F2E50
 
-jaudio_PP/verysimple.c:
+jaudio_PP/game/verysimple.c:
 	.text       start:0x8000CC10 end:0x8000CCA0
 	.sdata      start:0x80290AE0 end:0x80290AE8
 
-jaudio_PP/emusound.c:
+jaudio_PP/game/emusound.c:
 	.text       start:0x8000CCA0 end:0x8000CCA0
 	.text       start:0x8000CCA0 end:0x8000D4A0
 	.text       start:0x8000D4A0 end:0x8000DB60
@@ -104,7 +104,7 @@ jaudio_PP/emusound.c:
 	.sbss       start:0x80291300 end:0x80291368
 	.sdata2     start:0x80291DC0 end:0x80291E40
 
-jaudio_PP/game64.c:
+jaudio_PP/game/game64.c:
 	.text       start:0x80010380 end:0x80010380
 	.text       start:0x80010380 end:0x80010508
 	.text       start:0x80010508 end:0x800195B0
@@ -115,35 +115,35 @@ jaudio_PP/game64.c:
 	.sbss       start:0x80291368 end:0x80291420
 	.sdata2     start:0x80291E40 end:0x80291F40
 
-jaudio_PP/melody.c:
+jaudio_PP/game/melody.c:
 	.text       start:0x800195B0 end:0x800199E0
 	.rodata     start:0x800D0A18 end:0x800D1380
 	.sbss       start:0x80291420 end:0x80291430
 	.sdata2     start:0x80291F40 end:0x80291F48
 
-jaudio_PP/rhythm.c:
+jaudio_PP/game/rhythm.c:
 	.text       start:0x800199E0 end:0x8001A580
 	.bss        start:0x801A0CB8 end:0x801A0D60
 	.sdata      start:0x80290B30 end:0x80290B38
 	.sbss       start:0x80291430 end:0x80291440
 	.sdata2     start:0x80291F48 end:0x80291F60
 
-jaudio_PP/radio.c:
+jaudio_PP/game/radio.c:
 	.text       start:0x8001A580 end:0x8001A700
 	.sdata2     start:0x80291F60 end:0x80291F70
 
-jaudio_PP/kappa.c:
+jaudio_PP/game/kappa.c:
 	.text       start:0x8001A700 end:0x8001A7D4
 	.sbss       start:0x80291440 end:0x80291448
 	.sdata2     start:0x80291F70 end:0x80291F80
 
-jaudio_PP/staff.c:
+jaudio_PP/game/staff.c:
 	.text       start:0x8001A7D4 end:0x8001AE20
 	.data       start:0x800F4018 end:0x800F4060
 	.sbss       start:0x80291448 end:0x80291458
 	.sdata2     start:0x80291F80 end:0x80291F88
 
-jaudio_PP/rspsim.c:
+jaudio_PP/internal/rspsim.c:
 	.text       start:0x8001AE20 end:0x8001BFA0
 	.data       start:0x800F4060 end:0x800F42E8
 	.bss        start:0x801A0D60 end:0x801A1E80
@@ -151,23 +151,23 @@ jaudio_PP/rspsim.c:
 	.sbss       start:0x80291458 end:0x80291480
 	.sdata2     start:0x80291F88 end:0x80291F90
 
-jaudio_PP/aictrl.c:
+jaudio_PP/internal/aictrl.c:
 	.text       start:0x8001BFA0 end:0x8001C760
 	.rodata     start:0x800D1380 end:0x800D1398
 	.bss        start:0x801A1E80 end:0x801A1EA0
 	.sbss       start:0x80291480 end:0x802914B0
 	.sdata2     start:0x80291F90 end:0x80291FA0
 
-jaudio_PP/sample.c:
+jaudio_PP/internal/sample.c:
 	.text       start:0x8001C760 end:0x8001CA40
 
-jaudio_PP/dummyrom.c:
+jaudio_PP/internal/dummyrom.c:
 	.text       start:0x8001CA40 end:0x8001CCE0
 	.rodata     start:0x800D1398 end:0x800D13A8
 	.bss        start:0x8028663C end:0x80286650 align:4 common
 	.sbss       start:0x802914B0 end:0x802914D0
 
-jaudio_PP/audiothread.c:
+jaudio_PP/internal/audiothread.c:
 	.text       start:0x8001CCE0 end:0x8001D1C0
 	.text       start:0x8001D1C0 end:0x8001D200
 	.rodata     start:0x800D13A8 end:0x800D13B8
@@ -176,46 +176,46 @@ jaudio_PP/audiothread.c:
 	.sbss       start:0x802914D0 end:0x802914F0
 	.sdata2     start:0x80291FA0 end:0x80291FA8
 
-jaudio_PP/neosthread.c:
+jaudio_PP/internal/neosthread.c:
 	.text       start:0x8001D200 end:0x8001D4A0
 	.rodata     start:0x800D13B8 end:0x800D13D8
 	.bss        start:0x801A7F00 end:0x801AE320
 	.sdata      start:0x80290B40 end:0x80290B48
 	.sbss       start:0x802914F0 end:0x80291508
 
-jaudio_PP/streamctrl.c:
+jaudio_PP/internal/streamctrl.c:
 	.text       start:0x8001D4A0 end:0x8001D880
 	.data       start:0x800F42E8 end:0x800F43B8
 	.bss        start:0x801AE320 end:0x801AE390
 	.sdata2     start:0x80291FA8 end:0x80291FB8
 
-jaudio_PP/dspbuf.c:
+jaudio_PP/internal/dspbuf.c:
 	.text       start:0x8001D880 end:0x8001DC00
 	.rodata     start:0x800D13D8 end:0x800D13F0
 	.bss        start:0x801AE390 end:0x801AE3A0
 	.sbss       start:0x80291508 end:0x80291518
 
-jaudio_PP/cpubuf.c:
+jaudio_PP/internal/cpubuf.c:
 	.text       start:0x8001DC00 end:0x8001DEE0
 	.bss        start:0x801AE3A0 end:0x801AE3B0
 	.sbss       start:0x80291518 end:0x80291528
 
-jaudio_PP/playercall.c:
+jaudio_PP/internal/playercall.c:
 	.text       start:0x8001DEE0 end:0x8001E1E0
 	.bss        start:0x801AE3B0 end:0x801AE470
 
-jaudio_PP/dvdthread.c:
+jaudio_PP/internal/dvdthread.c:
 	.text       start:0x8001E1E0 end:0x8001EEB8
 	.data       start:0x800F43B8 end:0x800F43D8
 	.bss        start:0x801AE470 end:0x801B7088
 	.sbss       start:0x80291528 end:0x80291578
 
-jaudio_PP/rate.c:
+jaudio_PP/internal/rate.c:
 	.text       start:0x8001EEB8 end:0x8001EEB8
 	.sdata      start:0x80290B48 end:0x80290B58
 	.sbss       start:0x80291578 end:0x80291580
 
-jaudio_PP/driver.c:
+jaudio_PP/internal/driver.c:
 	.text       start:0x8001EEB8 end:0x8001EEC0
 	.text       start:0x8001EEC0 end:0x8001F160
 	.text       start:0x8001F160 end:0x80021280
@@ -228,7 +228,7 @@ jaudio_PP/driver.c:
 	.sbss       start:0x80291580 end:0x80291588
 	.sdata2     start:0x80291FB8 end:0x80291FD8
 
-jaudio_PP/memory.c:
+jaudio_PP/internal/memory.c:
 	.text       start:0x80021B54 end:0x80021B60
 	.text       start:0x80021B60 end:0x80021D00
 	.text       start:0x80021D00 end:0x80021F40
@@ -244,7 +244,7 @@ jaudio_PP/memory.c:
 	.sbss       start:0x80291588 end:0x80291590
 	.sdata2     start:0x80291FD8 end:0x80292020
 
-jaudio_PP/system.c:
+jaudio_PP/internal/system.c:
 	.text       start:0x80024D6C end:0x80024D80
 	.text       start:0x80024D80 end:0x80025440
 	.text       start:0x80025440 end:0x80025C40
@@ -264,7 +264,7 @@ jaudio_PP/system.c:
 	.sbss       start:0x80291590 end:0x802915A0
 	.sdata2     start:0x80292020 end:0x80292030
 
-jaudio_PP/sub_sys.c:
+jaudio_PP/internal/sub_sys.c:
 	.text       start:0x80028BF4 end:0x80028C00
 	.text       start:0x80028C00 end:0x80028C00
 	.text       start:0x80028C00 end:0x80029240
@@ -276,30 +276,30 @@ jaudio_PP/sub_sys.c:
 	.sbss       start:0x802915A0 end:0x802915B8
 	.sdata2     start:0x80292030 end:0x80292048
 
-jaudio_PP/audiowork.c:
+jaudio_PP/internal/audiowork.c:
 	.text       start:0x8002A258 end:0x8002A258
 	.bss        start:0x802876E0 end:0x80290A20 align:4 common
 	.sbss       start:0x802915B8 end:0x802915D0
 
-jaudio_PP/audiotable.c:
+jaudio_PP/internal/audiotable.c:
 	.text       start:0x8002A258 end:0x8002A258
 	.data       start:0x800F44D0 end:0x800F77A8
 
-jaudio_PP/os.c:
+jaudio_PP/internal/os.c:
 	.text       start:0x8002A258 end:0x8002A260
 	.text       start:0x8002A260 end:0x8002A2C0
 	.text       start:0x8002A2C0 end:0x8002A2C0
 	.text       start:0x8002A2C0 end:0x8002A2C0
 	.text       start:0x8002A2C0 end:0x8002A440
 
-jaudio_PP/astest.c:
+jaudio_PP/internal/astest.c:
 	.text       start:0x8002A440 end:0x8002A528
 
-jaudio_PP/audioconst.c:
+jaudio_PP/internal/audioconst.c:
 	.text       start:0x8002A528 end:0x8002A528
 	.data       start:0x800F77A8 end:0x800F7808
 
-jaudio_PP/channel.c:
+jaudio_PP/internal/channel.c:
 	.text       start:0x8002A528 end:0x8002A540
 	.text       start:0x8002A540 end:0x8002A980
 	.text       start:0x8002A980 end:0x8002AF40
@@ -309,7 +309,7 @@ jaudio_PP/channel.c:
 	.text       start:0x8002C220 end:0x8002C2FC
 	.sdata2     start:0x80292048 end:0x80292080
 
-jaudio_PP/effect.c:
+jaudio_PP/internal/effect.c:
 	.text       start:0x8002C2FC end:0x8002C300
 	.text       start:0x8002C300 end:0x8002C620
 	.text       start:0x8002C620 end:0x8002CB80
@@ -318,7 +318,7 @@ jaudio_PP/effect.c:
 	.sdata      start:0x80290B70 end:0x80290B78
 	.sdata2     start:0x80292080 end:0x802920B0
 
-jaudio_PP/track.c:
+jaudio_PP/internal/track.c:
 	.text       start:0x8002CF70 end:0x8002CF80
 	.text       start:0x8002CF80 end:0x8002D1C0
 	.text       start:0x8002D1C0 end:0x8002DB80
@@ -333,31 +333,31 @@ jaudio_PP/track.c:
 	.sbss       start:0x802915D0 end:0x802915D8
 	.sdata2     start:0x802920B0 end:0x802920F0
 
-jaudio_PP/dspboot.c:
+jaudio_PP/internal/dspboot.c:
 	.text       start:0x80030A40 end:0x80030AC0
 	.text       start:0x80030AC0 end:0x80030E40
 	.rodata     start:0x800D1600 end:0x800D1620
 	.data       start:0x800F7C40 end:0x800F9640
 	.sdata2     start:0x802920F0 end:0x802920F8
 
-jaudio_PP/dspproc.c:
+jaudio_PP/internal/dspproc.c:
 	.text       start:0x80030E40 end:0x80031100
 	.sdata      start:0x80290B78 end:0x80290B80
 
-jaudio_PP/ipldec.c:
+jaudio_PP/internal/ipldec.c:
 	.text       start:0x80031100 end:0x80031360
 	.bss        start:0x80290A20 end:0x80290A60 align:4 common
 	.sbss       start:0x802915D8 end:0x802915E0
 
-jaudio_PP/dsp_cardunlock.c:
+jaudio_PP/internal/dsp_cardunlock.c:
 	.text       start:0x80031360 end:0x80031B80
 	.rodata     start:0x800D1620 end:0x800D1660
 
-jaudio_PP/dsp_GBAKey.c:
+jaudio_PP/internal/dsp_GBAKey.c:
 	.text       start:0x80031B80 end:0x80031D20
 	.rodata     start:0x800D1660 end:0x800D16B8
 
-jaudio_PP/driverinterface.c:
+jaudio_PP/internal/driverinterface.c:
 	.text       start:0x80031D20 end:0x800336C0
 	.data       start:0x800F9640 end:0x800F96D8
 	.bss        start:0x801B70A0 end:0x801CB220
@@ -365,76 +365,76 @@ jaudio_PP/driverinterface.c:
 	.sbss       start:0x802915E0 end:0x802915F0
 	.sdata2     start:0x802920F8 end:0x80292110
 
-jaudio_PP/dspdriver.c:
+jaudio_PP/internal/dspdriver.c:
 	.text       start:0x800336C0 end:0x80033F40
 	.data       start:0x800F96D8 end:0x800F9700
 	.bss        start:0x801CB220 end:0x801CB620
 	.sbss       start:0x802915F0 end:0x802915F8
 	.sdata2     start:0x80292110 end:0x80292120
 
-jaudio_PP/dspinterface.c:
+jaudio_PP/internal/dspinterface.c:
 	.text       start:0x80033F40 end:0x80034620
 	.data       start:0x800F9700 end:0x800F9B60
 	.bss        start:0x801CB620 end:0x801D16A0
 	.sdata      start:0x80290B88 end:0x80290B98
 
-jaudio_PP/fxinterface.c:
+jaudio_PP/internal/fxinterface.c:
 	.text       start:0x80034620 end:0x80034754
 	.data       start:0x800F9B60 end:0x800F9B78
 
-jaudio_PP/tables.c:
+jaudio_PP/internal/tables.c:
 	.text       start:0x80034754 end:0x80034760
 	.data       start:0x800F9B78 end:0x800F9D78
 
-jaudio_PP/bankread.c:
+jaudio_PP/internal/bankread.c:
 	.text       start:0x80034760 end:0x80034B40
 	.bss        start:0x801D16A0 end:0x801D1AA0
 
-jaudio_PP/waveread.c:
+jaudio_PP/internal/waveread.c:
 	.text       start:0x80034B40 end:0x80035040
 	.bss        start:0x801D1AA0 end:0x801D22A0
 	.bss        start:0x80290A60 end:0x80290AA0 align:4 common
 
-jaudio_PP/connect.c:
+jaudio_PP/internal/connect.c:
 	.text       start:0x80035040 end:0x800356E0
 	.bss        start:0x801D22A0 end:0x801D26A0
 
-jaudio_PP/bankdrv.c:
+jaudio_PP/internal/bankdrv.c:
 	.text       start:0x800356E0 end:0x80035E60
 	.data       start:0x800F9D78 end:0x800F9D88
 	.sdata2     start:0x80292120 end:0x80292148
 
-jaudio_PP/random.c:
+jaudio_PP/internal/random.c:
 	.text       start:0x80035E60 end:0x80035F00
 	.sdata      start:0x80290B98 end:0x80290BA0
 	.sdata2     start:0x80292148 end:0x80292158
 
-jaudio_PP/aramcall.c:
+jaudio_PP/internal/aramcall.c:
 	.text       start:0x80035F00 end:0x80036240
 	.data       start:0x800F9D88 end:0x800F9DC8
 	.bss        start:0x80290AA0 end:0x80290ACC align:4 common
 	.sdata      start:0x80290BA0 end:0x80290BA8
 	.sbss       start:0x802915F8 end:0x80291600
 
-jaudio_PP/ja_calc.c:
+jaudio_PP/internal/ja_calc.c:
 	.text       start:0x80036240 end:0x800363E0
 	.bss        start:0x801D26A0 end:0x801D2AA8
 	.sdata2     start:0x80292158 end:0x80292188
 
-jaudio_PP/fat.c:
+jaudio_PP/internal/fat.c:
 	.text       start:0x800363E0 end:0x80036840
 	.bss        start:0x801D2AA8 end:0x801D36A8
 	.sbss       start:0x80291600 end:0x80291608
 
-jaudio_PP/cmdstack.c:
+jaudio_PP/internal/cmdstack.c:
 	.text       start:0x80036840 end:0x800369E0
 	.sbss       start:0x80291608 end:0x80291618
 
-jaudio_PP/heapctrl.c:
+jaudio_PP/internal/heapctrl.c:
 	.text       start:0x800369E0 end:0x80036E00
 	.sbss       start:0x80291618 end:0x80291620
 
-jaudio_PP/jammain_2.c:
+jaudio_PP/internal/jammain_2.c:
 	.text       start:0x80036E00 end:0x80037CA0
 	.text       start:0x80037CA0 end:0x80038780
 	.text       start:0x80038780 end:0x80038A60
@@ -449,26 +449,26 @@ jaudio_PP/jammain_2.c:
 	.sbss       start:0x80291620 end:0x80291630
 	.sdata2     start:0x80292188 end:0x802921E0
 
-jaudio_PP/noteon.c:
+jaudio_PP/internal/noteon.c:
 	.text       start:0x8003AC60 end:0x8003B1A0
 	.sdata2     start:0x802921E0 end:0x802921E8
 
-jaudio_PP/seqsetup.c:
+jaudio_PP/internal/seqsetup.c:
 	.text       start:0x8003B1A0 end:0x8003BF00
 	.bss        start:0x801D37C8 end:0x80217420
 	.sbss       start:0x80291630 end:0x80291640
 	.sdata2     start:0x802921E8 end:0x802921F8
 
-jaudio_PP/midplay.c:
+jaudio_PP/internal/midplay.c:
 	.text       start:0x8003BF00 end:0x8003BF00
 	.data       start:0x800FA088 end:0x800FA488
 
-jaudio_PP/centcalc.c:
+jaudio_PP/internal/centcalc.c:
 	.text       start:0x8003BF00 end:0x8003BFC0
 	.data       start:0x800FA488 end:0x800FA588
 	.sdata2     start:0x802921F8 end:0x80292210
 
-jaudio_PP/jamosc.c:
+jaudio_PP/internal/jamosc.c:
 	.text       start:0x8003BFC0 end:0x8003C400
 	.data       start:0x800FA588 end:0x800FA670
 	.sdata2     start:0x80292210 end:0x80292218

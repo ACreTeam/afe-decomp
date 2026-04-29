@@ -12,12 +12,163 @@
 // #include "va_args.h"
 #include "jsyswrap.h"
 #include "dolphin/PPCArch.h"
+#include "PowerPC_EABI_Support/msl/MSL_C/PPC_EABI/cmath_gcn.h" // for std::sqrtf
 
-// this pragma may be unnecessary
-#pragma inline_depth(1024)
+class aflags_c {
+public:
+#ifdef AFLAGS_DEBUG
+    u32 getMaxArray() {
+        return AFLAGS_MAX;
+    }
+    void set(unsigned int idx, u8 val) {
+        this->flags[idx] = val;
+    } /* @fabricated */
+    u8 operator[](unsigned int idx) {
+        return this->flags[idx];
+    } /* @fabricated */
 
-// this one is absolutely necessary for a ton of function calls to be inlined
-#pragma inline_max_size(10000)
+#else
+    u32 getMaxArray() {
+        return AFLAGS_MAX;
+    }
+    void set(unsigned int idx, u8 val) {
+    }
+    u8 operator[](unsigned int idx) {
+        return 0;
+    }
+#endif
+
+private:
+    int flags[AFLAGS_MAX];
+};
+
+class Texture {
+public:
+    /* @weak */
+    Texture(void* img_p, u16 w, u16 h, u8 fmt, u8 bpp) {
+        this->img_p = img_p;
+        this->width = w;
+        this->height = h;
+        this->n64_bpp = bpp;
+        this->n64_fmt = fmt;
+        this->blockX_size = EMU64_TEX_BLOCK_SIZE_X;
+        this->blockY_size = EMU64_TEX_BLOCK_SIZE_Y;
+    }
+
+    /* @??? (maybe not weak?) */
+    ~Texture() {};
+
+    /* @weak */
+    u32 getOffset(int x, int y) {
+        const int size_x = sizeof(u16) * EMU64_TEX_BLOCK_SIZE_X;
+        const int size_y = sizeof(u16) * EMU64_TEX_BLOCK_SIZE_Y;
+
+        return ((((u32)x / 8) + ((u32)(((u32)y / 8) * this->width) / 8)) * (size_x * size_y)) + ((u32)y & 7) * size_x +
+                ((u32)x & 7);
+    }
+
+    /* @weak */
+    u32 getTexel(int block_x, int block_y) {
+        int x = (1 << this->blockX_size) - 1;
+        int y = (1 << this->blockY_size) - 1;
+
+        block_x &= x;
+        block_y &= y;
+
+        u32 ofs = this->getOffset(block_x, block_y);
+
+        switch (this->n64_bpp) {
+            case G_IM_SIZ_4b: {
+                u8* img_p = ((u8*)this->img_p) + ofs / 2;
+                if ((block_x & 1) == 0) {
+                    return *img_p >> 4;
+                } else {
+                    return *img_p & 0xF;
+                }
+            }
+
+            case G_IM_SIZ_8b: {
+                return ((u8*)this->img_p)[ofs];
+            }
+
+            case G_IM_SIZ_16b: {
+                return ((u16*)this->img_p)[ofs];
+            }
+
+            default: {
+                return ((u32*)this->img_p)[ofs];
+            }
+        }
+    }
+
+    /* @weak */
+    void putTexel(int block_x, int block_y, u32 texel) {
+        int x = (1 << this->blockX_size) - 1;
+        int y = (1 << this->blockY_size) - 1;
+
+        block_x &= x;
+        block_y &= y;
+
+        u32 ofs = this->getOffset(block_x, block_y);
+
+        switch (this->n64_bpp) {
+            case G_IM_SIZ_4b: {
+                u8* img_p = ((u8*)this->img_p) + ofs / 2;
+                if ((block_x & 1) == 0) {
+                    *img_p = (*img_p & 0x0F) | (texel << 4);
+                } else {
+                    *img_p = (*img_p & 0xF0) | (texel & 0xF);
+                }
+            }
+
+            case G_IM_SIZ_8b: {
+                ((u8*)this->img_p)[ofs] = texel;
+            }
+
+            case G_IM_SIZ_16b: {
+                ((u16*)this->img_p)[ofs] = texel;
+            }
+
+            case G_IM_SIZ_32b: {
+                ((u32*)this->img_p)[ofs] = texel;
+            }
+        }
+    }
+
+    /* Member variables */
+    void* img_p;
+    u16 width;
+    u16 height;
+    u8 blockX_size;
+    u8 blockY_size;
+    u8 n64_fmt;
+    u8 n64_bpp;
+};
+
+inline unsigned int rgba5551_to_rgb5a3(unsigned int rgba5551) {
+    unsigned int rgb5a3;
+
+    switch (rgba5551 & 1) {
+        default:
+            rgb5a3 = 0x8000 | (rgba5551 >> 1); // no transparency so simply swap
+            break;
+        case 0:
+            rgb5a3 = ((rgba5551 >> 4) & ~0xFF) | ((rgba5551 >> 3) & 0xF0) | ((rgba5551 >> 2) & 0x0F);
+            break;
+    }
+
+    return rgb5a3;
+}
+
+inline unsigned int get_dol_tex_siz(unsigned int siz, unsigned int in_wd, unsigned int in_ht) {
+    unsigned int wd;
+    unsigned int ht;
+
+    get_dol_wd_ht(siz, in_wd, in_ht, &wd, &ht);
+    return ((wd * ht) << siz) / 2;
+}
+
+unsigned int get_dol_tlut_siz(unsigned int count);
 
 static void guMtxXFM1F_dol(MtxP mtx, float x, float y, float z, float* ox, float* oy, float* oz);
 static void guMtxXFM1F_dol7(MtxP mtx, float x, float y, float z, float* ox, float* oy, float* oz);
@@ -895,6 +1046,11 @@ void emu64::texconv_tile(u8* addr, u8* converted_addr, unsigned int wd, unsigned
     this->texconv_cnt++;
 }
 
+unsigned int emu64::tmem_swap(unsigned int ofs, unsigned int blk_siz) {
+    u16 block = ofs / blk_siz;
+    return ofs ^ ((block >> 1) & 4);
+}
+
 void emu64::tlutconv_rgba5551(u16* rgba5551_p, u16* rgb5a3_p, unsigned int count) {
     for (unsigned int i = 0; i < count; i++) {
         *rgb5a3_p++ = rgba5551_to_rgb5a3(*rgba5551_p++);
@@ -983,6 +1139,11 @@ void emu64::tlutconv(u16* src_tlut, u16* dst_tlut, unsigned int count, unsigned 
     } else {
         this->tlutconv_ia16(src_tlut, dst_tlut, count);
     }
+}
+
+unsigned int get_dol_tlut_siz(unsigned int count) {
+    unsigned int siz = count * sizeof(u16);
+    return ALIGN_NEXT(siz, 32);
 }
 
 /* TODO: @nonmatching */
@@ -1894,6 +2055,11 @@ void emu64::combine_manual() {
             break;
         }
     }
+}
+
+inline u8* emu64::texconv_block_new(u8* addr, unsigned int wd, unsigned int ht, unsigned int fmt, unsigned int size,
+    unsigned int line_siz) {
+    return this->texconv_tile_new(addr, wd, fmt, size, 0, 0, wd - 1, ht - 1, line_siz);
 }
 
 void emu64::combine() {
@@ -5470,15 +5636,17 @@ void emu64::emu64_taskstart(Gfx* dl_p) {
             this->Printf0("CMD TIMES CALLS TIMES/CALLS\n");
 
             for (int i = 0; i < NUM_COMMANDS; i++) {
-                if (this->command_info[i].calls != 0) {
-                    u32 total_calls = this->command_info[i].calls;
-                    u32 total_time = this->command_info[i].time;
-                    u32 avg_time = total_time / total_calls;
-                    u8 cmd = G_FIRST_CMD + i;
-                    this->Printf0("%02X %6d %4d %6d\n", cmd,            /* Command */
-                                  total_time,                             /* Total time */
-                                  total_calls,                            /* Total calls */
-                                  avg_time /* Average command time */
+                const command_info_t& info = this->command_info[i];
+                const u32 total_calls = info.calls;
+                if (total_calls != 0) {
+                    const u32 total_time = info.time;
+                    const u32 avg_time = total_time / total_calls;
+                    int cmd = G_FIRST_CMD + i;
+                    this->Printf0("%02X %6d %4d %6d\n",
+                                   cmd & 0xFF,            /* Command */
+                                   total_time,                             /* Total time */
+                                   total_calls,                            /* Total calls */
+                                   avg_time /* Average command time */
                     );
                 }
             }
