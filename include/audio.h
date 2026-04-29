@@ -56,7 +56,7 @@ extern void sAdo_Calc_MicPosition_forTrig(f32* fcalc, u16* scalc, const xyz_t* p
 extern void sAdo_Calc_MicPosition_forLevel(f32* fcalc, u16* scalc, const xyz_t* pos);
 
 extern void sAdo_GameFrame();
-extern void sAdo_BgmStart(u8 id);
+extern void sAdo_BgmStart(u16 id);
 extern void sAdo_BgmStop(u16 id);
 extern void sAdo_SysTrgStart(u16 id);
 
@@ -68,7 +68,7 @@ extern void sAdo_NpcWalkSeRoom(u8 se_no, const xyz_t* pos);
 extern void sAdo_PlayerStatusLevel(u8 dash, f32 speed);
 
 /* Not sure about the last param name */
-extern void sAdo_VoiceSe(u8 num, u8 num2, u8 num3, s16 character_idx, u8 scale, u8 mode);
+extern void sAdo_VoiceSe(u8 num, s16 character_idx, u8 scale);
 
 extern void sAdo_Inst(u16 num, u8* p);
 extern void sAdo_MessageStatus(u8 status);
@@ -106,7 +106,7 @@ extern void sAdo_SpecChange(int spec);
 extern void sAdo_MDPlayerPos(const xyz_t* pos, u16 s1, u16 s2, u32 p);
 
 extern void sAdo_BGMVolume(f32 f, u16 volume);
-extern void sAdo_BgmCrossfadeStart(u8 b);
+extern void sAdo_BgmCrossfadeStart(u16 num);
 
 extern void sAdo_SubGameStart();
 extern void sAdo_SubGameEnd();

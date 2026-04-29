@@ -26,7 +26,7 @@ static void Nap_AudioSysProcess(AudioPort* port) {
             Nas_PreLoadSeq(port->command.arg1, port->command.arg2, port->param.asS32, &AG.external_load_queue);
             break;
         case AUDIOCMD_START_SEQ:
-            Nas_StartMySeq(port->command.arg0, port->command.arg1, port->command.arg2);
+            Nas_StartMySeq(port->command.arg0, (port->command.arg2 << 8) | port->command.arg1);
             __Nas_GroupFadeIn(port->command.arg0, port->param.asS32);
             break;
         case AUDIOCMD_START_SEQ_SKIP:

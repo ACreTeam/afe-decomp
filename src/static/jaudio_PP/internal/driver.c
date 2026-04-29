@@ -1300,11 +1300,11 @@ extern Acmd* Nas_Synth_Resample(Acmd* cmd, const driverch* driver, s32 size, u16
 
 // @non-matching - issues with aSetEnvParam2 macro
 extern Acmd* Nas_Synth_Envelope(Acmd* cmd, commonch* common, driverch* driver, s32 samples_per_update, u16 dmem, s32 haasEffectDelaySide, s32 flags) {
-    s32 targetReverbVol = common->target_reverb_volume;
-    u32 curVolLeft = driver->current_volume_left & 0xFFFF;
-    u32 curVolRight = driver->current_volume_right & 0xFFFF;
-    u16 targetVolLeft = common->target_volume_left << 4;
-    u16 targetVolRight = common->target_volume_right << 4;
+    s32 targetReverbVol;
+    u16 curVolLeft;
+    u16 curVolRight;
+    u16 targetVolLeft;
+    u16 targetVolRight;
     u32 dmemDests;
     s32 curReverbVolAndFlags;
     u16 curReverbVol;
@@ -1314,12 +1314,12 @@ extern Acmd* Nas_Synth_Envelope(Acmd* cmd, commonch* common, driverch* driver, s
     f32 defaultPanVolume;
 
     
-    // targetReverbVol = common->target_reverb_volume;
-    // curVolLeft = driver->current_volume_left;
-    // curVolRight = driver->current_volume_right;
+    targetReverbVol = common->target_reverb_volume;
+    curVolLeft = driver->current_volume_left & 0xFFFF;
+    curVolRight = driver->current_volume_right & 0xFFFF;
 
-    // targetVolLeft = common->target_volume_left << 4;
-    // targetVolRight = common->target_volume_right << 4;
+    targetVolLeft = common->target_volume_left << 4;
+    targetVolRight = common->target_volume_right << 4;
 
     if (AG.sound_mode == SOUND_OUTPUT_DOLBY_SURROUND) {
         u8 idx = common->surround_effect_idx;
@@ -1382,9 +1382,7 @@ extern Acmd* Nas_Synth_Envelope(Acmd* cmd, commonch* common, driverch* driver, s
 
         {
             cmd->words.w0 = _SHIFTL(A_CMD_SETENVPARAM2, 24, 8);
-            curVolLeft = _SHIFTL(curVolLeft, 16, 16);
-            curVolLeft |= _SHIFTL(curVolRight, 0, 16);
-            cmd->words.w1 = curVolLeft;
+            cmd->words.w1 = _SHIFTL(curVolLeft, 16, 16) | _SHIFTL(curVolRight, 0, 16);
             // cmd->words.w1 = ((curVolLeft & 0xFFFF) << 16) | (curVolRight & 0xFFFF);
             cmd++;
         }

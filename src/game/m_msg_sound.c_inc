@@ -120,7 +120,7 @@ static void mMsg_sound_voice_entry(mMsg_Window_c* msg_p, int voice_sfx_idx, u8 v
 static void mMsg_sound_voice_endcode_set(mMsg_Window_c* msg_p) {
   int npc_id = mMsg_sound_npc_id_get(msg_p);
 
-  sAdo_VoiceSe(0x84, 0xFF, 0xFF, npc_id, 32, 0);
+  sAdo_VoiceSe(0x84, npc_id, 32);
   msg_p->free_str_color_idx[3] = 0;
   msg_p->status_flags &= ~(mMsg_STATUS_FLAG_18 | mMsg_STATUS_FLAG_VOICE_ENTRY);
 }

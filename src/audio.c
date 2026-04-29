@@ -46,7 +46,7 @@ extern void sAdo_GameFrame() {
     Na_GameFrame();
 }
 
-extern void sAdo_BgmStart(u8 id) {
+extern void sAdo_BgmStart(u16 id) {
     Na_BgmStart(id);
 }
 
@@ -93,8 +93,8 @@ extern void sAdo_PlayerStatusLevel(u8 dash, f32 speed) {
     Na_PlayerStatusLevel(dash, speed);
 }
 
-extern void sAdo_VoiceSe(u8 num, u8 num2, u8 num3, s16 character_idx, u8 scale, u8 mode) {
-    Na_VoiceSe(num, num2, num3, character_idx, scale, mode);
+extern void sAdo_VoiceSe(u8 num, s16 character_idx, u8 scale) {
+    Na_VoiceSe(num, character_idx, scale);
 }
 
 extern void sAdo_Inst(u16 num, u8* p) {
@@ -229,7 +229,7 @@ extern void sAdo_BGMVolume(f32 volume, u16 vol_move_ctr) {
     Na_BGMVolume(volume, vol_move_ctr);
 }
 
-extern void sAdo_BgmCrossfadeStart(u8 b) {
+extern void sAdo_BgmCrossfadeStart(u16 b) {
     Na_BgmCrossfadeStart(b);
 }
 

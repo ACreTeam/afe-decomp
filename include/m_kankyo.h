@@ -4,6 +4,7 @@
 #include "types.h"
 #include "m_lights.h"
 #include "m_play_h.h"
+#include "m_weather_type.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,25 +30,6 @@ extern "C" {
 #else
 #define mEnv_CHANGE_WEATHER_ENV_RATE (1.0f/600.0f);
 #endif
-
-enum weather {
-    mEnv_WEATHER_CLEAR,
-    mEnv_WEATHER_RAIN,
-    mEnv_WEATHER_SNOW,
-    mEnv_WEATHER_SAKURA,
-    mEnv_WEATHER_LEAVES,
-
-    mEnv_WEATHER_NUM
-};
-
-enum weather_intensity {
-    mEnv_WEATHER_INTENSITY_NONE,
-    mEnv_WEATHER_INTENSITY_LIGHT,
-    mEnv_WEATHER_INTENSITY_NORMAL,
-    mEnv_WEATHER_INTENSITY_HEAVY,
-
-    mEnv_WEATHER_INTENSITY_NUM,
-};
 
 enum {
     mEnv_LIGHT_TYPE_PLAYER,

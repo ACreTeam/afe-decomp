@@ -19,7 +19,7 @@
 
 static s32 Nas_GetSyncDummy(u8* param0, s32 param1);
 
-BOOL AUDIO_SYSTEM_READY = FALSE;
+volatile BOOL AUDIO_SYSTEM_READY = FALSE;
 static void* FASTDMA_BUFFER = NULL;
 Na_DmaProc NA_DMA_PROC = Z_osEPiStartDma;
 Na_SyncProc NA_SYNC_PROC = Nas_GetSyncDummy;
@@ -34,7 +34,7 @@ static u8* __Load_Seq(s32 id);
 static u8* __Load_Bank_BG(s32 table_type, s32 id, s32 n_chunks, s32 ret_data, OSMesgQueue* ret_queue);
 static s32 __Kill_Bank(s32 bank_id);
 static ArcHeader* __Get_ArcHeader(s32 table_type);
-static s32 __Nas_StartSeq(s32 group_idx, s32 seq_id, s32 param);
+static s32 __Nas_StartSeq(s32 group_idx, s32 seq_id);
 static u8* __Load_Bank(s32 table_type, s32 id, s32* did_alloc);
 static u32 __Load_Wave(s32 wave_id, u32* medium, s32 no_load);
 static void* __Check_Cache(s32 table_type, s32 id);
@@ -517,13 +517,13 @@ void Nas_SetExtPointer(s32 table_type, s32 idx, s32 param_3, s32 data) {
     }
 }
 
-s32 Nas_StartMySeq(s32 group_idx, s32 seq_id, s32 param) {
+s32 Nas_StartMySeq(s32 group_idx, s32 seq_id) {
     if (AG.reset_timer != 0) {
         return 0;
     }
 
     AG.groups_p[group_idx]->skip_ticks = 0;
-    return __Nas_StartSeq(group_idx, seq_id, param);
+    return __Nas_StartSeq(group_idx, seq_id);
 }
 
 s32 Nas_StartSeq_Skip(s32 group_idx, s32 seq_id, s32 skip_ticks) {
@@ -532,7 +532,7 @@ s32 Nas_StartSeq_Skip(s32 group_idx, s32 seq_id, s32 skip_ticks) {
     }
 
     AG.groups_p[group_idx]->skip_ticks = skip_ticks;
-    return __Nas_StartSeq(group_idx, seq_id, 0);
+    return __Nas_StartSeq(group_idx, seq_id);
 }
 
 static s32 __Nas_StartSeq(s32 group_idx, s32 seq_id, s32 param) {

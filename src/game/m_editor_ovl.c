@@ -715,14 +715,14 @@ static void mED_set_se(Submenu* submenu) {
             voice = 0x86;
         }
 
-        sAdo_VoiceSe(voice, 0xFF, 0xFF, 0, 32, 1);
+        sAdo_VoiceSe(voice, 0, 32);
     } else if (command == mED_COMMAND_EXCHANGE_CODE) {
         int exchange_code = editor_ovl->exchange_code;
 
         if (exchange_code != -1 && mED_exchange_se_list[exchange_code] != FALSE) {
             int voice = mMsg_sound_voice_get_for_editor(exchange_code);
 
-            sAdo_VoiceSe(voice, 0xFF, 0xFF, 0, 32, 1);
+            sAdo_VoiceSe(voice, 0, 32);
         } else {
             sAdo_SysTrgStart(0x36);
         }

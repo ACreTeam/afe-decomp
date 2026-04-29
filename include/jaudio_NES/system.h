@@ -21,7 +21,7 @@ extern void* Nas_WaveDmaCallBack(u32 device_addr, u32 size, s32 arg2, u8* wavelo
 extern void Nas_InitAudio(u64* acmdBuf, s32 acmdBufSize);
 extern void Nas_FastCopy(u8* SrcAddr, u8* DestAdd, size_t Length, s32 medium);
 extern void Nas_FastDiskCopy(u8* SrcAddr, u8* DestAdd, size_t Length, s32 medium);
-extern s32 Nas_StartMySeq(s32 group, s32 seq, s32 arg);
+extern s32 Nas_StartMySeq(s32 group, s32 seq);
 extern s32 Nas_StartSeq_Skip(s32 group, s32 seq, s32 skip_ticks);
 
 extern s32 Nas_LoadVoice(s32 progId, s32 instId, s32 percId);
@@ -62,7 +62,7 @@ extern void MK_Init(void);
 extern void Nas_WaveDmaNew(s32 n_channels);
 
 extern Na_SyncProc NA_SYNC_PROC;
-extern BOOL AUDIO_SYSTEM_READY;
+extern volatile BOOL AUDIO_SYSTEM_READY;
 extern Na_DmaProc NA_DMA_PROC;
 extern OSMesgQueue MK_QUEUE;
 extern OSMesg MK_QBUF[];

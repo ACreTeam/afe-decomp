@@ -933,7 +933,7 @@ typedef enum NASubtrack {
 } NASubtrack;
 
 #define NA_COMMAND_AUDIO_START_SEQ(groupID, seqID, fadeinTime) \
-    Nap_SetS32(NA_MAKE_COMMAND(AUDIOCMD_START_SEQ, groupID, seqID, 0), fadeinTime)
+    Nap_SetS32(NA_MAKE_COMMAND(AUDIOCMD_START_SEQ, groupID, ((seqID)), ((seqID) >> 8)), fadeinTime)
 
 #define NA_COMMAND_AUDIO_STOP_SEQ(groupID, fadeoutTime) \
     Nap_SetS32(NA_MAKE_COMMAND(AUDIOCMD_STOP_SEQ, groupID, 0, 0), fadeoutTime)

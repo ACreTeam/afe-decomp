@@ -966,7 +966,7 @@ static void mFontSentence_animal_voice_se(mFontSentence* this) {
     this->se_character_id = 0;
   }
 
-  sAdo_VoiceSe(this->voice_idx, this->voice2_idx, this->voice3_idx, this->se_character_id, (u8)scale, 0);
+  sAdo_VoiceSe(this->voice_idx, this->se_character_id, (u8)scale);
 }
 
 extern void mFontSentence_set(
