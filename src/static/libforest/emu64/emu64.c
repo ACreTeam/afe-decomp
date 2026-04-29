@@ -64,7 +64,7 @@ static texture_cache_funcs texture_cache_bss_func = {
 static texture_cache_t texture_cache_data = {
     &texture_cache_data_func,
     &texture_buffer_data[0],
-    &texture_buffer_data[sizeof(texture_buffer_data)],
+    &texture_buffer_bss[0], // TODO: I don't know why this is necessary over the old method
     &texture_buffer_data[0],
     nullptr,
     nullptr,
@@ -75,7 +75,7 @@ static texture_cache_t texture_cache_data = {
 static texture_cache_t texture_cache_bss = {
     &texture_cache_bss_func,
     &texture_buffer_bss[0],
-    &texture_buffer_bss[sizeof(texture_buffer_bss)],
+    (u8*)&tmem_map[0], // TODO: I don't know why this is necessary over the old method
     &texture_buffer_bss[0],
     nullptr,
     nullptr,
@@ -4260,10 +4260,10 @@ void emu64::dl_G_MTX() {
         Mtx44 mtx44; /* float-based matrix */
 
         /* Convert our s16.u16 matrix into a f32 matrix. */
-        N64Mtx_to_DOLMtx((Mtx*)mtx, mtx34);
+        N64Mtx_to_DOLMtx((N64Mtx*)mtx, mtx34);
 
         if ((mtx_gfx->type & G_MTX_PROJECTION) != G_MTX_MODELVIEW) { /* Projection */
-            N64Mtx_to_DOLMtx((Mtx*)mtx, mtx44);
+            N64Mtx_to_DOLMtx((N64Mtx*)mtx, mtx44);
             if ((mtx_gfx->type & G_MTX_LOAD) != G_MTX_MUL) {
                 if ((u16)(*mtx)[1][3] == 0) { /* If the last entry is 0, this should be a perspective projection.
                                                  Otherwise, it's likely an orthographic projection. */

@@ -163,10 +163,10 @@ void guMtxNormalize(GC_Mtx mtx) {
 }
 
 /* TODO: Mtx -> N64Mtx, GC_Mtx -> Mtx */
-void N64Mtx_to_DOLMtx(const Mtx* n64, MtxP gc) {
+void N64Mtx_to_DOLMtx(const N64Mtx* n64, MtxP gc) {
+    int i;
     s16* fixed = ((s16*)n64) + 0;
     u16* frac = ((u16*)n64) + 16;
-    int i;
 
     for (i = 0; i < 4; i++) {
         gc[0][i] = fastcast_float(&fixed[0]) + fastcast_float(&frac[0]) * (1.0f / 65536.0f);

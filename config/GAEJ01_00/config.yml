@@ -14,6 +14,21 @@ symbols_known: true
 fill_gaps: true
 ldscript_template: config/GAEJ01_00/ldscript.tpl
 
+add_relocations:
+# emu64
+- source: .text:0x80050824 # setup_texture_tile (inlined texture_cache_select)
+  type: ha
+  target: _f_rodata
+- source: .text:0x80050828 # setup_texture_tile (inlined texture_cache_select)
+  type: l
+  target: _f_rodata
+- source: .text:0x80050834 # setup_texture_tile (inlined texture_cache_select)
+  type: ha
+  target: _e_data
+- source: .text:0x80050838 # setup_texture_tile (inlined texture_cache_select)
+  type: l
+  target: _e_data
+
 extract:
 - symbol: JUTResFONT_Ascfont_fix12
   binary: assets/JSystem/JUtility/FontData/Ascfont_fix12.bfn

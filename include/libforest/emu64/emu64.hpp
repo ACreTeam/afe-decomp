@@ -182,8 +182,13 @@ float fastcast_float(register short* s) {
 
 #define number(n) ARRAY_COUNT(n)
 
+typedef union {
+    Mtx_t		m;
+    long long int	force_structure_alignment;
+} N64Mtx;
+
 void guMtxNormalize(GC_Mtx mtx);
-void N64Mtx_to_DOLMtx(const Mtx* n64, MtxP gc);
+void N64Mtx_to_DOLMtx(const N64Mtx* n64, MtxP gc);
 
 typedef union {
     GXColor color;
