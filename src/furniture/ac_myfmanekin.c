@@ -31,23 +31,24 @@ static void aMyfmanekin_dt(FTR_ACTOR* ftr_actor, u8* data) {
 static void aMyfmanekin_dma(mActor_name_t ftr_name, u8* data) {
     int house_no;
     int player_no;
-    u32 manekin_no;
-    int scene_no;
-    u16* pal_p = (u16*)(data + mNW_DESIGN_TEX_SIZE);
-    // u8* tex_p = data;
+    int manekin_no;
+    void* tex_p;
+    void* pal_p;
 
-    scene_no = Save_Get(scene_no);
+    pal_p = (data + mNW_DESIGN_TEX_SIZE);
+    tex_p = data;
     manekin_no = ((ftr_name - FTR_CLOTH_MANNIQUIN_MY_ORIGINAL0) >> 2);
-    if ((scene_no == SCENE_COTTAGE_MY && Common_Get(cur_island_house_p) != NULL) != FALSE) {
+    if ((Save_Get(scene_no) == SCENE_COTTAGE_MY && Common_Get(cur_island_house_p) != NULL) != FALSE) {
         house_no = Common_Get(cur_island_house_p)->island.house_idx;
     } else {
         house_no = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
     }
 
     player_no = mHS_get_pl_no(house_no);
-    mNW_CopyOriginalTexture(data, &Save_Get(private_data[player_no]).my_org[manekin_no & 7]);
+    mNW_CopyOriginalTexture(tex_p, &Save_Get(private_data[player_no]).my_org[manekin_no & 7]);
     mNW_CopyOriginalPalette(pal_p, &Save_Get(private_data[player_no]).my_org[manekin_no & 7]);
 }
+
 
 static aFTR_vtable_c aMyfmanekin_func = {
     &aMyfmanekin_ct, &aMyfmanekin_mv, &aMyfmanekin_dw, &aMyfmanekin_dt, &aMyfmanekin_dma,

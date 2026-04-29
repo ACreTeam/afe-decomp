@@ -31,8 +31,12 @@ static void aMFU_dt(FTR_ACTOR* ftr_actor, u8* data) {
 static void aMFU_dma(mActor_name_t ftr_name, u8* data) {
     int house_no;
     int player_no;
-    u8* pal_p = data + mNW_DESIGN_TEX_SIZE;
     int umbrella_no = ((ftr_name - FTR_MYUMBRELLA_START) >> 2);
+    void* tex_p;
+    void* pal_p;
+
+    pal_p = (data + mNW_DESIGN_TEX_SIZE);
+    tex_p = data;
 
     if ((Save_Get(scene_no) == SCENE_COTTAGE_MY && Common_Get(cur_island_house_p) != NULL) != FALSE) {
         house_no = Common_Get(cur_island_house_p)->island.house_idx;
@@ -41,7 +45,7 @@ static void aMFU_dma(mActor_name_t ftr_name, u8* data) {
     }
 
     player_no = mHS_get_pl_no(house_no);
-    mNW_CopyOriginalTexture(data, &Save_Get(private_data[player_no]).my_org[umbrella_no & 7]);
+    mNW_CopyOriginalTexture(tex_p, &Save_Get(private_data[player_no]).my_org[umbrella_no & 7]);
     mNW_CopyOriginalPalette(pal_p, &Save_Get(private_data[player_no]).my_org[umbrella_no & 7]);
 }
 
