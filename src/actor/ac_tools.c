@@ -30,31 +30,22 @@ static void aTOL_actor_ct(ACTOR* actor, GAME* game) {
     aTOL_init_clip_area(game);
 }
 
-static void aTOL_actor_dt(ACTOR*, GAME*) {
+static void aTOL_actor_dt(ACTOR* actor, GAME* game) {
     aTOL_free_clip_area();
 }
 
 static void aTOL_check_data_bank(int id, ACTOR* actor) {
-    ACTOR* kill;
-    aTOL_Clip_c* clip;
+    if ((actor->part == ACTOR_PART_PLAYER) && (id <= TOOL_UMBRELLA31) && (CLIP(tools_clip)->bank_id != -1)) {
+        ACTOR* tool = actor->child_actor;
 
-    if ((actor->part == ACTOR_PART_PLAYER) && (id <= 0x1F)) {
-
-        clip = Common_Get(clip.tools_clip);
-
-        if (clip->bank_id != -1) {
-
-            kill = actor->child_actor;
-
-            if ((kill != NULL) && (kill->data_bank_id == clip->bank_id)) {
-                Actor_delete(kill);
-            }
+        if ((tool != NULL) && (tool->data_bank_id == CLIP(tools_clip)->bank_id)) {
+            Actor_delete(tool);
         }
     }
 }
 
 static ACTOR* aTOL_birth_proc(int kind, int mode, ACTOR* parent_actor, GAME* game, s16 arg, int* bank_id) {
-    static s16 profile_table[] = {
+    static s16 profile_table[aTOL_NUM] = {
         mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA,
         mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA,
         mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA, mAc_PROFILE_T_UMBRELLA,
@@ -72,14 +63,17 @@ static ACTOR* aTOL_birth_proc(int kind, int mode, ACTOR* parent_actor, GAME* gam
         mAc_PROFILE_T_BISCUS2,  mAc_PROFILE_T_BISCUS3,  mAc_PROFILE_T_BISCUS4,  mAc_PROFILE_T_HASU1,
         mAc_PROFILE_T_HAT1,     mAc_PROFILE_T_HAT2,     mAc_PROFILE_T_HAT3,     mAc_PROFILE_T_REI1,
         mAc_PROFILE_T_REI2,     mAc_PROFILE_T_ZINNIA1,  mAc_PROFILE_T_ZINNIA2,  mAc_PROFILE_T_COBRA1,
+        mAc_PROFILE_T_HAT_ATHLETIC1, mAc_PROFILE_T_HAT_ATHLETIC2, mAc_PROFILE_T_HAT_CHRISTMAS1, mAc_PROFILE_T_HAT_HARVEST1,
+        mAc_PROFILE_T_HAT_HARVEST2, mAc_PROFILE_T_HAT_PARTY1, mAc_PROFILE_T_HAT_PARTY2, mAc_PROFILE_T_HAT_PARTY3,
+        mAc_PROFILE_T_HAT_PARTY4,
     };
 
     ACTOR* child;
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     aTOL_check_data_bank(kind, parent_actor);
-    child = Actor_info_make_child_actor(&play->actor_info, parent_actor, game, profile_table[kind], 0.0f, 0.0f,
-                                                      0.0f, 0, 0, 0, -1, 0, arg, -1);
+    child = Actor_info_make_child_actor(&play->actor_info, parent_actor, game, profile_table[kind], 0.0f, 0.0f, 0.0f, 0,
+                                        0, 0, -1, 0, arg, -1);
 
     if (child != NULL) {
         TOOLS_ACTOR* tool = (TOOLS_ACTOR*)child;
@@ -116,24 +110,42 @@ static void aTOL_secure_pl_umbrella_bank_area(GAME* game) {
     id = exchange->bank_idx;
 
     if (mSc_secure_exchange_keep_bank(exchange, 0, 0xC00) != NULL) {
-        Common_Set(clip.tools_clip->bank_id, id);
+        CLIP(tools_clip)->bank_id = id;
     } else {
-        Common_Set(clip.tools_clip->bank_id, -1);
+        CLIP(tools_clip)->bank_id = -1;
     }
 }
 
+static int aTOL_get_mtx_set_type_proc(int tool_idx) {
+    static int mtx_set_type_table[aTOL_NUM] = {
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0,
+        aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_0, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2,
+        aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2,
+        aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_2, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1,
+        aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1, aTOL_MTX_SET_TYPE_1,
+    };
+
+    return mtx_set_type_table[tool_idx];
+}
+
 static void aTOL_init_clip_area(GAME* game) {
-    if (Common_Get(clip.tools_clip) == NULL) {
-        Common_Set(clip.tools_clip, &aTOL_clip);
+    if (CLIP(tools_clip) == NULL) {
+        CLIP(tools_clip) = &aTOL_clip;
         bzero(&aTOL_clip, sizeof(aTOL_Clip_c));
-        Common_Set(clip.tools_clip->aTOL_birth_proc, aTOL_birth_proc);
-        Common_Set(clip.tools_clip->aTOL_chg_request_mode_proc, aTOL_chg_request_mode_proc);
+        CLIP(tools_clip)->aTOL_birth_proc = aTOL_birth_proc;
+        CLIP(tools_clip)->aTOL_chg_request_mode_proc = aTOL_chg_request_mode_proc;
         aTOL_secure_pl_umbrella_bank_area(game);
+        CLIP(tools_clip)->aTOL_get_mtx_set_type_proc = aTOL_get_mtx_set_type_proc;
     }
 }
 
 static void aTOL_free_clip_area() {
-    if (Common_Get(clip.tools_clip) != NULL) {
-        Common_Set(clip.tools_clip, NULL);
+    if (CLIP(tools_clip) != NULL) {
+        CLIP(tools_clip) = NULL;
     }
 }

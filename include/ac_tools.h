@@ -64,6 +64,31 @@ typedef enum {
     TOOL_TAMA2,
     TOOL_TAMA3,
     TOOL_TAMA4,
+    TOOL_ANRIUM1,
+    TOOL_BAG1,
+    TOOL_BAG2,
+    TOOL_BISCUS1,
+    TOOL_BISCUS2,
+    TOOL_BISCUS3,
+    TOOL_BISCUS4,
+    TOOL_HASU1,
+    TOOL_HAT1,
+    TOOL_HAT2,
+    TOOL_HAT3,
+    TOOL_REI1,
+    TOOL_REI2,
+    TOOL_ZINNIA1,
+    TOOL_ZINNIA2,
+    TOOL_COBRA1,
+    TOOL_HAT_ATHLETIC1,
+    TOOL_HAT_ATHLETIC2,
+    TOOL_HAT_CHRISTMAS1,
+    TOOL_HAT_HARVEST1,
+    TOOL_HAT_HARVEST2,
+    TOOL_HAT_PARTY1,
+    TOOL_HAT_PARTY2,
+    TOOL_HAT_PARTY3,
+    TOOL_HAT_PARTY4,
 
     aTOL_NUM
 } ToolName;
@@ -77,6 +102,14 @@ enum {
     aTOL_ACTION_SPECIAL,
 
     aTOL_ACTION_NUM
+};
+
+enum {
+    aTOL_MTX_SET_TYPE_0,
+    aTOL_MTX_SET_TYPE_1,
+    aTOL_MTX_SET_TYPE_2,
+
+    aTOL_MTX_SET_TYPE_NUM
 };
 
 typedef struct tools_s {
@@ -93,11 +126,13 @@ typedef struct tools_s {
 
 typedef ACTOR* (*ToolBirthProc)(int kind, int mode, ACTOR* parent_actor, GAME* game, s16 arg, int* bank_id);
 typedef int (*ToolChgRequestModeProc)(ACTOR* parent_actor, ACTOR* tool, int mode);
+typedef int (*ToolGetMtxSetTypeProc)(int tool_idx);
 
 typedef struct ToolClip {
     ToolBirthProc aTOL_birth_proc;
     ToolChgRequestModeProc aTOL_chg_request_mode_proc;
     int bank_id;
+    ToolGetMtxSetTypeProc aTOL_get_mtx_set_type_proc;
 } aTOL_Clip_c;
 
 extern aTOL_Clip_c aTOL_clip;

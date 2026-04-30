@@ -726,7 +726,7 @@ config.libs = [
             Object(Matching, "actor/ac_tama.c"),
             Object(Matching, "actor/ac_tent.c"),
             Object(Matching, "actor/ac_tokyoso_control.c"),
-            Object(NonMatching, "actor/ac_tools.c"),
+            Object(Matching, "actor/ac_tools.c"),
             Object(Matching, "actor/ac_toudai.c"),
             Object(Matching, "actor/ac_train0.c"),
             Object(Matching, "actor/ac_train1.c"),
