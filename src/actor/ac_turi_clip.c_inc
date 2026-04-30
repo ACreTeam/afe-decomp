@@ -1,3 +1,12 @@
+#ifdef __INTELLISENSE__
+#include "ac_turi_clip.h"
+#include "m_common_data.h"
+#include "m_event_map_npc.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_string.h"
+#endif
+
 static aTRC_clip_c aTRC_clip;
 
 static void aTRC_clip_ct(void) {
@@ -129,6 +138,22 @@ extern int aTRC_clip_get_msgno(mActor_name_t item) {
             return 0x2FB6;
         case ITM_FISH39:
             return 0x2FB1;
+        case ITM_FISH40:
+            return 0x2FB7;
+        case ITM_FISH41:
+            return 0x2FB8;
+        case ITM_FISH42:
+            return 0x2FB9;
+        case ITM_FISH43:
+            return 0x2FBA;
+        case ITM_FISH44:
+            return 0x2FBB;
+        case ITM_FISH45:
+            return 0x2FBC;
+        case ITM_FISH46:
+            return 0x2FBD;
+        case ITM_FISH47:
+            return 0x2FBE;
         default:
             return 0x10F2;
     }
@@ -137,7 +162,7 @@ extern int aTRC_clip_get_msgno(mActor_name_t item) {
 extern void aTRC_clip_random_topsize(void) {
     u8 npc_name[ANIMAL_NAME_LEN];
     mActor_name_t npc_id;
-    static u8 l_name[] = { 0x98, 0xA6, 0x8F, 0xA1, CHAR_SPACE }; // untranslated, JP "ケニッチ"
+    static u8 l_name[] = { CHAR_PP_152, CHAR_PP_166, CHAR_PP_143, CHAR_PP_161, CHAR_PP_032 }; // "ケニッチ"
     aEANG_event_data_c* fish_p = get_fish_save_area();
     lbRTC_time_c now_time = Common_Get(time.rtc_time);
     lbRTC_hour_t hour = now_time.hour;

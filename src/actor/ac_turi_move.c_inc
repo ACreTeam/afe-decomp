@@ -51,13 +51,13 @@ static void aTUR_set_bgOffset(ACTOR* actorx, int idx) {
                 if (z * 3 + x != 0 && z * 3 + x != 8) {
                     pos.x = actorx->home.position.x + addX[x];
 
-                    mCoBG_SetPluss5PointOffset_file(pos, *height_tbl_p, __FILE__, 121);
+                    mCoBG_SetPluss5PointOffset_file(pos, *height_tbl_p, __FILE__, 124);
                 }
             } else {
                 if (z * 3 + x != 2 && z * 3 + x != 6) {
                     pos.x = actorx->home.position.x + addX[x];
 
-                    mCoBG_SetPluss5PointOffset_file(pos, *height_tbl_p, __FILE__, 127);
+                    mCoBG_SetPluss5PointOffset_file(pos, *height_tbl_p, __FILE__, 130);
                 }
             }
 
