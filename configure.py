@@ -705,7 +705,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_ride_off_demo.c"),
             Object(NonMatching, "actor/ac_rope.c"),
             Object(NonMatching, "actor/ac_s_car.c"),
-            Object(NonMatching, "actor/ac_sample.c"),
+            Object(Matching, "actor/ac_sample.c"),
             Object(NonMatching, "actor/ac_set_manager.c"),
             Object(NonMatching, "actor/ac_set_npc_manager.c"),
             Object(NonMatching, "actor/ac_set_ovl_gyoei.c"),

@@ -50,19 +50,20 @@ static void Ac_Sample_Animation_Base(SAMPLE_ACTOR* actor) {
 
 static void Ac_Sample_Actor_wait_demo_ct(ACTOR* actor) {
     // ドリキャス "Dreamcast"
-    static u8 str0[16] = { 0xDC,       0xB8,       0x97,       0x8C,       0x9D,       CHAR_SPACE,
-                           CHAR_SPACE, CHAR_SPACE, CHAR_SPACE, CHAR_SPACE, CHAR_SPACE, CHAR_SPACE,
-                           CHAR_SPACE, CHAR_SPACE, CHAR_SPACE, CHAR_SPACE };
+    static u8 str0[mMsg_FREE_STRING_LEN] = {
+        CHAR_PP_220, CHAR_PP_184, CHAR_PP_151, CHAR_PP_140, CHAR_PP_157,
+        CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032,
+    };
 
     // プレステ2 "Playstation 2"
-    static u8 str9[5] = { 0xE4, 0xBA, 0x9D, 0xA3, 0x32 };
+    static u8 str9[5] = { CHAR_PP_228, CHAR_PP_186, CHAR_PP_157, CHAR_PP_163, CHAR_PP_050 };
 
     static u8 str_mail[64];
 
     mDemo_Set_msg_num(MSG_9);
     mMsg_Set_item_str(mMsg_Get_base_window_p(), 0, str0, 6);
     mMsg_Set_item_str(mMsg_Get_base_window_p(), 4, str9, 5);
-    mMsg_Set_free_str(mMsg_Get_base_window_p(), 0, str0, 16);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), 0, str0, mMsg_FREE_STRING_LEN);
     mMsg_Set_free_str(mMsg_Get_base_window_p(), 9, str9, 5);
     mMsg_Set_mail_str(mMsg_Get_base_window_p(), 0, str_mail, 64);
 }
@@ -139,28 +140,23 @@ static void Ac_Sample_Actor_draw_normal(SAMPLE_ACTOR* actor, GAME_PLAY* play) {
     Mtx* m = GRAPH_ALLOC_TYPE(play->game.graph, Mtx, keyframe->skeleton->num_shown_joints);
 
     if (m != NULL) {
-        GRAPH* g;
-        Gfx* gfx;
         _texture_z_light_fog_prim(play->game.graph);
 
-        g = play->game.graph;
-        OPEN_DISP(g);
-        gfx = NOW_POLY_OPA_DISP;
+        OPEN_POLY_OPA_DISP(play->game.graph);
 
         /* @BUG - rendering was never updated to GC format resulting in corrupted textures */
 #ifndef BUGFIXES
-        gDPLoadTextureBlockS(gfx++, hnw_tmem_txt, G_IM_FMT_I, G_IM_SIZ_8b, 64, 64, 0, G_TX_MIRROR | G_TX_WRAP,
+        gDPLoadTextureBlockS(POLY_OPA_DISP++, hnw_tmem_txt, G_IM_FMT_I, G_IM_SIZ_8b, 64, 64, 0, G_TX_MIRROR | G_TX_WRAP,
                              G_TX_MIRROR | G_TX_WRAP, 7, 7, G_TX_NOLOD, G_TX_NOLOD);
-        gDPLoadTLUT_pal16(gfx++, 15, hnw_face); // pal is different
-        gDPSetTextureLUT(gfx++, G_TT_RGBA16);
+        gDPLoadTLUT_pal16(POLY_OPA_DISP++, 15, hnw_face); // pal is different
+        gDPSetTextureLUT(POLY_OPA_DISP++, G_TT_RGBA16);
 #else
-        gSPSegment(gfx++, G_MWO_SEGMENT_B, hnw_tmem_txt);
-        gDPSetPrimColor(gfx++, 0, 128, 255, 255, 255, 255);
-        gDPLoadTLUT_Dolphin(gfx++, 15, 16, 1, hnw_face);
+        gSPSegment(POLY_OPA_DISP++, G_MWO_SEGMENT_B, hnw_tmem_txt);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 128, 255, 255, 255, 255);
+        gDPLoadTLUT_Dolphin(POLY_OPA_DISP++, 15, 16, 1, hnw_face);
 #endif
 
-        SET_POLY_OPA_DISP(gfx);
-        CLOSE_DISP(g);
+        CLOSE_POLY_OPA_DISP(play->game.graph);
 
         cKF_Si3_draw_R_SV((GAME*)play, keyframe, m, NULL, NULL, NULL);
     }
