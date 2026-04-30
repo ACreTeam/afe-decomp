@@ -88,6 +88,13 @@ enum {
     bIT_DRAW_TYPE_GOLD_TREE_STUMP003,
     bIT_DRAW_TYPE_GOLD_TREE_STUMP004,
     bIT_DRAW_TYPE_GOLD_TREE000_DEAD,
+    bIT_DRAW_TYPE_C_STONE_A,
+    bIT_DRAW_TYPE_C_STONE_B,
+    bIT_DRAW_TYPE_C_STONE_C,
+    bIT_DRAW_TYPE_C_STONE_D,
+    bIT_DRAW_TYPE_C_STONE_E,
+    bIT_DRAW_TYPE_RESETHOLE,
+    bIT_DRAW_TYPE_SP_FLOWER,
     bIT_DRAW_TYPE_APPLE,
     bIT_DRAW_TYPE_ORANGE,
     bIT_DRAW_TYPE_PEACH,
@@ -140,13 +147,17 @@ enum {
     bIT_DRAW_TYPE_BONE,
     bIT_DRAW_TYPE_DIARY,
     bIT_DRAW_TYPE_FORK,
+    bIT_DRAW_TYPE_LIVE_MUSIC,
+    bIT_DRAW_TYPE_CRACKER,
+    bIT_DRAW_TYPE_PRESENT2,
+    bIT_DRAW_TYPE_MEDICINE,
     bIT_DRAW_TYPE_FISH2,
     bIT_DRAW_TYPE_NONE,
 
     bIT_DRAW_TYPE_MAX
 };
 
-#define bIT_TYPE_BASE bIT_DRAW_TYPE_GOLD_TREE000_DEAD
+#define bIT_TYPE_BASE bIT_DRAW_TYPE_SP_FLOWER
 
 typedef struct blk_idx_info_s {
     u16 idx[bIT_DRAW_TYPE_MAX];
@@ -261,6 +272,7 @@ static void bCI_actor_ct(ACTOR* actorx, GAME* game) {
     common_info->pal_p[bIT_PAL_GOLD_TREE] = g_fdinfo->field_palette.golden_tree_pal;
     common_info->pal_p[bIT_PAL_HOLE_G] = obj_g_hole_pal;
     common_info->pal_p[bIT_PAL_HOLE_S] = obj_b_hole_pal;
+    common_info->pal_p[bIT_PAL_FLOWER_SP] = g_fdinfo->field_palette.flower3_pal;
 
     bg_item->common.bg_item_actorx_p = actorx;
 

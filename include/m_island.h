@@ -59,6 +59,13 @@ enum {
 #define mISL_PLAYER_ACTION_TRADE_CLOTH (1 << 30)
 #define mISL_PLAYER_ACTION_NOTICE_FISHING_ROD (1 << 31)
 
+// Around-town actions
+#define mISL_VILLAGE_PLAYER_ACTION_PLANT_MONEY_TREE (1 << 2)
+#define mISL_VILLAGE_PLAYER_ACTION_HIT_ROCK (1 << 6)
+#define mISL_VILLAGE_PLAYER_ACTION_BURY_DUST (1 << 20)
+#define mISL_VILLAGE_PLAYER_ACTION_21 (1 << 21)
+#define mISL_VILLAGE_PLAYER_ACTION_SHAKE_BEES (1 << 23)
+
 /* sizeof(Island_c) == 0x1900 */
 // typedef struct island_s {
 //   /* 0x0000 */ u8 name[mISL_ISLAND_NAME_LEN]; /* island name */
@@ -85,6 +92,7 @@ extern void mISL_init(Island_c* island);
 extern void mISL_ClearNowPlayerAction();
 extern void mISL_SetPlayerAction(PersonalID_c* pid, u32 action);
 extern void mISL_SetNowPlayerAction(u32 action);
+extern void mISL_UnsetNowPlayerAction(u32 action);
 extern int mISL_CheckPlayerAction(PersonalID_c* pid, u32 action);
 extern int mISL_CheckNowPlayerAction(u32 action);
 extern void mISL_MoveNowPlayerAction(void);

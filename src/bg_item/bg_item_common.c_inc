@@ -256,6 +256,10 @@ static int bIT_actor_ten_coin_entryR(bg_item_ten_coin_c* ten_coin, mActor_name_t
 
             bIT_actor_drop_entry(&bIT_CLIP->bg_item_common_p->drop_info, fg_money_item, &target_pos, &set_pos, 1, 0);
             sAdo_OngenTrgStart(sfx_no, &target_pos);
+
+            if (!mFI_CheckInIsland()) {
+                mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_HIT_ROCK);
+            }
         }
         return TRUE;
     }
@@ -585,7 +589,8 @@ static int bIT_common_bury_after(mActor_name_t fg_bury_item, mActor_name_t fg_ho
         for (i = 0; i < ARRAY_COUNT(fr2tr_f); i++) {
             if (fg_bury_item == fr2tr_f[i].fruit) {
                 *buried_item_p = fr2tr_f[i].tree;
-                return bIT_BURY_ACTION_PLANT;
+                res = bIT_BURY_ACTION_PLANT;
+                break;
             }
         }
     } else if (fg_bury_item == ITM_MONEY_1000 || fg_bury_item == ITM_MONEY_10000 || fg_bury_item == ITM_MONEY_30000 ||
@@ -610,6 +615,10 @@ static int bIT_common_bury_after(mActor_name_t fg_bury_item, mActor_name_t fg_ho
             }
 
             res = bIT_BURY_ACTION_PLANT;
+
+            if (!mFI_CheckInIsland()) {
+                mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PLANT_MONEY_TREE);
+            }
         }
     } else if (fg_bury_item >= ITM_WHITE_PANSY_BAG && fg_bury_item <= ITM_YELLOW_TULIP_BAG) {
         *buried_item_p = FLOWER_PANSIES0 + (fg_bury_item - ITM_WHITE_PANSY_BAG);
@@ -651,6 +660,13 @@ static void bIT_common_hole_throw(mActor_name_t fg_item, mActor_name_t fg_hole_i
                 mFI_SetFG_common(buried_item, *pos, TRUE);
                 if (fg_item != EMPTY_NO) {
                     mFI_Wpos2DepositON(*pos);
+
+                    if (!mFI_CheckInIsland()) {
+                        if (mFAs_CheckDust(buried_item) == TRUE) {
+                            mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_BURY_DUST);
+                            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_21);
+                        }
+                    }
                 }
                 break;
             case bIT_BURY_ACTION_PLANT:
@@ -883,6 +899,10 @@ static int fruit_set(mActor_name_t fg_item, int ut_x, int ut_z, s16 num, int dro
 
                 if (drop.fg_item == HONEYCOMB && drop_res) {
                     drop.flags |= 0x400; // honeycomb flag
+
+                    if (!mFI_CheckInIsland()) {
+                        mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_SHAKE_BEES);
+                    }
                 }
             }
 
@@ -1090,7 +1110,7 @@ static int BIT_actor_tree_cutcount_check(GAME* game, int ut_x, int ut_z) {
 }
 
 static void bg_item_tree_fruit_drop(mActor_name_t fg_item, int ut_x, int ut_z, xyz_t* drop_pos) {
-    if (fg_item == TREE || fg_item == CEDAR_TREE || fg_item == GOLD_TREE) {
+    if (fg_item == TREE || fg_item == CEDAR_TREE || fg_item == GOLD_TREE || fg_item == TREE_PALM_NOFRUIT_0 || fg_item == TREE_PALM_NOFRUIT_1 || fg_item == TREE_PALM_NOFRUIT_2) {
         if (Common_Get(clip).insect_clip != NULL && Common_Get(clip).insect_clip->set_pl_act_tim_proc != NULL) {
             Common_Get(clip).insect_clip->set_pl_act_tim_proc(aINS_PL_ACT_SHAKE_TREE, ut_x, ut_z);
         }
@@ -1212,7 +1232,7 @@ static void bIT_actor_hole_effect_destruct(bg_item_hole_c* hole) {
             bIT_common_hole_throw(hole->fg_item, hole->hole_fg_item, &hole->position, 1);
 
             if (hole->fg_item == EMPTY_NO && hole->hole_fg_item == HOLE_SHINE) {
-                mFI_SetFG_common(SHINE_SPOT, hole->position, TRUE);
+                mFI_SetFG_common(EMPTY_NO, hole->position, TRUE);
             }
 
             break;
@@ -2217,7 +2237,7 @@ static void m_GetCItTable_TreeTblChk(bg_item_block_info_tbl_c* block_info_table,
         }
     }
 
-    mFI_GetItemTable(item_table, wpos, __FILE__, 4856);
+    mFI_GetItemTable(item_table, wpos, __FILE__, 4909);
     remove_cut_tree_info_bitfield = Common_Get(remove_cut_tree_info_bitfield);
     block_info[1].count = item_table->count;
 
@@ -2431,7 +2451,7 @@ static int bg_item_common_chg_BGDataR_b(bg_item_common_c* common, int bx, int bz
                         pos.z = block_pos_z + pos_table[ut_z];
 
                         if (ofs_tbl->type != 0) {
-                            mCoBG_SetPluss5PointOffset_file(pos, ofs_tbl->table, __FILE__, 5243);
+                            mCoBG_SetPluss5PointOffset_file(pos, ofs_tbl->table, __FILE__, 5297);
                         } else {
                             mCoBG_SetPlussOffset(pos, ofs_tbl->table.centerRight_offset, ofs_tbl->table.unit_attribute);
                         }
@@ -2507,70 +2527,72 @@ static void bg_item_common_classifyitemDataTable(const GAME_PLAY* const play, bg
         deposit = mFI_GetDepositP(bx, bz);
         fg_p = block_table->items;
 
-        for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-            for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++, draw_pos++, idx++, col++, height_p++) {
-                if (bIT_individual_draw_check(*fg_p)) {
-                    xyz_t pos;
-                    bg_item_type_data_c type_data;
-                    flag = TRUE;
+        if (fg_p != NULL) {
+            for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
+                for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++, draw_pos++, idx++, col++, height_p++) {
+                    if (bIT_individual_draw_check(*fg_p)) {
+                        xyz_t pos;
+                        bg_item_type_data_c type_data;
+                        flag = TRUE;
 
-                    fg_no2fg_type(*fg_p, &type_data, col, type_data_table);
-                    if (deposit == NULL || ((*deposit >> ut_x) & 1) == 0 || type_data.type == bIT_DRAW_TYPE_FISH2) {
-                        if (*fg_p != EMPTY_NO) {
-                            fg_no2fg_type(*fg_p, &type_data, col, type_data_table);
+                        fg_no2fg_type(*fg_p, &type_data, col, type_data_table);
+                        if (deposit == NULL || ((*deposit >> ut_x) & 1) == 0 || type_data.type == bIT_DRAW_TYPE_FISH2) {
+                            if (*fg_p != EMPTY_NO) {
+                                fg_no2fg_type(*fg_p, &type_data, col, type_data_table);
+                            } else {
+                                flag = FALSE;
+                            }
                         } else {
-                            flag = FALSE;
+                            int hole_no = mCoBG_GetHoleNumber_ClData(col);
+
+                            if (hole_no >= 0) {
+                                bg_item_type_data_c* src_data = type_data_table[bIT_TYPE_CAT_CRACK];
+
+                                type_data._00 = src_data->_00;
+                                type_data.type = src_data->type;
+                                type_data.pos_x_tbl_p = src_data->pos_x_tbl_p;
+                                type_data.pos_z_tbl_p = src_data->pos_z_tbl_p;
+
+                                if (mCoBG_CheckSandHole_ClData(col)) {
+                                    type_data.type = bIT_DRAW_TYPE_CRACK00_S;
+                                }
+
+                                type_data._00 = hole_no;
+                            } else {
+                                flag = FALSE;
+                            }
                         }
-                    } else {
-                        int hole_no = mCoBG_GetHoleNumber_ClData(col);
 
-                        if (hole_no >= 0) {
-                            bg_item_type_data_c* src_data = type_data_table[bIT_TYPE_CAT_CRACK];
+                        if (flag) {
+                            int type = type_data.type;
+                            int before_start;
+                            int diff;
 
-                            type_data._00 = src_data->_00;
-                            type_data.type = src_data->type;
-                            type_data.pos_x_tbl_p = src_data->pos_x_tbl_p;
-                            type_data.pos_z_tbl_p = src_data->pos_z_tbl_p;
+                            pos.x = bx_pos + type_data.pos_x_tbl_p[ut_x];
+                            pos.z = bz_pos + type_data.pos_z_tbl_p[ut_z];
 
-                            if (mCoBG_CheckSandHole_ClData(col)) {
-                                type_data.type = bIT_DRAW_TYPE_CRACK00_S;
+                            if ((draw_part_table[type].flags & 2)) {
+                                pos.x += rnd_data_x[ut_x & 3][ut_z & 3];
+                                pos.z += rnd_data_z[ut_x & 3][ut_z & 3];
                             }
 
-                            type_data._00 = hole_no;
-                        } else {
-                            flag = FALSE;
+                            if (*fg_p == ITM_KNIFE_AND_FORK) {
+                                pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos(pos, 0.0f);
+                            } else {
+                                pos.y = (f32)*height_p * 10.0f + block_height;
+                            }
+
+                            before_start = start_idx_tbl[type];
+                            diff = before_start - idx;
+                            start_idx_tbl[type] = idx;
+                            bg_item_common_outPutData(play, draw_pos, diff, type_data._00, &pos);
                         }
-                    }
-
-                    if (flag) {
-                        int type = type_data.type;
-                        int before_start;
-                        int diff;
-
-                        pos.x = bx_pos + type_data.pos_x_tbl_p[ut_x];
-                        pos.z = bz_pos + type_data.pos_z_tbl_p[ut_z];
-
-                        if ((draw_part_table[type].flags & 2)) {
-                            pos.x += rnd_data_x[ut_x & 3][ut_z & 3];
-                            pos.z += rnd_data_z[ut_x & 3][ut_z & 3];
-                        }
-
-                        if (*fg_p == ITM_KNIFE_AND_FORK) {
-                            pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos(pos, 0.0f);
-                        } else {
-                            pos.y = (f32)*height_p * 10.0f + block_height;
-                        }
-
-                        before_start = start_idx_tbl[type];
-                        diff = before_start - idx;
-                        start_idx_tbl[type] = idx;
-                        bg_item_common_outPutData(play, draw_pos, diff, type_data._00, &pos);
                     }
                 }
-            }
 
-            if (deposit != NULL) {
-                deposit++;
+                if (deposit != NULL) {
+                    deposit++;
+                }
             }
         }
     }
@@ -2612,14 +2634,18 @@ static void bg_shin_effect_being_check(bg_item_common_c* common, int count) {
     xyz_t pos;
     xyz_t shine_pos;
     f32 x_start_save;
+    mActor_name_t fg_item;
     int i;
     int ut_z;
     int ut_x;
-    mFI_block_tbl_c* block_info_tbl = common->item_table.block_info_tbl;
-    mActor_name_t shin_fg_item = EMPTY_NO;
+    mFI_block_tbl_c* block_info_tbl;
+    mActor_name_t shin_fg_item;
     mActor_name_t* fg_p;
-    u16 mode = 0;
-
+    u16 mode;
+    
+    block_info_tbl = common->item_table.block_info_tbl;
+    shin_fg_item = EMPTY_NO;
+    mode = 0;
     pos.y = 0.0f;
     for (i = 0; i < count; i++, block_info_tbl++) {
         fg_p = block_info_tbl->items;
@@ -2627,27 +2653,29 @@ static void bg_shin_effect_being_check(bg_item_common_c* common, int count) {
         mFI_BkNum2WposXZ(&pos.x, &pos.z, block_info_tbl->block_x, block_info_tbl->block_z);
         pos.x += mFI_UT_WORLDSIZE_HALF_X_F;
         pos.z += mFI_UT_WORLDSIZE_HALF_Z_F;
+
+        if (fg_p != NULL) {
         x_start_save = pos.x;
+            for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
+                pos.x = x_start_save;
+                for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
+                    fg_item = *fg_p;
 
-        for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-            pos.x = x_start_save;
-            for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
-                mActor_name_t fg_item = *fg_p;
+                    if (fg_item == SHINE_SPOT) {
+                        shin_fg_item = fg_item;
+                        xyz_t_move(&shine_pos, &pos);
+                        mode = 1;
+                    } else if (fg_item == HOLE_SHINE) {
+                        shin_fg_item = fg_item;
+                        xyz_t_move(&shine_pos, &pos);
+                        mode = 2;
+                    }
 
-                if (fg_item == SHINE_SPOT) {
-                    shin_fg_item = fg_item;
-                    xyz_t_move(&shine_pos, &pos);
-                    mode = 1;
-                } else if (fg_item == HOLE_SHINE) {
-                    shin_fg_item = fg_item;
-                    xyz_t_move(&shine_pos, &pos);
-                    mode = 2;
+                    pos.x += mFI_UT_WORLDSIZE_X_F;
                 }
 
-                pos.x += mFI_UT_WORLDSIZE_X_F;
+                pos.z += mFI_UT_WORLDSIZE_Z_F;
             }
-
-            pos.z += mFI_UT_WORLDSIZE_Z_F;
         }
     }
 

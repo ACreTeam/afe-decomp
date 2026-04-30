@@ -50,8 +50,12 @@ extern Gfx obj_item_ticketT_mat_model[];
 extern Gfx obj_item_boneT_mat_model[];
 extern Gfx obj_item_diaryT_mat_model[];
 extern Gfx obj_item_fork_onT_mat_model[];
+extern Gfx obj_item_liveT_mat_model[];
+extern Gfx obj_item_cracker_1T_mat_model[];
+extern Gfx obj_box2T_mat_model[];
+extern Gfx obj_medicinT_mat_model[];
 
-static Gfx* mode_DL_table[] = {
+static Gfx* mode_DL_table[mNT_ITEM_TYPE_NUM] = {
     NULL,
     apple_DL_mode,
     orange_DL_mode,
@@ -105,6 +109,10 @@ static Gfx* mode_DL_table[] = {
     obj_item_boneT_mat_model,
     obj_item_diaryT_mat_model,
     obj_item_fork_onT_mat_model,
+    obj_item_liveT_mat_model,
+    obj_item_cracker_1T_mat_model,
+    obj_box2T_mat_model,
+    obj_medicinT_mat_model,
 };
 
 extern Gfx apple_DL_vtx[];
@@ -159,6 +167,10 @@ extern Gfx obj_item_ticketT_gfx_model[];
 extern Gfx obj_item_boneT_gfx_model[];
 extern Gfx obj_item_diaryT_gfx_model[];
 extern Gfx obj_item_fork_onT_gfx_model[];
+extern Gfx obj_item_liveT_gfx_model[];
+extern Gfx obj_item_cracker_1T_gfx_model[];
+extern Gfx obj_box2T_gfx_model[];
+extern Gfx obj_medicinT_gfx_model[];
 
 static Gfx* vtx_DL_table[] = {
     NULL,
@@ -214,4 +226,8 @@ static Gfx* vtx_DL_table[] = {
     obj_item_boneT_gfx_model,
     obj_item_diaryT_gfx_model,
     obj_item_fork_onT_gfx_model,
+    obj_item_liveT_gfx_model,
+    obj_item_cracker_1T_gfx_model,
+    obj_box2T_gfx_model,
+    obj_medicinT_gfx_model,
 };

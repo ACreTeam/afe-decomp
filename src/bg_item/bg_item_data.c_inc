@@ -1,3 +1,7 @@
+#ifdef __INTELLISENSE__
+#include "bg_item.h"
+#endif
+
 static bg_item_type_data_c typeData_table_bgItem[] = {
     { 0, bIT_DRAW_TYPE_NONE, NULL, NULL },                         // 0x0000
     { 0, bIT_DRAW_TYPE_STUMP1, pos_table, pos_table },             // 0x0001
@@ -130,6 +134,22 @@ static bg_item_type_data_c typeData_table_bgItem[] = {
     { 0, bIT_DRAW_TYPE_GOLD_TREE004, pos_table, pos_table },       // 0x0080
     { 0, bIT_DRAW_TYPE_GOLD_TREE004, pos_table, pos_table },       // 0x0081
     { 0, bIT_DRAW_TYPE_CEDAR004, pos_table, pos_table },           // 0x0082
+    { 0, bIT_DRAW_TYPE_STONE_A, pos_table, pos_table },            // 0x0083
+    { 1, bIT_DRAW_TYPE_STONE_B, pos_table, pos_table },            // 0x0084
+    { 2, bIT_DRAW_TYPE_STONE_C, pos_table, pos_table },            // 0x0085
+    { 3, bIT_DRAW_TYPE_STONE_D, pos_table, pos_table },            // 0x0086
+    { 4, bIT_DRAW_TYPE_STONE_E, pos_table, pos_table },            // 0x0087
+    { 0, bIT_DRAW_TYPE_C_STONE_A, pos_table, pos_table },          // 0x0088
+    { 1, bIT_DRAW_TYPE_C_STONE_B, pos_table, pos_table },          // 0x0089
+    { 2, bIT_DRAW_TYPE_C_STONE_C, pos_table, pos_table },          // 0x008A
+    { 3, bIT_DRAW_TYPE_C_STONE_D, pos_table, pos_table },          // 0x008B
+    { 4, bIT_DRAW_TYPE_C_STONE_E, pos_table, pos_table },          // 0x008C
+    { 0, bIT_DRAW_TYPE_RESETHOLE, pos_table, pos_table },          // 0x008D
+    { 0, bIT_DRAW_TYPE_RESETHOLE, pos_table, pos_table },          // 0x008E
+    { 0, bIT_DRAW_TYPE_RESETHOLE, pos_table, pos_table },          // 0x008F
+    { 0, bIT_DRAW_TYPE_RESETHOLE, pos_table, pos_table },          // 0x0090
+    { 0, bIT_DRAW_TYPE_RESETHOLE, pos_table, pos_table },          // 0x0091
+    { 0, bIT_DRAW_TYPE_SP_FLOWER, pos_table, pos_table },          // 0x0092
 };
 
 static bg_item_type_data_c typeData_table_bgItem2[] = {
@@ -1624,20 +1644,37 @@ extern Gfx obj_stoneB_shadowT_gfx_model[];
 extern Gfx obj_stoneC_shadowT_gfx_model[];
 extern Gfx obj_stoneD_shadowT_gfx_model[];
 extern Gfx obj_stoneE_shadowT_gfx_model[];
+extern Gfx obj_s_crackstoneA_mat_model[];
+extern Gfx obj_s_crackstoneA_gfx_model[];
+extern Gfx obj_s_crackstoneB_gfx_model[];
+extern Gfx obj_s_crackstoneC_gfx_model[];
+extern Gfx obj_s_crackstoneD_gfx_model[];
+extern Gfx obj_s_crackstoneE_gfx_model[];
 
 static Gfx* stone_DL_table[] = {
     obj_s_stoneA_mat_model,       obj_s_stoneA_gfx_model,       obj_s_stoneB_gfx_model,
     obj_s_stoneC_gfx_model,       obj_s_stoneD_gfx_model,       obj_s_stoneE_gfx_model,
+    obj_s_crackstoneA_mat_model,
+    obj_s_crackstoneA_gfx_model,
+    obj_s_crackstoneB_gfx_model,
+    obj_s_crackstoneC_gfx_model,
+    obj_s_crackstoneD_gfx_model,
+    obj_s_crackstoneE_gfx_model,
     obj_stoneA_shadowT_mat_model, obj_stoneA_shadowT_gfx_model, obj_stoneB_shadowT_gfx_model,
     obj_stoneC_shadowT_gfx_model, obj_stoneD_shadowT_gfx_model, obj_stoneE_shadowT_gfx_model,
 };
 
 static bg_item_draw_list_c stone_a_list = { &bg_item_common_draw_loop_type1, 0, 1 };
+static bg_item_draw_list_c c_stone_a_list = { &bg_item_common_draw_loop_type1, 6, 7 };
 
-static bg_item_draw_list_c stone_a_shadow_list = { &bg_item_common_s_draw_loop_type1, 6, 7 };
+static bg_item_draw_list_c stone_a_shadow_list = { &bg_item_common_s_draw_loop_type1, 12, 13 };
 
 static bg_item_draw_list_c* stone_a_list_table[] = {
     &stone_a_list,
+};
+
+static bg_item_draw_list_c* c_stone_a_list_table[] = {
+    &c_stone_a_list,
 };
 
 extern Vtx obj_stoneA_shadow_v[];
@@ -1670,6 +1707,26 @@ static bg_item_draw_part_c stone_e_part = {
     stone_DL_table, 1, stone_a_list_table, 10, obj_stoneE_shadow_v, 20.0f, stone_e_shadow_v_fix, &stone_a_shadow_list,
 };
 
+static bg_item_draw_part_c c_stone_a_part = {
+    stone_DL_table, 1, c_stone_a_list_table, 10, obj_stoneA_shadow_v, 30.0f, stone_a_shadow_v_fix, &stone_a_shadow_list,
+};
+
+static bg_item_draw_part_c c_stone_b_part = {
+    stone_DL_table, 1, c_stone_a_list_table, 12, obj_stoneB_shadow_v, 20.0f, stone_b_shadow_v_fix, &stone_a_shadow_list,
+};
+
+static bg_item_draw_part_c c_stone_c_part = {
+    stone_DL_table, 1, c_stone_a_list_table, 12, obj_stoneC_shadow_v, 20.0f, stone_c_shadow_v_fix, &stone_a_shadow_list,
+};
+
+static bg_item_draw_part_c c_stone_d_part = {
+    stone_DL_table, 1, c_stone_a_list_table, 8, obj_stoneD_shadow_v, 20.0f, stone_d_shadow_v_fix, &stone_a_shadow_list,
+};
+
+static bg_item_draw_part_c c_stone_e_part = {
+    stone_DL_table, 1, c_stone_a_list_table, 10, obj_stoneE_shadow_v, 20.0f, stone_e_shadow_v_fix, &stone_a_shadow_list,
+};
+
 extern Gfx obj_taneT_mat_model[];
 extern Gfx obj_taneT_gfx_model[];
 
@@ -1687,6 +1744,39 @@ static bg_item_draw_list_c* tane_list_table[] = {
 static bg_item_draw_part_c tane_part = {
     tane_DL_table, 1, tane_list_table, 0, NULL, 0.0f, NULL, NULL,
 };
+
+extern Gfx obj_s_resethole1T_mat_model[];
+extern Gfx obj_s_resethole1T_gfx_model[];
+
+static Gfx* resethole_DL_table[] = {
+    obj_s_resethole1T_mat_model,
+    obj_s_resethole1T_gfx_model,
+};
+
+static bg_item_draw_list_c resethole_list = { &bg_item_common_draw_loop_type1, 0, 1 };
+
+static bg_item_draw_list_c* resethole_list_table[] = {
+    &resethole_list,
+};
+
+static bg_item_draw_part_c resethole_part = {
+    resethole_DL_table, 1, resethole_list_table, 0, NULL, 0.0f, NULL, NULL,
+};
+
+extern Gfx obj_flower_dT_gfx_model[];
+extern Gfx obj_flower_dT_mat_model[];
+
+static Gfx* sp_flower_DL_table[2] = {
+    obj_flower_dT_mat_model, obj_flower_dT_gfx_model
+};
+
+static bg_item_draw_list_c sp_flower_list = {&bg_item_common_draw_loop_type1, 0, 1};
+
+static bg_item_draw_list_c* sp_flower_list_table[] = {
+    &sp_flower_list,
+};
+
+static bg_item_draw_part_c sp_flower_part = {sp_flower_DL_table, ARRAY_COUNT(sp_flower_list_table), sp_flower_list_table, 0, NULL, 0.0f, NULL, NULL};
 
 static bg_item_type_data_c typeData_table_item1[] = {
     { 0, bIT_DRAW_TYPE_APPLE, pos_table, pos_table }, // 2XXX
@@ -2498,6 +2588,21 @@ static bg_item_draw_part_c music_part = {
     music_DL_table, 1, music_list_table, 0, NULL, 0.0f, NULL, NULL,
 };
 
+extern Gfx obj_item_liveT_gfx_model[];
+extern Gfx obj_item_liveT_mat_model[];
+
+static Gfx* live_music_DL_table[2] = {
+    obj_item_liveT_mat_model, obj_item_liveT_gfx_model
+};
+
+static bg_item_draw_list_c live_music_list = {&bg_item_common_draw_loop_type1, 0, 1};
+
+static bg_item_draw_list_c* live_music_list_table[1] = {
+    &live_music_list
+};
+
+static bg_item_draw_part_c live_music_part = {live_music_DL_table, ARRAY_COUNT(live_music_list_table), live_music_list_table, 0, NULL, 0.0f, NULL, NULL};
+
 extern Gfx obj_item_ticketT_mat_model[];
 extern Gfx obj_item_ticketT_gfx_model[];
 
@@ -2570,6 +2675,36 @@ static bg_item_draw_part_c fork_part = {
     fork_DL_table, 1, fork_list_table, 0, NULL, 0.0f, NULL, NULL,
 };
 
+extern Gfx obj_item_cracker_1T_gfx_model[];
+extern Gfx obj_item_cracker_1T_mat_model[];
+
+static Gfx* cracker_DL_table[2] = {
+    obj_item_cracker_1T_mat_model, obj_item_cracker_1T_gfx_model
+};
+
+static bg_item_draw_list_c cracker_list = {&bg_item_common_draw_loop_type1, 0, 1};
+
+static bg_item_draw_list_c* cracker_list_table[1] = {
+    &cracker_list
+};
+
+static bg_item_draw_part_c cracker_part = {cracker_DL_table, ARRAY_COUNT(cracker_list_table), cracker_list_table, 0, NULL, 0.0f, NULL, NULL};
+
+extern Gfx obj_medicinT_gfx_model[];
+extern Gfx obj_medicinT_mat_model[];
+
+static Gfx* medicin_DL_table[2] = {
+    obj_medicinT_mat_model, obj_medicinT_gfx_model
+};
+
+static bg_item_draw_list_c medicin_list = {&bg_item_common_draw_loop_type1, 0, 1};
+
+static bg_item_draw_list_c* medicin_list_table[1] = {
+    &medicin_list
+};
+
+static bg_item_draw_part_c medicin_part = {medicin_DL_table, ARRAY_COUNT(medicin_list_table), medicin_list_table, 0, NULL, 0.0f, NULL, NULL};
+
 static bg_item_draw_part_table_c draw_part_table_a[] = {
     { &stump_part1, 0 },             // bIT_DRAW_TYPE_STUMP1
     { &stump_part2, 0 },             // bIT_DRAW_TYPE_STUMP2
@@ -2640,6 +2775,13 @@ static bg_item_draw_part_table_c draw_part_table_a[] = {
     { &gold_tree_stump003_part, 0 }, // bIT_DRAW_TYPE_GOLD_TREE_STUMP003
     { &gold_tree_stump004_part, 0 }, // bIT_DRAW_TYPE_GOLD_TREE_STUMP004
     { &gold_tree000_dead_part, 0 },  // bIT_DRAW_TYPE_GOLD_TREE000_DEAD
+    { &c_stone_a_part, 0 },          // bIT_DRAW_TYPE_C_STONE_A
+    { &c_stone_b_part, 0 },          // bIT_DRAW_TYPE_C_STONE_B
+    { &c_stone_c_part, 0 },          // bIT_DRAW_TYPE_C_STONE_C
+    { &c_stone_d_part, 0 },          // bIT_DRAW_TYPE_C_STONE_D
+    { &c_stone_e_part, 0 },          // bIT_DRAW_TYPE_C_STONE_E
+    { &resethole_part, 0 },          // bIT_DRAW_TYPE_RESETHOLE
+    { &sp_flower_part, 0 },          // bIT_DRAW_TYPE_SP_FLOWER
     { &apple_part, 1 },              // bIT_DRAW_TYPE_APPLE
     { &orange_part, 1 },             // bIT_DRAW_TYPE_ORANGE
     { &peach_part, 1 },              // bIT_DRAW_TYPE_PEACH
@@ -2692,6 +2834,10 @@ static bg_item_draw_part_table_c draw_part_table_a[] = {
     { &bone_part, 1 },               // bIT_DRAW_TYPE_BONE
     { &diary_part, 1 },              // bIT_DRAW_TYPE_DIARY
     { &fork_part, 1 },               // bIT_DRAW_TYPE_FORK
+    { &live_music_part, 1 },         // bIT_DRAW_TYPE_LIVE_MUSIC
+    { &cracker_part, 1 },            // bIT_DRAW_TYPE_CRACKER
+    { &present_part, 1 },            // bIT_DRAW_TYPE_PRESENT2
+    { &medicin_part, 1 },            // bIT_DRAW_TYPE_MEDICINE
     { &fish_part, 0 },               // bIT_DRAW_TYPE_FISH2
     { NULL, 0 },                     // bIT_DRAW_TYPE_NONE
 };

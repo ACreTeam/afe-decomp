@@ -882,12 +882,12 @@ config.libs = [
     Rel(
         "bg_item",
         [
-            Object(NonMatching, "bg_item/bg_cherry_item.c"),
-            Object(NonMatching, "bg_item/bg_item.c"),
-            Object(NonMatching, "bg_item/bg_police_item.c"),
-            Object(NonMatching, "bg_item/bg_post_item.c"),
-            Object(NonMatching, "bg_item/bg_winter_item.c"),
-            Object(NonMatching, "bg_item/bg_xmas_item.c"),
+            Object(Matching, "bg_item/bg_cherry_item.c"),
+            Object(Matching, "bg_item/bg_item.c"),
+            Object(Matching, "bg_item/bg_police_item.c"),
+            Object(Matching, "bg_item/bg_post_item.c"),
+            Object(Matching, "bg_item/bg_winter_item.c"),
+            Object(Matching, "bg_item/bg_xmas_item.c"),
         ],
     ),
     Rel(
