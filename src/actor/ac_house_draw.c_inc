@@ -217,21 +217,20 @@ static void aHUS_actor_draw_ta_set(ACTOR* actorx, GAME* game) {
     };
     // clang-format on
 
-    GRAPH* graph = game->graph;
     HOUSE_ACTOR* house = (HOUSE_ACTOR*)actorx;
     int type = house->structure_type;
     int season = house->season == mTM_SEASON_WINTER;
-    u8 a = GETREG(MYKREG, 1) + edge_alpha[type][season];
+    u8 a = (u8)edge_alpha[type][season];
     int adjust = adjust_mode[type][season];
 
-    OPEN_DISP(graph);
+    OPEN_DISP(game->graph);
 
     gDPSetTextureAdjustMode(NEXT_POLY_OPA_DISP, adjust);
     gDPSetTextureAdjustMode(NEXT_SHADOW_DISP, adjust);
     gDPSetTexEdgeAlpha(NEXT_POLY_OPA_DISP, a);
     gDPSetTexEdgeAlpha(NEXT_SHADOW_DISP, a);
 
-    CLOSE_DISP(graph);
+    CLOSE_DISP(game->graph);
 }
 
 static void aHUS_actor_draw_ta_clr(ACTOR* actorx, GAME* game) {
