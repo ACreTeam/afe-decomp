@@ -404,14 +404,10 @@ static void Weather_Actor_ct(ACTOR* actor, GAME* game) {
         weather->current_status = mEnv_SAVE_GET_WEATHER_TYPE(Save_Get(weather));
         weather->next_status = weather->current_status;
         weather->current_level = mEnv_SAVE_GET_WEATHER_INTENSITY(Save_Get(weather));
-// Aus version sets the aim level to the current level (from save) rather than from the
-// common data struct
-#if VERSION >= VER_GAFU01_00
-        weather->current_aim_level = weather->current_level;
-#else
         weather->current_aim_level = Common_Get(weather_intensity);
-#endif
     }
+
+    aWeather_weatherinfo_CommonSet(weather->current_status, weather->current_level);
 
     weather->ptr = NULL;
     weather->priv = NULL;
@@ -613,18 +609,18 @@ static void aWeather_ChangeWeatherTime0(ACTOR* actorx) {
             Save_Get(scene_no) == SCENE_START_DEMO3) {
             return;
         }
-        if (!(mFI_CheckPlayerBlockInfo() & 0x400000) && (mTM_check_renew_time(0) != 0)) {
+        if (!(mFI_CheckPlayerBlockInfo() & mRF_BLOCKKIND_OFFING) && (mTM_check_renew_time(0) != 0)) {
             mEnv_RandomWeather(&rndWeather, &rndIntensity);
             mEv_GetEventWeather(&evWeather, &evIntensity);
             if (evWeather != -1) {
                 rndWeather = evWeather;
                 rndIntensity = evIntensity;
             }
+            
             if ((mEv_CheckRealArbeit() == TRUE) && (rndWeather == mEnv_WEATHER_RAIN)) {
                 rndWeather = mEnv_WEATHER_CLEAR;
                 rndIntensity = mEnv_WEATHER_INTENSITY_NONE;
             }
-            mTM_off_renew_time(0);
 
             save_weather = mEnv_SAVE_GET_WEATHER_TYPE(Save_Get(weather));
             if (rndWeather == mEnv_WEATHER_CLEAR || rndWeather == mEnv_WEATHER_SAKURA) {
@@ -632,11 +628,15 @@ static void aWeather_ChangeWeatherTime0(ACTOR* actorx) {
                     mEnv_PreRainNowFine_Init();
                 }
             }
-            Save_Set(weather, rndIntensity | (rndWeather * 16));
 
-            if (((mEv_CheckTitleDemo() != mEv_TITLEDEMO_STAFFROLL) || (weather->sound_flag != 1)) && (mFI_CheckInIsland() == 0)) {
-                aWeather_RequestChangeWeather(actorx, rndWeather, rndIntensity);
+            if (mEv_CheckTitleDemo() != mEv_TITLEDEMO_STAFFROLL || weather->sound_flag != 1) {
+                if (!mFI_CheckInIsland() && mFI_GetClimate() != mFI_CLIMATE_ISLAND) {
+                    aWeather_RequestChangeWeather(actorx, rndWeather, rndIntensity);
+                    Save_Set(weather, rndIntensity | (rndWeather << 4));
+                    mTM_off_renew_time(0);
+                }
             }
+
             Common_Set(weather_time, Common_Get(time.rtc_time));
         }
     }
@@ -702,12 +702,7 @@ static void Weather_Actor_move(ACTOR* actor, GAME* game) {
 
     if (Common_Get(weather) == mEnv_WEATHER_RAIN) {
         umbrella = mPlib_check_player_open_umbrella(game);
-#if VERSION == VER_GAFU01_00
-        field_id = mFI_GetFieldId();
-        if (mFI_GET_TYPE(field_id) == mFI_FIELDTYPE2_FG && umbrella != weather->umbrella_flag) {
-#else
         if (umbrella != weather->umbrella_flag) {
-#endif
             aWeather_ChangeEnvSE(actor, game, weather->current_status, weather->current_level);
         }
 

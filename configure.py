@@ -736,7 +736,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_tunahiki_control.c"),
             Object(Matching, "actor/ac_turi.c"),
             Object(NonMatching, "actor/ac_uki.c"),
-            Object(NonMatching, "actor/ac_weather.c"),
+            Object(Matching, "actor/ac_weather.c"),
             Object(Matching, "actor/ac_weather_fine.c"),
             Object(Matching, "actor/ac_weather_leaf.c"),
             Object(Matching, "actor/ac_weather_rain.c"),
