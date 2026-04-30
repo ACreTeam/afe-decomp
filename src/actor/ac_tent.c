@@ -199,31 +199,33 @@ static int aTnt_ControlLight(ACTOR*) {
 static void aTnt_actor_move(ACTOR* actor, GAME* game) {
     STRUCTURE_ACTOR* tent = (STRUCTURE_ACTOR*)actor;
     GAME_PLAY* play = (GAME_PLAY*)game;
+    ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
+    int bx1, bz1;
+    int bx2, bz2;
+    f32 window;
 
-    PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
-    int bx1;
-    int bz1;
-    int bx2;
-    int bz2;
-
+    // @BUG - they use actor->world.position twice instead of
+    // using the player's position to differentiate the block.
+    // This means the tent actor only gets culled by a distance check,
+    // and never due to simply switching blocks.
     if ((mFI_Wpos2BlockNum(&bx1, &bz1, actor->world.position) != 0) &&
+#ifndef BUGFIXES
         (mFI_Wpos2BlockNum(&bx2, &bz2, actor->world.position) != 0) && ((bx1 != bx2) || (bz1 != bz2)) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL2, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL3, &player->actor_class) == FALSE)) {
+#else
+        (mFI_Wpos2BlockNum(&bx2, &bz2, playerx->world.position) != 0) && ((bx1 != bx2) || (bz1 != bz2)) &&
+#endif
+        !mDemo_CHECK_SCROLL(playerx)) {
         Actor_delete(actor);
-    } else {
-        f32 window;
-
-        tent->action_proc(tent, play);
-
-        window = (aTnt_ControlLight(actor) != 0) ? 1.0f : 0.0f;
-        chase_f(&tent->arg0_f, window, 0.019532442f);
+        return;
     }
+
+    tent->action_proc(tent, play);
+    window = (aTnt_ControlLight(actor) != 0) ? 1.0f : 0.0f;
+    chase_f(&tent->arg0_f, window, 0.019532442f);
 }
 
 static void aTnt_actor_init(ACTOR* actor, GAME* game) {
-    mFI_SetFG_common(DUMMY_TENT, actor->home.position, 0);
+    mFI_SetFG_common(DUMMY_TENT, actor->home.position, FALSE);
     aTnt_actor_move(actor, game);
     actor->mv_proc = aTnt_actor_move;
 }
@@ -259,12 +261,12 @@ static void aTnt_actor_draw(ACTOR* actor, GAME* game) {
         OPEN_DISP(game->graph);
 
         gSPMatrix(NEXT_POLY_OPA_DISP, m, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        gSPSegment(NEXT_POLY_OPA_DISP, 8, gfx);
+        gSPSegment(NEXT_POLY_OPA_DISP, ANIME_1_TXT_SEG, gfx);
 
         gSPDisplayList(NEXT_POLY_OPA_DISP, obj_s_tent_model);
 
-        (*Common_Get(clip).bg_item_clip->draw_shadow_proc)(game, &aTnt_shadow_data, FALSE);
-
         CLOSE_DISP(game->graph);
+
+        CLIP(bg_item_clip)->draw_shadow_proc(game, &aTnt_shadow_data, bIT_SHADOW_TYPE_HARD);
     }
 }

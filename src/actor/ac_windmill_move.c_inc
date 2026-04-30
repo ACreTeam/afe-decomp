@@ -25,13 +25,13 @@ static void aWIN_set_bgOffset(STRUCTURE_ACTOR* windmill, int idx) {
         pos.z = windmill->actor_class.home.position.z + addZ[i];
 
         pos.x = windmill->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 109);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 112);
 
         pos.x = windmill->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 113);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 116);
 
         pos.x = windmill->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 117);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 120);
 
         offset += 3;
     }

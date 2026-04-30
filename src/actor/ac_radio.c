@@ -48,10 +48,9 @@ static void aRAD_actor_ct(ACTOR* actor, GAME* game){
     RADIO_ACTOR* radio = (RADIO_ACTOR*)actor;
     
     aRAD_setup_action(radio, 0); 
-    radio->next_action = 0;
+    radio->structure_class.arg0 = 0;
     aRAD_set_bgOffset(radio, 1);
 }
 
 #include "../src/actor/ac_radio_move.c_inc"
-
 #include "../src/actor/ac_radio_draw.c_inc"

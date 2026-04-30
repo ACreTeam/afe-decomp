@@ -109,7 +109,7 @@ static void Museum_Fossil_Actor_move(ACTOR* actorx, GAME* game) {
                 if (mDemo_Request(mDemo_TYPE_SPEAK, actorx, &aMF_SetTalkInfo)) {
                     if (mMmd_IS_DONATED(donator)) {
                         mActor_name_t item = (i >= 0 && i < mMmd_FOSSIL_NUM)
-                                                 ? (mActor_name_t)(FTR_DINO_START + (mActor_name_t)(i << 2))
+                                                 ? (mActor_name_t)(FTR_DINO_START + (i << 2))
                                                  : FTR_DINO_START;
 
                         /* Copy the art item's name */

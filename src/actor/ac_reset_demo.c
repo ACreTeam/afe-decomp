@@ -130,14 +130,22 @@ static void aRSD_first_set_init(RESET_DEMO_ACTOR* reset_demo, GAME_PLAY* play) {
         SP_NPC_MAJIN3,
         SP_NPC_MAJIN4,
         SP_NPC_MAJIN_D080,
+        SP_NPC_MAJIN3,
+        SP_NPC_MAJIN4,
+        SP_NPC_MAJIN,
     };
     // clang-format on
 
     int reset = Now_Private->reset_count;
 
     play->submenu.start_refuse = TRUE;
-    if (reset >= 9) {
-        reset = 6 + ((reset - 9) % 3);
+    if (reset <= 0) {
+        reset = 1;
+        Now_Private->reset_count = 0;
+    }
+
+    if (reset >= 12) {
+        reset = 9 + ((reset - 12) % 3);
         Now_Private->reset_count = reset;
     }
 

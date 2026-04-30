@@ -1,3 +1,14 @@
+#ifdef __INTELLISENSE__
+#include "ac_toudai.h"
+#include "sys_matrix.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_field_info.h"
+#include "m_demo.h"
+#include "m_bgm.h"
+#include "m_rcp.h"
+#endif
+
 static int aTOU_actor_draw_before(GAME*,cKF_SkeletonInfo_R_c*, int idx, Gfx** gfxp,u8* dispbuf, void* actor, s_xyz* rotation, xyz_t* translation){
 
     if(idx == 4){
@@ -22,45 +33,40 @@ u8* dispbuf, void* actor, s_xyz* rotation, xyz_t* translation){
     Gfx* gfx; 
     int type;
 
-    if((idx == 4) && ((int)light->unk2CC != 0)){
+    if((idx == 4) && ((int)light->arg1_f != 0)){
         work = _Matrix_to_Mtx_new(graph);
 
         if(work != NULL){
            type = light->season == mTM_SEASON_WINTER;
-            pal = Common_Get(clip.structure_clip)->get_pal_segment_proc(aSTR_PAL_TOUDAI);
+            pal = CLIP(structure_clip)->get_pal_segment_proc(aSTR_PAL_TOUDAI);
             _texture_z_light_fog_prim_light(graph);
 
-            OPEN_DISP(graph);
-            
-            gfx = NOW_LIGHT_DISP; 
-            gSPSegment(gfx++, 0x8, pal); 
+            OPEN_LIGHT_DISP(graph);
+            gSPSegment(LIGHT_DISP++, ANIME_1_TXT_SEG, pal); 
 
-            prmcol.b = light->unk2C8;
-            prmcol.a = light->unk2CC;
+            prmcol.b = light->arg0_f;
+            prmcol.a = light->arg1_f;
 
-            if(prmcol.a > (u8)light->unk2D0){
-                prmcol.a = light->unk2D0; 
+            if(prmcol.a > (u8)light->arg2_f){
+                prmcol.a = light->arg2_f; 
             }
  
-            gDPPipeSync(gfx++); 
-            gDPSetPrimColor(gfx++, 0, (s8)light->unk2D0, prmcol.r, prmcol.g, prmcol.b, prmcol.a);
-            gSPMatrix(gfx++, work, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-            gSPDisplayList(gfx++, mdl[type]);
+            gDPPipeSync(LIGHT_DISP++); 
+            gDPSetPrimColor(LIGHT_DISP++, 0, (s8)light->arg2_f, prmcol.r, prmcol.g, prmcol.b, prmcol.a);
+            gSPMatrix(LIGHT_DISP++, work, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            gSPDisplayList(LIGHT_DISP++, mdl[type]);
 
-            SET_LIGHT_DISP(gfx);
-            CLOSE_DISP(graph);
+            CLOSE_LIGHT_DISP(graph);
         }
     }
 
-    return 1;
+    return TRUE;
 }
 
 
 static void aTOU_actor_draw(ACTOR* actor, GAME* game){
     GAME_PLAY* play = (GAME_PLAY*)game;
     GRAPH* graph;
-
-    Gfx* gfx;
     u16* pal;
     cKF_SkeletonInfo_R_c* keyf;
     Mtx* mtx;
@@ -79,21 +85,21 @@ static void aTOU_actor_draw(ACTOR* actor, GAME* game){
 
         _texture_z_light_fog_prim_npc(graph);
             
-        gfx = NOW_POLY_OPA_DISP; 
-        gSPSegment(gfx++, 0x8, pal); 
-        SET_POLY_OPA_DISP(gfx); 
+        OPEN_POLY_OPA_DISP(graph);
+        gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG, pal); 
+        CLOSE_POLY_OPA_DISP(graph); 
 
         _texture_z_light_fog_prim_xlu(graph);
 
-        gfx = NOW_POLY_XLU_DISP; 
-        gSPSegment(gfx++, 0x8, pal);  
-        SET_POLY_XLU_DISP(gfx); 
+        OPEN_POLY_XLU_DISP(graph); 
+        gSPSegment(POLY_XLU_DISP++, ANIME_1_TXT_SEG, pal);  
+        CLOSE_POLY_XLU_DISP(graph); 
 
         Setpos_HiliteReflect_init(pos, play);
         Setpos_HiliteReflect_xlu_init(pos, play);
         
         cKF_Si3_draw_R_SV(game, keyf, mtx, aTOU_actor_draw_before, aTOU_actor_draw_after, light);
-        (*Common_Get(clip).bg_item_clip->draw_shadow_proc)(game, &aTOU_shadow_data, TRUE);
+        CLIP(bg_item_clip)->draw_shadow_proc(game, &aTOU_shadow_data, bIT_SHADOW_TYPE_SOFT);
         CLOSE_DISP(graph);
     }
 }

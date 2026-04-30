@@ -379,7 +379,7 @@ extern void mNW_SwapOriginalData(mNW_original_design_c* org0, mNW_original_desig
  * @param design The design which will be initialized
  **/
 extern void mNW_InitOriginalData(mNW_original_design_c* design) {
-    static u8 name[mNW_ORIGINAL_DESIGN_NAME_LEN] = "blank           ";
+    static u8 name[mNW_ORIGINAL_DESIGN_NAME_LEN] = "blank     ";
 
     u8* tex;
     mNW_OverWriteOriginalName(design, name);

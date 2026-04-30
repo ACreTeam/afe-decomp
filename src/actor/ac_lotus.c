@@ -59,7 +59,7 @@ static void aLOT_actor_ct(ACTOR* actor, GAME* game) {
     f32 water_height;
 
     lotus = (LOTUS_ACTOR*)actor;
-    water_height = mCoBG_GetWaterHeight_File(actor->world.position, __FILE__, 265);
+    water_height = mCoBG_GetWaterHeight_File(actor->world.position, __FILE__, 268);
     cKF_SkeletonInfo_R_ct(&lotus->structure_class.keyframe, &cKF_bs_r_obj_s_lotus, NULL, lotus->structure_class.work_area, lotus->structure_class.morph_area);
 
     ClObjPipe_ct(game, &pipeinfo);

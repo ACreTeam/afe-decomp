@@ -85,10 +85,10 @@ typedef struct tools_s {
     /* 0x178 */ MtxF matrix_work;
     /* 0x1B8 */ int init_matrix;
     /* 0x1BC */ int unk1BC;
-    /* 0x1C0 */ int work0;
-    /* 0x1C4 */ int work1;
-    /* 0x1C8 */ int work2;
-    /* 0x1CC */ int _1CC;
+    /* 0x1C0 */ int drawn_flag;
+    /* 0x1C4 */ int work0;
+    /* 0x1C8 */ int work1;
+    /* 0x1CC */ int work2;
 } TOOLS_ACTOR;
 
 typedef ACTOR* (*ToolBirthProc)(int kind, int mode, ACTOR* parent_actor, GAME* game, s16 arg, int* bank_id);

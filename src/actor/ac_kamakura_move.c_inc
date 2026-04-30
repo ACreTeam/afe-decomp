@@ -80,13 +80,13 @@ static void aKKR_set_bgOffset(STRUCTURE_ACTOR* kamakura, int offs) {
         pos.z = kamakura->actor_class.home.position.z + addZ[i];
 
         pos.x = kamakura->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 202);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 205);
 
         pos.x = kamakura->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 206);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 209);
 
         pos.x = kamakura->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 210);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 213);
 
         offset += 3;
     }
@@ -172,7 +172,7 @@ static void aKKR_wait(STRUCTURE_ACTOR* kamakura, GAME_PLAY* play) {
 
 static void aKKR_setup_action(STRUCTURE_ACTOR* kamakura, int action) {
     static aSTR_MOVE_PROC process[] = {
-        &aKKR_wait, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        &aKKR_wait
     };
 
     kamakura->action_proc = process[action];
@@ -187,7 +187,7 @@ static int aKKR_ctrl_light(STRUCTURE_ACTOR* kamakura) {
 static void aKKR_actor_move(ACTOR* actor, GAME* game) {
     GAME_PLAY* play;
     STRUCTURE_ACTOR* kamakura;
-    PLAYER_ACTOR* player;
+    ACTOR* playerx;
     int bx1;
     int bz1;
     int bx2;
@@ -196,14 +196,12 @@ static void aKKR_actor_move(ACTOR* actor, GAME* game) {
 
     play = (GAME_PLAY*)game;
     kamakura = (STRUCTURE_ACTOR*)actor;
-    player = GET_PLAYER_ACTOR(play);
+    playerx = GET_PLAYER_ACTOR_ACTOR(play);
 
     mFI_Wpos2BlockNum(&bx1, &bz1, actor->world.position);
-    mFI_Wpos2BlockNum(&bx2, &bz2, player->actor_class.world.position);
+    mFI_Wpos2BlockNum(&bx2, &bz2, playerx->world.position);
 
-    if ((mDemo_Check(mDemo_TYPE_SCROLL, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL2, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL3, &player->actor_class) == FALSE) && ((bx1 != bx2) || (bz1 != bz2))) {
+    if (!mDemo_CHECK_SCROLL(playerx) && ((bx1 != bx2) || (bz1 != bz2))) {
         Actor_delete(actor);
     } else {
         kamakura->action_proc(kamakura, play);

@@ -2695,14 +2695,10 @@ void Na_VoiceSe(u8 num, s16 voice, u8 scale) {
 
                 break;
             }
+            
             if (sou_now_spec != 5 && sou_now_spec != 6) {
                 if (r29 != 0x51) {
-                    // @BUG - Should be sou_last_voice_toguru, fixed in rev 1
-#if VERSION >= VER_GAEJ01_01
-                    if (sou_last_voice_toguru == r29) {
-#else
                     if (sou_last_voice == r29) {
-#endif
                         if (sou_last_voice_toguru == 0) {
                             i = TRUE;
                             sou_last_voice_toguru = 1;
@@ -2722,12 +2718,8 @@ void Na_VoiceSe(u8 num, s16 voice, u8 scale) {
                     num = r27 >> 2;
                 }
             }
-            // @BUG - Should be sou_last_voice_toguru, fixed in rev 1
-#if VERSION >= VER_GAEJ01_01
-            sou_last_voice_toguru = r29;
-#else
             sou_last_voice = r29;
-#endif
+
             if (r29 < 0x4E && sou_now_spec != 5) {
                 if (sou_now_spec != 6) {
                     switch (sou_message_status) {

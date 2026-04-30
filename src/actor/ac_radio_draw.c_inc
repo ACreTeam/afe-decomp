@@ -7,7 +7,7 @@ static void aRAD_actor_draw(ACTOR* actor, GAME* game){
     Gfx* gfx;
 
     OPEN_DISP(graph);
-    pal = Common_Get(clip.structure_clip)->get_pal_segment_proc(aSTR_PAL_RADIO);
+    pal = CLIP(structure_clip)->get_pal_segment_proc(aSTR_PAL_RADIO);
     
     cur = _Matrix_to_Mtx_new(graph);
 

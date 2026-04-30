@@ -211,9 +211,9 @@ static int aHTMD_clip_think_init(ACTOR* actorx, GAME_PLAY* play) {
     (*init_table[data_p->think_init])(hatumode_npc, play);
 
     if (data_p->talk_req == aHN0_TALK_REQ_NONE) {
-        hatumode_npc->npc_class.head.lock_flag = TRUE;
+        hatumode_npc->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     } else {
-        hatumode_npc->npc_class.head.lock_flag = FALSE;
+        hatumode_npc->npc_class.head.lock_flag = aNPC_HEAD_LOCK_NONE;
     }
 
     return data_p->talk_req;

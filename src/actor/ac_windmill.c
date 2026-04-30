@@ -37,5 +37,4 @@ static void aWIN_actor_dt(ACTOR* actor, GAME* game) {
 }
 
 #include "../src/actor/ac_windmill_move.c_inc"
-
 #include "../src/actor/ac_windmill_draw.c_inc"

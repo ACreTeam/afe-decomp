@@ -128,10 +128,14 @@ typedef struct quest_delivery_s {
 #define mQst_ERRAND_CHAIN_ANIMAL_NUM 3
 
 enum {
+    // errand quests removed in e+
+#if 0
     mQst_ERRAND_REQUEST,
     mQst_ERRAND_REQUEST_CONTINUE,
     mQst_ERRAND_REQUEST_FINAL,
+#endif
 
+    mQst_ERRAND_FIRSTJOB_START,
     mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH,
     mQst_ERRAND_FIRSTJOB_PLANT_FLOWER,
     mQst_ERRAND_FIRSTJOB_DELIVER_FTR,
@@ -142,8 +146,15 @@ enum {
     mQst_ERRAND_FIRSTJOB_SEND_LETTER2,
     mQst_ERRAND_FIRSTJOB_DELIVER_AXE2,
     mQst_ERRAND_FIRSTJOB_INTRODUCTIONS,
+
+    // TODO: remove when references are cleared
+    // errand quests removed in e+
+#if 1
+    mQst_ERRAND_REQUEST,
+    mQst_ERRAND_REQUEST_CONTINUE,
+    mQst_ERRAND_REQUEST_FINAL,
     mQst_ERRAND_FIRSTJOB_OPEN,
-    mQst_ERRAND_FIRSTJOB_START,
+#endif
 
     mQst_ERRAND_NUM
 };

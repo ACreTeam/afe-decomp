@@ -24,15 +24,15 @@ static void aCOU_set_bgOffset(ACTOR* actorx, int idx) {
         pos.z = actorx->home.position.z + addZ[i];
 
         pos.x = actorx->home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 113);
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 116);
         table_p++;
 
         pos.x = actorx->home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 117);
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 120);
         table_p++;
 
         pos.x = actorx->home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 121);
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 124);
         table_p++;
     }
 }
@@ -95,8 +95,7 @@ static void aCOU_actor_move(ACTOR* actorx, GAME* game) {
     mFI_Wpos2BlockNum(&count_bx, &count_bz, actorx->world.position);
     mFI_Wpos2BlockNum(&player_bx, &player_bz, playerx->world.position);
 
-    if (!mDemo_Check(mDemo_TYPE_SCROLL, playerx) && !mDemo_Check(mDemo_TYPE_SCROLL2, playerx) &&
-        !mDemo_Check(mDemo_TYPE_SCROLL3, playerx) && (count_bx != player_bx || count_bz != player_bz)) {
+    if (!mDemo_CHECK_SCROLL(playerx) && (count_bx != player_bx || count_bz != player_bz)) {
         Actor_delete(actorx);
         return;
     }

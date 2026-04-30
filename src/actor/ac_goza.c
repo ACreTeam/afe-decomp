@@ -106,5 +106,4 @@ static void aGOZ_actor_ct(ACTOR* actor, GAME* game) {
 }
 
 #include "../src/actor/ac_goza_move.c_inc"
-
 #include "../src/actor/ac_goza_draw.c_inc"

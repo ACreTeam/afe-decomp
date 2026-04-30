@@ -47,7 +47,7 @@ static u8 aPOFF_shadow_vtx_fix_flg_table[] = {
     TRUE, FALSE, FALSE, TRUE, 
     FALSE, TRUE, FALSE, TRUE,
     TRUE, FALSE, TRUE,  FALSE,
-    FALSE, TRUE, FALSE, FALSE
+    FALSE, TRUE,
 };
 // clang-format on
 
@@ -113,5 +113,4 @@ static void aPOFF_actor_dt(ACTOR* actor, GAME* game) {
 }
 
 #include "../src/actor/ac_post_office_move.c_inc"
-
 #include "../src/actor/ac_post_office_draw.c_inc"

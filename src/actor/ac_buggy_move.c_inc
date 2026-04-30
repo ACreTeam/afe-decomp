@@ -83,13 +83,13 @@ static void aBGY_set_bgOffset(STRUCTURE_ACTOR* buggy, int offs) {
         pos.z = buggy->actor_class.home.position.z + addZ[i];
 
         pos.x = buggy->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 225);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 228);
 
         pos.x = buggy->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 229);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 232);
 
         pos.x = buggy->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 233);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 236);
 
         offset += 3;
     }
@@ -292,7 +292,7 @@ static int aBGY_ctrl_light(STRUCTURE_ACTOR* buggy) {
 static void aBGY_actor_move(ACTOR* actor, GAME* game) {
     GAME_PLAY* play;
     STRUCTURE_ACTOR* buggy;
-    PLAYER_ACTOR* player;
+    ACTOR* playerx;
     int bx1;
     int bz1;
     int bx2;
@@ -301,14 +301,12 @@ static void aBGY_actor_move(ACTOR* actor, GAME* game) {
 
     play = (GAME_PLAY*)game;
     buggy = (STRUCTURE_ACTOR*)actor;
-    player = GET_PLAYER_ACTOR(play);
+    playerx = GET_PLAYER_ACTOR_ACTOR(play);
 
     mFI_Wpos2BlockNum(&bx1, &bz1, actor->world.position);
-    mFI_Wpos2BlockNum(&bx2, &bz2, player->actor_class.world.position);
+    mFI_Wpos2BlockNum(&bx2, &bz2, playerx->world.position);
 
-    if ((mDemo_Check(mDemo_TYPE_SCROLL, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL2, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL3, &player->actor_class) == FALSE) && ((bx1 != bx2) || (bz1 != bz2))) {
+    if (!mDemo_CHECK_SCROLL(playerx) && ((bx1 != bx2) || (bz1 != bz2))) {
         Actor_delete(actor);
     } else {
 

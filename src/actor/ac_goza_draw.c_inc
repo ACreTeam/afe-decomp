@@ -19,7 +19,6 @@ static void aGOZ_actor_draw(ACTOR* actor, GAME* game) {
     graph = game->graph;
     type = goza->arg1 & 1;
 
-    _Matrix_to_Mtx_new(graph);
     _texture_z_light_fog_prim_shadow(graph);
     _texture_z_light_fog_prim_xlu(graph);
     _texture_z_light_fog_prim_npc(graph);

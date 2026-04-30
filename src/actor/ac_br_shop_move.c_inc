@@ -68,13 +68,13 @@ static void aBRS_set_bgOffset(STRUCTURE_ACTOR* windmill, int idx) {
         pos.z = windmill->actor_class.home.position.z + addZ[i];
 
         pos.x = windmill->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 238);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 241);
 
         pos.x = windmill->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 242);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 245);
 
         pos.x = windmill->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 246);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 249);
 
         offset += 3;
     }
@@ -92,8 +92,8 @@ static void aBRS_rewrite_out_data(ACTOR* actor, GAME_PLAY* play) {
         door_data->extra_data = 3;
 
         pos.x = actor->world.position.x;
-        pos.z = actor->world.position.z + 100.0f;
         pos.y = actor->world.position.y;
+        pos.z = actor->world.position.z + 100.0f;
 
         door_data->exit_position.x = pos.x;
         door_data->exit_position.y = pos.y;
@@ -259,23 +259,22 @@ static int aBRS_ctrl_light(STRUCTURE_ACTOR* shop) {
 static void aBRS_actor_move(ACTOR* actor, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     STRUCTURE_ACTOR* shop = (STRUCTURE_ACTOR*)actor;
-    PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
+    ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
     int bx1;
     int bz1;
     int bx2;
     int bz2;
 
     mFI_Wpos2BlockNum(&bx1, &bz1, actor->world.position);
-    mFI_Wpos2BlockNum(&bx2, &bz2, player->actor_class.world.position);
+    mFI_Wpos2BlockNum(&bx2, &bz2, playerx->world.position);
 
-    if ((mDemo_Check(mDemo_TYPE_SCROLL, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL2, &player->actor_class) == FALSE) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL3, &player->actor_class) == FALSE) && ((bx1 != bx2) || (bz1 != bz2))) {
+    if (!mDemo_CHECK_SCROLL(playerx) && ((bx1 != bx2) || (bz1 != bz2))) {
         Actor_delete(actor);
     } else {
         f32 window;
         shop->keyframe_state = cKF_SkeletonInfo_R_play(&shop->keyframe);
-        if ((shop->arg0 == 0) && (Actor_info_fgName_search(&play->actor_info, 0x2D, ACTOR_PART_NPC) != NULL)) {
+        if ((shop->arg0 == 0) &&
+            (Actor_info_fgName_search(&play->actor_info, mAc_PROFILE_EV_BROKER, ACTOR_PART_NPC) != NULL)) {
             shop->arg0 = 1;
         }
 

@@ -35,5 +35,4 @@ static void aTAM_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 #include "../src/actor/ac_tama_move.c_inc"
-
 #include "../src/actor/ac_tama_draw.c_inc"

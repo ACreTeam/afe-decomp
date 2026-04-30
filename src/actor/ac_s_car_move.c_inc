@@ -33,7 +33,7 @@ static void aSCR_set_bgOffset(STRUCTURE_ACTOR* car, int offs) {
 
 static void aSCR_actor_move(ACTOR* actor, GAME* game) {
     STRUCTURE_ACTOR* car;
-    PLAYER_ACTOR* player_actor;
+    ACTOR* playerx;
     mEv_dsg_common_c* designer_common;
     int car_bx;
     int car_bz;
@@ -41,15 +41,12 @@ static void aSCR_actor_move(ACTOR* actor, GAME* game) {
     int player_bz;
 
     car = (STRUCTURE_ACTOR*)actor;
-    player_actor = get_player_actor_withoutCheck((GAME_PLAY*)game);
+    playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
 
     mFI_Wpos2BlockNum(&car_bx, &car_bz, actor->world.position);
-    mFI_Wpos2BlockNum(&player_bx, &player_bz, player_actor->actor_class.world.position);
+    mFI_Wpos2BlockNum(&player_bx, &player_bz, playerx->world.position);
 
-    if (mDemo_Check(mDemo_TYPE_SCROLL, &player_actor->actor_class) == FALSE &&
-        mDemo_Check(mDemo_TYPE_SCROLL2, &player_actor->actor_class) == FALSE &&
-        mDemo_Check(mDemo_TYPE_SCROLL3, &player_actor->actor_class) == FALSE &&
-        (car_bx != player_bx || car_bz != player_bz)) {
+    if (!mDemo_CHECK_SCROLL(playerx) && (car_bx != player_bx || car_bz != player_bz)) {
         Actor_delete(actor);
         return;
     }
@@ -57,9 +54,9 @@ static void aSCR_actor_move(ACTOR* actor, GAME* game) {
     designer_common = (mEv_dsg_common_c*)mEv_get_common_area(mEv_EVENT_DESIGNER, FALSE);
     if (designer_common != NULL && designer_common->button_presses >= 100) {
         if (car->action <= 0) {
-            (*Common_Get(clip).effect_clip->effect_make_proc)(eEC_EFFECT_CAR_BLIGHT, actor->world.position, 1, 0, game,
-                                                              actor->npc_id, designer_common->_04 != 0, 0);
-            car->action = (int)(fqrand() * 3.0f) * 16 + 48;
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_CAR_BLIGHT, actor->world.position, 1, 0, game, actor->npc_id,
+                                       designer_common->_04 != 0, 0);
+            car->action = RANDOM(3) * 16 + 48;
         } else {
             car->action--;
         }
@@ -67,7 +64,7 @@ static void aSCR_actor_move(ACTOR* actor, GAME* game) {
 }
 
 static void aSCR_actor_init(ACTOR* actor, GAME* game) {
-    mFI_SetFG_common(DUMMY_CAR, actor->home.position, FALSE);
+    mFI_SetFG_common(DUMMY_S_CAR, actor->home.position, FALSE);
     aSCR_actor_move(actor, game);
     actor->mv_proc = aSCR_actor_move;
 }

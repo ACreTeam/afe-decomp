@@ -19,21 +19,17 @@ static void aKAG_setup_action(KAGO_ACTOR* kago, int id) {
 static void aKAG_actor_move(ACTOR* actor, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     KAGO_ACTOR* kago = (KAGO_ACTOR*)actor;
-
-    PLAYER_ACTOR* player;
+    ACTOR* playerx;
     int bx;
     int bz;
     int playerbx;
     int playerbz;
 
-    player = GET_PLAYER_ACTOR(play);
+    playerx = GET_PLAYER_ACTOR_ACTOR(play);
     mFI_Wpos2BlockNum(&bx, &bz, actor->world.position);
+    mFI_Wpos2BlockNum(&playerbx, &playerbz, playerx->world.position);
 
-    mFI_Wpos2BlockNum(&playerbx, &playerbz, player->actor_class.world.position);
-
-    if ((mDemo_Check(mDemo_TYPE_SCROLL, &player->actor_class) == 0) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL2, &player->actor_class) == 0) &&
-        (mDemo_Check(mDemo_TYPE_SCROLL3, &player->actor_class) == 0) && ((bx != playerbx) || (bz != playerbz))) {
+    if (!mDemo_CHECK_SCROLL(playerx) && ((bx != playerbx) || (bz != playerbz))) {
         Actor_delete(actor);
     } else {
         kago->structure_class.action_proc(&kago->structure_class, play);
@@ -41,8 +37,7 @@ static void aKAG_actor_move(ACTOR* actor, GAME* game) {
 }
 
 static void aKAG_actor_init(ACTOR* actor, GAME* game) {
-
-    mFI_SetFG_common(0xF111, actor->home.position, 0);
+    mFI_SetFG_common(DUMMY_KAGO, actor->home.position, FALSE);
     aKAG_actor_move(actor, game);
     actor->mv_proc = aKAG_actor_move;
 }

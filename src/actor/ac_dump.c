@@ -121,35 +121,32 @@ static void aDUM_wait(DUMP_ACTOR* dump, GAME_PLAY* play) {
 }
 
 static void aDUM_setup_action(DUMP_ACTOR* dump, int action) {
-    static DUMP_PROC process[] = { aDUM_wait };
+    static aSTR_MOVE_PROC process[] = { aDUM_wait };
 
-    dump->proc = process[action];
-    dump->current_action = action;
+    dump->action_proc = process[action];
+    dump->action = action;
 }
 
 static void aDUM_actor_move(ACTOR* actor, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     DUMP_ACTOR* dump = (DUMP_ACTOR*)actor;
-
-    PLAYER_ACTOR* player = get_player_actor_withoutCheck(play);
-
+    ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
     int dbx, dbz, pbx, pbz;
 
     mFI_Wpos2BlockNum(&dbx, &dbz, actor->world.position);
-    mFI_Wpos2BlockNum(&pbx, &pbz, player->actor_class.world.position);
+    mFI_Wpos2BlockNum(&pbx, &pbz, playerx->world.position);
 
-    if ((mDemo_Check(1, &player->actor_class) == 0) && (mDemo_Check(5, &player->actor_class) == 0) &&
-        (mDemo_Check(0x10, &player->actor_class) == 0) && ((dbx != pbx) || (dbz != pbz))) {
+    if (!mDemo_CHECK_SCROLL(playerx) && ((dbx != pbx) || (dbz != pbz))) {
         Actor_delete(actor);
     } else {
-        dump->proc(dump, play);
+        dump->action_proc(dump, play);
     }
 }
 
 static void aDUM_actor_init(ACTOR* actor, GAME* game) {
     DUMP_ACTOR* dump = (DUMP_ACTOR*)actor;
 
-    mFI_SetFG_common(0xF115, actor->home.position, 0);
+    mFI_SetFG_common(DUMMY_DUMP, actor->home.position, FALSE);
     aDUM_actor_move(actor, game);
     actor->mv_proc = aDUM_actor_move;
 }
@@ -165,14 +162,14 @@ static void aDUM_actor_draw(ACTOR* actor, GAME* game) {
     Mtx* cur;
 
     type = dump->season == mTM_SEASON_WINTER;
-    pal = Common_Get(clip.structure_clip)->get_pal_segment_proc(aSTR_PAL_DUMP);
+    pal = CLIP(structure_clip)->get_pal_segment_proc(aSTR_PAL_DUMP);
 
     _texture_z_light_fog_prim_npc(graph);
 
     OPEN_DISP(graph);
 
     gfx = NOW_POLY_OPA_DISP;
-    gSPSegment(gfx++, 0x8, pal);
+    gSPSegment(gfx++, ANIME_1_TXT_SEG, pal);
 
     Matrix_translate(-6000.0f, 0.0f,-10000.0f, MTX_MULT);
 
@@ -184,7 +181,7 @@ static void aDUM_actor_draw(ACTOR* actor, GAME* game) {
         SET_POLY_OPA_DISP(gfx);
     }
 
-    (*Common_Get(clip).bg_item_clip->draw_shadow_proc)(game, &aDUM_shadow_data, FALSE);
-
     CLOSE_DISP(graph);
+    
+    CLIP(bg_item_clip)->draw_shadow_proc(game, &aDUM_shadow_data, bIT_SHADOW_TYPE_HARD);
 }

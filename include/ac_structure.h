@@ -190,7 +190,7 @@ typedef u16* (*aSTR_GET_PAL_SEGMENT_PROC)(s16);
 
 typedef void (*aSTR_MOVE_PROC)(STRUCTURE_ACTOR*, GAME_PLAY*);
 
-// sizeof(actor_structure_s) == 0x2DC
+// sizeof(actor_structure_s) == 0x2F0
 struct actor_structure_s {
     /* 0x000 */ ACTOR actor_class;
     /* 0x174 */ int keyframe_state;
@@ -218,6 +218,9 @@ struct actor_structure_s {
     /* 0x2D4 */ f32 arg3_f;
 
     /* 0x2D8 */ u32 season;
+
+    /* 0x2DC */ Lights point_light;
+    /* 0x2EC */ Light_list* light_list;
 };
 
 typedef struct actor_overlay_info_s {

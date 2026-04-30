@@ -49,7 +49,7 @@ static u8 aBGY_shadow_vtx_fix_flg_table[] = {
     TRUE, TRUE, FALSE, TRUE,
     FALSE, FALSE, TRUE, FALSE,
     FALSE, TRUE, TRUE, FALSE,
-    TRUE, FALSE, FALSE, FALSE
+    TRUE, FALSE,
 };
 // clang-format on
 
@@ -125,5 +125,4 @@ static void aBGY_actor_dt(ACTOR* actor, GAME* game) {
 }
 
 #include "../src/actor/ac_buggy_move.c_inc"
-
 #include "../src/actor/ac_buggy_draw.c_inc"

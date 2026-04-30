@@ -218,7 +218,7 @@ static void aTUMB_anime_proc(UMBRELLA_ACTOR* umbrella) {
 
 static void aTUMB_takeout_before(ACTOR* actor) {
     UMBRELLA_ACTOR* umbrella = (UMBRELLA_ACTOR*)actor;
-    if (umbrella->tools_class.unk1BC == TRUE) {
+    if (umbrella->tools_class.drawn_flag == TRUE) {
         aTUMB_setupAction(umbrella, aTUMB_ACTION_OPENING);
     }
 }
@@ -292,7 +292,6 @@ static void aTUMB_actor_draw(ACTOR* actor, GAME* game) {
     int tool_name;
     UMBRELLA_MODEL* umbrella_model;
     ACTOR* parent;
-    Gfx* gfx;
 
     umbrella = (UMBRELLA_ACTOR*)actor;
     parent = actor->parent_actor;
@@ -305,42 +304,40 @@ static void aTUMB_actor_draw(ACTOR* actor, GAME* game) {
     }
 
     Matrix_put(&umbrella->tools_class.matrix_work);
-    Matrix_Position_Zero(&umbrella->tools_class.actor_class.world.position);
+    Matrix_Position_Zero(&actor->world.position);
 
     umbrella->tools_class.init_matrix = FALSE;
-    umbrella->tools_class.unk1BC = TRUE;
+    umbrella->tools_class.drawn_flag = TRUE;
 
     _texture_z_light_fog_prim_npc(graph);
 
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
+    OPEN_POLY_OPA_DISP(graph);
 
     Matrix_rotateXYZ(0, -0x4000, 0, MTX_MULT);
     Matrix_scale(umbrella->scale_e.x, umbrella->scale_e.y, umbrella->scale_e.z, MTX_MULT);
 
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, umbrella_model->model_e);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, umbrella_model->model_e);
 
     Matrix_translate(4500.0f, 0.0f, 0.0f, MTX_MULT);
     Matrix_scale(umbrella->scale_kasa.x, umbrella->scale_kasa.y, umbrella->scale_kasa.z, MTX_MULT);
 
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
     if (tool_name >= TOOL_ORG_UMBRELLA0) {
         umbrella_name = tool_name - TOOL_ORG_UMBRELLA0;
         if (parent->part == ACTOR_PART_PLAYER) {
             umbrella_name = (umbrella_name & 7);
-            gSPSegment(gfx++, G_MWO_SEGMENT_8, mNW_PaletteIdx2Palette(Player_Palette_Get(umbrella_name)));
-            gSPSegment(gfx++, G_MWO_SEGMENT_9, Player_Design_Get(umbrella_name));
+            gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG, mNW_PaletteIdx2Palette(Player_Palette_Get(umbrella_name)));
+            gSPSegment(POLY_OPA_DISP++, ANIME_2_TXT_SEG, Player_Design_Get(umbrella_name));
         } else {
             umbrella_name = umbrella_name & 3;
-            gSPSegment(gfx++, G_MWO_SEGMENT_8,
+            gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG,
                        mNW_PaletteIdx2Palette(Able_Sisters_Umbrella_Palette_Get(umbrella_name)));
-            gSPSegment(gfx++, G_MWO_SEGMENT_9, Able_Sisters_Umbrella_Design_Get(umbrella_name));
+            gSPSegment(POLY_OPA_DISP++, ANIME_2_TXT_SEG, Able_Sisters_Umbrella_Design_Get(umbrella_name));
         }
     }
 
-    gSPDisplayList(gfx++, umbrella_model->model_kasa);
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
+    gSPDisplayList(POLY_OPA_DISP++, umbrella_model->model_kasa);
+    CLOSE_POLY_OPA_DISP(graph);
 }

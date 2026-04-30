@@ -32,7 +32,7 @@ extern Vtx obj_s_toudai_shadow_v[];
 extern Gfx obj_s_toudai_shadow_1_model[];
 
 u8 aTOU_shadow_vtx_fix_flg_table[] = {
-    1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0,
+    1, 0, 1, 0, 0, 1, 1, 0, 1, 0,
 };
 
 bIT_ShadowData_c aTOU_shadow_data = {
@@ -40,7 +40,7 @@ bIT_ShadowData_c aTOU_shadow_data = {
 };
 
 static void aTOU_set_bgOffset(TOUDAI_ACTOR*, int);
-static void aTOU_setup_action(ACTOR*, int);
+static void aTOU_setup_action(TOUDAI_ACTOR*, int);
 
 static void aTOU_fgunit_on(ACTOR* actor) {
     TOUDAI_ACTOR* light = (TOUDAI_ACTOR*)actor;
@@ -51,26 +51,26 @@ static void aTOU_fgunit_on(ACTOR* actor) {
 
     xyz_t_move(&pos, &light->actor_class.home.position);
 
-    pos.x -= 40.0f;
-    pos.z -= 80.0f;
+    pos.x -= mFI_UT_WORLDSIZE_X_F;
+    pos.z -= mFI_UT_WORLDSIZE_Z_F * 2;
     for (i = 0; i < 2; i++) {
         nameptr = mFI_GetUnitFG(pos);
         if (nameptr != NULL) {
             if (mSN_ClearSnowman(nameptr) == 0) {
-                if (((*nameptr >= 0x2A) && (*nameptr <= 0x42)) || (*nameptr == 0x5C)) {
+                if (ITEM_IS_BURIED_PITFALL_HOLE(*nameptr) || *nameptr == SHINE_SPOT) {
                     mPB_keep_item(bg_item_fg_sub_dig2take_conv(*nameptr));
-                    mFI_SetFG_common(RSV_NO, pos, 1);
+                    mFI_SetFG_common(RSV_NO, pos, TRUE);
                     mFI_Wpos2DepositOFF(pos);
                 } else {
                     mFI_Wpos2DepositOFF(pos);
                     mPB_keep_item(*nameptr);
-                    mFI_SetFG_common(RSV_NO, pos, 1);
+                    mFI_SetFG_common(RSV_NO, pos, TRUE);
                 }
             } else {
-                mFI_SetFG_common(RSV_NO, pos, 1);
+                mFI_SetFG_common(RSV_NO, pos, TRUE);
             }
         }
-        pos.x += 40.0f;
+        pos.x += mFI_UT_WORLDSIZE_X_F;
     }
 }
 
@@ -82,11 +82,11 @@ static void aTOU_fgunit_off(ACTOR* actor) {
 
     xyz_t_move(&pos, &light->actor_class.home.position);
 
-    pos.x -= 40.0f;
-    pos.z -= 80.0f;
+    pos.x -= mFI_UT_WORLDSIZE_X_F;
+    pos.z -= mFI_UT_WORLDSIZE_Z_F * 2;
     for (i = 0; i < 2; i++) {
-        mFI_SetFG_common(EMPTY_NO, pos, 1);
-        pos.x += 40.0f;
+        mFI_SetFG_common(EMPTY_NO, pos, TRUE);
+        pos.x += mFI_UT_WORLDSIZE_X_F;
     }
 }
 
@@ -98,13 +98,13 @@ static void aTOU_actor_ct(ACTOR* actor, GAME* game) {
     TOUDAI_ACTOR* light = (TOUDAI_ACTOR*)actor;
 
     light->season = Common_Get(time.season);
-    cKF_SkeletonInfo_R_ct(&light->keyframe, skl[light->season == mTM_SEASON_WINTER], NULL, light->work, light->target);
+    cKF_SkeletonInfo_R_ct(&light->keyframe, skl[light->season == mTM_SEASON_WINTER], NULL, light->work_area, light->morph_area);
     aTOU_set_bgOffset(light, 1);
     aTOU_fgunit_on(actor);
-    aTOU_setup_action(actor, 0);
+    aTOU_setup_action(light, 0);
     cKF_SkeletonInfo_R_play(&light->keyframe);
-    actor->world.position.x -= 20.0f;
-    actor->world.position.z -= 20.0f;
+    actor->world.position.x -= mFI_UT_WORLDSIZE_HALF_X_F;
+    actor->world.position.z -= mFI_UT_WORLDSIZE_HALF_Z_F;
 }
 
 static void aTOU_actor_dt(ACTOR* actor, GAME* game) {
@@ -112,10 +112,9 @@ static void aTOU_actor_dt(ACTOR* actor, GAME* game) {
 
     aTOU_fgunit_off(&light->actor_class);
     cKF_SkeletonInfo_R_dt(&light->keyframe);
-    light->actor_class.world.position.x += 20.0f;
-    light->actor_class.world.position.z += 20.0f;
+    light->actor_class.world.position.x += mFI_UT_WORLDSIZE_HALF_X_F;
+    light->actor_class.world.position.z += mFI_UT_WORLDSIZE_HALF_Z_F;
 }
 
 #include "../src/actor/ac_toudai_move.c_inc"
-
 #include "../src/actor/ac_toudai_draw.c_inc"

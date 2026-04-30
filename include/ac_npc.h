@@ -810,6 +810,11 @@ enum {
     aNPC_HEAD_TARGET_NUM
 };
 
+#define aNPC_HEAD_LOCK_NONE (0)
+#define aNPC_HEAD_LOCK_X (1 << 0)
+#define aNPC_HEAD_LOCK_Y (1 << 1)
+#define aNPC_HEAD_LOCK_BOTH (aNPC_HEAD_LOCK_X | aNPC_HEAD_LOCK_Y)
+
 typedef struct npc_head_s {
     s16 angle_x;
     s16 angle_y;

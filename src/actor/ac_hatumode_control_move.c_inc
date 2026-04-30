@@ -34,6 +34,7 @@ static void aHTC_request(HATUMODE_CONTROL_ACTOR* hatumode_control, GAME_PLAY* pl
     ACTOR* actorx = (ACTOR*)hatumode_control;
 
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
+        mDemo_Set_talk_return_demo_wait(TRUE);
         if (mSP_money_check(50)) {
             aHTC_setup_move_proc(hatumode_control, 3);
             mDemo_Set_msg_num(MSG_4396);

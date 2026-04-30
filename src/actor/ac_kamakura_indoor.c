@@ -105,7 +105,7 @@ static void aKI_DrawKamakuraIndoorBG(KAMAKURA_INDOOR_ACTOR* k_indoor, GAME* game
         return;
     }
     
-    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_bg(game->graph);
     _texture_z_light_fog_prim_xlu(game->graph);
     Global_kankyo_set_room_prim(game);
     
@@ -115,15 +115,15 @@ static void aKI_DrawKamakuraIndoorBG(KAMAKURA_INDOOR_ACTOR* k_indoor, GAME* game
     Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
     gSPMatrix(NEXT_POLY_XLU_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_2_TXT_SEG, k_indoor->candle_fire[0].tex_p);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_1_TXT_SEG, gfx0);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_3_TXT_SEG, k_indoor->candle_fire[1].tex_p);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_5_TXT_SEG, gfx1);
-    gSPSegment(NEXT_POLY_OPA_DISP, ANIME_4_TXT_SEG, rom_kamakura_evw_anime_4_tex_table[(game->frame_counter / 6) & 1]);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_4_TXT_SEG, rom_kamakura_evw_anime_4_tex_table[(game->frame_counter / 6) & 1]);
     scroll_gfx = two_tex_scroll_dolphin(game->graph, 0, -game->frame_counter, 0, 32, 16, 1, -game->frame_counter * -1, -(-game->frame_counter * 2), 32, 16);
     gSPSegment(NEXT_POLY_XLU_DISP, ANIME_6_TXT_SEG, scroll_gfx);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, rom_kamakura_model);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_kamakura_model);
     gSPDisplayList(NEXT_POLY_XLU_DISP, rom_kamakura_modelT);
 
     CLOSE_DISP(game->graph);

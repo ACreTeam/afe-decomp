@@ -17,8 +17,8 @@ ACTOR_PROFILE Aprilfool_Control_Profile = {
     sizeof(APRILFOOL_CONTROL_ACTOR),
     &aAPC_actor_ct,
     &aAPC_actor_dt,
-    mActor_NONE_PROC1,
-    mActor_NONE_PROC1,
+    &none_proc2,
+    &none_proc2,
     NULL,
 };
 

@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define mNW_ORIGINAL_DESIGN_NAME_LEN 16 /* length of design name */
+#define mNW_ORIGINAL_DESIGN_NAME_LEN 10 /* length of design name */
 #define mNW_ORIGINAL_DESIGN_WIDTH 32 /* width */
 #define mNW_ORIGINAL_DESIGN_HEIGHT 32 /* height */
 #define mNW_DEFAULT_ORIGINAL_TEX_NUM 4 /* number of 'default' player textures which are not blank */

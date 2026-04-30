@@ -1,8 +1,16 @@
+#ifdef __INTELLISENSE__
+#include "ac_present_demo.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_soncho.h"
+#include "m_birthday_msg.h"
+#endif
+
 static void aPRD_setup_present(PRESENT_DEMO_ACTOR* present_demo) {
     int type = aPRD_TYPE_GOLDEN_ROD;
     mActor_name_t present = ITM_GOLDEN_ROD;
 
-    if (Common_Get(time.rtc_time.month) == Now_Private->birthday.month && Common_Get(time.rtc_time.day) == Now_Private->birthday.day && Now_Private->birthday_present_npc != EMPTY_NO) {
+    if (mBm_check_birthday(-1) && Now_Private->birthday_present_npc != EMPTY_NO) {
         type = aPRD_TYPE_BIRTHDAY;
         present = FTR_START(FTR_FAMICOM_COMMON02);
     } else if (mSC_LightHouse_Event_Check(Common_Get(player_no)) != mSC_LIGHTHOUSE_EVENT_NONE) {

@@ -115,7 +115,7 @@ static void aBridgeA_actor_dt(ACTOR* actorx, GAME* game) {
     sAdo_DeletePlussBridge();
 }
 
-static f32 aBridge_player_check(STRUCTURE_ACTOR* bridge, GAME_PLAY* play) {
+static void aBridge_player_check(STRUCTURE_ACTOR* bridge, GAME_PLAY* play) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
     xyz_t player_pos = player->actor_class.world.position;
     xyz_t bridge_pos = bridge->actor_class.world.position;

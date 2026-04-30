@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "m_actor.h"
+#include "ac_structure.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,8 +12,7 @@ extern "C" {
 extern ACTOR_PROFILE Nameplate_Profile;
 
 typedef struct nameplate_actor_s{
-    ACTOR actor_class;
-    u8 pad[0x2D8 - 0x170];
+    STRUCTURE_ACTOR structure_class;
 }NAMEPLATE_ACTOR;
 
 #ifdef __cplusplus
@@ -20,4 +20,3 @@ typedef struct nameplate_actor_s{
 #endif
 
 #endif
-

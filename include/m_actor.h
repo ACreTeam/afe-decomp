@@ -772,7 +772,7 @@ typedef enum bank_id {
     ACTOR_OBJ_BANK_729,
     ACTOR_OBJ_BANK_730,
     ACTOR_OBJ_BANK_731,
-};
+} mAc_BANK_ID_e;
 
 enum actor_part {
     ACTOR_PART_FG,

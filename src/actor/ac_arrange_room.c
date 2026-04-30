@@ -31,7 +31,7 @@ ACTOR_PROFILE Arrange_Room_Profile = {
 };
 
 static void* aAR_SecureDmaRam(GAME* game, size_t size) { 
-    zelda_malloc_align(size, 0x20); 
+    return zelda_malloc_align(size, 32); 
 }
 
 static void aAR_SetClip(ACTOR* actor, int flag) {
@@ -62,14 +62,14 @@ static void Arrange_Room_Actor_ct(ACTOR* actor, GAME* game) {
 
     if (floor_num < 0) {
         floor_num = 0;
-    } else if (floor_num > 0x42) {
-        floor_num = 0x42;
+    } else if (floor_num > FLOOR_NPC_END) {
+        floor_num = FLOOR_NPC_END;
     }
 
     if (wall_num < 0) {
         wall_num = 0;
-    } else if (wall_num > 0x42) {
-        wall_num = 0x42;
+    } else if (wall_num > WALL_NPC_END) {
+        wall_num = WALL_NPC_END;
     }
 
     arrange_room->vram_segment = NULL;
@@ -116,7 +116,7 @@ static void aAR_DrawFloor(ACTOR* actor, GAME* game) {
 
     ptr = arrange_room->floor_data_p;
 
-    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_bg(game->graph);
 
     graph = game->graph;
 
@@ -125,13 +125,13 @@ static void aAR_DrawFloor(ACTOR* actor, GAME* game) {
 
     OPEN_DISP(graph);
 
-    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_C, ptr);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, ptr + 0x20);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, ptr + 0x820);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, ptr + 0x1020);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_B, ptr + 0x1820);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, rom_myhome2_floor_model);
+    gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_5_TXT_SEG, ptr);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_1_TXT_SEG, ptr + 0x20);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_2_TXT_SEG, ptr + 0x820);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_3_TXT_SEG, ptr + 0x1020);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_4_TXT_SEG, ptr + 0x1820);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_myhome2_floor_model);
 
     CLOSE_DISP(graph);
 }
@@ -143,7 +143,7 @@ static void aAR_DrawWall(ACTOR* actor, GAME* game) {
 
     ptr = arrange_room->wall_data_p;
 
-    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_bg(game->graph);
 
     graph = game->graph;
 
@@ -152,13 +152,13 @@ static void aAR_DrawWall(ACTOR* actor, GAME* game) {
 
     OPEN_DISP(graph);
 
-    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, ptr + 0x20);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, ptr + 0x820);
-    gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, ptr);
+    gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_1_TXT_SEG, ptr + 0x20);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_2_TXT_SEG, ptr + 0x820);
+    gSPSegment(NEXT_BG_OPA_DISP, ANIME_3_TXT_SEG, ptr);
 
-    gSPDisplayList(NEXT_POLY_OPA_DISP, rom_myhome2_wall_model);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, rom_myhome2_wall_modelT);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_myhome2_wall_model);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_myhome2_wall_modelT);
 
     CLOSE_DISP(graph);
 }

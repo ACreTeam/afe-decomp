@@ -106,8 +106,7 @@ static void aCOU_actor_move(ACTOR* actorx, GAME* game) {
     mFI_Wpos2BlockNum(&count_bx, &count_bz, actorx->world.position);
     mFI_Wpos2BlockNum(&player_bx, &player_bz, playerx->world.position);
 
-    if (!mDemo_Check(mDemo_TYPE_SCROLL, playerx) && !mDemo_Check(mDemo_TYPE_SCROLL2, playerx) &&
-        !mDemo_Check(mDemo_TYPE_SCROLL3, playerx) && (count_bx != player_bx || count_bz != player_bz)) {
+    if (!mDemo_CHECK_SCROLL(playerx) && (count_bx != player_bx || count_bz != player_bz)) {
         Actor_delete(actorx);
         return;
     }

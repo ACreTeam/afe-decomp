@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "ac_mailbox.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
 static void aMBX_anime_proc(ACTOR* actorx, GAME_PLAY* play) {
     static s8 part_tbl[] = { 0, 0, 0, 1, 1, 0, 0 };
     MAILBOX_ACTOR* actor = (MAILBOX_ACTOR*)actorx;
@@ -32,12 +38,7 @@ static void aMBX_check_take_mail(MAILBOX_ACTOR* actor, GAME_PLAY* play) {
         int abs_dAngle = ABS(dAngle);
 
         if (abs_dAngle < aMBX_PLAYER_OPEN_ANGLE && player->a_btn_pressed == TRUE && pl_no == Common_Get(player_no) && player->item_in_front == (DUMMY_MAILBOX0 + arrange_idx)) {
-// Aus version changed the reset count needed for the 'free roam' Resetti interaction
-#if VERSION >= VER_GAFU01_00
-            if (Common_Get(reset_flag) == TRUE && Now_Private->reset_count < 4) {
-#else
-            if (Common_Get(reset_flag) == TRUE && Now_Private->reset_count < 3) {
-#endif
+            if (Common_Get(reset_flag) == TRUE && Now_Private->reset_count <= 4) {
                 Common_Set(reset_type, 5);
             } else if (!mPr_NullCheckPersonalID(&Save_Get(homes[arrange_idx]).ownerID)) {
                 Submenu* submenu = &play->submenu;
@@ -155,7 +156,7 @@ static void aMBX_pl_open(MAILBOX_ACTOR* actor, GAME_PLAY* play) {
 static void aMBX_pl_close(MAILBOX_ACTOR* actor, GAME_PLAY* play) {
     cKF_FrameControl_c* fc0 = &actor->kf0.frame_control;
     
-    if (cKF_FrameControl_passCheck_now(fc0, 4.0f) == TRUE) {
+    if (cKF_FrameControl_passCheck_now(fc0, 18.0f) == TRUE) {
         sAdo_OngenTrgStart(0x147, &actor->actor_class.world.position);
     }
 

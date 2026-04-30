@@ -16,7 +16,7 @@ ACTOR_PROFILE BoxTrick01_Profile = {
     &BoxTrick01_Actor_ct,
     &BoxTrick01_Actor_dt,
     &BoxTrick01_Actor_move,
-    (mActor_proc)&none_proc1,
+    &none_proc2,
     NULL
 };
 

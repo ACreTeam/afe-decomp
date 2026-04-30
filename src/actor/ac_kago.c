@@ -48,5 +48,4 @@ static void aKAG_actor_ct(ACTOR* actor, GAME* game) {
 }
 
 #include "../src/actor/ac_kago_move.c_inc"
-
 #include "../src/actor/ac_kago_draw.c_inc"

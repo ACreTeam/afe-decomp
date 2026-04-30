@@ -265,7 +265,7 @@ static void aHTBL_set_bgOffset(HTABLE_ACTOR* htable) {
                     pos = htable->actor_class.world.position;
                     pos.x += (f32)j * mFI_UT_WORLDSIZE_X_F;
                     pos.z += (f32)i * mFI_UT_WORLDSIZE_Z_F;
-                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataA[idx], __FILE__, 422);
+                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataA[idx], __FILE__, 424);
                     idx++;
                 }
             }
@@ -276,7 +276,7 @@ static void aHTBL_set_bgOffset(HTABLE_ACTOR* htable) {
                     pos = htable->actor_class.world.position;
                     pos.x += (f32)j * mFI_UT_WORLDSIZE_X_F;
                     pos.z += (f32)i * mFI_UT_WORLDSIZE_Z_F;
-                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataB[idx], __FILE__, 436);
+                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataB[idx], __FILE__, 438);
                     idx++;
                 }
             }
@@ -287,7 +287,7 @@ static void aHTBL_set_bgOffset(HTABLE_ACTOR* htable) {
                     pos = htable->actor_class.world.position;
                     pos.x += (f32)j * mFI_UT_WORLDSIZE_X_F;
                     pos.z += (f32)i * mFI_UT_WORLDSIZE_Z_F;
-                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataC[0], __FILE__, 450);
+                    mCoBG_SetPluss5PointOffset_file(pos, rewrite_dataC[0], __FILE__, 452);
                 }
             }
             break;

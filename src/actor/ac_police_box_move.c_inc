@@ -27,13 +27,13 @@ static void aPBOX_set_bgOffset(STRUCTURE_ACTOR* box, int idx) {
     for (i = 0; i < 3; i++) {
         pos.z = box->actor_class.home.position.z + addZ[i];
         pos.x = box->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 142);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 145);
 
         pos.x = box->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 146);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 149);
 
         pos.x = box->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 150);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 153);
 
         offset += 3;
     }

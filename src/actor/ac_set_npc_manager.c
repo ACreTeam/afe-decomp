@@ -415,7 +415,7 @@ static void aSNMgr_get_safe_sp_event_structure_4x4(int* safe_ux, int* safe_uz, i
 }
 
 static void aSNMgr_get_safe_sp_event_structure(int* safe_ux, int* safe_uz, mActor_name_t* fg_p) {
-    static mActor_name_t sp_event_fg[] = { BROKER_TENT, DUMMY_BROKER_SHOP, DESIGNER_CAR, DUMMY_CAR };
+    static mActor_name_t sp_event_fg[] = { BROKER_TENT, DUMMY_BROKER_SHOP, DESIGNER_CAR, DUMMY_S_CAR };
     int i;
     int j;
 
