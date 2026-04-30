@@ -80,7 +80,7 @@ extern int encode_asr(u8* compress_buf, u8* src, int size) {
     return result;
 }
 
-int encode_asrsub(u8 *encodeBuffer, u8 *data, int size, int count11Size) {
+static int encode_asrsub(u8 *encodeBuffer, u8 *data, int size, int count11Size) {
     int sym_count;
     int search_window_size;
     int rescale_count;
@@ -302,7 +302,7 @@ search_next:
     }
 }
 
-int mischarsearch(u8* pattern, int pattern_len, u8* text, int text_len) {
+static int mischarsearch(u8* pattern, int pattern_len, u8* text, int text_len) {
     int shift_amount;
     u8* pattern_ptr;
     u8* text_ptr;
@@ -378,7 +378,7 @@ static void initskip(u8* pattern, s32 pattern_len) {
     }
 }
 
-int decode_asr(u8 *in, u8 *out) {
+extern int decode_asr(u8 *in, u8 *out) {
     int symbol;
     u32 step;
     int model_index;
