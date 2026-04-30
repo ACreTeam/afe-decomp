@@ -135,6 +135,8 @@ typedef enum audio_sound_effects {
     NA_SE_GASAGOSO = 0x69,
     NA_SE_6A = 0x6A,
 
+    NA_SE_6C = 0x6C,
+
     NA_SE_6E = 0x6E,
     NA_SE_6F = 0x6F,
     NA_SE_70 = 0x70,

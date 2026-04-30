@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "ac_structure.h"
+#include "m_common_data.h"
+#include "m_malloc.h"
+#endif
+
 extern u16* structure_pal_adrs_nowinter[];
 extern u16* structure_pal_adrs_winter[];
 
@@ -16,7 +22,7 @@ typedef struct structure_setup_info_s {
 } aSTR_setup_info;
 
 static STRUCTURE_ACTOR* aSTR_setupActor_proc(GAME* game, mActor_name_t structure_name, s16 arg, f32 x, f32 z) {
-    static aSTR_setup_info setupInfo_table[] = {
+    static aSTR_setup_info setupInfo_table[STRUCTURE_END - STRUCTURE_START] = {
         { mAc_PROFILE_MYHOUSE, aSTR_TYPE_MYHOME, aSTR_PAL_MYHOME_A, 0 },
         { mAc_PROFILE_MYHOUSE, aSTR_TYPE_MYHOME, aSTR_PAL_MYHOME_B, 0 },
         { mAc_PROFILE_MYHOUSE, aSTR_TYPE_MYHOME, aSTR_PAL_MYHOME_C, 0 },
@@ -100,6 +106,37 @@ static STRUCTURE_ACTOR* aSTR_setupActor_proc(GAME* game, mActor_name_t structure
         { mAc_PROFILE_COTTAGE_MY, aSTR_TYPE_COTTAGE_MY, aSTR_PAL_MYHOME_ISLAND, 0 },
         { mAc_PROFILE_COTTAGE_NPC, aSTR_TYPE_COTTAGE_NPC, aSTR_PAL_HOUSE_I, 0 },
         { mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0 },
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_PARK_CLOCK, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_GAS_LAMP, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_WINDMILL, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_FLOWER_CLOCK, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_HELIPAD, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_WIND_TURBINE, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_PIPE_STACK, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_STONEHENGE, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_EGG, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_FOOTPRINTS,-1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_GEOGLYPH, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_MUSHROOM, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_GUIDEPOST, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_WELL, -1, 0},
+        {mAc_PROFILE_MONUMENT, aSTR_TYPE_MONUMENT_FOUNTAIN, -1, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
+        {mAc_PROFILE_RESERVE, aSTR_TYPE_RESERVE, aSTR_PAL_RESERVE, 0},
     };
 
     STRUCTURE_ACTOR* str_actor;
@@ -135,7 +172,7 @@ static STRUCTURE_ACTOR* aSTR_setupActor_proc(GAME* game, mActor_name_t structure
 }
 
 static int aSTR_get_overlay_free_area_idx() {
-    aSTR_Clip_c* clip = Common_Get(clip).structure_clip;
+    aSTR_Clip_c* clip = CLIP(structure_clip);
     aSTR_Overlay_info_c* overlay_info = clip->overlay_area;
     int res = -1;
     int i;
@@ -167,7 +204,7 @@ static void aSTR_get_overlay_area_proc(ACTOR_DLFTBL* dlftbl) {
 }
 
 static void aSTR_free_overlay_area_proc(ACTOR_DLFTBL* dlftbl) {
-    aSTR_Clip_c* clip = Common_Get(clip).structure_clip;
+    aSTR_Clip_c* clip = CLIP(structure_clip);
     aSTR_Overlay_info_c* overlay_info = clip->overlay_area;
     int i;
 
@@ -182,7 +219,7 @@ static void aSTR_free_overlay_area_proc(ACTOR_DLFTBL* dlftbl) {
 }
 
 static STRUCTURE_ACTOR* aSTR_get_actor_area_proc() {
-    aSTR_Clip_c* clip = Common_Get(clip).structure_clip;
+    aSTR_Clip_c* clip = CLIP(structure_clip);
     STRUCTURE_ACTOR** str_tbl = clip->structure_actor_tbl;
     int* str_used_tbl = clip->structure_actor_used_tbl;
 
@@ -203,7 +240,7 @@ static STRUCTURE_ACTOR* aSTR_get_actor_area_proc() {
 }
 
 static void aSTR_free_actor_area_proc(STRUCTURE_ACTOR* str_actor) {
-    aSTR_Clip_c* clip = Common_Get(clip).structure_clip;
+    aSTR_Clip_c* clip = CLIP(structure_clip);
     STRUCTURE_ACTOR** str_tbl = clip->structure_actor_tbl;
     int* str_used_tbl = clip->structure_actor_used_tbl;
     int i;
@@ -219,22 +256,22 @@ static void aSTR_free_actor_area_proc(STRUCTURE_ACTOR* str_actor) {
 }
 
 static void aSTR_init_clip_area() {
-    if (Common_Get(clip).structure_clip == NULL) {
+    if (CLIP(structure_clip) == NULL) {
         int i;
 
-        Common_Set(clip.structure_clip, (aSTR_Clip_c*)zelda_malloc(sizeof(aSTR_Clip_c)));
+        CLIP(structure_clip) = (aSTR_Clip_c*)zelda_malloc(sizeof(aSTR_Clip_c));
 
-        Common_Get(clip).structure_clip->setup_actor_proc = &aSTR_setupActor_proc;
-        Common_Get(clip).structure_clip->get_overlay_area_proc = &aSTR_get_overlay_area_proc;
-        Common_Get(clip).structure_clip->free_overlay_area_proc = &aSTR_free_overlay_area_proc;
-        Common_Get(clip).structure_clip->get_actor_area_proc = &aSTR_get_actor_area_proc;
-        Common_Get(clip).structure_clip->free_actor_area_proc = &aSTR_free_actor_area_proc;
-        Common_Get(clip).structure_clip->get_pal_segment_proc = &aSTR_get_pal_segment;
+        CLIP(structure_clip)->setup_actor_proc = &aSTR_setupActor_proc;
+        CLIP(structure_clip)->get_overlay_area_proc = &aSTR_get_overlay_area_proc;
+        CLIP(structure_clip)->free_overlay_area_proc = &aSTR_free_overlay_area_proc;
+        CLIP(structure_clip)->get_actor_area_proc = &aSTR_get_actor_area_proc;
+        CLIP(structure_clip)->free_actor_area_proc = &aSTR_free_actor_area_proc;
+        CLIP(structure_clip)->get_pal_segment_proc = &aSTR_get_pal_segment;
 
         {
-            STRUCTURE_ACTOR** str_tbl = Common_Get(clip).structure_clip->structure_actor_tbl;
-            int* str_used_tbl = Common_Get(clip).structure_clip->structure_actor_used_tbl;
-            aSTR_Overlay_info_c* overlay_info = Common_Get(clip).structure_clip->overlay_area;
+            STRUCTURE_ACTOR** str_tbl = CLIP(structure_clip)->structure_actor_tbl;
+            int* str_used_tbl = CLIP(structure_clip)->structure_actor_used_tbl;
+            aSTR_Overlay_info_c* overlay_info = CLIP(structure_clip)->overlay_area;
             for (i = 0; i < aSTR_ACTOR_TBL_COUNT; i++) {
                 *str_tbl = &aSTR_actor_cl[i];
                 *str_used_tbl = FALSE;
@@ -252,7 +289,7 @@ static void aSTR_init_clip_area() {
 }
 
 static void aSTR_free_clip_area() {
-    aSTR_Clip_c* clip = Common_Get(clip).structure_clip;
+    aSTR_Clip_c* clip = CLIP(structure_clip);
 
     if (clip != NULL) {
         STRUCTURE_ACTOR** str_tbl = clip->structure_actor_tbl;
@@ -272,7 +309,7 @@ static void aSTR_free_clip_area() {
             overlay_info++;
         }
 
-        zelda_free(Common_Get(clip).structure_clip);
-        Common_Set(clip.structure_clip, NULL);
+        zelda_free(CLIP(structure_clip));
+        CLIP(structure_clip) = NULL;
     }
 }

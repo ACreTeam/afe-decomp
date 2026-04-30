@@ -9,18 +9,19 @@ static void aSTR_actor_ct(ACTOR* actor, GAME* game);
 static void aSTR_actor_dt(ACTOR* actor, GAME* game);
 static void aSTR_actor_move(ACTOR* actor, GAME* game);
 
-ACTOR_PROFILE Structure_Profile = { mAc_PROFILE_STRUCTURE,
-                                    ACTOR_PART_CONTROL,
-                                    ACTOR_STATE_NO_MOVE_WHILE_CULLED | ACTOR_STATE_NO_DRAW_WHILE_CULLED,
-                                    EMPTY_NO,
-                                    ACTOR_OBJ_BANK_KEEP,
-                                    sizeof(STRUCTURE_CONTROL_ACTOR),
-
-                                    &aSTR_actor_ct,
-                                    &aSTR_actor_dt,
-                                    &aSTR_actor_move,
-                                    NONE_ACTOR_PROC,
-                                    NULL };
+ACTOR_PROFILE Structure_Profile = {
+    mAc_PROFILE_STRUCTURE,
+    ACTOR_PART_CONTROL,
+    ACTOR_STATE_NO_MOVE_WHILE_CULLED | ACTOR_STATE_NO_DRAW_WHILE_CULLED,
+    EMPTY_NO,
+    ACTOR_OBJ_BANK_KEEP,
+    sizeof(STRUCTURE_CONTROL_ACTOR),
+    &aSTR_actor_ct,
+    &aSTR_actor_dt,
+    &aSTR_actor_move,
+    mActor_NONE_PROC1,
+    NULL,
+};
 
 static u8 aSTR_overlay[aSTR_ACTOR_TBL_COUNT][aSTR_OVERLAY_SIZE];
 static STRUCTURE_ACTOR aSTR_actor_cl[aSTR_ACTOR_TBL_COUNT];
@@ -36,6 +37,10 @@ static void aSTR_actor_ct(ACTOR* actor, GAME* game) {
 }
 
 static void aSTR_actor_dt(ACTOR* actor, GAME* game) {
+    if ((Common_Get(heli_se_flags) & aSTR_HELI_SE_FLAG_PLAYING) != 0) {
+        Common_Set(heli_se_flags, Common_Get(heli_se_flags) & ~aSTR_HELI_SE_FLAG_SCHEDULED);
+        Common_Set(heli_se_flags, Common_Get(heli_se_flags) & ~aSTR_HELI_SE_FLAG_PLAYING);
+    }
     aSTR_free_clip_area();
 }
 
@@ -57,11 +62,32 @@ static void aSTR_check_door_data(STRUCTURE_CONTROL_ACTOR* actor, GAME* game) {
     }
 }
 
+static void aSTR_heli_se_ctrl(STRUCTURE_CONTROL_ACTOR* actor) {
+    if ((Common_Get(heli_se_flags) & aSTR_HELI_SE_FLAG_SCHEDULED) != 0) {
+        if ((Common_Get(heli_se_flags) & aSTR_HELI_SE_FLAG_PLAYING) == 0) {
+            actor->heli_se_timer = 25.0f + (RANDOM_F(16.0f) + 4.0f);
+            Common_Set(heli_se_flags, Common_Get(heli_se_flags) | aSTR_HELI_SE_FLAG_PLAYING);
+        } else {
+            int timer = actor->heli_se_timer;
+
+            if (timer - 1 == 25) {
+                sAdo_OngenTrgStart(NA_SE_6C, Common_GetPointer(heli_se_pos));
+            } else if (timer - 1 <= 0) {
+                Common_Set(heli_se_flags, Common_Get(heli_se_flags) & ~aSTR_HELI_SE_FLAG_SCHEDULED);
+                Common_Set(heli_se_flags, Common_Get(heli_se_flags) & ~aSTR_HELI_SE_FLAG_PLAYING);
+            }
+
+            actor->heli_se_timer = timer - 1;
+        }
+    }
+}
+
 static void aSTR_actor_move(ACTOR* actor, GAME* game) {
     STRUCTURE_CONTROL_ACTOR* structure = (STRUCTURE_CONTROL_ACTOR*)actor;
     switch (mFI_GetFieldId()) {
         case mFI_FIELD_FG:
             aSTR_check_door_data(structure, game);
+            aSTR_heli_se_ctrl(structure);
             break;
     }
 }

@@ -144,7 +144,7 @@ typedef struct offset_table_s {
 } mNT_offset_table_c;
 
 /* TODO: these should be calculated via definitions later */
-#define NPC_NUM 236
+#define NPC_NUM 256
 #define NPC_ISLANDER_NUM 18
 #define ALL_NPC_NUM NPC_NUM + 2 // include the two test villagers
 
@@ -3108,7 +3108,7 @@ enum ftr1_e {
 #define NPC_HOUSE_START 0x5000
 #define NPC_HOUSE000 NPC_HOUSE_START
 //
-#define NPC_HOUSE_END 0x50EE
+#define NPC_HOUSE_END (NPC_HOUSE_START + ALL_NPC_NUM - 1)
 
 #define STRUCTURE_START 0x5800
 #define HOUSE0 (STRUCTURE_START + 0)

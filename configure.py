@@ -721,7 +721,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_sign.c"),
             Object(NonMatching, "actor/ac_snowman.c"),
             Object(NonMatching, "actor/ac_station.c"),
-            Object(NonMatching, "actor/ac_structure.c"),
+            Object(Matching, "actor/ac_structure.c"),
             Object(NonMatching, "actor/ac_super.c"),
             Object(Matching, "actor/ac_tama.c"),
             Object(Matching, "actor/ac_tent.c"),

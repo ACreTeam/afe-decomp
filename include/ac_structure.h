@@ -14,6 +14,9 @@ extern "C" {
 #define aSTR_ACTOR_TBL_COUNT 9
 #define aSTR_OVERLAY_SIZE 0x2400
 
+#define aSTR_HELI_SE_FLAG_SCHEDULED (1 << 0)
+#define aSTR_HELI_SE_FLAG_PLAYING (1 << 1)
+
 enum structure_type {
     aSTR_TYPE_HOUSE1,
     aSTR_TYPE_HOUSE2,
@@ -71,6 +74,22 @@ enum structure_type {
     aSTR_TYPE_BOAT,
     aSTR_TYPE_COTTAGE_MY,
     aSTR_TYPE_COTTAGE_NPC,
+    aSTR_TYPE_56,
+    aSTR_TYPE_MONUMENT_PARK_CLOCK,
+    aSTR_TYPE_MONUMENT_GAS_LAMP,
+    aSTR_TYPE_MONUMENT_WINDMILL,
+    aSTR_TYPE_MONUMENT_FLOWER_CLOCK,
+    aSTR_TYPE_MONUMENT_HELIPAD,
+    aSTR_TYPE_MONUMENT_WIND_TURBINE,
+    aSTR_TYPE_MONUMENT_PIPE_STACK,
+    aSTR_TYPE_MONUMENT_STONEHENGE,
+    aSTR_TYPE_MONUMENT_EGG,
+    aSTR_TYPE_MONUMENT_FOOTPRINTS,
+    aSTR_TYPE_MONUMENT_GEOGLYPH,
+    aSTR_TYPE_MONUMENT_MUSHROOM,
+    aSTR_TYPE_MONUMENT_GUIDEPOST,
+    aSTR_TYPE_MONUMENT_WELL,
+    aSTR_TYPE_MONUMENT_FOUNTAIN,
 
     aSTR_TYPE_NUM
 };
@@ -248,6 +267,7 @@ struct actor_structure_control_s {
     int _174;
     mActor_name_t str_door_name;
     u8 reset;
+    int heli_se_timer;
 };
 
 extern ACTOR_PROFILE Structure_Profile;
