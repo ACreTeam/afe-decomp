@@ -1,4 +1,11 @@
-static void aRSV_set_bgOffset(ACTOR*, int) {
+#ifdef __INTELLISENSE__
+#include "ac_reserve.h"
+#include "m_common_data.h"
+#include "m_msg.h"
+#include "m_player_lib.h"
+#endif
+
+static void aRSV_set_bgOffset(ACTOR* actorx, int idx) {
 }
 
 static void aRSV_set_talk_info(ACTOR* actor) {
@@ -10,6 +17,10 @@ static void aRSV_set_talk_info(ACTOR* actor) {
 
     if (reserve->structure_class.arg0 == 0x42) {
         mDemo_Set_msg_num(MSG_11074);
+    } else if (reserve->structure_class.arg0 >= 0x52 && reserve->structure_class.arg0 < 0x61) {
+        mDemo_Set_msg_num(MSG_10612 + reserve->structure_class.arg0 - 0x52);
+    } else if (reserve->structure_class.arg0 == 0x61) {
+        mDemo_Set_msg_num(MSG_11075);
     } else {
         if (reserve->structure_class.arg0 >= 6 && reserve->structure_class.arg0 <= 8) {
             mIN_copy_name_str(str, Save_Get(fruit));
@@ -36,7 +47,7 @@ static void aRSV_wait(STRUCTURE_ACTOR* actor, GAME_PLAY* play) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
     int angle;
 
-    if (mDemo_Check(mDemo_TYPE_TALK, &actor->actor_class) != 1 && player != NULL) {
+    if (mDemo_Check(mDemo_TYPE_TALK, &actor->actor_class) != TRUE && player != NULL) {
         if (player->actor_class.world.position.z >= actor->actor_class.world.position.z) {
             angle = ABS(actor->actor_class.player_angle_y);
 
