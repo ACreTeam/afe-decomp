@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #define mPlayer_DEBT0 17400  /* Buy house */
+#define mPlayer_DEBT0_MOVED_IN 18800  /* Moved in from DnM+ town */
 #define mPlayer_DEBT1 148000 /* 1st upgrade main floor */
 #define mPlayer_DEBT2 398000 /* 2nd upgrade main floor */
 #define mPlayer_DEBT3 49800  /* Basement */
@@ -444,6 +445,10 @@ enum {
     mPlayer_ANIM_TAISOU7_1,
     mPlayer_ANIM_TAISOU7_2,
     mPlayer_ANIM_OMAIRI_US1,
+    mPlayer_ANIM_CRACKER_FIRE1,
+    mPlayer_ANIM_CRACKER_WAIT1,
+    mPlayer_ANIM_HANA_PICKUP1,
+    mPlayer_ANIM_HANA_WAIT1,
 
     mPlayer_ANIM_NUM
 };
@@ -473,6 +478,8 @@ enum {
     mPlayer_ITEM_MAIN_BALLOON_NORMAL,
     mPlayer_ITEM_MAIN_WINDMILL_NORMAL,
     mPlayer_ITEM_MAIN_FAN_NORMAL,
+    mPlayer_ITEM_MAIN_CRACKER_NORMAL,
+    mPlayer_ITEM_MAIN_FLOWER_NORMAL,
 
     mPlayer_ITEM_MAIN_NUM,
 };
@@ -569,7 +576,20 @@ enum {
     mPlayer_ITEM_KIND_FLOWER_FAN,
     mPlayer_ITEM_KIND_LEAF_FAN,
 
-    mPlayer_ITEM_KIND_NUM /* Are there more? */
+    mPlayer_ITEM_KIND_CRACKER,
+
+    mPlayer_ITEM_KIND_FLOWER01,
+    mPlayer_ITEM_KIND_FLOWER02,
+    mPlayer_ITEM_KIND_FLOWER03,
+    mPlayer_ITEM_KIND_FLOWER04,
+    mPlayer_ITEM_KIND_FLOWER05,
+    mPlayer_ITEM_KIND_FLOWER06,
+    mPlayer_ITEM_KIND_FLOWER07,
+    mPlayer_ITEM_KIND_FLOWER08,
+    mPlayer_ITEM_KIND_FLOWER09,
+    mPlayer_ITEM_KIND_FLOWER10,
+
+    mPlayer_ITEM_KIND_NUM
 };
 
 #define mPlayer_ITEM_KIND_NONE -1
@@ -588,9 +608,13 @@ enum {
     mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_YELLOW_PINWHEEL, mPlayer_ITEM_KIND_FANCY_PINWHEEL)
 #define mPlayer_ITEM_IS_FAN(kind) \
     mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_BLUEBELL_FAN, mPlayer_ITEM_KIND_LEAF_FAN)
+#define mPlayer_ITEM_IS_FLOWER(kind) \
+    mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_FLOWER01, mPlayer_ITEM_KIND_FLOWER10)
+#define mPlayer_ITEM_IS_CRACKER(kind) \
+    mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_CRACKER, mPlayer_ITEM_KIND_CRACKER)
 #define mPlayer_ITEM_IS_NOT_TOOL(kind)                                                                    \
     (mPlayer_ITEM_IS_UMBRELLA(kind) || mPlayer_ITEM_IS_BALLOON(kind) || mPlayer_ITEM_IS_WINDMILL(kind) || \
-     mPlayer_ITEM_IS_FAN(kind))
+     mPlayer_ITEM_IS_FAN(kind) || mPlayer_ITEM_IS_CRACKER(kind) || mPlayer_ITEM_IS_FLOWER(kind))
 
 #define mPlayer_ITEM_KIND_VALID(kind) (mPlayer_ITEM_KIND_CHECK(kind, 0, mPlayer_ITEM_KIND_NUM))
 
@@ -651,6 +675,19 @@ enum {
     mPlayer_ITEM_DATA_FAN6, // model
     mPlayer_ITEM_DATA_FAN7, // model
     mPlayer_ITEM_DATA_FAN8, // model
+
+    mPlayer_ITEM_DATA_CRACKER,
+
+    mPlayer_ITEM_DATA_FLOWER01,
+    mPlayer_ITEM_DATA_FLOWER02,
+    mPlayer_ITEM_DATA_FLOWER03,
+    mPlayer_ITEM_DATA_FLOWER04,
+    mPlayer_ITEM_DATA_FLOWER05,
+    mPlayer_ITEM_DATA_FLOWER06,
+    mPlayer_ITEM_DATA_FLOWER07,
+    mPlayer_ITEM_DATA_FLOWER08,
+    mPlayer_ITEM_DATA_FLOWER09,
+    mPlayer_ITEM_DATA_FLOWER10, // Jacob's Ladder
 
     mPlayer_ITEM_DATA_NUM
 };
