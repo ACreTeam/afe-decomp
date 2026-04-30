@@ -37,7 +37,6 @@ static void aRSV_actor_ct(ACTOR* actor, GAME* game) {
     mActor_name_t id;
 
     reserve->structure_class.season = Common_Get(time.season);
-
     reserve->structure_class.arg0 = actor->npc_id - SIGN00;
 
     aRSV_setup_action(actor, 0);
