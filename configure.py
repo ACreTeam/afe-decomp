@@ -409,7 +409,7 @@ config.libs = [
     ),
         {
         "lib": "jaudio_PP_game",
-        "mw_version": config.linker_version,
+        "mw_version": "GC/2.0p1",
         "cflags": [*cflags_static, "-O0", "-inline off", "-lang=c++", "-sym on"],
         "progress_category": "library",
         "src_dir": "src/static",

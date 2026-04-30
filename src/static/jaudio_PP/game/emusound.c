@@ -1147,12 +1147,12 @@ s8 __GetNoise(u32 a) {
     }
 }
 
-u32 delta_counter;
-s8 delta_sign;
-s32 bias_move;
-s32 bias;
-f32 voltage;
-f32 voltage_out;
+volatile u32 delta_counter;
+volatile s8 delta_sign;
+volatile s32 bias_move;
+volatile s32 bias;
+volatile f32 voltage;
+volatile f32 voltage_out;
 
 int __ProcessSoundD() {
     s16 ret;
@@ -1214,21 +1214,27 @@ void MoveDeltaCounter(u8 a) {
 }
 
 void MoveBias() {
+    s32 b_move;
+    s32 diff;
+    s32 sign = delta_sign;
     s32 oldBias = bias;
-    bias += delta_sign * 2;
+    bias = oldBias + sign * 2;
     if (bias > 0x7f) {
         bias = 0x7f;
     }
     if (bias < 0) {
         bias = 0;
     }
-    bias_move += bias - oldBias;
+
+    diff = bias - oldBias;
+    b_move = bias_move;
+    bias_move = b_move + diff;
     delta_sign = 0;
 }
 
 void WriteBias(u16 a) {
     bias_move = (s16)a - (s16)bias;
-    bias = (a & 0xffff);
+    bias = a;
 }
 
 int MoveVoltage() {
