@@ -4,6 +4,8 @@
 #include "JSystem/JUtility/carddrv.h"
 #include "JSystem/JUtility/exidrv.h"
 
+#define CARD_SECTOR_SIZE 64
+
 RES SD_RES[CARD_NUM_CHANS];
 CMD SD_CMD[CARD_NUM_CHANS];
 CID SD_CID[CARD_NUM_CHANS];
@@ -31,7 +33,7 @@ int CARD_Size[CARD_NUM_CHANS];
 int func_CARD_In[CARD_NUM_CHANS];
 int func_CARD_Out[CARD_NUM_CHANS];
 
-int CARD_IF_Reset() {
+u16 CARD_IF_Reset() {
     int i;
 
     EXIInit();
@@ -71,9 +73,9 @@ u16 CARD_SelectedNo() {
     return CARD_ExiChannel;
 }
 
-u16 CARD_Select(u16 param_1) {
-    if (CARD_ExiChannel != param_1) {
-        CARD_ExiChannel = param_1;
+u16 CARD_Select(u16 nDrive) {
+    if (CARD_ExiChannel != nDrive) {
+        CARD_ExiChannel = nDrive;
     }
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
@@ -125,7 +127,7 @@ u16 CARD_Reset() {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    CARD_SectorSize[CARD_ExiChannel] = SECTOR_SIZE * 8;
+    CARD_SectorSize[CARD_ExiChannel] = CARD_SECTOR_SIZE * 8;
     CARD_SetBlockLength(CARD_SectorSize[CARD_ExiChannel]);
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
         return CARD_ErrStatus[CARD_ExiChannel];
@@ -174,46 +176,45 @@ u16 CARD_Reset() {
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-int CARD_Getstatus(u16* param1) {
+u16 CARD_Getstatus(u16* param1) {
     int iVar1;
 
-    param1[0] = 0x831F;
+    *param1 = 0x831F;
 
     while ((iVar1 = EXIProbeEx(CARD_ExiChannel)) == 0) {}
 
     if (iVar1 != 1) {
-        param1[0] |= 0x420;
+        *param1 |= 0x420;
     }
 
     if (CARD_WP_Flag[CARD_ExiChannel] != 0) {
-        param1[0] |= 0x80;
+        *param1 |= 0x80;
     }
 
     return 0;
 }
 
-int CARD_Getinfo(u8* param1) {
+u16 CARD_Getinfo(SDInfos* param1) {
     s32 iVar1;
-    u8* ptr = param1;
+    u8* ptr = param1->data;
 
-    for (iVar1 = 0; iVar1 < 0x10; iVar1++) {
+    for (iVar1 = 0; iVar1 < ARRAY_COUNT(param1->cid); iVar1++) {
         *ptr++ = SD_CID[CARD_ExiChannel].data[0x0F - iVar1];
     }
 
-    // not sizeof(CSD)?
-    for (iVar1 = 0; iVar1 < 0x10; iVar1++) {
+    for (iVar1 = 0; iVar1 < ARRAY_COUNT(param1->csd); iVar1++) {
         *ptr++ = SD_CSD[CARD_ExiChannel].data[0x0F - iVar1];
     }
 
     return 0;
 }
 
-u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5) {
+u16 CARD_ReadD(u8* param1, u32 param2, int param3, int param4, UnknownStruct1* param5) {
     u8* pData;
     int i;
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
-    pData = param1->data;
+    pData = (u8*)param1;
 
     if (!CARD_Command(READ_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2 - 1; i++) {
@@ -233,7 +234,7 @@ u16 CARD_ReadD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDP
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteDParam5* param5) {
+u16 CARD_WriteD(u8* param1, u32 param2, int param3, int param4, UnknownStruct1* param5) {
     u8* volatile pData;
     int i;
 
@@ -243,7 +244,7 @@ u16 CARD_WriteD(SDSTATUS* param1, u32 param2, int param3, int param4, ReadWriteD
         return LOCK_UNLOCK_FAILED;
     }
 
-    pData = param1->data;
+    pData = param1;
 
     if (!CARD_Command(WRITE_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2; i++) {
@@ -277,7 +278,7 @@ u16 CARD_SD_Status() {
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
     iVar3 = CARD_SectorSize[CARD_ExiChannel];
-    CARD_SectorSize[CARD_ExiChannel] = SECTOR_SIZE;
+    CARD_SectorSize[CARD_ExiChannel] = CARD_SECTOR_SIZE;
     CARD_SetBlockLength(CARD_SectorSize[CARD_ExiChannel]);
 
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {

@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-#define SECTOR_SIZE 64
-
 enum SDCommands {
     // Block Read
     /* 0x11 */ READ_SINGLE_BLOCK = 17,
@@ -44,7 +42,8 @@ typedef struct CID {
 } CID;
 
 typedef struct CSD {
-    u8 data[0x12];
+    u8 data[0x10];
+    u8 data2[0x02];
 } CSD;
 
 typedef struct SDSTATUS {
@@ -65,6 +64,22 @@ typedef struct ARG {
         u32 data_u32;
     };
 } ARG;
+
+typedef struct UnkARG {
+    ARG arg;
+    u8 _00;
+} UnkARG;
+
+typedef struct SDInfos {
+    union {
+        /* 0x00 */ u8 data[32];
+        struct {
+            /* 0x00 */ u8 cid[16];
+            /* 0x10 */ u8 csd[16];
+        };
+    };
+    /* 0x20 */ char pad_unk_20[32];
+} SDInfos; // size = 0x40
 
 #ifdef __cplusplus
 };

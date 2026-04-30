@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "JSystem/JKernel/JKRFileFinder.h"
+#include "JSystem/JUtility/fs_file.h"
 
 #define DRIVE_SLOT_A 0
 #define DRIVE_SLOT_B 1
@@ -26,27 +27,24 @@ class JUTSDCardFinder : public JKRFileFinder {
 
     // _00     = VTBL
     // _00-_14 = JKRFileFinder
-    void* mUnk_14; // _14
-    void* mUnk_18; // _18
-    char mUnk_1C[0x5C - 0x1C]; // _1C
-    u16 mUnk_5C;
-    char mUnk_5E[0x6C - 0x5E]; // _5E
+    SDDirInfo* mUnk_14; // _14
+    UnknownStruct3 mUnk_18; // _18
     u16 mUnk_6C; // _6C
 };
 
 struct JUTSDDrive {
   public:
     static bool init();
-    static int setup(int nDrive);
-    static int mount(int nDrive);
-    static int unmount(int nDrive);
-    static int format(int nDrive, u16 param2, const char* param3);
-    static int terminate(int nDrive);
-    static int removeFile(int nDrive, const char* fileName);
-    static int renameFile(int nDrive, const char* curFileName, const char* newFileName);
-    static int setCurrentDirectory(int nDrive, const char* path);
-    static int makeDirectory(int nDrive, const char* newDirName);
-    static int expandPath(int nDrive, const char* src, char* dest);
+    static u16 setup(int nDrive);
+    static u16 mount(int nDrive);
+    static u16 unmount(int nDrive);
+    static u16 format(int nDrive, u16 param2, const char* param3);
+    static u16 terminate(int nDrive);
+    static u16 removeFile(int nDrive, const char* fileName);
+    static u16 renameFile(int nDrive, const char* curFileName, const char* newFileName);
+    static u16 setCurrentDirectory(int nDrive, const char* path);
+    static u16 makeDirectory(int nDrive, const char* newDirName);
+    static u16 expandPath(int nDrive, const char* src, char* dest);
 
     static bool IsInitialized() {
         return sInitialized;
@@ -56,7 +54,7 @@ struct JUTSDDrive {
         return sCurrentDrive;
     }
 
-    static void* GetDriveInfoPtr(int nDrive) {
+    static SDDriveInfo* GetDriveInfoPtr(int nDrive) {
         return sDriveInfoPtr[nDrive];
     }
 
@@ -75,7 +73,7 @@ struct JUTSDDrive {
   private:
     static bool sInitialized;
     static int sCurrentDrive;
-    static void* sDriveInfoPtr[MAX_DRIVES];
+    static SDDriveInfo* sDriveInfoPtr[MAX_DRIVES];
     static char sCurrentPath[MAX_DRIVES][MAX_PATH_LEN - 1];
     static bool sAvailable[MAX_DRIVES];
     static bool sMounted[MAX_DRIVES];
