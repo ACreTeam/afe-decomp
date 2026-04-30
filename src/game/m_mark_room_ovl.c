@@ -2737,7 +2737,7 @@ static u8 mMkRm_floor_from[CARPET_NUM] = {
     mRmTp_BIRTH_TYPE_HARVEST_FESTIVAL
 };
 
-static int mMkRm_unit_max_table[mHm_HOMESIZE_NUM - 1] = { 5, 7, 9, 9 };
+static int mMkRm_unit_max_table[mHm_HOMESIZE_NUM - 2] = { 5, 7, 9, 9 };
 
 static int mMkRm_letter_no_table[64] = { 52, 53, 54, 55, 56,  57, 58, 59, -1, -1, -1, -1, -1, -1, -1, -1,
                                          60, 61, -1, -1, -1,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

@@ -93,7 +93,7 @@ extern Gfx obj_w_myhome4_window_model[];
 
 static int aMHS_actor_draw_after(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int joint_idx, Gfx** joint_shape,
                                  u8* joint_flags, void* arg, s_xyz* joint_rot, xyz_t* joint_pos) {
-    static Gfx* mdl[mHm_HOMESIZE_NUM - 1][2] = {
+    static Gfx* mdl[mHm_HOMESIZE_NUM - 2][2] = {
         { obj_s_myhome1_window_model, obj_w_myhome1_window_model },
         { obj_s_myhome2_window_model, obj_w_myhome2_window_model },
         { obj_s_myhome3_window_model, obj_w_myhome3_window_model },
@@ -159,7 +159,7 @@ static int aMHS_actor_draw_after(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int
 }
 
 static void aMHS_actor_draw_ta_set(STRUCTURE_ACTOR* my_house, GAME* game) {
-    static u8 edge_alpha[mHm_HOMESIZE_NUM - 1] = { 96, 64, 112, 96 };
+    static u8 edge_alpha[mHm_HOMESIZE_NUM - 2] = { 96, 64, 112, 96 };
     GRAPH* graph = game->graph;
 
     OPEN_DISP(graph);
@@ -200,7 +200,7 @@ extern u8 obj_myhome_mark_tex_txt[];
 extern u16 obj_myhome_mark_pal[];
 
 static void aMHS_actor_draw(ACTOR* actorx, GAME* game) {
-    static bIT_ShadowData_c** shadow_data[mHm_HOMESIZE_NUM - 1] = {
+    static bIT_ShadowData_c** shadow_data[mHm_HOMESIZE_NUM - 2] = {
         aMHS_lv1_shadow_data,
         aMHS_lv2_shadow_data,
         aMHS_lv3_shadow_data,

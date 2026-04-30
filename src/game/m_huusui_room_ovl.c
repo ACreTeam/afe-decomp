@@ -31,7 +31,7 @@ static mHsRm_ftr_info_c mMkRm_ftr_info[FTR_NUM] = {
 };
 
 /* maximum unit position for each main floor size */
-static int mHsRm_unit_max[mHm_HOMESIZE_NUM - 1] = {
+static int mHsRm_unit_max[mHm_HOMESIZE_NUM - 2] = {
     mHsRm_UNIT_MAX_S, /* mHm_HOMESIZE_SMALL */
     mHsRm_UNIT_MAX_M, /* mHm_HOMESIZE_MEDIUM */
     mHsRm_UNIT_MAX_L, /* mHm_HOMESIZE_LARGE */

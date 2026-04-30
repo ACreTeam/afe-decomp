@@ -119,7 +119,7 @@ static bIT_ShadowData_c* aMHS_lv4_shadow_data[2] = { &aMHS_lv4_shadowW_data, &aM
 
 static f32 aMHS_posX_table[2] = { 20.0f, -20.0f };
 
-static int aMHS_door_closed_flag[mHm_HOMESIZE_NUM - 1];
+static int aMHS_door_closed_flag[mHm_HOMESIZE_NUM - 2];
 
 extern cKF_Skeleton_R_c cKF_bs_r_obj_s_myhome1;
 extern cKF_Skeleton_R_c cKF_bs_r_obj_w_myhome1;
@@ -134,7 +134,7 @@ extern cKF_Skeleton_R_c cKF_bs_r_obj_s_myhome4;
 extern cKF_Skeleton_R_c cKF_bs_r_obj_w_myhome4;
 
 static void aMHS_actor_ct(ACTOR* actorx, GAME* game) {
-    static cKF_Skeleton_R_c* skl[mHm_HOMESIZE_NUM - 1][2] = {
+    static cKF_Skeleton_R_c* skl[mHm_HOMESIZE_NUM - 2][2] = {
         { &cKF_bs_r_obj_s_myhome1, &cKF_bs_r_obj_w_myhome1 },
         { &cKF_bs_r_obj_s_myhome2, &cKF_bs_r_obj_w_myhome2 },
         { &cKF_bs_r_obj_s_myhome3, &cKF_bs_r_obj_w_myhome3 },

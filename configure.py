@@ -682,7 +682,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_museum_indoor.c"),
             Object(NonMatching, "actor/ac_museum_insect.c"),
             Object(Matching, "actor/ac_museum_picture.c"),
-            Object(NonMatching, "actor/ac_my_house.c"),
+            Object(Matching, "actor/ac_my_house.c"),
             Object(NonMatching, "actor/ac_my_indoor.c"),
             Object(NonMatching, "actor/ac_my_room.c"),
             Object(Matching, "actor/ac_nameplate.c"),
