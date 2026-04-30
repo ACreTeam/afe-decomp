@@ -47,6 +47,7 @@ BOOL EXIProbe(s32 channel);
 s32 EXIProbeEx(s32 channel);
 BOOL EXIAttach(s32 channel, EXICallback callback);
 BOOL EXIDetach(s32 channel);
+BOOL EXISelectSD(long chan, unsigned long dev, unsigned long freq);
 u32 EXIGetState(s32 channel);
 s32 EXIGetID(s32 channel, u32 device, u32* id);
 void EXIProbeReset(void);

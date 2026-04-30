@@ -28,4 +28,10 @@
     
 #define ASSERT(cond) ASSERTLINE(__LINE__, cond)
 
+#ifdef __MWERKS__
+#define ASM asm
+#else
+#define ASM
+#endif
+
 #endif // _H_MACROS_
