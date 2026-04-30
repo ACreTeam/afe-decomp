@@ -32,7 +32,7 @@ ACTOR_PROFILE Bee_Profile = {
     ACTOR_OBJ_BANK_BEE,
     sizeof(BEE_ACTOR),
     &aBEE_actor_ct,
-    mActor_NONE_PROC1,
+    &none_proc2,
     &aBEE_actor_move,
     &aBEE_actor_draw,
     NULL,
@@ -296,6 +296,10 @@ static void aBEE_disappear(ACTOR* actorx, GAME* game) {
     }
 }
 
+static void aBEE_none_proc1(BEE_ACTOR* bee, GAME* game) {
+    // nothing
+}
+
 static void aBEE_appear_init(BEE_ACTOR* bee, GAME* game) {
     static xyz_t Size_data = { 0.01f, 0.01f, 0.01f };
 
@@ -324,8 +328,8 @@ static void aBEE_setupAction(BEE_ACTOR* bee, int action, GAME* game) {
         &aBEE_appear_init,
         &aBEE_fly_init,
         &aBEE_caught_init,
-        (aBEE_INIT_PROC)&none_proc1,
-        (aBEE_INIT_PROC)&none_proc1,
+        &aBEE_none_proc1,
+        &aBEE_none_proc1,
         &aBEE_disappear_init,
     };
 
