@@ -10,6 +10,8 @@
 #define SQRTF_LINKAGE static
 #endif
 
+#pragma cplusplus on
+
 /**
  * Float square root implementation.
  *
@@ -36,6 +38,8 @@ SQRTF_LINKAGE inline float sqrtf(float x) {
 
     return x;
 }
+
+#pragma cplusplus reset
 
 #ifdef SQRTF_LINKAGE
 #undef SQRTF_LINKAGE
@@ -72,6 +76,17 @@ extern inline double sqrt(double x) {
     }
     return INFINITY;
 }
+
+// #ifdef __cplusplus
+// namespace std {
+//     static inline double sqrt(double x) {
+//         ::sqrt(x);
+//     }
+//     static inline float sqrtf(float x) {
+//         ::sqrtf(x);
+//     }
+// }
+// #endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -14,7 +14,7 @@ extern "C" {
 
 #define mMsg_MSG_BUF_MAX 1536
 #define mMsg_MSG_BUF_SIZE 1600
-#define mMsg_FREE_STRING_LEN 16
+#define mMsg_FREE_STRING_LEN 66
 #define mMsg_MAIL_STRING_LEN 132
 #define mMsg_MAX_LINE 4
 
@@ -341,6 +341,8 @@ extern int mMsg_sound_spec_change_voice(mMsg_Window_c* msg_p);
 extern void mMsg_sound_set_voice_click(mMsg_Window_c* msg_p);
 extern void mMsg_sound_set_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 extern void mMsg_sound_unset_voice_silent(mMsg_Window_c* msg_p, int update_mode);
+
+extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, int str_len);
 
 /* Macros */
 

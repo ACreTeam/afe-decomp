@@ -152,6 +152,13 @@ enum effect_type {
     eEC_EFFECT_MAKE_HEM,
     eEC_EFFECT_MAKE_HEM_KIRA,
     eEC_EFFECT_MAKE_HEM_LIGHT,
+    eEC_EFFECT_NOMI,
+    eEC_EFFECT_RESETBREAK,
+    eEC_EFFECT_RESETBREAK_PARTS,
+    eEC_EFFECT_RESETBREAK_DUST,
+    eEC_EFFECT_RESETBREAK_PIECE,
+    eEC_EFFECT_PRESENTOPEN,
+    eEC_EFFECT_PRESENTOPEN_PARTS,
 
     eEC_EFFECT_NUM
 };
@@ -233,12 +240,19 @@ extern eEC_PROFILE_c iam_ef_neboke_akubi;
 extern eEC_PROFILE_c iam_ef_neboke_awa;
 extern eEC_PROFILE_c iam_ef_night13_moon;
 extern eEC_PROFILE_c iam_ef_night15_moon;
+extern eEC_PROFILE_c iam_ef_nomi;
 extern eEC_PROFILE_c iam_ef_ongen;
 extern eEC_PROFILE_c iam_ef_otikomi;
 extern eEC_PROFILE_c iam_ef_otosiana;
+extern eEC_PROFILE_c iam_ef_presentopen;
+extern eEC_PROFILE_c iam_ef_presentopen_parts;
 extern eEC_PROFILE_c iam_ef_pun;
 extern eEC_PROFILE_c iam_ef_pun_sekimen;
 extern eEC_PROFILE_c iam_ef_pun_yuge;
+extern eEC_PROFILE_c iam_ef_resetbreak;
+extern eEC_PROFILE_c iam_ef_resetbreak_dust;
+extern eEC_PROFILE_c iam_ef_resetbreak_parts;
+extern eEC_PROFILE_c iam_ef_resetbreak_piece;
 extern eEC_PROFILE_c iam_ef_reset_hole;
 extern eEC_PROFILE_c iam_ef_sandsplash;
 extern eEC_PROFILE_c iam_ef_shock;

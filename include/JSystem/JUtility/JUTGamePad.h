@@ -107,6 +107,30 @@ class JUTGamePad : public JKRDisposer {
         return mPadStatus[port].err;
     }
 
+    static u32 getPadButton(EPadPort port) {
+        return mPadButton[port].mButton;
+    }
+
+    static u32 getPadTrigger(EPadPort port) {
+        return mPadButton[port].mTrigger;
+    }
+
+    static u32 getPadRelease(EPadPort port) {
+        return mPadButton[port].mRelease;
+    }
+
+    static u32 getPadRepeat(EPadPort port) {
+        return mPadButton[port].mRepeat;
+    }
+
+    static u32 getPadAnalogL(EPadPort port) {
+        return mPadButton[port].mAnalogL;
+    }
+
+    static u32 getPadAnalogR(EPadPort port) {
+        return mPadButton[port].mAnalogR;
+    }
+
     bool isPushing3ButtonReset() const {
         bool pushing = false;
 
@@ -194,11 +218,11 @@ class JUTGamePad : public JKRDisposer {
     }
 
     bool testButton(u32 mask) const {
-        return this->mButtons.mButton & mask;
+        return (this->mButtons.mButton & mask) != 0;
     }
 
     bool testTrigger(u32 mask) const {
-        return this->mButtons.mTrigger & mask;
+        return (this->mButtons.mTrigger & mask) != 0;
     }
 
     s16 getPortNum() const {
@@ -331,6 +355,7 @@ class JUTGamePad : public JKRDisposer {
     u32 _94;
     C3ButtonReset mButtonReset; // _98
     OSTime mResetTime;          // _A0
+    u8 _A8[8];                  // _A8
 };
 }
 #endif

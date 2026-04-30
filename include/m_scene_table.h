@@ -80,6 +80,7 @@ enum scene_table {
     SCENE_START_DEMO3,
     SCENE_LIGHTHOUSE,
     SCENE_TENT,
+    SCENE_RESET_HOUSE,
 
     SCENE_NUM
 };

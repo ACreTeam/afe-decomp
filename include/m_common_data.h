@@ -34,6 +34,8 @@
 #include "m_fishrecord.h"
 #include "m_card.h"
 #include "m_demo.h"
+#include "m_add_npc.h"
+#include "m_monument.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,99 +80,109 @@ typedef struct lighthouse_s {
     u8 players_completed;
 } LightHouse_c;
 
+/* sizeof(Save_s) == 0x2D800 */
 typedef struct Save_s {
-    /* 0x000000 */ mFRm_chk_t save_check; /* save information */
-    /* 0x000014 */ int scene_no;          /* current 'scene' id */
-    /* 0x000018 */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
-    /* 0x000019 */ u8
-        remove_animal_idx; /* index of the villager which is scheduled to leave town, 0xFF when none selected */
-    /* 0x00001A */ u16
-        copy_protect; /* 'unique' value between [1, 65520] used for copy protection (see mCD_get_land_copyProtect) */
-    /* 0x00001C */ u8 pad_1C[4];
-    /* 0x000020 */ Private_c private_data[PLAYER_NUM];                   /* player data */
-    /* 0x009120 */ mLd_land_info_c land_info;                            /* town name & id */
-    /* 0x00912C */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
-    /* 0x009CE4 */ u8 pad_9CE4[4];
-    /* 0x009CE8 */ mHm_hs_c homes[PLAYER_NUM];                              /* player house data */
-    /* 0x0137A8 */ mFM_fg_c fg[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];             /* fg items (fg = foreground?) */
-    /* 0x0173A8 */ mFM_combination_c combi_table[BLOCK_Z_NUM][BLOCK_X_NUM]; /* acre 'combination' data */
-    /* 0x017438 */ Animal_c animals[ANIMAL_NUM_MAX];                        /* villagers in town */
-    /* 0x020330 */ AnmPersonalID_c last_removed_animal_id;                  /* ID of last villager who left town */
-    /* 0x020340 */ Shop_c shop;                                             /* Nook's shop */
-    /* 0x020480 */ Kabu_price_c kabu_price_schedule;                        /* Stalk Market info */
-    /* 0x020498 */ mEv_event_save_c event_save_data;
-    /* 0x020554 */ mEv_save_common_data_c event_save_common;
-    /* 0x020688 */ mActor_name_t fruit;  /* town fruit type */
-    /* 0x02068A */ u8 house_arrangement; /* 2 bits for each player for the # of house they own */
-    /* 0x02068B */ u8 num_statues;       /* number of statues built for players who have paid off their debts */
-    /* 0x02068C */ lbRTC_time_c all_grow_renew_time; /* renewal time for fg items handled by mAgrw_RenewalFgItem_ovl */
-    /* 0x020694 */ PostOffice_c post_office;         /* post office data */
-    /* 0x020ED0 */ PoliceBox_c police_box;           /* police station lost & found */
-    /* 0x020EF8 */ mSN_snowman_save_c snowmen;       /* saved snowmen data */
-    /* 0x020F08 */ u64 melody;                       /* town tune, each nibble is a note (16 notes) */
-    /* 0x020F10 */ Config_c config;                  /* saved config for sound mode, voice mode, and vibration */
-    /* 0x020F14 */ lbRTC_ymd_c renew_time;           /* next renew date */
-    /* 0x020F18 */ u8 station_type;                  /* train station type */
-    /* 0x020F19 */ u8 weather;                       /* upper nibble is intensity, lower nibble is type */
-    /* 0x020F1A */ u8 save_exist;        /* unsure, set in mCD_SaveHome_bg_set_data (1) & mCD_SaveHome_bg (bss) */
-    /* 0x020F1B */ u8 npc_force_go_home; /* when set to 1, forces the 'm_go_home' code to activate */
-    /* 0x020F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM]
-                              [UT_Z_NUM];       /* flags for which items are buried around town */
-    /* 0x0212DC */ lbRTC_time_c last_grow_time; /* last time that a new villager moved into town */
-    /* 0x0212E4 */ mPr_mother_mail_info_c
-        mother_mail[PLAYER_NUM];              /* info on when mom sent player letters and what event was sent */
-    /* 0x02131C */ mMsr_time_c mushroom_time; /* last time mushroom season info was updated */
-    /* 0x021322 */ lbRTC_ymd_c _021322;
-    /* 0x021326 */ u16 _021326[20];
-    /* 0x02134E */ u8 npc_used_tbl[32];
-    /* 0x02136E */ lbRTC_time_c _02136E;
-    /* 0x021376 */ u8 cheated_flag;
-    /* 0x021377 */ u8 _021377[7];
-    /* 0x02137E */ lbRTC_time_c treasure_buried_time;  /* last time treasure was actually buried */
-    /* 0x021386 */ lbRTC_time_c treasure_checked_time; /* last time check to bury treasure was executed */
-    /* 0x02138E */ u8 saved_rom_debug;                 /* flag to set save to 'debug rom' mode */
-    /* 0x02138F */ u8 snowman_year;                    /* year last snowman was built */
-    /* 0x021390 */ u8 snowman_month;                   /* month last snowman was built */
-    /* 0x021391 */ u8 snowman_day;                     /* day last snowman was built */
-    /* 0x021392 */ u8 snowman_hour;                    /* hour last snowman was built */
-    /* 0x021393 */ u8 haniwa_scheduled;                /* when set, gyroids will be spwaned */
-    /* 0x021394 */ u8 dust_flag; /* set by field assessment for too much 'dust' (garbage) around town, causes immediate
-                                    fail of town ranking */
-    /* 0x021395 */ u8 clear_grass; /* set by Wisp, removes all weeds */
-    /* 0x021396 */ u8 _021396[2];
-    /* 0x021398 */ s16 event_year;
-    /* 0x02139A */ u8 unused_2139C[6];
-    /* 0x0213A0 */ u8 keep_house_size[PLAYER_NUM]; /* saved flags for house sizes */
-    /* 0x0213A4 */ lbRTC_ymd_c force_remove_date;  /* last time the NPC force remove timer was updated */
-    /* 0x0213A8 */ mMmd_info_c museum_display;     /* museum display bits */
-    /* 0x0213E7 */ u8 _tmp6[0x213F0 - 0x213E7];
-    /* 0x0213F0 */ PlusBridge_c bridge;         /* additional bridge info */
-    /* 0x021400 */ mNW_needlework_c needlework; /* Able Sisters' designs */
-    /* 0x022500 */ u8 _tmp7[0x22528 - 0x22500];
-    /* 0x022528 */ OSTime time_delta; /* time delta against GC RTC */
-    /* 0x022540 */ Island_c island;   /* island data */
-    /* 0x023E40 */ mAGrw_AllGrow_c allgrow_ss_pos_info;
-    /* 0x023E68 */ mFR_record_c fishRecord[mFR_RECORD_NUM];
-    /* 0x023F20 */ MaskCat_c mask_cat;
-    /* 0x024160 */ Anmret_c return_animal;  /* information about villager which moved back in to your town after moving
-                                               to someone else's town */
-    /* 0x02416C */ LightHouse_c LightHouse; /* info for tracking the light house quest */
-    /* 0x024174 */ u8 insect_term;          /* current insect term idx */
-    /* 0x024175 */ u8 insect_term_transition_offset; /* days offset from end of term to begin transition */
-    /* 0x024176 */ u8 gyoei_term;                    /* current fish term idx */
-    /* 0x024177 */ u8 gyoei_term_transition_offset;  /* days offset from end of term to begin transition */
-    /* 0x024178 */ mFAs_GoodField_c good_field;      /* field assessment last info */
-    /* 0x024184 */ u8 bg_tex_idx;                    /* Grass type */
-    /* 0x024185 */ lbRTC_month_t rainbow_month;
-    /* 0x024186 */ lbRTC_day_t rainbow_day;
-    /* 0x024187 */ u8 rainbow_reserved;
-    /* 0x024188 */ u8 _24188;
-    /* 0x024189 */ u8 first_present;
-    /* 0x02418A */ u8 town_day;
-    /* 0x02418B */ u8 _2418B[0x24198 - 0x2418B];
-    /* 0x024198 */ OSTime travel_hard_time;
-    /* 0x0241A0 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
-    /* 0x0241A8 */ u8 _241A8[0x242A0 - 0x241A8];
+    /* 0x00000 */ mFRm_chk_t save_check; /* save information */
+    /* 0x00014 */ mLd_land_info_c land_info;                            /* town name & id */
+    /* 0x0001E */ u8 sd_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
+    /* 0x00028 */ int scene_no;          /* current 'scene' id */
+    /* 0x0002C */ u8 now_npc_max;        /* current number of villagers living in town (see (Add/Sub)NowNpcMax) */
+    /* 0x0002D */ u8 remove_animal_idx;
+    /* 0x0002E */ u16 copy_protect; /* 'unique' value between [1, 65520] used for copy protection */
+    /* 0x00030 */ u8 _000030[0x188 - 0x030]; // TODO: this has to do with SD card stuff
+    /* 0x00188 */ OSTime nukegara_time;
+    /* 0x00190 */ u8 _000190[0x1C0 - 0x0190]; // TODO: this has to do with SD card stuff
+    /* 0x001C0 */ Private_c private_data[PLAYER_NUM];                   /* player data */
+    /* 0x09C40 */ mNtc_board_post_c noticeboard[mNtc_BOARD_POST_COUNT]; /* noticeboard posts */
+    // /* 0x0A32A */ u8 pad_9CE4[22]; // pad for mHm_hs_c 32 byte alignment (my_original)
+    /* 0x0A340 */ mHm_hs_c homes[PLAYER_NUM];                              /* player house data */
+    /* 0x184C0 */ mFM_fg_c fg[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];             /* fg items (fg = foreground?) */
+    /* 0x1C0C0 */ mFM_combination_c combi_table[BLOCK_Z_NUM][BLOCK_X_NUM]; /* acre 'combination' data */
+    // /* 0x1C14C */ u8 _1C14C[4]; // pad for Animal_c 8 byte alignment (u64)
+    /* 0x1C150 */ Animal_c animals[ANIMAL_NUM_MAX];                        /* villagers in town */
+    /* 0x222D0 */ AnmPersonalID_c last_removed_animal_id;                  /* ID of last villager who left town */
+    /* 0x222E4 */ u8 last_removed_animal_mem_town_name[LAND_NAME_SIZE];
+    /* 0x222EC */ Shop_c shop;                                             /* Nook's shop */
+    /* 0x223C4 */ u8 _223C4[4]; // unused? Shouldn't be padding/alignment.
+    /* 0x222C8 */ Kabu_price_c kabu_price_schedule;                        /* Stalk Market info */
+    /* 0x223E0 */ mEv_event_save_c event_save_data;
+    /* 0x2247C */ mEv_save_common_data_c event_save_common;
+    /* 0x20688 */ mActor_name_t fruit;  /* town fruit type */
+    /* 0x2068A */ u8 house_arrangement; /* 2 bits for each player for the # of house they own */
+    /* 0x2068B */ u8 num_statues;       /* number of statues built for players who have paid off their debts */
+    /* 0x2068C */ lbRTC_time_c all_grow_renew_time; /* renewal time for fg items handled by mAgrw_RenewalFgItem_ovl */
+    /* 0x20694 */ PostOffice_c post_office;         /* post office data */
+    /* 0x20ED0 */ PoliceBox_c police_box;           /* police station lost & found */
+    /* 0x20EF8 */ mSN_snowman_save_c snowmen;       /* saved snowmen data */
+    /* 0x20F08 */ u64 melody;                       /* town tune, each nibble is a note (16 notes) */
+    /* 0x20F10 */ Config_c config;                  /* saved config for sound mode, voice mode, and vibration */
+    /* 0x20F14 */ lbRTC_ymd_c renew_time;           /* next renew date */
+    /* 0x20F18 */ u8 station_type;                  /* train station type */
+    /* 0x20F19 */ u8 weather;                       /* upper nibble is intensity, lower nibble is type */
+    /* 0x20F1A */ u8 save_exist;        /* unsure, set in mCD_SaveHome_bg_set_data (1) & mCD_SaveHome_bg (bss) */
+    /* 0x20F1B */ u8 npc_force_go_home; /* when set to 1, forces the 'm_go_home' code to activate */
+    /* 0x20F1C */ u16 deposit[FG_BLOCK_X_NUM * FG_BLOCK_Z_NUM] [UT_Z_NUM]; // buried item flags
+    /* 0x212DC */ lbRTC_time_c last_grow_time; /* last time that a new villager moved into town */
+    /* 0x212E4 */ mPr_mother_mail_info_c mother_mail[PLAYER_NUM];  /* info on when mom sent player letters */
+    /* 0x2131C */ mMsr_time_c mushroom_time; /* last time mushroom season info was updated */
+    /* 0x21322 */ lbRTC_ymd_c _021322;
+    /* 0x21326 */ u16 _021326[20];
+    /* 0x2134E */ u8 npc_used_tbl[32];
+    /* 0x2136E */ lbRTC_time_c _02136E;
+    /* 0x21376 */ u8 cheated_flag;
+    /* 0x21377 */ u8 _021377[7];
+    /* 0x2137E */ lbRTC_time_c treasure_buried_time;  /* last time treasure was actually buried */
+    /* 0x21386 */ lbRTC_time_c treasure_checked_time; /* last time check to bury treasure was executed */
+    /* 0x2138E */ u8 saved_rom_debug;                 /* flag to set save to 'debug rom' mode */
+    /* 0x2138F */ u8 snowman_year;                    /* year last snowman was built */
+    /* 0x21390 */ u8 snowman_month;                   /* month last snowman was built */
+    /* 0x21391 */ u8 snowman_day;                     /* day last snowman was built */
+    /* 0x21392 */ u8 snowman_hour;                    /* hour last snowman was built */
+    /* 0x21393 */ u8 haniwa_scheduled;                /* when set, gyroids will be spwaned */
+    /* 0x21394 */ u8 dust_flag; /* set by field assessment for too much 'dust' (garbage) */
+    /* 0x21395 */ u8 clear_grass; /* set by Wisp, removes all weeds */
+    /* 0x21396 */ u8 _021396[2];
+    /* 0x21398 */ s16 event_year;
+    /* 0x2139A */ u8 unused_2139C[6];
+    /* 0x213A0 */ u8 keep_house_size[PLAYER_NUM]; /* saved flags for house sizes */
+    /* 0x213A4 */ lbRTC_ymd_c force_remove_date;  /* last time the NPC force remove timer was updated */
+    /* 0x213A8 */ mMmd_info_c museum_display;     /* museum display bits */
+    /* 0x213E7 */ u8 _tmp6[0x213F0 - 0x213E7];
+    /* 0x213F0 */ PlusBridge_c bridge;         /* additional bridge info */
+    /* 0x21400 */ mNW_needlework_c needlework; /* Able Sisters' designs */
+    /* 0x22500 */ u8 _tmp7[0x22528 - 0x22500];
+    /* 0x22528 */ OSTime time_delta; /* time delta against GC RTC */
+    // /* 0x22540 */ Island_c island;   /* island data */
+    /* 0x23E40 */ mAGrw_AllGrow_c allgrow_ss_pos_info;
+    /* 0x23E68 */ mFR_record_c fishRecord[mFR_RECORD_NUM];
+    /* 0x23F20 */ MaskCat_c mask_cat;
+    /* 0x24160 */ Anmret_c return_animal;  /* information about villager which moved back in to your town */
+    /* 0x2416C */ LightHouse_c LightHouse; /* info for tracking the light house quest */
+    /* 0x24174 */ u8 insect_term;          /* current insect term idx */
+    /* 0x24175 */ u8 insect_term_transition_offset; /* days offset from end of term to begin transition */
+    /* 0x24176 */ u8 gyoei_term;                    /* current fish term idx */
+    /* 0x24177 */ u8 gyoei_term_transition_offset;  /* days offset from end of term to begin transition */
+    /* 0x24178 */ mFAs_GoodField_c good_field;      /* field assessment last info */
+    /* 0x24184 */ u8 bg_tex_idx;                    /* Grass type */
+    /* 0x24185 */ lbRTC_month_t rainbow_month;
+    /* 0x24186 */ lbRTC_day_t rainbow_day;
+    /* 0x24187 */ u8 rainbow_reserved;
+    /* 0x24188 */ u8 _24188;
+    /* 0x24189 */ u8 first_present;
+    /* 0x2418A */ u8 town_day;
+    /* 0x2418B */ u8 reserve_sign_count; // number of 'reserve' signs in town
+    /* 0x2418C */ u8 monument_set; // the monumentset available from Nook in this town
+    /* 0x24490 */ AddNpc_c add_npc;
+    /* 0x2D664 */ u16 song_cards_scanned; // bitfield tracking which song cards have been scanned
+    /* 0x2D666 */ u8 _2D666[10];
+    /* 0x2D670 */ OSTime travel_hard_time;
+    /* 0x2D678 */ lbRTC_time_c saved_auto_nwrite_time; /* save data notice time used for fishing tourney results? */
+    /* 0x2D680 */ mMM_order_c monument_order; // current monument order
+    /* 0x2D688 */ int monument_count; // number of monuments in the town
+    /* 0x2D68C */ mNpc_SickInfo_c sick_info; // sick info for current sick villager
+    /* 0x2D70C */ u8 _2D70C[0x2D7E8 - 0x2D70C]; // pad?
+    /* 0x2D7E8 */ u64 rnd_hash; // used in mCDsd_set_SD_playcode
+    /* 0x2D7F0 */ u8 _2D7F0[0x2D800 - 0x2D7F0]; // pad
 } Save_t;
 
 typedef union save_u {
@@ -185,150 +197,165 @@ typedef struct transition_s {
     u8 wipe_type;
 } Transition_c;
 
-/* sizeof(common_data_t) == 0x2DC00 */
+/* sizeof(common_data_t) == 0x4F4C0 */
 typedef struct common_data_s {
-    /* 0x000000 */ Save save;
-    /* 0x026000 */ u8 game_started;
-    /* 0x026001 */ u8 field_type;
-    /* 0x026002 */ u8 field_draw_type;
-    /* 0x026003 */ u8 player_no;
-    /* 0x026004 */ int last_scene_no;
-    /* 0x026008 */ int player_data_mode;
-    /* 0x02600C */ Clip_c clip;
-    /* 0x026110 */ Time_c time;
-    /* 0x02613C */ Private_c* now_private;
-    /* 0x026140 */ mHm_hs_c* now_home;
-    /* 0x026144 */ u8 map_flag;
-    /* 0x026145 */ u8 fish_location;
-    /* 0x026146 */ u8 npc_is_summercamper;
-    /* 0x026147 */ u8 player_select_animal_no;
-    /* 0x026148 */ u8 _26148[0x2614C - 0x26148];
-    /* 0x02614C */ Transition_c transition;
-    /* 0x026150 */ s16 bg_item_type;
-    /* 0x026152 */ s16 bg_item_profile;
-    /* 0x026154 */ u8 _26154[0x26164 - 0x26154];
-    /* 0x026164 */ mNpc_NpcList_c npclist[ANIMAL_NUM_MAX + 1];
-    /* 0x0264E4 */ mNpc_NpcList_c island_npclist[1]; // TODO: define for island npc count
-    /* 0x02651C */ mActor_name_t house_owner_name;
-    /* 0x02651E */ mActor_name_t last_field_id;
-    /* 0x026520 */ u8 in_initial_block; /* when TRUE, the player is in acre they exited a building. FALSE otherwise. */
-    /* 0x026521 */ u8 submenu_disabled; /* when set, submenus cannot be accessed from start button */
-    /* 0x026522 */ u8 sunlight_flag;
-    /* 0x026523 */ u8 train_flag;
-    /* 0x026522 */ Mail_c unused_mail_26522; //u8 _26524[0x26668 - 0x26524];
-    /* 0x02664E */ mActor_name_t _2664E;
-    /* 0x026650 */ mActor_name_t _26650;
-    /* 0x026652 */ Mail_nm_c unused_mail_name_26652;
-    /* 0x026668 */ mActor_name_t npc_chg_cloth;
-    /* 0x02666A */ u16 _pad_2666A; // weather data is probably a struct aligned to 4 bytes
-    /* 0x02666C */ s16 weather;
-    /* 0x02666E */ s16 weather_intensity;
-    /* 0x026670 */ lbRTC_time_c weather_time;
-    /* 0x026678 */ s_xyz wind;
-    /* 0x026680 */ f32 wind_speed;
-    /* 0x026684 */ mEv_event_common_u special_event_common;
-    /* 0x02669C */ mQst_not_saved_c quest;
-    /* 0x0266A4 */ int scene_from_title_demo; /* next scene to be loaded when title demo finishes */
-    /* 0x0266A8 */ mNPS_schedule_c npc_schedule[SCHEDULE_NUM];
-    /* 0x0267A8 */ mNpc_walk_c npc_walk;
-    /* 0x026838 */ mNpc_EventNpc_c event_npc[mNpc_EVENT_NPC_NUM];
-    /* 0x026878 */ mNpc_MaskNpc_c mask_npc[mNpc_MASK_NPC_NUM];
-    /* 0x028528 */ int snowman_msg_id;
-    /* 0x02852C */ s16 money_power;
-    /* 0x02852E */ s16 goods_power;
-    /* 0x028530 */ Door_data_c door_data;                /* misc door data */
-    /* 0x028544 */ Door_data_c structure_exit_door_data; /* door data for when exiting a building */
-    /* 0x028558 */ mDemo_Request_c start_demo_request;
-    /* 0x028568 */ Door_data_c event_door_data;
-    /* 0x02857C */ Door_data_c famicom_emu_exit_door_data;
-    /* 0x028590 */ u8 remove_cut_tree_info_bitfield; /* resets the cut tree states for trees in a visible acre */
-    /* 0x028591 */ s8 floor_idx;
-    /* 0x028592 */ s16 demo_profiles[2]; /* demo_profiles[0] is for demo_clip, demo_profiles[1] is for demo_clip2 */
-    /* 0x028596 */ u16 copy_protect;
-    /* 0x028598 */ int event_keep_flags[4];
-    /* 0x0285A8 */ u8 _285A8[0x0285BD - 0x0285A8];
-    /* 0x0285BD */ s8 player_warp_request;
-    /* 0x0285BE */ s8 player_actor_exists;
-    /* 0x0285BF */ s8 complete_payment_type;
-    /* 0x0285C0 */ s8 player_decoy_flag;
-    /* 0x0285C1 */ s8 axe_damage;
-    /* 0x0285C2 */ u8 make_npc2_actor;
-    /* 0x0285C4 */ s16 event_id;
-    /* 0x0285C6 */ u8 event_title_flags;
-    /* 0x0285C7 */ u8 event_title_fade_in_progress;
-    /* 0x0285C8 */ mEv_common_data_c event_common;
-    /* 0x0287F8 */ s8 current_famicom_rom;
-    /* 0x0287F9 */ s8 famicom_287F9;
-    /* 0x0287FA */ u8 _287FA[0x28838 - 0x0287FA];
-    /* 0x028838 */ s8 player_bee_swell_flag;
-    /* 0x028839 */ s8 player_bee_chase_flag;
-    /* 0x02883A */ s8 goki_shocked_flag;
-    /* 0x02883B */ u8 time_changed_flag;
-    /* 0x02883C */ s8 unable_wade;
-    /* 0x02883D */ s8 fail_emu_flag;
-    /* 0x02883E */ u8 train_coming_flag;        /* state tracker for when train is going to spawn/has spawned */
-    /* 0x02883F */ u8 train_exists_flag;        /* state tracker for when train exists */
-    /* 0x028840 */ u8 train_control_state;      /* current train state */
-    /* 0x028841 */ u8 train_last_control_state; /* previous train state */
-    /* 0x028842 */ u8 train_signal;
-    /* 0x028843 */ u8 train_day;
-    /* 0x028844 */ u8 train_action;
-    /* 0x028845 */ u8 train_timer;
-    /* 0x028848 */ u32 train_start_timer;
-    /* 0x02884C */ f32 train_speed;
-    /* 0x028850 */ xyz_t train_position;
-    /* 0x02885C */ f32 unused_02885C;
-    /* 0x028860 */ f32 unused_028860;
-    /* 0x028864 */ u16 unused_028864;
-    /* 0x028866 */ u16 unused_028866;
-    /* 0x028868 */ u8 reset_flag;
-    /* 0x028869 */ u8 reset_type;
-    /* 0x02886A */ u8 force_mail_delivery_flag;
-    /* 0x02886B */ u8 post_girl_npc_type;
-    /* 0x02886C */ xyz_t ball_pos;
-    /* 0x028878 */ u8 ball_type;
-    /* 0x028879 */ u8 auto_nwrite_count;
-    /* 0x02887A */ lbRTC_year_t auto_nwrite_year;
-    /* 0x02887C */ u8 save_error_type;        /* set to one of the mFRm_ERROR_* states when save is invalid */
-    /* 0x02887D */ u8 train_approaching_flag; /* set when the train is coming */
-    /* 0x02887E */ u8 buried_treasure_flag;   /* when set, treasure cannot be buried */
-    /* 0x02887F */ u8 spnpc_first_talk_flags;
-    /* 0x028880 */ u8 needlework_first_talk_flags;
-    /* 0x028882 */ u16 event_notification_active;
-    /* 0x028884 */ lbRTC_time_c newly_set_time; /* time set by player in time adjust menu */
-    /* 0x02888C */ lbRTC_time_c old_time;       /* time before being changed by the player */
-    /* 0x028894 */ s16 balloon_state;           /* balloon's current state */
-    /* 0x028896 */ s16 balloon_last_spawn_min;  /* last minute the balloon was spawned */
-    /* 0x028898 */ f32 balloon_spawn_percent;   /* chance that a balloon will spawn */
-    /* 0x02889C */ int tanuki_shop_status;      /* adjusted based on any current events happening to Nook's shop */
-    /* 0x0288A0 */ u8 pad_connected;            /* is gamepad 0 connected? */
-    /* 0x0288A1 */ u8 unk288A1;
-    /* 0x0288A2 */ s16 current_sound_effect;
-    /* 0x0288A4 */ u8 _288a4[0x0288C0 - 0x0288A4];
-    /* 0x0288C0 */ Island_c transfer_island; /* used when transferring islands with the GBA */
-    /* 0x02A1C0 */ Island_agb_c agb_island;  /* converted island data sent over to the GBA */
-    /* 0x02DB40 */ u8 auto_nwrite_set; /* when true, saved nwrite time will be utilized. Seems to be used to keep same
+    /* 0x00000 */ Save save;
+    /* 0x2E000 */ u8 game_started;
+    /* 0x2E001 */ u8 field_type;
+    /* 0x2E002 */ u8 field_draw_type;
+    /* 0x2E003 */ u8 player_no;
+    /* 0x2E004 */ int last_scene_no;
+    /* 0x2E008 */ int player_data_mode;
+    /* 0x2E00C */ Clip_c clip;
+    /* 0x26110 */ Time_c time;
+    /* 0x2613C */ Private_c* now_private;
+    /* 0x26140 */ mHm_hs_c* now_home;
+    /* 0x26144 */ u8 map_flag;
+    /* 0x26145 */ u8 fish_location;
+    /* 0x26146 */ u8 npc_is_summercamper;
+    /* 0x26147 */ u8 player_select_animal_no;
+    /* 0x26148 */ u8 _26148[0x2614C - 0x26148];
+    /* 0x2614C */ Transition_c transition;
+    /* 0x26150 */ s16 bg_item_type;
+    /* 0x26152 */ s16 bg_item_profile;
+    /* 0x26154 */ u8 _26154[0x26164 - 0x26154];
+    /* 0x26164 */ mNpc_NpcList_c npclist[ANIMAL_NUM_MAX + 1];
+    /* 0x264E4 */ mNpc_NpcList_c island_npclist[1]; // TODO: define for island npc count
+    /* 0x2651C */ mActor_name_t house_owner_name;
+    /* 0x2651E */ mActor_name_t last_field_id;
+    /* 0x26520 */ u8 in_initial_block; /* when TRUE, the player is in acre they exited a building. FALSE otherwise. */
+    /* 0x26521 */ u8 submenu_disabled; /* when set, submenus cannot be accessed from start button */
+    /* 0x26522 */ u8 sunlight_flag;
+    /* 0x26523 */ u8 train_flag;
+    /* 0x26522 */ Mail_c unused_mail_26522; //u8 _26524[0x26668 - 0x26524];
+    /* 0x2664E */ mActor_name_t _2664E;
+    /* 0x26650 */ mActor_name_t _26650;
+    /* 0x26652 */ Mail_nm_c unused_mail_name_26652;
+    /* 0x26668 */ mActor_name_t npc_chg_cloth;
+    /* 0x2666A */ u16 _pad_2666A; // weather data is probably a struct aligned to 4 bytes
+    /* 0x2666C */ s16 weather;
+    /* 0x2666E */ s16 weather_intensity;
+    /* 0x26670 */ lbRTC_time_c weather_time;
+    /* 0x26678 */ s_xyz wind;
+    /* 0x26680 */ f32 wind_speed;
+    /* 0x26684 */ mEv_event_common_u special_event_common;
+    /* 0x2669C */ mQst_not_saved_c quest;
+    /* 0x266A4 */ int scene_from_title_demo; /* next scene to be loaded when title demo finishes */
+    /* 0x266A8 */ mNPS_schedule_c npc_schedule[SCHEDULE_NUM];
+    /* 0x267A8 */ mNpc_walk_c npc_walk;
+    /* 0x26838 */ mNpc_EventNpc_c event_npc[mNpc_EVENT_NPC_NUM];
+    /* 0x26878 */ mNpc_MaskNpc_c mask_npc[mNpc_MASK_NPC_NUM];
+    /* 0x28528 */ int snowman_msg_id;
+    /* 0x2852C */ s16 money_power;
+    /* 0x2852E */ s16 goods_power;
+    /* 0x28530 */ Door_data_c door_data;                /* misc door data */
+    /* 0x28544 */ Door_data_c structure_exit_door_data; /* door data for when exiting a building */
+    /* 0x28558 */ mDemo_Request_c start_demo_request;
+    /* 0x28568 */ Door_data_c event_door_data;
+    /* 0x2857C */ Door_data_c famicom_emu_exit_door_data;
+    /* 0x28590 */ u8 remove_cut_tree_info_bitfield; /* resets the cut tree states for trees in a visible acre */
+    /* 0x28591 */ s8 floor_idx;
+    /* 0x28592 */ s16 demo_profiles[2]; /* demo_profiles[0] is for demo_clip, demo_profiles[1] is for demo_clip2 */
+    /* 0x28596 */ u16 copy_protect;
+    /* 0x28598 */ int event_keep_flags[4];
+    /* 0x285A8 */ u8 _285A8[0x0285BD - 0x0285A8];
+    /* 0x285BD */ s8 player_warp_request;
+    /* 0x285BE */ s8 player_actor_exists;
+    /* 0x285BF */ s8 complete_payment_type;
+    /* 0x285C0 */ s8 player_decoy_flag;
+    /* 0x285C1 */ s8 axe_damage;
+    /* 0x285C2 */ u8 make_npc2_actor;
+    /* 0x285C4 */ s16 event_id;
+    /* 0x285C6 */ u8 event_title_flags;
+    /* 0x285C7 */ u8 event_title_fade_in_progress;
+    /* 0x285C8 */ mEv_common_data_c event_common;
+    u16 resetcenter_flags;
+    int _2F6E0;
+    /* 0x287F8 */ s8 current_famicom_rom;
+    /* 0x287F9 */ s8 famicom_287F9;
+    /* 0x287FA */ u8 _287FA[0x28838 - 0x0287FA];
+    /* 0x28838 */ s8 player_bee_swell_flag;
+    /* 0x28839 */ s8 player_bee_chase_flag;
+    /* 0x2883A */ s8 goki_shocked_flag;
+    /* 0x2883B */ u8 time_changed_flag;
+    /* 0x2883C */ s8 unable_wade;
+    /* 0x2883D */ s8 fail_emu_flag;
+    /* 0x2883E */ u8 train_coming_flag;        /* state tracker for when train is going to spawn/has spawned */
+    /* 0x2883F */ u8 train_exists_flag;        /* state tracker for when train exists */
+    /* 0x28840 */ u8 train_control_state;      /* current train state */
+    /* 0x28841 */ u8 train_last_control_state; /* previous train state */
+    /* 0x28842 */ u8 train_signal;
+    /* 0x28843 */ u8 train_day;
+    /* 0x28844 */ u8 train_action;
+    /* 0x28845 */ u8 train_timer;
+    /* 0x28848 */ u32 train_start_timer;
+    /* 0x2884C */ f32 train_speed;
+    /* 0x28850 */ xyz_t train_position;
+    /* 0x2885C */ f32 unused_02885C;
+    /* 0x28860 */ f32 unused_028860;
+    /* 0x28864 */ u16 unused_028864;
+    /* 0x28866 */ u16 unused_028866;
+    /* 0x28868 */ u8 reset_flag;
+    /* 0x28869 */ u8 reset_type;
+    /* 0x2886A */ u8 force_mail_delivery_flag;
+    /* 0x2886B */ u8 post_girl_npc_type;
+    /* 0x2886C */ xyz_t ball_pos;
+    /* 0x28878 */ u8 ball_type;
+    /* 0x28879 */ u8 auto_nwrite_count;
+    /* 0x2887A */ lbRTC_year_t auto_nwrite_year;
+    /* 0x2887C */ u8 save_error_type;        /* set to one of the mFRm_ERROR_* states when save is invalid */
+    /* 0x2887D */ u8 train_approaching_flag; /* set when the train is coming */
+    /* 0x2887E */ u8 buried_treasure_flag;   /* when set, treasure cannot be buried */
+    /* 0x2887F */ u8 spnpc_first_talk_flags;
+    /* 0x28880 */ u8 needlework_first_talk_flags;
+    /* 0x28882 */ u16 event_notification_active;
+    /* 0x28884 */ lbRTC_time_c newly_set_time; /* time set by player in time adjust menu */
+    /* 0x2888C */ lbRTC_time_c old_time;       /* time before being changed by the player */
+    /* 0x28894 */ s16 balloon_state;           /* balloon's current state */
+    /* 0x28896 */ s16 balloon_last_spawn_min;  /* last minute the balloon was spawned */
+    /* 0x28898 */ f32 balloon_spawn_percent;   /* chance that a balloon will spawn */
+    /* 0x2889C */ int tanuki_shop_status;      /* adjusted based on any current events happening to Nook's shop */
+    /* 0x288A0 */ u8 pad_connected;            /* is gamepad 0 connected? */
+    /* 0x288A1 */ u8 unk288A1;
+    /* 0x288A2 */ s16 current_sound_effect;
+    // /* 0x288A4 */ u8 _288a4[0x0288C0 - 0x0288A4];
+    // /* 0x288C0 */ Island_c transfer_island; /* used when transferring islands with the GBA */
+    // /* 0x2A1C0 */ Island_agb_c agb_island;  /* converted island data sent over to the GBA */
+    /* 0x2DB40 */ u8 auto_nwrite_set; /* when true, saved nwrite time will be utilized. Seems to be used to keep same
                                           date for fishing tourney stuff. */
-    /* 0x02DB42 */ u16 select_last_select_no;
-    /* 0x02DB44 */ u16 select_last_top_no;
-    /* 0x02DB46 */ mCD_persistent_data_c travel_persistent_data; /* used for checking if travelling back to town */
-    /* 0x02DBA2 */ s16 island_weather;
-    /* 0x02DBA4 */ s16 island_weather_intensity;
-    /* 0x02DBA6 */ s16 sunburn_time;
-    /* 0x02DBA8 */ u8 memcard_slot;
-    /* 0X02DBAC */ int my_room_message_control_flags;
-    /* 0x02DBB0 */ s16 can_look_goki_count;
-    /* 0x02DBB4 */ f32 rainbow_opacity; /* current opacity of rainbow (0.0f - 1.0f) */
-    /* 0x02DBB8 */ u32 event_flags[mEv_EVENT_TYPE_NUM];
-    /* 0x02DBD4 */ const xyz_t* pluss_bridge_pos; /* position of extra bridge */
-    /* 0x02DBD8 */ lbRTC_time_c auto_nwrite_time; /* cached notice time used for fishing tourney results? */
-    /* 0x02DBE0 */ u8 rhythym_updated;
-    /* 0x02DBE1 */ u8 _2dbe1;
-    /* 0x02DBE2 */ u8 hem_visible;             /* controls farley's visiblilty during cutscene? */
-    /* 0x02DBE4 */ u8* carde_program_p;        /* pointer to current e-Reader program data */
-    /* 0x02DBE8 */ size_t carde_program_size;  /* size of current e-Reader program data */
-    /* 0x02DBEC */ int unk_nook_present_count; /* something possibly to do withhanding over password present? */
-    /* 0x02DBF0 */ u8 pad[16];
+    /* 0x2DB42 */ u16 select_last_select_no;
+    /* 0x2DB44 */ u16 select_last_top_no;
+    /* 0x2DB46 */ mCD_persistent_data_c travel_persistent_data; /* used for checking if travelling back to town */
+    /* 0x2DBA2 */ s16 island_weather;
+    /* 0x2DBA4 */ s16 island_weather_intensity;
+    /* 0x2DBA6 */ s16 sunburn_time;
+    /* 0x2DBA8 */ u8 memcard_slot;
+    /* 0X2DBAC */ int my_room_message_control_flags;
+    /* 0x2DBB0 */ s16 can_look_goki_count;
+    /* 0x2DBB4 */ f32 rainbow_opacity; /* current opacity of rainbow (0.0f - 1.0f) */
+    /* 0x2DBB8 */ u32 event_flags[mEv_EVENT_TYPE_NUM];
+    /* 0x2DBD4 */ const xyz_t* pluss_bridge_pos; /* position of extra bridge */
+    /* 0x2DBD8 */ lbRTC_time_c auto_nwrite_time; /* cached notice time used for fishing tourney results? */
+    /* 0x2DBE0 */ u8 rhythym_updated;
+    /* 0x2DBE1 */ u8 _2dbe1;
+    /* 0x2DBE2 */ u8 hem_visible;             /* controls farley's visiblilty during cutscene? */
+    /* 0x2DBE4 */ u8* carde_program_p;        /* pointer to current e-Reader program data */
+    /* 0x2DBE8 */ size_t carde_program_size;  /* size of current e-Reader program data */
+    /* 0x2DBF0 */ u8 pad[24]; // padded to add_npc_info's 32 byte alignment
+    /* 0x2F840 */ AddNpcInfo_c add_npc_info;
+    /* 0x4F4A0 */ int unk_nook_present_count; /* number of passwords redeemed */
+    /* 0x4F4A4 */ u8 shop_force_opend;
+    /* 0x4F4A5 */ u8 shop_force_open_door_flag;
+    /* 0x4F4A6 */ u8 prev_shop_force_open_door_flag;
+    /* 0x4F4A8 */ mHm_hs_c* cur_island_house_p;
+    /* 0x4F4AC */ u8 cur_kanji_lv;
+    /* 0x4F4AD */ u8 turkey_talk_flg; // set when player has spoken to Franklin
+    /* 0x4F4AE */ u16 now_md;
+    /* 0x4F4B0 */ s8 islander_start_ux; // x unit islander spawned on
+    /* 0x4F4B1 */ s8 islander_start_uz; // z unit islander spawned on
+    /* 0x4F4B2 */ u8 _4F4B2; // unused?
+    /* 0x4F4B3 */ u8 heli_se_flags;
+    /* 0x4F4B4 */ xyz_t heli_se_pos;
 } common_data_t;
 
 extern common_data_t common_data;

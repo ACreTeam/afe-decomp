@@ -63,7 +63,8 @@ enum demo_type {
     mDemo_TYPE_12,
     mDemo_TYPE_EVENTMSG,
     mDemo_TYPE_EVENTMSG2,
-    mDemo_TYPE_15,
+    mDemo_TYPE_ALARM,
+    mDemo_TYPE_16,
     mDemo_TYPE_SCROLL3,
 
     mDemo_TYPE_NUM
@@ -139,25 +140,34 @@ typedef struct demo_talk_data_s {
     u8 actor_saved_weight;
 } mDemo_talk_data_c;
 
-typedef struct demo_data_s {
-    ACTOR* speaker_actor;
-    ACTOR* listen_actor;
-    int speaker_able;
-    int listen_able;
-    u16 order_data[mDemo_ORDER_NUM][mDemo_ORDER_VALUE_MAX];
-    s8 change_player_destiny;
-    int state;
-    mDemo_Request_c current;
-    mDemo_Request_c request[mDemo_REQUEST_NUM];
-    int request_num;
-    int priority_type;
-    int camera_type;
-    int keep_camera_type;
+typedef struct demo_alarm_data_s {
+    int msg_no;
+    rgba_t window_color;
+    int start_timer;
+    int end_timer;
+    Door_data_c door_data;
+} mDemo_alarm_data_c;
 
-    union {
+typedef struct demo_data_s {
+    /* 0x000 */ ACTOR* speaker_actor;
+    /* 0x004 */ ACTOR* listen_actor;
+    /* 0x008 */ int speaker_able;
+    /* 0x00C */ int listen_able;
+    /* 0x010 */ u16 order_data[mDemo_ORDER_NUM][mDemo_ORDER_VALUE_MAX];
+    /* 0x0D8 */ s8 change_player_destiny;
+    /* 0x0DC */ int state;
+    /* 0x0E0 */ mDemo_Request_c current;
+    /* 0x0F0 */ mDemo_Request_c request[mDemo_REQUEST_NUM];
+    /* 0x2F0 */ int request_num;
+    /* 0x2F4 */ int priority_type;
+    /* 0x2F8 */ int camera_type;
+    /* 0x2FC */ int keep_camera_type;
+
+    /* 0x300 */ union {
         mDemo_door_data_c door;
         mDemo_emsg_data_c emsg;
         mDemo_talk_data_c talk;
+        mDemo_alarm_data_c alarm;
     } data;
 
     mDemo_Request_c request_save;
@@ -209,6 +219,7 @@ extern void mDemo_KeepCamera(int camera_type);
 
 #define mDemo_CAN_ACTOR_TALK(actor) (!mDemo_Check(mDemo_TYPE_SPEAK, (actor)) && !mDemo_Check(mDemo_TYPE_TALK, (actor)))
 #define mDemo_IS_ACTOR_TALKING(actor) (mDemo_Check(mDemo_TYPE_SPEAK, (actor)) == TRUE || mDemo_Check(mDemo_TYPE_TALK, (actor)) == TRUE)
+#define mDemo_CHECK_SCROLL(actor) (mDemo_Check(mDemo_TYPE_SCROLL, (actor)) || mDemo_Check(mDemo_TYPE_SCROLL2, (actor)) || mDemo_Check(mDemo_TYPE_SCROLL3, (actor)))
 
 #ifdef __cplusplus
 }

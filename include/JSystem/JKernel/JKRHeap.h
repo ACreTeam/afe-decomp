@@ -87,30 +87,27 @@ class JKRHeap : public JKRDisposer {
     bool isSubHeap(JKRHeap* heap) const;
 
     virtual ~JKRHeap();
-    virtual void callAllDisposer();
-    virtual void* do_alloc(u32, int) = 0;
-    virtual void do_free(void*) = 0;
-    virtual void do_freeAll() = 0;
-    virtual void do_freeTail() = 0;
-    virtual s32 do_resize(void*, u32) = 0;
-    virtual s32 do_getSize(void*) = 0;
-    virtual s32 do_getFreeSize() = 0;
-    virtual s32 do_getTotalFreeSize() = 0;
-    virtual u32 getHeapType() = 0;
-    virtual bool check() = 0;
-    virtual bool dump_sort() {
-        return true;
-    }
-    virtual bool dump() = 0;
-    virtual s32 do_changeGroupID(u8 newGroupID) {
-        return 0;
-    }
-    virtual u8 do_getCurrentGroupId() {
-        return 0;
-    }
-    virtual void state_register(JKRHeap::TState*, u32) const;
-    virtual bool state_compare(JKRHeap::TState const&, JKRHeap::TState const&) const;
-    virtual void state_dump(JKRHeap::TState const&) const;
+    /* vt[03] */ virtual void callAllDisposer();
+    /* vt[04] */ virtual u32 getHeapType() = 0;
+    /* vt[05] */ virtual bool check() = 0;
+    /* vt[06] */ virtual bool dump_sort();
+    /* vt[07] */ virtual bool dump() = 0;
+    /* vt[08] */ virtual void do_destroy() = 0;
+    /* vt[09] */ virtual void* do_alloc(u32 size, int alignment) = 0;
+    /* vt[10] */ virtual void do_free(void* ptr) = 0;
+    /* vt[11] */ virtual void do_freeAll() = 0;
+    /* vt[12] */ virtual void do_freeTail() = 0;
+    /* vt[13] */ virtual void do_fillFreeArea() = 0;
+    /* vt[14] */ virtual s32 do_resize(void* ptr, u32 size) = 0;
+    /* vt[15] */ virtual s32 do_getSize(void* ptr) = 0;
+    /* vt[16] */ virtual s32 do_getFreeSize() = 0;
+    /* vt[17] */ virtual void* do_getMaxFreeBlock() = 0;
+    /* vt[18] */ virtual s32 do_getTotalFreeSize() = 0;
+    /* vt[19] */ virtual s32 do_changeGroupID(u8 newGroupID) { return 0; }
+    /* vt[20] */ virtual u8 do_getCurrentGroupId() { return 0; }
+    /* vt[21] */ virtual void state_register(JKRHeap::TState* p, u32 id) const;
+    /* vt[22] */ virtual bool state_compare(JKRHeap::TState const& r1, JKRHeap::TState const& r2) const;
+    /* vt[23] */ virtual void state_dump(JKRHeap::TState const& p) const;
 
     JKRHeap* becomeSystemHeap();
     JKRHeap* becomeCurrentHeap();

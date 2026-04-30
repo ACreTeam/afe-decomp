@@ -10,12 +10,12 @@
 extern "C" {
 #endif
 
-#define MAIL_HEADER_BASE_LEN 32
+#define MAIL_HEADER_BASE_LEN 16
 #define MAIL_HEADER_LEN (MAIL_HEADER_BASE_LEN - PLAYER_NAME_LEN)
-#define MAIL_FOOTER_LEN 32
-#define MAIL_BODY_LEN 192
+#define MAIL_FOOTER_LEN 16
+#define MAIL_BODY_LEN 96
 
-#define MAIL_FOOTER2_LEN 48
+#define MAIL_FOOTER2_LEN 82
 #define MAIL_HEADER2_LEN (MAIL_FOOTER2_LEN - PLAYER_NAME_LEN)
 
 #define mMl_POSTOFFICE_GIFT_NUM 4
@@ -65,46 +65,61 @@ enum {
     mMl_TYPE_NUM
 };
 
-/* sizeof(Mail_nm_c) == 0x16 */
+/* sizeof(Mail_nm_c) == 0x12 */
 typedef struct mail_nm_s {
     /* 0x00 */ PersonalID_c personalID;
-    /* 0x14 */ u8 type;
+    /* 0x10 */ u8 type;
 } Mail_nm_c;
 
-/* sizeof(mail_header_save_s) == 0x3A */
+/* sizeof(mail_header_save_s) == 0x36 */
 typedef struct mail_header_save_s {
     /* 0x00 */ s8 header_back_start;
     /* 0x01 */ u8 unknown;
-    /* 0x02 */ u8 header[MAIL_HEADER_LEN];
-    /* 0x1A */ u8 footer[MAIL_FOOTER_LEN];
+    /* 0x02 */ u16 header[MAIL_HEADER_LEN];
+    /* 0x16 */ u16 footer[MAIL_FOOTER_LEN];
 } Mail_hs_c;
 
-/* sizeof(Mail_hdr_c) == 0x2C */
+/* sizeof(Mail_hdr_c) == 0x24 */
 typedef struct mail_header_s {
     /* 0x00 */ Mail_nm_c recipient;
-    /* 0x16 */ Mail_nm_c sender;
+    /* 0x12 */ Mail_nm_c sender;
 } Mail_hdr_c;
 
-/* sizeof(Mail_ct_c) == 0xFC */
+typedef struct mail_text_content_s {
+    /* 0x00 */ u8 header[MAIL_HEADER_LEN];
+    /* 0x0A */ u8 _0A[4];
+    /* 0x0E */ u8 body[MAIL_BODY_LEN];
+    /* 0x6E */ u8 _56[14];
+    /* 0x7C */ u8 footer[MAIL_FOOTER_LEN];
+} Mail_text_content_c;
+
+typedef union {
+    Mail_text_content_c split;
+    u8 all[0x90];
+} Mail_text_u;
+
+/* sizeof(Mail_ct_c) == 0x94 */
 typedef struct mail_content_s {
     /* 0x00 */ u8 font;
     /* 0x01 */ u8 header_back_start;
     /* 0x02 */ u8 mail_type;
     /* 0x03 */ u8 paper_type;
-    /* 0x04 */ u8 header[MAIL_HEADER_LEN];
-    /* 0x1C */ u8 body[MAIL_BODY_LEN];
-    /* 0xDC */ u8 footer[MAIL_FOOTER_LEN];
+    /* 0x04 */ Mail_text_u text;
 } Mail_ct_c;
 
-/* sizeof(Mail_c) == 0x12A */
+/* sizeof(Mail_c) == 0xBA */
 typedef struct mail_s {
     /* 0x000 */ Mail_hdr_c header;
     /* 0x02C */ mActor_name_t present;
-    /* 0x02E */ Mail_ct_c content;
+    /* 0x026 */ Mail_ct_c content;
 } Mail_c;
+
+
 
 extern int mMl_strlen(u8* str, int size, u8 end_char);
 extern int mMl_strlen2(int* found, u8* str, int size, u8 end_char);
+extern int mMl_strlenW(u16* str, int size, u16 end_char);
+extern void mMlW_clear_buf(u16* buf, int size, u16 clear_char);
 extern void mMl_clear_mail_header(Mail_hdr_c* header);
 extern void mMl_clear_mail(Mail_c* mail);
 extern void mMl_clear_mail_box(Mail_c* mail, int num);

@@ -37,6 +37,7 @@ void PSMTXConcat(const GC_Mtx A, const GC_Mtx B, GC_Mtx concat);
 
 void PSMTXTranspose(const GC_Mtx src, GC_Mtx xPose);
 u32 PSMTXInverse(const GC_Mtx src, GC_Mtx inv);
+u32 PSMTXInvXpose(const GC_Mtx src, GC_Mtx invX);
 
 void __PSMTXRotAxisRadInternal(GC_Mtx mtx, const Vec* axis, f32 sinA, f32 cosA);
 void PSMTXRotRad(GC_Mtx mtx, char axis, f32 angle);
@@ -100,6 +101,7 @@ static inline void MTXSetPosition(GC_Mtx mtx, const Vec* pos) {
 #define MTXConcat         PSMTXConcat
 #define MTXInverse        PSMTXInverse
 #define MTXTranspose      PSMTXTranspose
+#define MTXInvXpose       PSMTXInvXpose
 #define MTXIdentity       PSMTXIdentity
 #define MTXRotRad         PSMTXRotRad
 #define MTXTrans          PSMTXTrans

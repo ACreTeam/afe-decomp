@@ -207,52 +207,54 @@ typedef struct furniture_collision_s {
     f32 edge_contact_ratio; /* percentage of the xz collision in contact with edge to count as collision */
 } aFTR_collision_c;
 
+/* sizeof(FTR_ACTOR) == 0x868 */
 struct furniture_actor_s {
-    u16 name;
-    s16 ctr_type; // 0 = GAME's frame counter, 1 = GAME_PLAY's frame counter
-    int id;
-    xyz_t position;
-    xyz_t last_position;
-    xyz_t target_position;
-    int target_direction; /* direction to target position */
-    f32 player_distance;  /* distance to the player */
-    f32 angle_y;          /* current Y angle */
-    f32 angle_y_target;   /* goal Y angle */
-    s16 state;
-    u8 shape_type;          /* current size & shape (rotation) */
-    u8 original_shape_type; /* original size & shape (rotation) */
-    xyz_t base_position;
-    aFTR_collision_c edge_collision[aFTR_EDGE_COL_NUM]; /* collision for each edge */
-    s16 collision_direction;
-    int move_bg_idx;
-    mCoBG_bg_regist_c bg_register;
-    mCoBG_bg_contact_c bg_contact;
-    s16 s_angle_y; /* current Y angle but 'binangle' format */
-    f32 collision_scale;
-    u8 switch_bit;          /* furniture on/off state */
-    u8 switch_changed_flag; /* signal that the on/off state is toggled */
-    s8 haniwa_step;
-    s16 haniwa_state;
-    cKF_SkeletonInfo_R_c keyframe; /* for actor animations */
-    s_xyz joint[9];
-    s_xyz morph[9];
-    Mtx skeleton_mtx[2][12];
-    cKF_TextureAnimation_c tex_animation; /* used for texture animations like TVs */
-    xyz_t scale;
-    f32 birth_scale_modifier; /* modifies scale for "birth" animation */
-    s16 birth_anim_counter;
-    s16 birth_anim_step;
-    s16 rotation_delay_timer;
-    s16 dynamic_work_s[5]; /* reserved for any use by each unique furniture actor */
-    f32 dynamic_work_f[2]; /* reserved for any use by each unique furniture actor */
-    s16 layer;             /* layer the furniture actor resides on */
-    s16 _83E;
-    s16 demo_status; /* set when a music player is interacted with */
-    s16 dust_timer;
-    mActor_name_t items[aFTR_KEEP_ITEM_COUNT]; /* used for holding items (music players & wardrobes)  */
-    int _84C;
-    u16* pal_p; /* used for furniture actors with dynamic palettes such as the structure model items */
-    int _854;
+    /* 0x000 */ u16 name;
+    /* 0x002 */ s16 ctr_type; // 0 = GAME's frame counter, 1 = GAME_PLAY's frame counter
+    /* 0x004 */ s16 _04;
+    /* 0x008 */ int id;
+    /* 0x00C */ xyz_t position;
+    /* 0x018 */ xyz_t last_position;
+    /* 0x024 */ xyz_t target_position;
+    /* 0x030 */ int target_direction; /* direction to target position */
+    /* 0x034 */ f32 player_distance;  /* distance to the player */
+    /* 0x038 */ f32 angle_y;          /* current Y angle */
+    /* 0x03C */ f32 angle_y_target;   /* goal Y angle */
+    /* 0x040 */ s16 state;
+    /* 0x042 */ u8 shape_type;          /* current size & shape (rotation) */
+    /* 0x043 */ u8 original_shape_type; /* original size & shape (rotation) */
+    /* 0x044 */ xyz_t base_position;
+    /* 0x050 */ aFTR_collision_c edge_collision[aFTR_EDGE_COL_NUM]; /* collision for each edge */
+    /* 0x0D0 */ s16 collision_direction;
+    /* 0x0D4 */ int move_bg_idx;
+    /* 0x0D8 */ mCoBG_bg_regist_c bg_register;
+    /* 0x100 */ mCoBG_bg_contact_c bg_contact;
+    /* 0x128 */ s16 s_angle_y; /* current Y angle but 'binangle' format */
+    /* 0x12C */ f32 collision_scale;
+    /* 0x130 */ u8 switch_bit;          /* furniture on/off state */
+    /* 0x131 */ u8 switch_changed_flag; /* signal that the on/off state is toggled */
+    /* 0x132 */ s8 haniwa_step;
+    /* 0x134 */ s16 haniwa_state;
+    /* 0x138 */ cKF_SkeletonInfo_R_c keyframe; /* for actor animations */
+    /* 0x1A8 */ s_xyz joint[9];
+    /* 0x1DE */ s_xyz morph[9];
+    /* 0x218 */ Mtx skeleton_mtx[2][12];
+    /* 0x818 */ cKF_TextureAnimation_c tex_animation; /* used for texture animations like TVs */
+    /* 0x81C */ xyz_t scale;
+    /* 0x828 */ f32 birth_scale_modifier; /* modifies scale for "birth" animation */
+    /* 0x82C */ s16 birth_anim_counter;
+    /* 0x82E */ s16 birth_anim_step;
+    /* 0x830 */ s16 rotation_delay_timer;
+    /* 0x832 */ s16 dynamic_work_s[5]; /* reserved for any use by each unique furniture actor */
+    /* 0x83C */ f32 dynamic_work_f[4]; /* reserved for any use by each unique furniture actor */
+    /* 0x84C */ s16 layer;             /* layer the furniture actor resides on */
+    /* 0x84E */ s16 _84E;
+    /* 0x850 */ s16 demo_status; /* set when a music player is interacted with */
+    /* 0x852 */ s16 dust_timer;
+    /* 0x854 */ mActor_name_t items[aFTR_KEEP_ITEM_COUNT]; /* used for holding items (music players & wardrobes)  */
+    /* 0x85C */ int _85C;
+    /* 0x860 */ u16* pal_p; /* used for furniture actors with dynamic palettes such as the structure model items */
+    /* 0x864 */ int _864;
 };
 
 #ifdef __cplusplus

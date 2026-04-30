@@ -1,0 +1,691 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#endif
+
+extern aNPC_Animation_c cKF_ba_r_npc_1_run1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk_ki1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk_do1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk_ai1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_ki1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_do1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_ai1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_nemu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aisatu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aisatu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aisatu3;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aisatu4;
+extern aNPC_Animation_c cKF_ba_r_npc_1_guratuku1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_otiru1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_otiru2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_mogaku1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_deru1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_deru2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_open1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_go_out1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_umb_open1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_umb_close1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_transfer1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_trans_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_pull1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_pull_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_putaway1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_eat1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_change1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_return1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_transfer_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_trans_wait_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_pull_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_pull_wait_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_putaway_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_get_return_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_estimate_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_contract1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_contract2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_contract3;
+extern aNPC_Animation_c cKF_ba_r_npc_1_not_contract1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_fly1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_flyaway1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_delivery1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kyoro1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_landing1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_landing2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_landing3;
+extern aNPC_Animation_c cKF_ba_r_npc_1_open_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sitdown_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sitdown_wait_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_standup_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_open_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_to_deck_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_keitai_on1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_keitai_talk1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_keitai_talk2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_keitai_off1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_e1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ensou_e1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_banzai1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_clap1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kokkuri_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kokkuri_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_saisen1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_omairi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sitdown_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sitdown_drink1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sitdown_clap1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_dance1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kuisinbo1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_sanbasi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_appear1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_go_ug1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_intro1_a;
+extern aNPC_Animation_c cKF_ba_r_npc_1_intro1_b;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou3_a;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou3_b;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou4_a;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou4_b;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou5_a;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou5_b;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou6_a;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou6_b;
+extern aNPC_Animation_c cKF_ba_r_npc_1_taisou7;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kiduku1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kiduku2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_cracker_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_cracker_fire1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_cracker_run1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_cracker_count1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_warmup1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ready1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_asihumi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kokeru1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kokeru_getup1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tired1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tamakome1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_youi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_don1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tunahiki_aiko1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tunahiki_yuri1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tunahiki_furi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hatafuri1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tamahiroi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tamanage1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_getup_seg1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_getup_wait_seg1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_piku_seg1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_4haku_e1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_3haku_e1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_send_mail1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_turi_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_misin1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wipkogu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wipwait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wipwait2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gstwait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gyafun1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gyafun2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tkykyoro1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muka1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muka2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gaaan1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gaaan2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_punpun1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_punpun2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_buruburu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_buruburu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_goukyu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_goukyu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hirameki1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hirameki2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hyuuu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hyuuu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_lovelove1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_lovelove2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_otikomu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_otikomu2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_shituren1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_shituren2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_warudakumi1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_warudakumi2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_neboke1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_neboke2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_love1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_love2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_niko1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_musu1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_komari1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_lovelove_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_lovelove_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile_f2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_komari_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_niko_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_musu_f1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_happy_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_aseru_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_muuuuu_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_love_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_love_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_shituren_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_shituren_i2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_komari_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_niko_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_musu_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_smile_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gaaan_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gaaan_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hirameki_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hirameki_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_musu_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_niko_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_komari_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_d1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hate_d2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_punpun_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_punpun_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_musu_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hyuuu_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_hyuuu_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a2_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_akireru_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_akireru_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_matarou_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_matarou_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gekido_r1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_gekido_r2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_e1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_ha_e2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_keirei1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kieeeei1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kieeeei2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_umbrella1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_utiwa_wait1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_tue1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kutipaku1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_kutipaku2;
+extern aNPC_Animation_c cKF_ba_r_npc_1_walk_sick1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_wait_sick1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_nomikaku1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_presentopen1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_i1;
+extern aNPC_Animation_c cKF_ba_r_npc_1_a_i2;
+
+// clang-format off
+static aNPC_anim_info_c aNPC_animeTable[aNPC_ANIM_NUM] = {
+    {&cKF_ba_r_npc_1_run1, aNPC_ANIM_RUN1},
+    {&cKF_ba_r_npc_1_walk1, aNPC_ANIM_WALK1},
+    {&cKF_ba_r_npc_1_walk_ki1, aNPC_ANIM_WALK_KI1},
+    {&cKF_ba_r_npc_1_walk_do1, aNPC_ANIM_WALK_DO1},
+    {&cKF_ba_r_npc_1_walk_ai1, aNPC_ANIM_WALK_AI1},
+    {&cKF_ba_r_npc_1_walk_sick1, aNPC_ANIM_WALK_SICK1},
+    {&cKF_ba_r_npc_1_wait1, aNPC_ANIM_WAIT1},
+    {&cKF_ba_r_npc_1_wait_ki1, aNPC_ANIM_WAIT_KI1},
+    {&cKF_ba_r_npc_1_wait_do1, aNPC_ANIM_WAIT_DO1},
+    {&cKF_ba_r_npc_1_wait_ai1, aNPC_ANIM_WAIT_AI1},
+    {&cKF_ba_r_npc_1_wait_nemu1, aNPC_ANIM_WAIT_NEMU1},
+    {&cKF_ba_r_npc_1_wait_sick1, aNPC_ANIM_WAIT_SICK1},
+    {&cKF_ba_r_npc_1_aisatu1, aNPC_ANIM_AISATU1},
+    {&cKF_ba_r_npc_1_aisatu2, aNPC_ANIM_AISATU2},
+    {&cKF_ba_r_npc_1_aisatu3, aNPC_ANIM_AISATU3},
+    {&cKF_ba_r_npc_1_aisatu4, aNPC_ANIM_AISATU4},
+    {&cKF_ba_r_npc_1_guratuku1, aNPC_ANIM_GURATUKU1},
+    {&cKF_ba_r_npc_1_otiru1, aNPC_ANIM_OTIRU1},
+    {&cKF_ba_r_npc_1_otiru2, aNPC_ANIM_OTIRU2},
+    {&cKF_ba_r_npc_1_mogaku1, aNPC_ANIM_MOGAKU1},
+    {&cKF_ba_r_npc_1_deru1, aNPC_ANIM_DERU1},
+    {&cKF_ba_r_npc_1_deru2, aNPC_ANIM_DERU2},
+    {&cKF_ba_r_npc_1_walk1, aNPC_ANIM_TALK_TURN1},
+    {&cKF_ba_r_npc_1_wait1, aNPC_ANIM_TALK1},
+    {&cKF_ba_r_npc_1_open1, aNPC_ANIM_OPEN1},
+    {&cKF_ba_r_npc_1_go_out1, aNPC_ANIM_GO_OUT1},
+    {&cKF_ba_r_npc_1_umb_open1, aNPC_ANIM_UMB_OPEN1},
+    {&cKF_ba_r_npc_1_umb_close1, aNPC_ANIM_UMB_CLOSE1},
+    {&cKF_ba_r_npc_1_transfer1, aNPC_ANIM_TRANSFER1},
+    {&cKF_ba_r_npc_1_trans_wait1, aNPC_ANIM_TRANS_WAIT1},
+    {&cKF_ba_r_npc_1_get1, aNPC_ANIM_GET1},
+    {&cKF_ba_r_npc_1_get_pull1, aNPC_ANIM_GET_PULL1},
+    {&cKF_ba_r_npc_1_get_pull_wait1, aNPC_ANIM_GET_PULL_WAIT1},
+    {&cKF_ba_r_npc_1_get_putaway1, aNPC_ANIM_GET_PUTAWAY1},
+    {&cKF_ba_r_npc_1_get_eat1, aNPC_ANIM_GET_EAT1},
+    {&cKF_ba_r_npc_1_get_change1, aNPC_ANIM_GET_CHANGE1},
+    {&cKF_ba_r_npc_1_get_return1, aNPC_ANIM_GET_RETURN1},
+    {&cKF_ba_r_npc_1_transfer_f1, aNPC_ANIM_TRANSFER_F1},
+    {&cKF_ba_r_npc_1_trans_wait_f1, aNPC_ANIM_TRANS_WAIT_F1},
+    {&cKF_ba_r_npc_1_get_f1, aNPC_ANIM_GET_F1},
+    {&cKF_ba_r_npc_1_get_pull_f1, aNPC_ANIM_GET_PULL_F1},
+    {&cKF_ba_r_npc_1_get_pull_wait_f1, aNPC_ANIM_GET_PULL_WAIT_F1},
+    {&cKF_ba_r_npc_1_get_putaway_f1, aNPC_ANIM_GET_PUTAWAY_F1},
+    {&cKF_ba_r_npc_1_get_return_f1, aNPC_ANIM_GET_RETURN_F1},
+    {&cKF_ba_r_npc_1_estimate_f1, aNPC_ANIM_ESTIMATE_F1},
+    {&cKF_ba_r_npc_1_contract1, aNPC_ANIM_CONTRACT1},
+    {&cKF_ba_r_npc_1_contract2, aNPC_ANIM_CONTRACT2},
+    {&cKF_ba_r_npc_1_contract3, aNPC_ANIM_CONTRACT3},
+    {&cKF_ba_r_npc_1_not_contract1, aNPC_ANIM_NOT_CONTRACT1},
+    {&cKF_ba_r_npc_1_presentopen1, aNPC_ANIM_PRESENTOPEN1},
+    {&cKF_ba_r_npc_1_fly1, aNPC_ANIM_FLY1},
+    {&cKF_ba_r_npc_1_flyaway1, aNPC_ANIM_FLYAWAY1},
+    {&cKF_ba_r_npc_1_delivery1, aNPC_ANIM_DELIVERY1},
+    {&cKF_ba_r_npc_1_kyoro1, aNPC_ANIM_KYORO1},
+    {&cKF_ba_r_npc_1_landing1, aNPC_ANIM_LANDING1},
+    {&cKF_ba_r_npc_1_landing2, aNPC_ANIM_LANDING2},
+    {&cKF_ba_r_npc_1_landing3, aNPC_ANIM_LANDING3},
+    {&cKF_ba_r_npc_1_open_d1, aNPC_ANIM_OPEN_D1},
+    {&cKF_ba_r_npc_1_sitdown_d1, aNPC_ANIM_SITDOWN_D1},
+    {&cKF_ba_r_npc_1_sitdown_wait_d1, aNPC_ANIM_SITDOWN_WAIT_D1},
+    {&cKF_ba_r_npc_1_standup_d1, aNPC_ANIM_STANDUP_D1},
+    {&cKF_ba_r_npc_1_open_d2, aNPC_ANIM_OPEN_D2},
+    {&cKF_ba_r_npc_1_to_deck_d1, aNPC_ANIM_TO_DECK_D1},
+    {&cKF_ba_r_npc_1_keitai_on1, aNPC_ANIM_KEITAI_ON1},
+    {&cKF_ba_r_npc_1_keitai_talk1, aNPC_ANIM_KEITAI_TALK1},
+    {&cKF_ba_r_npc_1_keitai_talk2, aNPC_ANIM_KEITAI_TALK2},
+    {&cKF_ba_r_npc_1_keitai_off1, aNPC_ANIM_KEITAI_OFF1},
+    {&cKF_ba_r_npc_1_wait_e1, aNPC_ANIM_WAIT_E1},
+    {&cKF_ba_r_npc_1_ensou_e1, aNPC_ANIM_ENSOU_E1},
+    {&cKF_ba_r_npc_1_banzai1, aNPC_ANIM_BANZAI1},
+    {&cKF_ba_r_npc_1_clap1, aNPC_ANIM_CLAP1},
+    {&cKF_ba_r_npc_1_kokkuri_d1, aNPC_ANIM_KOKKURI_D1},
+    {&cKF_ba_r_npc_1_kokkuri_d2, aNPC_ANIM_KOKKURI_D2},
+    {&cKF_ba_r_npc_1_saisen1, aNPC_ANIM_SAISEN1},
+    {&cKF_ba_r_npc_1_omairi1, aNPC_ANIM_OMAIRI1},
+    {&cKF_ba_r_npc_1_sitdown_wait1, aNPC_ANIM_SITDOWN_WAIT1},
+    {&cKF_ba_r_npc_1_sitdown_drink1, aNPC_ANIM_SITDOWN_DRINK1},
+    {&cKF_ba_r_npc_1_sitdown_clap1, aNPC_ANIM_SITDOWN_CLAP1},
+    {&cKF_ba_r_npc_1_dance1, aNPC_ANIM_DANCE1},
+    {&cKF_ba_r_npc_1_kuisinbo1, aNPC_ANIM_KUISINBO1},
+    {&cKF_ba_r_npc_1_sanbasi1, aNPC_ANIM_SANBASI1},
+    {&cKF_ba_r_npc_1_wait_r1, aNPC_ANIM_WAIT_R1},
+    {&cKF_ba_r_npc_1_appear1, aNPC_ANIM_APPEAR1},
+    {&cKF_ba_r_npc_1_go_ug1, aNPC_ANIM_GO_UG1},
+    {&cKF_ba_r_npc_1_intro1_a, aNPC_ANIM_INTRO1_A},
+    {&cKF_ba_r_npc_1_intro1_b, aNPC_ANIM_INTRO1_B},
+    {&cKF_ba_r_npc_1_taisou1, aNPC_ANIM_TAISOU1},
+    {&cKF_ba_r_npc_1_taisou2, aNPC_ANIM_TAISOU2},
+    {&cKF_ba_r_npc_1_taisou3_a, aNPC_ANIM_TAISOU3_A},
+    {&cKF_ba_r_npc_1_taisou3_b, aNPC_ANIM_TAISOU3_B},
+    {&cKF_ba_r_npc_1_taisou4_a, aNPC_ANIM_TAISOU4_A},
+    {&cKF_ba_r_npc_1_taisou4_b, aNPC_ANIM_TAISOU4_B},
+    {&cKF_ba_r_npc_1_taisou5_a, aNPC_ANIM_TAISOU5_A},
+    {&cKF_ba_r_npc_1_taisou5_b, aNPC_ANIM_TAISOU5_B},
+    {&cKF_ba_r_npc_1_taisou6_a, aNPC_ANIM_TAISOU6_A},
+    {&cKF_ba_r_npc_1_taisou6_b, aNPC_ANIM_TAISOU6_B},
+    {&cKF_ba_r_npc_1_taisou7, aNPC_ANIM_TAISOU7},
+    {&cKF_ba_r_npc_1_kiduku1, aNPC_ANIM_KIDUKU1},
+    {&cKF_ba_r_npc_1_kiduku2, aNPC_ANIM_KIDUKU2},
+    {&cKF_ba_r_npc_1_cracker_wait1, aNPC_ANIM_CRACKER_WAIT1},
+    {&cKF_ba_r_npc_1_cracker_fire1, aNPC_ANIM_CRACKER_FIRE1},
+    {&cKF_ba_r_npc_1_cracker_run1, aNPC_ANIM_CRACKER_RUN1},
+    {&cKF_ba_r_npc_1_cracker_count1, aNPC_ANIM_CRACKER_COUNT1},
+    {&cKF_ba_r_npc_1_warmup1, aNPC_ANIM_WARMUP1},
+    {&cKF_ba_r_npc_1_ready1, aNPC_ANIM_READY1},
+    {&cKF_ba_r_npc_1_asihumi1, aNPC_ANIM_ASIHUMI1},
+    {&cKF_ba_r_npc_1_kokeru1, aNPC_ANIM_KOKERU1},
+    {&cKF_ba_r_npc_1_kokeru_getup1, aNPC_ANIM_KOKERU_GETUP1},
+    {&cKF_ba_r_npc_1_tired1, aNPC_ANIM_TIRED1},
+    {&cKF_ba_r_npc_1_tamakome1, aNPC_ANIM_TAMAKOME1},
+    {&cKF_ba_r_npc_1_youi1, aNPC_ANIM_YOUI1},
+    {&cKF_ba_r_npc_1_don1, aNPC_ANIM_DON1},
+    {&cKF_ba_r_npc_1_tunahiki_aiko1, aNPC_ANIM_TUNAHIKI_AIKO1},
+    {&cKF_ba_r_npc_1_tunahiki_yuri1, aNPC_ANIM_TUNAHIKI_YURI1},
+    {&cKF_ba_r_npc_1_tunahiki_furi1, aNPC_ANIM_TUNAHIKI_FURI1},
+    {&cKF_ba_r_npc_1_hatafuri1, aNPC_ANIM_HATAFURI1},
+    {&cKF_ba_r_npc_1_tamahiroi1, aNPC_ANIM_TAMAHIROI1},
+    {&cKF_ba_r_npc_1_tamanage1, aNPC_ANIM_TAMANAGE1},
+    {&cKF_ba_r_npc_1_getup_seg1, aNPC_ANIM_GETUP_SEG1},
+    {&cKF_ba_r_npc_1_getup_wait_seg1, aNPC_ANIM_GETUP_WAIT_SEG1},
+    {&cKF_ba_r_npc_1_piku_seg1, aNPC_ANIM_PIKU_SEG1},
+    {&cKF_ba_r_npc_1_4haku_e1, aNPC_ANIM_4HAKU_E1},
+    {&cKF_ba_r_npc_1_3haku_e1, aNPC_ANIM_3HAKU_E1},
+    {&cKF_ba_r_npc_1_send_mail1, aNPC_ANIM_SEND_MAIL1},
+    {&cKF_ba_r_npc_1_turi_wait1, aNPC_ANIM_TURI_WAIT1},
+    {&cKF_ba_r_npc_1_misin1, aNPC_ANIM_MISIN1},
+    {&cKF_ba_r_npc_1_wipkogu1, aNPC_ANIM_WIPKOGU1},
+    {&cKF_ba_r_npc_1_wipwait1, aNPC_ANIM_WIPWAIT1},
+    {&cKF_ba_r_npc_1_wipwait2, aNPC_ANIM_WIPWAIT2},
+    {&cKF_ba_r_npc_1_gstwait1, aNPC_ANIM_GSTWAIT1},
+    {&cKF_ba_r_npc_1_gyafun1, aNPC_ANIM_GYAFUN1},
+    {&cKF_ba_r_npc_1_gyafun2, aNPC_ANIM_GYAFUN2},
+    {&cKF_ba_r_npc_1_tkykyoro1, aNPC_ANIM_TKYKYORO1},
+    {&cKF_ba_r_npc_1_muka1, aNPC_ANIM_MUKA1},
+    {&cKF_ba_r_npc_1_muka2, aNPC_ANIM_MUKA2},
+    {&cKF_ba_r_npc_1_gaaan1, aNPC_ANIM_GAAAN1},
+    {&cKF_ba_r_npc_1_gaaan2, aNPC_ANIM_GAAAN2},
+    {&cKF_ba_r_npc_1_smile1, aNPC_ANIM_SMILE1},
+    {&cKF_ba_r_npc_1_smile2, aNPC_ANIM_SMILE2},
+    {&cKF_ba_r_npc_1_ha1, aNPC_ANIM_HA1},
+    {&cKF_ba_r_npc_1_ha2, aNPC_ANIM_HA2},
+    {&cKF_ba_r_npc_1_punpun1, aNPC_ANIM_PUNPUN1},
+    {&cKF_ba_r_npc_1_punpun2, aNPC_ANIM_PUNPUN2},
+    {&cKF_ba_r_npc_1_a1, aNPC_ANIM_A1},
+    {&cKF_ba_r_npc_1_a2, aNPC_ANIM_A2},
+    {&cKF_ba_r_npc_1_aseru1, aNPC_ANIM_ASERU1},
+    {&cKF_ba_r_npc_1_aseru2, aNPC_ANIM_ASERU2},
+    {&cKF_ba_r_npc_1_buruburu1, aNPC_ANIM_BURUBURU1},
+    {&cKF_ba_r_npc_1_buruburu2, aNPC_ANIM_BURUBURU2},
+    {&cKF_ba_r_npc_1_goukyu1, aNPC_ANIM_GOUKYU1},
+    {&cKF_ba_r_npc_1_goukyu2, aNPC_ANIM_GOUKYU2},
+    {&cKF_ba_r_npc_1_happy1, aNPC_ANIM_HAPPY1},
+    {&cKF_ba_r_npc_1_happy2, aNPC_ANIM_HAPPY2},
+    {&cKF_ba_r_npc_1_hate1, aNPC_ANIM_HATE1},
+    {&cKF_ba_r_npc_1_hate2, aNPC_ANIM_HATE2},
+    {&cKF_ba_r_npc_1_hirameki1, aNPC_ANIM_HIRAMEKI1},
+    {&cKF_ba_r_npc_1_hirameki2, aNPC_ANIM_HIRAMEKI2},
+    {&cKF_ba_r_npc_1_hyuuu1, aNPC_ANIM_HYUUU1},
+    {&cKF_ba_r_npc_1_hyuuu2, aNPC_ANIM_HYUUU2},
+    {&cKF_ba_r_npc_1_lovelove1, aNPC_ANIM_LOVELOVE1},
+    {&cKF_ba_r_npc_1_lovelove2, aNPC_ANIM_LOVELOVE2},
+    {&cKF_ba_r_npc_1_muuuuu1, aNPC_ANIM_MUUUUU1},
+    {&cKF_ba_r_npc_1_muuuuu2, aNPC_ANIM_MUUUUU2},
+    {&cKF_ba_r_npc_1_otikomu1, aNPC_ANIM_OTIKOMU1},
+    {&cKF_ba_r_npc_1_otikomu2, aNPC_ANIM_OTIKOMU2},
+    {&cKF_ba_r_npc_1_shituren1, aNPC_ANIM_SHITUREN1},
+    {&cKF_ba_r_npc_1_shituren2, aNPC_ANIM_SHITUREN2},
+    {&cKF_ba_r_npc_1_warudakumi1, aNPC_ANIM_WARUDAKUMI1},
+    {&cKF_ba_r_npc_1_warudakumi2, aNPC_ANIM_WARUDAKUMI2},
+    {&cKF_ba_r_npc_1_neboke1, aNPC_ANIM_NEBOKE1},
+    {&cKF_ba_r_npc_1_neboke2, aNPC_ANIM_NEBOKE2},
+    {&cKF_ba_r_npc_1_love1, aNPC_ANIM_LOVE1},
+    {&cKF_ba_r_npc_1_love2, aNPC_ANIM_LOVE2},
+    {&cKF_ba_r_npc_1_niko1, aNPC_ANIM_NIKO1},
+    {&cKF_ba_r_npc_1_musu1, aNPC_ANIM_MUSU1},
+    {&cKF_ba_r_npc_1_komari1, aNPC_ANIM_KOMARI1},
+    {&cKF_ba_r_npc_1_hate_f1, aNPC_ANIM_HATE_F1},
+    {&cKF_ba_r_npc_1_hate_f2, aNPC_ANIM_HATE_F2},
+    {&cKF_ba_r_npc_1_ha_f1, aNPC_ANIM_HA_F1},
+    {&cKF_ba_r_npc_1_ha_f2, aNPC_ANIM_HA_F2},
+    {&cKF_ba_r_npc_1_happy_f1, aNPC_ANIM_HAPPY_F1},
+    {&cKF_ba_r_npc_1_happy_f2, aNPC_ANIM_HAPPY_F2},
+    {&cKF_ba_r_npc_1_aseru_f1, aNPC_ANIM_ASERU_F1},
+    {&cKF_ba_r_npc_1_aseru_f2, aNPC_ANIM_ASERU_F2},
+    {&cKF_ba_r_npc_1_muuuuu_f1, aNPC_ANIM_MUUUUU_F1},
+    {&cKF_ba_r_npc_1_muuuuu_f2, aNPC_ANIM_MUUUUU_F2},
+    {&cKF_ba_r_npc_1_lovelove_f1, aNPC_ANIM_LOVELOVE_F1},
+    {&cKF_ba_r_npc_1_lovelove_f2, aNPC_ANIM_LOVELOVE_F2},
+    {&cKF_ba_r_npc_1_a_f1, aNPC_ANIM_A_F1},
+    {&cKF_ba_r_npc_1_a_f2, aNPC_ANIM_A_F2},
+    {&cKF_ba_r_npc_1_smile_f1, aNPC_ANIM_SMILE_F1},
+    {&cKF_ba_r_npc_1_smile_f2, aNPC_ANIM_SMILE_F2},
+    {&cKF_ba_r_npc_1_komari_f1, aNPC_ANIM_KOMARI_F1},
+    {&cKF_ba_r_npc_1_niko_f1, aNPC_ANIM_NIKO_F1},
+    {&cKF_ba_r_npc_1_musu_f1, aNPC_ANIM_MUSU_F1},
+    {&cKF_ba_r_npc_1_hate_i1, aNPC_ANIM_HATE_I1},
+    {&cKF_ba_r_npc_1_hate_i2, aNPC_ANIM_HATE_I2},
+    {&cKF_ba_r_npc_1_ha_i1, aNPC_ANIM_HA_I1},
+    {&cKF_ba_r_npc_1_ha_i2, aNPC_ANIM_HA_I2},
+    {&cKF_ba_r_npc_1_a_i1, aNPC_ANIM_A_I1},
+    {&cKF_ba_r_npc_1_a_i2, aNPC_ANIM_A_I2},
+    {&cKF_ba_r_npc_1_happy_i1, aNPC_ANIM_HAPPY_I1},
+    {&cKF_ba_r_npc_1_happy_i2, aNPC_ANIM_HAPPY_I2},
+    {&cKF_ba_r_npc_1_aseru_i1, aNPC_ANIM_ASERU_I1},
+    {&cKF_ba_r_npc_1_aseru_i2, aNPC_ANIM_ASERU_I2},
+    {&cKF_ba_r_npc_1_muuuuu_i1, aNPC_ANIM_MUUUUU_I1},
+    {&cKF_ba_r_npc_1_muuuuu_i2, aNPC_ANIM_MUUUUU_I2},
+    {&cKF_ba_r_npc_1_love_i1, aNPC_ANIM_LOVE_I1},
+    {&cKF_ba_r_npc_1_love_i2, aNPC_ANIM_LOVE_I2},
+    {&cKF_ba_r_npc_1_shituren_i1, aNPC_ANIM_SHITUREN_I1},
+    {&cKF_ba_r_npc_1_shituren_i2, aNPC_ANIM_SHITUREN_I2},
+    {&cKF_ba_r_npc_1_komari_i1, aNPC_ANIM_KOMARI_I1},
+    {&cKF_ba_r_npc_1_niko_i1, aNPC_ANIM_NIKO_I1},
+    {&cKF_ba_r_npc_1_musu_i1, aNPC_ANIM_MUSU_I1},
+    {&cKF_ba_r_npc_1_smile_d1, aNPC_ANIM_SMILE_D1},
+    {&cKF_ba_r_npc_1_smile_d2, aNPC_ANIM_SMILE_D2},
+    {&cKF_ba_r_npc_1_gaaan_d1, aNPC_ANIM_GAAAN_D1},
+    {&cKF_ba_r_npc_1_gaaan_d2, aNPC_ANIM_GAAAN_D2},
+    {&cKF_ba_r_npc_1_hirameki_d1, aNPC_ANIM_HIRAMEKI_D1},
+    {&cKF_ba_r_npc_1_hirameki_d2, aNPC_ANIM_HIRAMEKI_D2},
+    {&cKF_ba_r_npc_1_ha_d1, aNPC_ANIM_HA_D1},
+    {&cKF_ba_r_npc_1_ha_d2, aNPC_ANIM_HA_D2},
+    {&cKF_ba_r_npc_1_musu_d1, aNPC_ANIM_MUSU_D1},
+    {&cKF_ba_r_npc_1_niko_d1, aNPC_ANIM_NIKO_D1},
+    {&cKF_ba_r_npc_1_komari_d1, aNPC_ANIM_KOMARI_D1},
+    {&cKF_ba_r_npc_1_hate_d1, aNPC_ANIM_HATE_D1},
+    {&cKF_ba_r_npc_1_hate_d2, aNPC_ANIM_HATE_D2},
+    {&cKF_ba_r_npc_1_punpun_r1, aNPC_ANIM_PUNPUN_R1},
+    {&cKF_ba_r_npc_1_punpun_r2, aNPC_ANIM_PUNPUN_R2},
+    {&cKF_ba_r_npc_1_musu_r1, aNPC_ANIM_MUSU_R1},
+    {&cKF_ba_r_npc_1_hyuuu_r1, aNPC_ANIM_HYUUU_R1},
+    {&cKF_ba_r_npc_1_hyuuu_r2, aNPC_ANIM_HYUUU_R2},
+    {&cKF_ba_r_npc_1_a_r1, aNPC_ANIM_A_R1},
+    {&cKF_ba_r_npc_1_a_r2, aNPC_ANIM_A_R2},
+    {&cKF_ba_r_npc_1_a2_r1, aNPC_ANIM_A2_R1},
+    {&cKF_ba_r_npc_1_akireru_r1, aNPC_ANIM_AKIRERU_R1},
+    {&cKF_ba_r_npc_1_akireru_r2, aNPC_ANIM_AKIRERU_R2},
+    {&cKF_ba_r_npc_1_matarou_r1, aNPC_ANIM_MATAROU_R1},
+    {&cKF_ba_r_npc_1_matarou_r2, aNPC_ANIM_MATAROU_R2},
+    {&cKF_ba_r_npc_1_gekido_r1, aNPC_ANIM_GEKIDO_R1},
+    {&cKF_ba_r_npc_1_gekido_r2, aNPC_ANIM_GEKIDO_R2},
+    {&cKF_ba_r_npc_1_ha_e1, aNPC_ANIM_HA_E1},
+    {&cKF_ba_r_npc_1_ha_e2, aNPC_ANIM_HA_E2},
+    {&cKF_ba_r_npc_1_keirei1, aNPC_ANIM_KEIREI1},
+    {&cKF_ba_r_npc_1_kieeeei1, aNPC_ANIM_KIEEEEI1},
+    {&cKF_ba_r_npc_1_kieeeei2, aNPC_ANIM_KIEEEEI2},
+    {&cKF_ba_r_npc_1_umbrella1, aNPC_ANIM_UMBRELLA1},
+    {&cKF_ba_r_npc_1_utiwa_wait1, aNPC_ANIM_UTIWA_WAIT1},
+    {&cKF_ba_r_npc_1_tue1, aNPC_ANIM_TUE1},
+    {&cKF_ba_r_npc_1_nomikaku1, aNPC_ANIM_NOMIKAKU1},
+    {&cKF_ba_r_npc_1_kutipaku1, aNPC_ANIM_KUTIPAKU1},
+    {&cKF_ba_r_npc_1_kutipaku2, aNPC_ANIM_KUTIPAKU2},
+};
+// clang-format on
+
+#ifndef aNPC_NPC2
+// clang-format off
+static s16 aNPC_animeSeqNoTable[] = {
+    aNPC_ANIM_WAIT1,
+    aNPC_ANIM_WAIT_KI1,
+    aNPC_ANIM_WAIT_DO1,
+    aNPC_ANIM_WAIT_AI1,
+    aNPC_ANIM_WAIT_NEMU1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_WALK_KI1,
+    aNPC_ANIM_WALK_DO1,
+    aNPC_ANIM_WALK_AI1,
+    aNPC_ANIM_RUN1,
+    aNPC_ANIM_WALK_KI1,
+    aNPC_ANIM_WALK_DO1,
+    aNPC_ANIM_WALK_AI1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_WAIT1,
+    aNPC_ANIM_WAIT1,
+    aNPC_ANIM_AISATU1,
+    aNPC_ANIM_AISATU2,
+    aNPC_ANIM_AISATU3,
+    aNPC_ANIM_AISATU4,
+    aNPC_ANIM_GURATUKU1,
+    aNPC_ANIM_OTIRU1,
+    aNPC_ANIM_OTIRU2,
+    aNPC_ANIM_MOGAKU1,
+    aNPC_ANIM_DERU1,
+    aNPC_ANIM_DERU2,
+    aNPC_ANIM_TALK_TURN1,
+    aNPC_ANIM_TALK1,
+    aNPC_ANIM_OPEN1,
+    aNPC_ANIM_GO_OUT1,
+    aNPC_ANIM_UMB_OPEN1,
+    aNPC_ANIM_UMB_CLOSE1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_TRANSFER1,
+    aNPC_ANIM_TRANS_WAIT1,
+    aNPC_ANIM_TRANSFER_F1,
+    aNPC_ANIM_TRANS_WAIT_F1,
+    aNPC_ANIM_SEND_MAIL1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_GET1,
+    aNPC_ANIM_GET_PULL1,
+    aNPC_ANIM_GET_PULL_WAIT1,
+    aNPC_ANIM_GET_PUTAWAY1,
+    aNPC_ANIM_GET_EAT1,
+    aNPC_ANIM_GET_CHANGE1,
+    aNPC_ANIM_GET_RETURN1,
+    aNPC_ANIM_GET_F1,
+    aNPC_ANIM_GET_PULL_F1,
+    aNPC_ANIM_GET_PULL_WAIT_F1,
+    aNPC_ANIM_GET_PUTAWAY_F1,
+    aNPC_ANIM_GET_RETURN_F1,
+    aNPC_ANIM_ESTIMATE_F1,
+    aNPC_ANIM_ENSOU_E1,
+    aNPC_ANIM_WAIT_E1,
+    aNPC_ANIM_GYAFUN1,
+    aNPC_ANIM_GYAFUN2,
+    aNPC_ANIM_CLAP1,
+};
+// clang-format on
+#else
+// clang-format off
+static s16 aNPC_animeSeqNoTable[] = {
+    aNPC_ANIM_WAIT1,
+    aNPC_ANIM_WAIT_KI1,
+    aNPC_ANIM_WAIT_DO1,
+    aNPC_ANIM_WAIT_AI1,
+    aNPC_ANIM_WAIT_NEMU1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_WALK_KI1,
+    aNPC_ANIM_WALK_DO1,
+    aNPC_ANIM_WALK_AI1,
+    aNPC_ANIM_RUN1,
+    aNPC_ANIM_WALK_KI1,
+    aNPC_ANIM_WALK_DO1,
+    aNPC_ANIM_WALK_AI1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_WAIT1,
+    aNPC_ANIM_TALK_TURN1,
+    aNPC_ANIM_TALK1,
+    aNPC_ANIM_KEITAI_ON1,
+    aNPC_ANIM_KEITAI_OFF1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_TRANSFER1,
+    aNPC_ANIM_TRANS_WAIT1,
+    aNPC_ANIM_SEND_MAIL1,
+    aNPC_ANIM_WALK1,
+    aNPC_ANIM_GET1,
+    aNPC_ANIM_GET_PULL1,
+    aNPC_ANIM_GET_PULL_WAIT1,
+    aNPC_ANIM_GET_PUTAWAY1,
+    aNPC_ANIM_GET_EAT1,
+    aNPC_ANIM_GET_CHANGE1,
+    aNPC_ANIM_GET_RETURN1,
+    aNPC_ANIM_GET_F1,
+    aNPC_ANIM_GET_PULL_F1,
+    aNPC_ANIM_GET_PULL_WAIT_F1,
+    aNPC_ANIM_GET_PUTAWAY_F1,
+    aNPC_ANIM_GET_RETURN_F1,
+    aNPC_ANIM_ESTIMATE_F1,
+    aNPC_ANIM_CONTRACT1,
+    aNPC_ANIM_CONTRACT2,
+    aNPC_ANIM_CONTRACT3,
+    aNPC_ANIM_NOT_CONTRACT1,
+    aNPC_ANIM_4HAKU_E1,
+    aNPC_ANIM_WAIT_E1,
+};
+// clang-format on
+#endif
+
+static s16 aNPC_sub_animeSeqNoTable[] = { -1, aNPC_ANIM_UMBRELLA1, aNPC_ANIM_UTIWA_WAIT1, aNPC_ANIM_TUE1 };
+
+// clang-format off
+static ClObjPipeData_c aNPC_CoInfoData = {
+    { 0x39, 0x20, 1 },
+    { 0x01 },
+    { 20, 30, 0, { 0, 0, 0 } },
+};
+// clang-format on
+
+// clang-format off
+static StatusData_c aNPC_StatusData = {
+    0,
+    20,
+    30,
+    0,
+    50,
+};
+// clang-format on
+
+static s8 aNPC_part_tbl00[aNPC_JOINT_NUM + 1] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static s8 aNPC_part_tbl01[aNPC_JOINT_NUM + 1] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00,
+};
+
+static s8 aNPC_part_tbl10[aNPC_JOINT_NUM + 1] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static s8 aNPC_part_tbl11[aNPC_JOINT_NUM + 1] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x00, 0x02, 0x02, 0x00, 0x00,
+};
+
+// clang-format off
+static s8* aNPC_part_tbl[][2] = {
+    {aNPC_part_tbl00, aNPC_part_tbl01},
+    {aNPC_part_tbl10, aNPC_part_tbl11},
+};
+// clang-format on
+
+// clang-format off
+static aNPC_spd_c aNPC_spd_data[] = {
+    { 0.0f, 0.0f, 0.0f },
+    { 1.0f, 0.1f, 0.2f },
+    { 3.0f, 0.3f, 0.6f },
+};
+// clang-format on
+
+// clang-format off
+static int aNPC_uzai_feel[] = {
+    mNpc_FEEL_UZAI_0,
+    mNpc_FEEL_UZAI_1,
+    mNpc_FEEL_UZAI_0,
+    mNpc_FEEL_UZAI_1,
+    mNpc_FEEL_UZAI_1,
+    mNpc_FEEL_UZAI_1,
+};
+// clang-format on

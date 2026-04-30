@@ -25,6 +25,8 @@ extern "C" {
 #define mCD_SAVE_DATA_OFS 0x1440
 #define mCD_LAND_PROTECT_CODE_MAGIC0 0x3C1C
 
+#define mCD_SD_FILE_NAME_SAVE_SIZE 8
+
 enum {
     mCD_SLOT_A,
     mCD_SLOT_B,
@@ -318,6 +320,10 @@ extern int mCD_SaveHome_bg(int param_1, int* chan);
 
 extern int mCD_save_data_aram_to_main(void* dst, u32 size, u32 idx);
 extern int mCD_save_data_main_to_aram(void* src, u32 size, u32 idx);
+
+extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size);
+extern void mCD_SD_static_clear(void);
+extern int mCD_castingoff_mura_chk(void);
 
 #ifdef __cplusplus
 }

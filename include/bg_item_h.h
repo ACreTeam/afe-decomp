@@ -9,6 +9,13 @@
 extern "C" {
 #endif
 
+enum {
+    bIT_SHADOW_TYPE_HARD,
+    bIT_SHADOW_TYPE_SOFT,
+
+    bIT_SHADOW_TYPE_NUM
+};
+
 typedef struct background_item_shadow_s {
     u32 vtx_num;
     u8* vtx_fix_flags;

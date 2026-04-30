@@ -17,6 +17,7 @@ extern void zelda_free(void*);
 extern void zelda_GetFreeArena(size_t* max, size_t* free, size_t* alloc);
 extern size_t zelda_GetTotalFreeSize(void);
 extern size_t zelda_GetMemBlockSize(void*);
+extern int zelda_CheckArena(void);
 extern void zelda_InitArena(void*, size_t);
 extern void zelda_AddBlockArena(void*, size_t);
 extern void zelda_CleanupArena(void);

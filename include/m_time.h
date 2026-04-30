@@ -87,6 +87,7 @@ extern void mTM_time();
 extern void mTM_time_init();
 
 extern const lbRTC_time_c mTM_rtcTime_clear_code;
+extern const lbRTC_time_c mTM_rtcTime_zero_code;
 extern const lbRTC_ymd_c mTM_rtcTime_ymd_clear_code;
 extern const lbRTC_time_c mTM_rtcTime_default_code;
 

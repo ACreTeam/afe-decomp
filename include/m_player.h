@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #define mPlayer_DEBT0 17400  /* Buy house */
+#define mPlayer_DEBT0_MOVED_IN 18800  /* Moved in from DnM+ town */
 #define mPlayer_DEBT1 148000 /* 1st upgrade main floor */
 #define mPlayer_DEBT2 398000 /* 2nd upgrade main floor */
 #define mPlayer_DEBT3 49800  /* Basement */
@@ -118,6 +119,7 @@ enum {
     mPlayer_INDEX_OUTDOOR,
     mPlayer_INDEX_INVADE,
     mPlayer_INDEX_HOLD,
+    mPlayer_INDEX_HOLD_LOCK, // e+
     mPlayer_INDEX_PUSH,
     mPlayer_INDEX_PULL,
     mPlayer_INDEX_ROTATE_FURNITURE,
@@ -210,6 +212,7 @@ enum {
     mPlayer_INDEX_SWING_FAN,
     mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE,
     mPlayer_INDEX_RADIO_EXERCISE,
+    mPlayer_INDEX_PULL_CRACKER, // e+
     mPlayer_INDEX_DEMO_GETON_BOAT,
     mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN,
     mPlayer_INDEX_DEMO_GETON_BOAT_WAIT,
@@ -219,6 +222,10 @@ enum {
     mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM,
     mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2,
     mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT,
+    mPlayer_INDEX_PICKUP_FLOWER, // e+
+    mPlayer_INDEX_READY_SECRETBASE, // e+
+    mPlayer_INDEX_FALL_SECRETBASE, // e+
+    mPlayer_INDEX_STRUGGLE_SECRETBASE, // e+
 
     mPlayer_INDEX_NUM
 };
@@ -438,6 +445,10 @@ enum {
     mPlayer_ANIM_TAISOU7_1,
     mPlayer_ANIM_TAISOU7_2,
     mPlayer_ANIM_OMAIRI_US1,
+    mPlayer_ANIM_CRACKER_FIRE1,
+    mPlayer_ANIM_CRACKER_WAIT1,
+    mPlayer_ANIM_HANA_PICKUP1,
+    mPlayer_ANIM_HANA_WAIT1,
 
     mPlayer_ANIM_NUM
 };
@@ -467,6 +478,8 @@ enum {
     mPlayer_ITEM_MAIN_BALLOON_NORMAL,
     mPlayer_ITEM_MAIN_WINDMILL_NORMAL,
     mPlayer_ITEM_MAIN_FAN_NORMAL,
+    mPlayer_ITEM_MAIN_CRACKER_NORMAL,
+    mPlayer_ITEM_MAIN_FLOWER_NORMAL,
 
     mPlayer_ITEM_MAIN_NUM,
 };
@@ -563,7 +576,20 @@ enum {
     mPlayer_ITEM_KIND_FLOWER_FAN,
     mPlayer_ITEM_KIND_LEAF_FAN,
 
-    mPlayer_ITEM_KIND_NUM /* Are there more? */
+    mPlayer_ITEM_KIND_CRACKER,
+
+    mPlayer_ITEM_KIND_FLOWER01,
+    mPlayer_ITEM_KIND_FLOWER02,
+    mPlayer_ITEM_KIND_FLOWER03,
+    mPlayer_ITEM_KIND_FLOWER04,
+    mPlayer_ITEM_KIND_FLOWER05,
+    mPlayer_ITEM_KIND_FLOWER06,
+    mPlayer_ITEM_KIND_FLOWER07,
+    mPlayer_ITEM_KIND_FLOWER08,
+    mPlayer_ITEM_KIND_FLOWER09,
+    mPlayer_ITEM_KIND_FLOWER10,
+
+    mPlayer_ITEM_KIND_NUM
 };
 
 #define mPlayer_ITEM_KIND_NONE -1
@@ -582,9 +608,13 @@ enum {
     mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_YELLOW_PINWHEEL, mPlayer_ITEM_KIND_FANCY_PINWHEEL)
 #define mPlayer_ITEM_IS_FAN(kind) \
     mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_BLUEBELL_FAN, mPlayer_ITEM_KIND_LEAF_FAN)
+#define mPlayer_ITEM_IS_FLOWER(kind) \
+    mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_FLOWER01, mPlayer_ITEM_KIND_FLOWER10)
+#define mPlayer_ITEM_IS_CRACKER(kind) \
+    mPlayer_ITEM_KIND_CHECK(kind, mPlayer_ITEM_KIND_CRACKER, mPlayer_ITEM_KIND_CRACKER)
 #define mPlayer_ITEM_IS_NOT_TOOL(kind)                                                                    \
     (mPlayer_ITEM_IS_UMBRELLA(kind) || mPlayer_ITEM_IS_BALLOON(kind) || mPlayer_ITEM_IS_WINDMILL(kind) || \
-     mPlayer_ITEM_IS_FAN(kind))
+     mPlayer_ITEM_IS_FAN(kind) || mPlayer_ITEM_IS_CRACKER(kind) || mPlayer_ITEM_IS_FLOWER(kind))
 
 #define mPlayer_ITEM_KIND_VALID(kind) (mPlayer_ITEM_KIND_CHECK(kind, 0, mPlayer_ITEM_KIND_NUM))
 
@@ -645,6 +675,19 @@ enum {
     mPlayer_ITEM_DATA_FAN6, // model
     mPlayer_ITEM_DATA_FAN7, // model
     mPlayer_ITEM_DATA_FAN8, // model
+
+    mPlayer_ITEM_DATA_CRACKER,
+
+    mPlayer_ITEM_DATA_FLOWER01,
+    mPlayer_ITEM_DATA_FLOWER02,
+    mPlayer_ITEM_DATA_FLOWER03,
+    mPlayer_ITEM_DATA_FLOWER04,
+    mPlayer_ITEM_DATA_FLOWER05,
+    mPlayer_ITEM_DATA_FLOWER06,
+    mPlayer_ITEM_DATA_FLOWER07,
+    mPlayer_ITEM_DATA_FLOWER08,
+    mPlayer_ITEM_DATA_FLOWER09,
+    mPlayer_ITEM_DATA_FLOWER10, // Jacob's Ladder
 
     mPlayer_ITEM_DATA_NUM
 };
@@ -2078,7 +2121,7 @@ typedef struct player_eye_pattern_s {
     s16 timer;
 } mPlayer_eye_pattern_c;
 
-/* sizeof(struct player_actor_s) == 0x13A8 */
+/* sizeof(struct player_actor_s) == 0x13C0 */
 struct player_actor_s {
     /* 0x0000 */ ACTOR actor_class;
     /* 0x0174 */ cKF_SkeletonInfo_R_c keyframe0;
@@ -2142,170 +2185,170 @@ struct player_actor_s {
     /* 0x0F24 */ u32 item_net_catch_label_request_force;
     /* 0x0F28 */ s8 item_net_catch_type_request_force;
     /* 0x0F2C */ int item_net_catch_insect_idx;
-#if VERSION >= VER_GAFU01_00
     /* 0x0F30 */ xyz_t item_net_catch_correct_pos;
     /* 0x0F3C */ int item_net_catch_correct_pos_set;
-#endif
-    /* 0x0F30 */ ACTOR* fishing_rod_actor_p;
-    /* 0x0F34 */ xyz_t item_rod_top_pos;
-    /* 0x0F40 */ xyz_t item_rod_virtual_top_pos;
-    /* 0x0F4C */ int item_rod_top_pos_set;
-    /* 0x0F50 */ s16 item_rod_angle_z;
-    /* 0x0F54 */ ClObjTris_c item_axe_tris;
-    /* 0x0F68 */ ClObjTrisElem_c item_axe_tris_elem_tbl[1];
-    /* 0x0FAC */ ClObjTris_c item_net_tris;
-    /* 0x0FC0 */ ClObjTrisElem_c item_net_tris_elem_tbl[1];
-    /* 0x1004 */ xyz_t scoop_pos;
-    /* 0x1010 */ ClObjPipe_c col_pipe;
-    /* 0x102C */ xyz_t head_pos;
-    /* 0x1038 */ xyz_t feel_pos;
-    /* 0x1044 */ xyz_t right_hand_pos;
-    /* 0x1050 */ xyz_t right_hand_move;
-    /* 0x105C */ xyz_t left_hand_pos;
-    /* 0x1068 */ MtxF right_hand_mtx;
-    /* 0x10A8 */ MtxF left_hand_mtx;
-    /* 0x10E8 */ xyz_t right_foot_pos;
-    /* 0x10F4 */ xyz_t left_foot_pos;
-    /* 0x1100 */ s_xyz right_foot_angle;
-    /* 0x1106 */ s_xyz left_foot_angle;
-    /* 0x110C */ int draw_effect_idx; // subtract 1 for the effect id
-    /* 0x1110 */ s8 part_table[mPlayer_JOINT_NUM + 1];
-    /* 0x112B */ s8 item_kind;
-    /* 0x112C */ int item_matrix_set;
-    /* 0x1130 */ xyz_t net_start_pos;
-    /* 0x113C */ xyz_t net_end_pos;
-    /* 0x1148 */ xyz_t other_item_start_pos;
-    /* 0x1154 */ xyz_t other_item_end_pos;
-    /* 0x1160 */ f32 other_item_move_dist;
-    /* 0x1164 */ s_xyz windmill_param;
-    /* 0x116A */ s_xyz windmill_angle;
-    /* 0x1170 */ int balloon_start_pos_set_flag;
-    /* 0x1174 */ ACTOR* balloon_actor;
-    /* 0x1178 */ s16 balloon_lean_angle;
-    /* 0x117A */ s_xyz balloon_angle;
-    /* 0x1180 */ f32 balloon_add_rot_z;
-    /* 0x1184 */ f32 balloon_anim_max_frame;
-    /* 0x1188 */ f32 balloon_anim_speed;
-    /* 0x118C */ int balloon_stop_movement_flag;
-    /* 0x1190 */ s16 ballon_add_rot_x;
-    /* 0x1192 */ s16 balloon_add_rot_x_counter;
-    /* 0x1194 */ f32 balloon_current_frame;
-    /* 0x1198 */ s8 address_able_display;
-    /* 0x119A */ s_xyz head_angle;
-    /* 0x11A0 */ xyz_t force_position;
-    /* 0x11AC */ s_xyz force_angle;
-    /* 0x11B2 */ u8 force_position_angle_flag;
-    /* 0x11B4 */ f32 shake_tree_timer[3];
-    /* 0x11C0 */ int shake_tree_ut_x[3];
-    /* 0x11CC */ int shake_tree_ut_z[3];
-    /* 0x11D8 */ int shake_tree_little[3];
-    /* 0x11E4 */ xyz_t pitfall_pos;
-    /* 0x11F0 */ int pitfall_flag;
-    /* 0x11F4 */ f32 ripple_timer;
-    /* 0x11F8 */ s8 ripple_foot_idx; // == 0: left, != 0: right
-    /* 0x11F9 */ s8 bgm_volume_mode;
-    /* 0x11FC */ int crash_snowball_for_wade;
-    /* 0x1200 */ xyz_t snowball_dist;
-    /* 0x120C */ int request_wade_dir;
-    /* 0x1210 */ u16 cancel_wade_timer;
-    /* 0x1214 */ int excute_cancel_wade;
-    /* 0x1218 */ f32 geton_boat_wade_border_start;
-    /* 0x121C */ u16 player_frame_counter;
-    /* 0x121E */ s8 bee_chase_bgm_flag;
-    /* 0x121F */ s8 status_for_bee;
-    /* 0x1220 */ u32 able_force_speak_label;
-    /* 0x1224 */ int player_sunburn_rankup;
-    /* 0x1228 */ int player_sunburn_rankdown;
-    /* 0x122C */ s8 radio_exercise_command_ring_buffer[mPlayer_RADIO_EXERCISE_COMMAND_RING_BUFFER_SIZE];
-    /* 0x1234 */ s8 radio_exercise_ring_buffer_cmd_timer;
-    /* 0x1238 */ int radio_exercise_command_ring_buffer_index;
-    /* 0x123C */ int radio_exercise_continue_cmd_idx;
-    /* 0x1240 */ f32 radio_exercise_cmd_timer;
-    /* 0x1244 */ u32 old_sound_frame_counter;
-    /* 0x1248 */ s16 boat_angleZ;
-    /* 0x124C */ int change_color_request;
-    /* 0x1250 */ int change_color_flag;
-    /* 0x1254 */ f32 change_color_timer;
-    /* 0x1258 */ int change_color_rgb[3];
-    /* 0x1264 */ int change_color_near;
-    /* 0x1268 */ int change_color_far;
-    /* 0x126C */ int refuse_pickup_knife_fork_flag;
-    /* 0x1270 */ int (*request_main_invade_all_proc)(GAME*, int);
-    /* 0x1274 */ int (*request_main_refuse_all_proc)(GAME*, int);
-    /* 0x1278 */ int (*request_main_return_demo_all_proc)(GAME*, int, f32, int);
-    /* 0x127C */ int (*request_main_wait_all_proc)(GAME*, f32, f32, int, int);
-    /* 0x1280 */ int (*request_main_talk_all_proc)(GAME*, ACTOR*, int, f32, int, int);
-    /* 0x1284 */ int (*request_main_hold_all_proc)(GAME*, int, int, const xyz_t*, f32, int, int);
-    /* 0x1288 */ int (*request_main_recieve_wait_all_proc)(GAME*, ACTOR*, int, int, mActor_name_t, int, int);
-    /* 0x128C */ int (*request_main_give_all_proc)(GAME*, ACTOR*, int, int, mActor_name_t, int, int, int, int);
-    /* 0x1290 */ int (*request_main_sitdown_all_proc)(GAME*, int, const xyz_t*, int, int);
-    /* 0x1294 */ int (*request_main_close_furniture_all_proc)(GAME*, int);
-    /* 0x1298 */ int (*request_main_lie_bed_all_proc)(GAME*, int, const xyz_t*, int, int, int);
-    /* 0x129C */ int (*request_main_hide_all_proc)(GAME*, int);
-    /* 0x12A0 */ int (*request_main_groundhog_proc)(GAME*, int);
-    /* 0x12A4 */ int (*request_main_door_all_proc)(GAME*, const xyz_t*, s16, int, void*, int);
-    /* 0x12A8 */ int (*request_main_outdoor_all_proc)(GAME*, int, int, int);
-    /* 0x12AC */ int (*request_main_wash_car_all_proc)(GAME*, const xyz_t*, const xyz_t*, s16, ACTOR*, int);
-    /* 0x12B0 */ int (*request_main_rotate_octagon_all_proc)(GAME*, ACTOR*, int, int, const xyz_t*, s16, int);
-    /* 0x12B4 */ int (*request_main_throw_money_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12B8 */ int (*request_main_pray_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12BC */ int (*request_main_mail_jump_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12C0 */ int (*request_main_demo_wait_all_proc)(GAME*, int, void*, int);
-    /* 0x12C4 */ int (*request_main_demo_walk_all_proc)(GAME*, f32, f32, f32, int, int);
-    /* 0x12C8 */ int (*request_main_demo_geton_train_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12CC */ int (*request_main_demo_getoff_train_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12D0 */ int (*request_main_demo_standing_train_all_proc)(GAME*, int);
-    /* 0x12D4 */ int (*request_main_stung_bee_all_proc)(GAME*, int);
-    /* 0x12D8 */ int (*request_main_shock_all_proc)(GAME*, f32, s16, s8, int, int);
-    /* 0x12DC */ int (*request_main_change_cloth_forNPC_proc)(GAME*, mActor_name_t, u16, int);
-    /* 0x12E0 */ int (*request_main_push_snowball_all_proc)(GAME*, void*, int, int);
-    /* 0x12E4 */ int (*request_main_stung_mosquito_all_proc)(GAME*, void*, int);
-    /* 0x12E8 */ int (*request_main_switch_on_lighthouse_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12EC */ int (*request_main_demo_geton_boat_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12F0 */ int (*request_main_demo_getoff_boat_standup_all_proc)(GAME*, const xyz_t*, s16, int);
-    /* 0x12F4 */ int (*request_main_demo_get_golden_item2_all_proc)(GAME*, int, int);
-    /* 0x12F8 */ int (*request_main_demo_get_golden_axe_wait_all_proc)(GAME*, int);
-    /* 0x12FC */ int (*check_request_main_priority_proc)(GAME*, int);
-    /* 0x1300 */ void* (*get_door_label_proc)(GAME*);
-    /* 0x1304 */ int (*Set_Item_net_catch_request_table_proc)(ACTOR*, GAME*, u32, s8, const xyz_t*, f32);
-    /* 0x1308 */ f32 (*Get_Item_net_catch_swing_timer_proc)(ACTOR*, GAME*);
-    /* 0x130C */ int (*Set_Item_net_catch_request_force_proc)(ACTOR*, GAME*, u32, s8);
-    /* 0x1310 */ void (*Set_force_position_angle_proc)(GAME*, const xyz_t*, const s_xyz*, u8);
-    /* 0x1314 */ u8 (*Get_force_position_angle_proc)(GAME*, xyz_t*, s_xyz*);
-    /* 0x1318 */ int (*Get_WadeEndPos_proc)(GAME*, xyz_t*);
-    /* 0x131C */ int (*Check_Label_main_push_snowball_proc)(GAME*, void*);
-    /* 0x1320 */ int (*SetParam_for_push_snowball_proc)(GAME*, const xyz_t*, s16, f32);
-    /* 0x1324 */ int (*able_submenu_request_main_index_proc)(GAME*);
-    /* 0x1328 */ int (*check_able_change_camera_normal_index_proc)(ACTOR*);
-    /* 0x132C */ int (*Check_able_force_speak_label_proc)(GAME*, void*);
-    /* 0x1330 */ int (*check_cancel_request_change_proc_index_proc)(int);
-    /* 0x1334 */ u32 (*Get_item_net_catch_label_proc)(ACTOR*);
-    /* 0x1338 */ int (*Change_item_net_catch_label_proc)(ACTOR*, u32, s8);
-    /* 0x133C */ int (*Check_StopNet_proc)(ACTOR*, xyz_t*);
-    /* 0x1340 */ int (*Check_HitAxe_proc)(ACTOR*, xyz_t*);
-    /* 0x1344 */ int (*Check_VibUnit_OneFrame_proc)(ACTOR*, const xyz_t*);
-    /* 0x1348 */ int (*Check_HitScoop_proc)(ACTOR*, xyz_t*);
-    /* 0x134C */ int (*Check_DigScoop_proc)(ACTOR*, xyz_t*);
-    /* 0x1350 */ int (*check_request_change_item_proc)(GAME*);
-    /* 0x1354 */ int (*Check_RotateOctagon_proc)(GAME*);
-    /* 0x1358 */ int (*Check_end_stung_bee_proc)(ACTOR*);
-    /* 0x135C */ int (*Get_status_for_bee_proc)(ACTOR*);
-    /* 0x1360 */ int (*Set_ScrollDemo_forWade_snowball_proc)(ACTOR*, int, const xyz_t*);
-    /* 0x1364 */ int (*Check_tree_shaken_proc)(ACTOR*, const xyz_t*);
-    /* 0x1368 */ int (*Check_tree_shaken_little_proc)(ACTOR*, const xyz_t*);
-    /* 0x136C */ int (*Check_tree_shaken_big_proc)(ACTOR*, const xyz_t*);
-    /* 0x1370 */ int (*Check_Label_main_wade_snowball_proc)(GAME*, void*);
-    /* 0x1374 */ int (*GetSnowballPos_forWadeSnowball_proc)(ACTOR*, xyz_t*);
-    /* 0x1378 */ int (*CheckCondition_forWadeSnowball_proc)(GAME*, const xyz_t*, s16);
-    /* 0x137C */ mActor_name_t (*Get_itemNo_forWindow_proc)(ACTOR*);
-    /* 0x1380 */ int (*check_cancel_event_without_priority_proc)(GAME*);
-    /* 0x1384 */ int (*CheckScene_AbleSubmenu_proc)();
-    /* 0x1388 */ int (*Check_stung_mosquito_proc)(GAME*, void*);
-    /* 0x138C */ int a_btn_pressed;
-    /* 0x1390 */ int a_btn_triggers_submenu;
-    /* 0x1394 */ mActor_name_t item_in_front; /* item directly in front of the player */
-    /* 0x1398 */ xyz_t forward_ut_pos;        /* wpos of unit in front of player */
-    /* 0x13A4 */ s8 update_scene_bg_mode;
+    /* 0x0F40 */ ACTOR* fishing_rod_actor_p;
+    /* 0x0F44 */ xyz_t item_rod_top_pos;
+    /* 0x0F50 */ xyz_t item_rod_virtual_top_pos;
+    /* 0x0F5C */ int item_rod_top_pos_set;
+    /* 0x0F60 */ s16 item_rod_angle_z;
+    /* 0x0F64 */ ClObjTris_c item_axe_tris;
+    /* 0x0F78 */ ClObjTrisElem_c item_axe_tris_elem_tbl[1];
+    /* 0x0FBC */ ClObjTris_c item_net_tris;
+    /* 0x0FD0 */ ClObjTrisElem_c item_net_tris_elem_tbl[1];
+    /* 0x1014 */ xyz_t scoop_pos;
+    /* 0x1020 */ ClObjPipe_c col_pipe;
+    /* 0x103C */ xyz_t head_pos;
+    /* 0x1048 */ xyz_t feel_pos;
+    /* 0x1054 */ xyz_t right_hand_pos;
+    /* 0x1060 */ xyz_t right_hand_move;
+    /* 0x106C */ xyz_t left_hand_pos;
+    /* 0x1078 */ MtxF right_hand_mtx;
+    /* 0x10B8 */ MtxF left_hand_mtx;
+    /* 0x10F8 */ xyz_t right_foot_pos;
+    /* 0x1104 */ xyz_t left_foot_pos;
+    /* 0x1110 */ s_xyz right_foot_angle;
+    /* 0x1116 */ s_xyz left_foot_angle;
+    /* 0x111C */ int draw_effect_idx; // subtract 1 for the effect id
+    /* 0x1120 */ s16 draw_effect_arg1;
+    /* 0x1122 */ s8 part_table[mPlayer_JOINT_NUM + 1];
+    /* 0x113D */ s8 item_kind;
+    /* 0x1140 */ int item_matrix_set;
+    /* 0x1144 */ xyz_t net_start_pos;
+    /* 0x1150 */ xyz_t net_end_pos;
+    /* 0x115C */ xyz_t other_item_start_pos;
+    /* 0x1168 */ xyz_t other_item_end_pos;
+    /* 0x1174 */ f32 other_item_move_dist;
+    /* 0x1178 */ s_xyz windmill_param;
+    /* 0x117E */ s_xyz windmill_angle;
+    /* 0x1184 */ int balloon_start_pos_set_flag;
+    /* 0x1188 */ ACTOR* balloon_actor;
+    /* 0x118C */ s16 balloon_lean_angle;
+    /* 0x118E */ s_xyz balloon_angle;
+    /* 0x1194 */ f32 balloon_add_rot_z;
+    /* 0x1198 */ f32 balloon_anim_max_frame;
+    /* 0x119C */ f32 balloon_anim_speed;
+    /* 0x11A0 */ int balloon_stop_movement_flag;
+    /* 0x11A4 */ s16 ballon_add_rot_x;
+    /* 0x11A6 */ s16 balloon_add_rot_x_counter;
+    /* 0x11A8 */ f32 balloon_current_frame;
+    /* 0x11AC */ s8 address_able_display;
+    /* 0x11AE */ s_xyz head_angle;
+    /* 0x11B4 */ xyz_t force_position;
+    /* 0x11C0 */ s_xyz force_angle;
+    /* 0x11C6 */ u8 force_position_angle_flag;
+    /* 0x11C8 */ f32 shake_tree_timer[3];
+    /* 0x11D4 */ int shake_tree_ut_x[3];
+    /* 0x11E0 */ int shake_tree_ut_z[3];
+    /* 0x11EC */ int shake_tree_little[3];
+    /* 0x11F8 */ xyz_t pitfall_pos;
+    /* 0x1204 */ int pitfall_flag;
+    /* 0x1208 */ f32 ripple_timer;
+    /* 0x120C */ s8 ripple_foot_idx; // == 0: left, != 0: right
+    /* 0x120D */ s8 bgm_volume_mode;
+    /* 0x1210 */ int crash_snowball_for_wade;
+    /* 0x1214 */ xyz_t snowball_dist;
+    /* 0x1220 */ int request_wade_dir;
+    /* 0x1224 */ u16 cancel_wade_timer;
+    /* 0x1228 */ int excute_cancel_wade;
+    /* 0x122C */ f32 geton_boat_wade_border_start;
+    /* 0x1230 */ u16 player_frame_counter;
+    /* 0x1232 */ s8 bee_chase_bgm_flag;
+    /* 0x1233 */ s8 status_for_bee;
+    /* 0x1234 */ u32 able_force_speak_label;
+    /* 0x1238 */ int player_sunburn_rankup;
+    /* 0x123C */ int player_sunburn_rankdown;
+    /* 0x1240 */ s8 radio_exercise_command_ring_buffer[mPlayer_RADIO_EXERCISE_COMMAND_RING_BUFFER_SIZE];
+    /* 0x1248 */ s8 radio_exercise_ring_buffer_cmd_timer;
+    /* 0x124C */ int radio_exercise_command_ring_buffer_index;
+    /* 0x1250 */ int radio_exercise_continue_cmd_idx;
+    /* 0x1254 */ f32 radio_exercise_cmd_timer;
+    /* 0x1258 */ u32 old_sound_frame_counter;
+    /* 0x125C */ s16 boat_angleZ;
+    /* 0x1260 */ int change_color_request;
+    /* 0x1264 */ int change_color_flag;
+    /* 0x1268 */ f32 change_color_timer;
+    /* 0x126C */ int change_color_rgb[3];
+    /* 0x1278 */ int change_color_near;
+    /* 0x127C */ int change_color_far;
+    /* 0x1280 */ int refuse_pickup_knife_fork_flag;
+    /* 0x1284 */ int (*request_main_invade_all_proc)(GAME*, int);
+    /* 0x1288 */ int (*request_main_refuse_all_proc)(GAME*, int);
+    /* 0x128C */ int (*request_main_return_demo_all_proc)(GAME*, int, f32, int);
+    /* 0x1290 */ int (*request_main_wait_all_proc)(GAME*, f32, f32, int, int);
+    /* 0x1294 */ int (*request_main_talk_all_proc)(GAME*, ACTOR*, int, f32, int, int);
+    /* 0x1298 */ int (*request_main_hold_all_proc)(GAME*, int, int, const xyz_t*, f32, int, int);
+    /* 0x129C */ int (*request_main_recieve_wait_all_proc)(GAME*, ACTOR*, int, int, mActor_name_t, int, int);
+    /* 0x12A0 */ int (*request_main_give_all_proc)(GAME*, ACTOR*, int, int, mActor_name_t, int, int, int, int);
+    /* 0x12A4 */ int (*request_main_sitdown_all_proc)(GAME*, int, const xyz_t*, int, int);
+    /* 0x12A8 */ int (*request_main_close_furniture_all_proc)(GAME*, int);
+    /* 0x12AC */ int (*request_main_lie_bed_all_proc)(GAME*, int, const xyz_t*, int, int, int);
+    /* 0x12B0 */ int (*request_main_hide_all_proc)(GAME*, int);
+    /* 0x12B4 */ int (*request_main_groundhog_proc)(GAME*, int);
+    /* 0x12B8 */ int (*request_main_door_all_proc)(GAME*, const xyz_t*, s16, int, void*, int);
+    /* 0x12BC */ int (*request_main_outdoor_all_proc)(GAME*, int, int, int);
+    /* 0x12C0 */ int (*request_main_wash_car_all_proc)(GAME*, const xyz_t*, const xyz_t*, s16, ACTOR*, int);
+    /* 0x12C4 */ int (*request_main_rotate_octagon_all_proc)(GAME*, ACTOR*, int, int, const xyz_t*, s16, int);
+    /* 0x12C8 */ int (*request_main_throw_money_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x12CC */ int (*request_main_pray_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x12D0 */ int (*request_main_mail_jump_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x12D4 */ int (*request_main_demo_wait_all_proc)(GAME*, int, void*, int);
+    /* 0x12D8 */ int (*request_main_demo_walk_all_proc)(GAME*, f32, f32, f32, int, int);
+    /* 0x12DC */ int (*request_main_demo_geton_train_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x12E0 */ int (*request_main_demo_getoff_train_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x12E4 */ int (*request_main_demo_standing_train_all_proc)(GAME*, int);
+    /* 0x12E8 */ int (*request_main_stung_bee_all_proc)(GAME*, int);
+    /* 0x12EC */ int (*request_main_shock_all_proc)(GAME*, f32, s16, s8, int, int);
+    /* 0x12F0 */ int (*request_main_change_cloth_forNPC_proc)(GAME*, mActor_name_t, u16, int);
+    /* 0x12F4 */ int (*request_main_push_snowball_all_proc)(GAME*, void*, int, int);
+    /* 0x12F8 */ int (*request_main_stung_mosquito_all_proc)(GAME*, void*, int);
+    /* 0x12FC */ int (*request_main_switch_on_lighthouse_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x1300 */ int (*request_main_demo_geton_boat_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x1304 */ int (*request_main_demo_getoff_boat_standup_all_proc)(GAME*, const xyz_t*, s16, int);
+    /* 0x1308 */ int (*request_main_demo_get_golden_item2_all_proc)(GAME*, int, int);
+    /* 0x130C */ int (*request_main_demo_get_golden_axe_wait_all_proc)(GAME*, int);
+    /* 0x1310 */ int (*check_request_main_priority_proc)(GAME*, int);
+    /* 0x1314 */ void* (*get_door_label_proc)(GAME*);
+    /* 0x1318 */ int (*Set_Item_net_catch_request_table_proc)(ACTOR*, GAME*, u32, s8, const xyz_t*, f32);
+    /* 0x131C */ f32 (*Get_Item_net_catch_swing_timer_proc)(ACTOR*, GAME*);
+    /* 0x1320 */ int (*Set_Item_net_catch_request_force_proc)(ACTOR*, GAME*, u32, s8);
+    /* 0x1324 */ void (*Set_force_position_angle_proc)(GAME*, const xyz_t*, const s_xyz*, u8);
+    /* 0x1328 */ u8 (*Get_force_position_angle_proc)(GAME*, xyz_t*, s_xyz*);
+    /* 0x132C */ int (*Get_WadeEndPos_proc)(GAME*, xyz_t*);
+    /* 0x1330 */ int (*Check_Label_main_push_snowball_proc)(GAME*, void*);
+    /* 0x1334 */ int (*SetParam_for_push_snowball_proc)(GAME*, const xyz_t*, s16, f32);
+    /* 0x1338 */ int (*able_submenu_request_main_index_proc)(GAME*);
+    /* 0x133C */ int (*check_able_change_camera_normal_index_proc)(ACTOR*);
+    /* 0x1340 */ int (*Check_able_force_speak_label_proc)(GAME*, void*);
+    /* 0x1344 */ int (*check_cancel_request_change_proc_index_proc)(int);
+    /* 0x1348 */ u32 (*Get_item_net_catch_label_proc)(ACTOR*);
+    /* 0x134C */ int (*Change_item_net_catch_label_proc)(ACTOR*, u32, s8);
+    /* 0x1350 */ int (*Check_StopNet_proc)(ACTOR*, xyz_t*);
+    /* 0x1354 */ int (*Check_HitAxe_proc)(ACTOR*, xyz_t*);
+    /* 0x1358 */ int (*Check_VibUnit_OneFrame_proc)(ACTOR*, const xyz_t*);
+    /* 0x135C */ int (*Check_HitScoop_proc)(ACTOR*, xyz_t*);
+    /* 0x1360 */ int (*Check_DigScoop_proc)(ACTOR*, xyz_t*);
+    /* 0x1364 */ int (*check_request_change_item_proc)(GAME*);
+    /* 0x1368 */ int (*Check_RotateOctagon_proc)(GAME*);
+    /* 0x136C */ int (*Check_end_stung_bee_proc)(ACTOR*);
+    /* 0x1370 */ int (*Get_status_for_bee_proc)(ACTOR*);
+    /* 0x1374 */ int (*Set_ScrollDemo_forWade_snowball_proc)(ACTOR*, int, const xyz_t*);
+    /* 0x1378 */ int (*Check_tree_shaken_proc)(ACTOR*, const xyz_t*);
+    /* 0x137C */ int (*Check_tree_shaken_little_proc)(ACTOR*, const xyz_t*);
+    /* 0x1380 */ int (*Check_tree_shaken_big_proc)(ACTOR*, const xyz_t*);
+    /* 0x1384 */ int (*Check_Label_main_wade_snowball_proc)(GAME*, void*);
+    /* 0x1388 */ int (*GetSnowballPos_forWadeSnowball_proc)(ACTOR*, xyz_t*);
+    /* 0x138C */ int (*CheckCondition_forWadeSnowball_proc)(GAME*, const xyz_t*, s16);
+    /* 0x1390 */ mActor_name_t (*Get_itemNo_forWindow_proc)(ACTOR*);
+    /* 0x1394 */ int (*check_cancel_event_without_priority_proc)(GAME*);
+    /* 0x1398 */ int (*CheckScene_AbleSubmenu_proc)();
+    /* 0x139C */ int (*Check_stung_mosquito_proc)(GAME*, void*);
+    /* 0x13A0 */ int (*Check_reflect_proc)(GAME* game, const xyz_t* pos);
+    /* 0x13A4 */ int a_btn_pressed;
+    /* 0x13A8 */ int a_btn_triggers_submenu;
+    /* 0x13AC */ mActor_name_t item_in_front; /* item directly in front of the player */
+    /* 0x13B0 */ xyz_t forward_ut_pos;        /* wpos of unit in front of player */
+    /* 0x13BC */ s8 update_scene_bg_mode;
 };
 
 extern void Player_actor_ct(ACTOR*, GAME*);

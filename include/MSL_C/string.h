@@ -23,14 +23,20 @@ char* strcat(char* dst, const char* src);
 char* strncpy(char* dst, const char* src, size_t n);
 char* strcpy(char* dst, const char* src);
 size_t strlen(const char* str);
-char* strstr(const char* str, const char* pat);
+char* strstr(char* str, const char* pat);
 
 #ifdef __cplusplus
 };
+#endif
 
+#ifdef __cplusplus
 namespace std {
 using ::strlen;
 using ::strrchr;
+
+char* strstr(char* str, const char* pat) {
+    return ::strstr(str, pat);
+}
 }; // namespace std
 #endif
 

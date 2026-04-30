@@ -99,6 +99,7 @@ enum field_room {
     mFI_FIELD_ROOM_NEEDLEWORK,      /* 0x3010 */
     mFI_FIELD_ROOM_LIGHTHOUSE,      /* 0x3011 */
     mFI_FIELD_ROOM_TENT,            /* 0x3012 */
+    mFI_FIELD_ROOM_RESET_HOUSE,     /* 0x3013 */
 
     mFI_FIELD_NPCROOM0 = mFI_TO_FIELD_ID(mFI_FIELDTYPE_NPC_ROOM, 0),
     mFI_FIELD_NPCROOM_FIELD_TOOL_INSIDE,
@@ -278,6 +279,7 @@ extern int mFI_CheckInJustIslandOutdoor();
 extern u32 mFI_CheckPlayerBlockInfo();
 extern mActor_name_t* mFI_BkNumtoUtFGTop(int bx, int bz);
 extern mActor_name_t* mFI_BkNum2UtFGTop_layer(int bx, int bz, int layer);
+extern mActor_name_t* mFI_BkNum2UtFGTop_field(int bx, int bz);
 extern mActor_name_t* mFI_UtNum2UtFG(int ut_x, int ut_z);
 extern mActor_name_t* mFI_GetUnitFG(xyz_t wpos);
 extern mActor_name_t* mFI_GetUnitFG2(xyz_t wpos);
@@ -332,7 +334,7 @@ extern void mFI_BlockDepositOFF(u16* deposit_p, int ut_x, int ut_z);
 extern int mFI_GetBlockDeposit(u16* deposit_p, int ut_x, int ut_z);
 // extern MATCH_FORCESTRIP void mFI_BkUtNum2DepositON(int bx, int bz, int ut_x, int ut_z);
 extern void mFI_BkUtNum2DepositOFF(int bx, int bz, int ut_x, int ut_z);
-// extern MATCH_FORCESTRIP int mFI_BkUtNum2DepositGet(int bx, int bz, int ut_x, int ut_z);
+extern int mFI_BkUtNum2DepositGet(int bx, int bz, int ut_x, int ut_z);
 extern void mFI_UtNum2DepositON(int ut_x, int ut_z);
 extern void mFI_UtNum2DepositOFF(int ut_x, int ut_z);
 extern int mFI_UtNum2DepositGet(int ut_x, int ut_z);
@@ -364,6 +366,7 @@ extern void mFI_SetClimate(int climate);
 extern int mFI_CheckBeforeScenePerpetual();
 extern void mFI_ChangeClimate_ForEventNotice();
 extern void mFI_PullTanukiPathTrees();
+extern void mFI_InitClimate(void);
 
 #ifdef __cplusplus
 }

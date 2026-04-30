@@ -89,9 +89,14 @@ enum {
 
 #define mPr_ORIGINAL_DESIGN_IDX_VALID(idx) ((idx) >= 0 && (idx) < mPr_ORIGINAL_DESIGN_COUNT)
 
+#if 0
 #define mPr_GET_ITEM_COND(all_cond, slot_no) (((all_cond) >> (((u32)(slot_no)) << 1)) & mPr_ITEM_COND_NUM)
 #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) \
     (((all_cond) & ~((u32)mPr_ITEM_COND_NUM << ((u32)(slot_no) << 1))) | ((u32)(cond) << ((u32)(slot_no) << 1)))
+#endif
+
+#define mPr_GET_ITEM_COND(all_cond, slot_no) ((all_cond)[slot_no])
+#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
 
 enum {
     mPr_SUNBURN_RANK_MIN,
@@ -141,13 +146,13 @@ typedef struct player_catalog_order_s {
     /* 0x02 */ u8 shop_level;      /* shop 'level' at time of order */
 } mPr_catalog_order_c;
 
-/* sizeof(mPr_animal_memory_c) == 0xA */
+/* sizeof(mPr_animal_memory_c) == 0x1A */
 typedef struct player_animal_memory_s {
-    /* 0x00 */ mActor_name_t npc_id;
-    /* 0x02 */ u8 land_name[LAND_NAME_SIZE];
+    /* 0x00 */ AnmPersonalID_c npc_id;
+    /* 0x14 */ u8 land_name[LAND_NAME_SIZE];
 } mPr_animal_memory_c;
 
-/* sizeof(mPr_map_info_c) == 0xA */
+/* sizeof(mPr_map_info_c) == 0x8 */
 typedef struct player_map_s {
     /* 0x00 */ u8 land_name[LAND_NAME_SIZE];
     /* 0x08 */ u16 land_id;
@@ -173,7 +178,7 @@ typedef struct player_ecard_data_s {
                                                               sent to the player [0, 366] */
 } mPr_carde_data_c;
 
-#define mPr_MOTHER_MAIL_NORMAL_NUM 7
+#define mPr_MOTHER_MAIL_NORMAL_NUM 8
 #define mPr_MOTHER_MAIL_MONTHLY_NUM 2
 
 typedef struct private_mother_mail_data_s {
@@ -187,80 +192,103 @@ typedef struct private_mother_mail_info_s {
     mPr_mother_mail_data_c data;
 } mPr_mother_mail_info_c;
 
+/* sizeof(mPr_birthday_msg_c) == 0xAA */
+typedef struct private_birthday_msg_s {
+    /* 0x00 */ PersonalID_c id; // player who sent
+    /* 0x10 */ lbRTC_time_c time; // date-time of message
+    /* 0x18 */ u8 header_back_start;
+    /* 0x19 */ u8 header[MAIL_HEADER_LEN + 4];
+    /* 0x27 */ u8 body[MAIL_BODY_LEN + 14];
+    /* 0x95 */ u8 footer[MAIL_FOOTER_LEN + 4];
+} mPr_birthday_msg_c;
+
+/* sizeof(mPr_birthday_msg_info_c) == 0x2AA */
+typedef struct private_birthday_msg_info_s {
+    /* 0x000 */ mPr_birthday_msg_c msgs[PLAYER_NUM];
+    /* 0x2A8 */ u16 flags;
+} mPr_birthday_msg_info_c;
+
+/* sizeof(mPr_pwdInfo_c) == 0x4 */
+typedef struct private_pwdinfo_s {
+    /* 0x00 */ u8 used;
+    /* 0x01 */ u8 card_id; // e-Card ID
+    /* 0x02 */ u8 _02[2];
+} mPr_pwdInfo_c;
+
+/* sizeof(Private_c) == 0x26A0 */
 struct private_s {
     /* 0x0000 */ PersonalID_c player_ID;      /* player's id info */
-    /* 0x0014 */ s8 gender;                   /* gender/sex of player */
-    /* 0x0015 */ s8 face;                     /* face type of player */
-    /* 0x0016 */ u8 reset_count;              /* times player has reset */
-    /* 0x0017 */ mMsm_record_c museum_record; /* museum items & remail info */
+    /* 0x0010 */ s8 gender;                   /* gender/sex of player */
+    /* 0x0011 */ s8 face;                     /* face type of player */
+    /* 0x0012 */ u8 moved_from_plus; // existing character from DnM+
+    /* 0x0013 */ u8 reset_count;              /* times player has reset */
+    /* 0x0014 */ mMsm_record_c museum_record; /* museum items & remail info */
 
     /* must be a struct due to alignment of first member */
-    /* 0x0068 */ struct {
-        /* 0x0068 */ mActor_name_t pockets[mPr_POCKETS_SLOT_COUNT]; /* items in inventory */
-        /* 0x0086 */ u8 lotto_ticket_expiry_month;
-        /* 0x0087 */ u8 lotto_ticket_mail_storage;
-        /* 0x0088 */ u32 item_conditions; /* bitfield (15 values), 2 bits per pocket slot */
-        /* 0x008C */ u32 wallet;
-        /* 0x0090 */ u32 loan;
+    /* 0x0064 */ struct {
+        /* 0x0064 */ mActor_name_t pockets[mPr_POCKETS_SLOT_COUNT]; /* items in inventory */
+        /* 0x0082 */ u8 lotto_ticket_expiry_month;
+        /* 0x0083 */ u8 lotto_ticket_mail_storage;
+        /* 0x0084 */ u8 item_conditions[mPr_POCKETS_SLOT_COUNT];
+        /* 0x0094 */ u32 wallet;
+        /* 0x0098 */ u32 loan;
     } inventory;
 
-    /* 0x0094 */ mQst_delivery_c deliveries[mPr_DELIVERY_QUEST_NUM]; /* delivery quests */
-    /* 0x02EC */ mQst_errand_c errands[mPr_ERRAND_QUEST_NUM];        /* errand quests */
-
-    /* 0x04A4 */ mActor_name_t equipment; /* equipped item */
-
-    /* 0x04A6 */ Mail_hs_c saved_mail_header; /* saved mail header/footer which is inserted when writing new letters */
-    /* 0x04E0 */ Mail_c mail[mPr_INVENTORY_MAIL_COUNT]; /* letters in inventory */
-    /* 0x1084 */ mActor_name_t backgound_texture;       /* inventory background shirt item id */
-    /* 0x1086 */ u8 exists;                             /* 0/1 if player exists or not */
-    /* 0x1087 */ u8 hint_count;                         /* total hints heard from villagers (initial dialog) */
-
-    /* 0x1088 */ mPr_cloth_c cloth;
-    /* 0x1088 */ // u16 cloth_idx; /* index value for texture? */
-    /* 0x108A */ // mActor_name_t cloth; /* shirt item */
-
-    /* 0x108C */ AnmPersonalID_c stored_anm_id; /* foriegn animal personal ID leftover from N64? */
-
-    /* 0x109A */ mPr_destiny_c destiny;   /* player fortune, seemingly called destiny */
-    /* 0x10A4 */ mPr_birthday_c birthday; /* player birthday */
-    /* 0x10A8 */ mPr_catalog_order_c
-        catalog_orders[mPr_CATALOG_ORDER_NUM];      /* items ordered from catalog to be mailed */
-    /* 0x10BC */ u8 unk_10A8[24];                   /* seemingly unused? */
-    /* 0x10D4 */ u32 aircheck_collect_bitfield[2];  /* TODO: this should be a define like #define
+    /* 0x009C */ mQst_delivery_c deliveries[mPr_DELIVERY_QUEST_NUM]; /* delivery quests */
+    /* 0x05C4 */ mQst_errand_c errands[mPr_ERRAND_QUEST_NUM];        /* errand quests */
+    /* 0x081C */ mQst_delivery_c lost_item_quest;
+    /* 0x0874 */ mActor_name_t equipment; /* equipped item */
+    /* 0x0876 */ Mail_hs_c saved_mail_header; /* saved mail header/footer which is inserted when writing new letters */
+    /* 0x08AC */ Mail_c mail[mPr_INVENTORY_MAIL_COUNT]; /* letters in inventory */
+    /* 0x0FF0 */ mActor_name_t backgound_texture;       /* inventory background shirt item id */
+    /* 0x0FF2 */ u8 exists;                             /* 0/1 if player exists or not */
+    /* 0x0FF3 */ u8 hint_count;                         /* total hints heard from villagers (initial dialog) */
+    /* 0x0FF4 */ mPr_cloth_c cloth;
+    /* 0x0FF8 */ AnmPersonalID_c stored_anm_id; /* foriegn animal personal ID leftover from N64? */
+    /* 0x100C */ mPr_destiny_c destiny;   /* player fortune, seemingly called destiny */
+    /* 0x1016 */ mPr_birthday_c birthday; /* player birthday */
+    /* 0x101A */ mPr_catalog_order_c catalog_orders[mPr_CATALOG_ORDER_NUM];      /* items ordered from catalog to be mailed */
+    /* 0x102E */ u8 unk_10A8[22];                   /* seemingly unused? */
+    /* 0x1044 */ u32 aircheck_collect_bitfield[3];  /* TODO: this should be a define like #define
                                                        mPr_AIRCHECK_BITFIELD_NUM ((MD_COUNT / 32) + 1) */
-    /* 0x10DC */ Anmremail_c remail;                /* scheduled mail received from a foreign villager? */
-    /* 0x10F4 */ u32 reset_code;                    /* 0 when not reset, random value after reset */
-    /* 0x10F8 */ mPr_animal_memory_c animal_memory; /* id and town of last animal to move to another town */
-    /* 0x1102 */ u8
-        complete_fish_insect_flags; /* bit0 = completed fish, bit1 = villager acknowledged completed fish, bit2 =
+    /* 0x1050 */ Anmremail_c remail;                /* scheduled mail received from a foreign villager? */
+    /* 0x1064 */ u32 reset_code;                    /* 0 when not reset, random value after reset */
+    /* 0x1068 */ mPr_animal_memory_c animal_memory; /* id and town of last animal to move to another town */
+    /* 0x1082 */ u8 complete_fish_insect_flags; /* bit0 = completed fish, bit1 = villager acknowledged completed fish, bit2 =
                                        completed insect, bit3 = villager acknowledged complete insect */
-    /* 0x1104 */ lbRTC_year_t celebrated_birthday_year; /* last year a birthday was celebrated by card or visitor */
+    /* 0x1084 */ lbRTC_year_t celebrated_birthday_year; /* last year a birthday was celebrated by card or visitor */
 
     /* catalog */
-    /* 0x1108 */ u32 furniture_collected_bitfield[43];
-    /* 0x11B4 */ u32 wall_collected_bitfield[3];
-    /* 0x11C0 */ u32 carpet_collected_bitfield[3];
-    /* 0x11CC */ u32 paper_collected_bitfield[2];
-    /* 0x11D4 */ u32 music_collected_bitfield[2];
+    /* 0x1088 */ u32 furniture_collected_bitfield[45];
+    /* 0x113C */ u32 wall_collected_bitfield[3];
+    /* 0x1148 */ u32 carpet_collected_bitfield[3];
+    /* 0x1154 */ u32 paper_collected_bitfield[2];
+    /* 0x115C */ u32 music_collected_bitfield[6];
 
-    /* 0x11DC */ mPr_map_info_c maps[mPr_FOREIGN_MAP_COUNT]; /* maps 'collected' for foreign towns */
+    /* 0x1174 */ mPr_map_info_c maps[mPr_FOREIGN_MAP_COUNT]; /* maps 'collected' for foreign towns */
 
-    /* 0x122C */ u32 bank_account;                                        /* probably 'deposit' interally */
-    /* 0x1240 */ mNW_original_design_c my_org[mPr_ORIGINAL_DESIGN_COUNT]; /* Able Sisters' designs */
-    /* 0x2340 */ u8 my_org_no_table[mPr_ORIGINAL_DESIGN_COUNT];           /* order of designs */
-    /* 0x2348 */ u32 state_flags;                    /* TODO: this might be a bitfield/struct, also document bits */
-    /* 0x234C */ mCD_player_calendar_c calendar;     /* player calendar data */
-    /* 0x23B4 */ u32 soncho_trophy_field0;           /* first 28 tortimer event flags */
-    /* 0x23B8 */ mPr_day_day_c nw_visitor;           /* info for how many unique days the player has talked to Sable */
-    /* 0x23BE */ mPr_day_day_c radiocard;            /* radio stamp days */
-    /* 0x23C4 */ mPr_sunburn_c sunburn;              /* sunburn state */
-    /* 0x23CA */ u8 unused_23CA[14];                 /* seemingly unused data */
-    /* 0x23D8 */ mActor_name_t birthday_present_npc; /* npc id of the 'best friend' villger who will gift the player a
+    /* 0x11B4 */ u32 bank_account;                                        /* probably 'deposit' interally */
+    /* 0x11C0 */ mNW_original_design_c my_org[mPr_ORIGINAL_DESIGN_COUNT]; /* Able Sisters' designs */
+    /* 0x22C0 */ u8 my_org_no_table[mPr_ORIGINAL_DESIGN_COUNT];           /* order of designs */
+    /* 0x22C8 */ u32 state_flags;                    /* TODO: this might be a bitfield/struct, also document bits */
+    /* 0x222C */ mCD_player_calendar_c calendar;     /* player calendar data */
+    /* 0x2334 */ u32 soncho_trophy_field0;           /* first 28 tortimer event flags */
+    /* 0x2338 */ mPr_day_day_c nw_visitor;           /* info for how many unique days the player has talked to Sable */
+    /* 0x233E */ mPr_day_day_c radiocard;            /* radio stamp days */
+    /* 0x2344 */ mPr_sunburn_c sunburn;              /* sunburn state */
+    /* 0x234A */ u8 _234A[14];                 /* seemingly unused data */
+    /* 0x2358 */ mActor_name_t birthday_present_npc; /* npc id of the 'best friend' villger who will gift the player a
                                                         present on their birthday (at the door) */
-    /* 0x23DA */ u8 golden_items_collected;          /* bitfield tracking which golden items the player has received */
-    /* 0x23DC */ u32 soncho_trophy_field1;           /* remaining tortimer event flags */
-    /* 0x23E0 */ mPr_carde_data_c ecard_letter_data; /* info relating to scanned e-Card letters */
-    /* 0x2412 */ u8 unused_2412[46];
+    /* 0x235A */ u8 golden_items_collected;          /* bitfield tracking which golden items the player has received */
+    /* 0x235B */ u8 kanji_pl_lv;
+    /* 0x235C */ u8 reset_center_flags;
+    /* 0x2360 */ u32 soncho_trophy_field1;           /* remaining tortimer event flags */
+    /* 0x2364 */ mPr_carde_data_c ecard_letter_data; /* info relating to scanned e-Card letters */
+    /* 0x2396 */ u8 _2396[10];
+    /* 0x23A0 */ mPr_birthday_msg_info_c birthday_msg_info;
+    /* 0x264A */ u8 _264A[2];
+    /* 0x264C */ mPr_pwdInfo_c pwdInfo[ANIMAL_NUM_MAX];
+    /* 0x2688 */ u16 new_music_card_scanned; // bitfield tracking which music cards have been scanned
 };
 
 extern void mPr_ClearPlayerName(u8* buf);

@@ -57,13 +57,16 @@ class JKRExpHeap : public JKRHeap {
     JKRExpHeap(void*, u32, JKRHeap*, bool);
 
     virtual ~JKRExpHeap();                                          // _08
+    virtual void do_destroy();                                      // _0C
     virtual void* do_alloc(u32, int);                               // _10
     virtual void do_free(void*);                                    // _14
     virtual void do_freeTail();                                     // _18
     virtual void do_freeAll();                                      // _1C
+    virtual void do_fillFreeArea();                                  // _20
     virtual s32 do_resize(void*, u32);                              // _20
     virtual s32 do_getSize(void*);                                  // _24
     virtual s32 do_getFreeSize();                                   // _28
+    virtual void* do_getMaxFreeBlock();                             // _2C
     virtual s32 do_getTotalFreeSize();                              // _2C
     virtual bool check();                                           // _34
     virtual bool dump_sort();                                       // _38
@@ -72,12 +75,12 @@ class JKRExpHeap : public JKRHeap {
     virtual void state_register(TState*, u32) const;                // _48
     virtual bool state_compare(const TState&, const TState&) const; // _4C
 
-    virtual u8 do_getCurrentGroupId() {
-        return mCurrentGroupID;
-    } // _44 (weak)
     virtual u32 getHeapType() {
         return 'EXPH';
     } // _30 (weak)
+    virtual u8 do_getCurrentGroupId() {
+        return mCurrentGroupID;
+    } // _44 (weak)
 
     void* allocFromHead(u32, int);
     void* allocFromHead(u32);

@@ -69,5 +69,25 @@ class JKRFileLoader : public JKRDisposer {
     u32 mMountCount;                        // 0x34
 };
 
+inline size_t JKRReadResource(void* resourceBuffer, u32 bufferSize, const char* path, JKRExpandSwitch expandSwitch) {
+    return JKRFileLoader::readGlbResource(resourceBuffer, bufferSize, path, expandSwitch);
+}
+
+inline void* JKRGetResource(const char* path) {
+    return JKRFileLoader::getGlbResource(path);
+}
+
+inline void JKRRemoveResource(void* resource, JKRFileLoader* fileLoader) {
+    JKRFileLoader::removeResource(resource, fileLoader);
+}
+
+inline void JKRChangeDirectory(const char* dir) {
+    JKRFileLoader::changeDirectory(dir);
+}
+
+inline JKRFileFinder* JKRFindFirstFile(const char* path) {
+    return JKRFileLoader::findFirstFile(path);
+}
+
 #endif
 #endif

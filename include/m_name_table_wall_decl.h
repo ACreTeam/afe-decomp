@@ -74,7 +74,9 @@ extern "C" {
 #define WALL_NPC064 64
 #define WALL_NPC065 65
 #define WALL_NPC066 66
-#define WALL_NPC_END WALL_NPC066
+#define WALL_NPC067 67
+#define WALL_NPC068 68
+#define WALL_NPC_END WALL_NPC068
 
 #define WALL_ETC_START (WALL_NPC_END + 1)
 #define WALL_SHOP1 (WALL_ETC_START + 0)

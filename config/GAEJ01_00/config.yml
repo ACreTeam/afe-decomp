@@ -1,0 +1,450 @@
+# See config.example.yml for documentation.
+object_base: orig/GAEJ01_00
+name: static
+object: sys/main.dol
+hash: 25d65de224306e90b12e89613c5658e4214c63b2
+symbols: config/GAEJ01_00/symbols.txt
+splits: config/GAEJ01_00/splits.txt
+# map: orig/GAEJ01_00/files/static.map
+common_start: 0x8028663C
+# Change this to match the linker verison.
+# See config.example.yml for a list.
+mw_comment_version: 10
+symbols_known: true
+fill_gaps: true
+ldscript_template: config/GAEJ01_00/ldscript.tpl
+
+block_relocations:
+# emu64
+- source: 0x800FF0F4
+
+add_relocations:
+# emu64
+- source: .text:0x80050824 # setup_texture_tile (inlined texture_cache_select)
+  type: ha
+  target: _f_rodata
+- source: .text:0x80050828 # setup_texture_tile (inlined texture_cache_select)
+  type: l
+  target: _f_rodata
+- source: .text:0x80050834 # setup_texture_tile (inlined texture_cache_select)
+  type: ha
+  target: _e_data
+- source: .text:0x80050838 # setup_texture_tile (inlined texture_cache_select)
+  type: l
+  target: _e_data
+
+extract:
+- symbol: JUTResFONT_Ascfont_fix12
+  binary: assets/JSystem/JUtility/FontData/Ascfont_fix12.bfn
+
+modules:
+- object: files/foresta.rel
+  hash: 83ef468f00e6374aa8e40b906e2da3e1dc6a9beb
+  symbols: config/GAEJ01_00/foresta/symbols.txt
+  splits: config/GAEJ01_00/foresta/splits.txt
+  # map: orig/GAEJ01_00/files/foresta.map
+  extract:
+  - symbol: ef_coin_gold_pal
+    binary: assets/ef_coin_gold_pal.bin
+    header: assets/ef_coin_gold_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: ef_coin_silver_pal
+    binary: assets/ef_coin_silver_pal.bin
+    header: assets/ef_coin_silver_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: con_waku_swaku3_tex
+    binary: assets/con_waku_swaku3_tex.bin
+    header: assets/con_waku_swaku3_tex.inc
+    header_type: raw
+
+  - symbol: con_sentaku2_v
+    binary: assets/con_sentaku2_v.bin
+    header: assets/con_sentaku2_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: wipe1_v!.data:0x00006530
+    binary: assets/wipe1_v.bin
+    header: assets/wipe1_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: g_wipe1_txt
+    binary: assets/g_wipe1_txt.bin
+    header: assets/g_wipe1_txt.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w1_tex
+    binary: assets/msg/con_kaiwa2_w1_tex.bin
+    header: assets/msg/con_kaiwa2_w1_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w2_tex
+    binary: assets/msg/con_kaiwa2_w2_tex.bin
+    header: assets/msg/con_kaiwa2_w2_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_w3_tex
+    binary: assets/msg/con_kaiwa2_w3_tex.bin
+    header: assets/msg/con_kaiwa2_w3_tex.inc
+    header_type: raw
+
+  - symbol: con_kaiwa2_v
+    binary: assets/msg/con_kaiwa2_v.bin
+    header: assets/msg/con_kaiwa2_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: con_namefuti_TXT
+    binary: assets/msg/con_namefuti_TXT.bin
+    header: assets/msg/con_namefuti_TXT.inc
+    header_type: raw
+
+  - symbol: con_kaiwaname_v
+    binary: assets/msg/con_kaiwaname_v.bin
+    header: assets/msg/con_kaiwaname_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: mbg_v
+    binary: assets/mbg_v.bin
+    header: assets/mbg_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: tol_sponge_1_v
+    binary: assets/tol_sponge_1_v.bin
+    header: assets/tol_sponge_1_v.inc
+    header_type: none
+    custom_type: vtx
+
+  - symbol: tol_sponge_1_pal
+    binary: assets/tol_sponge_1_pal.bin
+    header: assets/tol_sponge_1_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: tol_sponge_1_main1_tex_txt
+    binary: assets/tol_sponge_1_main1_tex_txt.bin
+    header: assets/tol_sponge_1_main1_tex_txt.inc
+    header_type: raw
+
+  - symbol: aKOI_obj_e_koinobori_a_pal
+    binary: assets/aKOI_obj_e_koinobori_a_pal.bin
+    header: assets/aKOI_obj_e_koinobori_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_e_koinobori_b_pal
+    binary: assets/obj_e_koinobori_b_pal.bin
+    header: assets/obj_e_koinobori_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: aLOT_obj_01_lotus_pal
+    binary: assets/aLOT_obj_01_lotus_pal.bin
+    header: assets/aLOT_obj_01_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_02_lotus_pal
+    binary: assets/obj_02_lotus_pal.bin
+    header: assets/obj_02_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_03_lotus_pal
+    binary: assets/obj_03_lotus_pal.bin
+    header: assets/obj_03_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_04_lotus_pal
+    binary: assets/obj_04_lotus_pal.bin
+    header: assets/obj_04_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_05_lotus_pal
+    binary: assets/obj_05_lotus_pal.bin
+    header: assets/obj_05_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_06_lotus_pal
+    binary: assets/obj_06_lotus_pal.bin
+    header: assets/obj_06_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_07_lotus_pal
+    binary: assets/obj_07_lotus_pal.bin
+    header: assets/obj_07_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_08_lotus_pal
+    binary: assets/obj_08_lotus_pal.bin
+    header: assets/obj_08_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: obj_09_lotus_pal
+    binary: assets/obj_09_lotus_pal.bin
+    header: assets/obj_09_lotus_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kamakura_off_pal
+    binary: assets/int_nog_kamakura_off_pal.bin
+    header: assets/int_nog_kamakura_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kamakura_on_pal
+    binary: assets/int_nog_kamakura_on_pal.bin
+    header: assets/int_nog_kamakura_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kouban_on_pal
+    binary: assets/int_nog_kouban_on_pal.bin
+    header: assets/int_nog_kouban_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_kouban_off_pal
+    binary: assets/int_nog_kouban_off_pal.bin
+    header: assets/int_nog_kouban_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_museum_off_pal
+    binary: assets/int_nog_museum_off_pal.bin
+    header: assets/int_nog_museum_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_museum_on_pal
+    binary: assets/int_nog_museum_on_pal.bin
+    header: assets/int_nog_museum_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_a_pal
+    binary: assets/int_nog_station1_a_pal.bin
+    header: assets/int_nog_station1_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_b_pal
+    binary: assets/int_nog_station1_b_pal.bin
+    header: assets/int_nog_station1_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_c_pal
+    binary: assets/int_nog_station1_c_pal.bin
+    header: assets/int_nog_station1_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_d_pal
+    binary: assets/int_nog_station1_d_pal.bin
+    header: assets/int_nog_station1_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station1_e_pal
+    binary: assets/int_nog_station1_e_pal.bin
+    header: assets/int_nog_station1_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_a_pal
+    binary: assets/int_nog_station2_a_pal.bin
+    header: assets/int_nog_station2_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_b_pal
+    binary: assets/int_nog_station2_b_pal.bin
+    header: assets/int_nog_station2_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_c_pal
+    binary: assets/int_nog_station2_c_pal.bin
+    header: assets/int_nog_station2_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_d_pal
+    binary: assets/int_nog_station2_d_pal.bin
+    header: assets/int_nog_station2_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station2_e_pal
+    binary: assets/int_nog_station2_e_pal.bin
+    header: assets/int_nog_station2_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_a_pal
+    binary: assets/int_nog_station3_a_pal.bin
+    header: assets/int_nog_station3_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_b_pal
+    binary: assets/int_nog_station3_b_pal.bin
+    header: assets/int_nog_station3_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_c_pal
+    binary: assets/int_nog_station3_c_pal.bin
+    header: assets/int_nog_station3_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_d_pal
+    binary: assets/int_nog_station3_d_pal.bin
+    header: assets/int_nog_station3_d_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_station3_e_pal
+    binary: assets/int_nog_station3_e_pal.bin
+    header: assets/int_nog_station3_e_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_shop1_on_pal
+    binary: assets/int_nog_shop1_on_pal.bin
+    header: assets/int_nog_shop1_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_shop1_off_pal
+    binary: assets/int_nog_shop1_off_pal.bin
+    header: assets/int_nog_shop1_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_uranai_off_pal
+    binary: assets/int_nog_uranai_off_pal.bin
+    header: assets/int_nog_uranai_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_uranai_on_pal
+    binary: assets/int_nog_uranai_on_pal.bin
+    header: assets/int_nog_uranai_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yamishop_off_pal
+    binary: assets/int_nog_yamishop_off_pal.bin
+    header: assets/int_nog_yamishop_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yamishop_on_pal
+    binary: assets/int_nog_yamishop_on_pal.bin
+    header: assets/int_nog_yamishop_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yubin_on_pal
+    binary: assets/int_nog_yubin_on_pal.bin
+    header: assets/int_nog_yubin_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_yubin_off_pal
+    binary: assets/int_nog_yubin_off_pal.bin
+    header: assets/int_nog_yubin_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tailor_on_pal
+    binary: assets/int_tak_tailor_on_pal.bin
+    header: assets/int_tak_tailor_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tailor_off_pal
+    binary: assets/int_tak_tailor_off_pal.bin
+    header: assets/int_tak_tailor_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: radio_pal$6905
+    binary: assets/radio_pal.bin
+    header: assets/radio_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_yaz_fish_trophy_pal
+    binary: assets/int_yaz_fish_trophy_pal.bin
+    header: assets/int_yaz_fish_trophy_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tent_on_pal
+    binary: assets/int_tak_tent_on_pal.bin
+    header: assets/int_tak_tent_on_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_tak_tent_off_pal
+    binary: assets/int_tak_tent_off_pal.bin
+    header: assets/int_tak_tent_off_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_yaz_fish_trophy2_pal
+    binary: assets/int_yaz_fish_trophy2_pal.bin
+    header: assets/int_yaz_fish_trophy2_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_a_pal
+    binary: assets/int_nog_flower_a_pal.bin
+    header: assets/int_nog_flower_a_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_b_pal
+    binary: assets/int_nog_flower_b_pal.bin
+    header: assets/int_nog_flower_b_pal.inc
+    header_type: none
+    custom_type: pal16
+
+  - symbol: int_nog_flower_c_pal
+    binary: assets/int_nog_flower_c_pal.bin
+    header: assets/int_nog_flower_c_pal.inc
+    header_type: none
+    custom_type: pal16
+
+- object: files/forestd.rel
+  hash: 113e0b2fec595b441fcbed8151f0a4dab41620fb
+  symbols: config/GAEJ01_00/forestd/symbols.txt
+  splits: config/GAEJ01_00/forestd/splits.txt
+  # map: orig/GAEJ01_00/files/forestd.map
+- object: files/foresti.rel
+  hash: 39a8462764ecc1405b25d41f829fe36fff793f25
+  symbols: config/GAEJ01_00/foresti/symbols.txt
+  splits: config/GAEJ01_00/foresti/splits.txt
+  # map: orig/GAEJ01_00/files/foresti.map
+- object: files/foresto.rel
+  hash: de8154e1c10c24fc6b19c2e77acdc634120a46bf
+  symbols: config/GAEJ01_00/foresto/symbols.txt
+  splits: config/GAEJ01_00/foresto/splits.txt
+  # map: orig/GAEJ01_00/files/foresto.map

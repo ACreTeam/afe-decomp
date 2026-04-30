@@ -11,6 +11,7 @@ extern "C" {
 extern void Na_StaffRollInit(void);
 extern void Na_StaffRollStart(s16 seq_no);
 extern void Na_GetStaffRollInfo(StaffRollInfo_c* info);
+extern void Na_SetBirthdayLoopCount(u8 count);
 
 #ifdef __cplusplus
 }

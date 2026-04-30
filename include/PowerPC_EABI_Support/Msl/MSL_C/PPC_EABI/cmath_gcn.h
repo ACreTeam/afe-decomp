@@ -1,3 +1,6 @@
+#ifndef CMATH_GCN_H
+#define CMATH_GCN_H
+
 #include "MSL_C/w_math.h"
 // #include "MSL_C/MSL_Common/float.h"
 
@@ -52,3 +55,5 @@ namespace std {
 
 //     return x;
 // }
+
+#endif

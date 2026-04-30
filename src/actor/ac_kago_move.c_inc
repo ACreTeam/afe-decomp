@@ -1,0 +1,43 @@
+static void aKAG_set_bgOffset(KAGO_ACTOR* actor, int id) {
+    id = id == 0 ? 10 : 10;
+
+    mCoBG_SetPlussOffset(actor->structure_class.actor_class.home.position, id, 100);
+}
+
+static void aKAG_wait(STRUCTURE_ACTOR* actorx, GAME_PLAY* play) {
+}
+
+static void aKAG_setup_action(KAGO_ACTOR* kago, int id) {
+    static aSTR_MOVE_PROC process[] = {
+        aKAG_wait,
+    };
+
+    kago->structure_class.action_proc = process[id];
+    kago->structure_class.arg0 = id;
+}
+
+static void aKAG_actor_move(ACTOR* actor, GAME* game) {
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    KAGO_ACTOR* kago = (KAGO_ACTOR*)actor;
+    ACTOR* playerx;
+    int bx;
+    int bz;
+    int playerbx;
+    int playerbz;
+
+    playerx = GET_PLAYER_ACTOR_ACTOR(play);
+    mFI_Wpos2BlockNum(&bx, &bz, actor->world.position);
+    mFI_Wpos2BlockNum(&playerbx, &playerbz, playerx->world.position);
+
+    if (!mDemo_CHECK_SCROLL(playerx) && ((bx != playerbx) || (bz != playerbz))) {
+        Actor_delete(actor);
+    } else {
+        kago->structure_class.action_proc(&kago->structure_class, play);
+    }
+}
+
+static void aKAG_actor_init(ACTOR* actor, GAME* game) {
+    mFI_SetFG_common(DUMMY_KAGO, actor->home.position, FALSE);
+    aKAG_actor_move(actor, game);
+    actor->mv_proc = aKAG_actor_move;
+}

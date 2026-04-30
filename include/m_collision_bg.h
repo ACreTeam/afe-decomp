@@ -437,6 +437,7 @@ extern f32 mCoBG_Wpos2BgUtCenterHeight_AddColumn(xyz_t pos);
 extern f32 mCoBG_GetBgY_OnlyCenter_FromWpos2(xyz_t pos, f32 ground_dist);
 extern void mCoBG_GetBgNorm_FromWpos(xyz_t* norm, xyz_t wpos);
 extern int mCoBG_ScrollCheck(xyz_t start, xyz_t end, f32 radius);
+extern int mCoBG_CheckPlace_OrgAttr(u32 org_attr);
 extern int mCoBG_CheckPlace(xyz_t pos);
 extern int mCoBG_UtCheckPlace(int ux, int uz);
 extern int mCoBG_Attribute2CheckPlant(u32 attr, const xyz_t* pos);
@@ -457,11 +458,7 @@ extern int mCoBG_CheckSandUt_ForFish(xyz_t* pos);
 extern int mCoBG_CheckSandHole_ClData(mCoBG_Collision_u* col);
 extern int mCoBG_BnumUnum2SandHole(int bx, int bz, int b_ux, int b_uz);
 extern int mCoBG_CheckHole(xyz_t pos);
-#if VERSION >= VER_GAFU01_00
 extern int mCoBG_CheckAirSwing(xyz_t pos);
-#else
-extern int mCoBG_CheckAirSwing(xyz_t pos);
-#endif
 extern int mCoBG_CheckGrassX_ClData(mCoBG_Collision_u* col);
 extern int mCoBG_CheckGrassX(const xyz_t* pos);
 extern int mCoBG_CheckWave_ClData(mCoBG_Collision_u* col);
@@ -479,6 +476,7 @@ extern int mCoBG_ExistHeightGap_KeepAndNow_Detail(xyz_t pos);
 extern int mCoBG_Wpos2CheckSlateCol(const xyz_t* pos, int check_attr);
 extern int mCoBG_WoodSoundEffect(const xyz_t* pos);
 extern int mCoBG_CheckCliffAttr(u32 attr);
+extern f32 mCoBG_Wpos2BgHeight_AngleSXXX(s_xyz* ground_angle, xyz_t pos, f32 ground_dist);
 extern f32 mCoBG_GetShadowBgY_AngleS_FromWpos(s_xyz* ground_angle, xyz_t pos, f32 ground_dist);
 extern int mCoBG_CheckUtFlat(const xyz_t* pos);
 extern int mCoBG_Height2GetLayer(f32 height);
@@ -500,11 +498,7 @@ extern void mCoBG_Ut2SetDefaultOffset(int ux, int uz);
 
 extern int mCoBG_LineCheck_RemoveFg(xyz_t* rev, xyz_t start_pos, xyz_t end_pos, mCoBG_COLUMN_CHECK_ITEM_TYPE_PROC check_proc, int line_check_type);
 
-#if VERSION >= VER_GAFU01_00
 extern f32 mCoBG_Wpos2BgHeight_AngleSXXX(s_xyz* ground_angle, xyz_t pos, f32 ground_dist);
-#else
-extern f32 mCoBG_GetBgY_AngleS_FromWpos2(s_xyz* ground_angle, xyz_t pos, f32 ground_dist);
-#endif
 extern f32 mCoBG_GetWaterHeight_File(xyz_t pos, char* file, int line);
 #define mCoBG_GetWaterHeight(wpos) mCoBG_GetWaterHeight_File(wpos, __FILE__, __LINE__)
 extern int mCoBG_CheckWaterAttribute(u32 attr);
@@ -515,9 +509,9 @@ extern int mCoBG_GetWaterFlow(xyz_t* flow, u32 attr);
 extern int mCoBG_CheckWaveAttr(u32 attr);
 extern int mCoBG_CheckSand2Sea(xyz_t* pos);
 
-#if VERSION == VER_GAFU01_00
+extern int mCoBG_check_fg_collision(mActor_name_t item);
+
 extern int mCoBG_GetCrossCircleAndLine2DvectorPlaneXZ_Xyz(xyz_t* cross1, xyz_t* cross2, const xyz_t* point, const xyz_t* vec, const xyz_t* center, f32 radius);
-#endif
 
 #ifdef __cplusplus
 }

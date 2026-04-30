@@ -2,6 +2,7 @@
 #define M_ISLAND_H
 
 #include "types.h"
+#include "m_island_h.h"
 #include "m_personal_id.h"
 #include "m_npc.h"
 #include "m_land.h"
@@ -13,22 +14,14 @@
 extern "C" {
 #endif
 
-#define mISL_ISLANDER_NUM 1
-
-#define mISL_ISLAND_NAME_LEN 8
-
-#define mISL_FG_BLOCK_X_NUM 2
-#define mISL_FG_BLOCK_Z_NUM 1
-
-#define mISL_BLOCK_X0 4
-#define mISL_BLOCK_X1 5
-#define mISL_BLOCK_Z 8
-
+// TODO: verify these names
 enum {
-  mISL_ISLAND_BLOCK_LEFT,
-  mISL_ISLAND_BLOCK_RIGHT,
+    mISL_NPC_DAY_TYPE_NOT_EXIST, // islander doesn't exist
+    mISL_NPC_DAY_TYPE_APPEARED_TODAY, // islander appeared today (player spoke to them)
+    mISL_NPC_DAY_TYPE_NORMAL, // normal
+    mISL_NPC_DAY_TYPE_LEAVING_TOMORROW, // islander is leaving tomorrow
 
-  mISL_ISLAND_BLOCK_NUM
+    mISL_NPC_DAY_TYPE_NUM
 };
 
 #define mISL_PLAYER_ACTION_NUM 32
@@ -66,23 +59,30 @@ enum {
 #define mISL_PLAYER_ACTION_TRADE_CLOTH (1 << 30)
 #define mISL_PLAYER_ACTION_NOTICE_FISHING_ROD (1 << 31)
 
+// Around-town actions
+#define mISL_VILLAGE_PLAYER_ACTION_PLANT_MONEY_TREE (1 << 2)
+#define mISL_VILLAGE_PLAYER_ACTION_HIT_ROCK (1 << 6)
+#define mISL_VILLAGE_PLAYER_ACTION_BURY_DUST (1 << 20)
+#define mISL_VILLAGE_PLAYER_ACTION_21 (1 << 21)
+#define mISL_VILLAGE_PLAYER_ACTION_SHAKE_BEES (1 << 23)
+
 /* sizeof(Island_c) == 0x1900 */
-typedef struct island_s {
-  /* 0x0000 */ u8 name[mISL_ISLAND_NAME_LEN]; /* island name */
-  /* 0x0008 */ mLd_land_info_c landinfo; /* land info for town */
-  /* 0x0014 */ mFM_fg_c fgblock[mISL_FG_BLOCK_Z_NUM][mISL_FG_BLOCK_X_NUM]; /* island item actor data */
-  /* 0x0418 */ mHm_cottage_c cottage; /* player shared cottage data */
-  /* 0x0CE0 */ mNW_original_design_c flag_design; /* island flag design */
-  /* 0x0F00 */ Animal_c animal; /* islander info */
-  /* 0x1888 */ u16 deposit[mISL_FG_BLOCK_X_NUM * mISL_FG_BLOCK_Z_NUM][UT_Z_NUM]; /* buried item bitfield */
-  /* 0x18C8 */ u8 bg_data[mISL_ISLAND_BLOCK_NUM]; /* island acre ids */
-  /* 0x18CA */ lbRTC_time_c renew_time; /* last time island was visited? */
-  /* 0x18D2 */ u8 unused_18D2[14]; /* unused */
-  /* 0x18E0 */ u8 grass_tex_type; /* grass type */
-  /* 0x18E1 */ u8 last_song_to_island; /* last song kapp'n sang to the island */
-  /* 0x18E2 */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
-  /* 0x18E3 */ u8 unused_18E3[29]; /* unused */
-} Island_c;
+// typedef struct island_s {
+//   /* 0x0000 */ u8 name[mISL_ISLAND_NAME_LEN]; /* island name */
+//   /* 0x0008 */ mLd_land_info_c landinfo; /* land info for town */
+//   /* 0x0014 */ mFM_fg_c fgblock[mISL_FG_BLOCK_Z_NUM][mISL_FG_BLOCK_X_NUM]; /* island item actor data */
+//   /* 0x0418 */ mHm_cottage_c cottage; /* player shared cottage data */
+//   /* 0x0CE0 */ mNW_original_design_c flag_design; /* island flag design */
+//   /* 0x0F00 */ Animal_c animal; /* islander info */
+//   /* 0x1888 */ u16 deposit[mISL_FG_BLOCK_X_NUM * mISL_FG_BLOCK_Z_NUM][UT_Z_NUM]; /* buried item bitfield */
+//   /* 0x18C8 */ u8 bg_data[mISL_ISLAND_BLOCK_NUM]; /* island acre ids */
+//   /* 0x18CA */ lbRTC_time_c renew_time; /* last time island was visited? */
+//   /* 0x18D2 */ u8 unused_18D2[14]; /* unused */
+//   /* 0x18E0 */ u8 grass_tex_type; /* grass type */
+//   /* 0x18E1 */ u8 last_song_to_island; /* last song kapp'n sang to the island */
+//   /* 0x18E2 */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
+//   /* 0x18E3 */ u8 unused_18E3[29]; /* unused */
+// } Island_c;
 
 extern void mISL_ClearKeepIsland();
 extern void mISL_KeepIsland(Island_c* island);
@@ -92,8 +92,11 @@ extern void mISL_init(Island_c* island);
 extern void mISL_ClearNowPlayerAction();
 extern void mISL_SetPlayerAction(PersonalID_c* pid, u32 action);
 extern void mISL_SetNowPlayerAction(u32 action);
+extern void mISL_UnsetNowPlayerAction(u32 action);
 extern int mISL_CheckPlayerAction(PersonalID_c* pid, u32 action);
 extern int mISL_CheckNowPlayerAction(u32 action);
+extern void mISL_MoveNowPlayerAction(void);
+extern int mISL_GetNpcDayType(Island_c* island);
 
 /* NOTE: a lot of these seem to be padded to 4-bytes and should be redone in the future */
 

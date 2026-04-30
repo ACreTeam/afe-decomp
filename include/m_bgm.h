@@ -20,25 +20,25 @@ enum {
     mBGM_PAUSE_NUM
 };
 
-extern void mBGMPsComp_make_ps_fanfare(u8 bgm_num, u16 stop_type);
-extern void mBGMPsComp_make_ps_lost_fanfare(u8 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_fanfare(u16 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_lost_fanfare(u16 bgm_num, u16 stop_type);
 extern void mBGMPsComp_make_ps_wipe(u16 stop_type);
 extern void mBGMPsComp_make_ps_quiet(u16 stop_type);
 extern void mBGMPsComp_make_ps_co_quiet(u16 stop_type, s16 counter);
 extern void mBGMPsComp_make_ps_fc_quiet(u16 stop_type);
-extern void mBGMPsComp_make_ps_demo(u8 bgm_num, u16 stop_type);
-extern void mBGMPsComp_make_ps_happening(u8 bgm_num, u16 stop_type);
-extern void mBGMPsComp_make_ps_room(u8 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_demo(u16 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_happening(u16 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_room(u16 bgm_num, u16 stop_type);
 extern void mBGMPsComp_make_ps_quietField(u16 stop_type);
 extern void mBGMPsComp_make_ps_fc_quietField(u16 stop_type);
-extern void mBGMPsComp_make_ps_fieldSuddenEv(u8 bgm_num, u16 stop_type, u8 priority);
-extern void mBGMPsComp_delete_ps_fanfare(u8 bgm_num, u16 stop_type);
+extern void mBGMPsComp_make_ps_fieldSuddenEv(u16 bgm_num, u16 stop_type, u8 priority);
+extern void mBGMPsComp_delete_ps_fanfare(u16 bgm_num, u16 stop_type);
 extern void mBGMPsComp_delete_ps_quiet();
-extern void mBGMPsComp_delete_ps_demo(u8 bgm_num, u16 stop_type);
-extern void mBGMPsComp_delete_ps_happening(u8 bgm_num, u16 stop_type);
-extern void mBGMPsComp_delete_ps_room(u8 bgm_num, u16 stop_type);
+extern void mBGMPsComp_delete_ps_demo(u16 bgm_num, u16 stop_type);
+extern void mBGMPsComp_delete_ps_happening(u16 bgm_num, u16 stop_type);
+extern void mBGMPsComp_delete_ps_room(u16 bgm_num, u16 stop_type);
 extern void mBGMPsComp_delete_ps_quietField();
-extern void mBGMPsComp_delete_ps_fieldSuddenEv(u8 bgm_num, u16 stop_type);
+extern void mBGMPsComp_delete_ps_fieldSuddenEv(u16 bgm_num, u16 stop_type);
 extern void mBGMPsComp_volume_fishing_start();
 extern void mBGMPsComp_volume_fishing_end();
 extern void mBGMPsComp_volume_collect_insects_start();

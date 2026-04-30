@@ -40,6 +40,7 @@ enum {
     bIT_PAL_TREE,
     bIT_PAL_PALM_TREE,
     bIT_PAL_GOLD_TREE,
+    bIT_PAL_FLOWER_SP,
 
     bIT_PAL_NUM
 };
@@ -223,25 +224,26 @@ typedef struct fade_s {
 
 typedef int (*bIT_TALK_DISPLAY_LIMIT_CHECK_PROC)(int);
 
+/* sizeof(bg_item_common_c) == 0x13A04 */
 struct bg_common_s {
-    bg_item_draw_table_c draw_table[mFM_VISIBLE_BLOCK_NUM];
-    bg_item_block_info_tbl_c block_info_table;
-    mFI_item_table_c item_table;
-    bg_item_common_info_c common_info;
-    bg_item_drop_table_c drop_info;
-    bg_item_drop_table_c fruit_drop_info;
-    bg_item_pit_c pit[bIT_PIT_NUM];
-    bg_item_drop_c drop[bIT_DROP_NUM];
-    bg_item_drop_c fruit_drop[bIT_FRUIT_DROP_NUM];
-    bg_item_hole_c hole[bIT_HOLE_NUM];
-    bg_item_shin_c shin[bIT_SHIN_NUM];
-    bg_item_ten_coin_c ten_coin[bIT_TEN_COIN_NUM];
-    bg_item_fade_c fade[bIT_FADE_NUM];
-    bIT_TALK_DISPLAY_LIMIT_CHECK_PROC talk_display_limit_check_proc;
-    ACTOR* bg_item_actorx_p;
-    u16 flags;
-    int _139E0[mFM_VISIBLE_BLOCK_NUM];
-    int _139F4[mFM_VISIBLE_BLOCK_NUM];
+    /* 0x00000 */ bg_item_draw_table_c draw_table[mFM_VISIBLE_BLOCK_NUM];
+    /* 0x12150 */ bg_item_block_info_tbl_c block_info_table;
+    /* 0x12554 */ mFI_item_table_c item_table;
+    /* 0x12598 */ bg_item_common_info_c common_info;
+    /* 0x125CC */ bg_item_drop_table_c drop_info;
+    /* 0x125D4 */ bg_item_drop_table_c fruit_drop_info;
+    /* 0x125DC */ bg_item_pit_c pit[bIT_PIT_NUM];
+    /* 0x12748 */ bg_item_drop_c drop[bIT_DROP_NUM];
+    /* 0x133C0 */ bg_item_drop_c fruit_drop[bIT_FRUIT_DROP_NUM];
+    /* 0x137B0 */ bg_item_hole_c hole[bIT_HOLE_NUM];
+    /* 0x137D4 */ bg_item_shin_c shin[bIT_SHIN_NUM];
+    /* 0x137E4 */ bg_item_ten_coin_c ten_coin[bIT_TEN_COIN_NUM];
+    /* 0x1399C */ bg_item_fade_c fade[bIT_FADE_NUM];
+    /* 0x139D8 */ bIT_TALK_DISPLAY_LIMIT_CHECK_PROC talk_display_limit_check_proc;
+    /* 0x139DC */ ACTOR* bg_item_actorx_p;
+    /* 0x139E0 */ u16 flags;
+    /* 0x139E4 */ int _139E0[mFM_VISIBLE_BLOCK_NUM];
+    /* 0x139F4 */ int _139F4[mFM_VISIBLE_BLOCK_NUM];
 };
 
 extern ACTOR_PROFILE BgItem_Profile;

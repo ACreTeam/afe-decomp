@@ -1,0 +1,3 @@
+# Python deps for tools/decomp-permuter (import.py needs toml; permuter uses vendored perm_pycparser)
+# Optional: pynacl (permuter@home), Levenshtein (use --algorithm levenshtein)
+toml>=0.10.0

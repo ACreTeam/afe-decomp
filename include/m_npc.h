@@ -26,16 +26,16 @@ extern "C" {
 
 #define ANIMAL_NUM_MIN 5
 #define ANIMAL_NUM_MAX 15 /* Maximum number of villagers possible in town */
+#define ANIMAL_ISLAND_NUM PLAYER_NUM
 #define ANIMAL_MEMORY_NUM 7
-#define ANIMAL_CATCHPHRASE_LEN 10
+#define ANIMAL_CATCHPHRASE_LEN 4
 #define ANIMAL_HP_MAIL_NUM PLAYER_NUM
-#define ANIMAL_NAME_LEN PLAYER_NAME_LEN
 #define mNpc_MINIMUM_DAYS_BEFORE_FORCE_REMOVAL 10
 
 #define mNpc_ISLAND_FTR_SAVE_NUM 4
 #define mNpc_ISLAND_FTR_NUM 16
 #define mNpc_EVENT_NPC_NUM 5
-#define mNpc_MASK_NPC_NUM 3
+#define mNpc_MASK_NPC_NUM 2
 #define mNpc_ISLANDER_NO ANIMAL_NUM_MAX
 
 enum {
@@ -114,6 +114,43 @@ enum {
     mNpc_PATIENCE_NUM
 };
 
+enum {
+    mNpc_SPECIES_CAT,
+    mNpc_SPECIES_ELEPHANT,
+    mNpc_SPECIES_SHEEP,
+    mNpc_SPECIES_BEAR,
+    mNpc_SPECIES_DOG,
+    mNpc_SPECIES_SQUIRREL,
+    mNpc_SPECIES_RABBIT,
+    mNpc_SPECIES_DUCK,
+    mNpc_SPECIES_HIPPO,
+    mNpc_SPECIES_WOLF,
+    mNpc_SPECIES_MOUSE,
+    mNpc_SPECIES_PIG,
+    mNpc_SPECIES_CHICKEN,
+    mNpc_SPECIES_BULL,
+    mNpc_SPECIES_COW,
+    mNpc_SPECIES_BIRD,
+    mNpc_SPECIES_FROG,
+    mNpc_SPECIES_CROCODILE,
+    mNpc_SPECIES_GOAT,
+    mNpc_SPECIES_TIGER,
+    mNpc_SPECIES_ANTEATER,
+    mNpc_SPECIES_KOALA,
+    mNpc_SPECIES_HORSE,
+    mNpc_SPECIES_OCTOPUS,
+    mNpc_SPECIES_LION,
+    mNpc_SPECIES_CHILD_BEAR,
+    mNpc_SPECIES_RHINO,
+    mNpc_SPECIES_GORILLA,
+    mNpc_SPECIES_OSTRICH,
+    mNpc_SPECIES_KANGAROO,
+    mNpc_SPECIES_BIG_BIRD,
+    mNpc_SPECIES_PENGUIN,
+
+    mNpc_SPECIES_NUM
+};
+
 /* sizeof(Anmremail_c) == 0x16 */
 typedef struct animal_remail_s {
     lbRTC_ymd_c date;             /* date sent */
@@ -131,9 +168,9 @@ typedef struct animal_player_maiL_s {
     /* 0x001 */ u8 paper_type;
     /* 0x002 */ mActor_name_t present;
     /* 0x004 */ u8 header_back_start; /* position for name insertion in header */
-    /* 0x005 */ u8 header[MAIL_HEADER_LEN];
-    /* 0x01D */ u8 body[MAIL_BODY_LEN];
-    /* 0x0DD */ u8 footer[MAIL_FOOTER_LEN];
+    /* 0x005 */ u8 header[MAIL_HEADER_LEN+4];
+    /* 0x01D */ u8 body[MAIL_BODY_LEN+14];
+    /* 0x0DD */ u8 footer[MAIL_FOOTER_LEN+4];
     /* 0x0FD */ u8 pad0;          /* likely pad */
     /* 0x0FE */ lbRTC_ymd_c date; /* sent date */
 } Anmplmail_c;
@@ -157,10 +194,10 @@ typedef struct animal_letter_info_s {
     u8 bit5_7 : 3;                /* seemingly unused */
 } Anmlet_c;
 
-/* sizeof(Anmlnd_c) == 0xA */
+/* sizeof(Anmlnd_c) == 0x8 */
 typedef struct animal_land_mem_s {
     /* 0x00 */ u8 name[LAND_NAME_SIZE];
-    /* 0x08 */ u16 id;
+    /* 0x06 */ u16 id;
 } Anmlnd_c;
 
 typedef struct island_animal_best_ftr_s {
@@ -170,24 +207,27 @@ typedef struct island_animal_best_ftr_s {
 
 /* sizeof(memuni_u) == 0xC */
 typedef union {
-    Anmlnd_c land;        /* size = 0xA */
+    Anmlnd_c land;        /* size = 0x8 */
     Anm_bestFtr_c island; /* size = 6 */
 } memuni_u;
 
 /* sizeof(Anmmem_c) == 0x138 */
 typedef struct animal_memory_s {
     /* 0x000 */ PersonalID_c memory_player_id; /* personal id of the player memory belongs to */
-    /* 0x014 */ lbRTC_time_c last_speak_time;  /* time the player last spoke to this villager */
-    /* 0x01C */ memuni_u memuni;               /* union between town NPC land memory & islander player action memory */
-    /* 0x028 */ u64 saved_town_tune;           /* memory origin town tune */
-    /* 0x030 */ s8 friendship;                 /* friendship with the player */
-    /* 0x031 */ Anmlet_c letter_info;          /* saved letter flags */
-    /* 0x032 */ Anmplmail_c letter;            /* saved letter */
+    /* 0x010 */ lbRTC_time_c last_speak_time;  /* time the player last spoke to this villager */
+    /* 0x018 */ memuni_u memuni;               /* union between town NPC land memory & islander player action memory */
+    /* 0x020 */ u64 saved_town_tune;           /* memory origin town tune */
+    /* 0x028 */ s8 friendship;                 /* friendship with the player */
+    /* 0x029 */ Anmlet_c letter_info;          /* saved letter flags */
+    /* 0x02A */ Anmplmail_c letter;            /* saved letter */
 } Anmmem_c;
 
 /* sizeof(anmuni) == 8 */
 typedef union {
-    u8 previous_land_name[LAND_NAME_SIZE];
+    struct {
+        u8 previous_land_name[LAND_NAME_SIZE];
+        u16 previous_land_id;
+    };
     mActor_name_t island_ftr[mNpc_ISLAND_FTR_SAVE_NUM];
 } anmuni_u;
 
@@ -197,35 +237,29 @@ typedef struct animal_password_mail_s {
     /* 0x08 */ u8 password[20]; /* TODO: this should not be a hardcoded length */
 } AnmHPMail_c;
 
-/* sizeof(Animal_c) == 0x988 */
+/* sizeof(Animal_c) == 0x680 */
 typedef struct animal_s {
     /* 0x000 */ AnmPersonalID_c id;                     /* this villager's ID */
-    /* 0x010 */ Anmmem_c memories[ANIMAL_MEMORY_NUM];   /* memories of players who've spoken to this villager */
-    /* 0x898 */ Anmhome_c home_info;                    /* home position info */
-    /* 0x89D */ u8 catchphrase[ANIMAL_CATCHPHRASE_LEN]; /* may be called 'word_ending' */
-    /* 0x8A8 */ mQst_contest_c contest_quest;           /* current contest quest information */
-    /* 0x8D0 */ u8
-        parent_name[PLAYER_NAME_LEN]; /* name of the player who 'spawned' the villager in, unsure why this is tracked */
-    /* 0x8D8 */ anmuni_u anmuni;      /* name of the last town the villager lived in or saved island ftr */
-    /* 0x8E0 */ u16 previous_land_id; /* id of the previous town the villager lived in */
-    /* 0x8E2 */ u8 mood;              /* probably called 'feel' based on code */
-    /* 0x8E3 */ u8 mood_time;         /* probably called 'feel_tim' based on code */
-    /* 0x8E4 */ mActor_name_t cloth;  /* shirt the villager is wearing */
-    /* 0x8E6 */ u16 remove_info;      /* info about villager moving between towns? kinda stubbed */
-    /* 0x8E8 */ u8 is_home;           /* TRUE when the villager is home, otherwise FALSE */
-    /* 0x8E9 */ u8
-        moved_in; /* TRUE when the villager moved in after town creation, FALSE if they started out in town */
-    /* 0x8EA */ u8 removing; /* TRUE when the villager is leaving town, FALSE otherwise */
-    /* 0x8EB */ u8
-        cloth_original_id; /* 0xFF when not wearing an Able Sister's pattern, otherwise 0-3 indicating which pattern */
-    /* 0x8EC */ u8 umbrella_id; /* 0xFF when no umbrella, 0-31 when a standard umbrella, 32-35 when using an Able
-                                   Sister's pattern */
-    /* 0x8ED */ u8 unk_8ED;     /* Exists according to mISL_gc_to_agb_animal, but seems unused in practice */
-    /* 0x8EE */ mActor_name_t
-        present_cloth; /* The most recently received shirt from a letter which the villager may change into */
-    /* 0x8F0 */ u8 animal_relations[ANIMAL_NUM_MAX]; /* relationships between all villagers in town, starts at 128 which
-                                                        is neutral */
-    /* 0x900 */ AnmHPMail_c hp_mail[ANIMAL_HP_MAIL_NUM]; /* mail password info storage */
+    /* 0x018 */ Anmmem_c memories[ANIMAL_MEMORY_NUM];   /* memories of players who've spoken to this villager */
+    /* 0x590 */ Anmhome_c home_info;                    /* home position info */
+    /* 0x595 */ u8 catchphrase[ANIMAL_CATCHPHRASE_LEN]; /* may be called 'word_ending' */
+    /* 0x59C */ mQst_contest_c contest_quest;           /* current contest quest information */
+    /* 0x5C0 */ PersonalID_c parent_id; // ID of the player who 'spawned' the villager in
+    /* 0x5D0 */ anmuni_u anmuni;
+    /* 0x5D8 */ u8 mood;              /* probably called 'feel' based on code */
+    /* 0x5D9 */ u8 mood_time;         /* probably called 'feel_tim' based on code */
+    /* 0x5DA */ mActor_name_t cloth;  /* shirt the villager is wearing */
+    /* 0x5DC */ u16 remove_info;      /* info about villager moving between towns? kinda stubbed */
+    /* 0x5DE */ u8 is_home;           /* TRUE when the villager is home, otherwise FALSE */
+    /* 0x5DF */ u8 moved_in; /* 0 = starting, 1 = moved in, 2 = invited (add_npc) */
+    /* 0x5E0 */ u8 removing; /* TRUE when the villager is leaving town, FALSE otherwise */
+    /* 0x5E1 */ u8 cloth_original_id; /* 0xFF when not wearing an Able Sister's pattern, otherwise 0-3 indicating which pattern */
+    /* 0x5E2 */ u8 umbrella_id; /* 0xFF when no umbrella, 0-31 when a standard umbrella, 32-35 when using an Able Sister's pattern */
+    /* 0x5E3 */ u8 unk_8ED;     /* Exists according to mISL_gc_to_agb_animal, but seems unused in practice */
+    /* 0x5E4 */ mActor_name_t present_cloth; /* The most recently received shirt from a letter */
+    /* 0x5E6 */ s8 animal_relations[ANIMAL_NUM_MAX]; /* relationships between all villagers in town */
+    /* 0x5F6 */ AnmHPMail_c hp_mail[ANIMAL_HP_MAIL_NUM]; /* mail password info storage */
+    /* 0x666 */ u8 race; // species
     /* 0x000 */ u8 unused[24];                           /* unknown usage/unused */
 } Animal_c;
 
@@ -265,16 +299,17 @@ typedef struct npc_conversation_s {
     u8 unk : 5;
 } mNpc_NpcConversation_c;
 
+/* sizeof(mNpc_NpcList_c) == 0x28 */
 typedef struct npc_list_s {
-    mActor_name_t name;
-    mActor_name_t field_name;
-    xyz_t house_position;
-    xyz_t position;
-    u8 appear_flag;
-    mNpc_NpcConversation_c conversation_flags;
-    mQst_base_c quest_info;
-    mNpc_NpcHouseData_c house_data;
-    mActor_name_t reward_furniture;
+    /* 0x00 */ mActor_name_t name;
+    /* 0x02 */ mActor_name_t field_name;
+    /* 0x04 */ xyz_t house_position;
+    /* 0x10 */ xyz_t position;
+    /* 0x1C */ u8 appear_flag;
+    /* 0x1D */mNpc_NpcConversation_c conversation_flags;
+    // mQst_base_c quest_info;
+    /* 0x1E */ mNpc_NpcHouseData_c house_data;
+    /* 0x26 */ mActor_name_t reward_furniture;
 } mNpc_NpcList_c;
 
 typedef struct event_npc_s {
@@ -301,6 +336,18 @@ typedef struct npc_default_data_s {
     u16 catchphrase_str_idx;
     s8 umbrella;
 } mNpc_Default_Data_c;
+
+/* sizeof(mNpc_SickInfo_c) == 0x80 */
+typedef struct npc_sick_info_s {
+    /* 0x00 */ AnmPersonalID_c id;
+    /* 0x14 */ lbRTC_time_c heal_time;
+    /* 0x1C */ lbRTC_time_c sick_level_change_time;
+    /* 0x24 */ lbRTC_time_c recovery_time;
+    /* 0x2C */ PersonalID_c id_gave_medicine[TOTAL_PLAYER_NUM];
+    /* 0x7C */ u8 healed;
+    /* 0x7D */ u8 gave_medicine;
+    /* 0x7E */ u8 sick_level;
+} mNpc_SickInfo_c;
 
 extern void mNpc_AddNowNpcMax(u8* npc_max);
 extern void mNpc_SubNowNpcMax(u8* npc_max);
@@ -388,6 +435,9 @@ extern u8 mNpc_GetLooks(mActor_name_t npc_id);
 extern void mNpc_SetDefAnimalCloth(Animal_c* animal);
 extern void mNpc_SetDefAnimalUmbrella(Animal_c* animal);
 extern void mNpc_SetDefAnimal(Animal_c* animal, mActor_name_t npc_id, mNpc_Default_Data_c* def_data);
+extern void mNpc_SetHaveAppeared(mActor_name_t npc_id);
+extern void mNpc_SetNpcNameID(Animal_c* animal, int count);
+extern void mNpc_SetDefAnimal_name(Animal_c* animal, mActor_name_t npc_id);
 extern void mNpc_SetAnimalTitleDemo(mNpc_demo_npc_c* demo_npc, Animal_c* animal, GAME* game);
 extern int mNpc_GetReservedUtNum(int* ut_x, int* ut_z, mActor_name_t* item);
 extern int mNpc_BlockNum2ReservedUtNum(int* ut_x, int* ut_z, int bx, int bz);
@@ -409,7 +459,9 @@ extern void mNpc_ClearInAnimal();
 extern Animal_c* mNpc_GetInAnimalP();
 extern void mNpc_SetRemoveAnimalNo(u8* remove_animal_no, Animal_c* animal, int ignored_idx);
 extern int mNpc_GetGoodbyAnimalIdx(int ignored_idx);
+extern void mNpc_DestroyHouse(Anmhome_c* home);
 extern void mNpc_FirstClearGoodbyMail();
+extern void mNpc_SetGoodbyAnimalMail(AnmPersonalID_c* anm_id);
 extern void mNpc_SendRegisteredGoodbyMail();
 extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, int moving_out);
 extern void mNpc_SetReturnAnimal(Animal_c* return_animal);
@@ -498,6 +550,12 @@ extern void mNpc_set_addd_edit_bit(int bit);
 extern void mNpc_set_addd_edit_info(int mtype, int disp_add);
 extern void mNpc_SetTalkAnimalIdx_fdebug(AnmPersonalID_c* anm_id);
 extern void mNpc_PrintFriendship_fdebug(gfxprint_t* gfxprint);
+
+extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 card_id);
+extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id);
+extern void mNpc_EraseIslandAnimal(int island_idx);
+extern void mNpc_RenewRemoveHistory(void);
+extern int mNpc_GetSickAnimalIdx(void);
 
 #ifdef __cplusplus
 }

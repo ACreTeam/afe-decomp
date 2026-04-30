@@ -15,8 +15,8 @@ extern "C" {
 #define NATIVE 0
 #define FOREIGN 1
 
-extern void mLd_StartFlagOn();
-extern int mLd_CheckStartFlag();
+extern void mLd_StartFlagOn(void);
+extern int mLd_CheckStartFlag(void);
 extern int mLd_NullCheckLandName(u8* land_name);
 extern int mLd_CheckId(u16 land_id);
 extern int mLd_CheckCmpLandName(u8* name_a, u8* name_b);
@@ -26,13 +26,14 @@ extern void mLd_CopyLandName(u8* dst, u8* src);
 extern int mLd_AddMuraString(u8* name, int name_len);
 extern int mLd_GetLandNameStringAddMura(u8* buf);
 extern void mLd_SetFreeStrLandMuraName(u8* name, int free_str_no);
-extern u8* mLd_GetLandName();
-extern u16 mLd_MakeLandId();
+extern u8* mLd_GetLandName(void);
+extern u16 mLd_MakeLandId(void);
 extern int mLd_PlayerManKindCheckNo(u8 player_no);
-extern int mLd_PlayerManKindCheck();
+extern int mLd_PlayerManKindCheck(void);
 extern int mLd_CheckThisLand(u8* other_name, u16 other_id);
-extern void mLd_LandInfoInit();
-extern void mLd_LandDataInit();
+extern void mLd_LandInfoInit(void);
+extern void mLd_LandDataInit(void);
+extern int mLd_CheckStartFlag(void);
 
 #ifdef __cplusplus
 }

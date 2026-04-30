@@ -200,11 +200,12 @@ typedef struct field_pal_s {
 /* 0x0C */ u16* flower0_pal;
 /* 0x10 */ u16* flower1_pal;
 /* 0x14 */ u16* flower2_pal;
-/* 0x18 */ u16* grass_pal;
-/* 0x1C */ u16* tree_pal;
-/* 0x20 */ u16* cedar_tree_pal; // probably?
-/* 0x24 */ u16* palm_tree_pal;
-/* 0x28 */ u16* golden_tree_pal;
+/* 0x18 */ u16* flower3_pal; // jacob's ladder
+/* 0x1C */ u16* grass_pal;
+/* 0x20 */ u16* tree_pal;
+/* 0x24 */ u16* cedar_tree_pal; // probably?
+/* 0x28 */ u16* palm_tree_pal;
+/* 0x2C */ u16* golden_tree_pal;
 } mFM_field_pal_c;
 
 typedef struct field_bg_sound_source_s {
@@ -337,7 +338,7 @@ extern void mFM_DecideBgTexIdx(u8* bg_tex_idx);
 extern void mFM_SetFieldInitData(int bg_disp_num, int bg_disp_size);
 extern void mFM_FieldInit(GAME_PLAY* play);
 extern void mFM_Field_dt();
-extern void mFM_SetBlockKindLoadCombi();
+extern void mFM_SetBlockKindLoadCombi(GAME* game);
 extern void mFM_InitFgCombiSaveData(GAME* game);
 extern void mFM_RenewalReserve();
 extern mActor_name_t mFM_GetReseveName(int bx, int bz);

@@ -1,0 +1,5 @@
+CompileFlags:
+  Add: [ "-fdeclspec", "-D__INTELLISENSE__", "-DVERSION=0", "-DDEBUG=0", "-DNDEBUG", "-DF3DEX_GBI_2", "-D_LANGUAGE_C" ]
+
+Diagnostics:
+  UnusedIncludes: None

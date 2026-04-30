@@ -11,14 +11,16 @@ extern "C" {
 f32 distance2vol4KITEKI(f32);
 f32 distance2vol4MD(f32);
 
-extern void Na_InitAudio(void (*fatal_callback)(), u8* load_addr, size_t load_size, u8* bootsound,
-                         size_t bootsound_size, BOOL cut_flag);
+typedef void (*Na_FatalCallback)();
+
+extern void Na_InitAudio(Na_FatalCallback fatal_callback, u8* bootsound, size_t bootsound_size, u32 aram_size);
+extern int Na_GetAudioARAMSize(int audirom_size, int nin_hi_aw_size);
 extern void Na_GameFrame();
 extern void Na_Reset();
 extern void Na_SoftReset();
 extern void Na_Tenki(u8);
-extern void Na_BgmStart(u8);
-extern void Na_BgmCrossfadeStart(u8);
+extern void Na_BgmStart(u16);
+extern void Na_BgmCrossfadeStart(u16);
 extern void Na_BgmStop(u16);
 extern void Na_SysTrgStart(u16);
 extern void Na_PlyWalkSe(u16 id, u16 angle, f32 distance);
@@ -26,7 +28,7 @@ extern void Na_PlyWalkSeRoom(u8 a, u16 angle, f32 distance);
 extern void Na_NpcWalkSe(u16 id, u16 angle, f32 distance);
 extern void Na_NpcWalkSeRoom(u8 index, u16 angle, f32 distance);
 extern void Na_PlayerStatusLevel(u8 playerDash, f32 playerSpeed);
-extern void Na_VoiceSe(u8, u8, u8, s16, u8, u8);
+extern void Na_VoiceSe(u8, s16, u8);
 extern void Na_MessageStatus(u8 messageStatus);
 extern void Na_MessageSpeed(u8 messageSpeed);
 extern u8 Na_MessageSpeedGet();
@@ -69,6 +71,9 @@ extern u8 Na_CheckNeosBoot();
 extern void Na_Museum(u8 museumType);
 extern int Na_GetSoundFrameCounter();
 extern void Na_kazagurumaLevel(f32 kazagurumaSpeed);
+extern void Na_StartSeq(u8 group_id, u16 seq_id, u32 fade_time);
+extern void Na_FuushaOngenPos(u32 id, u16 angle, f32 distance, f32 speed);
+extern void Na_PrivateIslandStatus(u8 status);
 
 // __declspec(weak) extern int OSAttention(const char* msg, ...) {
 //     va_list marker;

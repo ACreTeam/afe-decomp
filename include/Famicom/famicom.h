@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define FAMICOM_SAVE_HEADER_SIZE 0x40
-#define FAMICOM_INTERNAL_ROM_NUM 19
+#define FAMICOM_INTERNAL_ROM_NUM 17
 
 #define NESTAG_CMD_SIZE 3
 #define NESTAG_SIZE (NESTAG_CMD_SIZE + 1)
@@ -62,7 +62,7 @@ enum filer_demo_mode {
 };
 
 #define FAMICOM_SAVE_DATA_NAME_LEN 8
-#define FAMICOM_MORI_NAME_LEN 16
+#define FAMICOM_MORI_NAME_LEN 10
 
 typedef struct FamicomSaveDataHeader {
     u8 name[FAMICOM_SAVE_DATA_NAME_LEN];
@@ -107,11 +107,35 @@ enum {
     FAMICOM_RESULT_NOFILE
 };
 
+enum famicom_games {
+    FAMICOM_GAME_CLU_CLU_LAND,
+    FAMICOM_GAME_BALLOON_FIGHT,
+    FAMICOM_GAME_DONKEY_KONG,
+    FAMICOM_GAME_DONKEY_KONG_JR_MATH,
+    FAMICOM_GAME_PINBALL,
+    FAMICOM_GAME_TENNIS,
+    FAMICOM_GAME_GOLF,
+    FAMICOM_GAME_PUNCHOUT,
+    FAMICOM_GAME_BASEBALL,
+    FAMICOM_GAME_CLU_CLU_LAND_D,
+    FAMICOM_GAME_DONKEY_KONG_3,
+    FAMICOM_GAME_DONKEY_KONG_JR,
+    FAMICOM_GAME_EXCITEBIKE,
+    FAMICOM_GAME_SOCCER,
+    FAMICOM_GAME_WARIOS_WOODS,
+    FAMICOM_GAME_GOMOKU_NARABE,
+    FAMICOM_GAME_MAHJONG,
+    FAMICOM_GAME_NUM,
+
+    FAMICOM_GAME_EXTERNAL = 31
+};
+
 typedef struct MemcardGameHeader_t {
     u8 _00;
     u8 _01;
     u8 mori_name[FAMICOM_MORI_NAME_LEN];
     u16 nesrom_size;
+    u8 _0E[6];
     u16 nestags_size;
     u16 icon_format;
     u16 icon_flags;

@@ -30,6 +30,10 @@ class JKRFileFinder {
         return mIsAvailable;
     }
 
+    bool isDirectory() const {
+        return mIsDir;
+    }
+
     // _00     = VTBL
 
     bool mIsAvailable; // _10
@@ -69,6 +73,22 @@ class JKRDvdFinder : public JKRFileFinder {
     DVDDir mDir;     // _14
     bool mIsDvdOpen; // _20
 };
+
+inline bool JKRIsFileFinderDirectory(JKRFileFinder* finder) {
+    return finder->isDirectory();
+}
+
+inline bool JKRFindNextFile(JKRFileFinder* finder) {
+    return finder->findNextFile();
+}
+
+inline bool JKRIsFileFinderAvailable(JKRFileFinder* finder) {
+    return finder->isAvailable();
+}
+
+inline void JKRCloseFileFinder(JKRFileFinder* finder) {
+    delete finder;
+}
 
 #endif
 #endif
