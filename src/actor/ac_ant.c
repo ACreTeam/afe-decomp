@@ -14,6 +14,7 @@ enum {
 };
 
 static void aANT_actor_ct(ACTOR* actorx, GAME* game);
+static void aANT_actor_dt(ACTOR* actorx, GAME* game);
 static void aANT_actor_move(ACTOR* actorx, GAME* game);
 static void aANT_actor_draw(ACTOR* actorx, GAME* game);
 
@@ -26,7 +27,7 @@ ACTOR_PROFILE Ant_Profile = {
     ACTOR_OBJ_BANK_ANT,
     sizeof(ANT_ACTOR),
     &aANT_actor_ct,
-    mActor_NONE_PROC1,
+    &aANT_actor_dt,
     &aANT_actor_move,
     &aANT_actor_draw,
     NULL,
@@ -44,6 +45,9 @@ static void aANT_actor_ct(ACTOR* actorx, GAME* game) {
     ant->alpha = 255;
     actorx->mv_proc = &aANT_actor_move;
     aANT_setupAction(ant, aANT_ACT_WAIT);
+}
+
+static void aANT_actor_dt(ACTOR* actorx, GAME* game) {
 }
 
 static void aANT_calc_scale(ANT_ACTOR* ant, f32 step, f32 target_scale) {
@@ -107,6 +111,10 @@ static void aANT_disappear(ANT_ACTOR* ant, GAME* game) {
     }
 }
 
+static void aANT_wait_init(ANT_ACTOR* ant) {
+    // nothing
+}
+
 static void aANT_caught_init(ANT_ACTOR* ant) {
     ant->disappear_counter = 0;
 }
@@ -120,7 +128,7 @@ typedef void (*aANT_INIT_PROC)(ANT_ACTOR* ant);
 
 static void aANT_setupAction(ANT_ACTOR* ant, int action) {
     static aANT_INIT_PROC init_proc[] = {
-        (aANT_INIT_PROC)&none_proc1,
+        &aANT_wait_init,
         &aANT_caught_init,
         &aANT_disappear_init,
     };
