@@ -32,6 +32,7 @@ struct ac_npc_soncho2 {
     /* 0x9a9 */ u8 think;
     /* 0x9aa */ u8 _9aa;
     /* 0x9ab */ u8 talk;
+    u8 next_talk;
     /* 0x9ac */ u8 _9ac;
     /* 0x9ad */ u8 melody_inst;
     /* 0x9ae */ u8 event;

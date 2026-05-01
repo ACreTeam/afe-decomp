@@ -1,3 +1,12 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_soncho2.h"
+#include "m_common_data.h"
+#include "m_soncho.h"
+#include "m_string.h"
+#include "m_msg.h"
+#include "m_player_lib.h"
+#endif
+
 static int aES2_kinenhin_msg(ACTOR* actorx, int msg_no) {
     NPC_SONCHO2* soncho = (NPC_SONCHO2*)actorx;
     if (soncho->event == mSC_EVENT_HARVEST_FESTIVAL) {
@@ -12,13 +21,11 @@ static void aES2_LightHouse_set_free_str() {
     lbRTC_time_c time_2;
     u8 day_str[4];
     lbRTC_TimeCopy(&time_1, &Common_Get(time).rtc_time);
-    lbRTC_Add_DD(&time_1, 7);
+    lbRTC_Add_DD(&time_1, lbRTC_WEEK);
     lbRTC_TimeCopy(&time_2, &Common_Get(time).rtc_time);
-    lbRTC_Add_DD(&time_2, 8);
-    mString_Load_DayStringFromRom(day_str, time_1.day);
-    mMsg_Set_free_str(mMsg_Get_base_window_p(), FALSE, day_str, sizeof(day_str));
-    mString_Load_DayStringFromRom(day_str, time_2.day);
-    mMsg_Set_free_str(mMsg_Get_base_window_p(), TRUE, day_str, sizeof(day_str));
+    lbRTC_Add_DD(&time_2, lbRTC_WEEK + 1);
+    mSC_set_free_str_number(mMsg_FREE_STR0, time_1.day);
+    mSC_set_free_str_number(mMsg_FREE_STR1, time_2.day);
 }
 
 static void aES2_talk_before_give(NPC_SONCHO2* soncho, GAME* game) {
@@ -59,7 +66,7 @@ static void aES2_set_norm_talk_info(ACTOR* actorx) {
     aES2_change_talk_proc((ACTOR*)soncho, aES2_TALK_5);
 
     switch (soncho->event) {
-        case 0x65:
+        case mSC_SPECIAL_EVENT_JAN_VACATION:
             if (mSC_LightHouse_Talk_After_Check()) {
                 mDemo_Set_msg_num(MSG_SONCHO_LIGHTHOUSE_1 + 6 + (int)RANDOM_F(3));
             } else {
@@ -67,7 +74,7 @@ static void aES2_set_norm_talk_info(ACTOR* actorx) {
                 aES2_change_talk_proc((ACTOR*)soncho, aES2_TALK_LIGHTHOUSE_QUEST_START_1);
             }
             break;
-        case 0x66:
+        case mSC_SPECIAL_EVENT_FEB_VACATION:
             if (mSC_LightHouse_Talk_After_Check()) {
                 mDemo_Set_msg_num(MSG_SONCHO_LIGHTHOUSE_2 + 6 + (int)RANDOM_F(3));
             } else {

@@ -37,7 +37,7 @@ ACTOR_PROFILE Ev_Soncho2_Profile = {
     &aES2_actor_ct,
     &aES2_actor_dt,
     &aES2_actor_init,
-    mActor_NONE_PROC1,
+    mActor_NONE_PROC1, // @BUG - devs forgot to swap to none_proc2
     &aES2_actor_save,
 };
 // clang-format on
@@ -53,15 +53,15 @@ static void aES2_actor_ct(ACTOR* actorx, GAME* game) {
         0,
     };
     NPC_SONCHO2* soncho = (NPC_SONCHO2*)actorx;
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         ACTOR* player = (ACTOR*)GET_PLAYER_ACTOR_GAME(game);
         soncho->npc_class.schedule.schedule_proc = aES2_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         soncho->npc_class.palActorIgnoreTimer = -1;
         soncho->npc_class.draw.sub_anim_type = aNPC_SUB_ANIM_TUE;
         soncho->_9ac = FALSE;
         soncho->melody_inst = 0;
-        CLIP(npc_clip)->set_dst_pos_proc((NPC_ACTOR*)actorx, player->world.position.x, player->world.position.z);
+        NPC_CLIP->set_dst_pos_proc((NPC_ACTOR*)actorx, player->world.position.x, player->world.position.z);
         actorx->cull_width = 1350.0f;
         soncho->year = Common_Get(time).rtc_time.year;
         soncho->month = Common_Get(time).rtc_time.month;
@@ -75,12 +75,12 @@ static void aES2_actor_save(ACTOR* actor, GAME* game) {
 }
 
 static void aES2_actor_dt(ACTOR* actor, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actor, game);
+    NPC_CLIP->dt_proc(actor, game);
     mSC_delete_soncho(actor, (GAME_PLAY*)game);
 }
 
 static void aES2_actor_init(ACTOR* actor, GAME* game) {
-    CLIP(npc_clip)->init_proc(actor, game);
+    NPC_CLIP->init_proc(actor, game);
 }
 
 static int aES2_set_request_act(NPC_SONCHO2* soncho, u8 priority, int idx, int type, int obj, int x, int z) {
@@ -102,13 +102,13 @@ static int aES2_set_request_act(NPC_SONCHO2* soncho, u8 priority, int idx, int t
     return res;
 }
 
+#include "../src/actor/npc/event/ac_ev_soncho2_talk.c_inc"
+#include "../src/actor/npc/event/ac_ev_soncho2_think.c_inc"
+
 static void aES2_actor_move(ACTOR* actor, GAME* game) {
-    CLIP(npc_clip)->move_proc(actor, game);
+    NPC_CLIP->move_proc(actor, game);
 }
 
 static void aES2_actor_draw(ACTOR* actor, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actor, game);
+    NPC_CLIP->draw_proc(actor, game);
 }
-
-#include "src/actor/npc/event/ac_ev_soncho2_talk.c_inc"
-#include "src/actor/npc/event/ac_ev_soncho2_think.c_inc"

@@ -224,7 +224,7 @@ static void aES2_setup_think_proc(NPC_SONCHO2* soncho, GAME_PLAY* play, u8 think
 
     soncho->_994 = proc_table[data[0]];
     soncho->npc_class.talk_info.talk_request_proc = talk_request_table[data[2]];
-    soncho->talk = data[3];
+    soncho->next_talk = data[3];
     soncho->think = data[4];
 
     init_table[data[1]](soncho, play);
