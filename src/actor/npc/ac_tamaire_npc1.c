@@ -6,6 +6,7 @@
 #include "m_msg.h"
 #include "m_soncho.h"
 #include "libultra/libultra.h"
+#include "ac_tunahiki_control.h"
 
 enum {
     aTMN1_THINK_BIRTH,
@@ -104,6 +105,7 @@ static void aTMN1_actor_ct(ACTOR* actorx, GAME* game) {
 
         actor->npc_class.schedule.schedule_proc = aTMN1_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
+        aTNC_make_athletic_type(actorx, game, (((actorx->npc_id - SP_NPC_EV_TAMAIRE_1) >> 1) & 1) ^ 1);
 
         actor->npc_class.palActorIgnoreTimer = -1;
         actor->change_flag = FALSE;

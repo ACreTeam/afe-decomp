@@ -311,7 +311,7 @@ static void aTMN1_setup_think_proc(TAMAIRE_NPC1_ACTOR* actor, GAME_PLAY* play, u
     actor->npc_class.talk_info.talk_request_proc = talk_request_table[dt->talk_request_idx];
     actor->talk_idx = dt->talk_idx;
     actor->next_think_idx = dt->think_idx_after_talk;
-    actor->npc_class.head.lock_flag = TRUE;
+    actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     (*init_table[dt->think_init_idx])(actor, play);
     actor->change_flag = TRUE;
 }

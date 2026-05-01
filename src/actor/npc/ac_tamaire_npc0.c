@@ -5,6 +5,7 @@
 #include "m_font.h"
 #include "m_msg.h"
 #include "m_soncho.h"
+#include "ac_tunahiki_control.h"
 #include "libultra/libultra.h"
 
 static void aTMN0_actor_ct(ACTOR* actorx, GAME* game);
@@ -54,6 +55,7 @@ static void aTMN0_actor_ct(ACTOR* actorx, GAME* game) {
         actor->npc_class.schedule.schedule_proc = aTMN0_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
 
+        aTNC_make_athletic(actorx, game);
         actor->npc_class.palActorIgnoreTimer = -1;
         actor->change_flag = FALSE;
         actor->npc_class.collision.check_kind = aNPC_BG_CHECK_TYPE_NONE;
