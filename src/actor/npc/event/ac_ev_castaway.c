@@ -19,7 +19,7 @@ ACTOR_PROFILE Ev_Castaway_Profile = {
     &aECST_actor_ct,
     &aECST_actor_dt,
     &aECST_actor_init,
-    mActor_NONE_PROC1,
+    &none_proc2,
     &aECST_actor_save,
 };
 
@@ -32,14 +32,14 @@ static void aECST_actor_ct(ACTOR* actorx, GAME* game) {
 
     EV_CASTAWAY_ACTOR* castaway = (EV_CASTAWAY_ACTOR*)actorx;
 
-    if ((*Common_Get(clip).npc_clip->birth_check_proc)(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         castaway->npc_class.schedule.schedule_proc = &aECST_schedule_proc;
-        (*Common_Get(clip).npc_clip->ct_proc)(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         castaway->npc_class.condition_info.demo_flg = ~aNPC_COND_DEMO_SKIP_MOVE_Y; // is this a mistake?
         castaway->npc_class.condition_info.hide_request = FALSE;
         castaway->npc_class.palActorIgnoreTimer = -1;
         aNPC_SPNPC_BIT_SET(Common_Get(spnpc_first_talk_flags), aNPC_SPNPC_BIT_DOZAEMON);
-        actorx->status_data.weight = 254;
+        actorx->status_data.weight = MASSTYPE_HEAVY;
         actorx->gravity = 0.0f;
         actorx->max_velocity_y = 0.0f;
         actorx->shape_info.rotation.y = DEG2SHORT_ANGLE(68.027344f);        // 0x3060
@@ -51,25 +51,29 @@ static void aECST_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aECST_actor_save(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->save_proc)(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aECST_actor_dt(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->dt_proc)(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
 static void aECST_actor_init(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->init_proc)(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
+}
+
+static void aECST_schedule_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
+    // nothing
 }
 
 static void aECST_schedule_main_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
-    if (actorx->draw.animation_id != 116) {
-        (*Common_Get(clip).npc_clip->animation_init_proc)((ACTOR*)actorx, aNPC_ANIM_GETUP_WAIT_SEG1, 0);
+    if (actorx->draw.animation_id != aNPC_ANIM_GETUP_WAIT_SEG1) {
+        NPC_CLIP->animation_init_proc((ACTOR*)actorx, aNPC_ANIM_GETUP_WAIT_SEG1, 0);
     }
 }
 
 static void aECST_schedule_proc(NPC_ACTOR* actorx, GAME_PLAY* play, int type) {
-    static aNPC_SUB_PROC sche_proc[2] = { (aNPC_SUB_PROC)&none_proc1, aECST_schedule_main_proc };
+    static aNPC_SUB_PROC sche_proc[2] = { aECST_schedule_init_proc, aECST_schedule_main_proc };
 
     (*sche_proc[type])(actorx, play);
 }
@@ -81,9 +85,9 @@ static void aECST_actor_move(ACTOR* actorx, GAME* game) {
     cycle += 512;
     actorx->position_speed.y = (actorx->home.position.y + 4.0f + sin_s(cycle) * 4.0f) - actorx->world.position.y;
     castaway->bobbing_cycle = cycle;
-    (*Common_Get(clip).npc_clip->move_proc)(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
 }
 
 static void aECST_actor_draw(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->draw_proc)(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
