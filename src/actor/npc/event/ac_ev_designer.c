@@ -33,7 +33,7 @@ ACTOR_PROFILE Ev_Designer_Profile = {
     aEDSN_actor_ct,
     aEDSN_actor_dt,
     aEDSN_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aEDSN_actor_save,
 };
 // clang-format on
@@ -51,24 +51,34 @@ static void aEDSN_actor_ct(ACTOR* actorx, GAME* game) {
         aEDSN_actor_move,
         aEDSN_actor_draw,
         aNPC_CT_SCHED_TYPE_SPECIAL,
-        (aNPC_TALK_REQUEST_PROC)none_proc1,
+        none_proc2,
         aEDSN_talk_init,
         aEDSN_talk_end_chk,
         0,
         // clang-format on
     };
 
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         EV_DESIGNER_ACTOR* designer = (EV_DESIGNER_ACTOR*)actorx;
 
         designer->npc_class.schedule.schedule_proc = aEDSN_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         designer->melody_save = designer->npc_class.talk_info.melody_inst;
     }
 }
 
 static void aEDSN_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    EV_DESIGNER_ACTOR* designer = (EV_DESIGNER_ACTOR*)actorx;
+    
+    if (!mDemo_IS_EVENT_DEMO(Common_Get(start_demo_request).type)) {
+        aEv_designer_c* tmp_data_p = designer->tmp_save_p;
+
+        if (tmp_data_p != NULL) {
+            tmp_data_p->complete_flag = FALSE;
+        }
+    }
+
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aEDSN_actor_dt(ACTOR* actorx, GAME* game) {
@@ -80,18 +90,22 @@ static void aEDSN_actor_dt(ACTOR* actorx, GAME* game) {
         designer->camera_flag = FALSE;
     }
 
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
     mEv_actor_dying_message(mEv_EVENT_DESIGNER, actorx);
 }
 
 static void aEDSN_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
-static void aEDSN_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+static void aEDSN_none_proc1(EV_DESIGNER_ACTOR* designer, GAME_PLAY* play) {
+    // nothing
 }
 
 #include "../src/actor/npc/event/ac_ev_designer_move.c_inc"
 #include "../src/actor/npc/event/ac_ev_designer_talk.c_inc"
 #include "../src/actor/npc/event/ac_ev_designer_schedule.c_inc"
+
+static void aEDSN_actor_draw(ACTOR* actorx, GAME* game) {
+    NPC_CLIP->draw_proc(actorx, game);
+}

@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_designer.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_event.h"
+#include "m_msg.h"
+#endif
+
 enum {
     aEDSN_TALK_INVENTORY_CHECK,
     aEDSN_TALK_CLOSE_UMB_END_WAIT,
@@ -235,6 +243,7 @@ static void aEDSN_set_norm_talk_info(ACTOR* actorx) {
     int idx = aEDSN_check_present();
     int msg_idx;
     int talk_proc_idx = aEDSN_TALK_END_WAIT;
+    int complete_flag = FALSE;
 
     if (mSP_SearchItemCategoryPriority(Now_Private->cloth.item, mSP_KIND_CLOTH, mSP_LISTTYPE_EVENT, NULL) == TRUE) {
         designer->wear_flag = TRUE;
@@ -242,7 +251,11 @@ static void aEDSN_set_norm_talk_info(ACTOR* actorx) {
         designer->wear_flag = FALSE;
     }
 
-    if (designer->complete_flag == TRUE) {
+    if (designer->tmp_save_p != NULL) {
+        complete_flag = designer->tmp_save_p->complete_flag;
+    }
+
+    if (complete_flag == TRUE) {
         msg_idx = 21 + RANDOM(3);
         designer->next_think_idx = aEDSN_THINK_TALK_START_WAIT;
     } else if (idx != -1) {
@@ -276,7 +289,7 @@ static void aEDSN_norm_talk_request(ACTOR* actorx, GAME* game) {
 static int aEDSN_talk_init(ACTOR* actorx, GAME* game) {
     EV_DESIGNER_ACTOR* designer = (EV_DESIGNER_ACTOR*)actorx;
 
-    designer->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+    designer->npc_class.talk_info.talk_request_proc = none_proc2;
     mDemo_Set_ListenAble();
     return TRUE;
 }

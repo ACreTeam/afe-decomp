@@ -12,6 +12,7 @@ extern "C" {
 typedef struct ev_designer_save_data_s {
     int button_count;
     int result;
+    int complete_flag;
 } aEv_designer_c;
 
 typedef struct ev_designer_actor_s EV_DESIGNER_ACTOR;

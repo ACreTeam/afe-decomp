@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_designer.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#endif
+
 static void aEDSN_talk_start_wait(EV_DESIGNER_ACTOR* designer, GAME_PLAY* play) {
     if (designer->npc_class.action.step == aNPC_ACTION_END_STEP) {
         switch (designer->npc_class.action.idx) {
@@ -113,7 +119,10 @@ static void aEDSN_game_end_call_init(EV_DESIGNER_ACTOR* designer, GAME_PLAY* pla
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
     designer->camera_flag = FALSE;
     mPlib_Set_EndWashCar();
-    designer->complete_flag = TRUE;
+
+    if (designer->tmp_save_p != NULL) {
+        designer->tmp_save_p->complete_flag = TRUE;
+    }
 }
 
 typedef void (*aEDSN_THINK_INIT_PROC)(EV_DESIGNER_ACTOR* designer, GAME_PLAY* play);
@@ -138,13 +147,13 @@ static void aEDSN_setup_think_proc(EV_DESIGNER_ACTOR* designer, GAME_PLAY* play,
         {
             aEDSN_game_start_call_wait,
             aEDSN_game_start_call_wait_init,
-            (aNPC_TALK_REQUEST_PROC)none_proc1,
+            none_proc2,
             0,
             aEDSN_THINK_GAME_START_CALL,
         },
         {
-            (aEDSN_THINK_PROC)none_proc1,
-            (aEDSN_THINK_INIT_PROC)none_proc1,
+            aEDSN_none_proc1,
+            aEDSN_none_proc1,
             aEDSN_force_talk_request,
             0,
             aEDSN_THINK_GAME_END_WAIT,
@@ -152,12 +161,12 @@ static void aEDSN_setup_think_proc(EV_DESIGNER_ACTOR* designer, GAME_PLAY* play,
         {
             aEDSN_game_end_wait,
             aEDSN_game_end_wait_init,
-            (aNPC_TALK_REQUEST_PROC)none_proc1,
+            none_proc2,
             0,
             aEDSN_THINK_GAME_END_CALL,
         },
         {
-            (aEDSN_THINK_PROC)none_proc1,
+            aEDSN_none_proc1,
             aEDSN_game_end_call_init,
             aEDSN_force_talk_request,
             1,
@@ -192,6 +201,7 @@ static void aEDSN_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
         if (tmp_data_p == NULL) {
             tmp_data_p = (aEv_designer_c*)mEv_reserve_common_area(mEv_EVENT_DESIGNER, 0);
+            bzero(tmp_data_p, sizeof(aEv_designer_c));
             tmp_data_p->result = 2;
         }
 
