@@ -40,30 +40,32 @@ void aESS_actor_ct(ACTOR* actorx, GAME* game) {
     static aNPC_ct_data_c ct_data = {
         &aESS_actor_move,
         &aESS_actor_draw,
-        5,
+        aNPC_CT_SCHED_TYPE_SPECIAL,
         mActor_NONE_PROC1,
         &aESS_talk_init,
         (aNPC_TALK_END_CHECK_PROC)mActor_NONE_PROC1,
         1,
     };
     NPC_SPEECH_SONCHO* soncho = (NPC_SPEECH_SONCHO*)actorx;
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         soncho->npc_class.schedule.schedule_proc = (aNPC_SCHEDULE_PROC)aESS_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
-        CLIP(npc_clip)->animation_init_proc(actorx, 5, 0);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->animation_init_proc(actorx, aNPC_ANIM_WAIT1, 0);
     }
 }
 
 void aESS_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 void aESS_actor_dt(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
+#include "../src/actor/npc/event/ac_ev_speech_soncho_talk.c_inc"
+
 void aESS_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 void aESS_actor_move(ACTOR* actorx, GAME* game) {
@@ -72,11 +74,9 @@ void aESS_actor_move(ACTOR* actorx, GAME* game) {
         actorx->parent_actor =
             Actor_info_name_search(&play->actor_info, mAc_PROFILE_GROUNDHOG_CONTROL, ACTOR_PART_CONTROL);
     }
-    CLIP(npc_clip)->move_proc(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
 }
 
 void aESS_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
-
-#include "src/actor/npc/event/ac_ev_speech_soncho_talk.c_inc"

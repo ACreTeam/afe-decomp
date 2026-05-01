@@ -29,7 +29,7 @@ void aESS_think_main_proc(NPC_SPEECH_SONCHO* soncho, GAME_PLAY* play) {
     if (soncho->npc_class.action.idx == aNPC_ACT_SPECIAL) {
         soncho->think_proc(soncho, play);
     } else if (soncho->npc_class.action.step == 0xff) {
-        CLIP(npc_clip)->animation_init_proc((ACTOR*)soncho, 0x5, FALSE);
+        NPC_CLIP->animation_init_proc((ACTOR*)soncho, aNPC_ANIM_WAIT1, FALSE);
         aESS_set_request_act(soncho);
     }
     clip = CLIP(groundhog_control_clip);
@@ -66,15 +66,15 @@ void aESS_think_init_proc(ACTOR* actorx, GAME_PLAY* play) {
 void aESS_setup_think_proc(ACTOR* actorx, int think_proc_idk) {
     static aESS_think_info dt_tbl[5] = {
         { (aESS_PROC)mActor_NONE_PROC1, (aNPC_TALK_REQUEST_PROC)aESS_norm_talk_request,
-          (aNPC_TALK_END_CHECK_PROC)aESS_norm_talk_end_chk, TRUE },
+          (aNPC_TALK_END_CHECK_PROC)aESS_norm_talk_end_chk, aNPC_HEAD_LOCK_BOTH },
         { (aESS_PROC)mActor_NONE_PROC1, (aNPC_TALK_REQUEST_PROC)mActor_NONE_PROC1,
-          (aNPC_TALK_END_CHECK_PROC)mActor_NONE_PROC1, TRUE },
+          (aNPC_TALK_END_CHECK_PROC)mActor_NONE_PROC1, aNPC_HEAD_LOCK_BOTH },
         { aESS_speech_start_wait, (aNPC_TALK_REQUEST_PROC)mActor_NONE_PROC1,
-          (aNPC_TALK_END_CHECK_PROC)mActor_NONE_PROC1, FALSE },
+          (aNPC_TALK_END_CHECK_PROC)mActor_NONE_PROC1, aNPC_HEAD_LOCK_NONE },
         { (aESS_PROC)mActor_NONE_PROC1, (aNPC_TALK_REQUEST_PROC)aESS_force_talk_request,
-          (aNPC_TALK_END_CHECK_PROC)aESS_force_talk_end_chk, TRUE },
+          (aNPC_TALK_END_CHECK_PROC)aESS_force_talk_end_chk, aNPC_HEAD_LOCK_BOTH },
         { (aESS_PROC)mActor_NONE_PROC1, (aNPC_TALK_REQUEST_PROC)aESS_norm_talk_request,
-          (aNPC_TALK_END_CHECK_PROC)aESS_norm_talk_end_chk, TRUE },
+          (aNPC_TALK_END_CHECK_PROC)aESS_norm_talk_end_chk, aNPC_HEAD_LOCK_BOTH },
     };
     NPC_SPEECH_SONCHO* soncho = (NPC_SPEECH_SONCHO*)actorx;
     aESS_think_info* info = &dt_tbl[think_proc_idk];
