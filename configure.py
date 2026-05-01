@@ -778,7 +778,7 @@ config.libs = [
         [
             Object(NonMatching, "actor/npc/ac_countdown_npc0.c"),
             Object(NonMatching, "actor/npc/ac_countdown_npc1.c"),
-            Object(NonMatching, "actor/npc/ac_go_home_npc.c"),
+            Object(Matching, "actor/npc/ac_go_home_npc.c"),
             Object(NonMatching, "actor/npc/ac_groundhog_npc0.c"),
             Object(NonMatching, "actor/npc/ac_halloween_npc.c"),
             Object(Matching, "actor/npc/ac_hanabi_npc0.c"),

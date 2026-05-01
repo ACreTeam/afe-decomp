@@ -1,0 +1,61 @@
+#ifdef __INTELLISENSE__
+#include "ac_go_home_npc.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "m_string.h"
+#endif
+
+static void aGHN_set_free_str() {
+    static u8 str[mMsg_FREE_STRING_LEN];
+    int days = lbRTC_GetIntervalDays(&Save_Get(return_animal).renew_time,
+                                    Common_GetPointer(time.rtc_time)); // days since animal left
+    int len;
+
+    if (days > 10000) {
+        days = 9999;
+    }
+
+    len = mFont_UnintToString(str, sizeof(str), days, sizeof(str), TRUE, FALSE, FALSE);
+    mString_Load_StringFromRom(str + len, sizeof(str) - len, 5);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, str, mMsg_Get_Length_String(str, sizeof(str)));
+}
+
+static void aGHN_set_talk_info(ACTOR* actorx) {
+    int msg_no = MSG_12827 + mNpc_GetNpcLooks(actorx) * 4;
+
+    if ((Common_Get(spnpc_first_talk_flags) & (1 << aNPC_SPNPC_BIT_GOHOME_NPC)) != 0) {
+        msg_no += 1 + RANDOM(3);
+    }
+
+    mDemo_Set_msg_num(msg_no);
+}
+
+static void aGHN_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_TALK, actorx, &aGHN_set_talk_info);
+}
+
+static int aGHN_talk_init(ACTOR* actorx, GAME* game) {
+    aNPC_SPNPC_BIT_SET(Common_Get(spnpc_first_talk_flags),
+                       aNPC_SPNPC_BIT_GOHOME_NPC);                    // record that the npc has been spoken to before
+    Save_Get(return_animal).talk_bit |= (1 << Common_Get(player_no)); // record this player has spoken to the npc
+    aGHN_set_free_str();
+    mDemo_Set_ListenAble();
+    return TRUE;
+}
+
+static int aGHN_talk_end_chk(ACTOR* actorx, GAME* game) {
+    int res = FALSE;
+
+    if (mDemo_Check(mDemo_TYPE_TALK, actorx) == FALSE) {
+        res = TRUE;
+    }
+
+    return res;
+}
+
+static void aGHN_actor_move(ACTOR* actorx, GAME* game) {
+    NPC_CLIP->move_proc(actorx, game);
+}
