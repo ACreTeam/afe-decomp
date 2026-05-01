@@ -1,7 +1,13 @@
+#ifdef __INTELLISENSE__
+#include "f_furniture.h"
+#include "ac_furniture.h"
+#include "ac_my_room.h"
+#endif
+
 extern cKF_Skeleton_R_c cKF_bs_r_int_sum_okiagari01;
 extern cKF_Animation_R_c cKF_ba_r_int_sum_okiagari01;
 
-static void aSumOkiagari01_ct(FTR_ACTOR* ftr_actor, u8* data) {
+static void fSOK_ct(FTR_ACTOR* ftr_actor, u8* data) {
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
 
     cKF_SkeletonInfo_R_ct(keyframe, &cKF_bs_r_int_sum_okiagari01, &cKF_ba_r_int_sum_okiagari01, ftr_actor->joint,
@@ -9,9 +15,14 @@ static void aSumOkiagari01_ct(FTR_ACTOR* ftr_actor, u8* data) {
     cKF_SkeletonInfo_R_init_standard_stop(keyframe, &cKF_ba_r_int_sum_okiagari01, NULL);
     cKF_SkeletonInfo_R_play(keyframe);
     keyframe->frame_control.speed = 0.5f;
+
+    if (ftr_actor->_04 != 1) {
+        ftr_actor->switch_changed_flag = FALSE;
+        keyframe->frame_control.current_frame = keyframe->frame_control.end_frame;
+    }
 }
 
-static void aSumOkiagari01_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
+static void fSOK_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
 
     if (cKF_SkeletonInfo_R_play(keyframe) != cKF_STATE_STOPPED) {
@@ -28,7 +39,7 @@ static void aSumOkiagari01_mv(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* 
     }
 }
 
-static void aSumOkiagari01_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
+static void fSOK_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* game, u8* data) {
     int mtx_idx = game->frame_counter & 1;
     cKF_SkeletonInfo_R_c* keyframe = &ftr_actor->keyframe;
     Mtx* mtx = ftr_actor->skeleton_mtx[mtx_idx];
@@ -42,8 +53,8 @@ static void aSumOkiagari01_dw(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor, GAME* 
     cKF_Si3_draw_R_SV(game, keyframe, mtx, NULL, NULL, NULL);
 }
 
-static aFTR_vtable_c aSumOkiagari01_func = {
-    &aSumOkiagari01_ct, &aSumOkiagari01_mv, &aSumOkiagari01_dw, NULL, NULL,
+static aFTR_vtable_c fSOK_func = {
+    &fSOK_ct, &fSOK_mv, &fSOK_dw, NULL, NULL,
 };
 
 aFTR_PROFILE iam_sum_okiagari01 = {
@@ -64,6 +75,6 @@ aFTR_PROFILE iam_sum_okiagari01 = {
     0,
     0,
     0,
-    &aSumOkiagari01_func,
+    &fSOK_func,
     // clang-format on
 };

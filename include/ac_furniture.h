@@ -154,6 +154,10 @@ enum {
     aFTR_KANKYO_MAP_NUM
 };
 
+#define aFTR_CAN_PLAY_SE(ftr_actor)                                                \
+    (ftr_actor->state != aFTR_STATE_BIRTH && ftr_actor->state != aFTR_STATE_BYE && \
+     ftr_actor->state != aFTR_STATE_DEATH && ftr_actor->state != aFTR_STATE_BIRTH_WAIT)
+
 typedef void (*aFTR_FTR_CT_PROC)(FTR_ACTOR*, u8*);
 typedef void (*aFTR_FTR_MOVE_PROC)(FTR_ACTOR*, ACTOR*, GAME*, u8*);
 typedef void (*aFTR_FTR_DRAW_PROC)(FTR_ACTOR*, ACTOR*, GAME*, u8*);

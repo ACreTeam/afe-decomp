@@ -704,6 +704,28 @@ extern aFTR_PROFILE iam_yos_terrace;
 extern aFTR_PROFILE iam_yos_turkey_mirror;
 extern aFTR_PROFILE iam_yos_turkey_watch;
 extern aFTR_PROFILE iam_yos_wheel;
+extern aFTR_PROFILE iam_tool_cracker;
+extern aFTR_PROFILE iam_oza_apple_box;
+extern aFTR_PROFILE iam_mut_scarecrow;
+extern aFTR_PROFILE iam_oza_doki;
+extern aFTR_PROFILE iam_oza_bathtub;
+extern aFTR_PROFILE iam_mut_bascket;
+extern aFTR_PROFILE iam_oza_coffin;
+extern aFTR_PROFILE iam_oza_orange_box;
+extern aFTR_PROFILE iam_mut_tobidasi;
+extern aFTR_PROFILE iam_oza_hydrant;
+extern aFTR_PROFILE iam_oza_idol;
+extern aFTR_PROFILE iam_oza_pinball;
+extern aFTR_PROFILE iam_oza_drum;
+extern aFTR_PROFILE iam_oza_fragile;
+extern aFTR_PROFILE iam_oza_wood_horse;
+extern aFTR_PROFILE iam_oza_shower;
+extern aFTR_PROFILE iam_mut_wheel;
+extern aFTR_PROFILE iam_oza_dart;
+extern aFTR_PROFILE iam_mut_princess_bed;
+extern aFTR_PROFILE iam_nog_signature;
+extern aFTR_PROFILE iam_nog_dish;
+extern aFTR_PROFILE iam_nog_billboard;
 
 #ifdef __cplusplus
 }

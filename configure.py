@@ -597,7 +597,7 @@ config.libs = [
             Object(Matching, "ev_cherry_manager.c"),
             Object(Matching, "evw_anime.c"),
             Object(Matching, "executor.c"),
-            Object(NonMatching, "f_furniture.c"),
+            Object(Matching, "f_furniture.c"),
             Object(NonMatching, "famicom_emu.c"),
             Object(Matching, "first_game.c"),
             Object(Matching, "game.c"),

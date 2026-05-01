@@ -1,7 +1,7 @@
-extern Gfx int_iid_mdiary_model[];
+extern Gfx int_nkh_table01_model[];
 
-aFTR_PROFILE iam_iid_mdiary = {
-	int_iid_mdiary_model,
+aFTR_PROFILE iam_nkh_table01 = {
+	int_nkh_table01_model,
 	NULL,
 	NULL,
 	NULL,
@@ -16,6 +16,6 @@ aFTR_PROFILE iam_iid_mdiary = {
 	0,
 	0,
 	0,
-	aFTR_INTERACTION_NONE,
+	0,
 	NULL,
 };

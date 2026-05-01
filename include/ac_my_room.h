@@ -111,33 +111,33 @@ typedef void (*aMR_SOUND_MELODY_PROC)(FTR_ACTOR* ftr_actor, ACTOR* my_room_actor
 typedef int (*aMR_CHECK_DANNA_KILL_PROC)(xyz_t* pos);
 
 typedef struct my_room_clip_s {
-    ACTOR* my_room_actor_p;
-    aMR_JUDGE_BREED_NEW_FTR_PROC judge_breed_new_ftr_proc;
-    aMR_SEARCH_PICKUP_FURNITURE_PROC search_pickup_ftr_proc;
-    aMR_FURNITURE2ITEMBAG_PROC ftr2itemBag_proc;
-    aMR_JUDGE_PLAYER_ACTION_PROC judge_player_action_proc;
-    aMR_PLAYER_MOVE_FURNITURE_PROC player_move_ftr_proc;
-    aMR_FTR_ID_2_WPOS_PROC ftrId2wpos_proc;
-    aMR_UNIT_NUM_2_FTR_ITEMNO_FTRID_PROC unitNum2ftrItemNoftrId_proc;
-    aMR_FTR_ID_2_EXTINGUISH_FURNITURE_PROC ftrId2extinguishFtr_proc;
-    aMR_REDMA_FTR_BANK_PROC redma_ftr_bank_proc;
-    aMR_RESERVE_FURNITURE_PROC reserve_ftr_proc;
-    aMR_COUNT_FRIEND_FURNITURE_PROC count_friend_ftr_proc;
-    aMR_JUDGE_PLACE_2ND_LAYER_PROC judge_place_2nd_layer_proc;
-    aMR_OPEN_CLOSE_COMMON_MOVE_PROC open_close_common_move_proc;
-    aMR_GET_BED_ACTION_PROC get_bed_action_proc;
-    aMR_MINI_DISK_COMMON_MOVE_PROC mini_disk_common_move_proc;
-    aMR_SET_LEAF_PROC set_leaf_proc;
-    aMR_FTR2LEAF_PROC ftr2leaf_proc;
-    aMR_LEAF_START_POS_PROC leaf_start_pos_proc;
-    aMR_PICKUP_FTR_LAYER_PROC pickup_ftr_layer_proc;
-    aMR_LEAF_PICKUPED_PROC leaf_pickuped_proc;
-    aMR_FAMICOM_EMU_COMMON_MOVE_PROC famicom_emu_common_move_proc;
-    aMR_FTR_NO_2_BANK_ADDRESS_PROC ftrNo2bankAddress_proc;
-    aMR_CALL_SIT_DOWN_ONGEN_POS_SE_PROC call_sit_down_ongen_pos_se_proc;
-    aMR_clock_info_c* clock_info_p; /* used for playing the clock tick? sfx */
-    aMR_SOUND_MELODY_PROC sound_melody_proc;
-    aMR_CHECK_DANNA_KILL_PROC check_danna_kill_proc;
+    /* 0x00 */ ACTOR* my_room_actor_p;
+    /* 0x04 */ aMR_JUDGE_BREED_NEW_FTR_PROC judge_breed_new_ftr_proc;
+    /* 0x08 */ aMR_SEARCH_PICKUP_FURNITURE_PROC search_pickup_ftr_proc;
+    /* 0x0C */ aMR_FURNITURE2ITEMBAG_PROC ftr2itemBag_proc;
+    /* 0x10 */ aMR_JUDGE_PLAYER_ACTION_PROC judge_player_action_proc;
+    /* 0x14 */ aMR_PLAYER_MOVE_FURNITURE_PROC player_move_ftr_proc;
+    /* 0x18 */ aMR_FTR_ID_2_WPOS_PROC ftrId2wpos_proc;
+    /* 0x1C */ aMR_UNIT_NUM_2_FTR_ITEMNO_FTRID_PROC unitNum2ftrItemNoftrId_proc;
+    /* 0x20 */ aMR_FTR_ID_2_EXTINGUISH_FURNITURE_PROC ftrId2extinguishFtr_proc;
+    /* 0x24 */ aMR_REDMA_FTR_BANK_PROC redma_ftr_bank_proc;
+    /* 0x28 */ aMR_RESERVE_FURNITURE_PROC reserve_ftr_proc;
+    /* 0x2C */ aMR_COUNT_FRIEND_FURNITURE_PROC count_friend_ftr_proc;
+    /* 0x30 */ aMR_JUDGE_PLACE_2ND_LAYER_PROC judge_place_2nd_layer_proc;
+    /* 0x34 */ aMR_OPEN_CLOSE_COMMON_MOVE_PROC open_close_common_move_proc;
+    /* 0x38 */ aMR_GET_BED_ACTION_PROC get_bed_action_proc;
+    /* 0x3C */ aMR_MINI_DISK_COMMON_MOVE_PROC mini_disk_common_move_proc;
+    /* 0x40 */ aMR_SET_LEAF_PROC set_leaf_proc;
+    /* 0x44 */ aMR_FTR2LEAF_PROC ftr2leaf_proc;
+    /* 0x48 */ aMR_LEAF_START_POS_PROC leaf_start_pos_proc;
+    /* 0x4C */ aMR_PICKUP_FTR_LAYER_PROC pickup_ftr_layer_proc;
+    /* 0x50 */ aMR_LEAF_PICKUPED_PROC leaf_pickuped_proc;
+    /* 0x54 */ aMR_FAMICOM_EMU_COMMON_MOVE_PROC famicom_emu_common_move_proc;
+    /* 0x58 */ aMR_FTR_NO_2_BANK_ADDRESS_PROC ftrNo2bankAddress_proc;
+    /* 0x5C */ aMR_CALL_SIT_DOWN_ONGEN_POS_SE_PROC call_sit_down_ongen_pos_se_proc;
+    /* 0x60 */ aMR_clock_info_c* clock_info_p; /* used for playing the clock tick? sfx */
+    /* 0x64 */ aMR_SOUND_MELODY_PROC sound_melody_proc;
+    /* 0x68 */ aMR_CHECK_DANNA_KILL_PROC check_danna_kill_proc;
 } aMR_Clip_c;
 
 typedef struct room_leaf_s {
