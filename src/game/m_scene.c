@@ -238,7 +238,7 @@ extern void mSc_decide_exchange_bank(Object_Exchange_c* exchange) {
     exchange->_194C = exchange->next_bank_ram_address;
 }
 
-static void Scene_player_select(int scene_no, int npc_actor) {
+static void Scene_player_select(int scene_no, mActor_name_t npc_actor) {
     if (Save_Get(scene_no) == scene_no) {
         int met_villagers_bitfield = 0;
         int met_villagers_num = 0;
@@ -251,7 +251,7 @@ static void Scene_player_select(int scene_no, int npc_actor) {
 
         /* Track all villagers who have met a player from town before */
         for (i = 0; i < ANIMAL_NUM_MAX; i++) {
-            if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+            if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE && mNpc_CheckSickAnimal(animal) == FALSE) {
                 memory = animal->memories;
 
                 for (j = 0; j < ANIMAL_MEMORY_NUM; j++) {
@@ -263,7 +263,8 @@ static void Scene_player_select(int scene_no, int npc_actor) {
                         break;
                     }
 
-                    memory++;
+                    // @BUG: memory is not incremented in e+??
+                    // memory++;
                 }
             }
 
@@ -567,6 +568,6 @@ extern void return_emu_game(GAME* game) {
              sizeof(Door_data_c)); // copy exit door data
     Common_Get(door_data).next_scene_id = Common_Get(famicom_emu_exit_door_data).next_scene_id + 1;
     game->pad_initialized = FALSE;
-    game_goto_next_game_play(game);
+    game_goto_next_game_reload_data(game);
     Save_Set(scene_no, Common_Get(famicom_emu_exit_door_data).next_scene_id);
 }

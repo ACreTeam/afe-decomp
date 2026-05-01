@@ -1185,7 +1185,7 @@ config.libs = [
             Object(NonMatching, "game/m_repay_ovl.c"),
             Object(Matching, "game/m_roll_lib.c"),
             Object(NonMatching, "game/m_room_type.c"),
-            Object(NonMatching, "game/m_scene.c"),
+            Object(Matching, "game/m_scene.c"),
             Object(Matching, "game/m_scene_ftr.c"),
             Object(Matching, "game/m_scene_table.c"),
             Object(Matching, "game/m_select.c"),
