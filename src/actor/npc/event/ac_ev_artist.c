@@ -45,7 +45,7 @@ ACTOR_PROFILE Ev_Artist_Profile = {
     aEART_actor_ct,
     aEART_actor_dt,
     aEART_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aEART_actor_save,
 };
 // clang-format on
@@ -69,22 +69,22 @@ static void aEART_actor_ct(ACTOR* actorx, GAME* game) {
         // clang-format on
     };
 
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         EV_ARTIST_ACTOR* artist = (EV_ARTIST_ACTOR*)actorx;
         
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         artist->setupAction_proc = aEART_setupAction;
     }
 }
 
 static void aEART_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aEART_actor_dt(ACTOR* actorx, GAME* game) {
     EV_ARTIST_ACTOR* artist = (EV_ARTIST_ACTOR*)actorx;
 
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
     mEv_actor_dying_message(mEv_EVENT_ARTIST, actorx);
 
     {
@@ -97,11 +97,11 @@ static void aEART_actor_dt(ACTOR* actorx, GAME* game) {
 }
 
 static void aEART_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aEART_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/event/ac_ev_artist_move.c_inc"

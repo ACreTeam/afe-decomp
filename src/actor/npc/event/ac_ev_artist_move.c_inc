@@ -1,3 +1,7 @@
+static void aEART_none_proc1(EV_ARTIST_ACTOR* artist, GAME_PLAY* play) {
+    // nothing
+}
+
 static int aEART_check_present(void) {
     mEv_artist_c* ev_save_p = &Save_Get(event_save_data).special.event.artist;
     int ret = FALSE;
@@ -174,14 +178,14 @@ typedef void (*aEART_INIT_PROC)(EV_ARTIST_ACTOR* artist, GAME_PLAY* play);
 static void aEART_init_proc(EV_ARTIST_ACTOR* artist, GAME_PLAY* play, int action) {
     static aEART_INIT_PROC init_proc[] = {
         // clang-format off
-        (aEART_INIT_PROC)none_proc1,
-        (aEART_INIT_PROC)none_proc1,
+        aEART_none_proc1,
+        aEART_none_proc1,
         aEART_menu_open_wait_init,
         aEART_menu_close_wait_init,
         aEART_msg_win_open_wait_init,
         aEART_demo_start_wait_init,
-        (aEART_INIT_PROC)none_proc1,
-        (aEART_INIT_PROC)none_proc1,
+        aEART_none_proc1,
+        aEART_none_proc1,
         // clang-format on
     };
 
@@ -192,7 +196,7 @@ static void aEART_setupAction(EV_ARTIST_ACTOR* artist, GAME_PLAY* play, int acti
     static aEART_TALK_PROC process[] = {
         // clang-format off
         aEART_say_hungry,
-        (aEART_TALK_PROC)none_proc1,
+        aEART_none_proc1,
         aEART_menu_open_wait,
         aEART_menu_close_wait,
         aEART_msg_win_open_wait,
