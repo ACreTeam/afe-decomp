@@ -148,7 +148,7 @@ static void aETKY_act_chg_data_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static void aETKY_act_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     EV_TURKEY_ACTOR* turkey = (EV_TURKEY_ACTOR*)nactorx;
 
-    if (turkey->_9B1 == 1) {
+    if (Common_Get(turkey_talk_flg)) {
         aETKY_setupAction(turkey, aETKY_ACTION_WAIT);
     } else {
         aETKY_setupAction(turkey, aETKY_ACTION_KYORO);
@@ -194,7 +194,7 @@ static void aETKY_think_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
                 if (turkey->_9BC != -1) {
                     aETKY_setupAction(turkey, turkey->_9BC);
                     turkey->_9BC = -1;
-                } else if (turkey->_9B1 == 1) {
+                } else if (Common_Get(turkey_talk_flg)) {
                     aETKY_setupAction(turkey, aETKY_ACTION_WAIT);
                 } else {
                     aETKY_setupAction(turkey, (turkey->action + 1) & 1);
@@ -461,7 +461,8 @@ static void aETKY_GetTalkStartStatus(int* msg_no, int* next_talk_act, ACTOR* act
     EV_TURKEY_ACTOR* turkey = (EV_TURKEY_ACTOR*)actorx;
     aEv_turkey_common_c* common_p = turkey->ev_common_p;
 
-    if (turkey->_9B1 == 1) {
+    *msg_no = -1;
+    if (Common_Get(turkey_talk_flg)) {
         *msg_no = 0x3C1D + gamePT->frame_counter % 5;
         *next_talk_act = aETKY_TALK_WAIT_END;
     } else {
@@ -483,16 +484,16 @@ static void aETKY_SetTalkInfo(ACTOR* actorx) {
     aETKY_GetTalkStartStatus(&msg_no, &next_talk_act, actorx);
     turkey->talk_msg_no = msg_no;
     turkey->next_talk_action = next_talk_act;
-    mEv_set_status(mEv_EVENT_HARVEST_FESTIVAL_FRANKLIN, mEv_STATUS_TALK);
     mDemo_Set_msg_num(msg_no);
     turkey->ev_common_p->_00++;
-    turkey->_9B1 = 1;
+    mEv_set_status(mEv_EVENT_HARVEST_FESTIVAL_FRANKLIN, mEv_STATUS_TALK);
+    Common_Set(turkey_talk_flg, TRUE);
 }
 
 static void aETKY_TalkRequest(ACTOR* actorx, GAME* game) {
     EV_TURKEY_ACTOR* turkey = (EV_TURKEY_ACTOR*)actorx;
     
-    if (turkey->_9B1 == 0) {
+    if (!Common_Get(turkey_talk_flg)) {
         ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
         xyz_t delta;
 
@@ -505,7 +506,8 @@ static void aETKY_TalkRequest(ACTOR* actorx, GAME* game) {
                 if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
                     if (mDemo_Check_ListenAble() == FALSE) {
                         mDemo_Set_ListenAble();
-                        turkey->_9B1 = 1;
+                        mEv_set_status(mEv_EVENT_HARVEST_FESTIVAL_FRANKLIN, mEv_STATUS_TALK);
+                        Common_Set(turkey_talk_flg, TRUE);
                     }
                 } else {
                     mDemo_Request(mDemo_TYPE_SPEAK, actorx, aETKY_SetTalkInfo);

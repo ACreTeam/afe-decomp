@@ -36,10 +36,9 @@ struct ev_turkey_actor_s {
     aEv_turkey_save_c* ev_save_p;
     aEv_turkey_common_c* ev_common_p;
     u8 present_idx;
-    u8 _9B1;
+    s8 action;
+    s8 _9BC;
     aETKY_ACT_PROC act_proc;
-    int action;
-    int _9BC;
     xyz_t _9C0;
 };
 
