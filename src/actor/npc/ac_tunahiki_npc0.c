@@ -104,10 +104,10 @@ static void aTNN0_actor_ct(ACTOR* actorx, GAME* game) {
 
         actor->npc_class.schedule.schedule_proc = aTNN0_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
-
+        aTNC_make_athletic(actorx, game);
         actor->npc_class.palActorIgnoreTimer = -1;
         actor->change_flag = FALSE;
-        actor->npc_class.head.lock_flag = TRUE;
+        actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
         actor->base_msg = base_msg_table[mNpc_GetNpcLooks(actorx)];
         actor->npc_class.talk_info.turn = aNPC_TALK_TURN_NONE;
         actor->npc_class.talk_info.default_animation = aNPC_ANIM_HATAFURI1;
