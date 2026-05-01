@@ -36,7 +36,7 @@ ACTOR_PROFILE Ev_KabuPeddler_Profile = {
     &aEKPD_actor_ct,
     &aEKPD_actor_dt,
     &aEKPD_actor_init,
-    mActor_NONE_PROC1,
+    &none_proc2,
     &aEKPD_actor_save
 };
 
@@ -49,7 +49,7 @@ static void aEKPD_actor_ct(ACTOR* actorx, GAME* game) {
     static aNPC_ct_data_c ct_data = {
         &aEKPD_actor_move,
         &aEKPD_actor_draw,
-        3,
+        aNPC_CT_SCHED_TYPE_WANDER,
         &aEKPD_talk_request,
         &aEKPD_talk_init,
         &aEKPD_talk_end_chk,
@@ -58,27 +58,27 @@ static void aEKPD_actor_ct(ACTOR* actorx, GAME* game) {
 
     EV_KABUPEDDLER_ACTOR* kabuPeddler = (EV_KABUPEDDLER_ACTOR*)actorx;
 
-    if ((*Common_Get(clip).npc_clip->birth_check_proc)(actorx, game) == TRUE) {
-        (*Common_Get(clip).npc_clip->ct_proc)(actorx, game, &ct_data);
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         kabuPeddler->setup_talk_proc = &aEKPD_setupAction;
     }
 }
 
 static void aEKPD_actor_save(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->save_proc)(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aEKPD_actor_dt(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->dt_proc)(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
     mEv_actor_dying_message(mEv_EVENT_KABU_PEDDLER, actorx);
 }
 
+#include "../src/actor/npc/event/ac_ev_kabuPeddler_move.c_inc"
+
 static void aEKPD_actor_init(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->init_proc)(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aEKPD_actor_draw(ACTOR* actorx, GAME* game) {
-    (*Common_Get(clip).npc_clip->draw_proc)(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
-
-#include "../src/actor/npc/event/ac_ev_kabuPeddler_move.c_inc"

@@ -1,3 +1,16 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_kabuPeddler.h"
+#include "m_string.h"
+#include "m_msg.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_font.h"
+#endif
+
+static void aEKPD_none_proc1(EV_KABUPEDDLER_ACTOR* kabuPeddler, GAME_PLAY* play) {
+    // nothing
+}
+
 static int aEKPD_check_look() {
     mEv_kabu_peddler_c* peddler_data = &Save_Get(event_save_data).weekly.kabu_peddler;
     int res = FALSE;
@@ -11,9 +24,9 @@ static int aEKPD_check_look() {
 }
 
 static void aEKPD_set_price_str_sub(u32 price, int free_str_no) {
-    u8 price_str[6];
+    u8 price_str[5];
 
-    mFont_UnintToString(price_str, sizeof(price_str), price, 5, TRUE, FALSE, TRUE);
+    mFont_UnintToString(price_str, sizeof(price_str), price, 5, TRUE, FALSE, FALSE);
     mMsg_Set_free_str(mMsg_Get_base_window_p(), free_str_no, price_str, sizeof(price_str));
 }
 
@@ -38,8 +51,12 @@ static void aEKPD_hand_over_kabu(int idx, int kabu_type) {
 }
 
 static void aEKPD_sell_check(EV_KABUPEDDLER_ACTOR* kabuPeddler, GAME_PLAY* play) {
-    static int next_act[] = { aEKPD_ACTION_TALK_END_WAIT, aEKPD_ACTION_SELL_CHECK_AFTER, aEKPD_ACTION_SELL_CEHCK_AFTER2,
-                              0 };
+    static int next_act[] = {
+        aEKPD_ACTION_TALK_END_WAIT,
+        aEKPD_ACTION_SELL_CHECK_AFTER,
+        aEKPD_ACTION_SELL_CEHCK_AFTER2,
+        aEKPD_ACTION_TALK_END_WAIT,
+    };
     int talk_act_idx;
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
 
@@ -81,8 +98,11 @@ static void aEKPD_sell_check_after(EV_KABUPEDDLER_ACTOR* kabuPeddler, GAME_PLAY*
     static int sell_sum[aEKPD_KABU_TYPE_NUM] = { 10, 50, 100, 0 };
     static int next_msg_no[] = { 0x0711, 0x0710, 0x070F };
     static int next_msg_no2[] = { 0x0711, 0x0717, 0x0716 };
-    static int next_act[] = { aEKPD_ACTION_MONEY_GET_DEMO_START_WAIT, aEKPD_ACTION_TALK_END_WAIT,
-                              aEKPD_ACTION_TALK_END_WAIT };
+    static int next_act[] = {
+        aEKPD_ACTION_MONEY_GET_DEMO_START_WAIT,
+        aEKPD_ACTION_TALK_END_WAIT,
+        aEKPD_ACTION_TALK_END_WAIT,
+    };
 
     if (mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p()) == TRUE) {
         u32 price;
@@ -155,19 +175,25 @@ typedef void (*aEKPD_INIT_PROC)(EV_KABUPEDDLER_ACTOR*, GAME_PLAY*);
 
 static void aEKPD_init_proc(EV_KABUPEDDLER_ACTOR* kabuPeddler, GAME_PLAY* play, int act) {
     static aEKPD_INIT_PROC init_proc[aEKPD_ACTION_NUM] = {
-        (aEKPD_INIT_PROC)&none_proc1, &aEKPD_sell_check_init,       (aEKPD_INIT_PROC)&none_proc1,
-        &aEKPD_sell_check2_init,      (aEKPD_INIT_PROC)&none_proc1, &aEKPD_money_get_demo_start_wait_init,
-        (aEKPD_INIT_PROC)&none_proc1, (aEKPD_INIT_PROC)&none_proc1
+        &aEKPD_none_proc1,       &aEKPD_sell_check_init, &aEKPD_none_proc1,
+        &aEKPD_sell_check2_init, &aEKPD_none_proc1,      &aEKPD_money_get_demo_start_wait_init,
+        &aEKPD_none_proc1,       &aEKPD_none_proc1,
     };
 
     (*init_proc[act])(kabuPeddler, play);
 }
 
 static void aEKPD_setupAction(EV_KABUPEDDLER_ACTOR* kabuPeddler, GAME_PLAY* play, int act) {
-    static aEKPD_PROC process[aEKPD_ACTION_NUM] = { (aEKPD_PROC)&none_proc1,        &aEKPD_sell_check,
-                                                    &aEKPD_sell_check_after,        &aEKPD_sell_check,
-                                                    &aEKPD_sell_check_after,        &aEKPD_money_get_demo_start_wait,
-                                                    &aEKPD_money_get_demo_end_wait, &aEKPD_kabu_trans_demo_start_wait };
+    static aEKPD_PROC process[aEKPD_ACTION_NUM] = {
+        &aEKPD_none_proc1,
+        &aEKPD_sell_check,
+        &aEKPD_sell_check_after,
+        &aEKPD_sell_check,
+        &aEKPD_sell_check_after,
+        &aEKPD_money_get_demo_start_wait,
+        &aEKPD_money_get_demo_end_wait,
+        &aEKPD_kabu_trans_demo_start_wait,
+    };
 
     kabuPeddler->talk_act = act;
     kabuPeddler->talk_proc = process[act];
