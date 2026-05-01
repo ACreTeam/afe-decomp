@@ -103,6 +103,8 @@ static void aEYMS_actor_dt(ACTOR* actorx, GAME* game) {
     NPC_CLIP->dt_proc(actorx, game);
 }
 
+#include "../src/actor/npc/event/ac_ev_yomise_move.c_inc"
+
 static void aEYMS_actor_init(ACTOR* actorx, GAME* game) {
     NPC_CLIP->init_proc(actorx, game);
 }
@@ -110,5 +112,3 @@ static void aEYMS_actor_init(ACTOR* actorx, GAME* game) {
 static void aEYMS_actor_draw(ACTOR* actorx, GAME* game) {
     NPC_CLIP->draw_proc(actorx, game);
 }
-
-#include "../src/actor/npc/event/ac_ev_yomise_move.c_inc"

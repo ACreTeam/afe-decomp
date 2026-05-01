@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define mChoice_CHOICE_STRING_LEN 16
+#define mChoice_CHOICE_STRING_LEN 10
 #define mChoice_SELECT_STR_NUM 607
 
 typedef struct choice_s mChoice_c;

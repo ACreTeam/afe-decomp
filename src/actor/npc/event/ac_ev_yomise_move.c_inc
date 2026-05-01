@@ -1,3 +1,13 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_yomise.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_string.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "libultra/libultra.h"
+#endif
+
 static aEv_yomise_save_c* get_yomise_save_area(void) {
     aEv_yomise_save_c* save_p = (aEv_yomise_save_c*)mEv_get_save_area(mEv_EVENT_FIREWORKS_SHOW, 0);
 
@@ -59,8 +69,8 @@ static int aEYMS_set_choise_data(int start_idx, int max) {
     u8* str_p[mChoice_CHOICE_NUM];
     int i;
     int j;
-    static u8 new_player_str[mChoice_CHOICE_STRING_LEN] = "I'm not buying! ";
-    static u8 new_player_str2[mChoice_CHOICE_STRING_LEN] = "I don't want it!";
+    static u8 new_player_str[mChoice_CHOICE_STRING_LEN] = { CHAR_PP_005, CHAR_PP_193, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032 };
+    static u8 new_player_str2[mChoice_CHOICE_STRING_LEN] = { CHAR_PP_009, CHAR_PP_126, CHAR_PP_025, CHAR_PP_029, CHAR_PP_011, CHAR_PP_007, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032 };
 
     mem_clear(buf, sizeof(buf), CHAR_SPACE);
     for (i = 0; i < mChoice_CHOICE_NUM; i++) {
@@ -104,9 +114,9 @@ static int aEYMS_set_choise_data(int start_idx, int max) {
 }
 
 static void aNSM_set_item_value_str(u32 price, int str_no) {
-    u8 str[6];
+    u8 str[5];
 
-    mFont_UnintToString(str, 6, price, 5, TRUE, FALSE, TRUE);
+    mFont_UnintToString(str, 5, price, 5, TRUE, FALSE, FALSE);
     mMsg_SET_FREE_STR(str_no, str, sizeof(str));
 }
 

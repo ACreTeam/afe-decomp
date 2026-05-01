@@ -863,7 +863,7 @@ config.libs = [
             Object(Matching, "actor/npc/event/ac_ev_soncho2.c"),
             Object(NonMatching, "actor/npc/event/ac_ev_speech_soncho.c"),
             Object(NonMatching, "actor/npc/event/ac_ev_turkey.c"),
-            Object(NonMatching, "actor/npc/event/ac_ev_yomise.c"),
+            Object(Matching, "actor/npc/event/ac_ev_yomise.c"),
         ],
     ),
     Rel(
