@@ -1,3 +1,15 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_dozaemon.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "m_demo.h"
+#endif
+
+static void aEDZ_none_proc1(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
+    // nothing
+}
+
 static void aEDZ_anime_next(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
     if (cKF_FrameControl_stop_proc(&dozaemon->npc_class.draw.main_animation.keyframe.frame_control) == cKF_STATE_STOPPED) {
         aEDZ_setup_think_proc(dozaemon, play, (u8)++dozaemon->think_idx);
@@ -24,26 +36,26 @@ static void aEDZ_normal_wait_init(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
 
 static void aEDZ_taoreru_init(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
     dozaemon->npc_class.action.idx = aNPC_ACT_WAIT;
-    CLIP(npc_clip)->animation_init_proc((ACTOR*)dozaemon, aNPC_ANIM_GETUP_WAIT_SEG1, FALSE);
+    NPC_CLIP->animation_init_proc((ACTOR*)dozaemon, aNPC_ANIM_GETUP_WAIT_SEG1, FALSE);
     aEDZ_normal_wait_init(dozaemon, play);
-    dozaemon->npc_class.head.lock_flag = TRUE;
+    dozaemon->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     dozaemon->npc_class.talk_info.turn = aNPC_TALK_TURN_NONE;
     dozaemon->npc_class.talk_info.default_animation = aNPC_ANIM_PIKU_SEG1;
 }
 
 static void aEDZ_okiagaru_init(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
     dozaemon->npc_class.action.idx = aNPC_ACT_WAIT;
-    CLIP(npc_clip)->animation_init_proc((ACTOR*)dozaemon, aNPC_ANIM_GETUP_SEG1, FALSE);
+    NPC_CLIP->animation_init_proc((ACTOR*)dozaemon, aNPC_ANIM_GETUP_SEG1, FALSE);
     dozaemon->npc_class.draw.main_animation.keyframe.frame_control.mode = cKF_FRAMECONTROL_STOP;
     aEDZ_normal_wait_init(dozaemon, play);
-    dozaemon->npc_class.head.lock_flag = FALSE;
+    dozaemon->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     dozaemon->npc_class.talk_info.turn = aNPC_TALK_TURN_NORMAL;
     dozaemon->npc_class.talk_info.default_animation = aNPC_ANIM_TALK1;
     dozaemon->npc_class.actor_class.status_data.weight = 50;
 }
 
 static void aEDZ_wander_init(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play) {
-    CLIP(npc_clip)->chg_schedule_proc((NPC_ACTOR*)dozaemon, play, aNPC_SCHEDULE_TYPE_WANDER);
+    NPC_CLIP->chg_schedule_proc((NPC_ACTOR*)dozaemon, play, aNPC_SCHEDULE_TYPE_WANDER);
     dozaemon->npc_class.talk_info.talk_request_proc = aEDZ_wander_talk_request;
 }
 
@@ -64,14 +76,14 @@ static aEDZ_think_data_c dt_tbl[] = {
 };
 
 static aEDZ_THINK_PROC proc_table[] = {
-    (aEDZ_THINK_PROC)none_proc1,
+    aEDZ_none_proc1,
     aEDZ_anime_next,
 };
 
 typedef void (*aEDZ_THINK_INIT_PROC)(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play);
 
 static aEDZ_THINK_INIT_PROC init_table[] = {
-    (aEDZ_THINK_INIT_PROC)none_proc1,
+    aEDZ_none_proc1,
     aEDZ_normal_wait_init,
     aEDZ_taoreru_init,
     aEDZ_okiagaru_init,
@@ -81,7 +93,7 @@ static aEDZ_THINK_INIT_PROC init_table[] = {
 static void aEDZ_setup_think_proc(DOZAEMON_ACTOR* dozaemon, GAME_PLAY* play, u8 idx) {
     aEDZ_think_data_c* dt = &dt_tbl[idx];
     static aNPC_TALK_REQUEST_PROC talk_request_table[] = {
-        (aNPC_TALK_REQUEST_PROC)none_proc1,
+        none_proc2,
         aEDZ_norm_talk_request,
         aEDZ_force_talk_request,
     };
@@ -109,12 +121,12 @@ static void aEDZ_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int think_type)
 
 static void aEDZ_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->think.think_proc = aEDZ_think_proc;
-    CLIP(npc_clip)->think_proc(nactorx, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
+    NPC_CLIP->think_proc(nactorx, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
 }
 
 static void aEDZ_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    if (CLIP(npc_clip)->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
-        CLIP(npc_clip)->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
+    if (NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
+        NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
     }
 }
 

@@ -31,7 +31,7 @@ ACTOR_PROFILE Ev_Dozaemon_Profile = {
     aEDZ_actor_ct,
     aEDZ_actor_dt,
     aEDZ_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aEDZ_actor_save,
 };
 
@@ -49,7 +49,7 @@ static void aEDZ_actor_ct(ACTOR* actorx, GAME* game) {
         aEDZ_actor_move,
         aEDZ_actor_draw,
         aNPC_CT_SCHED_TYPE_SPECIAL,
-        mActor_NONE_PROC1,
+        none_proc2,
         aEDZ_talk_init,
         aEDZ_talk_end_chk,
         0,
@@ -64,7 +64,7 @@ static void aEDZ_actor_ct(ACTOR* actorx, GAME* game) {
         f32 pos_x;
 
         dozaemon->npc_class.schedule.schedule_proc = aEDZ_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         dozaemon->npc_class.palActorIgnoreTimer = -1;
         dozaemon->change_think = 0;
         dozaemon->melody_backup = 0;
@@ -81,7 +81,7 @@ static void aEDZ_actor_ct(ACTOR* actorx, GAME* game) {
             pos_x += 10.0f;
         }
 
-        CLIP(npc_clip)->set_dst_pos_proc(&dozaemon->npc_class, pos_x, pos_z);
+        NPC_CLIP->set_dst_pos_proc(&dozaemon->npc_class, pos_x, pos_z);
         actorx->shape_info.rotation.y = dozaemon->npc_class.movement.mv_angl;
         actorx->world.angle.y = dozaemon->npc_class.movement.mv_angl;
 
@@ -107,11 +107,11 @@ static void aEDZ_actor_dt(ACTOR* actorx, GAME* game) {
         mEv_actor_dying_message(mEv_EVENT_DOZAEMON, actorx);
     }
 
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
 static void aEDZ_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static int aEDZ_set_request_act(DOZAEMON_ACTOR* dozaemon, u8 prio, u8 act_idx, u8 act_type, u16 act_obj, s16 move_x, s16 move_z) {
@@ -135,12 +135,12 @@ static int aEDZ_set_request_act(DOZAEMON_ACTOR* dozaemon, u8 prio, u8 act_idx, u
 }
 
 static void aEDZ_actor_move(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->move_proc(actorx, game);
-}
-
-static void aEDZ_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
 }
 
 #include "../src/actor/npc/event/ac_ev_dozaemon_move.c_inc"
 #include "../src/actor/npc/event/ac_ev_dozaemon_schedule.c_inc"
+
+static void aEDZ_actor_draw(ACTOR* actorx, GAME* game) {
+    NPC_CLIP->draw_proc(actorx, game);
+}
