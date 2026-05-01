@@ -43,7 +43,7 @@ ACTOR_PROFILE Ev_Miko_Profile = {
     aEMK_actor_ct,
     aEMK_actor_dt,
     aEMK_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aEMK_actor_save,
     // clang-format on
 };
