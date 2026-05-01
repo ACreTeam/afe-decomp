@@ -53,7 +53,7 @@ ACTOR_PROFILE Ev_Pumpkin_Profile = {
     &aEPK_actor_ct,
     &aEPK_actor_dt,
     &aEPK_actor_init,
-    mActor_NONE_PROC1,
+    mActor_NONE_PROC1, // @BUG - devs forgot to swap to none_proc2
     &aEPK_actor_save,
 };
 // clang-format on
@@ -83,6 +83,7 @@ static void aEPK_actor_ct(ACTOR* actorx, GAME* game) {
 
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
         pumpkin->npc_class.palActorIgnoreTimer = -1;
+        pumpkin->npc_class.movement.range_type = aNPC_MOVE_RANGE_TYPE_SQUARE;
         
         common_p = (aEv_pumpkin_common_c*)mEv_get_common_area(mEv_EVENT_HALLOWEEN, 0);
         if (common_p == NULL) {

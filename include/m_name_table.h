@@ -204,6 +204,7 @@ extern int mNT_ItIsStump(mActor_name_t actor);
 extern int mNT_ItIsStoneCoin10(mActor_name_t actor);
 extern int mNT_ItIsReserveDummy(mActor_name_t actor);
 extern int mNT_check_unknown(mActor_name_t item_no);
+extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);
 
 /* Retrieve the item actor's category */
 #define ITEM_NAME_GET_TYPE(n) (((n) & 0xF000) >> 12)

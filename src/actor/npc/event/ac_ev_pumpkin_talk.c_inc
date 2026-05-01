@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_pumpkin.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#endif
+
 static int aEPK_get_trick_type(void) {
     int count = 0;
     int idx[mPr_POCKETS_SLOT_COUNT];
@@ -10,7 +17,7 @@ static int aEPK_get_trick_type(void) {
             case NAME_TYPE_FTR0:
             case NAME_TYPE_FTR1:
                 if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
-                    int ftr_idx = mRmTp_FtrItemNo2FtrIdx(*pocket_p);
+                    int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pocket_p);
 
                     // skip jack-o'-lantern and jack-in-the-box
                     if (ftr_idx != FTR_SUM_HAL_PKIN && ftr_idx != FTR_SUM_HAL_BOX01) {
@@ -164,7 +171,7 @@ static void aEPK_receive_tool_item_start_wait_talk_proc(EV_PUMPKIN_ACTOR* pumpki
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
 
     if (order == 2) {
-        aNPC_DEMO_GIVE_ITEM(pumpkin->item, aHOI_REQUEST_PUTAWAY, TRUE);
+        aNPC_DEMO_GIVE_ITEM(pumpkin->item, aHOI_REQUEST_PUTAWAY, FALSE);
         mMsg_SET_LOCKCONTINUE();
         aEPK_change_talk_proc(pumpkin, aEPK_RECEIVE_TOOL_ITEM_END_WAIT_TALK_PROC);
     }
