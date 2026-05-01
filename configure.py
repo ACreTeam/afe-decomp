@@ -850,7 +850,7 @@ config.libs = [
             Object(Matching, "actor/npc/event/ac_ev_carpetPeddler.c"),
             Object(Matching, "actor/npc/event/ac_ev_castaway.c"),
             Object(Matching, "actor/npc/event/ac_ev_designer.c"),
-            Object(NonMatching, "actor/npc/event/ac_ev_dokutu.c"),
+            Object(Matching, "actor/npc/event/ac_ev_dokutu.c"),
             Object(NonMatching, "actor/npc/event/ac_ev_dozaemon.c"),
             Object(NonMatching, "actor/npc/event/ac_ev_ghost.c"),
             Object(NonMatching, "actor/npc/event/ac_ev_gypsy.c"),
