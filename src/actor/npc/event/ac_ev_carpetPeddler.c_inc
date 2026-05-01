@@ -1,3 +1,7 @@
+static void aECPD_none_proc1(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
+    // nothing
+}
+
 int aECPD_check_possession() {
     mActor_name_t* pocket = Now_Private->inventory.pockets;
     int i;
@@ -105,7 +109,7 @@ void aECPD_menu_close_wait(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
 }
 
 void aECPD_demo0_end_wait(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
-    static int next_act[2] = { eECPD_ACTION_DEMO_START_WAIT, eECPD_ACTION_MSG_WIN_OPEN_WAIT };
+    static int next_act_idx[2] = { eECPD_ACTION_DEMO_START_WAIT, eECPD_ACTION_MSG_WIN_OPEN_WAIT };
     static int over_next_act_idx[2] = { eECPD_ACTION_DEMO1_END_WAIT, eECPD_ACTION_REFUSE_TRADE_IN };
     static int msg_no[2] = { MSG_CARPETPEDDLER_START + 7, MSG_CARPETPEDDLER_START + 9 };
     int next;
@@ -122,7 +126,7 @@ void aECPD_demo0_end_wait(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
         }
         peddler->next_action = over_next_act_idx[next];
         mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), msg_no[next]);
-        peddler->setup_action(peddler, play, next_act[next]);
+        peddler->setup_action(peddler, play, next_act_idx[next]);
     }
 }
 
@@ -182,7 +186,7 @@ void aECPD_msg_win_open_wait_init(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* pl
 void aECPD_1st_check_init(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
     mActor_name_t item;
     u8 item_str[mIN_ITEM_NAME_LEN];
-    u8 price_str[6];
+    u8 price_str[5];
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
     int n = Save_Get(event_save_data).special.event.arabian.used;
     int price = eECPD_PRICE_START;
@@ -192,7 +196,7 @@ void aECPD_1st_check_init(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play) {
     }
 
     peddler->price = price;
-    mFont_UnintToString(price_str, sizeof(price_str), price, 0x5, TRUE, FALSE, TRUE);
+    mFont_UnintToString(price_str, sizeof(price_str), price, 0x5, TRUE, FALSE, FALSE);
     mMsg_Set_free_str(msg_p, 0x0, price_str, sizeof(price_str));
     mSP_SelectRandomItem_New(NULL, &item, 0x1, NULL, 0x0, mSP_KIND_CARPET, mSP_LISTTYPE_EVENT, FALSE);
     mIN_copy_name_str(item_str, item);
@@ -242,17 +246,17 @@ void aECPD_refuse_trade_in_init(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play
 
 void aECPD_init_proc(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play, int action) {
     static aECPD_INIT_PROC init_proc[15] = {
-        (aECPD_INIT_PROC)none_proc1, aECPD_msg_win_open_wait_init, (aECPD_INIT_PROC)none_proc1,
-        aECPD_1st_check_init,        (aECPD_INIT_PROC)none_proc1,  aECPD_grad_message_init,
+        aECPD_none_proc1, aECPD_msg_win_open_wait_init, aECPD_none_proc1,
+        aECPD_1st_check_init,        aECPD_none_proc1,  aECPD_grad_message_init,
         aECPD_menu_open_wait_init,   aECPD_menu_close_wait_init,   aECPD_demo0_end_wait_init,
-        (aECPD_INIT_PROC)none_proc1, (aECPD_INIT_PROC)none_proc1,  aECPD_demo2_start_check_init,
-        (aECPD_INIT_PROC)none_proc1, aECPD_refuse_trade_in_init,   (aECPD_INIT_PROC)none_proc1
+        aECPD_none_proc1, aECPD_none_proc1,  aECPD_demo2_start_check_init,
+        aECPD_none_proc1, aECPD_refuse_trade_in_init,   aECPD_none_proc1,
     };
     init_proc[action](peddler, play);
 }
 
 void aECPD_setupAction(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play, int action) {
-    static aECPD_INIT_PROC process[15] = { (aECPD_INIT_PROC)none_proc1,
+    static aECPD_INIT_PROC process[15] = { aECPD_none_proc1,
                                            aECPD_msg_win_open_wait,
                                            aECPD_demo_start_wait,
                                            aECPD_1st_check,
@@ -266,7 +270,7 @@ void aECPD_setupAction(EV_CARPETPEDDLER_ACTOR* peddler, GAME_PLAY* play, int act
                                            aECPD_demo2_start_check,
                                            aECPD_demo2_end_wait,
                                            aECPD_refuse_trade_in,
-                                           aECPD_refuse_trade_in_end_wait };
+                                           aECPD_refuse_trade_in_end_wait, };
     peddler->proc = process[action];
     aECPD_init_proc(peddler, play, action);
 }

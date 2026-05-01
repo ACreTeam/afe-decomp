@@ -33,7 +33,7 @@ ACTOR_PROFILE Ev_CarpetPeddler_Profile = {
     &aECPD_actor_ct,
     &aECPD_actor_dt,
     &aECPD_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     &aECPD_actor_save,
 };
 // clang-format on
@@ -43,27 +43,27 @@ void aECPD_actor_ct(ACTOR* actorx, GAME* game) {
         &aECPD_actor_move, &aECPD_actor_draw, 3, &aECPD_talk_request, &aECPD_talk_init, &aECPD_talk_end_chk, 0,
     };
     EV_CARPETPEDDLER_ACTOR* peddler = (EV_CARPETPEDDLER_ACTOR*)actorx;
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         peddler->setup_action = aECPD_setupAction;
     }
 }
 
 void aECPD_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 void aECPD_actor_dt(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
     mEv_actor_dying_message(0x4f, actorx);
 }
 
 void aECPD_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 void aECPD_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/event/ac_ev_carpetPeddler.c_inc"
