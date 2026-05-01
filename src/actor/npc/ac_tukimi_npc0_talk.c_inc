@@ -56,7 +56,7 @@ static void aTM0_think_proc(NPC_ACTOR* actorx, GAME_PLAY* play, int think_idx) {
 static void aTM0_schedule_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     int puleIdx;
     s16 ang;
-    static s16 def_angle[] = { 0xA000, 0x2000, 0x6000, 0xE000, 0xE000, 0x2000, 0xA000, 0 };
+    static s16 def_angle[] = { 0xA000, 0x2000, 0x6000, 0xE000, 0xE000, 0x2000, 0xA000 };
     static f32 def_posX[] = { 1.0f, 39.0f, 39.0f, 1.0f, 1.0f, 39.0f, 1.0f };
     static f32 def_posZ[] = { 1.0f, 39.0f, 1.0f, 39.0f, 39.0f, 39.0f, 1.0f };
     actorx->think.think_proc = &aTM0_think_proc;
