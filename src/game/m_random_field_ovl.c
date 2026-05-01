@@ -1283,6 +1283,76 @@ static u16 mRF_BgName2RandomConbiNo(mActor_name_t bg_name, mFM_combo_info_c* com
     return combi_count;
 }
 
+// This function exists to guarantee that all towns have a pond.
+// Instead of reconsidering the generation logic to actually check if a block
+// has a pond in it, the devs opted to check four specific special block types.
+// If none of these blocks with ponds are present, one is chosen at random to be
+// forced into the pond variant. Post office, police station, museum, and shop are
+// the four blocks considered for this.
+static void mRF_SelectBlockAdjust(mFM_combination_c* combi_table, mFM_combo_info_c* combi_info, int combi_count, u8* blocks, int bit) {
+    int cnt = 0;
+    u8 chk_type;
+    int bnum;
+    int bz2;
+    int bz;
+    int bx2;
+    int bx;
+    mActor_name_t replace_bg_id;
+
+    for (bz = 0; bz < BLOCK_Z_NUM - 2; bz++) {
+        for (bx = 0; bx < BLOCK_X_NUM; bx++) {
+            bnum = mRF_D2ToD1(bx, bz);
+
+            switch (combi_info[combi_table[bnum].combination_type].bg_id) {
+                case BG_TYPE_GRD_S_T_PO_3:
+                case BG_TYPE_GRD_S_F_KO_3:
+                case BG_TYPE_GRD_S_F_MU_3:
+                case BG_TYPE_GRD_S_T_SH_2:
+                    // We found a special block with a pond.
+                    // Why don't we just bail here? There's no reason
+                    // to continue checking the rest of the blocks.
+                    cnt++;
+                    break;
+            }
+        }
+    }
+
+    if (cnt != 0) {
+        // We have at least one special block with a pond, so we can return early.
+        return;
+    }
+
+    // We don't have any special blocks with a pond, so choose one at random to force convert.
+    switch (RANDOM(4)) {
+        case 0:
+            chk_type = mFM_BLOCK_TYPE_TRACKS_SHOP;
+            replace_bg_id = BG_TYPE_GRD_S_T_SH_2;
+            break;
+        case 1:
+            chk_type = mFM_BLOCK_TYPE_TRACKS_POST_OFFICE;
+            replace_bg_id = BG_TYPE_GRD_S_T_PO_3;
+            break;
+        case 2:
+            chk_type = mFM_BLOCK_TYPE_POLICE_BOX;
+            replace_bg_id = BG_TYPE_GRD_S_F_KO_3;
+            break;
+        default:
+            chk_type = mFM_BLOCK_TYPE_MUSEUM;
+            replace_bg_id = BG_TYPE_GRD_S_F_MU_3;
+            break;
+    }
+
+    for (bz2 = 0; bz2 < BLOCK_Z_NUM - 2; bz2++) {
+        for (bx2 = 0; bx2 < BLOCK_X_NUM; bx2++) {
+            cnt = mRF_D2ToD1(bx2, bz2);
+
+            if (chk_type == blocks[cnt]) {
+                combi_table[cnt].combination_type = mRF_BgName2RandomConbiNo(replace_bg_id, combi_info, combi_count);
+            }
+        }
+    }
+}
+
 static void mRF_SelectBlock(mFM_combination_c* combi_table, mFM_combo_info_c* combi_info, int combi_count, u8* blocks) {
     int bx;
     int bz;
@@ -1331,16 +1401,6 @@ static void mRF_SelectBlock(mFM_combination_c* combi_table, mFM_combo_info_c* co
                     } else {
                         combi_table[bnum].combination_type = BLOCK_COMBI_GRD_S_F_7;
                     }
-                }
-            }
-
-            if (type == mFM_BLOCK_TYPE_ISLAND_RIGHT || type == mFM_BLOCK_TYPE_ISLAND_LEFT) {
-                mActor_name_t bg_id = combi_info[combi_table[bnum].combination_type].bg_id;
-
-                if (type == mFM_BLOCK_TYPE_ISLAND_LEFT) {
-                    // Save_Get(island).bg_data[0] = bg_id - BG_TYPE_GRD_S_IL_1;
-                } else {
-                    // Save_Get(island).bg_data[1] = bg_id - BG_TYPE_GRD_S_IR_1;
                 }
             }
         }
@@ -1859,19 +1919,20 @@ extern void mRF_MakeRandomField_ovl(mFM_combination_c* combi_table, mFM_combo_in
 
     while (perfect_bit != (perfect_bit & bit)) {
         bit = 0;
-        mRF_InitCombTable(combi_table);                                  // clear save data acres
-        mRF_MakeBaseLandform(blocks_c, blocks_r, stepmode);              // make the town base (cliffs + river)
-        mRF_MakeFlatPlaceInfomation(blocks_c);                           // log all "flat" blocks (no river or cliff)
-        mRF_SetMarinBlock(blocks_c);                                     // make the beach base
-        bit |= mRF_SetBridgeAndSlopeBlock(blocks_c, stepmode);           // set bridges and slopes
-        bit |= mRF_SetNeedleworkAndWharfBlock(blocks_c);                 // set Able Sister's and dock
-        bit |= mRF_SetUniqueFlatBlock(blocks_c);                         // Set Wishing Well, Police Station, & Museum
-        mRF_SetUniqueRailBlock(blocks_c);                                // Set Nook's Shop & Post Office
-        bit |= mRF_SetPoolBlock(blocks_c);                               // Set lake
-        bit |= mRF_SetSeaBlockWithBridgeRiver(blocks_c, bit);            // Set river bridge only if necessary
-        mRF_MakeBaseHeightTable(base_table, blocks_c);                   // Create acre height map
-        mRF_ReportRandomFieldBitResult(bit, perfect_bit);                // Debug function stubbed
-        mRF_SelectBlock(combi_table, combi_info, combi_count, blocks_c); // Choose the actual acres for each block
-        mRF_CopyBlockBaseHeightData(combi_table, base_table);            // Set block height
+        mRF_InitCombTable(combi_table);                                             // clear save data acres
+        mRF_MakeBaseLandform(blocks_c, blocks_r, stepmode);                         // make the town base (cliffs + river)
+        mRF_MakeFlatPlaceInfomation(blocks_c);                                      // log all "flat" blocks (no river or cliff)
+        mRF_SetMarinBlock(blocks_c);                                                // make the beach base
+        bit |= mRF_SetBridgeAndSlopeBlock(blocks_c, stepmode);                      // set bridges and slopes
+        bit |= mRF_SetNeedleworkAndWharfBlock(blocks_c);                            // set Able Sister's and dock
+        bit |= mRF_SetUniqueFlatBlock(blocks_c);                                    // Set Wishing Well, Police Station, & Museum
+        mRF_SetUniqueRailBlock(blocks_c);                                           // Set Nook's Shop & Post Office
+        bit |= mRF_SetPoolBlock(blocks_c);                                          // Set lake
+        bit |= mRF_SetSeaBlockWithBridgeRiver(blocks_c, bit);                       // Set river bridge only if necessary
+        mRF_MakeBaseHeightTable(base_table, blocks_c);                              // Create acre height map
+        mRF_ReportRandomFieldBitResult(bit, perfect_bit);                           // Debug function stubbed
+        mRF_SelectBlock(combi_table, combi_info, combi_count, blocks_c);            // Choose the actual acres for each block
+        mRF_SelectBlockAdjust(combi_table, combi_info, combi_count, blocks_c, bit); // Adjust the acres to ensure pond
+        mRF_CopyBlockBaseHeightData(combi_table, base_table);                       // Set block height
     }
 }
