@@ -4,6 +4,7 @@
 #include "m_event.h"
 #include "m_name_table.h"
 #include "m_play.h"
+#include "m_common_data.h"
 
 enum {
     aTNC_ACT_WAIT,
@@ -48,6 +49,8 @@ static void aTNC_actor_ct(ACTOR* actorx, GAME* game) {
             tunahiki->npc_state = aTNC_NPC_STATE0;
             tunahiki->_14 = 0;
         }
+    } else {
+        tunahiki->npc_state = aTNC_NPC_STATE0;
     }
 }
 
@@ -103,4 +106,23 @@ static void aTNC_setupAction(TUNAHIKI_CONTROL_ACTOR* actor, int action) {
 
     actor->action = action;
     actor->act_proc = process[action];
+}
+
+extern int aTNC_make_athletic(ACTOR* actorx, GAME* game) {
+    static s16 accessory_type_table[] = { TOOL_HAT_ATHLETIC1, TOOL_HAT_ATHLETIC2 };
+    int idx = 0;
+
+    if (mNpc_GetNpcSex(actorx) == mPr_SEX_MALE) {
+        idx = 1;
+    }
+
+    NPC_CLIP->make_accessory_proc(actorx, game, accessory_type_table[idx], aNPC_JOINT_FEEL);
+    return 0;
+}
+
+extern int aTNC_make_athletic_type(ACTOR* actorx, GAME* game, int type) {
+    static s16 accessory_type_table[] = { TOOL_HAT_ATHLETIC1, TOOL_HAT_ATHLETIC2 };
+
+    NPC_CLIP->make_accessory_proc(actorx, game, accessory_type_table[type], aNPC_JOINT_FEEL);
+    return 0;
 }

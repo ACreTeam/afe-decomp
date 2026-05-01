@@ -310,6 +310,8 @@ typedef void (*aNPC_CHG_SCHEDULE_PROC)(NPC_ACTOR*, GAME_PLAY*, u8);
 typedef int (*aNPC_CLIP_THINK_PROC)(NPC_ACTOR*, GAME_PLAY*, int, int);
 typedef int (*aNPC_FORCE_CALL_REQ_PROC)(NPC_ACTOR*, int);
 typedef void (*aNPC_SET_START_POS_PROC)(ACTOR* actorx);
+typedef void (*aNPC_MAKE_ACCESSORY_PROC)(ACTOR* actorx, GAME* game, s16 type, s16 joint);
+typedef void (*aNPC_SET_INSECT_ACTOR)(NPC_ACTOR* nactorx, ACTOR* insect_actor);
 
 struct ac_npc_clip_s {
     /* 0x000 */ aNPC_SETUP_ACTOR_PROC setupActor_proc;
@@ -351,6 +353,9 @@ struct ac_npc_clip_s {
     /* 0x120 */ aNPC_CLIP_THINK_PROC think_proc;
     /* 0x124 */ aNPC_FORCE_CALL_REQ_PROC force_call_req_proc;
     /* 0x128 */ aNPC_SET_START_POS_PROC set_start_pos_proc;
+    /* 0x134 */ u8 tmp[0x148 - 0x134];
+    /* 0x148 */ aNPC_MAKE_ACCESSORY_PROC make_accessory_proc;
+    /* 0x14C */ aNPC_SET_INSECT_ACTOR set_insect_actor_proc;
 };
 
 typedef struct npc_info_s {

@@ -58,6 +58,9 @@ struct tunahiki_control_actor_s {
     int action;
 };
 
+extern int aTNC_make_athletic(ACTOR* actorx, GAME* game);
+extern int aTNC_make_athletic_type(ACTOR* actorx, GAME* game, int type);
+
 extern ACTOR_PROFILE Tunahiki_Control_Profile;
 
 #ifdef __cplusplus
