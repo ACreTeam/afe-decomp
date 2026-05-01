@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_broker.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#endif
+
 static void aEBRK_set_request_act(EV_BROKER_ACTOR* broker) {
     broker->npc_class.request.act_priority = 4;
     broker->npc_class.request.act_idx = aNPC_ACT_SPECIAL;
@@ -126,6 +133,10 @@ static void aEBRK_enter(EV_BROKER_ACTOR* broker) {
     }
 }
 
+static void aEBRK_hide(EV_BROKER_ACTOR* broker) {
+    // nothing
+}
+
 static void aEBRK_set_spd_info(EV_BROKER_ACTOR* broker, int action) {
     if (action == aEBRK_ACTION_ENTER) {
         broker->npc_class.movement.speed.max_speed = 1.0f;
@@ -144,7 +155,7 @@ static void aEBRK_setupAction(EV_BROKER_ACTOR* broker, int action) {
         &aEBRK_talk_wait,
         &aEBRK_turn,
         &aEBRK_enter,
-        (aEBRK_ACT_PROC)&none_proc1,
+        &aEBRK_hide,
     };
 
     broker->action_step = 0;
@@ -152,6 +163,10 @@ static void aEBRK_setupAction(EV_BROKER_ACTOR* broker, int action) {
     broker->action_proc = process[action];
     aEBRK_set_animation(broker, action);
     aEBRK_set_spd_info(broker, action);
+
+    if (action == aEBRK_ACTION_HIDE) {
+        Common_Get(special_event_common).broker.hide_npc = TRUE;
+    }
 }
 
 static void aEBRK_act_chg_data_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
@@ -231,12 +246,12 @@ static void aEBRK_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int proc) {
 
 static void aEBRK_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->think.think_proc = &aEBRK_think_proc;
-    Common_Get(clip).npc_clip->think_proc(nactorx, play, aNPC_THINK_SPECIAL, 0);
+    NPC_CLIP->think_proc(nactorx, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
 }
 
 static void aEBRK_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    if (!Common_Get(clip).npc_clip->think_proc(nactorx, play, -1, 1)) {
-        Common_Get(clip).npc_clip->think_proc(nactorx, play, -1, 2);
+    if (NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
+        NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
     }
 }
 
@@ -272,6 +287,7 @@ static void aEBRK_set_talk_info_talk_request(ACTOR* actorx) {
     }
 
     mDemo_Set_msg_num(msg_no);
+    mDemo_Set_talk_return_demo_wait(TRUE);
     aEBRK_set_pl_talk_lock((EV_BROKER_ACTOR*)actorx, TRUE);
 }
 
@@ -282,7 +298,7 @@ static void aEBRK_talk_request(ACTOR* actorx, GAME* game) {
 static int aEBRK_talk_init(ACTOR* actorx, GAME* game) {
     EV_BROKER_ACTOR* broker = (EV_BROKER_ACTOR*)actorx;
 
-    broker->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)&none_proc1;
+    broker->npc_class.talk_info.talk_request_proc = none_proc2;
     mDemo_Set_ListenAble();
     return TRUE;
 }
@@ -298,6 +314,6 @@ static int aEBRK_talk_end_chk(ACTOR* actorx, GAME* game) {
 }
 
 static void aEBRK_actor_move(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->move_proc(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
     aEBRK_check_tent(actorx, game);
 }

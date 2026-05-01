@@ -31,7 +31,7 @@ ACTOR_PROFILE Ev_Broker_Profile = {
     &aEBRK_actor_ct,
     &aEBRK_actor_dt,
     &aEBRK_actor_init,
-    mActor_NONE_PROC1,
+    &none_proc2,
     &aEBRK_actor_save,
 };
 // clang-format on
@@ -47,25 +47,26 @@ static int aEBRK_check_start_around(ACTOR* actorx, GAME* game);
 
 static void aEBRK_actor_ct(ACTOR* actorx, GAME* game) {
     static aNPC_ct_data_c ct_data = {
-        &aEBRK_actor_move, &aEBRK_actor_draw, 5, &aEBRK_talk_request, &aEBRK_talk_init, &aEBRK_talk_end_chk,
+        &aEBRK_actor_move,   &aEBRK_actor_draw, aNPC_CT_SCHED_TYPE_SPECIAL,
+        &aEBRK_talk_request, &aEBRK_talk_init,  &aEBRK_talk_end_chk,
     };
 
     EV_BROKER_ACTOR* broker = (EV_BROKER_ACTOR*)actorx;
 
-    if (Common_Get(clip).npc_clip->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         broker->npc_class.schedule.schedule_proc = &aEBRK_schedule_proc;
-        Common_Get(clip).npc_clip->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         broker->npc_class.actor_class.status_data.weight = 254;
 
         if (aEBRK_get_sell_item_sum() == 0 || aEBRK_check_start_around(actorx, game) == FALSE) {
-            broker->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)&none_proc1;
+            broker->npc_class.talk_info.talk_request_proc = none_proc2;
             broker->next_action = aEBRK_ACTION_HIDE;
         } else {
             int hide_npc = Common_Get(special_event_common).broker.hide_npc;
 
             broker->npc_class.condition_info.hide_request = hide_npc;
             if (hide_npc == TRUE) {
-                broker->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)&none_proc1;
+                broker->npc_class.talk_info.talk_request_proc = none_proc2;
                 broker->next_action = aEBRK_ACTION_HIDE;
             } else {
                 broker->next_action = aEBRK_ACTION_TALK_WAIT;
@@ -75,17 +76,23 @@ static void aEBRK_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aEBRK_actor_save(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->save_proc(actorx, game);
+    EV_BROKER_ACTOR* broker = (EV_BROKER_ACTOR*)actorx;
+
+    if (!mDemo_IS_EVENT_DEMO(Common_Get(start_demo_request).type)) {
+        mEv_broker_common_c* broker_common = &Common_Get(special_event_common).broker;
+
+        broker_common->hide_npc = FALSE;
+    }
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aEBRK_actor_dt(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->dt_proc(actorx, game);
-    Common_Get(special_event_common).broker.hide_npc = FALSE;
+    NPC_CLIP->dt_proc(actorx, game);
     mEv_actor_dying_message(mEv_EVENT_BROKER_SALE, actorx);
 }
 
 static void aEBRK_actor_init(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aEBRK_set_animation(EV_BROKER_ACTOR* broker, int action) {
@@ -96,11 +103,11 @@ static void aEBRK_set_animation(EV_BROKER_ACTOR* broker, int action) {
         aNPC_ANIM_WAIT1,
     };
 
-    Common_Get(clip).npc_clip->animation_init_proc(&broker->npc_class.actor_class, animeSeqNo[action], FALSE);
+    NPC_CLIP->animation_init_proc(&broker->npc_class.actor_class, animeSeqNo[action], FALSE);
 }
 
 static void aEBRK_actor_draw(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/event/ac_ev_broker_move.c_inc"
