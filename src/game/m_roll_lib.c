@@ -195,7 +195,7 @@ extern int mRlib_HeightGapCheck_And_ReversePos(ACTOR* actor) {
 extern int mRlib_Hole_check(ACTOR* actor) {
     mActor_name_t* ut_fg_p = mFI_GetUnitFG(actor->world.position); // item underneath where the actor is
 
-    if (ut_fg_p != NULL && ((ut_fg_p[0] >= HOLE_START && ut_fg_p[0] <= HOLE_END) || ut_fg_p[0] == HOLE_SHINE)) {
+    if (ut_fg_p != NULL && ((ut_fg_p[0] >= HOLE_START && ut_fg_p[0] <= HOLE_END) || ut_fg_p[0] == HOLE_SHINE || IS_ITEM_RST_HOLE(ut_fg_p[0]))) {
         return TRUE; // a hole item is under the actor
     }
 
