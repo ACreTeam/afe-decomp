@@ -7,6 +7,7 @@
 #include "m_msg.h"
 #include "m_soncho.h"
 #include "libultra/libultra.h"
+#include "ac_tunahiki_control.h"
 
 // TODO: coordinate enum types with ac_tokyoso_control
 
@@ -106,6 +107,7 @@ static void aTKN0_actor_ct(ACTOR* actorx, GAME* game) {
         actor->npc_class.schedule.schedule_proc = aTKN0_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
 
+        aTNC_make_athletic(actorx, game);
         actor->npc_class.palActorIgnoreTimer = -1;
         actor->base_msg = base_msg_table[mNpc_GetNpcLooks(actorx)];
         actor->change_flag = FALSE;
@@ -120,7 +122,7 @@ static void aTKN0_actor_ct(ACTOR* actorx, GAME* game) {
             }
         }
 
-        actor->npc_class.head.lock_flag = TRUE;
+        actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
         actor->npc_class.collision.check_kind = mCoBG_CHECK_TYPE_NORMAL;
         actorx->world.position.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, 0.0f);
         actorx->position_speed.y = 0.0f;

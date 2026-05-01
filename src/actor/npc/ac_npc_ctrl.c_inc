@@ -438,6 +438,16 @@ static int aNPC_setupActor_proc(GAME_PLAY* play, mActor_name_t name, s8 idx, int
         mAc_PROFILE_EV_TURKEY,
         mAc_PROFILE_NPC_HEM,
         mAc_PROFILE_KAMAKURA_NPC0,
+        mAc_PROFILE_T_NPC_RESET,
+        mAc_PROFILE_T_NPC_RESET,
+        mAc_PROFILE_NPC_SHOP_MASTER,
+        mAc_PROFILE_NPC_CONV_MASTER,
+        mAc_PROFILE_NPC_SUPER_MASTER,
+        mAc_PROFILE_NPC_DEPART_MASTER,
+        mAc_PROFILE_NPC_MAMEDANUKI,
+        mAc_PROFILE_NPC_MAMEDANUKI,
+        mAc_PROFILE_NPC_TOTAKEKE,
+        mAc_PROFILE_ISLAND_NPC,
     };
     // clang-format on
 

@@ -7,6 +7,7 @@
 #include "m_msg.h"
 #include "m_soncho.h"
 #include "libultra/libultra.h"
+#include "ac_tunahiki_control.h"
 
 // TODO: coordinate enum types with ac_tokyoso_control
 
@@ -105,12 +106,12 @@ static void aTKN1_actor_ct(ACTOR* actorx, GAME* game) {
 
         actor->npc_class.schedule.schedule_proc = aTKN1_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
-
+        aTNC_make_athletic_type(actorx, game, ((actorx->npc_id - SP_NPC_EV_TOKYOSO_0)) & 1);
         actor->npc_class.palActorIgnoreTimer = -1;
         actor->base_msg = base_msg_table[mNpc_GetNpcLooks(actorx)];
         actor->change_flag = FALSE;
         actor->flags = 0;
-        actor->npc_class.head.lock_flag = TRUE;
+        actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     }
 }
 
