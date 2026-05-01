@@ -34,6 +34,7 @@ struct ev_angler_actor_s {
     aEANG_SETUP_TALK_PROC setup_talk_proc;
     mActor_name_t item;
     u8 item_idx;
+    u8 talk_init_flag;
     int size;
 };
 

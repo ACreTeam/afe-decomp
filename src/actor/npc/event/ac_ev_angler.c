@@ -26,6 +26,7 @@ enum {
     aEANG_TALK_DEMO_HOUBI,
     aEANG_TALK_MSG_TO_MENU,
     aEANG_TALK_DEMO_MEASURE,
+    aEANG_TALK_PRESENT_FISHROD,
 
     aEANG_TALK_NUM
 };
@@ -48,7 +49,7 @@ ACTOR_PROFILE Ev_Angler_Profile = {
     aEANG_actor_ct,
     aEANG_actor_dt,
     aEANG_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aEANG_actor_save,
     // clang-format on
 };
@@ -95,6 +96,8 @@ static void aEANG_actor_dt(ACTOR* actorx, GAME* game) {
     fish_save_area_dt(actorx);
 }
 
+#include "../src/actor/npc/event/ac_ev_angler_move.c_inc"
+
 static void aEANG_actor_init(ACTOR* actorx, GAME* game) {
     NPC_CLIP->init_proc(actorx, game);
 }
@@ -102,5 +105,3 @@ static void aEANG_actor_init(ACTOR* actorx, GAME* game) {
 static void aEANG_actor_draw(ACTOR* actorx, GAME* game) {
     NPC_CLIP->draw_proc(actorx, game);
 }
-
-#include "../src/actor/npc/event/ac_ev_angler_move.c_inc"

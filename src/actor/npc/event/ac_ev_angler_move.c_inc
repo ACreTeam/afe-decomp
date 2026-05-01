@@ -1,3 +1,39 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_angler.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_string.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "libultra/libultra.h"
+#endif
+
+static void aEANG_none_proc1(EV_ANGLER_ACTOR* angler, GAME_PLAY* play) {
+    // nothing
+}
+
+static int aEANG_present_check(void) {
+    Private_c* priv = Now_Private;
+    mActor_name_t held_item = Now_Private->equipment;
+    int rod_sum;
+
+    if (Now_Private->state_flags & mPr_FLAG_ANGLER_PRESENT_GIVEN) {
+        return FALSE;
+    }
+
+    rod_sum = mPr_GetPossessionItemSumWithCond(priv, ITM_ROD, mPr_ITEM_COND_NORMAL);
+    rod_sum += mPr_GetPossessionItemSumWithCond(priv, ITM_GOLDEN_ROD, mPr_ITEM_COND_NORMAL);
+    if (rod_sum != 0) {
+        return FALSE;
+    }
+
+    if ((held_item >= ITM_ROD && held_item <= ITM_ROD) || (held_item >= ITM_GOLDEN_ROD && held_item <= ITM_GOLDEN_ROD)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static int time_over_check(void) {
     lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
     lbRTC_hour_t hour = rtc_time.hour;
@@ -290,6 +326,16 @@ static void aEANG_say_tureta(EV_ANGLER_ACTOR* angler, GAME_PLAY* play) {
     }
 }
 
+static void aEANG_present_fishrod(EV_ANGLER_ACTOR* angler, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
+
+    if (order == 2) {
+        aNPC_DEMO_GIVE_ITEM(ITM_ROD, aHOI_REQUEST_PUTAWAY, FALSE);
+        mPr_SetFreePossessionItem(Now_Private, ITM_ROD, mPr_ITEM_COND_NORMAL);
+        (*angler->setup_talk_proc)(angler, play, aEANG_TALK_END_WAIT);
+    }
+}
+
 static void aEANG_menu_open_wait(EV_ANGLER_ACTOR* angler, GAME_PLAY* play) {
     if (mMsg_CHECK_MAIN_WAIT() == TRUE) {
         (*angler->setup_talk_proc)(angler, play, aEANG_TALK_MENU_CLOSE_WAIT);
@@ -405,57 +451,67 @@ static void aEANG_demo_measure_init(EV_ANGLER_ACTOR* angler, GAME_PLAY* play) {
 
 typedef void (*aEANG_INIT_PROC)(EV_ANGLER_ACTOR* angler, GAME_PLAY* play);
 
-static void aEANG_init_proc(EV_ANGLER_ACTOR* angler, GAME_PLAY* play, int action) {
-    static aEANG_INIT_PROC init_proc[] = {
-        // clang-format off
-        (aEANG_INIT_PROC)none_proc1,
-        aEANG_menu_open_wait_init,
-        aEANG_menu_close_wait_init,
-        aEANG_msg_win_open_wait_init,
-        (aEANG_INIT_PROC)none_proc1,
-        (aEANG_INIT_PROC)none_proc1,
-        (aEANG_INIT_PROC)none_proc1,
-        (aEANG_INIT_PROC)none_proc1,
-        (aEANG_INIT_PROC)none_proc1,
-        aEANG_demo_measure_init,  
-        // clang-format on
-    };
+static aEANG_INIT_PROC init_proc[] = {
+    // clang-format off
+    aEANG_none_proc1,
+    aEANG_menu_open_wait_init,
+    aEANG_menu_close_wait_init,
+    aEANG_msg_win_open_wait_init,
+    aEANG_none_proc1,
+    aEANG_none_proc1,
+    aEANG_none_proc1,
+    aEANG_none_proc1,
+    aEANG_none_proc1,
+    aEANG_demo_measure_init,  
+    aEANG_none_proc1,
+    // clang-format on
+};
 
+static void aEANG_init_proc(EV_ANGLER_ACTOR* angler, GAME_PLAY* play, int action) {
     (*init_proc[action])(angler, play);
 }
 
-static void aEANG_setupAction(EV_ANGLER_ACTOR* angler, GAME_PLAY* play, int action) {
-    static aEANG_TALK_PROC process[] = {
-        // clang-format off
-        (aEANG_TALK_PROC)none_proc1,
-        aEANG_menu_open_wait,
-        aEANG_menu_close_wait,
-        aEANG_msg_win_open_wait,
-        aEANG_say_tureta,
-        aEANG_demo_give_me,
-        aEANG_demo_henkyaku,
-        aEANG_demo_houbi,
-        aEANG_msg_to_menu,
-        aEANG_demo_measure,  
-        // clang-format on
-    };
+static aEANG_TALK_PROC process[] = {
+    // clang-format off
+    aEANG_none_proc1,
+    aEANG_menu_open_wait,
+    aEANG_menu_close_wait,
+    aEANG_msg_win_open_wait,
+    aEANG_say_tureta,
+    aEANG_demo_give_me,
+    aEANG_demo_henkyaku,
+    aEANG_demo_houbi,
+    aEANG_msg_to_menu,
+    aEANG_demo_measure,
+    aEANG_present_fishrod,
+    // clang-format on
+};
 
+static void aEANG_setupAction(EV_ANGLER_ACTOR* angler, GAME_PLAY* play, int action) {
     angler->talk_proc = process[action];
     aEANG_init_proc(angler, play, action);
 }
 
 static void aEANG_set_talk_info(ACTOR* actorx) {
+    EV_ANGLER_ACTOR* angler = (EV_ANGLER_ACTOR*)actorx;
     int msg_no;
 
     if (time_over_check()) {
         msg_no = 0x10EE;
     } else if (entry_check()) {
         msg_no = 0x10EF;
+    } else if (aEANG_present_check()) {
+        if (mPr_GetPossessionItemSumWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL) == 0) {
+            msg_no = 0x17EB;
+        } else {
+            msg_no = 0x17EC;
+        }
     } else {
         msg_no = 0x10E8;
     }
 
     mDemo_Set_msg_num(msg_no);
+    angler->talk_init_flag = FALSE;
 }
 
 static void aEANG_talk_request(ACTOR* actorx, GAME* game) {
@@ -465,18 +521,26 @@ static void aEANG_talk_request(ACTOR* actorx, GAME* game) {
 static int aEANG_talk_init(ACTOR* actorx, GAME* game) {
     EV_ANGLER_ACTOR* angler = (EV_ANGLER_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
-    int action;
+    
+    if (angler->talk_init_flag == FALSE) {
+        int action = aEANG_TALK_END_WAIT;
 
-    if (time_over_check()) {
-        action = aEANG_TALK_END_WAIT;
-    } else if (entry_check()) {
-        action = aEANG_TALK_SAY_TURETA;
-    } else {
-        action = aEANG_TALK_END_WAIT;
-        entry_on();
+        if (time_over_check()) {
+            // nothing now
+        } else if (entry_check()) {
+            action = aEANG_TALK_SAY_TURETA;
+        } else if (aEANG_present_check()) {
+            if (mPr_GetPossessionItemSumWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL) != 0) {
+                action = aEANG_TALK_PRESENT_FISHROD;
+                entry_on();
+            }
+        } else {
+            entry_on();
+        }
+
+        (*angler->setup_talk_proc)(angler, play, action);
+        angler->talk_init_flag = TRUE;
     }
-
-    (*angler->setup_talk_proc)(angler, play, action);
     mDemo_Set_ListenAble();
     return TRUE;
 }

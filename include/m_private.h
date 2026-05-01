@@ -30,6 +30,7 @@ extern "C" {
 #define mPr_FLAG_UPDATE_OUTLOOK_PENDING (1 << 9)         // player bought a new coat of roof paint to be repainted
 #define mPr_FLAG_BIRTHDAY_ACTIVE (1 << 10)       // player's birthday is active and a villager can give them a gift
 #define mPr_FLAG_TOTAKEKE_INTRODUCTION (1 << 11) // player has spoken to K.K. Slider before
+#define mPr_FLAG_ANGLER_PRESENT_GIVEN (1 << 20) // Chip gave the player a fishing rod
 
 #define mPr_MONEY_POWER_MIN -80
 
