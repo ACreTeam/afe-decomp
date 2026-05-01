@@ -9,6 +9,10 @@ static void aEMJ_set_request_act(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
     majin->npc_class.request.act_type = aNPC_ACT_TYPE_SEARCH;
 }
 
+static void aEMJ_none_proc1(NPC_ACTOR* actor, GAME_PLAY* play) {
+    // nothing
+}
+
 static void aEMJ_act_init_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
     EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
 
@@ -16,8 +20,8 @@ static void aEMJ_act_init_proc(NPC_ACTOR* actor, GAME_PLAY* play) {
 }
 
 static void aEMJ_act_proc(NPC_ACTOR* actor, GAME_PLAY* play, int idx) {
-    static aNPC_SUB_PROC act_proc[] = { aEMJ_act_init_proc, (aNPC_SUB_PROC)none_proc1,
-                                        (aNPC_SUB_PROC)none_proc1, };
+    static aNPC_SUB_PROC act_proc[] = { aEMJ_act_init_proc, aEMJ_none_proc1,
+                                        aEMJ_none_proc1, };
 
     (*act_proc[idx])(actor, play);
 }
@@ -26,6 +30,10 @@ static void aEMJ_appear(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
     if (majin->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
         aEMJ_setup_think_proc(majin, aEMJ_ACT_WAIT);
     }
+}
+
+static void aEMJ_speech(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
+    // nothing
 }
 
 static void aEMJ_retire(EV_MAJIN_ACTOR* majin, GAME_PLAY* play) {
@@ -66,9 +74,9 @@ typedef struct {
 
 static void aEMJ_setup_think_proc(EV_MAJIN_ACTOR* majin, int idx) {
     static aEMJ_talk_data_c dt_tbl[] = {
-        { aEMJ_appear, (aNPC_TALK_REQUEST_PROC)none_proc1 },
-        { (aEMJ_PROC)none_proc1, aEMJ_force_talk_request },
-        { aEMJ_retire, (aNPC_TALK_REQUEST_PROC)none_proc1 },
+        { aEMJ_appear, none_proc2 },
+        { aEMJ_speech, aEMJ_force_talk_request },
+        { aEMJ_retire, none_proc2 },
     };
     aEMJ_talk_data_c* data_p = &dt_tbl[idx];
 
@@ -139,7 +147,7 @@ static void aEMJ_force_talk_request(ACTOR* actorx, GAME* game) {
 int aEMJ_talk_init(ACTOR* actor, GAME* play) {
     EV_MAJIN_ACTOR* majin = (EV_MAJIN_ACTOR*)actor;
 
-    majin->npc_class.talk_info.talk_request_proc = (mActor_proc)none_proc1;
+    majin->npc_class.talk_info.talk_request_proc = none_proc2;
     mDemo_Set_ListenAble();
     return TRUE;
 }
