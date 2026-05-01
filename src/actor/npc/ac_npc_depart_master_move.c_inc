@@ -132,7 +132,7 @@ void aNDM_actor_move(ACTOR* actorx, GAME* game) {
     aNSC_set_zone_data(depart_master, (ACTOR*)player);
     aNSC_set_player_angl(depart_master);
     (*depart_master->proc)(depart_master, play);
-    aNSC_talk_demo_proc(actorx);
+    aNSC_talk_demo_proc(actorx, game);
     CLIP(npc_clip)->move_after_proc(actorx, game);
     aNSC_sell_camera(depart_master, play);
 }

@@ -170,9 +170,9 @@ static void aNM2_set_stop_spd(NPC_MASK_CAT2_ACTOR* actorx) {
     actorx->npc_class.movement.speed.deceleration = 0.0f;
 }
 
-static void aNM2_talk_demo_proc(ACTOR* actorx) {
+static void aNM2_talk_demo_proc(ACTOR* actorx, GAME* game) {
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
-        NPC_CLIP->talk_demo_proc(actorx);
+        NPC_CLIP->talk_demo_proc(actorx, game);
     }
 }
 
@@ -824,7 +824,7 @@ static void aNM2_actor_move(ACTOR* actorx, GAME* game) {
     NPC_MASK_CAT2_ACTOR* mask_cat2_actor = (NPC_MASK_CAT2_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
     NPC_CLIP->move_before_proc(actorx, game);
-    aNM2_talk_demo_proc(actorx);
+    aNM2_talk_demo_proc(actorx, game);
     mask_cat2_actor->move_proc(actorx, game);
     NPC_CLIP->move_after_proc(actorx, game);
     aNM2_set_camera(mask_cat2_actor, play);

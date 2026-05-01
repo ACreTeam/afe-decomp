@@ -41,7 +41,7 @@ static void aNM2_set_camera(NPC_MASK_CAT2_ACTOR* actorx, GAME_PLAY* play);
 static void aNM2_set_camera_eyes(NPC_MASK_CAT2_ACTOR* actorx);
 static void aNM2_set_walk_spd(NPC_MASK_CAT2_ACTOR* actorx);
 static void aNM2_set_stop_spd(NPC_MASK_CAT2_ACTOR* actorx);
-static void aNM2_talk_demo_proc(ACTOR* actorx);
+static void aNM2_talk_demo_proc(ACTOR* actorx, GAME* game);
 static int aNM2_count_player_num_nextland(u8* player_name_array);
 static int aNM2_count_player_num_beforeland(u8* player_name_array);
 static void aNM2_set_free_str();

@@ -17,7 +17,7 @@ static void aNPC_Init_OrderValue(void) {
     }
 }
 
-static void aNPC_talk_demo_proc(ACTOR* actorx) {
+static void aNPC_talk_demo_proc(ACTOR* actorx, GAME* game) {
     aNPC_check_feel_demoCode(actorx);
     aNPC_check_manpu_demoCode(actorx);
     aNPC_check_timing_demoCode(actorx);
@@ -111,7 +111,7 @@ static void aNPC_act_talk(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         aNPC_setup_talk_end(nactorx);
         nactorx->action.step = aNPC_ACTION_END_STEP;
     } else {
-        aNPC_talk_demo_proc((ACTOR*)nactorx);
+        aNPC_talk_demo_proc((ACTOR*)nactorx, (GAME*)play);
     }
 }
 

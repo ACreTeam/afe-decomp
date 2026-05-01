@@ -1,9 +1,18 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_broker2.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_melody.h"
+#endif
+
 static void aEBR2_BGcheck(ACTOR* actorx) {
     mCoBG_BgCheckControll(NULL, actorx, 8.0f, 0.0f, TRUE, mCoBG_REVERSE_TYPE_REVERSE, mCoBG_CHECK_TYPE_NORMAL);
 }
 
 static void aEBR2_set_animation(EV_BROKER2_ACTOR* broker2, int action) {
-    static int animeSeqNo[] = {
+    static int animeSeqNoTable[] = {
         aNPC_ANIM_WAIT1,
         aNPC_ANIM_WALK1,
         aNPC_ANIM_WALK1,
@@ -19,7 +28,7 @@ static void aEBR2_set_animation(EV_BROKER2_ACTOR* broker2, int action) {
         aNPC_ANIM_WAIT1,
     };
 
-    NPC_CLIP->animation_init_proc(&broker2->npc_class.actor_class, animeSeqNo[action], FALSE);
+    NPC_CLIP->animation_init_proc(&broker2->npc_class.actor_class, animeSeqNoTable[action], FALSE);
 }
 
 static void aEBR2_Set_ListenAble(EV_BROKER2_ACTOR* broker2) {
@@ -27,9 +36,9 @@ static void aEBR2_Set_ListenAble(EV_BROKER2_ACTOR* broker2) {
     mDemo_Set_ListenAble();
 }
 
-static void aEBR2_talk_demo_proc(ACTOR* actorx) {
+static void aEBR2_talk_demo_proc(ACTOR* actorx, GAME* game) {
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE || mDemo_Check(mDemo_TYPE_TALK, actorx) == TRUE) {
-        NPC_CLIP->talk_demo_proc(actorx);
+        NPC_CLIP->talk_demo_proc(actorx, game);
     }
 }
 
@@ -37,7 +46,7 @@ static void aEBR2_set_msg_data_price(mActor_name_t item) {
     u32 price = mSP_ItemNo2ItemPrice(item) * aEBR2_PRICE_MULT;
     u8 str[7];
 
-    mFont_UnintToString(str, sizeof(str), price, sizeof(str) - 1, TRUE, FALSE, TRUE);
+    mFont_UnintToString(str, sizeof(str), price, sizeof(str) - 1, TRUE, FALSE, FALSE);
     mMsg_SET_FREE_STR(mMsg_FREE_STR0, str, sizeof(str));
 }
 
@@ -459,7 +468,7 @@ static void aEBR2_sell_after(EV_BROKER2_ACTOR* broker2, GAME_PLAY* play) {
                 }
 
                 mMsg_Set_continue_msg_num(msg_p, 0x079E);
-                broker2->sell_flag = TRUE;
+                Common_Get(special_event_common).broker.sell_flag = TRUE;
             }
         }
 
@@ -471,7 +480,7 @@ static void aEBR2_set_talk_info_goodbye_wait(ACTOR* actorx) {
     EV_BROKER2_ACTOR* broker2 = (EV_BROKER2_ACTOR*)actorx;
     int msg_no;
 
-    if (broker2->sell_flag == TRUE) {
+    if (Common_Get(special_event_common).broker.sell_flag == TRUE) {
         msg_no = 0x0792;
     } else {
         msg_no = 0x0791;
@@ -585,7 +594,7 @@ static void aEBR2_actor_move(ACTOR* actorx, GAME* game) {
     aEBR2_BGcheck(actorx);
     aEBR2_set_zone_data(broker2, playerx);
     aEBR2_set_player_angl(broker2);
-    aEBR2_talk_demo_proc(actorx);
+    aEBR2_talk_demo_proc(actorx, game);
     (*broker2->action_proc)(broker2, play);
     NPC_CLIP->move_after_proc(actorx, game);
 }

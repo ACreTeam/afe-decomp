@@ -65,7 +65,7 @@ static void aNSC_init_proc(NPC_SHOP_COMMON_ACTOR *mamedanuki, GAME_PLAY * play, 
 static void aNSC_BGcheck(ACTOR* actorx);
 static void aNSC_set_zone_data(NPC_SHOP_COMMON_ACTOR* mamedanuki, ACTOR* actor);
 static void aNSC_set_player_angl(NPC_SHOP_COMMON_ACTOR* mamedanuki);
-static void aNSC_talk_demo_proc(ACTOR* actorx);
+static void aNSC_talk_demo_proc(ACTOR* actorx, GAME* game);
 static void aNSC_sell_camera(NPC_SHOP_COMMON_ACTOR* mamedanuki, GAME_PLAY* play);
 
 static ACTOR* aNMD_actor_p[2];

@@ -1093,7 +1093,7 @@ void aNMD_actor_move(ACTOR* actorx, GAME* game) {
     aNSC_set_zone_data(mamedanuki, player);
     aNSC_set_player_angl(mamedanuki);
     (*mamedanuki->proc)(mamedanuki, play);
-    aNSC_talk_demo_proc(actorx);
+    aNSC_talk_demo_proc(actorx, game);
     CLIP(npc_clip)->move_after_proc(actorx, game);
     aNMD_weight_ctrl(actorx);
     aNSC_sell_camera(mamedanuki, play);

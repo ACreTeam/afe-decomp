@@ -54,7 +54,7 @@ static void aNSC_init_proc(NPC_DEPART_MASTER_ACTOR *depart_master, GAME_PLAY * p
 static void aNSC_BGcheck(ACTOR* actorx);
 static void aNSC_set_zone_data(NPC_DEPART_MASTER_ACTOR* depart_master, ACTOR* actor);
 static void aNSC_set_player_angl(NPC_DEPART_MASTER_ACTOR* depart_master);
-static void aNSC_talk_demo_proc(ACTOR* actorx);
+static void aNSC_talk_demo_proc(ACTOR* actorx, GAME* game);
 static void aNSC_sell_camera(NPC_DEPART_MASTER_ACTOR* depart_master, GAME_PLAY* play);
 
 void aNDM_actor_ct(ACTOR* actorx, GAME* game) {

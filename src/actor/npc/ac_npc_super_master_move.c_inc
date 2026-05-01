@@ -246,7 +246,7 @@ void aNSPM_actor_move(ACTOR* actorx, GAME* game) {
     aNSC_set_zone_data(super_master, (ACTOR*)player);
     aNSC_set_player_angl(super_master);
     (*super_master->proc)(super_master, play);
-    aNSC_talk_demo_proc(actorx);
+    aNSC_talk_demo_proc(actorx, game);
     CLIP(npc_clip)->move_after_proc(actorx, game);
     aNSC_sell_camera(super_master, play);
 }

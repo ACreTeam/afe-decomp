@@ -523,6 +523,7 @@ typedef struct save_event_data_s {
 typedef struct broker_event_common_s {
     PersonalID_c entered_pid;
     int hide_npc;
+    int sell_flag;
 } mEv_broker_common_c;
 
 typedef struct santa_event_common_s {

@@ -304,7 +304,7 @@ typedef void (*aNPC_REBUILD_DMA_PROC)();
 typedef int (*aNPC_SET_REQUEST_ACT_PROC)(NPC_ACTOR* nactorx, u8 priority, u8 act_idx, u8 act_type, u16* arg_data);
 typedef int (*aNPC_SET_HEAD_REQUEST_PROC)(NPC_ACTOR* nactorx, u8 priority, u8 type, ACTOR* target_actor,
                                           xyz_t* target_pos);
-typedef void (*aNPC_TALK_DEMO_PROC)(ACTOR*);
+typedef void (*aNPC_TALK_DEMO_PROC)(ACTOR*, GAME*);
 typedef void (*aNPC_ANIMATION_INIT_PROC)(ACTOR*, int, int);
 typedef void (*aNPC_CHG_SCHEDULE_PROC)(NPC_ACTOR*, GAME_PLAY*, u8);
 typedef int (*aNPC_CLIP_THINK_PROC)(NPC_ACTOR*, GAME_PLAY*, int, int);

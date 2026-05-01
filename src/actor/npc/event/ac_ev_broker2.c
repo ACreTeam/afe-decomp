@@ -57,7 +57,7 @@ ACTOR_PROFILE Ev_Broker2_Profile = {
     &aEBR2_actor_ct,
     &aEBR2_actor_dt,
     &aEBR2_actor_init,
-    mActor_NONE_PROC1,
+    &none_proc2,
     &aEBR2_actor_save,
 };
 // clang-format on
@@ -98,13 +98,19 @@ static void aEBR2_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aEBR2_actor_save(ACTOR* actorx, GAME* game) {
+    if (!mDemo_IS_EVENT_DEMO(Common_Get(start_demo_request).type)) {
+        Common_Get(special_event_common).broker.sell_flag = FALSE;
+    }
+    
+    Common_Get(special_event_common).broker.hide_npc = TRUE;
     NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aEBR2_actor_dt(ACTOR* actorx, GAME* game) {
     NPC_CLIP->dt_proc(actorx, game);
-    Common_Get(special_event_common).broker.hide_npc = TRUE;
 }
+
+#include "../src/actor/npc/event/ac_ev_broker2_move.c_inc"
 
 static void aEBR2_actor_init(ACTOR* actorx, GAME* game) {
     NPC_CLIP->init_proc(actorx, game);
@@ -113,5 +119,3 @@ static void aEBR2_actor_init(ACTOR* actorx, GAME* game) {
 static void aEBR2_actor_draw(ACTOR* actorx, GAME* game) {
     NPC_CLIP->draw_proc(actorx, game);
 }
-
-#include "../src/actor/npc/event/ac_ev_broker2_move.c_inc"

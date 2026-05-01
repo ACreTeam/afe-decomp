@@ -431,9 +431,9 @@ static void aNSC_sell_camera(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play
     }
 }
 
-static void aNSC_talk_demo_proc(ACTOR* actorx) {
+static void aNSC_talk_demo_proc(ACTOR* actorx, GAME* game) {
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE || mDemo_Check(mDemo_TYPE_TALK, actorx) == TRUE) {
-        CLIP(npc_clip)->talk_demo_proc(actorx);
+        CLIP(npc_clip)->talk_demo_proc(actorx, game);
     }
 }
 

@@ -171,9 +171,9 @@ static int aNG2_chg_cond_keitai(NPC_GUIDE2_ACTOR* guide2, int cond) {
     return res;
 }
 
-static void aNG2_talk_demo_proc(ACTOR* actorx) {
+static void aNG2_talk_demo_proc(ACTOR* actorx, GAME* game) {
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
-        Common_Get(clip).npc_clip->talk_demo_proc(actorx);
+        NPC_CLIP->talk_demo_proc(actorx, game);
     }
 }
 
@@ -813,7 +813,7 @@ static void aNG2_actor_move(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     Common_Get(clip).npc_clip->move_before_proc(actorx, game);
-    aNG2_talk_demo_proc(actorx);
+    aNG2_talk_demo_proc(actorx, game);
     aNG2_check_talk_msg_no(guide2);
     (*guide2->proc)(guide2, play);
     Common_Get(clip).npc_clip->move_after_proc(actorx, game);
