@@ -58,12 +58,15 @@ struct ev_ghost_s {
   /* 0x9A5 */ u8 _9A5;
   /* 0x9A6 */ u8 talk_act;
   /* 0x9A7 */ u8 _9A7;
-  /* 0x9A8 */ u8 melody_inst;
-  /* 0x9A9 */ u8 alpha;
-  /* 0x9AA */ u8 _9AA;
-  /* 0x9AB */ u8 roof_pal;
-  /* 0x9AC */ u8 _9AC;
+  /* 0x9A8 */ u8 _9A8;
+  /* 0x9A9 */ u8 melody_inst;
+  /* 0x9AA */ u8 alpha;
+  /* 0x9AB */ u8 _9AB;
+  /* 0x9AC */ u8 roof_pal;
+  /* 0x9AD */ u8 _9AD;
 };
+
+extern mActor_name_t aEGH_not_collect_get();
 
 extern ACTOR_PROFILE Ev_Ghost_Profile;
 
@@ -72,4 +75,3 @@ extern ACTOR_PROFILE Ev_Ghost_Profile;
 #endif
 
 #endif
-

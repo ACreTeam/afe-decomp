@@ -1,3 +1,15 @@
+#ifdef __INTELLISENSE__
+#include "ac_ev_ghost.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "m_string.h"
+#endif
+
+static void aEGH_none_proc1(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
+    // nothing
+}
+
 static void aEGH_look_player(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
     if (ghost->npc_class.action.step == aNPC_ACTION_END_STEP) {
         u8 action = 4;
@@ -74,11 +86,16 @@ static int aEGH_equal_block(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
 }
 
 static int aEGH_time_over() {
-    return Common_Get(time.now_sec) > (4 * mTM_SECONDS_IN_HOUR);
+    return Common_Get(time.now_sec) >= mTM_TIME2SEC(4, 0, 0);
 }
 
 static void aEGH_byebye_check(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
     ACTOR* actorx = (ACTOR*)ghost;
+    mEv_common_data_c* event_common = Common_GetPointer(event_common);
+
+    if (aEGH_time_over()) {
+        event_common->exist_flags0 |= 1;
+    }
 
     if (mDemo_Check(mDemo_TYPE_TALK, actorx) == FALSE && mDemo_Check(mDemo_TYPE_SPEAK, actorx) == FALSE &&
         aEGH_time_over() != FALSE) {
@@ -88,7 +105,7 @@ static void aEGH_byebye_check(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
                     aEGH_setup_think_proc(ghost, play, aEGH_THINK_BYEBYE);
                     ghost->msg_no = 0x2EDD;
                     ghost->npc_class.actor_class.talk_distance = 1000.0f;
-                    ghost->_9AA = 1;
+                    ghost->_9AB = 1;
                     break;
                 }
 
@@ -168,8 +185,8 @@ static void aEGH_think_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     EV_GHOST_ACTOR* ghost = (EV_GHOST_ACTOR*)actorx;
     u8 think_act;
 
-    if (ghost->_9AC) {
-        ghost->_9AC = FALSE;
+    if (ghost->_9AD) {
+        ghost->_9AD = FALSE;
     } else {
         if (aEGH_bitcheck_func(aEGH_BIT_FOUND_GHOST)) {
             ghost->alpha = 140;
@@ -227,7 +244,7 @@ static void aEGH_byebye_init(EV_GHOST_ACTOR* ghost, GAME_PLAY* play) {
     ghost->bye_bye_scale_timer = 48;
     ghost->bye_bye_transparency_delay_timer = 43;
     aEGH_normal_wait_init(ghost, play);
-    ghost->npc_class.head.lock_flag = TRUE;
+    ghost->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
 }
 
 static aEGH_setup_c dt_tbl[aEGH_THINK_NUM] = {
@@ -248,27 +265,29 @@ static aEGH_setup_c dt_tbl[aEGH_THINK_NUM] = {
     { aEGH_THINK_PROC_NONE, aEGH_THINK_INIT_IRAI_AF, aEGH_TALK_REQUEST_NORM, aEGH_TALK_END_WAIT, aEGH_THINK_SPEAK }
 };
 
-static aEGH_PROC proc_table[aEGH_THINK_PROC_NUM] = { (aEGH_PROC)&none_proc1, &aEGH_irai, &aEGH_bye, &aEGH_byebye,
-                                                     &aEGH_speak_byebye };
+static aEGH_PROC proc_table[aEGH_THINK_PROC_NUM] = {
+    aEGH_none_proc1, &aEGH_irai, &aEGH_bye, &aEGH_byebye, &aEGH_speak_byebye,
+};
 
-static aEGH_PROC init_table[aEGH_THINK_INIT_NUM] = { (aEGH_PROC)&none_proc1, &aEGH_normal_wait_init, &aEGH_irai_init,
-                                                     &aEGH_irai_af_init,     &aEGH_bye_init,         &aEGH_welcom_init,
-                                                     &aEGH_byebye_init };
+static aEGH_PROC init_table[aEGH_THINK_INIT_NUM] = {
+    aEGH_none_proc1, &aEGH_normal_wait_init, &aEGH_irai_init,   &aEGH_irai_af_init,
+    &aEGH_bye_init,         &aEGH_welcom_init,      &aEGH_byebye_init,
+};
 
 static void aEGH_setup_think_proc(EV_GHOST_ACTOR* ghost, GAME_PLAY* play, u8 think_act) {
-    static aNPC_TALK_REQUEST_PROC talk_request_table[aEGH_TALK_REQUEST_NUM] = { (aNPC_TALK_REQUEST_PROC)&none_proc1,
+    static aNPC_TALK_REQUEST_PROC talk_request_table[aEGH_TALK_REQUEST_NUM] = { &none_proc2,
                                                                                 &aEGH_norm_talk_request,
-                                                                                &aEGH_force_talk_request };
+                                                                                &aEGH_force_talk_request, };
 
     aEGH_setup_c* data = &dt_tbl[think_act];
 
     ghost->think_act = think_act;
     ghost->think_proc = proc_table[data->think_proc];
     ghost->npc_class.talk_info.talk_request_proc = talk_request_table[data->talk_request_proc];
-    ghost->talk_act = data->talk_act;
+    ghost->_9A7 = data->talk_act;
     ghost->after_talk_think_act = data->talk_after_act;
     (*init_table[data->think_init_proc])(ghost, play);
-    ghost->_9A7 = TRUE;
+    ghost->_9A8 = TRUE;
 }
 
 static void aEGH_think_proc(NPC_ACTOR* actorx, GAME_PLAY* play, int think_type) {
