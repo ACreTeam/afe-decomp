@@ -209,7 +209,7 @@ static void aNRST_save(NPC_RESTART_ACTOR* actor, GAME_PLAY* play) {
             aNRST_unset_lock_select2(actor, 1, aNRST_MSG_GROUP2);
             break;
         case mCD_TRANS_ERR_IOERROR:
-            aNRST_unset_lock_select2(actor, 7, aNRST_MSG_GROUP1);
+            aNRST_unset_lock_select2(actor, 1, aNRST_MSG_GROUP3);
             aNRST_set_slot_name(actor->card_chan);
             break;
         case mCD_TRANS_ERR_BROKEN_WRONGENCODING:
