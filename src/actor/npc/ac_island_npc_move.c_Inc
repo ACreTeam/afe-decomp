@@ -237,7 +237,7 @@ static void aISN_schedule_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
 }
 
 static int aISN_get_msg_no(ISLAND_NPC_ACTOR* actor, int start_idx, int count) {
-    static int msg_no_tbl[mNpc_LOOKS_NUM] = {
+    static int msg_no_table[mNpc_LOOKS_NUM] = {
         0x2C9E, // mNpc_LOOKS_GIRL
         0x2CAA, // mNpc_LOOKS_KO_GIRL
         0x2CB6, // mNpc_LOOKS_BOY
@@ -247,7 +247,7 @@ static int aISN_get_msg_no(ISLAND_NPC_ACTOR* actor, int start_idx, int count) {
     };
 
     int looks = mNpc_GetLooks(actor->npc_class.actor_class.npc_id);
-    return start_idx + msg_no_tbl[looks] + RANDOM(count);
+    return start_idx + msg_no_table[looks] + RANDOM(count);
 }
 
 static int aISN_get_first_day_msg_type(ISLAND_NPC_ACTOR* actor) {
@@ -328,7 +328,7 @@ static void aISN_first_day_talk_request(ACTOR* actorx, GAME* game) {
 }
 
 static void aISN_set_last_day_talk_info(ACTOR* actorx) {
-    static int msg_no_tbl[mNpc_LOOKS_NUM] = {
+    static int msg_no_table[mNpc_LOOKS_NUM] = {
         0x5449, // mNpc_LOOKS_GIRL
         0x544E, // mNpc_LOOKS_KO_GIRL
         0x5453, // mNpc_LOOKS_BOY
@@ -339,7 +339,7 @@ static void aISN_set_last_day_talk_info(ACTOR* actorx) {
 
     ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
     int looks = mNpc_GetLooks(actor->npc_class.actor_class.npc_id);
-    int msg_no = msg_no_tbl[looks] + RANDOM(5);
+    int msg_no = msg_no_table[looks] + RANDOM(5);
 
     mDemo_Set_talk_turn(TRUE);
     mDemo_Set_camera(CAMERA2_PROCESS_TALK);
