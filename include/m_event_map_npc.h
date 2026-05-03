@@ -44,6 +44,7 @@ extern void mEvMN_GetEventNpcName(mActor_name_t* npc_name, int event_type, int a
 extern int mEvNM_CheckJointEvent(mActor_name_t npc_name);
 extern int mEvMN_GetJointEventRandomNpc(mActor_name_t* npc_name_p);
 extern int mEvMN_CheckLapPlayer(int block_ux, int block_uz);
+extern void mEvMN_be_flat_unit(int bx, int bz, int ux, int uz);
 
 #ifdef __cplusplus
 }
