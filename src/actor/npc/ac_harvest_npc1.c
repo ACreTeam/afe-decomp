@@ -66,9 +66,19 @@ static void aHT1_actor_ct(ACTOR* actorx, GAME* game) {
 
     NPC_HARVEST_NPC1_ACTOR* actor = (NPC_HARVEST_NPC1_ACTOR*)actorx;
     if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
+        static s16 accessory_type_table[] = { TOOL_HAT_HARVEST2, TOOL_HAT_HARVEST1 };
+        int idx;
+
         actor->actor.actor_class.world.position.x += 20.f;
         actor->actor.schedule.schedule_proc = aHT1_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
+
+        idx = 0;
+        if (mNpc_GetNpcSex(actorx) == mPr_SEX_MALE) {
+            idx = 1;
+        }
+
+        NPC_CLIP->make_accessory_proc(actorx, game, accessory_type_table[idx], aNPC_JOINT_FEEL);
     }
 }
 

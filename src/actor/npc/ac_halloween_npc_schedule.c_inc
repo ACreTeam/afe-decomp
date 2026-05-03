@@ -82,8 +82,12 @@ static void aHWN_schedule_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     int step = 1;
 
     actorx->think.think_proc = aHWN_think_proc;
-    if (actorx->npc_info.animal->is_home == TRUE) {
+    if (actorx->npc_info.animal_orig->is_home == TRUE) {
         step = 0;
+    } else if (actorx->npc_info.list->conversation_flags.spoke_halloween == TRUE) {
+        actorx->condition_info.hide_request = FALSE;
+        actorx->talk_info.talk_request_proc = aHWN_norm_talk_request;
+        step = 2;
     }
     actorx->schedule.step = step;
     aHWN_schedule_think_init(actorx, play);

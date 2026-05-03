@@ -10,7 +10,7 @@ static int aHWN_get_trick_type(void) {
             case NAME_TYPE_FTR0:
             case NAME_TYPE_FTR1:
                 if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
-                    int ftr_idx = mRmTp_FtrItemNo2FtrIdx(*pockets_p);
+                    int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pockets_p);
 
                     // check furniture is not jack-o'-lantern nor jack-in-the-box
                     if (ftr_idx != FTR_SUM_HAL_PKIN && ftr_idx != FTR_SUM_HAL_BOX01) {
@@ -247,6 +247,7 @@ static void aHWN_set_force_talk_info(ACTOR* actorx) {
 
     mDemo_Set_msg_num(MSG_2442);
     mDemo_Set_talk_turn(TRUE);
+    hwn_actor->npc_class.npc_info.list->conversation_flags.spoke_halloween = TRUE;
     aHWN_change_talk_proc(hwn_actor, aHWN_TALK_FIRST_CALL_TALK);
 }
 

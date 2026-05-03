@@ -111,6 +111,12 @@ static void aHWN_actor_dt(ACTOR* actorx, GAME* game) {
 }
 
 static void aHWN_actor_save(ACTOR* actorx, GAME* game) {
+    if (!mDemo_IS_EVENT_DEMO(Common_Get(start_demo_request).type)) {
+        NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+
+        nactorx->npc_info.list->conversation_flags.spoke_halloween = FALSE;
+    }
+    
     NPC_CLIP->save_proc(actorx, game);
 }
 
@@ -123,7 +129,5 @@ static void aHWN_actor_draw(ACTOR* actorx, GAME* game) {
 }
 
 #include "../src/actor/npc/ac_halloween_npc_move.c_inc"
-
 #include "../src/actor/npc/ac_halloween_npc_talk.c_inc"
-
 #include "../src/actor/npc/ac_halloween_npc_schedule.c_inc"
