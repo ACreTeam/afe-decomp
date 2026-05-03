@@ -132,11 +132,11 @@ extern int mFR_fish_rndsize(int fish_size) {
 
     switch (fish_size) {
         case mFR_SIZE_LARGE:
-            return (50.0f + 20.0f * rng * rng) / 2.54f;
+            return 50.0f + 20.0f * rng * rng;
         case mFR_SIZE_MEDIUM:
-            return (30.0f + 20.0f * rng) / 2.54f;
+            return 30.0f + 20.0f * rng;
         default: /* mFR_SIZE_SMALL */
-            return (30.0f - 20.0f * rng * rng) / 2.54f;
+            return 30.0f - 20.0f * rng * rng;
     }
 }
 
@@ -421,7 +421,7 @@ static void mFR_GetFishPresentMail(mFR_record_c* record, Mail_c* mail) {
     int header_back_start;
 
     mMl_clear_mail(mail);
-    present = mSP_SelectFishginPresent(mPr_GetPrivateIdx(&record->pid));
+    present = mSP_SelectFishingPresent(mPr_GetPrivateIdx(&record->pid));
     mIN_copy_name_str(present_name, present);
     mHandbill_Set_free_str(mHandbill_FREE_STR0, present_name, mIN_ITEM_NAME_LEN);
     mHandbill_Load_HandbillFromRom(mail->content.text.split.header, &header_back_start, mail->content.text.split.footer, mail->content.text.split.body,

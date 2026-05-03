@@ -2223,7 +2223,7 @@ static void mSP_SelectNpcBirthdayPresent() {
     };
 }
 
-extern mActor_name_t mSP_SelectFishginPresent(int player_no) {
+extern mActor_name_t mSP_SelectFishingPresent(int player_no) {
     mActor_name_t item = mSP_CarryOutAlternativeRandomSelect(&mSP_GetNonePossessionItem_InLotteryFurniture,
                                                              &mSP_GetNonePossessionItem_InEventFurniture, player_no);
 

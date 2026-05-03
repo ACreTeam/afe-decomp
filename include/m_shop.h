@@ -262,7 +262,7 @@ extern int mSP_CheckHallowinDay();
 extern void mSP_SetTanukiShopStatus();
 extern int mSP_money_check(u32 amount);
 extern void mSP_get_sell_price(u32 amount);
-extern mActor_name_t mSP_SelectFishginPresent(int player_no);
+extern mActor_name_t mSP_SelectFishingPresent(int player_no);
 extern void mSP_SelectRandomItemToAGB();
 extern const char* mSP_ShopStatus2String(int status);
 extern mActor_name_t mSP_GetRandomStationToyItemNo();

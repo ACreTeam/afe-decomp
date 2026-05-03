@@ -1115,7 +1115,7 @@ config.libs = [
             Object(Matching, "game/m_field_assessment.c"),
             Object(Matching, "game/m_field_info.c"),
             Object(NonMatching, "game/m_field_make.c"),
-            Object(NonMatching, "game/m_fishrecord.c"),
+            Object(Matching, "game/m_fishrecord.c"),
             Object(NonMatching, "game/m_flashrom.c"),
             Object(NonMatching, "game/m_font.c"),
             Object(Matching, "game/m_fuusen.c"),
