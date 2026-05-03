@@ -384,7 +384,7 @@ static void aPST_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->actor_class.world.angle.y = set_data_p->angle_y;
     nactorx->movement.mv_angl = set_data_p->angle_y;
 
-    if (nactorx->npc_info.animal != NULL && Common_Get(weather) == mEnv_WEATHER_RAIN) {
+    if (nactorx->npc_info.animal_orig != NULL && Common_Get(weather) == mEnv_WEATHER_RAIN) {
         actor->umbrella_flag = TRUE;
     }
 }

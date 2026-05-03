@@ -1,9 +1,15 @@
-static void aNPC_actor_save_for_normal(ACTOR* actorx) {
-    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
-    Animal_c* animal = aNPC_GET_ANM(nactorx);
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "../src/actor/npc/ac_npc_data.c_inc"
+#endif
 
 #ifndef aNPC_NPC2
+static void aNPC_check_stay_my_house(NPC_ACTOR* nactorx) {
     if (nactorx->action.idx == aNPC_ACT_INTO_HOUSE) {
+        Animal_c* animal = aNPC_GET_ANM(nactorx);
         int home_ux = animal->home_info.block_x * UT_X_NUM + animal->home_info.ut_x;
         int home_uz = animal->home_info.block_z * UT_Z_NUM + animal->home_info.ut_z;
 
@@ -11,11 +17,19 @@ static void aNPC_actor_save_for_normal(ACTOR* actorx) {
             aNPC_setup_stay_my_house(nactorx);
         }
     }
+}
 #endif
+
+static void aNPC_save_cloth_data(NPC_ACTOR* nactorx) {
+    Animal_c* animal = aNPC_GET_ANM(nactorx);
 
     aNPC_cancel_cloth_data(nactorx);
     animal->cloth = nactorx->draw.next_cloth_no;
     animal->cloth_original_id = nactorx->draw.next_org_idx;
+}
+
+static void aNPC_save_feel_data(NPC_ACTOR* nactorx) {
+    Animal_c* animal = aNPC_GET_ANM(nactorx);
 
     if (nactorx->condition_info.feel_tim == 0) {
         animal->mood = mNpc_FEEL_NORMAL;
@@ -26,7 +40,7 @@ static void aNPC_actor_save_for_normal(ACTOR* actorx) {
         switch (animal->mood) {
 #ifndef aNPC_NPC2
             case mNpc_FEEL_PITFALL:
-                mFI_SetFG_common(EMPTY_NO, actorx->world.position, TRUE);
+                mFI_SetFG_common(EMPTY_NO, nactorx->actor_class.world.position, TRUE);
 #endif
             // fallthrough 5 -> 4, 7, & 8
             case mNpc_FEEL_SLEEPY:
@@ -42,12 +56,31 @@ static void aNPC_actor_save_for_normal(ACTOR* actorx) {
 
         animal->mood_time = feel_tim;
     }
+}
+
+static void aNPC_actor_save_for_normal(ACTOR* actorx) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+    Animal_c* animal = aNPC_GET_ANM(nactorx);
+
+#ifndef aNPC_NPC2
+    aNPC_check_stay_my_house(nactorx);
+#endif
+
+    aNPC_save_cloth_data(nactorx);
+    aNPC_save_feel_data(nactorx);
 
 #ifdef aNPC_NPC2
     if (nactorx->schedule.type == aNPC_SCHEDULE_TYPE_FIELD && nactorx->think.idx == aNPC_THINK_EXIT_WAIT) {
         aNPC_set_be_out_home(nactorx);
     }
 #endif
+}
+
+static void aNPC_actor_save_for_island_1st_day(ACTOR* actorx) { 
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+
+    aNPC_save_cloth_data(nactorx);
+    aNPC_save_feel_data(nactorx);
 }
 
 static void aNPC_actor_save_for_special(ACTOR* actorx) {
@@ -74,13 +107,17 @@ static void aNPC_actor_save(ACTOR* actorx, GAME* game) {
 
     if (mEv_IsNotTitleDemo()) {
         if (ITEM_NAME_GET_TYPE(actorx->npc_id) == NAME_TYPE_NPC) {
-            aNPC_actor_save_for_normal(actorx);
+            if (actorx->id == mAc_PROFILE_ISLAND_NPC) {
+                aNPC_actor_save_for_island_1st_day(actorx);
+            } else {
+                aNPC_actor_save_for_normal(actorx);
+            }
         } else {
             aNPC_actor_save_for_special(actorx);
         }
 
 #ifndef aNPC_NPC2
-        if (nactorx->movement.move_timer >= 18000 && nactorx->npc_info.list != NULL) {
+        if (actorx->id != mAc_PROFILE_ISLAND_NPC && nactorx->movement.move_timer >= 18000 && nactorx->npc_info.list != NULL) {
             xyz_t_move(&actorx->world.position, &nactorx->npc_info.list->position);
         }
 #endif

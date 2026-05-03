@@ -97,6 +97,7 @@ extern int mISL_CheckPlayerAction(PersonalID_c* pid, u32 action);
 extern int mISL_CheckNowPlayerAction(u32 action);
 extern void mISL_MoveNowPlayerAction(void);
 extern int mISL_GetNpcDayType(Island_c* island);
+extern int mISL_CheckAppearIslandNpc_com(mHm_hs_c* home, PersonalID_c* pid);
 
 /* NOTE: a lot of these seem to be padded to 4-bytes and should be redone in the future */
 

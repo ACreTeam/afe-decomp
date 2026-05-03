@@ -1,0 +1,177 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "m_font.h"
+#endif
+
+enum {
+    aNPC_ACT_SAY_HELLO_TURN,
+    aNPC_ACT_SAY_HELLO_HELLO,
+    aNPC_ACT_SAY_HELLO_TALK_WAIT,
+    aNPC_ACT_SAY_HELLO_TALK_WAIT_TURN,
+};
+
+typedef struct npc_voice_s {
+    u8* voice_se_tbl;
+    int len;
+} aNPC_voice_c;
+
+static void aNPC_act_say_hello_voice(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    static u8 futsu_girl_voice[] = {CHAR_PP_025, CHAR_PP_144, CHAR_PP_001};
+    static u8 genki_girl_voice[] = {CHAR_PP_093, CHAR_PP_204, CHAR_PP_029, CHAR_PP_144};
+    static u8 bonyari_boy_voice[] = {CHAR_PP_004, CHAR_PP_144, CHAR_PP_001};
+    static u8 hakihaki_boy_voice[] = {CHAR_PP_028, CHAR_PP_001};
+    static u8 kowai_boy_voice[] = {CHAR_PP_004, CHAR_PP_002};
+    static u8 takabi_girl_voice[] = {CHAR_PP_000, CHAR_PP_123, CHAR_PP_144};
+
+    static aNPC_voice_c voice[] = {
+        // clang-format off
+        { futsu_girl_voice, ARRAY_COUNT(futsu_girl_voice) },
+        { genki_girl_voice, ARRAY_COUNT(genki_girl_voice) },
+        { bonyari_boy_voice, ARRAY_COUNT(bonyari_boy_voice) },
+        { hakihaki_boy_voice, ARRAY_COUNT(hakihaki_boy_voice) },
+        { kowai_boy_voice, ARRAY_COUNT(kowai_boy_voice) },
+        { takabi_girl_voice, ARRAY_COUNT(takabi_girl_voice) },
+        // clang-format on
+    };
+    
+    if (nactorx->hello_talk_flag == TRUE) {
+        int timer = nactorx->act_react_tool_timer;
+        timer--;
+        
+        if (timer <= 0) {
+            int voice_idx = nactorx->nomi_itchy_voice_idx;
+            aNPC_voice_c* voice_p = &voice[nactorx->nomi_looks_type];
+            u8* voice_str;
+            int len;
+
+            if (voice_p->voice_se_tbl != NULL) {
+                voice_str = voice_p->voice_se_tbl;
+                len = voice_p->len;
+            } else {
+                voice_str = Now_Private->player_ID.player_name;
+                len = mMl_strlen(voice_str, PLAYER_NAME_LEN, CHAR_SPACE);
+            }
+
+            if (mDemo_CheckDemoType() == mDemo_TYPE_NONE) {
+                sAdo_SetVoiceMode(VOICE_MODE_ANIMALESE);
+                sAdo_SpecChange(mNpc_GetNpcSoundSpec((ACTOR*)nactorx));
+                sAdo_VoiceSe(mMsg_sound_voice_get(voice_str[voice_idx]), 0, 32);
+            }
+
+            timer = 4;
+            voice_idx++;
+            if (voice_idx >= len) {
+                nactorx->hello_talk_flag = FALSE;
+            }
+            nactorx->nomi_itchy_voice_idx = voice_idx;
+        }
+
+        nactorx->act_react_tool_timer = timer;
+    }
+}
+
+static void aNPC_act_say_hello_chg_step(NPC_ACTOR* nactorx, u8 step) {
+    static u8 act_idx[] = {
+        // clang-format off
+        aNPC_ACTION_TYPE_TURN,
+        aNPC_ACTION_TYPE_SAY_HELLO1,
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_TURN,
+        // clang-format on
+    };
+    
+    nactorx->action.step = step;
+    aNPC_setupAction(nactorx, act_idx[step]);
+}
+
+static void aNPC_act_say_hello_turn(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (!aNPC_act_turn(nactorx)) {
+        nactorx->hello_talk_flag = TRUE;
+        aNPC_act_say_hello_chg_step(nactorx, aNPC_ACT_SAY_HELLO_HELLO);
+    }
+}
+
+static void aNPC_act_say_hello_hello(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (!aNPC_act_anm_seq(nactorx)) {
+        aNPC_act_say_hello_chg_step(nactorx, aNPC_ACT_SAY_HELLO_TALK_WAIT);
+    }
+}
+
+static void aNPC_act_say_hello_talk_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (nactorx->actor_class.player_distance_xz >= 140.0f) {
+        nactorx->action.step = aNPC_ACTION_END_STEP;
+    } else {
+        ACTOR* actorx = (ACTOR*)nactorx;
+        s16 dAngle = actorx->player_angle_y - actorx->shape_info.rotation.y;
+        int angle = ABS(dAngle);
+
+        if (angle >= (nactorx->head.max_look_angle >> 1)) {
+            nactorx->movement.mv_angl = (s16)nactorx->actor_class.player_angle_y;
+            aNPC_act_say_hello_chg_step(nactorx, aNPC_ACT_SAY_HELLO_TALK_WAIT_TURN);
+        }
+    }
+}
+
+static void aNPC_act_say_hello_talk_wait_turn(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (nactorx->actor_class.player_distance_xz >= 140.0f) {
+        nactorx->action.step = aNPC_ACTION_END_STEP;
+    } else {
+        if (!aNPC_act_turn(nactorx)) {
+            aNPC_act_say_hello_chg_step(nactorx, aNPC_ACT_SAY_HELLO_TALK_WAIT);
+        }
+    }
+}
+
+static void aNPC_act_say_hello_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    static aNPC_SUB_PROC act_proc[] = {
+        // clang-format off
+        aNPC_act_say_hello_turn,
+        aNPC_act_say_hello_hello,
+        aNPC_act_say_hello_talk_wait,
+        aNPC_act_say_hello_talk_wait_turn,
+        // clang-format on
+    };
+
+    aNPC_act_say_hello_voice(nactorx, play);
+    (*act_proc[nactorx->action.step])(nactorx, play);
+}
+
+static void aNPC_act_say_hello_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    mNpc_NpcList_c* list;
+    ACTOR* playerx;
+
+    nactorx->nomi_looks_type = mNpc_GetLooks(nactorx->actor_class.npc_id);
+    nactorx->hello_talk_flag = FALSE;
+    nactorx->act_react_tool_timer = 0;
+    nactorx->nomi_itchy_voice_idx = 0;
+    nactorx->condition_info.can_say_hello = FALSE;
+    
+    list = nactorx->npc_info.list;
+    if (list != NULL) {
+        list->conversation_flags.say_hello_roll = 0;
+        list->conversation_flags.said_hello = TRUE;
+    }
+
+    playerx = GET_PLAYER_ACTOR_ACTOR(play);
+    if (playerx != NULL) {
+        aNPC_set_head_request(nactorx, 4, aNPC_ATT_TYPE_ACTOR, playerx, NULL);
+    }
+
+    nactorx->movement.mv_angl = nactorx->actor_class.player_angle_y;
+    aNPC_act_say_hello_chg_step(nactorx, aNPC_ACT_SAY_HELLO_TURN);
+}
+
+static void aNPC_act_say_hello_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
+    static aNPC_SUB_PROC act_proc[] = {
+        // clang-format off
+        aNPC_act_say_hello_init_proc,
+        (aNPC_SUB_PROC)none_proc1,
+        aNPC_act_say_hello_main_proc,
+        // clang-format on
+    };
+
+    (*act_proc[type])(nactorx, play);
+}

@@ -7,6 +7,7 @@
 #include "m_name_table_floor_decl.h"
 #include "m_name_table_wall_decl.h"
 #include "m_ftr_def.h"
+#include "m_umbrella_def.h"
 
 /* TODO: these defintions are likely included from an auto-gen source */
 
@@ -150,7 +151,7 @@ typedef struct offset_table_s {
 /* TODO: these should be calculated via definitions later */
 #define NPC_NUM 256
 #define NPC_ISLANDER_NUM 18
-#define ALL_NPC_NUM NPC_NUM + 2 // include the two test villagers
+#define ALL_NPC_NUM (NPC_NUM + 1) // include the two test villagers
 
 #define TICKET_STACK_MAX 5
 #define WISP_STACK_MAX 5
@@ -186,7 +187,6 @@ typedef struct offset_table_s {
 #define FLOWER_NUM 9
 #define HANIWA_NUM 127
 #define NOT_SECRET_MD_NUM 52
-#define UMBRELLA_NUM 32
 
 extern s16 move_obj_profile_table[];
 extern s16 actor_profile_table[];
@@ -205,6 +205,8 @@ extern int mNT_ItIsStoneCoin10(mActor_name_t actor);
 extern int mNT_ItIsReserveDummy(mActor_name_t actor);
 extern int mNT_check_unknown(mActor_name_t item_no);
 extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);
+extern int mNT_get_cloth_type(mActor_name_t cloth, u8 org_idx);
+extern int mNT_get_org_umb_type(mActor_name_t umb);
 
 /* Retrieve the item actor's category */
 #define ITEM_NAME_GET_TYPE(n) (((n) & 0xF000) >> 12)
@@ -222,11 +224,11 @@ extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);
 #define WISP_COUNT(n) (ITEM_IS_WISP(n) ? (1 + (n) - ITM_SPIRIT0) : 0)
 
 #define ITEM_IS_INSECT(n) ((n) >= ITM_INSECT_START && (n) < ITM_INSECT_END)
-#define ITEM_IS_FISH(n) ((n) >= ITM_FISH_START && (n) <= ITM_FISH_END)
+#define ITEM_IS_FISH(n) ((n) >= ITM_FISH_START && (n) < ITM_FISH_END)
 #define ITEM_IS_WISP(n) ((n) >= ITM_SPIRIT0 && (n) <= ITM_SPIRIT4)
 #define ITEM_IS_PAPER(n) ((n) >= ITM_PAPER_START && (n) <= (ITM_PAPER_END - 1))
 #define ITEM_IS_CLOTH(n) ((n) >= ITM_CLOTH_START && (n) < ITM_CLOTH_END)
-#define ITEM_IS_NPC_CLOTH(n) ((n) == RSV_CLOTH || ITEM_IS_CLOTH(n))
+#define ITEM_IS_NPC_CLOTH(n) ((n) == RSV_CLOTH || ITEM_IS_CLOTH(n) || (n) == RSV_CLOTH1)
 
 #define ITEM_IS_RSVCLOTH(n) ((n) >= RSV_CLOTH && (n) <= RSV_CLOTH7)
 #define ITEM_IS_RSVNWORG(n) ((n) >= RSV_NW_ORIGINAL0 && (n) <= RSV_NW_ORIGINAL7)
@@ -3135,7 +3137,7 @@ enum ftr1_e {
 #define NPC_HOUSE_START 0x5000
 #define NPC_HOUSE000 NPC_HOUSE_START
 //
-#define NPC_HOUSE_END (NPC_HOUSE_START + ALL_NPC_NUM - 1)
+#define NPC_HOUSE_END (NPC_HOUSE_START + ALL_NPC_NUM)
 
 #define STRUCTURE_START 0x5800
 #define HOUSE0 (STRUCTURE_START + 0)
@@ -3448,6 +3450,16 @@ enum ftr1_e {
 #define SP_NPC_TURKEY (SP_NPC_START + 141) // D08D
 #define SP_NPC_HEM (SP_NPC_START + 142) // D08E
 #define SP_NPC_EV_SUMMERCAMP_0 (SP_NPC_START + 143) // 0xD08F
+#define SP_NPC_T_RESET_MAJIN (SP_NPC_START + 144) // 0xD090
+#define SP_NPC_T_RESET_BROTHER (SP_NPC_START + 145) // 0xD091
+#define SP_NPC_SHOP_MASTER_NIGHT (SP_NPC_START + 146) // 0xD092
+#define SP_NPC_CONV_MASTER_NIGHT (SP_NPC_START + 147) // 0xD093
+#define SP_NPC_SUPER_MASTER_NIGHT (SP_NPC_START + 148) // 0xD094
+#define SP_NPC_DEPART_MASTER_NIGHT (SP_NPC_START + 149) // 0xD095
+#define SP_NPC_MAMEDANUKI0_NIGHT (SP_NPC_START + 150) // 0xD096
+#define SP_NPC_MAMEDANUKI1_NIGHT (SP_NPC_START + 151) // 0xD097
+#define SP_NPC_TOTAKEKE_BIRTHDAY (SP_NPC_START + 152) // 0xD098
+#define SP_NPC_ISLAND_NPC (SP_NPC_START + 153) // 0xD099
 
 #define NPC_START    0xE000 // 0xE000
 // cats
@@ -4010,7 +4022,7 @@ enum ftr1_e {
 #define DUMMY_NPC_HOUSE_254 (DUMMY_START + 259) // F103
 #define DUMMY_NPC_HOUSE_255 (DUMMY_START + 260) // F104
 #define DUMMY_NPC_HOUSE_256 (DUMMY_START + 261) // F105
-#define DUMMY_NPC_HOUSE_END (DUMMY_START + 242) // F105
+#define DUMMY_NPC_HOUSE_END (DUMMY_START + 261) // F105
 #define DUMMY_HOUSE0 0xF106
 #define DUMMY_HOUSE1 0xF107
 #define DUMMY_HOUSE2 0xF108
@@ -4146,8 +4158,8 @@ enum ftr1_e {
 #define RSV_BRIDGE0 0xFE1D
 #define RSV_BRIDGE1 0xFE1E
 #define RSV_FE1F 0xFE1F
-#define RSV_CLOTH 0xFE20
-#define RSV_CLOTH1 0xFE21
+#define RSV_CLOTH 0xFE23
+#define RSV_CLOTH1 0xFE24
 #define RSV_CLOTH2 0xFE22
 #define RSV_CLOTH3 0xFE23
 #define RSV_CLOTH4 0xFE24

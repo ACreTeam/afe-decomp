@@ -82,6 +82,8 @@ typedef struct npc_control_actor_s {
     /* 0xAC0 */ int route_node_count;
     /* 0xAC4 */ int safe_ux[4];
     /* 0xAD4 */ int safe_uz[4];
+    /* 0xAE4 */ ACTOR* talk_actor_list[2];
+    /* 0xAEC */ ACTOR* talk_now_actor;
 } NPC_CONTROL_ACTOR;
 
 static aNPC_Clip_c aNPC_clip;
@@ -128,6 +130,20 @@ static void aNPC_set_schedule(NPC_ACTOR* nactorx, GAME_PLAY* play);
 static void aNPC_dma_draw_data_proc(aNPC_draw_data_c* draw_data_p, mActor_name_t npc_name);
 static void aNPC_WalkSeRoom(xyz_t* pos_p);
 static int aNPC_route_check(NPC_ACTOR* nactorx, GAME_PLAY* play, int ux, int uz, int turn);
+static int aNPC_check_talk_now(NPC_ACTOR* nactorx);
+static int aNPC_chk_group_talk(NPC_ACTOR* nactorx);
+static NPC_ACTOR* aNPC_get_talk_now_actor(void);
+static void aNPC_set_talk_now_actor(NPC_ACTOR* nactorx);
+static int aNPC_chk_talk_actor_list(NPC_ACTOR* nactorx);
+static ACTOR* aNPC_get_talk_actor_list(int type);
+static void aNPC_regist_talk_actor_list(NPC_ACTOR* nactorx, NPC_ACTOR* second_nactorx);
+static void aNPC_unregist_all_talk_actor_list(void);
+static ACTOR* aNPC_check_balloon(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static ACTOR* aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static ACTOR* aNPC_check_gyoei(NPC_ACTOR* nactorx);
+static ACTOR* aNPC_check_insect(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static void aNPC_talk_demo_proc(ACTOR* actorx, GAME* game);
+static void aNPC_group_talk_chg_actor(void);
 
 #include "../src/actor/npc/ac_npc_data.c_inc"
 #include "../src/actor/npc/ac_npc_cloth.c_inc"
@@ -138,7 +154,6 @@ static int aNPC_route_check(NPC_ACTOR* nactorx, GAME_PLAY* play, int ux, int uz,
 #include "../src/actor/npc/ac_npc_talk.c_inc"
 #include "../src/actor/npc/ac_npc2_move.c_inc"
 #include "../src/actor/npc/ac_npc_draw.c_inc"
-#include "../src/actor/npc/ac_npc_effect.c_inc"
 #include "../src/actor/npc/ac_npc2_action.c_inc"
 #include "../src/actor/npc/ac_npc2_think.c_inc"
 #include "../src/actor/npc/ac_npc2_schedule.c_inc"

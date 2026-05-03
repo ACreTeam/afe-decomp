@@ -1,16 +1,79 @@
-// clang-format off
-static u8 aNPC_wait_action[] = {
-    aNPC_ACTION_TYPE_WAIT,
-    aNPC_ACTION_TYPE_WAIT_KI,
-    aNPC_ACTION_TYPE_WAIT_DO,
-    aNPC_ACTION_TYPE_WAIT_AI,
-    aNPC_ACTION_TYPE_WAIT_NEMU,
-    aNPC_ACTION_TYPE_WAIT,
-    aNPC_ACTION_TYPE_WAIT_DO,
-    aNPC_ACTION_TYPE_WAIT_AI,
-    aNPC_ACTION_TYPE_WAIT_DO,
-};
-// clang-format on
+#ifdef __INTELLISENSE__
+#include "ac_npc2.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
+
+static u8 aNPC_get_wait_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 wait_action[] = {
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_WAIT_KI,
+        aNPC_ACTION_TYPE_WAIT_DO,
+        aNPC_ACTION_TYPE_WAIT_AI,
+        aNPC_ACTION_TYPE_WAIT_NEMU,
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_WAIT_DO,
+        aNPC_ACTION_TYPE_WAIT_AI,
+        aNPC_ACTION_TYPE_WAIT_DO,
+    };
+    // clang-format on
+
+    switch (aNPC_check_sick(nactorx)) {
+        case 0:
+        case 1:
+            return aNPC_ACTION_TYPE_WAIT_SICK;
+        default:
+            return wait_action[step];
+    }
+}
+
+static u8 aNPC_get_walk_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 walk_action[] = {
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK_KI,
+        aNPC_ACTION_TYPE_WALK_DO,
+        aNPC_ACTION_TYPE_WALK_AI,
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK_DO,
+        aNPC_ACTION_TYPE_WALK_AI,
+        aNPC_ACTION_TYPE_WALK_DO,
+    };
+    // clang-format on
+
+    switch (aNPC_check_sick(nactorx)) {
+        case 0:
+            return aNPC_ACTION_TYPE_WALK_AI;
+        case 1:
+            return aNPC_ACTION_TYPE_WALK_SICK;
+        default:
+            return walk_action[step];
+    }
+}
+
+static u8 aNPC_get_run_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 run_action[] = {
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN_KI,
+        aNPC_ACTION_TYPE_RUN_DO,
+        aNPC_ACTION_TYPE_RUN_AI,
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN_DO,
+        aNPC_ACTION_TYPE_RUN_AI,
+        aNPC_ACTION_TYPE_RUN_DO,
+    };
+    // clang-format on
+
+    return run_action[step];
+}
 
 static void aNPC_set_be_out_home(NPC_ACTOR* nactorx) {
     mNpc_NpcList_c* list_p;

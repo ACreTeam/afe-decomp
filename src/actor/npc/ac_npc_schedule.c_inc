@@ -27,10 +27,11 @@ static int aNPC_check_chg_schedule(NPC_ACTOR* nactorx, int step) {
 }
 
 static int aNPC_check_home_block(NPC_ACTOR* nactorx) {
+    Animal_c* animal = aNPC_GET_ANM(nactorx);
     int ret = FALSE;
 
-    if (nactorx->actor_class.block_x == aNPC_GET_ANM(nactorx)->home_info.block_x &&
-        nactorx->actor_class.block_z == aNPC_GET_ANM(nactorx)->home_info.block_z) {
+    if (animal != NULL && nactorx->actor_class.block_x == animal->home_info.block_x &&
+        nactorx->actor_class.block_z == animal->home_info.block_z) {
         ret = TRUE;
     }
 

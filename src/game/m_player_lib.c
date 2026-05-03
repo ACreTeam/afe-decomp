@@ -166,6 +166,10 @@ extern cKF_Animation_R_c cKF_ba_r_ply_1_taisou6_2;
 extern cKF_Animation_R_c cKF_ba_r_ply_1_taisou7_1;
 extern cKF_Animation_R_c cKF_ba_r_ply_1_taisou7_2;
 extern cKF_Animation_R_c cKF_ba_r_ply_1_omairi_us1;
+extern cKF_Animation_R_c cKF_ba_r_ply_1_cracker_fire1;
+extern cKF_Animation_R_c cKF_ba_r_ply_1_cracker_wait1;
+extern cKF_Animation_R_c cKF_ba_r_ply_1_hana_pickup1;
+extern cKF_Animation_R_c cKF_ba_r_ply_1_hana_wait1;
 
 extern cKF_Animation_R_c* mPlib_Get_Pointer_Animation(int anim_idx) {
     static cKF_Animation_R_c* data[] = {
@@ -326,6 +330,10 @@ extern cKF_Animation_R_c* mPlib_Get_Pointer_Animation(int anim_idx) {
         &cKF_ba_r_ply_1_taisou7_1,
         &cKF_ba_r_ply_1_taisou7_2,
         &cKF_ba_r_ply_1_omairi_us1,
+        &cKF_ba_r_ply_1_cracker_fire1,
+        &cKF_ba_r_ply_1_cracker_wait1,
+        &cKF_ba_r_ply_1_hana_pickup1,
+        &cKF_ba_r_ply_1_hana_wait1,
     };
 
     if (anim_idx >= 0 && anim_idx < mPlayer_ANIM_NUM && data[anim_idx] != NULL) {
@@ -418,6 +426,17 @@ extern int mPlib_Get_BasicPlayerAnimeIndex_fromItemKind(int item_kind) {
             mPlayer_ANIM_UTIWA_WAIT1,
             mPlayer_ANIM_UTIWA_WAIT1,
             mPlayer_ANIM_UTIWA_WAIT1,
+            mPlayer_ANIM_CRACKER_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
+            mPlayer_ANIM_HANA_WAIT1,
             mPlayer_ANIM_WAIT1,
         };
         // clang-format on
@@ -589,6 +608,10 @@ extern int mPlib_Get_BasicPartTableIndex_fromAnimeIndex(int anim_idx) {
             mPlayer_PART_TABLE_NORMAL,
             mPlayer_PART_TABLE_NORMAL,
             mPlayer_PART_TABLE_NORMAL,
+            mPlayer_PART_TABLE_NORMAL,
+            mPlayer_PART_TABLE_NET,
+            mPlayer_PART_TABLE_NORMAL,
+            mPlayer_PART_TABLE_NET,
         };
         // clang-format on
 
@@ -648,6 +671,17 @@ extern Gfx tol_fan5_model[];
 extern Gfx tol_fan6_model[];
 extern Gfx tol_fan7_model[];
 extern Gfx tol_fan8_model[];
+extern Gfx tol_cracker_1_modelT[];
+extern Gfx tol_flower01_model[];
+extern Gfx tol_flower02_model[];
+extern Gfx tol_flower03_model[];
+extern Gfx tol_flower04_model[];
+extern Gfx tol_flower05_model[];
+extern Gfx tol_flower06_model[];
+extern Gfx tol_flower07_model[];
+extern Gfx tol_flower08_model[];
+extern Gfx tol_flower09_model[];
+extern Gfx tol_flower10_model[];
 
 extern void* mPlib_Get_Item_DataPointer(int data_kind) {
     if (mPlayer_ITEM_DATA_VALID(data_kind)) {
@@ -702,6 +736,17 @@ extern void* mPlib_Get_Item_DataPointer(int data_kind) {
             tol_fan6_model,
             tol_fan7_model,
             tol_fan8_model,
+            tol_cracker_1_modelT,
+            tol_flower01_model,
+            tol_flower02_model,
+            tol_flower03_model,
+            tol_flower04_model,
+            tol_flower05_model,
+            tol_flower06_model,
+            tol_flower07_model,
+            tol_flower08_model,
+            tol_flower09_model,
+            tol_flower10_model,
         };
 
         return mPlib_Item_DataPointer[data_kind];
@@ -793,6 +838,17 @@ extern int mPlib_Get_BasicItemShapeIndex_fromItemKind(int item_kind) {
             mPlayer_ITEM_DATA_FAN6,
             mPlayer_ITEM_DATA_FAN7,
             mPlayer_ITEM_DATA_FAN8,
+            mPlayer_ITEM_DATA_CRACKER,
+            mPlayer_ITEM_DATA_FLOWER01,
+            mPlayer_ITEM_DATA_FLOWER02,
+            mPlayer_ITEM_DATA_FLOWER03,
+            mPlayer_ITEM_DATA_FLOWER04,
+            mPlayer_ITEM_DATA_FLOWER05,
+            mPlayer_ITEM_DATA_FLOWER06,
+            mPlayer_ITEM_DATA_FLOWER07,
+            mPlayer_ITEM_DATA_FLOWER08,
+            mPlayer_ITEM_DATA_FLOWER09,
+            mPlayer_ITEM_DATA_FLOWER10,
             0x00,
         };
         // clang-format on
@@ -879,13 +935,24 @@ extern int mPlib_Get_BasicItemAnimeIndex_fromItemKind(int item_kind) {
             mPlayer_ITEM_DATA_PINWHEEL_WAIT,
             mPlayer_ITEM_DATA_PINWHEEL_WAIT,
             -1,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
             0x00
         };
         // clang-format on
@@ -942,6 +1009,16 @@ extern u8 mPlib_Get_Item_DataPointerType(int data_idx) {
             mPlayer_ITEM_DATA_TYPE_SKELETON,
             mPlayer_ITEM_DATA_TYPE_SKELETON,
             mPlayer_ITEM_DATA_TYPE_PINWHEEL_ANIMATION,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
+            mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,

@@ -1,0 +1,165 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
+#define aNPC_NOMI_MANPU_CLAP 0xFD
+#define aNPC_NOMI_MANPU_BANZAI 0xFE
+#define aNPC_NOMI_MANPU_WAIT 0xFF
+
+enum {
+    aNPC_ACT_NOMI_GOODBYE_SURPRISE,
+    aNPC_ACT_NOMI_GOODBYE_TURN,
+    aNPC_ACT_NOMI_GOODBYE_WAIT,
+
+    aNPC_ACT_NOMI_GOODBYE_NUM
+};
+
+static void aNPC_act_nomi_goodbye_chg_step(NPC_ACTOR* nactorx, u8 step);
+
+static void aNPC_act_nomi_goodbye_request_force_call(NPC_ACTOR* nactorx) {
+    static int base_msg_no[] = {
+        // clang-format off
+        0x2947,
+        0x294A,
+        0x294D,
+        0x2950,
+        0x2953,
+        0x2956,
+        // islanders
+        0x29A8,
+        0x29AB,
+        0x29AE,
+        0x29B1,
+        0x29B4,
+        0x29B7,
+        // clang-format on
+    };
+
+    int res = aNPC_force_call_req_proc(nactorx, base_msg_no[(int)nactorx->act_react_tool_timer] + nactorx->nomi_itchy_voice_idx);
+
+    if (res == TRUE) {
+        nactorx->think.force_call_camera_type = CAMERA2_PROCESS_TALK;
+        nactorx->think.force_call_talk_turn = TRUE;
+        nactorx->think.force_call_able_hand_all_item_in_demo = TRUE;
+    }
+}
+
+static void aNPC_act_nomi_goodbye_surprise(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (aNPC_act_anm_seq(nactorx) == FALSE) {
+        nactorx->movement.mv_angl = nactorx->actor_class.player_angle_y;
+        aNPC_act_nomi_goodbye_chg_step(nactorx, aNPC_ACT_NOMI_GOODBYE_TURN);
+    }
+}
+
+static void aNPC_act_nomi_goodbye_turn(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (aNPC_act_turn(nactorx) == FALSE) {
+        aNPC_act_nomi_goodbye_chg_step(nactorx, aNPC_ACT_NOMI_GOODBYE_WAIT);
+    }
+}
+
+static void aNPC_act_nomi_goodbye_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    switch (nactorx->talk_info.demo_code) {
+        case 0xFD:
+        case 0xFE:
+        case 0xFF:
+            break;
+        default:
+            aNPC_manpu_proc((ACTOR*)nactorx, aNPC_MANPU_NONE);
+            break;
+    }
+}
+
+static void aNPC_act_nomi_goodbye_chg_step(NPC_ACTOR* nactorx, u8 step) {
+    static u8 act_idx_table[] = { aNPC_ACTION_TYPE_GYAFUN1, aNPC_ACTION_TYPE_TURN, aNPC_ACTION_TYPE_WAIT };
+
+    static u8 wait_manpu_table[12][3] = {
+        // clang-format off
+        {aNPC_MANPU_SMILE, aNPC_MANPU_SMILE, aNPC_MANPU_SMILE},
+        {aNPC_NOMI_MANPU_CLAP, aNPC_MANPU_ASERU, aNPC_MANPU_ASERU},
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_MANPU_ASERU, aNPC_MANPU_BURUBURU},
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_MANPU_ASERU, aNPC_NOMI_MANPU_BANZAI},
+        {aNPC_MANPU_SMILE, aNPC_MANPU_PUNPUN, aNPC_MANPU_LOVELOVE},
+        {aNPC_MANPU_PUNPUN, aNPC_MANPU_PUNPUN, aNPC_MANPU_PUNPUN},
+        // islanders
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_NOMI_MANPU_BANZAI, aNPC_NOMI_MANPU_BANZAI},
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_MANPU_PUNPUN, aNPC_NOMI_MANPU_BANZAI},
+        {aNPC_NOMI_MANPU_WAIT, aNPC_MANPU_ASERU, aNPC_MANPU_ASERU},
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_MANPU_ASERU, aNPC_NOMI_MANPU_BANZAI},
+        {aNPC_NOMI_MANPU_WAIT, aNPC_MANPU_BURUBURU, aNPC_NOMI_MANPU_BANZAI},
+        {aNPC_NOMI_MANPU_BANZAI, aNPC_NOMI_MANPU_BANZAI, aNPC_NOMI_MANPU_BANZAI},
+        // clang-format on
+    };
+
+    static u8 wait_animeSeqNo_table[] = { aNPC_ANIM_CLAP1, aNPC_ANIM_BANZAI1, aNPC_ANIM_WAIT1 };
+    int idx = act_idx_table[step];
+
+    nactorx->action.step = step;
+    aNPC_setupAction(nactorx, idx);
+    if (step == aNPC_ACT_NOMI_GOODBYE_WAIT) {
+        int manpu = wait_manpu_table[(int)nactorx->act_react_tool_timer][nactorx->nomi_itchy_voice_idx];
+
+        switch (manpu) {
+            case aNPC_NOMI_MANPU_CLAP:
+            case aNPC_NOMI_MANPU_BANZAI:
+            case aNPC_NOMI_MANPU_WAIT:
+                aNPC_Animation_init((ACTOR*)nactorx, wait_animeSeqNo_table[manpu - aNPC_NOMI_MANPU_CLAP], FALSE);
+                break;
+            default:
+                aNPC_manpu_proc((ACTOR*)nactorx, manpu);
+                break;
+        }
+    }
+}
+
+static void aNPC_act_nomi_goodbye_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    static aNPC_SUB_PROC act_proc[] = {
+        // clang-format off
+        aNPC_act_nomi_goodbye_surprise,
+        aNPC_act_nomi_goodbye_turn,
+        aNPC_act_nomi_goodbye_wait,
+        NULL, // @BUG - this shouldn't be here, right? There's no step for this.
+        // clang-format on
+    };
+
+    aNPC_act_nomi_goodbye_request_force_call(nactorx);
+    nactorx->palActorIgnoreTimer = 2;
+    (*act_proc[nactorx->action.step])(nactorx, play);
+}
+
+static void aNPC_act_nomi_goodbye_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    Animal_c* animal;
+    int idx = 0;
+    int voice_idx;
+
+    nactorx->movement.mv_angl = nactorx->actor_class.shape_info.rotation.y;
+    nactorx->palActorIgnoreTimer = -1;
+    nactorx->condition_info.demo_flg = 0;
+    
+    animal = nactorx->npc_info.animal;
+    if (animal != NULL) {
+        idx = mNpc_GetLooks(nactorx->actor_class.npc_id);
+        if (mNpc_CheckIslandAnimal(animal) == TRUE) {
+            idx += 6;
+        }
+    }
+
+    voice_idx = RANDOM(3);
+    nactorx->act_react_tool_timer = idx;
+    nactorx->nomi_itchy_voice_idx = voice_idx;
+    aNPC_act_react_tool_chg_step(nactorx, aNPC_ACT_REACT_TOOL_STEP_SURPRISE);
+}
+
+static void aNPC_act_nomi_goodbye_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
+    static aNPC_SUB_PROC act_proc[] = {
+        // clang-format off
+        aNPC_act_nomi_goodbye_init_proc,
+        (aNPC_SUB_PROC)none_proc1,
+        aNPC_act_nomi_goodbye_main_proc,
+        // clang-format on
+    };
+
+    (*act_proc[type])(nactorx, play);
+}

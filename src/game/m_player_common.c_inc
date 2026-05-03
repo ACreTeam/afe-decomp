@@ -3256,19 +3256,11 @@ static int Player_actor_Check_axe_after(ACTOR* actorx, xyz_t* target_pos_p, mAct
         }
 
         for (i = 0; i < unit_count; i++) {
-// TODO: this feels fake, unlikely to have been changed between US and Aus
-#if VERSION == VER_GAFE01_00
             unit_center_p = &unit_center_pos[i];
             unit_exist_table[i] = mFI_Wpos2UtCenterWpos(unit_center_p, unit_pos[i]);
             if (unit_exist_table[i] != FALSE) {
                 f32 dx = unit_center_p->x - player_move_pos.x;
                 f32 dz = unit_center_p->z - player_move_pos.z;
-#else
-            unit_exist_table[i] = mFI_Wpos2UtCenterWpos(&unit_center_pos[i], unit_pos[i]);
-            if (unit_exist_table[i] != FALSE) {
-                f32 dx = unit_center_pos[i].x - player_move_pos.x;
-                f32 dz = unit_center_pos[i].z - player_move_pos.z;
-#endif
                 f32 dist_center = Math3DVecLength2D(dx, dz);
                 int angle_center = atans_table(dz, dx) - player_angle_y;
                 int abs_angle_center = ABS(angle_center);
@@ -3295,7 +3287,7 @@ static int Player_actor_Check_axe_after(ACTOR* actorx, xyz_t* target_pos_p, mAct
                     if (unit_fg_p != NULL) {
                         mActor_name_t item = *unit_fg_p;
 
-                        if (IS_ITEM_COLLIDEABLE_TREE(item) != FALSE || IS_ITEM_ROCK(item) != FALSE) {
+                        if (IS_ITEM_COLLIDEABLE_TREE(item) != FALSE || (IS_ITEM_ROCK(item) || IS_ITEM_RST_STONE(item) || IS_ITEM_CRACKED_STONE(item)) != FALSE) {
                             f32 diff_y = mCoBG_GetBgY_OnlyCenter_FromWpos2(*unit_center_p, 0.0f) - player_move_pos.y;
                             f32 abs_diff_y = ABS(diff_y);
 
@@ -3590,6 +3582,14 @@ static int Player_actor_CheckAndRequest_main_umbrella_all(GAME* game, int prio) 
 static int Player_actor_CheckAndRequest_main_fan_all(GAME* game, int check_trigger, int start_swing, int prio) {
     if (Player_actor_CheckController_forFan(game, check_trigger) && Player_actor_CheckAbleSpeed_forItem(game)) {
         return Player_actor_request_main_swing_fan_all(game, start_swing, prio);
+    }
+
+    return FALSE;
+}
+
+static int Player_actor_CheckAndRequest_main_cracker_all(GAME* game, int prio) {
+    if (Player_actor_CheckController_forCracker(game)) {
+        return Player_actor_request_main_pull_cracker_all(game, prio);
     }
 
     return FALSE;

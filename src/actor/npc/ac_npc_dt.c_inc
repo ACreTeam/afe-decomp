@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "../src/actor/npc/ac_npc_data.c_inc"
+#endif
+
 static void aNPC_actor_dt(ACTOR* actorx, GAME* game) {
     NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
@@ -26,10 +34,20 @@ static void aNPC_actor_dt(ACTOR* actorx, GAME* game) {
         ((NPC_ACTOR*)palActor)->palActor = NULL;
     }
 
+    if (nactorx->insect_actor != NULL && nactorx->insect_actor->id == mAc_PROFILE_INSECT) {
+        aINS_INSECT_ACTOR* insect_actor = (aINS_INSECT_ACTOR*)nactorx->insect_actor;
+
+        if (insect_actor->type == aINS_INSECT_TYPE_FLEA) {
+            insect_actor->tools_actor.actor_class.parent_actor = NULL;
+        }
+    }
+    nactorx->insect_actor = NULL;
+
     if (actorx->ct_proc == NULL) {
         cKF_SkeletonInfo_R_dt(&nactorx->draw.main_animation.keyframe);
         cKF_SkeletonInfo_R_dt(&nactorx->draw.sub_animation0.keyframe);
         cKF_SkeletonInfo_R_dt(&nactorx->draw.sub_animation1.keyframe);
+        cKF_SkeletonInfo_R_dt(&nactorx->draw.sub_animation2.keyframe);
         ClObjPipe_dt(game, &nactorx->collision.pipe);
     }
 

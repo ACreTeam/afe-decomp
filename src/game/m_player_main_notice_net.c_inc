@@ -16,6 +16,7 @@ static void Player_actor_setup_main_Notice_net(ACTOR* actor, GAME* game) {
     static int use_mark_insect_type[] = {
         aINS_INSECT_TYPE_ANT,
         aINS_INSECT_TYPE_MOSQUITO,
+        aINS_INSECT_TYPE_FLEA,
     };
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
     mPlayer_main_notice_net_c* main_notice = &player->main_data.notice_net;

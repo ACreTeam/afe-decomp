@@ -1,3 +1,13 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
+
 enum {
     aNPC_ACT_WAIT_STEP_MAIN,
 
@@ -10,7 +20,7 @@ static void aNPC_act_wait_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
         if (nactorx->action.feel != feel) {
             nactorx->action.feel = feel;
-            aNPC_setupAction(nactorx, aNPC_wait_action[feel]);
+            aNPC_setupAction(nactorx, aNPC_get_wait_action(nactorx, feel));
         }
     }
 
@@ -33,7 +43,7 @@ static void aNPC_act_wait_chg_data_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static void aNPC_act_wait_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->action.step = aNPC_ACT_WAIT_STEP_MAIN;
     nactorx->action.feel = aNPC_get_feel_info(nactorx);
-    aNPC_setupAction(nactorx, aNPC_wait_action[aNPC_get_feel_info(nactorx)]);
+    aNPC_setupAction(nactorx, aNPC_get_wait_action(nactorx, aNPC_get_feel_info(nactorx)));
 }
 
 static void aNPC_act_wait_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {

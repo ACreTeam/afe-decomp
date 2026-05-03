@@ -1,3 +1,25 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#endif
+
+static int aNPC_check_talk_now(NPC_ACTOR* nactorx) {
+    int ret = FALSE;
+
+    if (aNPC_chk_group_talk(nactorx) == TRUE) {
+        if (aNPC_get_talk_now_actor() == nactorx) {
+            ret = TRUE;
+        }
+    } else {
+        if (mDemo_Check(mDemo_TYPE_SPEAK, (ACTOR*)nactorx) == TRUE || mDemo_Check(mDemo_TYPE_SPEECH, (ACTOR*)nactorx) == TRUE || mDemo_Check(mDemo_TYPE_TALK, (ACTOR*)nactorx) == TRUE) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
 static int aNPC_force_call_req_proc(NPC_ACTOR* nactorx, int msg_no) {
     int ret = FALSE;
 
@@ -5,13 +27,15 @@ static int aNPC_force_call_req_proc(NPC_ACTOR* nactorx, int msg_no) {
         nactorx->condition_info.talk_condition == aNPC_TALK_TYPE_NONE && mDemo_CAN_ACTOR_TALK((ACTOR*)nactorx)) {
         nactorx->think.force_call_flag = aNPC_FORCE_CALL_REQUEST;
         nactorx->think.force_call_msg_no = msg_no;
+        nactorx->think.force_call_camera_type = CAMERA2_PROCESS_NORMAL;
+        nactorx->think.force_call_talk_turn = aNPC_TALK_TURN_NORMAL;
         ret = TRUE;
     }
 
     return ret;
 }
 
-static void aNPC_check_manpu_demoCode(ACTOR* actorx) {
+static void aNPC_manpu_proc(ACTOR* actorx, int order) {
     // clang-format off
     static s16 eff_idx[43] = {
         -1,
@@ -212,7 +236,7 @@ static void aNPC_check_manpu_demoCode(ACTOR* actorx) {
         aNPC_ANIM_SMILE1,
         aNPC_ANIM_HA_I1,
         aNPC_ANIM_PUNPUN1,
-        aNPC_ANIM_A1,
+        aNPC_ANIM_A_I1,
         aNPC_ANIM_ASERU_I1,
         aNPC_ANIM_BURUBURU1,
         aNPC_ANIM_GOUKYU1,
@@ -260,7 +284,7 @@ static void aNPC_check_manpu_demoCode(ACTOR* actorx) {
         aNPC_ANIM_SMILE2,
         aNPC_ANIM_HA_I2,
         aNPC_ANIM_PUNPUN2,
-        aNPC_ANIM_A2,
+        aNPC_ANIM_A_I2,
         aNPC_ANIM_ASERU_I2,
         aNPC_ANIM_BURUBURU2,
         aNPC_ANIM_GOUKYU2,
@@ -301,7 +325,6 @@ static void aNPC_check_manpu_demoCode(ACTOR* actorx) {
     // clang-format on
 
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 0);
     int last_order = nactorx->talk_info.demo_code;
     s16* eff_idx_p;
     s16* eff_idx2_p;
@@ -338,15 +361,21 @@ static void aNPC_check_manpu_demoCode(ACTOR* actorx) {
                nactorx->draw.main_animation_state == cKF_STATE_STOPPED) {
         aNPC_Animation_init(actorx, eff_idx2_p[last_order], FALSE);
     }
-
-    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0, 0);
 }
 
-static void aNPC_clear_timing_demoCode(int type) {
+static void aNPC_check_manpu_demoCode(ACTOR* actorx, int order_type) {
+    int order = mDemo_Get_OrderValue(order_type, 0);
+
+    aNPC_manpu_proc(actorx, order);
+    mDemo_Set_OrderValue(order_type, 0, 0);
+}
+
+
+static void aNPC_clear_timing_demoCode(int type, int order_type) {
     if (type == 0) {
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 0);
+        mDemo_Set_OrderValue(order_type, 1, 0);
     } else {
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 3, 0);
+        mDemo_Set_OrderValue(order_type, 3, 0);
     }
 
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, 0);
@@ -354,15 +383,15 @@ static void aNPC_clear_timing_demoCode(int type) {
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);
 }
 
-static int aNPC_check_timing_demoCode(ACTOR* actorx) {
+static int aNPC_check_timing_demoCode(ACTOR* actorx, int order_type) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 3);
+    int order = mDemo_Get_OrderValue(order_type, 3);
     int type = 1;
     int ret = TRUE;
 
     switch (order) {
         default:
-            order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
+            order = mDemo_Get_OrderValue(order_type, 1);
             type = 0;
             break;
         case 2:
@@ -378,7 +407,7 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
             bzero(args, sizeof(args));
             args[0] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 0);
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_GET, aNPC_ACT_TYPE_DEFAULT, args) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
@@ -392,7 +421,7 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
             args[1] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 1);
             args[2] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 2);
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_TRANS, aNPC_ACT_TYPE_DEFAULT, args) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
@@ -400,7 +429,7 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
         case 15: {
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_CHANGE_CLOTH, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data) == TRUE) {
                 Common_Set(npc_chg_cloth, Now_Private->cloth.item);
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
@@ -415,7 +444,7 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
             bzero(args, sizeof(args));
             args[0] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 0);
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_GET, aNPC_ACT_TYPE_DEFAULT, args) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
@@ -429,41 +458,41 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
             args[1] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 1);
             args[2] = mDemo_Get_OrderValue(mDemo_ORDER_NPC1, 2);
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_TRANS, aNPC_ACT_TYPE_DEFAULT, args) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
         }
         case 6:
             nactorx->right_hand.requested_item_type = aNPC_ITEM_TYPE_KEITAI;
-            aNPC_clear_timing_demoCode(type);
+            aNPC_clear_timing_demoCode(type, order_type);
             break;
         case 7:
             nactorx->right_hand.requested_item_type = aNPC_ITEM_TYPE_PUTAWAY;
-            aNPC_clear_timing_demoCode(type);
+            aNPC_clear_timing_demoCode(type, order_type);
             break;
         case 8:
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_CONTRACT, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
         case 9:
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_NOT_CONTRACT, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
         case 13:
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_NOT_CONTRACT2, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data) == TRUE) {
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
         case 15: {
             if (aNPC_set_request_act(nactorx, 4, aNPC_ACT_CHANGE_CLOTH, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data) == TRUE) {
                 Common_Set(npc_chg_cloth, Now_Private->cloth.item);
-                aNPC_clear_timing_demoCode(type);
+                aNPC_clear_timing_demoCode(type, order_type);
                 ret = FALSE;
             }
             break;
@@ -474,16 +503,16 @@ static int aNPC_check_timing_demoCode(ACTOR* actorx) {
     return ret;
 }
 
-static void aNPC_check_feel_demoCode(ACTOR* actorx) {
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 2);
+static void aNPC_check_feel_demoCode(ACTOR* actorx, int order_type) {
+    int order = mDemo_Get_OrderValue(order_type, 2);
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
 
     if (order != 0) {
-        int timer = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 8);
+        int timer = mDemo_Get_OrderValue(order_type, 8);
 
         if (order >= mNpc_FEEL_ALL_NUM) {
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 2, 0);
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 8, 0);
+            mDemo_Set_OrderValue(order_type, 2, 0);
+            mDemo_Set_OrderValue(order_type, 8, 0);
             return;
         }
 
@@ -499,16 +528,184 @@ static void aNPC_check_feel_demoCode(ACTOR* actorx) {
         }
 
         aNPC_set_feel_info(nactorx, order, timer);
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 2, 0);
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 8, 0);
+        mDemo_Set_OrderValue(order_type, 2, 0);
+        mDemo_Set_OrderValue(order_type, 8, 0);
     }
+}
+
+static void aNPC_check_direction_demoCode(ACTOR* actorx, int order_type) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        u32 look_target = nactorx->talk_info.look_target & 0xF;
+        u32 move_target = (nactorx->talk_info.look_target >> 4) & 0xF;
+        u8 order = mDemo_Get_OrderValue(order_type, 5) & 0xF;
+
+        if (order != 0) {
+            int new_look_target = order - 1;
+
+            if (look_target != new_look_target) {
+                look_target = new_look_target;
+            }
+
+            mDemo_Set_OrderValue(order_type, 5, 0);
+        }
+
+        order = mDemo_Get_OrderValue(order_type, 6) & 0xF;
+        if (order != 0) {
+            int new_move_target = order - 1;
+            
+            if (move_target != new_move_target) {
+                move_target = new_move_target;
+            }
+
+            mDemo_Set_OrderValue(order_type, 6, 0);
+        }
+
+        nactorx->talk_info.look_target = (move_target << 4) | look_target;
+    }
+}
+
+static ACTOR* aNPC_getP_move_target(ACTOR* actorx, GAME* game) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    ACTOR* ret;
+
+    ret = nactorx->condition_info.near_npc;
+    if (ret == NULL) {
+        ret = aNPC_check_balloon(nactorx, play);
+        if (ret == NULL) {
+            ret = aNPC_check_ball(nactorx, play);
+            if (ret == NULL) {
+                ret = aNPC_check_gyoei(nactorx);
+                if (ret == NULL) {
+                    ret = aNPC_check_insect(nactorx, play);
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+typedef struct npc_dir_data_s {
+    u16 angle_y;
+    float xz_adjust;
+    float y_adjust;
+} aNPC_direction_data_c;
+
+static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+    ACTOR* target;
+    ACTOR* look_target_actor;
+
+    target = aNPC_get_talk_actor_list(aNPC_TALK_GROUP_1);
+    if (target == actorx) {
+        target = aNPC_get_talk_actor_list(aNPC_TALK_GROUP_0);
+    }
+
+    if (target == NULL) {
+        target = playerx;
+    }
+
+    look_target_actor = (ACTOR*)target;
+    if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL) {
+        int move_target = (nactorx->talk_info.look_target >> 4) & 0xF;
+
+        switch (move_target) {
+            case 0:
+                aNPC_set_dst_pos(nactorx, playerx->world.position.x, playerx->world.position.z);
+                nactorx->movement.mv_angl -= nactorx->_174.y;
+                break;
+            case 1:
+                aNPC_set_dst_pos(nactorx, target->world.position.x, target->world.position.z);
+                nactorx->movement.mv_angl -= nactorx->_174.y;
+                break;
+            case 2: {
+                    ACTOR* target_actor = aNPC_getP_move_target(actorx, game);
+                    if (target_actor != NULL) {
+                        aNPC_set_dst_pos(nactorx, target_actor->world.position.x, target_actor->world.position.z);
+                        nactorx->movement.mv_angl -= nactorx->_174.y;
+                    }
+                } break;
+        }
+    }
+
+    if (nactorx->talk_info.turn != aNPC_TALK_TURN_NONE) {
+        int look_target = nactorx->talk_info.look_target & 0xF;
+        
+        switch (look_target) {
+            case 0:
+                aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, playerx, NULL);
+                break;
+            case 1:
+                aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, look_target_actor, NULL);
+                break;
+            case 2: {
+                ACTOR* target_actor = aNPC_getP_move_target(actorx, game);
+                if (target_actor != NULL) {
+                    aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, target_actor, NULL);
+                } else {
+                    // clang-format off
+                    static aNPC_direction_data_c data[] = {
+                        { DEG2SHORT_ANGLE2(  0.0f), 100.0f, 100.0f },
+                        { DEG2SHORT_ANGLE2( 90.0f), 100.0f,   0.0f },
+                        { DEG2SHORT_ANGLE2(270.0f), 100.0f,   0.0f },
+                        { DEG2SHORT_ANGLE2(  0.0f), 100.0f, -50.0f },
+                    };
+                    // clang-format on
+                    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+                    
+                    if (playerx != NULL) {
+                        aNPC_direction_data_c* direction_data_p;
+                        u32 id;
+                        u32 frame;
+                        s16 angle_y;
+                        xyz_t pos;
+                        float sin;
+                        float cos;
+
+                        frame = (game->frame_counter);
+                        id = actorx->npc_id;
+                        frame = (frame >> 8) & 3;
+                        direction_data_p = &data[(id + frame) & 3];
+                        angle_y = actorx->shape_info.rotation.y + direction_data_p->angle_y;
+                        sin = sin_s(angle_y);
+                        cos = cos_s(angle_y);
+
+                        pos.x = actorx->world.position.x + direction_data_p->xz_adjust * sin;
+                        pos.y = playerx->eye.position.y + direction_data_p->y_adjust;
+                        pos.z = actorx->world.position.z + direction_data_p->xz_adjust * cos;
+                        aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_POS, NULL, &pos);
+                    }
+                }
+            } break;
+        }
+    }
+}
+
+static int aNPC_get_demo_kind(ACTOR* actorx) {
+    static int demo_kind_table[] = { mDemo_ORDER_NPC0, mDemo_ORDER_NPC2 };
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+    int ret = mDemo_ORDER_NPC0;
+
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        int type = aNPC_chk_talk_actor_list(nactorx);
+
+        if (type >= 0 && type < aNPC_TALK_GROUP_NUM) {
+            ret = demo_kind_table[type];
+        }
+    }
+
+    return ret;
 }
 
 static void aNPC_setup_talk_start(NPC_ACTOR* nactorx, GAME* game) {
     ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
 
     nactorx->palActor = playerx;
-    if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL) {
+    aNPC_set_talk_now_actor(nactorx);
+    if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL && nactorx->talk_info.look_target == 0) {
         aNPC_set_dst_pos(nactorx, playerx->world.position.x, playerx->world.position.z);
         nactorx->movement.mv_angl -= nactorx->_174.y;
     }
@@ -534,16 +731,22 @@ static void aNPC_setup_talk_end(NPC_ACTOR* nactorx) {
 #ifdef aNPC_NPC2
     nactorx->talk_info.melody_inst = 0;
 #endif
+
+    nactorx->npc_info.animal_orig = nactorx->npc_info.animal;
+    aNPC_set_talk_now_actor(NULL);
+    aNPC_unregist_all_talk_actor_list();
+    nactorx->talk_info.look_target = 0;
 }
 
 static void aNPC_set_talk_info_talk_request_check(ACTOR* actorx) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+    Animal_c* animal = nactorx->npc_info.animal;
     int msg_no;
 
-    if (mNpc_CheckIslandAnimal(nactorx->npc_info.animal) == TRUE) {
-        msg_no = 0x34AC + nactorx->npc_info.animal->id.looks * 3 + RANDOM(3);
+    if (mNpc_CheckIslandAnimal(animal) == TRUE) {
+        msg_no = 0x34AC + animal->id.looks * 3 + mQst_GetIdxTalkSelect(0x112, 0x115, animal->id.looks);
     } else {
-        msg_no = 0x075F + nactorx->npc_info.animal->id.looks * 3 + RANDOM(3);
+        msg_no = 0x075F + animal->id.looks * 3 + mQst_GetIdxTalkSelect(0x35, 0x38, animal->id.looks);
     }
 
     mDemo_Set_msg_num(msg_no);
@@ -589,9 +792,19 @@ static void aNPC_set_talk_info_force_call(ACTOR* actorx) {
 
     mDemo_Set_msg_num(nactorx->think.force_call_msg_no);
     mDemo_Set_camera(nactorx->think.force_call_camera_type);
+    mDemo_Set_talk_turn(nactorx->think.force_call_talk_turn);
+
+    if (nactorx->think.force_call_able_hand_all_item_in_demo == TRUE) {
+        mPlib_Set_able_hand_all_item_in_demo(TRUE);
+    }
+
+    nactorx->think.force_call_flag = aNPC_FORCE_CALL_SET;
     nactorx->think.force_call_msg_no = -1;
     nactorx->think.force_call_camera_type = CAMERA2_PROCESS_NORMAL;
-    nactorx->think.force_call_flag = aNPC_FORCE_CALL_SET;
+    nactorx->think.force_call_talk_turn = aNPC_TALK_TURN_NORMAL;
+    nactorx->think.force_call_able_hand_all_item_in_demo = FALSE;
+    aNPC_regist_talk_actor_list(nactorx, NULL);
+    nactorx->remove_insect = FALSE;
 }
 
 static int aNPC_force_talk_request(ACTOR* actorx) {
@@ -641,6 +854,37 @@ static void aNPC_talk_request_normal_npc(ACTOR* actorx, GAME* game) {
     }
 }
 
+static void aNPC_talk_request_island_first_day_npc(ACTOR* actorx, GAME* game) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+
+    if (mDemo_Check(mDemo_TYPE_TALK, actorx) == TRUE) {
+        nactorx->think.force_call_flag = aNPC_FORCE_CALL_NONE;
+    }
+
+    switch (nactorx->think.force_call_flag) {
+        case aNPC_FORCE_CALL_NONE:
+            if (nactorx->talk_info.talk_request_proc != NULL) {
+                if (mDemo_IS_ANY_TALK_DEMO(actorx) && !mDemo_Check_ListenAble()) {
+                    aNPC_setup_talk_start(nactorx, game);
+                } else {
+                    nactorx->talk_info.talk_request_proc(actorx, game);
+                }
+            } else {
+                aNPC_normal_talk_request(actorx, game);
+            }
+            break;
+        case aNPC_FORCE_CALL_REQUEST:
+            aNPC_force_talk_request(actorx);
+            break;
+        case aNPC_FORCE_CALL_SET:
+            if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
+                aNPC_setup_talk_start(nactorx, game);
+                nactorx->think.force_call_flag = aNPC_FORCE_CALL_START;
+            }
+            break;
+    }
+}
+
 static void aNPC_talk_request_check(ACTOR* actorx, GAME* game) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
 
@@ -649,9 +893,13 @@ static void aNPC_talk_request_check(ACTOR* actorx, GAME* game) {
         if (mEv_CheckTitleDemo() == mEv_TITLEDEMO_NONE || mEv_CheckTitleDemo() == mEv_TITLEDEMO_STAFFROLL) {
             if (nactorx->action.idx != aNPC_ACT_TALK) {
 #ifndef aNPC_NPC2
+                Animal_c* animal = nactorx->npc_info.animal;
+
                 if (ITEM_NAME_GET_TYPE(actorx->npc_id) == NAME_TYPE_SPNPC &&
-                    (nactorx->npc_info.animal == NULL || nactorx->npc_info.animal->mood != mNpc_FEEL_PITFALL)) {
+                    (animal == NULL || animal->mood != mNpc_FEEL_PITFALL)) {
                     aNPC_talk_request_event_npc(actorx, game);
+                } else if (actorx->id == mAc_PROFILE_ISLAND_NPC) {
+                    aNPC_talk_request_island_first_day_npc(actorx, game);
                 } else {
                     aNPC_talk_request_normal_npc(actorx, game);
                 }

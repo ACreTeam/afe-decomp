@@ -1,3 +1,13 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
+
 enum {
     aNPC_ACT_TALK_STEP_TALK_TURN,
     aNPC_ACT_TALK_STEP_TALK_WAIT,
@@ -18,9 +28,12 @@ static void aNPC_Init_OrderValue(void) {
 }
 
 static void aNPC_talk_demo_proc(ACTOR* actorx, GAME* game) {
-    aNPC_check_feel_demoCode(actorx);
-    aNPC_check_manpu_demoCode(actorx);
-    aNPC_check_timing_demoCode(actorx);
+    int demo_kind = aNPC_get_demo_kind(actorx);
+
+    aNPC_check_feel_demoCode(actorx, demo_kind);
+    aNPC_check_manpu_demoCode(actorx, demo_kind);
+    aNPC_check_direction_demoCode(actorx, demo_kind);
+    aNPC_check_timing_demoCode(actorx, demo_kind);
 }
 
 static int aNPC_talk_end_check(ACTOR* actorx, GAME* game) {
@@ -87,17 +100,20 @@ static void aNPC_act_talk_turn(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     }
 }
 
-static void aNPC_act_talk_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    if (ITEM_NAME_GET_TYPE(nactorx->actor_class.npc_id) == NAME_TYPE_SPNPC) {
-        if ((*nactorx->talk_info.talk_init_proc)((ACTOR*)nactorx, (GAME*)play) == TRUE && mDemo_Check_SpeakerAble() == TRUE) {
-            mMld_ActorMakeMelody((ACTOR*)nactorx);
-            aNPC_act_talk_chg_step(nactorx, aNPC_ACT_TALK_STEP_TALK);
-
-            if (nactorx->npc_info.animal != NULL && nactorx->talk_info.memory == TRUE) {
-                mNpc_SetAnimalLastTalk(nactorx->npc_info.animal);
-            }
+static void aNPC_act_talk_wait_special(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if ((*nactorx->talk_info.talk_init_proc)((ACTOR*)nactorx, (GAME*)play) == TRUE && mDemo_Check_SpeakerAble() == TRUE) {
+        Animal_c* animal = nactorx->npc_info.animal;
+        
+        mMld_ActorMakeMelody((ACTOR*)nactorx);
+        aNPC_act_talk_chg_step(nactorx, aNPC_ACT_TALK_STEP_TALK);
+        if (animal != NULL && nactorx->talk_info.memory == TRUE) {
+            mNpc_SetAnimalLastTalk(animal);
         }
-    } else if (nactorx->think.force_call_flag != aNPC_FORCE_CALL_NONE) {
+    }
+}
+
+static void aNPC_act_talk_wait_normal(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (nactorx->think.force_call_flag != aNPC_FORCE_CALL_NONE) {
         mMld_ActorMakeMelody((ACTOR*)nactorx);
         mDemo_Set_ListenAble();
         aNPC_act_talk_chg_step(nactorx, aNPC_ACT_TALK_STEP_TALK);
@@ -106,12 +122,36 @@ static void aNPC_act_talk_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     }
 }
 
+static void aNPC_act_talk_wait_island_first_day(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (nactorx->think.force_call_flag != aNPC_FORCE_CALL_NONE) {
+        mMld_ActorMakeMelody((ACTOR*)nactorx);
+        mDemo_Set_ListenAble();
+        aNPC_act_talk_chg_step(nactorx, aNPC_ACT_TALK_STEP_TALK);
+    } else {
+        aNPC_act_talk_wait_special(nactorx, play);
+    }
+}
+
+static void aNPC_act_talk_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (ITEM_NAME_GET_TYPE(nactorx->actor_class.npc_id) == NAME_TYPE_SPNPC) {
+        aNPC_act_talk_wait_special(nactorx, play);
+    } else if (nactorx->actor_class.id == mAc_PROFILE_ISLAND_NPC) {
+        aNPC_act_talk_wait_island_first_day(nactorx, play);
+    } else {
+        aNPC_act_talk_wait_normal(nactorx, play);
+    }
+}
+
 static void aNPC_act_talk(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    if ((*nactorx->talk_info.talk_end_check_proc)((ACTOR*)nactorx, (GAME*)play) == TRUE) {
+    ACTOR* actorx = (ACTOR*)nactorx;
+    GAME* game = (GAME*)play;
+
+    if ((*nactorx->talk_info.talk_end_check_proc)(actorx, game) == TRUE) {
         aNPC_setup_talk_end(nactorx);
         nactorx->action.step = aNPC_ACTION_END_STEP;
     } else {
-        aNPC_talk_demo_proc((ACTOR*)nactorx, (GAME*)play);
+        aNPC_talk_demo_proc(actorx, game);
+        aNPC_talk_direction_proc(actorx, game);
     }
 }
 
@@ -129,11 +169,19 @@ static void aNPC_act_talk_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static void aNPC_act_talk_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     u8 step = aNPC_ACT_TALK_STEP_TALK_TURN;
 
+    if (nactorx->action.prev_idx == aNPC_ACT_REACT_TOOL) {
+        nactorx->head.angle_add_x = 0x200;
+        nactorx->head.angle_add_y = 0x400;
+        nactorx->palActorIgnoreTimer = 0;
+    }
+
     if (nactorx->condition_info.talk_condition == aNPC_TALK_TYPE_CONTINUE) {
         step = aNPC_ACT_TALK_STEP_TALK;
     } else {
         aNPC_Init_OrderValue();
         if (nactorx->talk_info.turn != aNPC_TALK_TURN_NORMAL) {
+            step = aNPC_ACT_TALK_STEP_TALK_WAIT;
+        } else if (aNPC_chk_group_talk(nactorx) == TRUE) {
             step = aNPC_ACT_TALK_STEP_TALK_WAIT;
         }
         nactorx->condition_info.talk_condition = aNPC_TALK_TYPE_CONTINUE;

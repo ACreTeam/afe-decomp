@@ -1,5 +1,16 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
+
 typedef struct {
     mActor_name_t npc_name;
+    Animal_c* animal;
     int bx;
     int bz;
     s8 friendship;
@@ -21,6 +32,9 @@ enum {
     aNPC_ACT_GREETING_STEP_GREETING1,
     aNPC_ACT_GREETING_STEP_GREETING2,
     aNPC_ACT_GREETING_STEP_GREETING3,
+    aNPC_ACT_GREETING_STEP_GROUP_TALK_WAIT,
+    aNPC_ACT_GREETING_STEP_TALK,
+    aNPC_ACT_GREETING_STEP_AFTER,
     aNPC_ACT_GREETING_STEP_CHG_CLOTH,
     aNPC_ACT_GREETING_STEP_CHG_UMB,
     aNPC_ACT_GREETING_STEP_CHG_CLOTH_AND_UMB,
@@ -40,25 +54,67 @@ static void aNPC_setup_turn_round_palActor(NPC_ACTOR* nactorx, NPC_ACTOR* pal_na
 }
 
 static s8 aNPC_get_animal_friendship(NPC_ACTOR* nactorx) {
+    Animal_c* animal;
     int mem_idx;
     s8 friendship;
 
-    friendship = 0;
-    mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, nactorx->npc_info.animal->memories, ANIMAL_MEMORY_NUM);
-    if (mem_idx != -1) {
-        friendship = nactorx->npc_info.animal->memories[mem_idx].friendship;
+    friendship = -128;
+    animal = nactorx->npc_info.animal;
+
+    if (animal != NULL) {
+        mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+        if (mem_idx != -1) {
+            friendship = animal->memories[mem_idx].friendship;
+        }
     }
 
     return friendship;
 }
 
+static void aNPC_setup_group_talk_wait_start(NPC_ACTOR* nactorx) {
+    aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_GROUP_TALK_WAIT);
+    nactorx->talk_info.group_talk_wait_timer = 120;
+
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        nactorx->condition_info.demo_flg =
+            aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+            aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
+            aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+    } else {
+        nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_UZAI_CHECK |
+                                           aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+                                           aNPC_COND_DEMO_SKIP_HEAD_LOOKAT |
+                                           aNPC_COND_DEMO_SKIP_FORWARD_CHECK;
+    }
+
+    nactorx->condition_info.greeting_flag = 6;
+}
+
+static void aNPC_setup_group_talk_wait_end(NPC_ACTOR* nactorx) {
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        nactorx->condition_info.demo_flg =
+            aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+            aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_TALK_CHECK |
+            aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
+            aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+    } else {
+        nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_UZAI_CHECK |
+                                           aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+                                           aNPC_COND_DEMO_SKIP_HEAD_LOOKAT |
+                                           aNPC_COND_DEMO_SKIP_TALK_CHECK |
+                                           aNPC_COND_DEMO_SKIP_ITEM |
+                                           aNPC_COND_DEMO_SKIP_FORWARD_CHECK;
+    }
+}
+
 static void aNPC_setup_greeting_end_sub(NPC_ACTOR* nactorx) {
     nactorx->palActor = NULL;
     nactorx->palActorIgnoreTimer = 10 * FRAMES_PER_SECOND;
-    nactorx->condition_info.greeting_flag = FALSE;
+    nactorx->condition_info.greeting_flag = 0;
 
-    if (ITEM_NAME_GET_TYPE(nactorx->actor_class.npc_id) == NAME_TYPE_NPC) {
+    if (aNPC_IS_NRM_NPC(nactorx)) {
         nactorx->right_hand.umbrella_disabled_flag = FALSE;
+        nactorx->movement.range_type = aNPC_MOVE_RANGE_TYPE_BLOCK;
     }
 
     nactorx->condition_info.demo_flg = nactorx->condition_info.trans_demo_flg_save;
@@ -75,22 +131,25 @@ static void aNPC_setup_greeting_end(NPC_ACTOR* nactorx) {
     if (palActor != NULL) {
         NPC_ACTOR* pal_nactorx = (NPC_ACTOR*)palActor;
 
-        switch (pal_nactorx->condition_info.greeting_flag) {
-            case 3:
-            case 4:
-            case 5:
-                aNPC_act_greeting_chg_step(nactorx, 10);
+        aNPC_setup_greeting_end_sub(pal_nactorx);
+        pal_nactorx->action.step = aNPC_ACTION_END_STEP;
+        aNPC_setup_greeting_end_sub(nactorx);
+        nactorx->action.step = aNPC_ACTION_END_STEP;
+    } else {
+        switch (aNPC_chk_talk_actor_list(nactorx)) {
+            case 0:
+                aNPC_setup_greeting_end_sub(nactorx);
+                nactorx->action.step = aNPC_ACTION_END_STEP;
+                break;
+            case 1:
+                aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_TALK);
+                nactorx->condition_info.greeting_flag = 7;
                 break;
             default:
-                aNPC_setup_greeting_end_sub(pal_nactorx);
-                pal_nactorx->action.step = aNPC_ACTION_END_STEP;
                 aNPC_setup_greeting_end_sub(nactorx);
                 nactorx->action.step = aNPC_ACTION_END_STEP;
                 break;
         }
-    } else {
-        aNPC_setup_greeting_end_sub(nactorx);
-        nactorx->action.step = aNPC_ACTION_END_STEP;
     }
 }
 
@@ -152,6 +211,7 @@ static void aNPC_make_aroundNpcInfoList(NPC_ACTOR* nactorx0, NPC_ACTOR* nactorx1
                     aroundNpc_p = &list_p->around_npc[list_p->count];
                     list_p->count++;
                     aroundNpc_p->npc_name = npclist_p->name;
+                    aroundNpc_p->animal = animal_p;
                     aroundNpc_p->bx = npc_bx;
                     aroundNpc_p->bz = npc_bz;
                     aroundNpc_p->friendship = animal_p->memories[mem_idx].friendship;
@@ -194,49 +254,142 @@ static void aNPC_decide_AB_Actor(NPC_ACTOR** nactorx_A, NPC_ACTOR** nactorx_B, N
 static int aNPC_chk_same_cloth(mActor_name_t cloth0, u8 org_idx0, mActor_name_t cloth1, u8 org_idx1) {
     int ret = FALSE;
     if (cloth0 == cloth1) {
-// @BUG - this doesn't return FALSE when the original designs are different
-#ifndef BUGFIXES
-        if (cloth0 == RSV_CLOTH && org_idx0 == org_idx1) {
-            ret = TRUE;
-        } else {
-            ret = TRUE;
-        }
-#else
-        if (cloth0 == RSV_CLOTH) {
+        if (cloth0 == RSV_CLOTH1) {
             if (org_idx0 == org_idx1) {
                 ret = TRUE;
             }
         } else {
             ret = TRUE;
         }
-#endif
     }
 
     return ret;
 }
 
-static void aNPC_set_feel_sub(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B) {
-    static int feel_table[] = { mNpc_FEEL_ANGRY, mNpc_FEEL_SAD, mNpc_FEEL_NORMAL };
-    static int addTim_table[] = { 1, 1, 0 };
-    static int relation_table[] = { -8, -4, 0 };
-    int idx = RANDOM(ARRAY_COUNT(feel_table));
+static void aNPC_add_relation(Animal_c* animal0, Animal_c* animal1, int type) {
+    static int relation_table_set_feel[mNpc_RELATION_NUM] = {2, 8, 16, 10, 6};
+    static int relation_table_set_normal_feel[mNpc_RELATION_NUM] = {-6, -10, -16, -8, -2};
+    static int relation_table_copy_cloth[mNpc_RELATION_NUM] = {1, 2, 12, 4, 2};
+    static int relation_table_copy_cloth2[mNpc_RELATION_NUM] = {-2, -4, -6, -2, -1};
+    static int relation_table_reset_cloth_and_umb[mNpc_RELATION_NUM] = {-56, -68, -40, -20, 0};
+    static int relation_table_reset_end_words[mNpc_RELATION_NUM] = {-10, -18, -28, -14, -2};
+    static int relation_table_chg_sp_cloth[mNpc_RELATION_NUM] = {1, 2, 6, 4, 2};
+    static int relation_table_chg_sp_umb[mNpc_RELATION_NUM] = {-4, -7, -12, -4, -1};
+    static int relation_table_copy_end_words[mNpc_RELATION_NUM] = {2, 14, 28, 18, 10};
+    static int relation_table_set_cloth[mNpc_RELATION_NUM] = {0, 0, 0, 0, 0};
 
-    aNPC_set_relation(nactorx_A, nactorx_B, relation_table[idx]);
-    aNPC_set_feel_info(nactorx_A, feel_table[idx], addTim_table[idx]);
+    static int* relation_table[aNPC_RELATION_TYPE_NUM] = {
+        relation_table_set_feel,     relation_table_set_normal_feel,     relation_table_copy_cloth,
+        relation_table_copy_cloth2,  relation_table_reset_cloth_and_umb, relation_table_reset_end_words,
+        relation_table_chg_sp_cloth, relation_table_chg_sp_umb,          relation_table_copy_end_words,
+        relation_table_set_cloth,
+    };
+
+    int* relation_table_p = relation_table[type];
+
+    // @BUG - this is not used
+#ifndef BUGFIXES
+    int relation_unused = mNpc_GetRelationAnimal(animal0, animal1);
+#endif
+
+    if (animal0 != NULL && animal1 != NULL) {
+        int relation = mNpc_GetRelationAnimal(animal0, animal1);
+        int relation_point = relation_table_p[relation];
+        mNpc_AddRelationPoint(animal0, animal1, relation_point);
+    }
+}
+
+// Pick a random other NPC who is not spawned.
+static Animal_c* aNPC_choice_other_npc(AnmPersonalID_c** pid_tbl, int* pid_tbl_cnt, Animal_c* animal0,
+                                       Animal_c* animal1, Actor_info* actor_info) {
+    Animal_c* animal = NULL;
+    int max = mNpc_GetAnimalNum();
+
+    for (; *pid_tbl_cnt < max; (*pid_tbl_cnt)++) {
+        pid_tbl[*pid_tbl_cnt] = mNpc_GetOtherAnimalPersonalID(pid_tbl[0], *pid_tbl_cnt);
+
+        if (pid_tbl[*pid_tbl_cnt] == NULL) {
+            break;
+        }
+
+        animal = mNpc_GetAnimalInfoP(pid_tbl[*pid_tbl_cnt]->npc_id);
+        if (animal != NULL && animal != animal0 && animal != animal1 &&
+            Actor_info_fgName_search(actor_info, pid_tbl[*pid_tbl_cnt]->npc_id, ACTOR_PART_NPC) != NULL) {
+            animal = NULL;
+        }
+
+        if (animal != NULL) {
+            (*pid_tbl_cnt)++;
+            break;
+        }
+    }
+
+    return animal;
+}
+
+static void aNPC_add_relation_other(int type, NPC_ACTOR* nactorx0, NPC_ACTOR* nactorx1, GAME_PLAY* play) {
+    Animal_c* animal0 = nactorx0->npc_info.animal;
+    Animal_c* animal1 = nactorx1->npc_info.animal;
+    AnmPersonalID_c* pid_tbl[ANIMAL_NUM_MAX];
+    int count = 0;
+    Animal_c* sel0 = NULL;
+    Animal_c* sel1 = NULL;
+    Actor_info* info_p = &play->actor_info;
+
+    sel0 = aNPC_choice_other_npc(pid_tbl, &count, animal0, animal1, info_p);
+    if (sel0 != NULL) {
+        sel1 = aNPC_choice_other_npc(pid_tbl, &count, animal0, animal1, info_p);
+    }
+
+    if (sel0 != NULL && sel1 != NULL) {
+        aNPC_add_relation(sel0, sel1, type);
+    }
 }
 
 static void aNPC_set_feel(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
-    aNPC_set_feel_sub(nactorx_A, nactorx_B);
-    aNPC_set_feel_sub(nactorx_B, nactorx_A);
+    static u8 feel_table[] = { mNpc_FEEL_SAD, mNpc_FEEL_ANGRY };
+    int idx;
+
+    switch (mNpc_GetRelationAnimal(nactorx_A->npc_info.animal, nactorx_B->npc_info.animal)) {
+        case mNpc_RELATION_LOVE:
+        case mNpc_RELATION_LIKE:
+            aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
+            aNPC_set_feel_info(nactorx_B, mNpc_FEEL_HAPPY, 1);
+            break;
+        case mNpc_RELATION_DISLIKE:
+        case mNpc_RELATION_HATE:
+            idx = RANDOM(ARRAY_COUNT(feel_table));
+            aNPC_set_feel_info(nactorx_A, feel_table[idx], 1);
+            idx = RANDOM(ARRAY_COUNT(feel_table));
+            aNPC_set_feel_info(nactorx_B, feel_table[idx], 1);
+            break;
+    }
+
+    aNPC_add_relation_other(aNPC_RELATION_TYPE_SET_FEEL, nactorx_A, nactorx_B, play);
+}
+
+static void aNPC_set_normal_feel(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
+    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_NORMAL, 0);
+    aNPC_set_feel_info(nactorx_B, mNpc_FEEL_NORMAL, 0);
+    aNPC_add_relation_other(aNPC_RELATION_TYPE_SET_NORMAL_FEEL, nactorx_A, nactorx_B, play);
 }
 
 static void aNPC_copy_cloth(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
-    mActor_name_t cloth = nactorx_A->npc_info.animal->cloth;
-    u8 org_idx = nactorx_A->npc_info.animal->cloth_original_id;
+    Animal_c* animal_A = nactorx_A->npc_info.animal;
+    Animal_c* animal_B = nactorx_B->npc_info.animal;
+    mActor_name_t cloth = animal_A->cloth;
+    u8 org_idx = animal_A->cloth_original_id;
+    int cloth_type = mNT_get_cloth_type(cloth, org_idx);
 
-    if (aNPC_chk_same_cloth(nactorx_B->npc_info.animal->cloth, nactorx_B->npc_info.animal->cloth_original_id, cloth,
-                            org_idx) == FALSE) {
-        aNPC_setup_chg_cloth(nactorx_B, cloth, org_idx);
+    if (!aNPC_chk_same_cloth(animal_B->cloth, animal_B->cloth_original_id, cloth, org_idx)) {
+        if (cloth_type == mNpc_GetDefAnimalClothHAttr(animal_B)) {
+            aNPC_add_relation(animal_A, animal_B, aNPC_RELATION_TYPE_COPY_CLOTH2);
+            aNPC_set_feel_info(nactorx_A, mNpc_FEEL_SAD, 1);
+        } else {
+            aNPC_add_relation(animal_A, animal_B, aNPC_RELATION_TYPE_COPY_CLOTH);
+            aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
+            aNPC_setup_chg_cloth(nactorx_B, cloth, org_idx);
+        }
     } else {
         Actor_info* info_p;
         aNPC_around_npc_c* aroundNpc_p;
@@ -251,8 +404,15 @@ static void aNPC_copy_cloth(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLA
                 ACTOR* aroundNpc_actor = Actor_info_fgName_search(info_p, aroundNpc_p->npc_name, ACTOR_PART_NPC);
 
                 if (aroundNpc_actor == NULL) {
-                    *aroundNpc_p->cloth_p = cloth;
-                    *aroundNpc_p->org_idx_p = org_idx;
+                    if (cloth_type == mNpc_GetDefAnimalClothHAttr(aroundNpc_p->animal)) {
+                        aNPC_add_relation(animal_A, aroundNpc_p->animal, aNPC_RELATION_TYPE_COPY_CLOTH2);
+                        aNPC_set_feel_info(nactorx_A, mNpc_FEEL_SAD, 1);
+                    } else {
+                        aNPC_add_relation(animal_A, aroundNpc_p->animal, aNPC_RELATION_TYPE_COPY_CLOTH);
+                        aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
+                        *aroundNpc_p->cloth_p = cloth;
+                        *aroundNpc_p->org_idx_p = org_idx;
+                    }
                     break;
                 }
             }
@@ -260,126 +420,179 @@ static void aNPC_copy_cloth(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLA
             aroundNpc_p++;
         }
     }
-
-    aNPC_set_relation(nactorx_A, nactorx_B, 8);
-    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
-    aNPC_set_relation(nactorx_B, nactorx_A, 8);
-    aNPC_set_feel_info(nactorx_B, mNpc_FEEL_HAPPY, 1);
 }
 
 static void aNPC_copy_end_words(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
     Animal_c* animal_A = nactorx_A->npc_info.animal;
     Animal_c* animal_B = nactorx_B->npc_info.animal;
+    int animal_A_sex = mNpc_GetLooks2Sex(animal_A->id.looks);
+    int animal_B_sex = mNpc_GetLooks2Sex(animal_B->id.looks);
 
-    if (mNpc_GetLooks2Sex(animal_A->id.looks) == mNpc_GetLooks2Sex(animal_B->id.looks)) {
-        if (mem_cmp(animal_A->catchphrase, animal_B->catchphrase, ANIMAL_CATCHPHRASE_LEN) == FALSE) {
-            mem_copy(animal_B->catchphrase, animal_A->catchphrase, ANIMAL_CATCHPHRASE_LEN);
-        } else {
+    if (animal_A_sex == animal_B_sex) {
+        u8 ending[ANIMAL_CATCHPHRASE_LEN];
+        Animal_c* around_animal = NULL;
+
+        mem_copy(ending, animal_A->catchphrase, ANIMAL_CATCHPHRASE_LEN);
+        if (mem_cmp(ending, animal_B->catchphrase, ANIMAL_CATCHPHRASE_LEN) == TRUE) {
             aNPC_around_npc_c* aroundNpc_p;
+            Actor_info* info_p;
             int i;
-            u8 ending[ANIMAL_CATCHPHRASE_LEN];
 
             aNPC_make_aroundNpcInfoList(nactorx_A, nactorx_B);
-            mem_copy(ending, animal_A->catchphrase, ANIMAL_CATCHPHRASE_LEN);
             aroundNpc_p = aNPC_aroundNpcInfoList.around_npc;
+            info_p = &play->actor_info;
+
             for (i = 0; i < aNPC_aroundNpcInfoList.count; i++) {
-                if (mem_cmp(aroundNpc_p->ending_p, ending, ANIMAL_CATCHPHRASE_LEN) == FALSE) {
-                    mem_copy(aroundNpc_p->ending_p, ending, ANIMAL_CATCHPHRASE_LEN);
+                if (animal_A_sex == mNpc_GetLooks2Sex(aroundNpc_p->animal->id.looks) &&
+                    Actor_info_fgName_search(info_p, aroundNpc_p->npc_name, ACTOR_PART_NPC) == NULL &&
+                    mem_cmp(aroundNpc_p->ending_p, ending, ANIMAL_CATCHPHRASE_LEN) == FALSE) {
+                    around_animal = aroundNpc_p->animal;
                     break;
                 }
 
                 aroundNpc_p++;
             }
+        } else {
+            around_animal = animal_B;
+        }
+
+        if (around_animal != NULL) {
+            mem_copy(around_animal->catchphrase, animal_A->catchphrase, ANIMAL_CATCHPHRASE_LEN);
         }
     }
 
-    aNPC_set_relation(nactorx_A, nactorx_B, 8);
     aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
-    aNPC_set_relation(nactorx_B, nactorx_A, 8);
     aNPC_set_feel_info(nactorx_B, mNpc_FEEL_HAPPY, 1);
+    aNPC_add_relation_other(aNPC_RELATION_TYPE_COPY_END_WORDS, nactorx_A, nactorx_B, play);
 }
 
 static void aNPC_set_cloth(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
     Animal_c* animal_p = nactorx_A->npc_info.animal;
     mActor_name_t cur_cloth = animal_p->cloth;
     u8 cur_org_idx = animal_p->cloth_original_id;
+    mActor_name_t new_cloth;
 
-    mSP_SelectRandomItem_New(NULL, &animal_p->cloth, 1, &cur_cloth, 1, mSP_KIND_CLOTH, mSP_LISTTYPE_ABC, FALSE);
-    aNPC_setup_chg_cloth(nactorx_A, animal_p->cloth, 0xFF);
-    aNPC_setup_cloth(nactorx_A, cur_cloth, cur_org_idx);
-    aNPC_set_relation(nactorx_A, nactorx_B, -4);
-    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_SAD, 1);
+    mSP_SelectRandomItem_New(NULL, &new_cloth, 1, &cur_cloth, 1, mSP_KIND_CLOTH, mSP_LISTTYPE_ABC, FALSE);
+    aNPC_setup_chg_cloth(nactorx_A, new_cloth, 0xFF);
+
+    if (mNT_get_cloth_type(new_cloth, 0xFF) == mNpc_GetDefAnimalClothHAttr(animal_p)) {
+        aNPC_set_feel_info(nactorx_A, mNpc_FEEL_SAD, 1);
+    } else {
+        aNPC_set_feel_info(nactorx_A, mNpc_FEEL_NORMAL, 0);
+    }
 }
 
 static void aNPC_reset_end_words(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
     mNpc_ResetWordEnding(nactorx_B);
-    aNPC_set_relation(nactorx_A, nactorx_B, -8);
-    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_ANGRY, 1);
+    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_NORMAL, 0);
+    aNPC_set_feel_info(nactorx_B, mNpc_FEEL_NORMAL, 0);
+    aNPC_add_relation_other(aNPC_RELATION_TYPE_RESET_END_WORDS, nactorx_A, nactorx_B, play);
 }
 
 static void aNPC_chg_sp_cloth(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
-    Animal_c* animal_p = nactorx_A->npc_info.animal;
+    Animal_c* animal_A = nactorx_A->npc_info.animal;
+    Animal_c* animal_B = nactorx_B->npc_info.animal;
     u8 org_idx;
 
-    if (animal_p->cloth == RSV_CLOTH) {
+    if (animal_A->cloth == RSV_CLOTH1) {
         do {
             org_idx = RANDOM_F(4);
-        } while (org_idx == animal_p->cloth_original_id);
+        } while (org_idx == animal_A->cloth_original_id);
     } else {
         org_idx = RANDOM_F(4);
     }
 
-    aNPC_setup_chg_cloth(nactorx_A, RSV_CLOTH, org_idx);
-    aNPC_set_relation(nactorx_A, nactorx_B, 8);
+    if (mNT_get_cloth_type(RSV_CLOTH1, org_idx) == mNpc_GetDefAnimalClothHAttr(animal_A)) {
+        aNPC_set_feel_info(nactorx_B, mNpc_FEEL_ANGRY, 1);
+    } else {
+        aNPC_setup_chg_cloth(nactorx_A, RSV_CLOTH1, org_idx);
+        aNPC_set_feel_info(nactorx_B, mNpc_FEEL_HAPPY, 1);
+    }
+    
     aNPC_set_feel_info(nactorx_A, mNpc_FEEL_HAPPY, 1);
+    aNPC_add_relation(animal_A, animal_B, aNPC_RELATION_TYPE_CHANGE_SP_CLOTH);
 }
 
 static void aNPC_chg_sp_umb(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
-    Animal_c* animal_p = nactorx_A->npc_info.animal;
-    u8 org_idx;
+    Animal_c* animal_A = nactorx_A->npc_info.animal;
+    Animal_c* animal_B = nactorx_B->npc_info.animal;
+    int org_idx;
+    u8 umb_idx;
 
-    if (animal_p->umbrella_id >= (ITM_MY_ORG_UMBRELLA0 - ITM_UMBRELLA_START) &&
-        animal_p->umbrella_id <= (ITM_MY_ORG_UMBRELLA7 - ITM_UMBRELLA_START)) {
+    if (animal_A->umbrella_id >= UMBRELLA_MY_START &&
+        animal_A->umbrella_id <= UMBRELLA_MY_END) {
         do {
-            org_idx = (ITM_MY_ORG_UMBRELLA0 - ITM_UMBRELLA_START) + RANDOM(4);
-        } while (org_idx == animal_p->umbrella_id);
+            org_idx = RANDOM(4);
+            umb_idx = UMBRELLA_MY_START + org_idx;
+        } while (umb_idx == animal_A->umbrella_id);
     } else {
-        org_idx = (ITM_MY_ORG_UMBRELLA0 - ITM_UMBRELLA_START) + RANDOM(4);
+        org_idx = RANDOM(4);
+        umb_idx = UMBRELLA_MY_START + org_idx;
     }
 
-    nactorx_A->right_hand.umbrella_type = org_idx;
-    if (nactorx_A->right_hand.item_type != aNPC_ITEM_TYPE_UMBRELLA) {
-        animal_p->umbrella_id = org_idx;
+    if (mNT_get_org_umb_type(ITM_MY_ORG_UMBRELLA0 + org_idx) != mNpc_GetDefAnimalClothHAttr(animal_A)) {
+        nactorx_A->right_hand.umbrella_type = umb_idx;
+        if (nactorx_A->right_hand.item_type != aNPC_ITEM_TYPE_UMBRELLA) {
+            animal_A->umbrella_id = umb_idx;
+        }
     }
+
+    aNPC_add_relation(animal_A, animal_B, aNPC_RELATION_TYPE_CHANGE_SP_UMB);
 }
 
 static void aNPC_reset_cloth_and_umb(NPC_ACTOR* nactorx_A, NPC_ACTOR* nactorx_B, GAME_PLAY* play) {
-    Animal_c* animal_p = nactorx_A->npc_info.animal;
-    mActor_name_t cloth = animal_p->cloth;
-    u8 org_id = animal_p->cloth_original_id;
-    u8 umb = animal_p->umbrella_id;
+    Animal_c* animal_A = nactorx_A->npc_info.animal;
+    Animal_c* animal_B = nactorx_B->npc_info.animal;
+    mActor_name_t cloth = animal_A->cloth;
+    u8 org_id = animal_A->cloth_original_id;
+    u8 umb = animal_A->umbrella_id;
 
-    mNpc_SetDefAnimalCloth(animal_p);
-    aNPC_setup_chg_cloth(nactorx_A, animal_p->cloth, 0xFF);
+    mNpc_SetDefAnimalCloth(animal_A);
+    aNPC_setup_chg_cloth(nactorx_A, animal_A->cloth, 0xFF);
     aNPC_setup_cloth(nactorx_A, cloth, org_id);
-    mNpc_SetDefAnimalUmbrella(animal_p);
-    nactorx_A->right_hand.umbrella_type = animal_p->umbrella_id;
+    mNpc_SetDefAnimalUmbrella(animal_A);
+    nactorx_A->right_hand.umbrella_type = animal_A->umbrella_id;
     if (nactorx_A->right_hand.item_type == aNPC_ITEM_TYPE_UMBRELLA) {
-        animal_p->umbrella_id = umb;
+        animal_A->umbrella_id = umb;
     }
 
-    aNPC_set_relation(nactorx_A, nactorx_B, -4);
-    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_SAD, 1);
+    aNPC_set_feel_info(nactorx_A, mNpc_FEEL_NORMAL, 0);
+    aNPC_set_feel_info(nactorx_B, mNpc_FEEL_NORMAL, 0);
+    aNPC_add_relation_other(aNPC_RELATION_TYPE_RESET_CLOTH_AND_UMB, nactorx_A, nactorx_B, play);
+}
+
+static u8 aNPC_chk_chg_cloth_and_umb(NPC_ACTOR* nactorx, int param_2) {
+    Animal_c* animal_p = nactorx->npc_info.animal;
+    u8 ret = 1;
+
+    if (param_2 == 1) {
+        ret = 2;
+    }
+
+    if (aNPC_chk_same_cloth(animal_p->cloth, animal_p->cloth_original_id, nactorx->draw.cloth_no, nactorx->draw.org_idx) == FALSE) {
+        ret = 3;
+    }
+
+    if (animal_p->umbrella_id != nactorx->right_hand.umbrella_type) {
+        if (ret == 3) {
+            ret = 5;
+        } else {
+            ret = 4;
+        }
+    }
+
+    return ret;
 }
 
 enum {
     aNPC_GREETING_REACTION_SET_FEEL,
+    aNPC_GREETING_REACTION_SET_NORMAL_FEEL,
     aNPC_GREETING_REACTION_COPY_END_WORDS,
     aNPC_GREETING_REACTION_RESET_END_WORDS,
-    aNPC_GREETING_REACTION_CHG_SP_UMB,
+    aNPC_GREETING_REACTION_CHANGE_SP_UMB,
     aNPC_GREETING_REACTION_COPY_CLOTH,
     aNPC_GREETING_REACTION_SET_CLOTH,
-    aNPC_GREETING_REACTION_CHG_SP_CLOTH,
+    aNPC_GREETING_REACTION_CHANGE_SP_CLOTH,
     aNPC_GREETING_REACTION_RESET_CLOTH_AND_UMB,
 
     aNPC_GREETING_REACTION_NUM
@@ -390,20 +603,22 @@ typedef void (*aNPC_GREETING_REACTION_PROC)(NPC_ACTOR*, NPC_ACTOR*, GAME_PLAY*);
 static void aNPC_act_greeting_reaction(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     // clang-format off
     static f32 react_rate_table[] = {
-        0.2f,
-        0.1f,
-        0.1f,
-        0.1f,
-        0.1f,
-        0.05f,
-        0.1f,
-        0.05f,
+        0.2f, // aNPC_GREETING_REACTION_SET_FEEL
+        0.2f, // aNPC_GREETING_REACTION_SET_NORMAL_FEEL
+        0.1f, // aNPC_GREETING_REACTION_COPY_END_WORDS
+        0.1f, // aNPC_GREETING_REACTION_RESET_END_WORDS
+        0.1f, // aNPC_GREETING_REACTION_CHANGE_SP_UMB
+        0.1f, // aNPC_GREETING_REACTION_COPY_CLOTH
+        0.05f, // aNPC_GREETING_REACTION_SET_CLOTH
+        0.1f, // aNPC_GREETING_REACTION_CHANGE_SP_CLOTH
+        0.05f, // aNPC_GREETING_REACTION_RESET_CLOTH_AND_UMB
     };
     // clang-format on
 
     // clang-format off
     static aNPC_GREETING_REACTION_PROC react_proc_table[] = {
         &aNPC_set_feel,
+        &aNPC_set_normal_feel,
         &aNPC_copy_end_words,
         &aNPC_reset_end_words,
         &aNPC_chg_sp_umb,
@@ -414,27 +629,27 @@ static void aNPC_act_greeting_reaction(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     };
     // clang-format on
 
+    NPC_ACTOR* pal_nactorx;
     int sp_npc_flag;
-    u8 greeting_flag;
-    ACTOR* palActor = nactorx->palActor;
-    NPC_ACTOR* pal_nactorx = (NPC_ACTOR*)palActor;
-    Animal_c* animal_p = nactorx->npc_info.animal;
-    Animal_c* animal_pal = pal_nactorx->npc_info.animal;
+    u8 greeting_flag_A;
+    u8 greeting_flag_B;
+    Animal_c* animal_A;
+    Animal_c* animal_B;
     aNPC_GREETING_REACTION_PROC* reaction_proc;
     f32* rate_p;
 
+    pal_nactorx = (NPC_ACTOR*)nactorx->palActor;
+    animal_A = nactorx->npc_info.animal;
+    animal_B = pal_nactorx->npc_info.animal;
     sp_npc_flag = TRUE;
-    greeting_flag = 2;
-    if (ITEM_NAME_GET_TYPE(nactorx->actor_class.npc_id) == NAME_TYPE_NPC &&
-        ITEM_NAME_GET_TYPE(pal_nactorx->actor_class.npc_id) == NAME_TYPE_NPC) {
+    greeting_flag_A = 1;
+    greeting_flag_B = 2;
+    if (aNPC_IS_NRM_NPC(nactorx) && animal_A != NULL && aNPC_IS_NRM_NPC(pal_nactorx) && animal_B != NULL) {
         sp_npc_flag = FALSE;
     }
 
     if (pal_nactorx->condition_info.greeting_flag != 1 && pal_nactorx->condition_info.greeting_flag != 3 &&
         pal_nactorx->condition_info.greeting_flag != 4 && pal_nactorx->condition_info.greeting_flag != 5) {
-        aNPC_setup_turn_round_palActor(nactorx, pal_nactorx);
-        aNPC_setup_turn_round_palActor(pal_nactorx, nactorx);
-
         if (sp_npc_flag == FALSE) {
             NPC_ACTOR* nactorx_A;
             NPC_ACTOR* nactorx_B;
@@ -444,8 +659,8 @@ static void aNPC_act_greeting_reaction(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             reaction_proc = react_proc_table;
             rate_p = react_rate_table;
 
-            if (mNpc_CheckTalkPresentCloth(animal_p) == TRUE || mNpc_CheckTalkPresentCloth(animal_pal) == TRUE) {
-                react = aNPC_GREETING_REACTION_COPY_CLOTH;
+            if (mNpc_CheckTalkPresentCloth(animal_A) == TRUE || mNpc_CheckTalkPresentCloth(animal_B) == TRUE) {
+                react = 3; // only last 3 reactions are available
             }
 
             for (react; react != 0; react--) {
@@ -460,38 +675,13 @@ static void aNPC_act_greeting_reaction(NPC_ACTOR* nactorx, GAME_PLAY* play) {
                 reaction_proc++;
             }
 
-            greeting_flag = 1;
+            greeting_flag_A = aNPC_chk_chg_cloth_and_umb(nactorx, 0);
+            greeting_flag_B = aNPC_chk_chg_cloth_and_umb(pal_nactorx, 1);
         }
     }
 
-    nactorx->condition_info.trans_demo_flg_save = nactorx->condition_info.demo_flg;
-    nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
-                                       aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_TALK_CHECK |
-                                       aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
-                                       aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
-    if (nactorx->actor_class.status_data.weight < MASSTYPE_HEAVY) {
-        nactorx->actor_class.status_data.weight = MASSTYPE_HEAVY - 1;
-    }
-
-    nactorx->condition_info.actor_state_save = nactorx->actor_class.state_bitfield;
-    nactorx->actor_class.state_bitfield |= ACTOR_STATE_NO_MOVE_WHILE_CULLED;
-
-    if (sp_npc_flag == FALSE) {
-        if (!aNPC_chk_same_cloth(animal_p->cloth, animal_p->cloth_original_id, nactorx->draw.cloth_no,
-                                 nactorx->draw.org_idx)) {
-            greeting_flag = 3;
-        }
-
-        if (animal_p->umbrella_id != nactorx->right_hand.umbrella_type) {
-            if (greeting_flag == 3) {
-                greeting_flag = 5;
-            } else {
-                greeting_flag = 4;
-            }
-        }
-    }
-
-    nactorx->condition_info.greeting_flag = greeting_flag;
+    nactorx->condition_info.greeting_flag = greeting_flag_A;
+    pal_nactorx->condition_info.greeting_flag = greeting_flag_B;
 }
 
 static u8 aNPC_get_greeting_step(ACTOR* actorx) {
@@ -510,9 +700,8 @@ static u8 aNPC_get_greeting_step(ACTOR* actorx) {
 }
 
 static void aNPC_act_greeting_chg_step(NPC_ACTOR* nactorx, u8 step) {
-    // Why 11? is this a bug?
     // clang-format off
-    static u8 act_idx[11] = {
+    static u8 act_idx[aNPC_ACT_GREETING_STEP_NUM] = {
         aNPC_ACTION_TYPE_TURN,
         aNPC_ACTION_TYPE_WALK,
         aNPC_ACTION_TYPE_PAL_WAIT,
@@ -520,19 +709,32 @@ static void aNPC_act_greeting_chg_step(NPC_ACTOR* nactorx, u8 step) {
         aNPC_ACTION_TYPE_GREETING1,
         aNPC_ACTION_TYPE_GREETING2,
         aNPC_ACTION_TYPE_GREETING3,
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_TALK,
+        aNPC_ACTION_TYPE_WAIT,
         aNPC_ACTION_TYPE_GET_CHANGE,
         aNPC_ACTION_TYPE_GET_CHANGE,
         aNPC_ACTION_TYPE_GET_CHANGE,
-        aNPC_ACT_GREETING_STEP_TURN, // bug?
+        aNPC_ACTION_TYPE_WAIT,
     };
     // clang-format on
 
-    if (step == aNPC_ACT_GREETING_STEP_APPROACH) {
-        nactorx->movement.demo_move_timer = 80;
+    u8 idx = act_idx[step];
+    u8 feel;
+
+    switch (step) {
+        case aNPC_ACT_GREETING_STEP_APPROACH:
+            nactorx->movement.demo_move_timer = 80;
+            break;
+        case aNPC_ACT_GREETING_STEP_GROUP_TALK_WAIT:
+            feel = aNPC_get_feel_info(nactorx);
+            nactorx->action.feel = feel;
+            idx = aNPC_get_wait_action(nactorx, feel);
+            break;
     }
 
     nactorx->action.step = step;
-    aNPC_setupAction(nactorx, act_idx[step]);
+    aNPC_setupAction(nactorx, idx);
 }
 
 static void aNPC_act_greeting_turn(NPC_ACTOR* nactorx, GAME_PLAY* play) {
@@ -573,27 +775,61 @@ static void aNPC_act_greeting_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
 static void aNPC_act_greeting(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     if (nactorx->draw.main_animation_state == cKF_STATE_STOPPED) {
-        switch (nactorx->condition_info.greeting_flag) {
-            case 3:
-                aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
-                nactorx->draw.cloth_change_step = 0;
-                aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_CLOTH);
-                break;
-            case 4:
-                aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
-                nactorx->draw.umb_state = 0;
-                aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_UMB);
-                break;
-            case 5:
-                aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
-                nactorx->draw.cloth_change_step = 0;
-                nactorx->draw.umb_state = 0;
-                aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_CLOTH_AND_UMB);
-                break;
-            default:
-                aNPC_setup_greeting_end(nactorx);
-                break;
-        }
+        aNPC_setup_group_talk_wait_start((NPC_ACTOR*)nactorx->palActor);
+        aNPC_setup_group_talk_wait_start(nactorx);
+    }
+}
+
+static void aNPC_act_greeting_group_talk_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (nactorx->talk_info.group_talk_wait_timer == 0) {
+        NPC_ACTOR* pal_nactorx = (NPC_ACTOR*)nactorx->palActor;
+
+        aNPC_setup_group_talk_wait_end(pal_nactorx);
+        aNPC_setup_group_talk_wait_end(nactorx);
+        aNPC_act_greeting_reaction(nactorx, play);
+        aNPC_act_greeting_chg_step(pal_nactorx, aNPC_ACT_GREETING_STEP_AFTER);
+        aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_AFTER);
+    }
+}
+
+static void aNPC_act_greeting_talk(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (aNPC_chk_talk_actor_list(nactorx) == -1) {
+        aNPC_setup_greeting_end(nactorx);
+    } else {
+        aNPC_talk_demo_proc((ACTOR*)nactorx, (GAME*)play);
+        aNPC_talk_direction_proc((ACTOR*)nactorx, (GAME*)play);
+    }
+}
+
+static void aNPC_act_greeting_after(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    switch (nactorx->condition_info.greeting_flag) {
+        case 3:
+            aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
+            nactorx->draw.cloth_change_step = 0;
+            aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_CLOTH);
+            return;
+        case 4:
+            aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
+            nactorx->draw.umb_state = 0;
+            aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_UMB);
+            return;
+        case 5:
+            aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
+            nactorx->draw.cloth_change_step = 0;
+            nactorx->draw.umb_state = 0;
+            aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_CLOTH_AND_UMB);
+            return;
+    }
+
+    switch (((NPC_ACTOR*)nactorx->palActor)->condition_info.greeting_flag) {
+        case 3:
+        case 4:
+        case 5:
+            aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_CHG_WAIT);
+            break;
+        default:
+            aNPC_setup_greeting_end(nactorx);
+            break;
     }
 }
 
@@ -631,6 +867,9 @@ static void aNPC_act_greeting_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         &aNPC_act_greeting,
         &aNPC_act_greeting,
         &aNPC_act_greeting,
+        &aNPC_act_greeting_group_talk_wait,
+        &aNPC_act_greeting_talk,
+        &aNPC_act_greeting_after,
         &aNPC_act_greeting_chg_cloth,
         &aNPC_act_greeting_chg_umb,
         &aNPC_act_greeting_chg_cloth_and_umb,
@@ -638,20 +877,55 @@ static void aNPC_act_greeting_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     };
     // clang-format on
 
-    if (nactorx->palActor == NULL) {
+    u8 step = nactorx->action.step;
+    NPC_ACTOR* pal_nactorx = (NPC_ACTOR*)nactorx->palActor;
+    
+    if (step == aNPC_ACT_GREETING_STEP_TALK) {
+        (*act_proc[step])(nactorx, play);
+    } else if (pal_nactorx == NULL) {
         aNPC_setup_greeting_end(nactorx);
-    } else if (((NPC_ACTOR*)nactorx->palActor)->palActor != (ACTOR*)nactorx) {
+    } else if (pal_nactorx->palActor != (ACTOR*)nactorx) {
         nactorx->palActor = NULL;
         aNPC_setup_greeting_end(nactorx);
     } else {
-        (*act_proc[nactorx->action.step])(nactorx, play);
+        (*act_proc[step])(nactorx, play);
     }
 }
 
 static void aNPC_act_greeting_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    NPC_ACTOR* pal_nactorx;
+
     nactorx->right_hand.umbrella_disabled_flag = TRUE;
     nactorx->request.umb_flag = 0;
-    aNPC_act_greeting_reaction(nactorx, play);
+    nactorx->condition_info.trans_demo_flg_save = nactorx->condition_info.demo_flg;
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        nactorx->condition_info.demo_flg =
+            aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+            aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_TALK_CHECK |
+            aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
+            aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+    } else {
+        nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_UZAI_CHECK |
+                                           aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK |
+                                           aNPC_COND_DEMO_SKIP_HEAD_LOOKAT |
+                                           aNPC_COND_DEMO_SKIP_TALK_CHECK |
+                                           aNPC_COND_DEMO_SKIP_ITEM |
+                                           aNPC_COND_DEMO_SKIP_FORWARD_CHECK;
+    }
+
+    nactorx->condition_info.actor_state_save = nactorx->actor_class.state_bitfield;
+    nactorx->actor_class.state_bitfield |= ACTOR_STATE_NO_MOVE_WHILE_CULLED;
+
+    pal_nactorx = (NPC_ACTOR*)nactorx->palActor;
+    if (pal_nactorx != NULL) {
+        aNPC_setup_turn_round_palActor(nactorx, pal_nactorx);
+        aNPC_setup_turn_round_palActor(pal_nactorx, nactorx);
+    }
+
+    if (nactorx->actor_class.status_data.weight < MASSTYPE_HEAVY) {
+        nactorx->actor_class.status_data.weight = MASSTYPE_HEAVY - 1;
+    }
+
     aNPC_act_greeting_chg_step(nactorx, aNPC_ACT_GREETING_STEP_TURN);
 }
 

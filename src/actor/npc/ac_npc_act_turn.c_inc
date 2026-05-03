@@ -51,9 +51,9 @@ static void aNPC_act_turn_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     }
 
     if (nactorx->action.idx == aNPC_ACT_TURN) {
-        action = 13;
+        action = aNPC_ACTION_TYPE_TURN;
     } else {
-        action = 14;
+        action = aNPC_ACTION_TYPE_TURN2;
     }
 
     aNPC_setupAction(nactorx, action);

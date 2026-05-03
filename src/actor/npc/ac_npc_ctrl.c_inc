@@ -1,3 +1,12 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_shop.h"
+#include "libultra/libultra.h"
+#include "../src/actor/npc/ac_npc_data.c_inc"
+#endif
+
 static int aNPC_actor_birth_check(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     Actor_info* info = &play->actor_info;
@@ -111,7 +120,7 @@ static void aNPC_make_unitInfo(NPC_CONTROL_ACTOR* ctrl) {
     int x;
     int z;
     mActor_name_t* fg_p = mFI_UtNum2UtFG(1, 1);
-    
+
     for (z = 0; z < aNPC2_UNIT_Z_NUM; z++) {
         for (x = 0; x < aNPC2_UNIT_X_NUM; x++) {
             table[z][x] = *fg_p != RSV_NO;
@@ -151,58 +160,50 @@ static void aNPC_set_attention_request_proc(u8 type, ACTOR* target_p, xyz_t* pos
     }
 }
 
-static int aNPC_get_draw_data_idx(mActor_name_t npc_name) {
-    int ret = -1;
+static void aNPC_set_insect_actor(NPC_ACTOR* nactorx, ACTOR* insect_actor) {
+    if (nactorx != NULL && aNPC_IS_NRM_NPC(nactorx)) {
+        if (insect_actor == NULL && nactorx->insect_actor != NULL) {
+            nactorx->remove_insect = TRUE;
+        } else if (insect_actor->id != mAc_PROFILE_INSECT ||
+                   ((aINS_INSECT_ACTOR*)insect_actor)->type != aINS_INSECT_TYPE_FLEA) {
+            insect_actor = NULL;
+        }
 
-    switch (ITEM_NAME_GET_TYPE(npc_name)) {
-        case NAME_TYPE_SPNPC: {
-            mNpc_EventNpc_c* event_npc = mNpc_GetSameEventNpc(npc_name);
-
-            if (event_npc != NULL) {
-                if (ITEM_NAME_GET_TYPE(event_npc->texture_id) == NAME_TYPE_NPC) {
-                    ret = event_npc->texture_id - NPC_START;
-                } else {
-                    ret = ALL_NPC_NUM + event_npc->texture_id - SP_NPC_START;
-                }
-            } else {
-                mNpc_MaskNpc_c* mask_npc = mNpc_GetSameMaskNpc(npc_name);
-
-                if (mask_npc != NULL) {
-                    if (ITEM_NAME_GET_TYPE(mask_npc->npc_id) == NAME_TYPE_NPC) {
-                        ret = mask_npc->npc_id - NPC_START;
-                    } else {
-                        ret = ALL_NPC_NUM + mask_npc->npc_id - SP_NPC_START;
-                    }
-                } else {
-                    ret = ALL_NPC_NUM + npc_name - SP_NPC_START;
-                }
-            }
-        } break;
-
-        case NAME_TYPE_NPC:
-            ret = npc_name - NPC_START;
-            break;
+        nactorx->insect_actor = insect_actor;
     }
-
-    return ret;
 }
 
 static int aNPC_check_dma_cloth_data(int idx) {
     int ret = FALSE;
 
     if (idx < ANIMAL_NUM_MAX) {
-        Animal_c* animal;
+        Animal_c* animal = NULL;
 
         if (idx == -ANIMAL_NUM_MAX) {
-            // animal = &Save_Get(island).animal;
-        } else {
+            animal = &Common_Get(cur_island_house_p)->island.animal;
+        } else if (idx >= 0) {
             animal = Save_GetPointer(animals[idx]);
         }
 
-        if (!aNPC_dma_regist_check_cloth_data(animal->cloth)) {
-            aNPC_dma_regist_cloth_data(animal->cloth);
-        } else {
-            ret = TRUE;
+        if (animal != NULL) {
+            mActor_name_t cloth = animal->cloth;
+
+            if (!aNPC_dma_regist_check_cloth_data(cloth)) {
+#if VERSION == VER_GAEJ01_00
+                if (ITEM_IS_NPC_CLOTH(cloth) != FALSE) {
+                    aNPC_dma_regist_cloth_data(cloth);
+                }
+#elif VERSION == VER_GAEJ01_01
+                if (ITEM_IS_NPC_CLOTH(cloth) == FALSE) {
+                    cloth = mSP_get_directed_type_cloth_no(mNpc_GetDefAnimalClothLAttr(animal));
+                    animal->cloth = cloth;
+                }
+                aNPC_dma_regist_cloth_data(cloth);
+#endif
+            } else {
+                aNPC_reserve_cloth_data(cloth);
+                ret = TRUE;
+            }
         }
     } else {
         ret = TRUE;
@@ -217,6 +218,8 @@ static int aNPC_check_dma_cloth_data_sub(mActor_name_t cloth) {
     if (!aNPC_dma_regist_check_cloth_data(cloth)) {
         aNPC_dma_regist_cloth_data(cloth);
         ret = FALSE;
+    } else {
+        aNPC_reserve_cloth_data(cloth);
     }
 
     return ret;
@@ -490,6 +493,22 @@ static int aNPC_setupActor_proc(GAME_PLAY* play, mActor_name_t name, s8 idx, int
                 case SP_NPC_DEPART_MASTER:
                     if (mEv_CheckFirstJob() == TRUE) {
                         name = SP_NPC_RCN_GUIDE2 + (name - SP_NPC_SHOP_MASTER);
+                    } else if (mSP_force_opend()) {
+                        switch (name) {
+                            case SP_NPC_CONV_MASTER:
+                                name = SP_NPC_CONV_MASTER_NIGHT;
+                                break;
+                            case SP_NPC_SUPER_MASTER:
+                                name = SP_NPC_SUPER_MASTER_NIGHT;
+                                break;
+                            case SP_NPC_DEPART_MASTER:
+                                name = SP_NPC_DEPART_MASTER_NIGHT;
+                                break;
+                            default:
+                                name = SP_NPC_SHOP_MASTER_NIGHT;
+                                break;
+                        }
+                        break;
                     } else if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                         switch (name) {
                             case SP_NPC_CONV_MASTER:
@@ -508,11 +527,28 @@ static int aNPC_setupActor_proc(GAME_PLAY* play, mActor_name_t name, s8 idx, int
                         }
                     }
                     break;
+                case SP_NPC_MAMEDANUKI0:
+                case SP_NPC_MAMEDANUKI1:
+                    if (mSP_force_opend()) {
+                        switch (name) {
+                            case SP_NPC_MAMEDANUKI1:
+                                name = SP_NPC_MAMEDANUKI1_NIGHT;
+                                break;
+                            default:
+                                name = SP_NPC_MAMEDANUKI0_NIGHT;
+                                break;
+                        }
+                    }
+                    break;
             }
             profile = event_npc_profile_table[name - SP_NPC_START];
             break;
         case NAME_TYPE_NPC:
             profile = mAc_PROFILE_NORMAL_NPC;
+            if (mNpc_CheckIslandAnimalTableNo(name) == TRUE && Common_Get(cur_island_house_p) != NULL &&
+                mISL_GetNpcDayType(&Common_Get(cur_island_house_p)->island) != mISL_NPC_DAY_TYPE_NORMAL) {
+                profile = mAc_PROFILE_ISLAND_NPC;
+            }
             break;
     }
 
@@ -571,7 +607,7 @@ static void aNPC_get_overlay_area_proc(ACTOR_DLFTBL* dlftbl, u8* name_p, size_t 
                 mNpc_MaskNpc_c* mask_npc = mNpc_GetSameMaskNpc(npc_name);
 
                 if (mask_npc != NULL) {
-                    aNPC_get_overlay_area_proc_sub(dlftbl, size, 0x3000, CLIP(npc_clip)->keep_k_overlay, 3, npc_name);
+                    aNPC_get_overlay_area_proc_sub(dlftbl, size, 0x3000, CLIP(npc_clip)->keep_k_overlay, 4, npc_name);
                 } else {
                     switch (npc_name) {
                         case SP_NPC_KABUPEDDLER:
@@ -586,7 +622,7 @@ static void aNPC_get_overlay_area_proc(ACTOR_DLFTBL* dlftbl, u8* name_p, size_t 
                         case SP_NPC_SENDO:
                         case SP_NPC_MASK_CAT:
                         case SP_NPC_GO_HONE_NPC:
-                            aNPC_get_overlay_area_proc_sub(dlftbl, size, 0x3000, CLIP(npc_clip)->keep_k_overlay, 3,
+                            aNPC_get_overlay_area_proc_sub(dlftbl, size, 0x3000, CLIP(npc_clip)->keep_k_overlay, 4,
                                                            npc_name);
                             break;
                         default:
@@ -627,7 +663,7 @@ static void aNPC_free_overlay_area_proc(ACTOR_DLFTBL* dlftbl) {
     }
 
     overlay_p = CLIP(npc_clip)->keep_k_overlay;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         if (overlay_p->buf == dlftbl->alloc_buf) {
             overlay_p->used = FALSE;
             dlftbl->alloc_buf = NULL;
@@ -654,7 +690,7 @@ static ACTOR* aNPC_get_actor_area_proc(size_t size, const char* actor_name, int 
     int* used = CLIP(npc_clip)->keep_actor_used;
     int i;
 
-    if (size > 0x9D0) {
+    if (size > 0xBA0) {
         return NULL;
     }
 
@@ -695,16 +731,54 @@ static void aNPC_free_actor_area_proc(ACTOR* actorx) {
 }
 #endif
 
-static void aNPC_dma_draw_data_proc(aNPC_draw_data_c* draw_data_p, mActor_name_t npc_name) {
-    int idx = aNPC_get_draw_data_idx(npc_name);
+static void aNPC_dma_draw_data_proc_normal_npc(aNPC_draw_data_c* draw_data_p, mActor_name_t npc_name) {
+    if (IS_NPC_ADD_NPC(npc_name)) {
+        mAN_set_draw_data(draw_data_p, npc_name);
+    } else {
+        int idx = npc_name - NPC_START;
 
-    mem_copy((u8*)draw_data_p, (u8*)&npc_draw_data_tbl[idx], sizeof(aNPC_draw_data_c));
+        mem_copy((u8*)draw_data_p, (u8*)&npc_draw_data_tbl[idx], sizeof(aNPC_draw_data_c));
+    }
+}
+
+static void aNPC_dma_draw_data_proc(aNPC_draw_data_c* draw_data_p, mActor_name_t npc_name) {
+    int idx;
+
+    bzero(draw_data_p, sizeof(aNPC_draw_data_c));
+    if (ITEM_NAME_GET_TYPE(npc_name) == NAME_TYPE_NPC) {
+        aNPC_dma_draw_data_proc_normal_npc(draw_data_p, npc_name);
+    } else {
+        mNpc_EventNpc_c* event_npc = mNpc_GetSameEventNpc(npc_name);
+
+        if (event_npc != NULL) {
+            if (ITEM_NAME_GET_TYPE(event_npc->texture_id) == NAME_TYPE_NPC) {
+                aNPC_dma_draw_data_proc_normal_npc(draw_data_p, event_npc->texture_id);
+            } else {
+                idx = ALL_NPC_NUM + event_npc->texture_id - SP_NPC_START;
+                mem_copy((u8*)draw_data_p, (u8*)&npc_draw_data_tbl[idx], sizeof(aNPC_draw_data_c));
+            }
+        } else {
+            mNpc_MaskNpc_c* mask_npc = mNpc_GetSameMaskNpc(npc_name);
+
+            if (mask_npc != NULL) {
+                if (ITEM_NAME_GET_TYPE(mask_npc->npc_id) == NAME_TYPE_NPC) {
+                    aNPC_dma_draw_data_proc_normal_npc(draw_data_p, mask_npc->npc_id);
+                } else {
+                    idx = ALL_NPC_NUM + mask_npc->npc_id - SP_NPC_START;
+                    mem_copy((u8*)draw_data_p, (u8*)&npc_draw_data_tbl[idx], sizeof(aNPC_draw_data_c));
+                }
+            } else {
+                idx = ALL_NPC_NUM + npc_name - SP_NPC_START;
+                mem_copy((u8*)draw_data_p, (u8*)&npc_draw_data_tbl[idx], sizeof(aNPC_draw_data_c));
+            }
+        }
+    }
 }
 
 #ifndef aNPC_NPC2
 typedef struct {
     u64 align;
-    u8 buf[0x9D0];
+    u8 buf[0xBA0];
 } aNPC_actor_class_overlay_c;
 
 typedef struct {
@@ -730,7 +804,7 @@ typedef struct {
 static aNPC_actor_class_overlay_c aNPC_n_actor_cl_tbl[9];
 static aNPC_n_overlay_c aNPC_n_overlay[1];
 static aNPC_s_overlay_c aNPC_s_overlay[2];
-static aNPC_k_overlay_c aNPC_k_overlay[3];
+static aNPC_k_overlay_c aNPC_k_overlay[4];
 static aNPC_e_overlay_c aNPC_e_overlay[2];
 
 static void aNPC_keep_actor_class(void) {
@@ -782,7 +856,7 @@ static void aNPC_keep_s_overlay_area(aNPC_overlay_c* overlay_p) {
 static void aNPC_keep_k_overlay_area(aNPC_overlay_c* overlay_p) {
     int i;
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         overlay_p->buf = (u8*)&aNPC_k_overlay[i].buf;
         overlay_p->used = FALSE;
         overlay_p++;
@@ -856,6 +930,14 @@ static void aNPC_actor_ct_c(ACTOR* actorx, GAME* game) {
         CLIP(npc_clip)->think_proc = &aNPC_think_proc;
         CLIP(npc_clip)->force_call_req_proc = &aNPC_force_call_req_proc;
         CLIP(npc_clip)->set_start_pos_proc = &aNPC_set_start_pos;
+        CLIP(npc_clip)->regist_talk_actor_list_proc = &aNPC_regist_talk_actor_list;
+        CLIP(npc_clip)->get_talk_actor_list_proc = &aNPC_get_talk_actor_list;
+        CLIP(npc_clip)->group_talk_chg_actor_proc = &aNPC_group_talk_chg_actor;
+        CLIP(npc_clip)->get_demo_kind_proc = &aNPC_get_demo_kind;
+        CLIP(npc_clip)->chk_group_talk_proc = &aNPC_chk_group_talk;
+        CLIP(npc_clip)->make_accessory_proc = &aNPC_make_accessory;
+        CLIP(npc_clip)->set_insect_actor_proc = &aNPC_set_insect_actor;
+        CLIP(npc_clip)->get_feel_info_proc = &aNPC_get_feel_info;
 
 #ifndef aNPC_NPC2
         aNPC_keep_actor_class();
@@ -871,51 +953,56 @@ static void aNPC_actor_ct_c(ACTOR* actorx, GAME* game) {
     }
 
     if (play->block_table.block_z == mISL_BLOCK_Z) {
-        int bx;
-        int bz;
-        int ux;
-        int uz;
-        Island_c* island_p;
-        Animal_c* islander_p;
-        mNpc_NpcList_c* list_p;
-        mNPS_schedule_c* sched_p;
+        mHm_hs_c* home = Common_Get(cur_island_house_p);
+        Private_c* priv = Now_Private;
 
-        // island_p = &Save_Get(island);
-        // islander_p = &island_p->animal;
-        list_p = &Common_Get(island_npclist[0]);
+        if (home != NULL && priv != NULL && mISL_CheckAppearIslandNpc_com(home, &priv->player_ID) == TRUE) {
+            int bx;
+            int bz;
+            int ux;
+            int uz;
+            Island_c* island_p;
+            Animal_c* islander_p;
+            mNpc_NpcList_c* list_p;
+            mNPS_schedule_c* sched_p;
 
-        if (list_p->name == EMPTY_NO) {
-            mNpc_SetNpcList(list_p, islander_p, 1, TRUE);
-            bx = (int)islander_p->home_info.block_x;
-            bz = (int)islander_p->home_info.block_z;
-            ux = (int)islander_p->home_info.ut_x;
-            uz = (int)islander_p->home_info.ut_z;
-        } else {
-            int ret = mFI_Wpos2BkandUtNuminBlock(&bx, &bz, &ux, &uz, list_p->position);
+            island_p = &home->island;
+            islander_p = &island_p->animal;
+            list_p = &Common_Get(island_npclist[0]);
 
-            if (ret == FALSE) {
+            if (list_p->name == EMPTY_NO) {
+                mNpc_SetNpcList(list_p, islander_p, 1, TRUE);
                 bx = (int)islander_p->home_info.block_x;
                 bz = (int)islander_p->home_info.block_z;
                 ux = (int)islander_p->home_info.ut_x;
                 uz = (int)islander_p->home_info.ut_z;
             } else {
-                if (!mNpc_CheckNpcSet(bx, bz, ux, uz) && !mNpc_GetMakeUtNuminBlock_area(&ux, &uz, bx, bz, 0)) {
+                int ret = mFI_Wpos2BkandUtNuminBlock(&bx, &bz, &ux, &uz, list_p->position);
+
+                if (ret == FALSE) {
                     bx = (int)islander_p->home_info.block_x;
                     bz = (int)islander_p->home_info.block_z;
                     ux = (int)islander_p->home_info.ut_x;
                     uz = (int)islander_p->home_info.ut_z;
+                } else {
+                    if (!mNpc_CheckNpcSet(bx, bz, ux, uz) && !mNpc_GetMakeUtNuminBlock_area(&ux, &uz, bx, bz, 0)) {
+                        bx = (int)islander_p->home_info.block_x;
+                        bz = (int)islander_p->home_info.block_z;
+                        ux = (int)islander_p->home_info.ut_x;
+                        uz = (int)islander_p->home_info.ut_z;
+                    }
                 }
             }
-        }
 
-        if (mFI_RegistMoveActorList(list_p->name, bx, bz, ux, uz, -ANIMAL_NUM_MAX, 0)) {
-            sched_p = Common_GetPointer(npc_schedule[ANIMAL_NUM_MAX]);
+            if (mFI_RegistMoveActorList(list_p->name, bx, bz, ux, uz, -ANIMAL_NUM_MAX, 0)) {
+                sched_p = Common_GetPointer(npc_schedule[ANIMAL_NUM_MAX]);
 
-            if (sched_p->id != NULL) {
-                mNPS_reset_schedule_area(sched_p->id);
+                if (sched_p->id != NULL) {
+                    mNPS_reset_schedule_area(sched_p->id);
+                }
+
+                mNPS_set_island_schedule_area(&islander_p->id);
             }
-
-            mNPS_set_island_schedule_area(&islander_p->id);
         }
     }
 }
@@ -926,25 +1013,115 @@ static void aNPC_actor_dt_c(ACTOR* actorx, GAME* game) {
         aNPC_free_actor_class();
         aNPC_free_overlay_area(CLIP(npc_clip)->keep_n_overlay, 1);
         aNPC_free_overlay_area(CLIP(npc_clip)->keep_s_overlay, 2);
-        aNPC_free_overlay_area(CLIP(npc_clip)->keep_k_overlay, 3);
+        aNPC_free_overlay_area(CLIP(npc_clip)->keep_k_overlay, 4);
         aNPC_free_overlay_area(CLIP(npc_clip)->keep_e_overlay, 2);
 #endif
         CLIP(npc_clip) = NULL;
     }
 }
 
+static void aNPC_around_npc_check(GAME_PLAY* play) {
+    Actor_list* list = &play->actor_info.list[ACTOR_PART_NPC];
+    int count;
+    ACTOR* actor;
+    NPC_ACTOR* nactor_A;
+    ACTOR* second_actor;
+    NPC_ACTOR* nactor_B;
+    int i;
+    int j;
+    float min_dist_male;
+    float min_dist_female;
+    NPC_ACTOR* sel_male;
+    NPC_ACTOR* sel_female;
+
+    count = list->num_actors;
+    actor = list->actor;
+    for (i = count; i > 0; i--) {
+        nactor_A = (NPC_ACTOR*)actor;
+        sel_male = NULL;
+        sel_female = NULL;
+        second_actor = list->actor;
+        min_dist_male = 3840.0f;
+        min_dist_female = 3840.0f;
+
+        for (j = list->num_actors - 1; j != 0; j--) {
+            nactor_B = (NPC_ACTOR*)second_actor;
+
+            if (nactor_B != nactor_A && !nactor_B->condition_info.hide_flg && aNPC_chk_talk_actor_list(nactor_B) == -1) {
+                float dist = search_position_distance(&actor->world.position, &second_actor->world.position);
+
+                if (mNpc_GetNpcSex(second_actor) == mPr_SEX_MALE) {
+                    if (dist < min_dist_male) {
+                        min_dist_male = dist;
+                        sel_male = nactor_B;
+                    }
+                } else {
+                    if (dist < min_dist_female) {
+                        min_dist_female = dist;
+                        sel_female = nactor_B;
+                    }
+                }
+            }
+
+            second_actor = second_actor->next_actor;
+        }
+
+        nactor_A->condition_info.near_male_npc = (ACTOR*)sel_male;
+        nactor_A->condition_info.near_female_npc = (ACTOR*)sel_female;
+
+        if (min_dist_male < min_dist_female) {
+            nactor_A->condition_info.near_npc = (ACTOR*)sel_male;
+        } else {
+            nactor_A->condition_info.near_npc = (ACTOR*)sel_female;
+        }
+        
+        actor = actor->next_actor;
+    }
+}
+
 static int aNPC_check_cond_to_greeting(NPC_ACTOR* nactorx) {
     int ret = TRUE;
 
-    if (nactorx->actor_class.ct_proc != NULL || nactorx->palActor != NULL || nactorx->palActorIgnoreTimer != 0 ||
+    if (nactorx->actor_class.ct_proc != NULL || aNPC_chk_talk_actor_list(nactorx) != -1 || nactorx->palActor != NULL ||
+        nactorx->palActorIgnoreTimer != 0 ||
         nactorx->condition_info.hide_flg == TRUE) {
         ret = FALSE;
     } else {
-        switch (aNPC_get_feel_info(nactorx)) {
+        int feel = aNPC_get_feel_info(nactorx);
+        int move_type;
+
+        switch (feel) {
             case mNpc_FEEL_ANGRY:
             case mNpc_FEEL_SAD:
             case mNpc_FEEL_SLEEPY:
+            case mNpc_FEEL_PITFALL:
+            case mNpc_FEEL_UZAI_0:
+            case mNpc_FEEL_UZAI_1:
                 ret = FALSE;
+                break;
+            default:
+                move_type = nactorx->condition_info.move_type;
+                switch (move_type) {
+                    case aNPC_MOVE_TYPE_HATED:
+                    case aNPC_MOVE_TYPE_BEST_FRIEND:
+                        ret = FALSE;
+                        break;
+                    default:
+                        if (aNPC_IS_NRM_NPC(nactorx) && aNPC_chk_talk_actor_list(nactorx) == -1) {
+                            Animal_c* animal = nactorx->npc_info.animal;
+        
+                            if (animal != NULL) {
+                                int mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+        
+                                if (mem_idx == -1) {
+                                    ret = FALSE;
+                                } else if (mPr_CheckFirstJobHint(Now_Private) == FALSE) {
+                                    ret = FALSE;
+                                }
+                            }
+                        }
+                        break;
+                }
                 break;
         }
     }
@@ -1057,6 +1234,7 @@ static void aNPC_actor_move_c(ACTOR* actorx, GAME* game) {
 
     aNPC_dma_cloth_data(actorx);
     if (mEv_IsNotTitleDemo()) {
+        aNPC_around_npc_check(play);
         aNPC_greeting_area_check(play);
     }
 
@@ -1145,3 +1323,120 @@ static void aNPC_talk_area_check(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->collision.turn_flag = turn;
 }
 #endif
+
+static int aNPC_regist_talk_actor_list_check(ACTOR* actorx) {
+    int ret = TRUE;
+
+    if (actorx != NULL) {
+        mActor_name_t npc_name = actorx->npc_id;
+
+        if (ITEM_NAME_GET_TYPE(npc_name) != NAME_TYPE_NPC && npc_name != SP_NPC_EV_KAMAKURA_0 && npc_name != SP_NPC_EV_SUMMERCAMP_0) {
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
+// @HACK - They must've had different enums for NPC vs NPC2 instead of ifdef directives
+#ifdef aNPC_NPC2
+#define aNPC_ACT_GREETING 7
+#endif
+
+extern void aNPC_regist_talk_actor_list(NPC_ACTOR* nactorx, NPC_ACTOR* second_nactorx) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    
+    if (!aNPC_regist_talk_actor_list_check((ACTOR*)nactorx)) {
+        nactorx = NULL;
+        second_nactorx = NULL;
+    } else if (second_nactorx != NULL) {
+        if (!aNPC_regist_talk_actor_list_check((ACTOR*)second_nactorx)) {
+            second_nactorx = NULL;
+        } else if (aNPC_IS_NRM_NPC(second_nactorx) && second_nactorx->action.idx != aNPC_ACT_GREETING) {
+            second_nactorx = NULL;
+        }
+    }
+
+    if (ctrl->talk_actor_list[0] == NULL) {
+        ctrl->talk_actor_list[0] = (ACTOR*)nactorx;
+    }
+
+    if (ctrl->talk_actor_list[1] == NULL) {
+        ctrl->talk_actor_list[1] = (ACTOR*)second_nactorx;
+    }
+}
+
+static void aNPC_unregist_all_talk_actor_list(void) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    int i;
+
+    for (i = 0; i < ARRAY_COUNT(ctrl->talk_actor_list); i++) {
+        ctrl->talk_actor_list[i] = NULL;
+    }
+}
+
+static ACTOR* aNPC_get_talk_actor_list(int type) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    return ctrl->talk_actor_list[type];
+}
+
+static int aNPC_chk_talk_actor_list(NPC_ACTOR* nactorx) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    int i;
+    int ret = -1;
+
+    for (i = 0; i < ARRAY_COUNT(ctrl->talk_actor_list); i++) {
+        if (ctrl->talk_actor_list[i] == (ACTOR*)nactorx) {
+            ret = i;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+static int aNPC_chk_group_talk(NPC_ACTOR* nactorx) {
+    int ret = FALSE;
+    ACTOR* talk_actor = aNPC_get_talk_actor_list(1);
+
+    if (talk_actor != NULL) {
+        ret = TRUE;
+    } else if (aNPC_IS_NRM_NPC(nactorx) && nactorx->action.idx == aNPC_ACT_GREETING) {
+        NPC_ACTOR* pal_actor = (NPC_ACTOR*)nactorx->palActor;
+
+        if (pal_actor != NULL && aNPC_IS_NRM_NPC(pal_actor) && pal_actor->action.idx == aNPC_ACT_GREETING) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static void aNPC_set_talk_now_actor(NPC_ACTOR* nactorx) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    ctrl->talk_now_actor = (ACTOR*)nactorx;
+}
+
+static NPC_ACTOR* aNPC_get_talk_now_actor(void) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    return (NPC_ACTOR*)ctrl->talk_now_actor;
+}
+
+static void aNPC_group_talk_chg_actor(void) {
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+
+    if (play != NULL && GET_PLAYER_ACTOR_ACTOR(play) != NULL) {
+        NPC_ACTOR* nactorx0 = (NPC_ACTOR*)aNPC_get_talk_actor_list(0);
+        NPC_ACTOR* nactorx1 = (NPC_ACTOR*)aNPC_get_talk_actor_list(1);
+        NPC_ACTOR* talk_actor = aNPC_get_talk_now_actor();
+
+        if (talk_actor != nactorx0) {
+            nactorx1 = nactorx0;
+        }
+
+        aNPC_set_talk_now_actor(nactorx1);
+        nactorx0->npc_info.animal_orig = nactorx1->npc_info.animal;
+        mPlib_Change_main_talk_data_talk_actor_p((ACTOR*)nactorx1);
+    }
+
+}

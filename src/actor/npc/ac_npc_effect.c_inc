@@ -1,3 +1,13 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
+
 static void aNPC_set_eff(GAME* game, NPC_ACTOR* nactorx, int effect_id, s16 arg0, s16 arg1) {
     ACTOR* actorx = (ACTOR*)nactorx;
     xyz_t pos;
@@ -13,8 +23,7 @@ typedef struct {
 } aNPC_effect_data_c;
 
 static void aNPC_set_feel_effect(GAME* game, NPC_ACTOR* nactorx) {
-    // @BUG - this should've been marked static
-    aNPC_effect_data_c effect_data[mNpc_FEEL_ALL_NUM] = {
+    static aNPC_effect_data_c eff_data[mNpc_FEEL_ALL_NUM] = {
         // clang-format off
         {eEC_EFFECT_KONPU, 0, 0},
         {eEC_EFFECT_KONPU, 0, 0},
@@ -29,20 +38,22 @@ static void aNPC_set_feel_effect(GAME* game, NPC_ACTOR* nactorx) {
     };
 
     aNPC_feel_effect_c* feel_effect_p = nactorx->draw.feel_effect;
-    aNPC_effect_data_c* data_p = &effect_data[feel_effect_p->feel_type];
+    aNPC_effect_data_c* data_p = &eff_data[feel_effect_p->feel_type];
     f32 feel_counter = nactorx->draw.feel_effect_counter;
     int set_num = feel_effect_p->set_num;
     u32* set_p = feel_effect_p->set_p;
 
-    while (set_num != 0) {
-        f32 tmp = (f32)*set_p - feel_counter;
+    if (data_p->effect_id != -1) {
+        while (set_num != 0) {
+            f32 tmp = (f32)*set_p - feel_counter;
 
-        if (tmp >= 0.0f && tmp < 0.5f) {
-            aNPC_set_eff(game, nactorx, data_p->effect_id, data_p->arg0, data_p->arg1);
+            if (tmp >= 0.0f && tmp < 0.5f) {
+                aNPC_set_eff(game, nactorx, data_p->effect_id, data_p->arg0, data_p->arg1);
+            }
+
+            set_p++;
+            set_num--;
         }
-
-        set_p++;
-        set_num--;
     }
 
     feel_counter += 0.5f;

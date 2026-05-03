@@ -52,7 +52,7 @@ static void aNPC_actor_init_for_special(ACTOR* actorx, GAME* game) {
             if (cloth != EMPTY_NO) {
                 NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
 
-                if (cloth == RSV_CLOTH && aNPC_GET_ANM(nactorx) == NULL) {
+                if (cloth == RSV_CLOTH1 && aNPC_GET_ANM(nactorx) == NULL) {
                     cloth = ITM_CLOTH_START;
                 }
 

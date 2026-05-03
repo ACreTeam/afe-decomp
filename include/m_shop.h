@@ -266,8 +266,10 @@ extern mActor_name_t mSP_SelectFishginPresent(int player_no);
 extern void mSP_SelectRandomItemToAGB();
 extern const char* mSP_ShopStatus2String(int status);
 extern mActor_name_t mSP_GetRandomStationToyItemNo();
+extern mActor_name_t mSP_get_directed_type_cloth_no(int type);
 
 extern void mSP_init_check_door(void);
+extern int mSP_force_opend(void);
 
 #ifdef __cplusplus
 }

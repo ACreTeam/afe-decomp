@@ -62,8 +62,13 @@ static void aNPC_sleep_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aNPC_sleep_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    aNPC_set_hide_flg(nactorx, aNPC_GET_ANM(nactorx)->is_home);
-    nactorx->right_hand.umbrella_disabled_flag = aNPC_GET_ANM(nactorx)->is_home;
+    Animal_c* animal = aNPC_GET_ANM(nactorx);
+
+    if (animal != NULL) {
+        aNPC_set_hide_flg(nactorx, animal->is_home);
+        nactorx->right_hand.umbrella_disabled_flag = animal->is_home;
+    }
+    
     nactorx->palActorIgnoreTimer = -1;
     nactorx->schedule.step = aNPC_SCHEDULE_SLEEP_STEP_SLEEP;
     aNPC_sleep_schedule_think_init(nactorx, play, aNPC_SCHEDULE_SLEEP_STEP_SLEEP);

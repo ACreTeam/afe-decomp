@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "ac_npc.h"
+#endif
+
 static int Player_actor_CheckController_forPickup(GAME* game) {
     if (mEv_IsTitleDemo()) {
         mPlayer_Controller_Data_c* data = mPlib_Get_controller_data_for_title_demo_p();
@@ -106,6 +112,21 @@ static int Player_actor_CheckController_forFan(GAME* game, int type) {
         } else {
             return chkButton(BUTTON_A);
         }
+    }
+
+    return FALSE;
+}
+
+static int Player_actor_CheckController_forCracker(GAME* game) {
+    ACTOR* actorx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+    s8 kind = Player_actor_Get_ItemKind(actorx, player->now_main_index);
+
+    if (mPlayer_ITEM_IS_CRACKER(kind) != FALSE) {
+        if (mEv_IsTitleDemo()) {
+            return mPlib_Get_controller_data_for_title_demo_p()->trigger_btn_a;
+        }
+        return chkTrigger(BUTTON_A);
     }
 
     return FALSE;

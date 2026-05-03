@@ -1,4 +1,14 @@
-//
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+
+#include "../src/actor/npc/ac_npc_data.c_inc"
+#endif
 
 static int aNPC_check_mask_cat_type(ACTOR* actorx) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
@@ -128,6 +138,8 @@ static void aNPC_set_left_hand_item(GAME* game, NPC_ACTOR* nactorx, int joint_id
     }
 }
 
+#include "../src/actor/npc/ac_npc_effect.c_inc"
+
 static void aNPC_set_foot_eff(GAME* game, NPC_ACTOR* nactorx, int joint_idx) {
     int idx;
 
@@ -148,17 +160,61 @@ static void aNPC_set_feel_eff(GAME* game, NPC_ACTOR* nactorx, int joint_idx) {
     }
 }
 
+static void aNPC_set_accessory_mtx_0(TOOLS_ACTOR* accessory, NPC_ACTOR* nactorx) {
+    aNPC_tool_draw_dt_c* tool_draw_dt_p = &aNPC_tool_draw_dt[aTOL_MTX_SET_TYPE_0][nactorx->npc_info.animal->race];
+    float inv_actor_scale = 1.0f / nactorx->actor_class.scale.x;
+    float accessory_scale = tool_draw_dt_p->scale;
+
+    Matrix_scale(inv_actor_scale, inv_actor_scale, inv_actor_scale, MTX_MULT);
+    Matrix_translate(tool_draw_dt_p->pos.x, tool_draw_dt_p->pos.y, tool_draw_dt_p->pos.z, MTX_MULT);
+    Matrix_RotateX(tool_draw_dt_p->rot_x, MTX_MULT);
+    Matrix_scale(accessory_scale, accessory_scale, accessory_scale, MTX_MULT);
+    Matrix_get(&accessory->matrix_work);
+    accessory->init_matrix = TRUE;
+}
+
+static void aNPC_set_accessory_mtx_1(TOOLS_ACTOR* accessory, NPC_ACTOR* nactorx) {
+    float inv_actor_scale = 1.0f / (nactorx->actor_class.scale.x * 100.0f);
+
+    Matrix_scale(inv_actor_scale, inv_actor_scale, inv_actor_scale, MTX_MULT);
+    Matrix_get(&accessory->matrix_work);
+    accessory->init_matrix = TRUE;
+}
+
 static void aNPC_set_accessory_mtx(NPC_ACTOR* nactorx, int joint_idx) {
     if (joint_idx == nactorx->accessory.pos_joint_idx) {
         TOOLS_ACTOR* accessory = (TOOLS_ACTOR*)nactorx->accessory.accessory;
+        int tool_type = nactorx->accessory.type;
 
         if (accessory != NULL) {
-            f32 scale = 1.0f / (nactorx->actor_class.scale.x * 100.0f);
+            Matrix_push();
+
+            switch (CLIP(tools_clip)->aTOL_get_mtx_set_type_proc(tool_type)) {
+                case aTOL_MTX_SET_TYPE_1:
+                    aNPC_set_accessory_mtx_0(accessory, nactorx);
+                    break;
+                case aTOL_MTX_SET_TYPE_2:
+                    aNPC_set_accessory_mtx_1(accessory, nactorx);
+                    break;
+            }
+
+            Matrix_pull();
+        }
+    }
+}
+
+static void aNPC_set_insect_mtx(NPC_ACTOR* nactorx, int joint_idx) {
+    if (joint_idx == aNPC_JOINT_FEEL) {
+        aINS_INSECT_ACTOR* insect_actor = (aINS_INSECT_ACTOR*)nactorx->insect_actor;
+        
+        if (insect_actor != NULL) {
+            float inv_scale;
 
             Matrix_push();
-            Matrix_scale(scale, scale, scale, MTX_MULT);
-            Matrix_get(&accessory->matrix_work);
-            accessory->init_matrix = TRUE;
+            inv_scale = 1.0f / (nactorx->actor_class.scale.x * 100.0f);
+            Matrix_scale(inv_scale, inv_scale, inv_scale, MTX_MULT);
+            Matrix_get(&insect_actor->tools_actor.matrix_work);
+            insect_actor->tools_actor.init_matrix = TRUE;
             Matrix_pull();
         }
     }
@@ -203,13 +259,13 @@ static int aNPC_actor_draw_after(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int
 
     (*after_proc[joint_idx])(game, nactorx, joint_idx);
     aNPC_set_accessory_mtx(nactorx, joint_idx);
+    aNPC_set_insect_mtx(nactorx, joint_idx);
     return TRUE;
 }
 
 static void aNPC_actor_draw_sub(ACTOR* actorx, GAME* game) {
     // clang-format off
     static Gfx xlu_env_disp[] = {
-        gsDPPipeSync(),
         gsSPLoadGeometryMode(G_ZBUFFER | G_SHADE | G_FOG | G_LIGHTING | G_SHADING_SMOOTH),
         gsDPSetOtherMode(G_AD_NOTPATTERN | G_CD_MAGICSQ | G_CK_NONE | G_TC_FILT | G_TF_BILERP | G_TT_RGBA16 | G_TL_TILE | G_TD_CLAMP | G_TP_PERSP | G_CYC_2CYCLE | G_PM_NPRIMITIVE, G_AC_NONE | G_ZS_PIXEL | G_RM_FOG_SHADE_A | G_RM_AA_ZB_XLU_SURF2),
         gsSPTexture(65535, 65535, 0, 0, G_ON),
@@ -241,7 +297,6 @@ static void aNPC_actor_draw_sub(ACTOR* actorx, GAME* game) {
 
                 gSPDisplayList(gfx++, xlu_env_disp);
                 if (ghost->alpha > 127) {
-                    gDPPipeSync(gfx++);
                     gDPSetRenderMode(gfx++,
                                      Z_CMP | Z_UPD | IM_RD | CVG_DST_FULL | ZMODE_XLU | FORCE_BL | G_RM_FOG_SHADE_A,
                                      Z_CMP | Z_UPD | IM_RD | CVG_DST_FULL | ZMODE_XLU | FORCE_BL |
@@ -254,6 +309,7 @@ static void aNPC_actor_draw_sub(ACTOR* actorx, GAME* game) {
                 xlu = FALSE;
                 _texture_z_light_fog_prim_npc(graph);
                 gfx = NOW_POLY_OPA_DISP;
+                break;
         }
 
         gDPSetTexEdgeAlpha(gfx++, 127);

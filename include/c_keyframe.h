@@ -488,6 +488,9 @@ extern void cKF_SkeletonInfo_R_AnimationMove_CulcTransToWorld(xyz_t* calc_pos, c
                                                               f32 trans_y, f32 trans_z, s16 angle_y, const xyz_t* scale,
                                                               cKF_SkeletonInfo_R_c* keyframe, int trans_flag);
 
+
+extern void cKF_SkeletonInfo_R_Multi_combine_play(int* state_tbl, cKF_SkeletonInfo_R_c** info_tbl, s8* part_table, int count);
+
 #ifdef __cplusplus
 }
 #endif

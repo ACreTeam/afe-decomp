@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 enum {
     aNPC_ACT_GET_STEP_MOVE,
     aNPC_ACT_GET_STEP_GET,
@@ -11,6 +18,8 @@ enum {
     aNPC_ACT_GET_STEP_RETURN,
     aNPC_ACT_GET_STEP_RETURN_WAIT,
     aNPC_ACT_GET_STEP_ESTIMATE,
+    aNPC_ACT_GET_STEP_PRESENTOPEN,
+    aNPC_ACT_GET_STEP_CHANGE2,
 
     aNPC_ACT_GET_STEP_NUM
 };
@@ -23,6 +32,29 @@ enum {
 
     aNPC_CLOTH_CHG_STEP_NUM
 };
+
+static void aNPC_act_get_end_step(NPC_ACTOR* nactorx) {
+    static u16 demo_code[] = {
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        2,
+        0,
+        0,
+        0,
+        3,
+        0,
+    };
+
+    int step = nactorx->action.step;
+    int demo_kind = aNPC_get_demo_kind((ACTOR*)nactorx);
+    mDemo_Set_OrderValue(demo_kind, 7, demo_code[step]);
+}
 
 static void aNPC_act_get_chg_step(NPC_ACTOR* nactorx, u8 step) {
     // clang-format off
@@ -39,6 +71,8 @@ static void aNPC_act_get_chg_step(NPC_ACTOR* nactorx, u8 step) {
         aNPC_ACTION_TYPE_GET_RETURN,
         aNPC_ACTION_TYPE_GET_RETURN,
         aNPC_ACTION_TYPE_ESTIMATE_F,
+        aNPC_ACTION_TYPE_PRESENTOPEN,
+        aNPC_ACTION_TYPE_GET_CHANGE2,
     };
     // clang-format on
 
@@ -56,12 +90,15 @@ static void aNPC_act_get_chg_step(NPC_ACTOR* nactorx, u8 step) {
         aNPC_ACTION_TYPE_GET_RETURN_F,
         aNPC_ACTION_TYPE_GET_RETURN_F,
         aNPC_ACTION_TYPE_ESTIMATE_F,
+        aNPC_ACTION_TYPE_PRESENTOPEN,
+        aNPC_ACTION_TYPE_GET_CHANGE2,
     };
     // clang-format on
 
     int check_for_fish = CLIP(handOverItem_clip)->master_actor == (ACTOR*)nactorx;
     u8 next_act_idx;
-
+    
+    aNPC_act_get_end_step(nactorx);
     switch (step) {
         case aNPC_ACT_GET_STEP_MOVE:
             nactorx->movement.demo_move_timer = 80;
@@ -136,24 +173,47 @@ static void aNPC_act_get(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aNPC_act_get_pull(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    static u8 next_step[] = {
-        aNPC_ACT_GET_STEP_EAT, // aHOI_REQUEST_EAT
-        aNPC_ACT_GET_STEP_CHG_CLOTH, // aHOI_REQUEST_CHANGE
-        aNPC_ACT_GET_STEP_PUTAWAY, // aHOI_REQUEST_PUTAWAY
-        aNPC_ACT_GET_STEP_PULL_WAIT, // aHOI_REQUEST_GET_PULL_WAIT
-    };
-
     if (nactorx->draw.main_animation_state == cKF_STATE_STOPPED) {
+        u8 step;
+        
+        if (CLIP(handOverItem_clip) == NULL) {
+            step = aNPC_ACT_GET_STEP_PUTAWAY;
+            CLIP(handOverItem_clip)->player_after_mode = aHOI_REQUEST_PUTAWAY;
+        } else {
+            switch (CLIP(handOverItem_clip)->player_after_mode) {
+                case aHOI_REQUEST_EAT:
+                    step = aNPC_ACT_GET_STEP_EAT;
+                    break;
+                case aHOI_REQUEST_CHANGE:
+                    step = aNPC_ACT_GET_STEP_CHG_CLOTH;
+                    break;
+                case aHOI_REQUEST_PUTAWAY:
+                    step = aNPC_ACT_GET_STEP_PUTAWAY;
+                    break;
+                case aHOI_REQUEST_GET_PULL_WAIT:
+                    step = aNPC_ACT_GET_STEP_PULL_WAIT;
+                    break;
+                case aHOI_REQUEST_PRESENTCHANGE:
+                    step = aNPC_ACT_GET_STEP_CHANGE2;
+                    aNPC_OngenTrgStart(nactorx, NA_SE_WEAR);
+                    break;
+                default:
+                    CLIP(handOverItem_clip)->player_after_mode = aHOI_REQUEST_PUTAWAY;
+                    step = aNPC_ACT_GET_STEP_PUTAWAY;
+                    break;
+            }
+        }
         CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)nactorx, CLIP(handOverItem_clip)->player_after_mode);
-        aNPC_act_get_chg_step(nactorx, next_step[CLIP(handOverItem_clip)->player_after_mode - aHOI_REQUEST_EAT]);
+        aNPC_act_get_chg_step(nactorx, step);
     }
 }
 
 static void aNPC_act_get_pull_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    aNPC_check_manpu_demoCode((ACTOR*)nactorx);
+    int demo_kind = aNPC_get_demo_kind((ACTOR*)nactorx);
+    aNPC_check_manpu_demoCode((ACTOR*)nactorx, demo_kind);
 
     if (nactorx->draw.main_animation_state == cKF_STATE_STOPPED || nactorx->draw.main_animation_state == cKF_STATE_CONTINUE) {
-        int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
+        int order = mDemo_Get_OrderValue(demo_kind, 1);
 
         if (order != 0) {
             u8 step = nactorx->action.step;
@@ -180,6 +240,10 @@ static void aNPC_act_get_pull_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
                     mode = aHOI_REQUEST_CHANGE;
                     step = aNPC_ACT_GET_STEP_CHG_CLOTH;
                     break;
+                case 16:
+                    mode = aHOI_REQUEST_PRESENTOPEN;
+                    step = aNPC_ACT_GET_STEP_PRESENTOPEN;
+                    break;
                 default:
                     mode = aHOI_REQUEST_RETURN;
                     break;
@@ -187,7 +251,7 @@ static void aNPC_act_get_pull_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             
             if (step != nactorx->action.step) {
                 CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)nactorx, mode);
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 0);
+                mDemo_Set_OrderValue(demo_kind, 1, 0);
                 aNPC_act_get_chg_step(nactorx, step);
             }
         }
@@ -328,7 +392,9 @@ static void aNPC_act_get_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 #endif
         &aNPC_act_get_return,
         &aNPC_act_trans_wait,
-        &aNPC_act_estimate
+        &aNPC_act_estimate,
+        &aNPC_act_estimate,
+        &aNPC_act_get_putaway,
     };
     // clang-format on
 
@@ -336,7 +402,8 @@ static void aNPC_act_get_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         aNPC_setup_talk_end(nactorx);
         nactorx->action.step = aNPC_ACTION_END_STEP;
     } else {
-        aNPC_check_feel_demoCode((ACTOR*)nactorx);
+        int demo_kind = aNPC_get_demo_kind((ACTOR*)nactorx);
+        aNPC_check_feel_demoCode((ACTOR*)nactorx, demo_kind);
         (*act_proc[nactorx->action.step])(nactorx, play);
     }
 }

@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "../src/actor/npc/ac_npc_data.c_inc"
+#endif
+
 static void aNPC_make_accessory(ACTOR* actorx, GAME* game, s16 type, s16 joint) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
 
@@ -10,6 +18,14 @@ static void aNPC_make_accessory(ACTOR* actorx, GAME* game, s16 type, s16 joint) 
             nactorx->accessory.accessory = acc_actor;
             xyz_t_move(&acc_actor->world.position, &actorx->world.position);
         }
+    }
+}
+
+static void aNPC_make_event_accessory(ACTOR* actorx, GAME* game) {
+    NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+
+    if (aNPC_IS_NRM_NPC(nactorx) && mEv_check_status(mEv_EVENT_TOY_DAY_JINGLE, mEv_STATUS_ACTIVE) == TRUE) {
+        aNPC_make_accessory(actorx, game, TOOL_HAT_CHRISTMAS1, aNPC_JOINT_FEEL);
     }
 }
 
@@ -239,7 +255,7 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
     mActor_name_t org_name = actorx->npc_id;
     mActor_name_t npc_name = org_name;
     aNPC_draw_data_c draw_data;
-
+    
     name_type = ITEM_NAME_GET_TYPE(actorx->npc_id);
     if (name_type != NAME_TYPE_NPC && name_type != NAME_TYPE_SPNPC) {
         Actor_delete(actorx);
@@ -248,23 +264,36 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
         mNpc_RenewalSetNpc(actorx);
     } else {
         NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
+        Animal_c* animal = aNPC_GET_ANM(nactorx);
+        mActor_name_t tex_name;
         cKF_Skeleton_R_c* skeleton;
         f32 scale;
         f32 eye_y;
 
-        aNPC_dma_draw_data_proc(&draw_data, org_name);
+        tex_name = org_name;
+        if (name_type == NAME_TYPE_SPNPC) {
+            mNpc_EventNpc_c* event_npc = mNpc_GetSameEventNpc(org_name);
+
+            if (event_npc != NULL && ITEM_NAME_GET_TYPE(event_npc->texture_id) == NAME_TYPE_NPC) {
+                tex_name = event_npc->texture_id;
+            }
+        }
+
+        aNPC_dma_draw_data_proc(&draw_data, tex_name);
         mem_copy((u8*)&nactorx->draw.draw_tex_data, (u8*)&draw_data.tex_data, sizeof(draw_data.tex_data));
         nactorx->talk_info.type = draw_data.talk_type;
         nactorx->draw.draw_type = draw_data.species_sub_idx;
 
-        if (aNPC_GET_ANM(nactorx) != NULL) {
-            nactorx->right_hand.umbrella_type = aNPC_GET_ANM(nactorx)->umbrella_id;
+        if (animal != NULL) {
+            nactorx->right_hand.umbrella_type = animal->umbrella_id;
         } else {
             nactorx->right_hand.umbrella_type = draw_data.umbrella_type;
         }
 
         if (draw_data.accessory_type != -1) {
             aNPC_make_accessory(actorx, game, draw_data.accessory_type, draw_data.accessory_joint);
+        } else {
+            aNPC_make_event_accessory(actorx, game);
         }
 
         skeleton = draw_data.model_skeleton;
@@ -277,6 +306,17 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
                               nactorx->draw.sub_animation0.morph);
         cKF_SkeletonInfo_R_ct(&nactorx->draw.sub_animation1.keyframe, skeleton, NULL, nactorx->draw.sub_animation1.work,
                               nactorx->draw.sub_animation1.morph);
+        cKF_SkeletonInfo_R_ct(&nactorx->draw.sub_animation2.keyframe, skeleton, NULL, nactorx->draw.sub_animation2.work,
+                              nactorx->draw.sub_animation2.morph);
+
+        {
+            aNPC_Animation_c* anim_p = aNPC_animeTable[aNPC_ANIM_NOMIKAKU1].anim_p;
+            cKF_SkeletonInfo_R_c* kf_p = &nactorx->draw.sub_animation2.keyframe;
+            float start_frame = anim_p->start_frame;
+            float end_frame = anim_p->end_frame;
+
+            cKF_SkeletonInfo_R_init(&nactorx->draw.sub_animation2.keyframe, nactorx->draw.sub_animation2.keyframe.skeleton, &anim_p->anim, start_frame, end_frame, start_frame, nactorx->draw.frame_speed, anim_p->morph_counter, anim_p->mode, NULL);
+        }
         Shape_Info_init(actorx, 0.0f, &mAc_ActorShadowEllipse, 9.0f, 17.0f);
         actorx->shape_info.ofs_y = 2.0f;
 
@@ -325,6 +365,7 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
         nactorx->movement.range_radius = 280.0f;
         nactorx->movement.movement_ut_x = -1;
         nactorx->movement.movement_ut_z = -1;
+        nactorx->movement.speed_percent = 1.0f;
 
         // @duplicate, already set above
         nactorx->action.idx = aNPC_ACT_NONE;
@@ -332,12 +373,15 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
 
         nactorx->think.force_call_msg_no = -1;
         nactorx->think.force_call_camera_type = CAMERA2_PROCESS_NORMAL;
+        nactorx->think.force_call_talk_turn = aNPC_TALK_TURN_NORMAL;
+        nactorx->think.force_call_able_hand_all_item_in_demo = FALSE;
 
         nactorx->talk_info.feel = 0xFF;
         nactorx->talk_info.memory = TRUE;
 
         nactorx->head.angle_add_x = 0x200;
         nactorx->head.angle_add_y = 0x400;
+        nactorx->head.max_look_angle = DEG2SHORT_ANGLE2(67.5f);
 
         nactorx->draw.frame_sub_speed = 1.0f;
 
@@ -350,11 +394,10 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
         aNPC_set_hide_flg(nactorx, TRUE);
 
         if (name_type == NAME_TYPE_NPC) {
-            Animal_c* animal = aNPC_GET_ANM(nactorx);
             mActor_name_t cloth = animal->cloth;
             u8 org_idx;
 
-            if (animal->cloth == RSV_CLOTH) {
+            if (animal->cloth == RSV_CLOTH1) {
                 org_idx = animal->cloth_original_id;
             } else {
                 org_idx = 0xFF;
@@ -372,6 +415,45 @@ static void aNPC_actor_ct(ACTOR* actorx, GAME* game, aNPC_ct_data_c* ct_data) {
 #endif
             nactorx->talk_info.melody_inst = draw_data.voice_type;
             nactorx->talk_info.npc_voice_id = draw_data.voice_type;
+
+            if (animal != NULL) {
+                mNpc_NpcList_c* list;
+
+                if (mNpc_CheckSickAnimal(animal) == TRUE) {
+                    nactorx->condition_info.sick_flg = TRUE;
+                }
+
+                list = nactorx->npc_info.list;
+                if (list != NULL) {
+                    int mem_idx;
+
+                    mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+                    if (mem_idx != -1) {
+                        s8* friendship_p = nactorx->condition_info.friendship;
+                        int friendship = 0;
+
+                        if (friendship_p != NULL) {
+                            friendship = *friendship_p;
+                        }
+
+                        if (friendship > 80) {
+                            if (list->conversation_flags.said_hello == FALSE) {
+                                list->conversation_flags.say_hello_roll = 6;
+                            } else {
+                                list->conversation_flags.say_hello_roll++;
+                            }
+                        }
+                    }
+
+                    if (list->conversation_flags.say_hello_roll >= 6) {
+                        if (RANDOM_F(1.0f) < 0.3f) {
+                            nactorx->condition_info.can_say_hello = TRUE;
+                        } else {
+                            list->conversation_flags.say_hello_roll = 6;
+                        }
+                    }
+                }
+            }
         } else {
             mNpc_EventNpc_c* event_npc = mNpc_GetSameEventNpc(org_name);
 

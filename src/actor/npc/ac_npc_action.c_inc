@@ -1,44 +1,79 @@
-// clang-format off
-static u8 aNPC_wait_action[] = {
-    aNPC_ACTION_TYPE_WAIT,
-    aNPC_ACTION_TYPE_WAIT_KI,
-    aNPC_ACTION_TYPE_WAIT_DO,
-    aNPC_ACTION_TYPE_WAIT_AI,
-    aNPC_ACTION_TYPE_WAIT_NEMU,
-    aNPC_ACTION_TYPE_WAIT,
-    aNPC_ACTION_TYPE_WAIT_DO,
-    aNPC_ACTION_TYPE_WAIT_AI,
-    aNPC_ACTION_TYPE_WAIT_DO,
-};
-// clang-format on
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "ac_ev_ghost.h"
+#include "m_rcp.h"
+#endif
 
-// clang-format off
-static u8 aNPC_walk_action[] = {
-    aNPC_ACTION_TYPE_WALK,
-    aNPC_ACTION_TYPE_WALK_KI,
-    aNPC_ACTION_TYPE_WALK_DO,
-    aNPC_ACTION_TYPE_WALK_AI,
-    aNPC_ACTION_TYPE_WALK,
-    aNPC_ACTION_TYPE_WALK,
-    aNPC_ACTION_TYPE_WALK_DO,
-    aNPC_ACTION_TYPE_WALK_AI,
-    aNPC_ACTION_TYPE_WALK_DO,
-};
-// clang-format on
+static u8 aNPC_get_wait_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 wait_action[] = {
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_WAIT_KI,
+        aNPC_ACTION_TYPE_WAIT_DO,
+        aNPC_ACTION_TYPE_WAIT_AI,
+        aNPC_ACTION_TYPE_WAIT_NEMU,
+        aNPC_ACTION_TYPE_WAIT,
+        aNPC_ACTION_TYPE_WAIT_DO,
+        aNPC_ACTION_TYPE_WAIT_AI,
+        aNPC_ACTION_TYPE_WAIT_DO,
+    };
+    // clang-format on
 
-// clang-format off
-static u8 aNPC_run_action[] = {
-    aNPC_ACTION_TYPE_RUN,
-    aNPC_ACTION_TYPE_RUN_KI,
-    aNPC_ACTION_TYPE_RUN_DO,
-    aNPC_ACTION_TYPE_RUN_AI,
-    aNPC_ACTION_TYPE_RUN,
-    aNPC_ACTION_TYPE_RUN,
-    aNPC_ACTION_TYPE_RUN_DO,
-    aNPC_ACTION_TYPE_RUN_AI,
-    aNPC_ACTION_TYPE_RUN_DO,
-};
-// clang-format on
+    switch (aNPC_check_sick(nactorx)) {
+        case 0:
+        case 1:
+            return aNPC_ACTION_TYPE_WAIT_SICK;
+        default:
+            return wait_action[step];
+    }
+}
+
+static u8 aNPC_get_walk_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 walk_action[] = {
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK_KI,
+        aNPC_ACTION_TYPE_WALK_DO,
+        aNPC_ACTION_TYPE_WALK_AI,
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK,
+        aNPC_ACTION_TYPE_WALK_DO,
+        aNPC_ACTION_TYPE_WALK_AI,
+        aNPC_ACTION_TYPE_WALK_DO,
+    };
+    // clang-format on
+
+    switch (aNPC_check_sick(nactorx)) {
+        case 0:
+            return aNPC_ACTION_TYPE_WALK_AI;
+        case 1:
+            return aNPC_ACTION_TYPE_WALK_SICK;
+        default:
+            return walk_action[step];
+    }
+}
+
+static u8 aNPC_get_run_action(NPC_ACTOR* nactorx, int step) {
+    // clang-format off
+    static u8 run_action[] = {
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN_KI,
+        aNPC_ACTION_TYPE_RUN_DO,
+        aNPC_ACTION_TYPE_RUN_AI,
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN,
+        aNPC_ACTION_TYPE_RUN_DO,
+        aNPC_ACTION_TYPE_RUN_AI,
+        aNPC_ACTION_TYPE_RUN_DO,
+    };
+    // clang-format on
+
+    return run_action[step];
+}
 
 static void aNPC_setup_stay_my_house(NPC_ACTOR* nactorx) {
     mNPS_schedule_c* sched_p = nactorx->npc_info.schedule;
@@ -89,45 +124,6 @@ static int aNPC_check_arrive_destination(NPC_ACTOR* nactorx) {
     }
 
     return ret;
-}
-
-static int aNPC_get_animal_idx(NPC_ACTOR* nactorx) {
-    Animal_c* target_animal = nactorx->npc_info.animal;
-    Animal_c* animal = Save_Get(animals);
-    int i;
-    int ret = -1;
-
-    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
-        if (animal == target_animal) {
-            ret = i;
-            break;
-        }
-
-        animal++;
-    }
-
-    return ret;
-}
-
-static void aNPC_set_relation(NPC_ACTOR* nactorx0, NPC_ACTOR* nactorx1, int add) {
-    Animal_c* animal = nactorx0->npc_info.animal;
-
-    if (animal != NULL) {
-        int other_idx = aNPC_get_animal_idx(nactorx1);
-
-        if (other_idx != -1) {
-            s8* relation_p = animal->animal_relations + other_idx;
-            int relation = *relation_p + add;
-
-            if (relation < 0) {
-                relation = 0;
-            } else if (relation > 255) {
-                relation = 255;
-            }
-
-            *relation_p = relation;
-        }
-    }
 }
 
 static void aNPC_set_feel_info(NPC_ACTOR* nactorx, int feel, int timer) {
@@ -413,10 +409,12 @@ static void aNPC_act_special_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type)
 #include "../src/actor/npc/ac_npc_act_revive.c_inc"
 #include "../src/actor/npc/ac_npc_act_react_tool.c_inc"
 #include "../src/actor/npc/ac_npc_act_clap.c_inc"
+#include "../src/actor/npc/ac_npc_act_say_hello.c_inc"
+#include "../src/actor/npc/ac_npc_act_nomi.c_inc"
 
 typedef void (*aNPC_ACT_PROC)(NPC_ACTOR* nactorx, GAME_PLAY* play, int type);
 
-static aNPC_ACT_PROC aNPC_act_proc[] = {
+static aNPC_ACT_PROC aNPC_act_proc[aNPC_ACT_NUM] = {
     &aNPC_act_wait_proc,  
     &aNPC_act_walk_proc,
     &aNPC_act_walk_proc,
@@ -434,6 +432,8 @@ static aNPC_ACT_PROC aNPC_act_proc[] = {
     &aNPC_act_talk_proc,
     &aNPC_act_react_tool_proc,
     &aNPC_act_clap_proc,
+    &aNPC_act_say_hello_proc,
+    &aNPC_act_nomi_goodbye_proc,
     &aNPC_act_trans_proc,
     &aNPC_act_get_proc,
     &aNPC_act_get_proc,

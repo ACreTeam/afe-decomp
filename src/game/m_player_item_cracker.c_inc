@@ -1,0 +1,25 @@
+#ifdef __INTELLISENSE__
+#include "m_player_lib.h"
+#endif
+
+static int Player_actor_Item_main_cracker_normal(ACTOR* actor, GAME* game) {
+    return 0;
+}
+
+static void Player_actor_Item_draw_cracker(ACTOR* actor, GAME* game) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
+    f32 current_frame = player->keyframe0.frame_control.current_frame;
+
+    if (mPlib_get_player_actor_main_index(game) != mPlayer_INDEX_PULL_CRACKER || !(current_frame >= 19.0f)) {
+        int type = player->item_shape_type[player->item_bank_idx];
+
+        OPEN_POLY_OPA_DISP(game->graph);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
+        gSPDisplayList(POLY_OPA_DISP++, mPlib_Get_Item_DataPointer(type));
+        CLOSE_POLY_OPA_DISP(game->graph);
+
+    }
+
+    player->item_rod_top_pos_set = FALSE;
+    player->balloon_start_pos_set_flag = FALSE;
+}

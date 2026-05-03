@@ -1,3 +1,15 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "ac_handOverItem.h"
+#include "sys_matrix.h"
+#include "m_rcp.h"
+#include "jsyswrap.h"
+#include "ac_ev_ghost.h"
+#endif
+
 static void aNPC_dma_cloth_data(ACTOR* actorx) {
     NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)actorx;
     aNPC_cloth_c* cloth = ctrl->cloth;
@@ -100,12 +112,13 @@ static int aNPC_get_same_cloth_data_area(aNPC_cloth_c* cloth, mActor_name_t item
 static int aNPC_dma_cloth_data_check(aNPC_cloth_c* cloth, mActor_name_t item, NPC_ACTOR* nactorx) {
     int idx;
 
-    if (item == RSV_CLOTH) {
+    if (item == RSV_CLOTH1) {
         idx = 1 + aNPC_CTRL_CLOTH_NUM;
     } else {
         idx = aNPC_get_same_cloth_data_area(cloth, item);
         if (idx != -1) {
             cloth[idx].init_flag = FALSE;
+            cloth[idx]._02 = 0;
             cloth[idx].in_use_count++;
         }
         idx += 1;
@@ -136,7 +149,7 @@ static int aNPC_get_no_use_cloth_data_area(aNPC_cloth_c* cloth) {
     int i;
 
     for (i = 0; i < aNPC_CTRL_CLOTH_NUM; i++) {
-        if (cloth->id != mSC_BANK_NONE && cloth->dma_flag == FALSE && cloth->init_flag == FALSE && cloth->in_use_count == 0) {
+        if (cloth->id != mSC_BANK_NONE && cloth->dma_flag == FALSE && cloth->init_flag == FALSE && cloth->_02 == 0 && cloth->in_use_count == 0) {
             return i;
         }
 
@@ -149,7 +162,7 @@ static int aNPC_get_no_use_cloth_data_area(aNPC_cloth_c* cloth) {
 static void aNPC_cancel_cloth_data(NPC_ACTOR* nactorx) {
     int idx = nactorx->draw.cloth_idx - 1;
 
-    if (idx >= 0 && idx < 9) {
+    if (idx >= 0 && idx < aNPC_CTRL_CLOTH_NUM) {
         NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
         aNPC_cloth_c* cloth = ctrl->cloth + idx;
 
@@ -158,12 +171,15 @@ static void aNPC_cancel_cloth_data(NPC_ACTOR* nactorx) {
 }
 
 static void aNPC_dma_regist_cloth_data(mActor_name_t item) {
-    if (item != RSV_CLOTH) {
+    if (item != RSV_CLOTH1) {
         NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
         aNPC_cloth_c* cloth = ctrl->cloth;
         int idx = aNPC_get_same_cloth_data_area(cloth, item);
 
-        if (idx == -1) {
+        if (idx != -1) {
+            cloth += idx;
+            cloth->_02 = TRUE;
+        } else {
             idx = aNPC_get_new_cloth_data_area(cloth);
             
             if (idx == -1) {
@@ -174,6 +190,7 @@ static void aNPC_dma_regist_cloth_data(mActor_name_t item) {
                 cloth += idx;
                 cloth->dma_flag = TRUE;
                 cloth->init_flag = TRUE;
+                cloth->_02 = TRUE;
                 cloth->in_use_count = 0;
                 cloth->cloth_item = item;
                 cloth->texture_bank._14 = 0;
@@ -193,7 +210,7 @@ static int aNPC_dma_regist_check_cloth_data(mActor_name_t item) {
     int i;
     int ret = FALSE;
 
-    if (item == RSV_CLOTH) {
+    if (item == RSV_CLOTH1) {
         return TRUE;
     }
 
@@ -260,7 +277,7 @@ static int aNPC_change_cloth_data(NPC_ACTOR* nactorx) {
         nactorx->draw.cloth_no = ITM_CLOTH000;
     }
 
-    if (cloth == RSV_CLOTH) {
+    if (cloth == RSV_CLOTH1) {
         nactorx->draw.cloth_idx = aNPC_CLOTH_IDX_ORG;
         ret = TRUE;
     } else {
@@ -269,7 +286,9 @@ static int aNPC_change_cloth_data(NPC_ACTOR* nactorx) {
 
         if (aNPC_dma_regist_check_cloth_data(cloth) == TRUE) {
             nactorx->draw.cloth_idx = aNPC_dma_cloth_data_check(ctrl->cloth, cloth, nactorx);
-            ret = TRUE;
+            if (nactorx->draw.cloth_idx != 0) {
+                ret = TRUE;
+            }
         }
     }
 
@@ -296,5 +315,18 @@ static void aNPC_setup_cloth(NPC_ACTOR* nactorx, mActor_name_t cloth, u8 org_idx
     if (animal != NULL) {
         animal->cloth = cloth;
         animal->cloth_original_id = org_idx;
+    }
+}
+
+static void aNPC_reserve_cloth_data(mActor_name_t cloth_name) {
+    NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;
+    aNPC_cloth_c* cloth = ctrl->cloth;
+    
+    if (cloth_name != RSV_CLOTH1) {
+        int idx = aNPC_get_same_cloth_data_area(cloth, cloth_name);
+
+        if (idx != -1) {
+            cloth[idx]._02 = TRUE;
+        }
     }
 }

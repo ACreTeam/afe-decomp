@@ -1,7 +1,14 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 static int aNPC_check_uzai_cross(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     int ret = FALSE;
 
-    if (nactorx->actor_class.player_distance_xz < mFI_UNIT_BASE_SIZE_F &&
+    if (nactorx->actor_class.player_distance_xz < nactorx->collision.pipe.attribute.pipe.radius + (mFI_UNIT_BASE_SIZE_F / 2) &&
         ABS(nactorx->actor_class.player_distance_y) < mFI_UNIT_BASE_SIZE_F) {
         if (!F32_IS_ZERO(gamePT->mcon.adjusted_pR)) {
             ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
@@ -43,6 +50,19 @@ static int aNPC_check_uzai(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         },
     };
     // clang-format on
+
+    static int base_idx_no_table[][2][2] = {
+        {
+            {0x80, 0x85},
+            {0x85, 0x8A},
+        },
+        {
+            {0x118, 0x11B},
+            {0x11B, 0x11E},
+        },
+    };
+
+    Animal_c* animal = nactorx->npc_info.animal;
     int ret = FALSE;
 
     if (mEv_IsTitleDemo() || (nactorx->condition_info.demo_flg & aNPC_COND_DEMO_SKIP_UZAI_CHECK)) {
@@ -54,9 +74,9 @@ static int aNPC_check_uzai(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         ret = TRUE;
     }
 
-    if (aNPC_IS_NRM_NPC(nactorx)) {
+    if (aNPC_IS_NRM_NPC(nactorx) && animal != NULL) {
         int mem_idx =
-            mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, nactorx->npc_info.animal->memories, ANIMAL_MEMORY_NUM);
+            mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
 
         if (mem_idx != -1 && (nactorx->condition_info.demo_flg & aNPC_COND_DEMO_SKIP_LOVE_CHECK) == 0) {
             int step = nactorx->condition_info.uzai_step;
@@ -73,11 +93,13 @@ static int aNPC_check_uzai(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
             if (step > max_uzai_cross[nactorx->condition_info.uzai_cross == 1] ||
                 nactorx->condition_info.uzai_tool == max_uzai_tool[nactorx->condition_info.uzai_cross == 1]) {
-                Animal_c* animal = nactorx->npc_info.animal;
                 int msg_no;
                 f32 msg_max = 5;
                 int pushed = FALSE;
                 int islander = FALSE;
+                int* base_idx_no_p;
+                int final_msg_no;
+                u8 looks;
 
                 if (mNpc_CheckIslandAnimal(animal) == TRUE) {
                     msg_max = 3;
@@ -86,15 +108,22 @@ static int aNPC_check_uzai(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
                 if (nactorx->condition_info.uzai_flag == 1) {
                     mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_HIT_NET);
-                    mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_HIT);
+
+                    if (mFI_CheckInIsland() == TRUE) {
+                        mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_HIT);
+                    }
                 } else {
-                    mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_PUSHED);
+                    if (mFI_CheckInIsland() == TRUE) {
+                        mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_PUSHED);
+                    }
                     nactorx->condition_info.uzai_flag = 2;
                     pushed = TRUE;
                 }
 
-                msg_no = base_msg_no_table[islander][animal->id.looks][pushed];
-                if (aNPC_force_call_req_proc(nactorx, msg_no + (int)RANDOM_F(msg_max)) == TRUE) {
+                looks = animal->id.looks;
+                msg_no = base_msg_no_table[islander][looks][pushed];
+                final_msg_no = msg_no + mQst_GetIdxTalkSelect(base_idx_no_table[islander][pushed][0], base_idx_no_table[islander][pushed][1], looks);
+                if (aNPC_force_call_req_proc(nactorx, final_msg_no) == TRUE) {
                     nactorx->condition_info.uzai_tool = 0;
                     nactorx->condition_info.uzai_cross = 1;
                     step = 0;
@@ -350,6 +379,19 @@ static int aNPC_chk_talk_start(NPC_ACTOR* nactorx) {
 
                 if (mDemo_IS_ACTOR_TALKING(actorx) || mDemo_IS_ACTOR_TALKING(palActor)) {
                     NPC_ACTOR* pal_nactorx = (NPC_ACTOR*)palActor;
+                    NPC_ACTOR* main_nactorx;
+                    NPC_ACTOR* second_nactorx;
+
+                    if (mDemo_IS_ACTOR_TALKING(actorx)) {
+                        main_nactorx = nactorx;
+                        second_nactorx = pal_nactorx;
+                    } else {
+                        main_nactorx = pal_nactorx;
+                        second_nactorx = nactorx;
+                    }
+
+                    aNPC_set_talk_now_actor(main_nactorx);
+                    aNPC_regist_talk_actor_list(main_nactorx, second_nactorx);
 
                     if (nactorx->palActor == palActor) {
                         nactorx->palActor = NULL;
@@ -381,17 +423,52 @@ static int aNPC_chk_talk_start(NPC_ACTOR* nactorx) {
     return ret;
 }
 
-static int aNPC_check_clap(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+static int aNPC_check_action_for_player(NPC_ACTOR* nactorx, GAME_PLAY* play, u8* act) {
     int ret = FALSE;
 
-    if (aNPC_IS_NRM_NPC(nactorx) && aNPC_get_feel_info(nactorx) == mNpc_FEEL_NORMAL) {
-        if (mPlib_check_player_actor_main_index_catch_insect((GAME*)play) ||
-            mPlib_check_player_actor_main_index_catch_fish((GAME*)play)) {
-            if (nactorx->actor_class.player_distance_xz < (3 * mFI_UNIT_BASE_SIZE_F)) {
-                s16 d_angle = nactorx->actor_class.shape_info.rotation.y - nactorx->actor_class.player_angle_y;
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        if (aNPC_get_feel_info(nactorx) == mNpc_FEEL_NORMAL && nactorx->actor_class.player_distance_xz < (3 * mFI_UNIT_BASE_SIZE_F)) {
+            s16 d_angle = nactorx->actor_class.shape_info.rotation.y - nactorx->actor_class.player_angle_y;
 
-                if (ABS(d_angle) < DEG2SHORT_ANGLE2(67.5f)) {
-                    ret = TRUE;
+            if (ABS(d_angle) < DEG2SHORT_ANGLE2(67.5f)) {
+                switch (nactorx->condition_info.move_type) {
+                    case aNPC_MOVE_TYPE_NORMAL:
+                    case aNPC_MOVE_TYPE_FRIEND:
+                    case aNPC_MOVE_TYPE_BEST_FRIEND:
+                        if (mPlib_check_player_actor_main_index_catch_insect((GAME*)play) ||
+                            mPlib_check_player_actor_main_index_catch_fish((GAME*)play)) {
+                            *act = aNPC_ACT_CLAP;
+                            ret = TRUE;
+                        }
+                        break;
+                }
+            }
+        }
+
+        if (ret == FALSE && nactorx->condition_info.can_say_hello == TRUE && Now_Private->destiny.type != mPr_DESTINY_UNPOPULAR && nactorx->actor_class.player_distance_xz < (3 * mFI_UNIT_BASE_SIZE_F + mFI_UNIT_BASE_SIZE_F / 2) && mDemo_CheckDemo() == FALSE) {
+            *act = aNPC_ACT_SAY_HELLO;
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static ACTOR* aNPC_check_balloon(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ACTOR* ret = NULL;
+
+    if (aNPC_IS_NRM_NPC(nactorx)) {
+        ACTOR* balloon = Actor_info_name_search(&play->actor_info, mAc_PROFILE_FUUSEN, ACTOR_PART_CONTROL);
+
+        if (balloon != NULL) {
+            float dx = balloon->world.position.x - nactorx->actor_class.world.position.x;
+            float dz = balloon->world.position.z - nactorx->actor_class.world.position.z;
+
+            if (SQ(dx) + SQ(dz) < SQ(200.0f)) {
+                s16 angle = atans_table(dz, dx);
+
+                if (ABS(angle) < DEG2SHORT_ANGLE2(67.5f)) {
+                    ret = (ACTOR*)balloon;
                 }
             }
         }
@@ -400,8 +477,8 @@ static int aNPC_check_clap(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     return ret;
 }
 
-static int aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    int ret = FALSE;
+static ACTOR* aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ACTOR* ret = NULL;
 
     if (aNPC_IS_NRM_NPC(nactorx)) {
         BALL_ACTOR* ball = (BALL_ACTOR*)Actor_info_name_search(&play->actor_info, mAc_PROFILE_BALL, ACTOR_PART_BG);
@@ -415,8 +492,50 @@ static int aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play) {
                 s16 angle = atans_table(dz, dx);
 
                 if (ABS(angle) < DEG2SHORT_ANGLE2(67.5f)) {
-                    ret = TRUE;
+                    ret = (ACTOR*)ball;
                 }
+            }
+        }
+    }
+
+    return ret;
+}
+
+static ACTOR* aNPC_check_gyoei(NPC_ACTOR* nactorx) {
+    ACTOR* ret = NULL;
+
+    if (CLIP(gyo_clip) != NULL) {
+        float x = nactorx->actor_class.world.position.x;
+        float z = nactorx->actor_class.world.position.z;
+        ACTOR* gyoei = CLIP(gyo_clip)->search_near_gyoei_proc(x, z);
+
+        if (gyoei != NULL) {
+            float dx = gyoei->world.position.x - x;
+            float dz = gyoei->world.position.z - z;
+
+            if (SQ(dx) + SQ(dz) < SQ(140.0f)) {
+                ret = gyoei;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static ACTOR* aNPC_check_insect(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ACTOR* ret = NULL;
+
+    if (CLIP(insect_clip) != NULL) {
+        float x = nactorx->actor_class.world.position.x;
+        float z = nactorx->actor_class.world.position.z;
+        ACTOR* insect = CLIP(insect_clip)->search_near_insect_proc(x, z, (GAME*)play);
+
+        if (insect != NULL) {
+            float dx = insect->world.position.x - x;
+            float dz = insect->world.position.z - z;
+
+            if (SQ(dx) + SQ(dz) < SQ(100.0f)) {
+                ret = insect;
             }
         }
     }
@@ -427,46 +546,16 @@ static int aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static int aNPC_check_insect_and_gyoei(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     static u16 req_gyo_data[aNPC_REQUEST_ARG_NUM] = { aNPC_ACT_OBJ_FISH, 0, 0, 0, 0, 0 };
     static u16 req_ins_data[aNPC_REQUEST_ARG_NUM] = { aNPC_ACT_OBJ_INSECT, 0, 0, 0, 0, 0 };
-    int ret = FALSE;
 
     if (aNPC_IS_NRM_NPC(nactorx) && aNPC_get_feel_info(nactorx) == mNpc_FEEL_NORMAL) {
-        f32 x = nactorx->actor_class.world.position.x;
-        f32 z = nactorx->actor_class.world.position.z;
-        f32 dx;
-        f32 dz;
-        f32 dist;
-        ACTOR* target = NULL;
-
-        if (CLIP(gyo_clip) != NULL) {
-            target = CLIP(gyo_clip)->search_near_gyoei_proc(x, z);
-        }
-
-        if (target != NULL) {
-            dx = target->world.position.x - x;
-            dz = target->world.position.z - z;
-            dist = SQ(dx) + SQ(dz);
-
-            if (dist < SQ(140.0f)) {
-                aNPC_set_request_act(nactorx, 1, aNPC_ACT_CHASE_GYOEI, aNPC_ACT_TYPE_SEARCH, req_gyo_data);
-                ret = TRUE;
-            }
-        } else if (CLIP(insect_clip) != NULL) {
-            target = CLIP(insect_clip)->search_near_insect_proc(x, z, (GAME*)play);
-
-            if (target != NULL) {
-                dx = target->world.position.x - x;
-                dz = target->world.position.z - z;
-                dist = SQ(dx) + SQ(dz);
-
-                if (dist < SQ(100.0f)) {
-                    aNPC_set_request_act(nactorx, 1, aNPC_ACT_CHASE_INSECT, aNPC_ACT_TYPE_SEARCH, req_ins_data);
-                    ret = TRUE;
-                }
-            }
+        if (aNPC_check_gyoei(nactorx) != NULL) {
+            aNPC_set_request_act(nactorx, 1, aNPC_ACT_CHASE_GYOEI, aNPC_ACT_TYPE_SEARCH, req_gyo_data);
+        } else if (aNPC_check_insect(nactorx, play) != NULL) {
+            aNPC_set_request_act(nactorx, 1, aNPC_ACT_CHASE_INSECT, aNPC_ACT_TYPE_SEARCH, req_ins_data);
         }
     }
 
-    return ret;
+    return FALSE;
 }
 
 static int aNPC_check_fatigue(NPC_ACTOR* nactorx) {
@@ -576,11 +665,11 @@ static int aNPC_love_player(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static int aNPC_chk_friendship_lv(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     int ret = FALSE;
 
-    switch (aNPC_chk_avoid_and_search(nactorx, play)) {
-        case aNPC_FRIENDSHIP_AVOID:
+    switch (nactorx->condition_info.move_type) {
+        case aNPC_MOVE_TYPE_HATED:
             ret = aNPC_hate_player(nactorx);
             break;
-        case aNPC_FRIENDSHIP_SEARCH:
+        case aNPC_MOVE_TYPE_BEST_FRIEND:
             ret = aNPC_love_player(nactorx, play);
             break;
     }
@@ -638,6 +727,7 @@ static int aNPC_think_chk_interrupt_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     static u16 aNPC_req_ball_search_data[aNPC_REQUEST_ARG_NUM] = { aNPC_ACT_OBJ_BALL, 0, 0, 0, 0, 0 };
     // clang-format on
     int ret = FALSE;
+    u8 act;
 
     if (aNPC_chk_talk_start(nactorx) == TRUE) {
         ret = TRUE;
@@ -654,11 +744,14 @@ static int aNPC_think_chk_interrupt_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             if (aNPC_check_uzai(nactorx, play) == TRUE) {
                 aNPC_set_request_act(nactorx, 2, aNPC_ACT_REACT_TOOL, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
                 ret = TRUE;
+            } else if (nactorx->remove_insect == TRUE) {
+                aNPC_set_request_act(nactorx, 1, aNPC_ACT_NOMI_GOODBYE, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
+                ret = TRUE;
             } else if (aNPC_check_entrance(nactorx) == TRUE) {
                 ret = TRUE;
             } else if (!F32_IS_ZERO(nactorx->actor_class.speed)) {
-                if (aNPC_check_clap(nactorx, play) == TRUE) {
-                    aNPC_set_request_act(nactorx, 1, aNPC_ACT_CLAP, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
+                if (aNPC_check_action_for_player(nactorx, play, &act) == TRUE) {
+                    aNPC_set_request_act(nactorx, 1, act, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
                     ret = TRUE;
                 } else if (aNPC_check_fatigue(nactorx) == TRUE) {
                     aNPC_set_request_act(nactorx, 1, aNPC_ACT_WAIT, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
@@ -679,15 +772,15 @@ static int aNPC_think_chk_interrupt_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
                     ret = TRUE;
                 } else if (aNPC_avoid_obstacle(nactorx) == TRUE) {
                     ret = TRUE;
-                } else if (aNPC_check_ball(nactorx, play) == TRUE) {
+                } else if (aNPC_check_ball(nactorx, play) != NULL) {
                     aNPC_set_request_act(nactorx, 1, aNPC_ACT_RUN, aNPC_ACT_TYPE_SEARCH, aNPC_req_ball_search_data);
                     ret = TRUE;
                 } else if (aNPC_check_insect_and_gyoei(nactorx, play) == TRUE) {
                     ret = TRUE;
                 }
             } else {
-                if (aNPC_check_clap(nactorx, play) == TRUE) {
-                    aNPC_set_request_act(nactorx, 1, aNPC_ACT_CLAP, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
+                if (aNPC_check_action_for_player(nactorx, play, &act) == TRUE) {
+                    aNPC_set_request_act(nactorx, 1, act, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
                     ret = TRUE;
                 }
             }

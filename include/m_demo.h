@@ -219,6 +219,7 @@ extern void mDemo_KeepCamera(int camera_type);
 
 #define mDemo_CAN_ACTOR_TALK(actor) (!mDemo_Check(mDemo_TYPE_SPEAK, (actor)) && !mDemo_Check(mDemo_TYPE_TALK, (actor)))
 #define mDemo_IS_ACTOR_TALKING(actor) (mDemo_Check(mDemo_TYPE_SPEAK, (actor)) == TRUE || mDemo_Check(mDemo_TYPE_TALK, (actor)) == TRUE)
+#define mDemo_IS_ANY_TALK_DEMO(actor) ( mDemo_Check(mDemo_TYPE_SPEAK, (actor)) == TRUE || mDemo_Check(mDemo_TYPE_SPEECH, (actor)) == TRUE || mDemo_Check(mDemo_TYPE_TALK, (actor)) == TRUE)
 #define mDemo_CHECK_SCROLL(actor) (mDemo_Check(mDemo_TYPE_SCROLL, (actor)) || mDemo_Check(mDemo_TYPE_SCROLL2, (actor)) || mDemo_Check(mDemo_TYPE_SCROLL3, (actor)))
 #define mDemo_IS_EVENT_DEMO(type) (mDemo_TYPE_16 > (type) && (type) >= mDemo_TYPE_EVENTMSG)
 

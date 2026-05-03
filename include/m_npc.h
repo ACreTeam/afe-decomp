@@ -151,6 +151,16 @@ enum {
     mNpc_SPECIES_NUM
 };
 
+enum {
+    mNpc_RELATION_LOVE,
+    mNpc_RELATION_LIKE,
+    mNpc_RELATION_NORMAL,
+    mNpc_RELATION_DISLIKE,
+    mNpc_RELATION_HATE,
+
+    mNpc_RELATION_NUM
+};
+
 /* sizeof(Anmremail_c) == 0x16 */
 typedef struct animal_remail_s {
     lbRTC_ymd_c date;             /* date sent */
@@ -296,7 +306,9 @@ typedef struct npc_conversation_s {
     u8 beesting : 1;        // talk to player about their beesting
     u8 fish_complete : 1;   // talk to the player about catching all fish
     u8 insect_complete : 1; // talk to the player about catching all insects
-    u8 unk : 5;
+    u8 say_hello_roll : 3;
+    u8 said_hello : 1;
+    u8 spoke_halloween : 1;
 } mNpc_NpcConversation_c;
 
 /* sizeof(mNpc_NpcList_c) == 0x28 */
@@ -306,7 +318,7 @@ typedef struct npc_list_s {
     /* 0x04 */ xyz_t house_position;
     /* 0x10 */ xyz_t position;
     /* 0x1C */ u8 appear_flag;
-    /* 0x1D */mNpc_NpcConversation_c conversation_flags;
+    /* 0x1D */ mNpc_NpcConversation_c conversation_flags;
     // mQst_base_c quest_info;
     /* 0x1E */ mNpc_NpcHouseData_c house_data;
     /* 0x26 */ mActor_name_t reward_furniture;
@@ -336,6 +348,17 @@ typedef struct npc_default_data_s {
     u16 catchphrase_str_idx;
     s8 umbrella;
 } mNpc_Default_Data_c;
+
+enum __sick_level__ {
+    mNpc_SICK_LV5,
+    mNpc_SICK_LV4,
+    mNpc_SICK_LV3,
+    mNpc_SICK_LV2,
+    mNpc_SICK_LV1,
+    mNpc_SICK_LV_NOT_SICK,
+
+    mNpc_SICK_LV_NUM = mNpc_SICK_LV_NOT_SICK
+};
 
 /* sizeof(mNpc_SickInfo_c) == 0x80 */
 typedef struct npc_sick_info_s {
@@ -557,6 +580,11 @@ extern void mNpc_EraseIslandAnimal(int island_idx);
 extern void mNpc_RenewRemoveHistory(void);
 extern int mNpc_GetSickAnimalIdx(void);
 extern int mNpc_CheckSickAnimal(Animal_c* animal);
+extern int mNpc_GetSickLevel(void);
+extern int mNpc_GetRelationAnimal(Animal_c* animal0, Animal_c* animal1);
+extern void mNpc_AddRelationPoint(Animal_c* animal0, Animal_c* animal1, int point);
+extern u8 mNpc_GetDefAnimalClothHAttr(Animal_c* animal);
+extern u8 mNpc_GetDefAnimalClothLAttr(Animal_c* animal);
 
 #ifdef __cplusplus
 }

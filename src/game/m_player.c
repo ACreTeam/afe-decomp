@@ -125,6 +125,7 @@ static int Player_actor_check_able_request_main_index_for_reset(int request_main
 static void Player_actor_putin_item(int slot, mActor_name_t item, xyz_t* pos_p);
 static void Player_actor_putin_item_layer2(int slot, mActor_name_t item, xyz_t* pos_p);
 static void Player_actor_putin_furniture(GAME* game, int slot, mActor_name_t item);
+static int Player_actor_Check_reflect(GAME* game, const xyz_t* pos);
 
 static void Player_actor_sound_SetStatus(ACTOR* actor);
 static void Player_actor_set_sound_common1(xyz_t* pos, u16 id);
@@ -352,6 +353,7 @@ static int Player_actor_request_main_notice_mosquito(GAME* game, u32 label, int 
 static int Player_actor_request_main_demo_geton_boat_sitdown_all(GAME* game, int prio);
 static int Player_actor_request_main_demo_geton_boat_wait_all(GAME* game, int prio);
 static int Player_actor_request_main_demo_getoff_boat_all(GAME* game, const xyz_t* pos_p, s16 angle_y, int prio);
+static int Player_actor_request_main_pull_cracker_all(GAME* game, int prio);
 
 /* Tool Models */
 #include "../src/game/m_player_tools.c_inc"
@@ -373,6 +375,8 @@ static int Player_actor_request_main_demo_getoff_boat_all(GAME* game, const xyz_
 #include "../src/game/m_player_item_balloon.c_inc"
 #include "../src/game/m_player_item_windmill.c_inc"
 #include "../src/game/m_player_item_fan.c_inc"
+#include "../src/game/m_player_item_cracker.c_inc"
+#include "../src/game/m_player_item_flower.c_inc"
 #include "../src/game/m_player_item.c_inc"
 
 /* Draw */
@@ -597,6 +601,7 @@ static void Player_actor_init_value(ACTOR* actorx, GAME* game) {
     player->check_cancel_event_without_priority_proc = &Player_actor_check_cancel_event_without_priority;
     player->Check_able_force_speak_label_proc = &Player_actor_Check_able_force_speak_label;
     player->Check_stung_mosquito_proc = &Player_actor_Check_stung_mosquito;
+    player->Check_reflect_proc = &Player_actor_Check_reflect;
 
     {
         int* shake_tree_table_ut_x_p = player->shake_tree_ut_x;
@@ -609,16 +614,6 @@ static void Player_actor_init_value(ACTOR* actorx, GAME* game) {
         }
     }
 
-// TODO: I don't like this deviation between 1.3.2/US AC and 2.0/Aus AC
-#if VERSION >= VER_GAFU01_00
-    {
-        int i;
-
-        for (i = 0; i < 8; i++) {
-            player->radio_exercise_command_ring_buffer[i] = -1;
-        }
-    }
-#else
     {
         s8* radio_exercise_command_ring_buffer_p = player->radio_exercise_command_ring_buffer;
         int i;
@@ -627,7 +622,6 @@ static void Player_actor_init_value(ACTOR* actorx, GAME* game) {
             *radio_exercise_command_ring_buffer_p++ = -1;
         }
     }
-#endif
 
     Player_actor_Set_old_sound_frame_counter(actorx);
 }

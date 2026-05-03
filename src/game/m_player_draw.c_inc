@@ -111,8 +111,9 @@ static void Player_actor_draw_After_feel(ACTOR* actorx, GAME* game, cKF_Skeleton
     Matrix_Position_Zero(feel_pos);
     if (player->draw_effect_idx > 0) {
         Common_Get(clip).effect_clip->effect_make_proc(player->draw_effect_idx - 1, *feel_pos, 2,
-                                                       player->actor_class.shape_info.rotation.y, game, RSV_NO, 0, 0);
+                                                       player->actor_class.shape_info.rotation.y, game, RSV_NO, 0, player->draw_effect_arg1);
         player->draw_effect_idx = 0;
+        player->draw_effect_arg1 = 0;
     }
 
     if (mPlib_get_player_actor_main_index(game) == mPlayer_INDEX_WASH_CAR) {

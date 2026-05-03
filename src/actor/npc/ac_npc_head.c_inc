@@ -1,3 +1,21 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#endif
+
+static void aNPC_move_head(NPC_ACTOR* nactorx, s16 angle_x, s16 angle_y, s_xyz* lock_angle) {
+    if (nactorx->head.lock_flag & aNPC_HEAD_LOCK_X) {
+        angle_x = lock_angle->y;
+    }
+    if (nactorx->head.lock_flag & aNPC_HEAD_LOCK_Y) {
+        angle_y = lock_angle->x;
+    }
+
+    chase_angle(&nactorx->head.angle_x, angle_x, nactorx->head.angle_add_x);
+    chase_angle(&nactorx->head.angle_y, angle_y, nactorx->head.angle_add_y);
+}
+
 static int aNPC_check_look_range(NPC_ACTOR* nactorx, xyz_t* pos_p) {
     ACTOR* parent = nactorx->actor_class.parent_actor;
     int ret = FALSE;
@@ -9,7 +27,7 @@ static int aNPC_check_look_range(NPC_ACTOR* nactorx, xyz_t* pos_p) {
     }
 
     angleY -= actor_angleY;
-    if (ABS(angleY) < DEG2SHORT_ANGLE2(67.5f)) {
+    if (ABS(angleY) < nactorx->head.max_look_angle) {
         ret = TRUE;
     }
 
@@ -30,7 +48,7 @@ static ACTOR* aNPC_check_look_player(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         }
 
         angleY = nactorx->actor_class.player_angle_y - actor_angleY;
-        if (ABS(angleY) < DEG2SHORT_ANGLE2(67.5f)) {
+        if (ABS(angleY) < nactorx->head.max_look_angle) {
             playerx = GET_PLAYER_ACTOR_ACTOR(play);
         }
     }
@@ -79,7 +97,26 @@ static void aNPC_look_target(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     ACTOR* target = NULL;
     u8 prio = 1;
 
-    if (nactorx->palActor != NULL) {
+    if (aNPC_IS_NRM_NPC(nactorx) && aNPC_chk_group_talk(nactorx) == TRUE) {
+        if (nactorx->talk_info.turn != aNPC_TALK_TURN_NONE) {
+            switch (nactorx->talk_info.look_target & 0xF) {
+                case 0:
+                    target = nactorx->palActor;
+                    prio = 4;
+                    break;
+                case 1: {
+                    int type = aNPC_chk_talk_actor_list(nactorx);
+
+                    if (type == aNPC_TALK_GROUP_0) {
+                        target = aNPC_get_talk_actor_list(aNPC_TALK_GROUP_1);
+                    } else {
+                        target = aNPC_get_talk_actor_list(aNPC_TALK_GROUP_0);
+                    }
+                    prio = 4;
+                } break;
+            }
+        }
+    } else if (nactorx->palActor != NULL) {
         switch (nactorx->action.idx) {
 #ifndef aNPC_NPC2
             case aNPC_ACT_GREETING:
@@ -122,7 +159,7 @@ static int aNPC_check_condition_search_eye(NPC_ACTOR* nactorx) {
     return aNPC_get_feel_info(nactorx) != mNpc_FEEL_SLEEPY;
 }
 
-static void aNPC_search_eye_target_sub(NPC_ACTOR* nactorx, xyz_t* target_eye, xyz_t* target_pos, s_xyz* angle) {
+static void aNPC_search_eye_target_sub(NPC_ACTOR* nactorx, xyz_t* target_eye, xyz_t* target_pos, s_xyz* angle, s_xyz* lock_angle) {
     s16 angleX = -search_position_angleX(&nactorx->actor_class.eye.position, target_eye);
     s16 angleY = search_position_angleY(&nactorx->actor_class.world.position, target_pos);
 
@@ -133,20 +170,19 @@ static void aNPC_search_eye_target_sub(NPC_ACTOR* nactorx, xyz_t* target_eye, xy
         angleX = DEG2SHORT_ANGLE2(-33.75f);
     }
 
-    if (ABS(angleY) > DEG2SHORT_ANGLE2(67.5f)) {
+    if (ABS(angleY) > nactorx->head.max_look_angle) {
         if (angleY < 0) {
-            angleY = DEG2SHORT_ANGLE2(-67.5f);
+            angleY = -nactorx->head.max_look_angle;
         } else {
-            angleY = DEG2SHORT_ANGLE2(67.5f);
+            angleY = nactorx->head.max_look_angle;
         }
     }
 
-    chase_angle(&nactorx->head.angle_x, angleX, nactorx->head.angle_add_x);
-    chase_angle(&nactorx->head.angle_y, angleY, nactorx->head.angle_add_y);
+    aNPC_move_head(nactorx, angleX, angleY, lock_angle);
 }
 
 static void aNPC_search_eye_target(NPC_ACTOR* nactorx, GAME_PLAY* play, s_xyz* world_angle, s_xyz* joint_angle) {
-    if (nactorx->head.lock_flag == FALSE) {
+    if (nactorx->head.lock_flag != aNPC_HEAD_LOCK_BOTH) {
         aNPC_look_target(nactorx, play);
     }
 
@@ -163,20 +199,19 @@ static void aNPC_search_eye_target(NPC_ACTOR* nactorx, GAME_PLAY* play, s_xyz* w
             case aNPC_HEAD_TARGET_ACTOR: {
                 ACTOR* target = nactorx->head.target;
 
-                aNPC_search_eye_target_sub(nactorx, &target->eye.position, &target->world.position, world_angle);
+                aNPC_search_eye_target_sub(nactorx, &target->eye.position, &target->world.position, world_angle, joint_angle);
                 break;
             }
 
             case aNPC_HEAD_TARGET_POS: {
                 xyz_t* pos = &nactorx->head.pos;
 
-                aNPC_search_eye_target_sub(nactorx, pos, pos, world_angle);
+                aNPC_search_eye_target_sub(nactorx, pos, pos, world_angle, joint_angle);
                 break;
             }
 
             default: {
-                chase_angle(&nactorx->head.angle_x, joint_angle->y, nactorx->head.angle_add_x);
-                chase_angle(&nactorx->head.angle_y, joint_angle->x, nactorx->head.angle_add_y);
+                aNPC_move_head(nactorx, joint_angle->y, joint_angle->x, joint_angle);
                 break;
             }
         }

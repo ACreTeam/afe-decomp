@@ -14,22 +14,18 @@
 #include "m_melody.h"
 #include "ac_ball.h"
 #include "m_actor_shadow.h"
+#include "m_font.h"
 
 extern aNPC_draw_data_c npc_draw_data_tbl[];
 
 #define aNPC_CLOTH_TEX_SIZE ((32*32)/2)
 #define aNPC_CLOTH_PAL_SIZE (16*sizeof(u16))
 
-#define aNPC_GET_TYPE(npc) (ITEM_NAME_GET_TYPE((npc)->actor_class.npc_id))
-#define aNPC_IS_NRM_NPC(npc) (aNPC_GET_TYPE(npc) == NAME_TYPE_NPC)
-#define aNPC_IS_SP_NPC(npc) (aNPC_GET_TYPE(npc) == NAME_TYPE_SPNPC)
-#define aNPC_GET_ANM(npc) ((npc)->npc_info.animal)
-#define aNPC_GET_LOOKS(npc) (aNPC_GET_ANM(npc)->id.looks)
-
 typedef struct npc_control_cloth_s {
     /* 0x00 */ u8 dma_flag;
     /* 0x01 */ u8 init_flag;
-    /* 0x02 */ s16 _02;
+    /* 0x02 */ u8 _02;
+    /* 0x03 */ u8 _03;
     /* 0x04 */ mActor_name_t cloth_item;
     /* 0x06 */ s8 in_use_count;
     /* 0x07 */ u8 id;
@@ -55,6 +51,8 @@ typedef struct npc_control_actor_s {
     /* 0x9CC */ int door_exit_timer;
     /* 0x9D0 */ ACTOR* umbrella_open_actor;
     /* 0x9D4 */ int umbrella_open_timer;
+    /* 0x9D8 */ ACTOR* talk_actor_list[2];
+    /* 0x9E0 */ ACTOR* talk_now_actor;
 } NPC_CONTROL_ACTOR;
 
 static aNPC_Clip_c aNPC_clip;
@@ -106,6 +104,20 @@ static void aNPC_think_in_block_chg_native_info(ACTOR* actorx, f32 home_x, f32 h
 static int aNPC_check_home_block(NPC_ACTOR* nactorx);
 static void aNPC_set_schedule(NPC_ACTOR* nactorx, GAME_PLAY* play);
 static void aNPC_dma_draw_data_proc(aNPC_draw_data_c* draw_data_p, mActor_name_t npc_name);
+static int aNPC_check_talk_now(NPC_ACTOR* nactorx);
+static int aNPC_chk_group_talk(NPC_ACTOR* nactorx);
+static NPC_ACTOR* aNPC_get_talk_now_actor(void);
+static void aNPC_set_talk_now_actor(NPC_ACTOR* nactorx);
+static int aNPC_chk_talk_actor_list(NPC_ACTOR* nactorx);
+static ACTOR* aNPC_get_talk_actor_list(int type);
+static void aNPC_regist_talk_actor_list(NPC_ACTOR* nactorx, NPC_ACTOR* second_nactorx);
+static void aNPC_unregist_all_talk_actor_list(void);
+static ACTOR* aNPC_check_balloon(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static ACTOR* aNPC_check_ball(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static ACTOR* aNPC_check_gyoei(NPC_ACTOR* nactorx);
+static ACTOR* aNPC_check_insect(NPC_ACTOR* nactorx, GAME_PLAY* play);
+static void aNPC_talk_demo_proc(ACTOR* actorx, GAME* game);
+static void aNPC_group_talk_chg_actor(void);
 
 #include "../src/actor/npc/ac_npc_data.c_inc"
 #include "../src/actor/npc/ac_npc_cloth.c_inc"
@@ -116,7 +128,6 @@ static void aNPC_dma_draw_data_proc(aNPC_draw_data_c* draw_data_p, mActor_name_t
 #include "../src/actor/npc/ac_npc_talk.c_inc"
 #include "../src/actor/npc/ac_npc_move.c_inc"
 #include "../src/actor/npc/ac_npc_draw.c_inc"
-#include "../src/actor/npc/ac_npc_effect.c_inc"
 #include "../src/actor/npc/ac_npc_action.c_inc"
 #include "../src/actor/npc/ac_npc_think.c_inc"
 #include "../src/actor/npc/ac_npc_schedule.c_inc"

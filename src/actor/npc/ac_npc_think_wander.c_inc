@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 static int aNPC_think_wander_check_ones_way(NPC_ACTOR* nactorx, u16* arg_data) {
     s16 angle;
     s16 d_angle;
@@ -192,9 +199,9 @@ static void aNPC_think_wander_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     mFI_Wpos2UtNum_inBlock(&ux, &uz, nactorx->actor_class.world.position);
     if (ux == 0 || ux == (UT_X_NUM - 1) || uz == 0 || uz == (UT_Z_NUM - 1)) {
         aNPC_think_in_block_chg_native_info((ACTOR*)nactorx, nactorx->actor_class.world.position.x, nactorx->actor_class.world.position.z);
-        nactorx->movement.range_type = aNPC_MOVE_RANGE_TYPE_BLOCK;
         nactorx->movement.range_center_x = (0.5f + nactorx->actor_class.block_x) * mFI_BK_WORLDSIZE_X_F;
         nactorx->movement.range_center_z = (0.5f + nactorx->actor_class.block_z) * mFI_BK_WORLDSIZE_Z_F;
+        nactorx->movement.range_type = aNPC_MOVE_RANGE_TYPE_BLOCK;
     }
 
     nactorx->condition_info.demo_flg = 0;

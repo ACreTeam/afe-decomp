@@ -255,6 +255,8 @@ extern void mQst_NextSnowman(xyz_t snowman_pos);
 extern void mQst_BackSnowman(xyz_t snowman_pos);
 extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint);
 
+extern int mQst_GetIdxTalkSelect(int lower_bound, int upper_bound, int looks);
+
 #ifdef __cplusplus
 }
 #endif

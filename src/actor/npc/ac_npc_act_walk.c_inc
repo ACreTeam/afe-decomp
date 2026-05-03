@@ -9,9 +9,9 @@ static void aNPC_act_walk_setupAction(NPC_ACTOR* nactorx, u8 feel) {
     
     nactorx->action.feel = feel;
     if (nactorx->action.idx == aNPC_ACT_WALK) {
-        act = aNPC_walk_action[feel];
+        act = aNPC_get_walk_action(nactorx, feel);
     } else {
-        act = aNPC_run_action[feel];
+        act = aNPC_get_run_action(nactorx, feel);
     }
 
     aNPC_setupAction(nactorx, act);

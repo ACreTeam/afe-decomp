@@ -14,6 +14,7 @@ static void aNPC_think_in_block_setup_end(NPC_ACTOR* nactorx) {
     nactorx->think.end_flag = TRUE;
     nactorx->collision.check_kind = aNPC_BG_CHECK_TYPE_RANGE;
     nactorx->palActorIgnoreTimer = 0;
+    nactorx->actor_class.status_data.weight = 50;
     nactorx->action.step = aNPC_ACTION_END_STEP;
     aNPC_think_in_block_chg_native_info((ACTOR*)nactorx, nactorx->actor_class.world.position.x,
                                         nactorx->actor_class.world.position.z);
@@ -36,6 +37,9 @@ static int aNPC_think_in_block_chk_interrupt_proc(NPC_ACTOR* nactorx, GAME_PLAY*
             ret = TRUE;
         } else if (aNPC_check_uzai(nactorx, play) == TRUE) {
             aNPC_set_request_act(nactorx, 2, aNPC_ACT_REACT_TOOL, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
+            ret = TRUE;
+        } else if (nactorx->remove_insect == TRUE) {
+            aNPC_set_request_act(nactorx, 1, aNPC_ACT_NOMI_GOODBYE, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
             ret = TRUE;
         }
     }
@@ -62,11 +66,14 @@ static void aNPC_think_in_block_next_act(NPC_ACTOR* nactorx) {
     if (nactorx->action.step == aNPC_ACTION_END_STEP) {
         if (aNPC_check_arrive_destination(nactorx) == TRUE) {
             aNPC_think_in_block_setup_end(nactorx);
+        } else if (nactorx->movement.dst_pos_x != nactorx->movement.avoid_pos_x && nactorx->movement.dst_pos_z != nactorx->movement.avoid_pos_z) {
+            aNPC_think_in_block_setup_end(nactorx);
         } else {
             nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_LOVE_CHECK |
                                                aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
                                                aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV |
                                                aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+            nactorx->palActorIgnoreTimer = -1;
             aNPC_set_request_act(nactorx, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
         }
     }
@@ -78,15 +85,31 @@ static void aNPC_think_in_block_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     }
 
     if (!aNPC_think_in_block_chk_interrupt_proc(nactorx, play)) {
-        if (aNPC_think_in_block_check_humanoid(nactorx) == TRUE) {
-            aNPC_think_in_block_setup_end(nactorx);
-        } else if (nactorx->collision.collision_flag) {
-            int bx;
-            int bz;
+        int bx;
+        int bz;
 
-            mFI_Wpos2BlockNum(&bx, &bz, nactorx->actor_class.world.position);
-            if (nactorx->actor_class.block_x == bx && nactorx->actor_class.block_z == bz && !ClObj_DID_COLLIDE(nactorx->collision.pipe.collision_obj)) {
+        if (mFI_Wpos2BlockNum(&bx, &bz, nactorx->actor_class.world.position) == TRUE) {
+            float dist_block_x = nactorx->actor_class.world.position.x - bx * mFI_BK_WORLDSIZE_X_F;
+            float dist_block_z = nactorx->actor_class.world.position.z - bz * mFI_BK_WORLDSIZE_Z_F;
+            float range = nactorx->collision.BGcheck_radius;
+            float inv_range = mFI_BK_WORLDSIZE_BASE_F - range;
+
+            if (dist_block_x <= range || dist_block_x >= inv_range || dist_block_z <= range || dist_block_z >= inv_range) {
+                nactorx->actor_class.status_data.weight = MASSTYPE_IMMOVABLE;
+            } else {
+                nactorx->actor_class.status_data.weight = 50;
+            }
+        }
+        
+        if (nactorx->actor_class.status_data.weight < MASSTYPE_IMMOVABLE) {
+            if (aNPC_think_in_block_check_humanoid(nactorx) == TRUE) {
                 aNPC_think_in_block_setup_end(nactorx);
+            } else if (nactorx->collision.collision_flag) {
+                if (nactorx->actor_class.block_x == bx && nactorx->actor_class.block_z == bz && !ClObj_DID_COLLIDE(nactorx->collision.pipe.collision_obj)) {
+                    aNPC_think_in_block_setup_end(nactorx);
+                }
+            } else {
+                aNPC_think_in_block_next_act(nactorx);
             }
         } else {
             aNPC_think_in_block_next_act(nactorx);
@@ -117,6 +140,7 @@ static void aNPC_think_in_block_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     aNPC_think_in_block_chg_native_info(actorx, x, z);
     nactorx->movement.range_type = aNPC_MOVE_RANGE_TYPE_BLOCK;
     nactorx->collision.check_kind = aNPC_BG_CHECK_TYPE_NORMAL;
+    nactorx->actor_class.status_data.weight = MASSTYPE_IMMOVABLE;
     aNPC_set_request_act(nactorx, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
 }
 

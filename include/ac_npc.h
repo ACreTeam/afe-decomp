@@ -61,6 +61,54 @@ enum {
 };
 
 enum {
+    aNPC_MANPU_NONE,
+    aNPC_MANPU_MUKA, // Glare
+    aNPC_MANPU_GAAAN, // Shock
+    aNPC_MANPU_SMILE,
+    aNPC_MANPU_HA,
+    aNPC_MANPU_PUNPUN,
+    aNPC_MANPU_A,
+    aNPC_MANPU_ASERU,
+    aNPC_MANPU_BURUBURU,
+    aNPC_MANPU_GOUKYU,
+    aNPC_MANPU_HAPPY,
+    aNPC_MANPU_HATE,
+    aNPC_MANPU_HIRAMEKI,
+    aNPC_MANPU_HYUUU,
+    aNPC_MANPU_LOVELOVE,
+    aNPC_MANPU_MUUUUU,
+    aNPC_MANPU_OTIKOMU,
+    aNPC_MANPU_SHITUREN,
+    aNPC_MANPU_WARUDAKUMI,
+    aNPC_MANPU_NEBOKE,
+    aNPC_MANPU_LOVE,
+    aNPC_MANPU_NIKO,
+    aNPC_MANPU_MUSU,
+    aNPC_MANPU_KOMARI,
+    aNPC_MANPU_SMILE_D,
+    aNPC_MANPU_GAAAN_D,
+    aNPC_MANPU_HIRAMEKI_D,
+    aNPC_MANPU_HA_D,
+    aNPC_MANPU_MUSU_D,
+    aNPC_MANPU_NIKO_D,
+    aNPC_MANPU_KOMARI_D,
+    aNPC_MANPU_HATE_D,
+    aNPC_MANPU_KEIREI,
+    aNPC_MANPU_PUNPUN_R,
+    aNPC_MANPU_MUSU_R,
+    aNPC_MANPU_HYUUU_R,
+    aNPC_MANPU_A_R,
+    aNPC_MANPU_AKIRERU_R,
+    aNPC_MANPU_MATAROU_R,
+    aNPC_MANPU_GEKIDO_R,
+    aNPC_MANPU_HA_E,
+    aNPC_MANPU_KIEEEEI,
+    aNPC_MANPU_A2_R,
+
+    aNPC_MANPU_NUM
+};
+
+enum {
     aNPC_ANIM_SPEED_TYPE_LOCKED,
     aNPC_ANIM_SPEED_TYPE_FREE,
 
@@ -310,8 +358,14 @@ typedef void (*aNPC_CHG_SCHEDULE_PROC)(NPC_ACTOR*, GAME_PLAY*, u8);
 typedef int (*aNPC_CLIP_THINK_PROC)(NPC_ACTOR*, GAME_PLAY*, int, int);
 typedef int (*aNPC_FORCE_CALL_REQ_PROC)(NPC_ACTOR*, int);
 typedef void (*aNPC_SET_START_POS_PROC)(ACTOR* actorx);
+typedef void (*aNPC_REGIST_TALK_ACTOR_LIST_PROC)(NPC_ACTOR* nactorx, NPC_ACTOR* second_nactorx);
+typedef ACTOR* (*aNPC_GET_TALK_ACTOR_LIST_PROC)(int type);
+typedef void (*aNPC_GROUP_TALK_CHG_ACTOR_PROC)(void);
+typedef int (*aNPC_GET_DEMO_KIND_PROC)(ACTOR* actorx);
+typedef int (*aNPC_CHK_GROUP_TALK_PROC)(NPC_ACTOR* nactorx);
 typedef void (*aNPC_MAKE_ACCESSORY_PROC)(ACTOR* actorx, GAME* game, s16 type, s16 joint);
-typedef void (*aNPC_SET_INSECT_ACTOR)(NPC_ACTOR* nactorx, ACTOR* insect_actor);
+typedef void (*aNPC_SET_INSECT_ACTOR_PROC)(NPC_ACTOR* nactorx, ACTOR* insect_actor);
+typedef int (*aNPC_GET_FEEL_INFO_PROC)(NPC_ACTOR* nactorx);
 
 struct ac_npc_clip_s {
     /* 0x000 */ aNPC_SETUP_ACTOR_PROC setupActor_proc;
@@ -325,10 +379,8 @@ struct ac_npc_clip_s {
     /* 0x040 */ int keep_actor_used[9];
     /* 0x064 */ aNPC_overlay_c keep_n_overlay[1];
     /* 0x06C */ aNPC_overlay_c keep_s_overlay[2];
-    /* 0x07C */ aNPC_overlay_c keep_k_overlay[3];
+    /* 0x07C */ aNPC_overlay_c keep_k_overlay[4];
     /* 0x094 */ aNPC_overlay_c keep_e_overlay[2];
-    int _0A4;
-    int _0A8;
     /* 0x0A4 */ aNPC_attention_c attention_request;
     /* 0x0B8 */ aNPC_attention_c attention;
     /* 0x0CC */ aNPC_BIRTH_CHECK_PROC birth_check_proc;
@@ -353,26 +405,32 @@ struct ac_npc_clip_s {
     /* 0x120 */ aNPC_CLIP_THINK_PROC think_proc;
     /* 0x124 */ aNPC_FORCE_CALL_REQ_PROC force_call_req_proc;
     /* 0x128 */ aNPC_SET_START_POS_PROC set_start_pos_proc;
-    /* 0x134 */ u8 tmp[0x148 - 0x134];
+    /* 0x134 */ aNPC_REGIST_TALK_ACTOR_LIST_PROC regist_talk_actor_list_proc;
+    /* 0x138 */ aNPC_GET_TALK_ACTOR_LIST_PROC get_talk_actor_list_proc;
+    /* 0x13C */ aNPC_GROUP_TALK_CHG_ACTOR_PROC group_talk_chg_actor_proc;
+    /* 0x140 */ aNPC_GET_DEMO_KIND_PROC get_demo_kind_proc;
+    /* 0x144 */ aNPC_CHK_GROUP_TALK_PROC chk_group_talk_proc;
     /* 0x148 */ aNPC_MAKE_ACCESSORY_PROC make_accessory_proc;
-    /* 0x14C */ aNPC_SET_INSECT_ACTOR set_insect_actor_proc;
+    /* 0x14C */ aNPC_SET_INSECT_ACTOR_PROC set_insect_actor_proc;
+    /* 0x150 */ aNPC_GET_FEEL_INFO_PROC get_feel_info_proc;
+    /* 0x154 */ u8 _154[4];
 };
 
 typedef struct npc_info_s {
-    Animal_c* animal;
+    Animal_c* animal_orig;
     mNpc_NpcList_c* list;
     mNPS_schedule_c* schedule;
     mNpc_EventNpc_c* event;
     mNpc_MaskNpc_c* mask;
-    Animal_c* animal_bak;
+    Animal_c* animal;
     mActor_name_t npc_name;
 } NpcActorInfo_c;
 
 typedef struct npc_animation_s {
-    int _00;
     cKF_SkeletonInfo_R_c keyframe;
     s_xyz work[27];
     s_xyz morph[27];
+    int _00;
     s8 animation_id;
 } aNPC_ANIMATION_c;
 
@@ -427,12 +485,12 @@ typedef struct npc_draw_info_s {
     /* 0x008 */ int main_animation_state;
     /* 0x00C */ int sub_animation0_state;
     /* 0x010 */ int sub_animation1_state;
+    int _704;
     /* 0x014 */ aNPC_ANIMATION_c main_animation;
     /* 0x1D0 */ aNPC_ANIMATION_c sub_animation0;
     /* 0x38C */ aNPC_ANIMATION_c sub_animation1;
     aNPC_ANIMATION_c sub_animation2;
     /* 0x548 */ aNPC_se_c se;
-    int _73C;
     /* 0x580 */ int animation_id;
     /* 0x584 */ int texture_bank_idx;
     /* 0x588 */ aNPC_tex_anim_c tex_anim[aNPC_TEX_ANIM_NUM]; // eye -> mouth
@@ -483,6 +541,8 @@ typedef struct npc_think_info_s {
     /* 0x06 */ u16 force_call_timer;
     /* 0x08 */ int force_call_msg_no;
     /* 0x0C */ u8 force_call_camera_type;
+    /* 0x0D */ u8 force_call_talk_turn;
+    /* 0x0E */ u8 force_call_able_hand_all_item_in_demo;
     /* 0x10 */ aNPC_THINK_PROC think_proc;
     /* 0x14 */ u32 interrupt_flags;
 } aNPC_think_info_c;
@@ -566,10 +626,12 @@ enum {
     aNPC_ACTION_TYPE_WAIT_DO,
     aNPC_ACTION_TYPE_WAIT_AI,
     aNPC_ACTION_TYPE_WAIT_NEMU,
+    aNPC_ACTION_TYPE_WAIT_SICK,
     aNPC_ACTION_TYPE_WALK,
     aNPC_ACTION_TYPE_WALK_KI,
     aNPC_ACTION_TYPE_WALK_DO,
     aNPC_ACTION_TYPE_WALK_AI,
+    aNPC_ACTION_TYPE_WALK_SICK,
     aNPC_ACTION_TYPE_RUN,
     aNPC_ACTION_TYPE_RUN_KI,
     aNPC_ACTION_TYPE_RUN_DO,
@@ -613,11 +675,20 @@ enum {
     aNPC_ACTION_TYPE_GET_PUTAWAY_F,
     aNPC_ACTION_TYPE_GET_RETURN_F,
     aNPC_ACTION_TYPE_ESTIMATE_F,
+    aNPC_ACTION_TYPE_PRESENTOPEN,
+    aNPC_ACTION_TYPE_GET_CHANGE2,
     aNPC_ACTION_TYPE_ENSOU_E,
     aNPC_ACTION_TYPE_WAIT_E,
     aNPC_ACTION_TYPE_GYAFUN1,
     aNPC_ACTION_TYPE_GYAFUN2,
     aNPC_ACTION_TYPE_CLAP,
+    aNPC_ACTION_TYPE_SAY_HELLO1,
+    aNPC_ACTION_TYPE_SAY_HELLO2,
+    aNPC_ACTION_TYPE_SAY_HELLO3,
+    aNPC_ACTION_TYPE_SAY_HELLO4,
+    aNPC_ACTION_TYPE_65,
+    aNPC_ACTION_TYPE_66,
+    aNPC_ACTION_TYPE_67,
 
     aNPC_ACTION_TYPE_NUM
 };
@@ -650,10 +721,12 @@ enum {
     aNPC_ACTION_TYPE_WAIT_DO,
     aNPC_ACTION_TYPE_WAIT_AI,
     aNPC_ACTION_TYPE_WAIT_NEMU,
+    aNPC_ACTION_TYPE_WAIT_SICK,
     aNPC_ACTION_TYPE_WALK,
     aNPC_ACTION_TYPE_WALK_KI,
     aNPC_ACTION_TYPE_WALK_DO,
     aNPC_ACTION_TYPE_WALK_AI,
+    aNPC_ACTION_TYPE_WALK_SICK,
     aNPC_ACTION_TYPE_RUN,
     aNPC_ACTION_TYPE_RUN_KI,
     aNPC_ACTION_TYPE_RUN_DO,
@@ -682,6 +755,8 @@ enum {
     aNPC_ACTION_TYPE_GET_PUTAWAY_F,
     aNPC_ACTION_TYPE_GET_RETURN_F,
     aNPC_ACTION_TYPE_ESTIMATE_F,
+    aNPC_ACTION_TYPE_PRESENTOPEN,
+    aNPC_ACTION_TYPE_GET_CHANGE2,
     aNPC_ACTION_TYPE_CONTRACT,
     aNPC_ACTION_TYPE_CONTRACT_PULL,
     aNPC_ACTION_TYPE_CONTRACT_PUTAWAY,
@@ -692,6 +767,21 @@ enum {
     aNPC_ACTION_TYPE_NUM
 };
 #endif
+
+enum {
+    aNPC_RELATION_TYPE_SET_FEEL,
+    aNPC_RELATION_TYPE_SET_NORMAL_FEEL,
+    aNPC_RELATION_TYPE_COPY_CLOTH,
+    aNPC_RELATION_TYPE_COPY_CLOTH2,
+    aNPC_RELATION_TYPE_RESET_CLOTH_AND_UMB,
+    aNPC_RELATION_TYPE_RESET_END_WORDS,
+    aNPC_RELATION_TYPE_CHANGE_SP_CLOTH,
+    aNPC_RELATION_TYPE_CHANGE_SP_UMB,
+    aNPC_RELATION_TYPE_COPY_END_WORDS,
+    aNPC_RELATION_TYPE_SET_CLOTH,
+
+    aNPC_RELATION_TYPE_NUM
+};
 
 typedef void (*aNPC_ACTION_PROC)(NPC_ACTOR*, GAME_PLAY*, int);
 
@@ -762,17 +852,18 @@ typedef struct npc_condition_s {
     u8 entrance_flag;
     u16 fatigue;
     int feel_tim;
-    int _0C;
+    int sleep_cnt;
     u32 demo_flg;
     u32 talk_demo_flg_save;
     u32 trans_demo_flg_save;
     u8 appear_flag;
     u8 appear_rotation;
     u8 pitfall_flag;
+    u8 sick_flg;
     u32 actor_state_save;
-    int _24;
-    int _28;
-    int _2C;
+    ACTOR* near_npc;
+    ACTOR* near_male_npc;
+    ACTOR* near_female_npc;
     s8* friendship;
     int over_friendship;
     mActor_name_t* under_fg_p;
@@ -827,7 +918,7 @@ typedef struct npc_head_s {
     s16 angle_y;
     s16 angle_add_x;
     s16 angle_add_y;
-    s16 _08;
+    s16 max_look_angle;
     u8 lock_flag;
     u8 target_type;
     ACTOR* target;
@@ -853,6 +944,16 @@ enum {
     aNPC_MOVE_RANGE_TYPE_SQUARE,
 
     aNPC_MOVE_RANGE_TYPE_NUM
+};
+
+enum {
+    aNPC_MOVE_TYPE_NORMAL,
+    aNPC_MOVE_TYPE_FRIEND,
+    aNPC_MOVE_TYPE_DISLIKED,
+    aNPC_MOVE_TYPE_HATED,
+    aNPC_MOVE_TYPE_BEST_FRIEND,
+
+    aNPC_MOVE_TYPE_NUM
 };
 
 enum {
@@ -921,6 +1022,13 @@ enum {
     aNPC_TALK_TURN_NONE,
 
     aNPC_TALK_TURN_NUM
+};
+
+enum {
+    aNPC_TALK_GROUP_0,
+    aNPC_TALK_GROUP_1,
+
+    aNPC_TALK_GROUP_NUM
 };
 
 enum {
@@ -1012,6 +1120,12 @@ struct npc_actor_s {
     /* 0xB66 */ s16 hello_talk_flag;
 };
 
+#define aNPC_GET_TYPE(npc) (ITEM_NAME_GET_TYPE((npc)->actor_class.npc_id))
+#define aNPC_IS_NRM_NPC(npc) (aNPC_GET_TYPE(npc) == NAME_TYPE_NPC)
+#define aNPC_IS_SP_NPC(npc) (aNPC_GET_TYPE(npc) == NAME_TYPE_SPNPC)
+#define aNPC_GET_ANM(npc) ((npc)->npc_info.animal)
+#define aNPC_GET_LOOKS(npc) (aNPC_GET_ANM(npc)->id.looks)
+
 typedef struct {
     aNPC_se_data_c* lfoot_data;
     aNPC_se_data_c* rfoot_data;
@@ -1041,6 +1155,12 @@ typedef struct {
     aNPC_Animation_c* anim_p;
     int anim_idx;
 } aNPC_anim_info_c;
+
+typedef struct {
+    xyz_t pos;
+    float scale;
+    s16 rot_x;
+} aNPC_tool_draw_dt_c;
 
 #define aNPC_DEMO_GIVE_ITEM(item, mode, present)       \
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, (item)); \

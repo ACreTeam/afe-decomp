@@ -107,7 +107,8 @@ static void aNPC_act_trans(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aNPC_act_trans_wait(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    aNPC_check_manpu_demoCode((ACTOR*)nactorx);
+    int demo_kind = aNPC_get_demo_kind((ACTOR*)nactorx);
+    aNPC_check_manpu_demoCode((ACTOR*)nactorx, demo_kind);
 
     if (CLIP(handOverItem_clip)->master_actor != (ACTOR*)nactorx) {
         aNPC_clear_left_hand_info(nactorx);
@@ -141,7 +142,8 @@ static void aNPC_act_trans_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         aNPC_setup_talk_end(nactorx);
         nactorx->action.step = aNPC_ACTION_END_STEP;
     } else {
-        aNPC_check_feel_demoCode((ACTOR*)nactorx);
+        int demo_kind = aNPC_get_demo_kind((ACTOR*)nactorx);
+        aNPC_check_feel_demoCode((ACTOR*)nactorx, demo_kind);
         (*act_proc[nactorx->action.step])(nactorx, play);
     }
 }

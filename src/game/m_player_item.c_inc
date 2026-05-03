@@ -41,6 +41,8 @@ static int Player_actor_Item_main(ACTOR* actor, GAME* game) {
         Player_actor_Item_main_balloon_normal,
         Player_actor_Item_main_windmill_normal,
         Player_actor_Item_main_fan_normal,
+        Player_actor_Item_main_cracker_normal,
+        Player_actor_Item_main_flower_normal,
     };
 
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
@@ -88,6 +90,8 @@ static void Player_actor_Item_draw(ACTOR* actor, GAME* game) {
         Player_actor_Item_draw_balloon,
         Player_actor_Item_draw_windmill,
         Player_actor_Item_draw_fan,
+        Player_actor_Item_draw_cracker,
+        Player_actor_Item_draw_flower,
     };
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
     int now_index = player->now_item_main_index;

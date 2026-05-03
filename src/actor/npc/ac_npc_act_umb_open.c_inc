@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 enum {
     aNPC_ACT_UMB_OPEN_STEP_OPEN,
 
@@ -28,7 +35,7 @@ static void aNPC_act_umb_open_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
 
     if (nactorx->request.umb_flag == TRUE) {
-        aNPC_setupAction(nactorx, aNPC_wait_action[aNPC_get_feel_info(nactorx)]);
+        aNPC_setupAction(nactorx, aNPC_get_wait_action(nactorx, aNPC_get_feel_info(nactorx)));
         nactorx->draw.main_animation.keyframe.frame_control.mode = cKF_FRAMECONTROL_STOP;
         nactorx->draw.main_animation.keyframe.morph_counter = 0.0f;
     } else {
