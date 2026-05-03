@@ -423,65 +423,59 @@ static void cKF_SkeletonInfo_R_morphJoint(cKF_SkeletonInfo_R_c* keyframe) {
     }
 }
 
+// @fakematch
+#pragma opt_lifetimes off
 extern int cKF_SkeletonInfo_R_play(cKF_SkeletonInfo_R_c* keyframe) {
-    int i;
-    int j;
+    s16* fixedTable;
+    s16* keyTable;
+    s16* dataTable;
     u8* flagTable;
+    u32 rotFlag;
+    int j;
+    int i;
     int keyTableIndex = 0;
     int fixedTableIndex = 0;
     int dataIndex = 0;
     s16* jointValuePtr;
-    s16* fixedTable;
-    s16* dataTable;
-    s16* keyTable;
-    u32 jointFlag; // Check translation (xyz)
+    cKF_Animation_R_c* animation;
 
-    // Choose between current and target joint based on morph counter
     if (F32_IS_ZERO(keyframe->morph_counter)) {
         jointValuePtr = &keyframe->current_joint->x;
     } else {
         jointValuePtr = &keyframe->target_joint->x;
     }
 
-    jointFlag = cKF_ANIMATION_BIT_TRANS_X;
+    j = cKF_ANIMATION_BIT_TRANS_X;
+    i = 0;
 
-    // Retrieve animation tables
-    fixedTable = keyframe->animation->fixed_table;
-    keyTable = keyframe->animation->key_table;
-    dataTable = keyframe->animation->data_table;
-    flagTable = keyframe->animation->flag_table;
+    animation = keyframe->animation;
+    fixedTable = animation->fixed_table;
+    keyTable = animation->key_table;
+    dataTable = animation->data_table;
+    flagTable = animation->flag_table;
 
-    
-
-    // Process root translation x -> y -> z
-    for (j = 0; j < 3; j++) {
-        if (*flagTable & jointFlag) {
-            // Apply joint translation
+    for (; i < 3; i++) {
+        if (*flagTable & j) {
             *jointValuePtr =
                 cKF_KeyCalc(dataIndex, keyTable[keyTableIndex], dataTable, keyframe->frame_control.current_frame);
             dataIndex += keyTable[keyTableIndex];
             keyTableIndex++;
         } else {
-            // Use fixed value if not flagged for keyframe animation
             *jointValuePtr = fixedTable[fixedTableIndex];
             fixedTableIndex++;
         }
 
-        jointFlag >>= 1; // Shift x -> y -> z
-        jointValuePtr++; // Move to next joint
+        j = (u32)j >> 1;
+        jointValuePtr++;
     }
 
-    // Process remaining joint rotations
     for (i = 0; i < keyframe->skeleton->num_joints; i++) {
-        jointFlag = cKF_ANIMATION_BIT_ROT_X; // Reset flag for new joint
+        rotFlag = cKF_ANIMATION_BIT_ROT_X;
 
-        // Process each joint x -> y -> z
         for (j = 0; j < 3; j++) {
-            f32 rotf;
-            f32 div360;
+            f32 calc_joint;
 
-            // Similar logic to above, but for each joint in the skeleton
-            if (jointFlag & flagTable[i]) {
+            if (rotFlag & flagTable[i]) {
                 *jointValuePtr =
                     cKF_KeyCalc(dataIndex, keyTable[keyTableIndex], dataTable, keyframe->frame_control.current_frame);
                 dataIndex += keyTable[keyTableIndex];
@@ -491,24 +485,18 @@ extern int cKF_SkeletonInfo_R_play(cKF_SkeletonInfo_R_c* keyframe) {
                 fixedTableIndex++;
             }
 
-            // Reduce the value by 90% and clamp to [0, 360) degrees converted back to binangle (s16)
-            // This effectively limits any joint's maximum rotation to be in the range of [-36.8, 36.7] degrees
-            rotf = *jointValuePtr * 0.1f;
-            // mod = MOD_F(rotf, 360.0f);
-            div360 = rotf * (1.0f / 360.0f);
-            // mod -= ;
-            *jointValuePtr = DEG2SHORT_ANGLE(div360 - (int)div360 * 360.0f);
+            calc_joint = 0.1f * *jointValuePtr;
+            *jointValuePtr = (s16)DEG2SHORT_ANGLE2(MOD_F(calc_joint, 360.0f));
             jointValuePtr++;
 
-
-            jointFlag >>= 1; // Shift flag for next component x -> y -> z
+            rotFlag >>= 1;
         }
 
         // flagTable++;
     }
 
-    // Apply rotation differences if available
     if (keyframe->rotation_diff_table != NULL) {
+        int k;
         s_xyz* currentJointPtr;
         
         if (F32_IS_ZERO(keyframe->morph_counter)) {
@@ -517,39 +505,35 @@ extern int cKF_SkeletonInfo_R_play(cKF_SkeletonInfo_R_c* keyframe) {
             currentJointPtr = keyframe->target_joint;
         }
 
-        currentJointPtr++; // Skip first joint, usually root, which is handled separately
-        for (j = 0; j < keyframe->skeleton->num_joints; j++) {
-            // Apply rotation differences to each joint
-            currentJointPtr->x += keyframe->rotation_diff_table[j].x;
-            currentJointPtr->y += keyframe->rotation_diff_table[j].y;
-            currentJointPtr->z += keyframe->rotation_diff_table[j].z;
+        currentJointPtr++;
+        for (k = 0; k < keyframe->skeleton->num_joints; k++) {
+            currentJointPtr->x += keyframe->rotation_diff_table[k].x;
+            currentJointPtr->y += keyframe->rotation_diff_table[k].y;
+            currentJointPtr->z += keyframe->rotation_diff_table[k].z;
 
-            currentJointPtr++; // Move to next joint
+            currentJointPtr++;
         }
     }
 
-    // Handle morphing and play control based on morph counter
     if (F32_IS_ZERO(keyframe->morph_counter)) {
-        // Play normally if no morphing is needed
         return cKF_FrameControl_play(&keyframe->frame_control);
     } else if (keyframe->morph_counter > 0.0f) {
-        // Morph towards target, decreasing morph counter
         cKF_SkeletonInfo_R_morphJoint(keyframe);
         keyframe->morph_counter -= 0.5f;
         if (keyframe->morph_counter <= 0.0f) {
-            keyframe->morph_counter = 0.0f; // Clamp to zero if over-decremented
+            keyframe->morph_counter = 0.0f;
         }
         return cKF_STATE_NONE;
     } else {
-        // Morph from target, increasing morph counter towards zero
         cKF_SkeletonInfo_R_morphJoint(keyframe);
         keyframe->morph_counter += 0.5f;
         if (keyframe->morph_counter >= 0.0f) {
-            keyframe->morph_counter = 0.0f; // Clamp to zero if over-incremented
+            keyframe->morph_counter = 0.0f;
         }
         return cKF_FrameControl_play(&keyframe->frame_control);
     }
 }
+#pragma opt_lifetimes reset
 
 extern void cKF_Si3_draw_SV_R_child(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int* joint_num,
                                     cKF_draw_callback prerender_callback, cKF_draw_callback postrender_callback,
