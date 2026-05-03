@@ -1119,7 +1119,7 @@ config.libs = [
             Object(NonMatching, "game/m_flashrom.c"),
             Object(NonMatching, "game/m_font.c"),
             Object(Matching, "game/m_fuusen.c"),
-            Object(NonMatching, "game/m_game_dlftbls.c"),
+            Object(Matching, "game/m_game_dlftbls.c"),
             Object(NonMatching, "game/m_gba_ovl.c"),
             Object(NonMatching, "game/m_hand_ovl.c"),
             Object(NonMatching, "game/m_handbill.c"),
