@@ -1138,7 +1138,7 @@ config.libs = [
             Object(Matching, "game/m_land.c"),
             Object(NonMatching, "game/m_ledit_ovl.c"),
             Object(Matching, "game/m_lib.c"),
-            Object(NonMatching, "game/m_lights.c"),
+            Object(Matching, "game/m_lights.c"),
             Object(Matching, "game/m_mail.c"),
             Object(Matching, "game/m_mail_check.c"),
             Object(NonMatching, "game/m_mail_check_ovl.c"),

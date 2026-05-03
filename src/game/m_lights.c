@@ -16,7 +16,6 @@ static void Global_light_fog_set(Global_light* light, u8 r, u8 g, u8 b, s16 near
 static LightsN* new_LightsN(GRAPH*, u8 r, u8 g, u8 b);
 
 static void point_data_set(Lights* lights, s16 x, s16 y, s16 z, u8 r, u8 g, u8 b, s16 radius, int type) {
-
     lights->type = type;
     lights->lights.point.x = x;
     lights->lights.point.y = y;
@@ -25,12 +24,10 @@ static void point_data_set(Lights* lights, s16 x, s16 y, s16 z, u8 r, u8 g, u8 b
 }
 
 extern void Light_point_ct(Lights* lights, s16 x, s16 y, s16 z, u8 r, u8 g, u8 b, s16 radius) {
-
     point_data_set(lights, x, y, z, r, g, b, radius, 0);
 }
 
 static void Light_point_color_set(Lights* lights, u8 r, u8 g, u8 b, s16 radius) {
-
     lights->lights.point.color[0] = r;
     lights->lights.point.color[1] = g;
     lights->lights.point.color[2] = b;
@@ -38,7 +35,6 @@ static void Light_point_color_set(Lights* lights, u8 r, u8 g, u8 b, s16 radius) 
 }
 
 extern void Light_diffuse_ct(Lights* lights, s8 x, s8 y, s8 z, u8 r, u8 g, u8 b) {
-
     lights->type = 1;
     lights->lights.diffuse.x = x;
     lights->lights.diffuse.y = y;
@@ -49,7 +45,6 @@ extern void Light_diffuse_ct(Lights* lights, s8 x, s8 y, s8 z, u8 r, u8 g, u8 b)
 }
 
 extern void LightsN_disp_BG(LightsN* lights, GRAPH* graph) {
-
     Light_new* light;
     int i;
 
@@ -74,7 +69,6 @@ extern void LightsN_disp_BG(LightsN* lights, GRAPH* graph) {
 }
 
 extern void LightsN_disp(LightsN* lights, GRAPH* graph) {
-
     Light_new* light;
     int i;
     Gfx* opa_gfx;
@@ -106,7 +100,6 @@ extern void LightsN_disp(LightsN* lights, GRAPH* graph) {
 }
 
 static Light_new* LightsN_new_diffuse(LightsN* lights) {
-
     if (lights->diffuse_count >= 7) {
         return NULL;
     }
@@ -153,7 +146,6 @@ static void LightsN__point_proc(LightsN* lights, LightParams* lightInfo, xyz_t* 
 }
 
 static void LightsN__P_point_proc(LightsN* lights, LightParams* lightInfo, xyz_t* pos) {
-
     f32 rad;
     xyz_t point;
     Light_new* light;
@@ -190,11 +182,9 @@ static void LightsN__P_point_proc(LightsN* lights, LightParams* lightInfo, xyz_t
 }
 
 static void LightsN__diffuse_proc(LightsN* lights, LightParams* lightInfo) {
-
     Light_new* light;
 
     light = LightsN_new_diffuse(lights);
-
     if (light != NULL) {
         light->l.col[0] = light->l.colc[0] = lightInfo->diffuse.color[0];
         light->l.col[1] = light->l.colc[1] = lightInfo->diffuse.color[1];
@@ -206,29 +196,31 @@ static void LightsN__diffuse_proc(LightsN* lights, LightParams* lightInfo) {
 }
 
 extern void LightsN_list_check(LightsN* lights, Light_list* node, xyz_t* pos) {
-
-    const static light_point_proc poslight_type_proc[] = { LightsN__point_proc, (light_point_proc)LightsN__diffuse_proc,
-                                                           LightsN__point_proc };
-
-    const static light_P_point_proc light_type_proc[] = { LightsN__P_point_proc,
-                                                          (light_P_point_proc)LightsN__diffuse_proc,
-                                                          LightsN__P_point_proc };
+    const static light_point_proc light_type_proc[] = {
+        LightsN__point_proc,
+        (light_point_proc)LightsN__diffuse_proc,
+        LightsN__point_proc,
+    };
+    const static light_P_point_proc poslight_type_proc[] = {
+        LightsN__P_point_proc,
+        (light_P_point_proc)LightsN__diffuse_proc,
+        LightsN__P_point_proc,
+    };
 
     if (pos == NULL) {
         while (node != NULL) {
-            light_type_proc[node->info->type](lights, &node->info->lights, pos);
+            poslight_type_proc[node->info->type](lights, &node->info->lights, pos);
             node = node->next;
         }
     } else {
         while (node != NULL) {
-            poslight_type_proc[node->info->type](lights, &node->info->lights, pos);
+            light_type_proc[node->info->type](lights, &node->info->lights, pos);
             node = node->next;
         }
     }
 }
 
 static Light_list* Light_list_buf_new() {
-
     Light_list* light;
 
     if (light_list_buf.current >= 32) {
@@ -260,7 +252,6 @@ static void Light_list_buf_delete(Light_list* light) {
 }
 
 extern void Global_light_ct(Global_light* glight) {
-
     Global_light_list_ct(glight);
     Global_light_ambient_set(glight, 80, 80, 80);
     Global_light_fog_set(glight, 0, 0, 0, 996, 1600);
@@ -268,14 +259,12 @@ extern void Global_light_ct(Global_light* glight) {
 }
 
 static void Global_light_ambient_set(Global_light* glight, u8 r, u8 g, u8 b) {
-
     glight->ambientColor[0] = r;
     glight->ambientColor[1] = g;
     glight->ambientColor[2] = b;
 }
 
 static void Global_light_fog_set(Global_light* glight, u8 r, u8 g, u8 b, s16 near, s16 far) {
-
     glight->fogColor[0] = r;
     glight->fogColor[1] = g;
     glight->fogColor[2] = b;
@@ -288,16 +277,13 @@ extern LightsN* Global_light_read(Global_light* glight, GRAPH* graph) {
 }
 
 static void Global_light_list_ct(Global_light* glight) {
-
     glight->list = NULL;
 }
 
 extern Light_list* Global_light_list_new(GAME* game, Global_light* glight, Lights* light) {
-
     Light_list* clight;
 
     clight = Light_list_buf_new();
-
     if (clight != NULL) {
         clight->info = light;
         clight->prev = NULL;
@@ -314,7 +300,6 @@ extern Light_list* Global_light_list_new(GAME* game, Global_light* glight, Light
 }
 
 extern void Global_light_list_delete(Global_light* glight, Light_list* light) {
-
     if (light != NULL) {
         if (light->prev != NULL) {
             light->prev->next = light->next;
@@ -330,11 +315,9 @@ extern void Global_light_list_delete(Global_light* glight, Light_list* light) {
 }
 
 static LightsN* new_LightsN(GRAPH* graph, u8 r, u8 g, u8 b) {
-
     LightsN* light;
 
     light = GRAPH_ALLOC(graph, sizeof(LightsN));
-
     light->a.l.col[0] = light->a.l.colc[0] = r;
     light->a.l.col[1] = light->a.l.colc[1] = g;
     light->a.l.col[2] = light->a.l.colc[2] = b;
