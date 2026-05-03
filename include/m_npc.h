@@ -581,6 +581,7 @@ extern void mNpc_RenewRemoveHistory(void);
 extern int mNpc_GetSickAnimalIdx(void);
 extern int mNpc_CheckSickAnimal(Animal_c* animal);
 extern int mNpc_GetSickLevel(void);
+extern void mNpc_HealSick(mNpc_SickInfo_c* sick_info);
 extern int mNpc_GetRelationAnimal(Animal_c* animal0, Animal_c* animal1);
 extern void mNpc_AddRelationPoint(Animal_c* animal0, Animal_c* animal1, int point);
 extern u8 mNpc_GetDefAnimalClothHAttr(Animal_c* animal);

@@ -6,6 +6,8 @@
 #include "m_event.h"
 #include "m_field_info.h"
 #include "m_common_data.h"
+#include "m_police_box.h"
+#include "m_snowman.h"
 #include "ac_set_npc_manager.h"
 
 // clang-format off
@@ -206,6 +208,18 @@ static int mEvMN_CheckCanJointEvent(Anmmem_c* memory, PersonalID_c* pid) {
     return res;
 }
 
+static void mEvMN_CheckHealSick(int idx) {
+    mNpc_SickInfo_c* sick_info = Save_GetPointer(sick_info);
+
+    if (idx != -1) {
+        int sick_idx = mNpc_SearchAnimalPersonalID(&sick_info->id);
+
+        if (sick_idx == idx) {
+            mNpc_HealSick(sick_info);
+        }
+    }
+}
+
 static void mEvMN_GetNpcIdxRandom(u8* animal_idx, int max) {
     Animal_c* animal = Save_Get(animals);
     int idx;
@@ -224,7 +238,7 @@ static void mEvMN_GetNpcIdxRandom(u8* animal_idx, int max) {
     }
 
     animal_count -= max;
-    animal -= ANIMAL_NUM_MAX;
+    animal = Save_Get(animals);
     if (animal_count > 0 && mLd_PlayerManKindCheck() == FALSE) {
         for (i = 0; i < ANIMAL_NUM_MAX; i++) {
             if (((animal_bitfield >> i) & 1) == 1 &&
@@ -261,8 +275,9 @@ static void mEvMN_GetNpcIdxRandom(u8* animal_idx, int max) {
             if (((animal_bitfield >> i) & 1) == 1) {
                 if (idx <= 0) {
                     *animal_idx = (u8)i;
-                    count--;
                     animal_bitfield &= ~(1 << i);
+                    mEvMN_CheckHealSick(i);
+                    count--;
                     break;
                 }
 
@@ -390,8 +405,9 @@ static void mEvMN_SetNpcJointEvRandom(u8* animal_idx, int max) {
                 for (j = 0; j < ANIMAL_NUM_MAX; j++) {
                     if (((animal_bitfield >> j) & 1) == 1) {
                         *animal_idx = (u8)j;
-                        count--;
                         animal_bitfield &= ~(1 << j);
+                        mEvMN_CheckHealSick(j);
+                        count--;
                         break;
                     }
                 }
@@ -639,4 +655,37 @@ extern int mEvMN_CheckLapPlayer(int block_ux, int block_uz) {
     }
 
     return 0;
+}
+
+extern void mEvMN_be_flat_unit(int bx, int bz, int ux, int uz) {
+    mActor_name_t* fg_p;
+    mActor_name_t item;
+    xyz_t center_pos;
+    xyz_t get_pos;
+    xyz_t set_pos;
+    xyz_t deposit_pos;
+
+    mFI_BkandUtNum2CenterWpos(&center_pos, bx, bz, ux, uz);
+
+    get_pos = center_pos;
+    fg_p = mFI_GetUnitFG(get_pos);
+
+    if (fg_p != NULL && mSN_ClearSnowman(fg_p) == FALSE) {
+        item = *fg_p;
+
+        if ((ITEM_IS_BURIED_PITFALL_HOLE(item) || item == SHINE_SPOT) == TRUE) {
+            mPB_keep_item(bg_item_fg_sub_dig2take_conv(item));
+
+            set_pos = center_pos;
+            mFI_SetFG_common(EMPTY_NO, set_pos, TRUE);
+
+            deposit_pos = center_pos;
+            mFI_Wpos2DepositOFF(deposit_pos);
+        } else if (ITEM_IS_SIGNBOARD(item)) {
+            mPB_keep_item(ITM_SIGNBOARD);
+
+            set_pos = center_pos;
+            mFI_SetFG_common(EMPTY_NO, set_pos, TRUE);
+        }
+    }
 }
