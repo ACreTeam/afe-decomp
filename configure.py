@@ -788,6 +788,7 @@ config.libs = [
             Object(Matching, "actor/npc/ac_harvest_npc0.c"),
             Object(Matching, "actor/npc/ac_harvest_npc1.c"),
             Object(Matching, "actor/npc/ac_hatumode_npc0.c"),
+            Object(Matching, "actor/npc/ac_island_npc.c"),
             Object(Matching, "actor/npc/ac_kamakura_npc0.c"),
             Object(Matching, "actor/npc/ac_normal_npc.c"),
             Object(Matching, "actor/npc/ac_npc.c"),

@@ -1,0 +1,382 @@
+#ifdef __INTELLISENSE__
+#include "ac_island_npc.h"
+#include "m_common_data.h"
+#include "m_island.h"
+#include "m_player_lib.h"
+
+enum {
+    aISN_ACT_LYING,
+    aISN_ACT_STAND_UP,
+    aISN_ACT_TALK,
+    aISN_ACT_WANDER,
+
+    aISN_ACT_NUM
+};
+
+static void aISN_setup_isl_think_proc(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play, u8 think_idx);
+static void aISN_first_day_talk_request(ACTOR* actorx, GAME* game);
+static void aISN_last_day_talk_request(ACTOR* actorx, GAME* game);
+static void aISN_norm_talk_request(ACTOR* actorx, GAME* game);
+static void aISN_force_talk_request(ACTOR* actorx, GAME* game);
+#endif
+
+static void aISN_set_request_act(ISLAND_NPC_ACTOR* actor) {
+    actor->npc_class.request.act_priority = 4;
+    actor->npc_class.request.act_idx = aNPC_ACT_SPECIAL;
+    actor->npc_class.request.act_type = aNPC_ACT_TYPE_SEARCH;
+}
+
+static void aISN_adjust_start_pos(ISLAND_NPC_ACTOR* actor) {
+    int set = FALSE;
+    mCoBG_Collision_u* col_p = mFI_GetBkNum2ColTop(mISL_BLOCK_X0, mISL_BLOCK_Z);
+    int ux = Common_Get(islander_start_ux);
+    int uz = Common_Get(islander_start_uz);
+    u32 attr;
+    float pos_x;
+
+    if (ux < -1 || ux >= UT_X_NUM || uz < -1 || uz >= UT_Z_NUM) {
+        ux = -1;
+        uz = -1;
+    }
+
+    if (ux != -1 && uz != -1) {
+        if (mCoBG_CheckWaveAttr((col_p + uz * UT_X_NUM + ux)->data.unit_attribute) == TRUE) {
+            set = TRUE;
+        }
+    }
+
+    if (!set) {
+        int i;
+
+        for (i = 0; i < 5; i++) {
+            if (mFI_GetWaveUtinBlock(&ux, &uz, mISL_BLOCK_X0, mISL_BLOCK_Z) && ux > 0 && ux < UT_X_NUM - 1 && uz > 0 && uz < UT_Z_NUM - 1) {
+                set = TRUE;
+                break;
+            }
+        }
+    }
+
+    if (!set) {
+        mFI_GetWaveUtinBlock(&ux, &uz, mISL_BLOCK_X0, mISL_BLOCK_Z);
+    }
+
+    Common_Set(islander_start_ux, ux);
+    Common_Set(islander_start_uz, uz);
+    mFI_BkandUtNum2Wpos(&actor->npc_class.actor_class.world.position, mISL_BLOCK_X0, mISL_BLOCK_Z, ux, uz);
+    actor->npc_class.actor_class.world.position.x += mFI_UT_WORLDSIZE_HALF_X_F;
+    actor->npc_class.actor_class.world.position.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(actor->npc_class.actor_class.world.position, 0.0f);
+
+    attr = (col_p + uz * UT_X_NUM + ux)->data.unit_attribute;
+    pos_x = actor->npc_class.actor_class.world.position.x;
+    if (attr == mCoBG_ATTRIBUTE_25) {
+        pos_x -= 10.0f;
+    } else if (attr == mCoBG_ATTRIBUTE_26) {
+        pos_x += 10.0f;
+    }
+
+    NPC_CLIP->set_dst_pos_proc((NPC_ACTOR*)actor, pos_x, actor->npc_class.actor_class.world.position.z - 10.0f);
+    actor->npc_class.actor_class.shape_info.rotation.y = actor->npc_class.movement.mv_angl;
+    actor->npc_class.actor_class.world.angle.y = actor->npc_class.movement.mv_angl;
+}
+
+static void aISN_stand_up(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
+        aISN_setup_isl_think_proc(actor, play, aISN_ACT_TALK);
+    }
+}
+
+static void aISN_isl_think_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)nactorx;
+
+    if (actor->npc_class.action.step == aNPC_ACTION_END_STEP && actor->npc_class.action.idx != aNPC_ACT_SPECIAL) {
+        aISN_set_request_act(actor);
+    }
+
+    actor->think_act_proc(actor, play);
+}
+
+static void aISN_isl_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)nactorx;
+
+    aISN_adjust_start_pos(actor);
+    actor->npc_class.right_hand.umbrella_disabled_flag = TRUE;
+    actor->npc_class.actor_class.status_data.weight = MASSTYPE_IMMOVABLE;
+    actor->npc_class.condition_info.demo_flg =
+        aNPC_COND_DEMO_SKIP_UZAI_CHECK | aNPC_COND_DEMO_SKIP_FOOTSTEPS_VFX |
+        aNPC_COND_DEMO_SKIP_LOVE_CHECK | aNPC_COND_DEMO_SKIP_FEEL_CHECK |
+        aNPC_COND_DEMO_SKIP_FOOTSTEPS | aNPC_COND_DEMO_SKIP_KUTIPAKU |
+        aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK | aNPC_COND_DEMO_SKIP_HEAD_LOOKAT |
+        aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
+        aNPC_COND_DEMO_SKIP_BGCHECK | aNPC_COND_DEMO_SKIP_MOVE_Y |
+        aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+    actor->npc_class.think.interrupt_flags = 0;
+    actor->npc_class.action.act_proc = (aNPC_ACTION_PROC)none_proc1;
+    aISN_set_request_act(actor);
+    aISN_setup_isl_think_proc(actor, play, aISN_ACT_LYING);
+}
+
+static void aISN_lying_init(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play) {
+    actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
+    actor->npc_class.talk_info.turn = aNPC_TALK_TURN_NONE;
+    actor->npc_class.talk_info.default_animation = aNPC_ANIM_PIKU_SEG1;
+}
+
+static void aISN_stand_up_init(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play) {
+    actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_NONE;
+    actor->npc_class.talk_info.turn = aNPC_TALK_TURN_NORMAL;
+    actor->npc_class.actor_class.status_data.weight = 50;
+    actor->npc_class.talk_info.default_animation = aNPC_ANIM_WAIT1;
+}
+
+static void aISN_wander_init(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play) {
+    actor->npc_class.think.end_flag = TRUE;
+    actor->npc_class.talk_info.talk_request_proc = aISN_first_day_talk_request;
+}
+
+typedef struct island_npc_think_data_s {
+    aISN_PROC act_proc;
+    aISN_PROC init_proc;
+    aNPC_TALK_REQUEST_PROC talk_request_proc;
+    u8 _0C;
+    u8 think_after_talk_idx;
+    int anim;
+} aISN_think_data_c;
+
+static void aISN_setup_isl_think_proc(ISLAND_NPC_ACTOR* actor, GAME_PLAY* play, u8 think_idx) {
+    static aISN_think_data_c dt_tbl[] = {
+        { (aISN_PROC)none_proc1, aISN_lying_init, aISN_norm_talk_request, 0, 0, aNPC_ANIM_GETUP_WAIT_SEG1 },
+        { aISN_stand_up, aISN_stand_up_init, (aNPC_TALK_REQUEST_PROC)none_proc1, 0, 3, aNPC_ANIM_GETUP_SEG1 },
+        { (aISN_PROC)none_proc1, (aISN_PROC)none_proc1, aISN_force_talk_request, 0, 3, aNPC_ANIM_WAIT1 },
+        { (aISN_PROC)none_proc1, aISN_wander_init, (aNPC_TALK_REQUEST_PROC)none_proc1, 0, 3, aNPC_ANIM_WALK1 },
+    };
+
+    aISN_think_data_c* data_p = &dt_tbl[think_idx];
+    actor->think_act = think_idx;
+    actor->think_act_proc = data_p->act_proc;
+    actor->npc_class.talk_info.talk_request_proc = data_p->talk_request_proc;
+    actor->_B70 = data_p->_0C;
+    actor->think_after_talk_idx = data_p->think_after_talk_idx;
+    NPC_CLIP->animation_init_proc((ACTOR*)actor, data_p->anim, FALSE);
+    (*data_p->init_proc)(actor, play);
+}
+
+static void aISN_isl_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int proc_type) {
+    static aNPC_SUB_PROC isl_think_proc[] = { aISN_isl_think_init_proc, aISN_isl_think_main_proc };
+    
+    (*isl_think_proc[proc_type])(nactorx, play);
+}
+
+static void aISN_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)nactorx;
+    int day_type;
+    int think_idx;
+
+    nactorx->think.think_proc = aISN_isl_think_proc;
+    nactorx->condition_info.hide_request = FALSE;
+    day_type = mISL_GetNpcDayType(&Common_Get(cur_island_house_p)->island);
+    actor->day_type = day_type;
+
+    switch (day_type) {
+        case mISL_NPC_DAY_TYPE_NOT_EXIST:
+            think_idx = aNPC_THINK_SPECIAL;
+            break;
+        case mISL_NPC_DAY_TYPE_APPEARED_TODAY:
+            think_idx = aNPC_THINK_WANDER;
+            nactorx->talk_info.talk_request_proc = aISN_first_day_talk_request;
+            break;
+        case mISL_NPC_DAY_TYPE_LEAVING_TOMORROW:
+            think_idx = aNPC_THINK_WANDER;
+            nactorx->talk_info.talk_request_proc = aISN_last_day_talk_request;
+            break;
+        case mISL_NPC_DAY_TYPE_NORMAL:
+        default:
+            think_idx = aNPC_THINK_WANDER;
+            nactorx->talk_info.talk_request_proc = aISN_first_day_talk_request;
+            break;
+    }
+
+    NPC_CLIP->think_proc(nactorx, play, think_idx, aNPC_THINK_TYPE_INIT);
+}
+
+static void aISN_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)nactorx;
+
+    if (nactorx->think.end_flag == TRUE) {
+        int think_idx;
+
+        switch (nactorx->think.idx) {
+            case aNPC_THINK_WANDER:
+                think_idx = aNPC_THINK_PITFALL; // they chose to use the pitfall think state?
+                nactorx->talk_info.talk_request_proc = NULL;
+                break;
+            default:
+                think_idx = aNPC_THINK_WANDER;
+                switch (actor->day_type) {
+                    case mISL_NPC_DAY_TYPE_APPEARED_TODAY:
+                        nactorx->talk_info.talk_request_proc = aISN_first_day_talk_request;
+                        break;
+                    case mISL_NPC_DAY_TYPE_LEAVING_TOMORROW:
+                        nactorx->talk_info.talk_request_proc = aISN_last_day_talk_request;
+                        break;
+                }
+                break;
+        }
+
+        NPC_CLIP->think_proc(nactorx, play, think_idx, aNPC_THINK_TYPE_INIT);
+    } else {
+        if (!NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT)) {
+            NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
+        }
+    }
+}
+
+static void aISN_schedule_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
+    static aNPC_SUB_PROC sche_proc[] = { aISN_schedule_init_proc, aISN_schedule_main_proc };
+
+    (*sche_proc[type])(nactorx, play);
+}
+
+static int aISN_get_msg_no(ISLAND_NPC_ACTOR* actor, int start_idx, int count) {
+    static int msg_no_tbl[mNpc_LOOKS_NUM] = {
+        0x2C9E, // mNpc_LOOKS_GIRL
+        0x2CAA, // mNpc_LOOKS_KO_GIRL
+        0x2CB6, // mNpc_LOOKS_BOY
+        0x2CC2, // mNpc_LOOKS_SPORT_MAN
+        0x2CCE, // mNpc_LOOKS_GRIM_MAN
+        0x2CDA, // mNpc_LOOKS_NANIWA_LADY
+    };
+
+    int looks = mNpc_GetLooks(actor->npc_class.actor_class.npc_id);
+    return start_idx + msg_no_tbl[looks] + RANDOM(count);
+}
+
+static int aISN_get_first_day_msg_type(ISLAND_NPC_ACTOR* actor) {
+    int type = 0;
+
+    if (!mPr_CheckCmpPersonalID(&Common_Get(cur_island_house_p)->ownerID, &Now_Private->player_ID)) {
+        Animal_c* animal = actor->npc_class.npc_info.animal;
+
+        if (animal != NULL) {
+            int mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+
+            if (mem_idx == -1) {
+                type = 1;
+            }
+        }
+    }
+
+    return type;
+}
+
+static void aISN_set_force_talk_info(ACTOR* actorx) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+    int msg_no = aISN_get_msg_no(actor, 2, 2);
+
+    mDemo_Set_msg_num(msg_no);
+    mDemo_Set_talk_turn(TRUE);
+    mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+}
+
+static void aISN_force_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_SPEAK, actorx, &aISN_set_force_talk_info);
+}
+
+static void aISN_set_norm_talk_info(ACTOR* actorx) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+
+    mDemo_Set_talk_turn(TRUE);
+    mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+
+    if (actor->_B6A == TRUE) {
+        if (RANDOM_F(1.0f) < 0.5f) {
+            actor->think_after_talk_idx = aISN_ACT_STAND_UP;
+
+            mDemo_Set_talk_return_demo_wait(TRUE);
+            mPlib_Set_able_force_speak_label(actorx);
+            Common_Get(cur_island_house_p)->island.islander_spawn_date.year = Common_Get(time.rtc_time.year);
+            Common_Get(cur_island_house_p)->island.islander_spawn_date.month = Common_Get(time.rtc_time.month);
+            Common_Get(cur_island_house_p)->island.islander_spawn_date.day = Common_Get(time.rtc_time.day);
+        }
+    }
+
+    actor->_B6A = TRUE;
+    mDemo_Set_msg_num(aISN_get_msg_no(actor, 0, 2));
+}
+
+static void aISN_norm_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_TALK, actorx, &aISN_set_norm_talk_info);
+}
+
+static void aISN_set_first_day_talk_info(ACTOR* actorx) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+    int msg_no;
+
+    mDemo_Set_talk_turn(TRUE);
+    mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+
+    if (aISN_get_first_day_msg_type(actor) == 1) {
+        msg_no = aISN_get_msg_no(actor, 4, 2);
+    } else {
+        msg_no = aISN_get_msg_no(actor, 6, 6);
+    }
+
+    mDemo_Set_msg_num(msg_no);
+}
+
+static void aISN_first_day_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_TALK, actorx, &aISN_set_first_day_talk_info);
+}
+
+static void aISN_set_last_day_talk_info(ACTOR* actorx) {
+    static int msg_no_tbl[mNpc_LOOKS_NUM] = {
+        0x5449, // mNpc_LOOKS_GIRL
+        0x544E, // mNpc_LOOKS_KO_GIRL
+        0x5453, // mNpc_LOOKS_BOY
+        0x5458, // mNpc_LOOKS_SPORT_MAN
+        0x545D, // mNpc_LOOKS_GRIM_MAN
+        0x5462, // mNpc_LOOKS_NANIWA_LADY
+    };
+
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+    int looks = mNpc_GetLooks(actor->npc_class.actor_class.npc_id);
+    int msg_no = msg_no_tbl[looks] + RANDOM(5);
+
+    mDemo_Set_talk_turn(TRUE);
+    mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+    mDemo_Set_msg_num(msg_no);
+}
+
+static void aISN_last_day_talk_request(ACTOR* actorx, GAME* game) {
+    mDemo_Request(mDemo_TYPE_TALK, actorx, &aISN_set_last_day_talk_info);
+}
+
+static int aISN_talk_init(ACTOR* actorx, GAME* game) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+
+    mNpc_SetAnimalLastTalk(actor->npc_class.npc_info.animal_orig);
+    if (actor->npc_class.think.idx == aNPC_THINK_SPECIAL) {
+        actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+    }
+
+    mDemo_Set_ListenAble();
+    return TRUE;
+}
+
+static int aISN_talk_end_chk(ACTOR* actorx, GAME* game) {
+    ISLAND_NPC_ACTOR* actor = (ISLAND_NPC_ACTOR*)actorx;
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    int ret = FALSE;
+
+    if (!mDemo_Check(mDemo_TYPE_SPEAK, actorx) && !mDemo_Check(mDemo_TYPE_TALK, actorx)) {
+        if (actor->npc_class.think.idx == aNPC_THINK_SPECIAL) {
+            aISN_setup_isl_think_proc(actor, play, actor->think_after_talk_idx);
+        }
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static void aISN_actor_move(ACTOR* actorx, GAME* game) {
+    NPC_CLIP->move_proc(actorx, game);
+}
