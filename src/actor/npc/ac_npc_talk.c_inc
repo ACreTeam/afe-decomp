@@ -593,6 +593,8 @@ typedef struct npc_dir_data_s {
     float y_adjust;
 } aNPC_direction_data_c;
 
+// @fakematch: I don't think that we should have differing behavior for look_target_actor vs target
+// for NPC2.
 static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
     ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
@@ -608,7 +610,9 @@ static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
         target = playerx;
     }
 
+#ifndef aNPC_NPC2
     look_target_actor = (ACTOR*)target;
+#endif
     if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL) {
         int move_target = (nactorx->talk_info.look_target >> 4) & 0xF;
 
@@ -621,6 +625,7 @@ static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
                 aNPC_set_dst_pos(nactorx, target->world.position.x, target->world.position.z);
                 nactorx->movement.mv_angl -= nactorx->_174.y;
                 break;
+#ifndef aNPC_NPC2
             case 2: {
                     ACTOR* target_actor = aNPC_getP_move_target(actorx, game);
                     if (target_actor != NULL) {
@@ -628,6 +633,10 @@ static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
                         nactorx->movement.mv_angl -= nactorx->_174.y;
                     }
                 } break;
+#else
+                case 2:
+                    break;
+#endif
         }
     }
 
@@ -639,8 +648,13 @@ static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
                 aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, playerx, NULL);
                 break;
             case 1:
+#ifndef aNPC_NPC2
                 aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, look_target_actor, NULL);
+#else
+                aNPC_set_head_request(nactorx, 4, aNPC_HEAD_TARGET_ACTOR, target, NULL);
+#endif
                 break;
+#ifndef aNPC_NPC2
             case 2: {
                 ACTOR* target_actor = aNPC_getP_move_target(actorx, game);
                 if (target_actor != NULL) {
@@ -680,6 +694,10 @@ static void aNPC_talk_direction_proc(ACTOR* actorx, GAME* game) {
                     }
                 }
             } break;
+#else
+            case 2:
+                break;
+#endif
         }
     }
 }
@@ -705,10 +723,18 @@ static void aNPC_setup_talk_start(NPC_ACTOR* nactorx, GAME* game) {
 
     nactorx->palActor = playerx;
     aNPC_set_talk_now_actor(nactorx);
+
+#ifndef aNPC_NPC2
     if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL && nactorx->talk_info.look_target == 0) {
         aNPC_set_dst_pos(nactorx, playerx->world.position.x, playerx->world.position.z);
         nactorx->movement.mv_angl -= nactorx->_174.y;
     }
+#else
+    if (nactorx->talk_info.turn == aNPC_TALK_TURN_NORMAL) {
+        aNPC_set_dst_pos(nactorx, playerx->world.position.x, playerx->world.position.z);
+        nactorx->movement.mv_angl -= nactorx->_174.y;
+    }
+#endif
 
     nactorx->request.umb_flag = FALSE;
     nactorx->condition_info.greeting_flag = FALSE;

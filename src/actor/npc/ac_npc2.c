@@ -53,7 +53,7 @@ extern aNPC_draw_data_c npc_draw_data_tbl[];
 typedef struct npc_control_cloth_s {
     /* 0x00 */ u8 dma_flag;
     /* 0x01 */ u8 init_flag;
-    /* 0x02 */ s16 _02;
+    /* 0x02 */ u8 _02;
     /* 0x04 */ mActor_name_t cloth_item;
     /* 0x06 */ s8 in_use_count;
     /* 0x07 */ u8 id;

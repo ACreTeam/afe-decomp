@@ -545,10 +545,12 @@ static int aNPC_setupActor_proc(GAME_PLAY* play, mActor_name_t name, s8 idx, int
             break;
         case NAME_TYPE_NPC:
             profile = mAc_PROFILE_NORMAL_NPC;
+#ifndef aNPC_NPC2
             if (mNpc_CheckIslandAnimalTableNo(name) == TRUE && Common_Get(cur_island_house_p) != NULL &&
                 mISL_GetNpcDayType(&Common_Get(cur_island_house_p)->island) != mISL_NPC_DAY_TYPE_NORMAL) {
                 profile = mAc_PROFILE_ISLAND_NPC;
             }
+#endif
             break;
     }
 
@@ -1395,6 +1397,7 @@ static int aNPC_chk_talk_actor_list(NPC_ACTOR* nactorx) {
     return ret;
 }
 
+#ifndef aNPC_NPC2
 static int aNPC_chk_group_talk(NPC_ACTOR* nactorx) {
     int ret = FALSE;
     ACTOR* talk_actor = aNPC_get_talk_actor_list(1);
@@ -1411,6 +1414,18 @@ static int aNPC_chk_group_talk(NPC_ACTOR* nactorx) {
 
     return ret;
 }
+#else
+static int aNPC_chk_group_talk(NPC_ACTOR* nactorx) {
+    int ret = FALSE;
+    ACTOR* talk_actor = aNPC_get_talk_actor_list(1);
+
+    if (talk_actor != NULL) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+#endif
 
 static void aNPC_set_talk_now_actor(NPC_ACTOR* nactorx) {
     NPC_CONTROL_ACTOR* ctrl = (NPC_CONTROL_ACTOR*)aNPC_ctrlActor;

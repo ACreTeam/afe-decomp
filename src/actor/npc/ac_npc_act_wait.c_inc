@@ -41,6 +41,18 @@ static void aNPC_act_wait_chg_data_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aNPC_act_wait_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+#ifdef aNPC_NPC2
+    if (nactorx->condition_info.sick_flg == TRUE) {
+        int sick_level = mNpc_GetSickLevel();
+        switch (sick_level) {
+            case mNpc_SICK_LV5:
+            case mNpc_SICK_LV4:
+            case mNpc_SICK_LV3:
+                nactorx->actor_class.status_data.weight = MASSTYPE_IMMOVABLE;
+                break;
+        }
+    }
+#endif
     nactorx->action.step = aNPC_ACT_WAIT_STEP_MAIN;
     nactorx->action.feel = aNPC_get_feel_info(nactorx);
     aNPC_setupAction(nactorx, aNPC_get_wait_action(nactorx, aNPC_get_feel_info(nactorx)));

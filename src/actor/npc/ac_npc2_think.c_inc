@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 static void aNPC_chg_entrance_fg(mActor_name_t fg) {
     mActor_name_t* fg_p = mFI_UtNum2UtFG(3, 8);
     fg_p[0] = fg;
@@ -30,7 +37,7 @@ static int aNPC_check_uzai_cross(NPC_ACTOR* nactorx) {
     return ret;
 }
 
-static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
+static int aNPC_check_uzai(NPC_ACTOR* nactorx) {
     static int max_uzai_cross[] = { 600, 240 };
     static int max_uzai_tool[] = { 3, 1 };
     // clang-format off
@@ -53,10 +60,13 @@ static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
         },
     };
     // clang-format on
+    
+    Animal_c* animal = nactorx->npc_info.animal;
+    int ret = FALSE;
 
-    if (aNPC_IS_NRM_NPC(nactorx)) {
+    if (aNPC_IS_NRM_NPC(nactorx) && animal != NULL && nactorx->condition_info.sick_flg == FALSE) {
         int mem_idx =
-            mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, nactorx->npc_info.animal->memories, ANIMAL_MEMORY_NUM);
+            mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
 
         if (mem_idx != -1 && (nactorx->condition_info.demo_flg & aNPC_COND_DEMO_SKIP_LOVE_CHECK) == 0) {
             int step = nactorx->condition_info.uzai_step;
@@ -69,7 +79,6 @@ static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
 
             if (step > max_uzai_cross[nactorx->condition_info.uzai_cross == 1] ||
                 nactorx->condition_info.uzai_tool == max_uzai_tool[nactorx->condition_info.uzai_cross == 1]) {
-                Animal_c* animal = nactorx->npc_info.animal;
                 int msg_no;
                 f32 msg_max = 5;
                 int pushed = FALSE;
@@ -80,7 +89,9 @@ static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
                     islander = TRUE;
                 }
 
-                mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_PUSHED);
+                if (mFI_CheckInIsland() == TRUE) {
+                    mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_UZAI_PUSHED);
+                }
                 msg_no = base_msg_no_table[islander][animal->id.looks];
                 if (aNPC_force_call_req_proc(nactorx, msg_no + (int)RANDOM_F(msg_max)) == TRUE) {
                     nactorx->condition_info.uzai_tool = 0;
@@ -89,6 +100,7 @@ static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
                     aNPC_set_feel_info(nactorx, aNPC_uzai_feel[mNpc_GetNpcLooks((ACTOR*)nactorx)], 1);
                     nactorx->think.force_call_camera_type = CAMERA2_PROCESS_TALK;
                     nactorx->condition_info.uzai_flag = 0;
+                    ret = TRUE;
                 }
             } else {
                 if (step < 0) {
@@ -101,6 +113,23 @@ static void aNPC_check_uzai(NPC_ACTOR* nactorx) {
             nactorx->condition_info.uzai_step = step;
         }
     }
+
+    return ret;
+}
+
+static void aNPC_check_sick_lv(NPC_ACTOR* nactorx) {
+    if (nactorx->condition_info.sick_flg == TRUE) {
+        int sick_level = mNpc_GetSickLevel();
+        switch (sick_level) {
+            case mNpc_SICK_LV5:
+                nactorx->condition_info.demo_flg |= aNPC_COND_DEMO_SKIP_HEAD_LOOKAT;
+                break;
+            case mNpc_SICK_LV4:
+            case mNpc_SICK_LV3:
+                nactorx->condition_info.demo_flg |= aNPC_COND_DEMO_SKIP_HEAD_LOOKAT;
+                break;
+        }
+    }
 }
 
 static int aNPC_chk_talk_start(NPC_ACTOR* nactorx) {
@@ -109,6 +138,10 @@ static int aNPC_chk_talk_start(NPC_ACTOR* nactorx) {
 
     if (palActor != NULL) {
         switch (nactorx->condition_info.talk_condition) {
+            case aNPC_TALK_TYPE_NONE:
+                aNPC_set_talk_now_actor(nactorx);
+                aNPC_regist_talk_actor_list(nactorx, NULL);
+                break;
             case aNPC_TALK_TYPE_START:
                 aNPC_set_request_act(nactorx, 4, nactorx->talk_info.default_act, aNPC_ACT_TYPE_DEFAULT,
                                      aNPC_req_default_data);
@@ -700,7 +733,7 @@ static int aNPC_chk_friendship_lv(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     int ret = FALSE;
     int friendship = (*nactorx->condition_info.friendship) + nactorx->condition_info.over_friendship;
 
-    if (friendship < 0) {
+    if (friendship < -32) {
         ret = aNPC_hate_player(nactorx, play);
     } else if (friendship > 128) {
         ret = aNPC_love_player(nactorx, play);
@@ -727,7 +760,7 @@ static int aNPC_chk_friendship_sub(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 static int aNPC_chk_friendship(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     int ret = FALSE;
 
-    if ((nactorx->think.interrupt_flags & aNPC_THINK_INTERRUPT_FRIENDSHIP) != 0 && !aNPC_IS_SP_NPC(nactorx)) {
+    if ((nactorx->think.interrupt_flags & aNPC_THINK_INTERRUPT_FRIENDSHIP) != 0 && !aNPC_IS_SP_NPC(nactorx) && nactorx->condition_info.sick_flg == FALSE) {
         switch (nactorx->action.idx) {
             case aNPC_ACT_WAIT:
             case aNPC_ACT_WALK:
@@ -755,13 +788,17 @@ static int aNPC_think_chk_interrupt_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     } else if (aNPC_chk_left_hand(nactorx) == FALSE) {
         ret = TRUE;
     } else {
-        aNPC_check_uzai(nactorx);
-        if (!F32_IS_ZERO(nactorx->actor_class.speed)) {
-            if (aNPC_check_fatigue(nactorx) == TRUE) {
-                aNPC_set_request_act(nactorx, 1, aNPC_ACT_WAIT, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
-                ret = TRUE;
-            } else {
-                ret = aNPC_avoid_obstacle(nactorx, play);
+        if (aNPC_check_uzai(nactorx) == TRUE) {
+            ret = TRUE;
+        } else {
+            aNPC_check_sick_lv(nactorx);
+            if (!F32_IS_ZERO(nactorx->actor_class.speed)) {
+                if (aNPC_check_fatigue(nactorx) == TRUE) {
+                    aNPC_set_request_act(nactorx, 1, aNPC_ACT_WAIT, aNPC_ACT_TYPE_DEFAULT, aNPC_req_default_data);
+                    ret = TRUE;
+                } else {
+                    ret = aNPC_avoid_obstacle(nactorx, play);
+                }
             }
         }
 

@@ -5,39 +5,18 @@ enum {
 };
 
 static void aNPC_act_walk_setupAction(NPC_ACTOR* nactorx, u8 feel) {
-    static u8 walk_action[] = {
-        aNPC_ACTION_TYPE_WALK,
-        aNPC_ACTION_TYPE_WALK_KI,
-        aNPC_ACTION_TYPE_WALK_DO,
-        aNPC_ACTION_TYPE_WALK_AI,
-        aNPC_ACTION_TYPE_WALK,
-        aNPC_ACTION_TYPE_WALK,
-        aNPC_ACTION_TYPE_WALK_DO,
-        aNPC_ACTION_TYPE_WALK_AI,
-        aNPC_ACTION_TYPE_WALK_DO
-    };
-    static u8 run_action[] = {
-        aNPC_ACTION_TYPE_RUN,
-        aNPC_ACTION_TYPE_RUN_KI,
-        aNPC_ACTION_TYPE_RUN_DO,
-        aNPC_ACTION_TYPE_RUN_AI,
-        aNPC_ACTION_TYPE_RUN,
-        aNPC_ACTION_TYPE_RUN,
-        aNPC_ACTION_TYPE_RUN_DO,
-        aNPC_ACTION_TYPE_RUN_AI,
-        aNPC_ACTION_TYPE_RUN_DO
-    };
     u8 act;
     
     nactorx->action.feel = feel;
     if (nactorx->action.idx == aNPC_ACT_WALK) {
-        act = walk_action[feel];
+        act = aNPC_get_walk_action(nactorx, feel);
     } else {
-        act = run_action[feel];
+        act = aNPC_get_run_action(nactorx, feel);
     }
 
     aNPC_setupAction(nactorx, act);
 }
+
 
 typedef int (*aNPC_ACT_WALK_PROC)(NPC_ACTOR* nactorx, GAME_PLAY* play);
 

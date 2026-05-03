@@ -45,6 +45,8 @@ static void aNPC_act_contract1(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             nactorx->left_hand.item = CLIP(handOverItem_clip)->item;
             if (nactorx->action.idx == aNPC_ACT_NOT_CONTRACT) {
                 CLIP(handOverItem_clip)->player_after_mode = aHOI_REQUEST_RETURN;
+            } else {
+                CLIP(handOverItem_clip)->player_after_mode = aHOI_REQUEST_PUTAWAY;
             }
 
             aNPC_act_contract_chg_step(nactorx, aNPC_ACT_CONTRACT_STEP_CONTRACT2);

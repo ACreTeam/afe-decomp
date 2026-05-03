@@ -105,7 +105,9 @@ static void aNPC_calc_timer(NPC_ACTOR* nactorx) {
 
 static void aNPC_position_move(ACTOR* actorx) {
     NPC_ACTOR* nactorx = (NPC_ACTOR*)actorx;
-    f32 accel;
+    float speed;
+    float accel;
+    float speed_percent = nactorx->movement.speed_percent;
 
     if (actorx->speed < nactorx->movement.speed.max_speed) {
         accel = nactorx->movement.speed.acceleration;
@@ -113,16 +115,15 @@ static void aNPC_position_move(ACTOR* actorx) {
         accel = nactorx->movement.speed.deceleration;
     }
 
-    chase_f(&actorx->speed, nactorx->movement.speed.max_speed, accel * 0.5f);
-#ifndef aNPC_NPC2
-    Actor_position_speed_set(actorx);
-#else
+    accel *= speed_percent;
+    speed = nactorx->movement.speed.max_speed;
+    speed *= speed_percent;
+    chase_f(&actorx->speed, speed, accel * 0.5f);
     Actor_position_moveF(actorx);
-#endif
 }
 
 static void aNPC_angle_calc(NPC_ACTOR* nactorx) {
-    chase_angle(&nactorx->actor_class.shape_info.rotation.y, nactorx->movement.mv_angl, nactorx->movement.mv_add_angl);
+    chase_angle(&nactorx->actor_class.shape_info.rotation.y, nactorx->movement.mv_angl, nactorx->movement.mv_add_angl * nactorx->movement.speed_percent);
     nactorx->actor_class.world.angle.y = nactorx->actor_class.shape_info.rotation.y;
 }
 
@@ -140,8 +141,53 @@ static void aNPC_set_body_angle(NPC_ACTOR* nactorx) {
 
 static void aNPC_calc_fatigue(NPC_ACTOR* nactorx) {
     static int fatigue_add_table[] = {
-        -2, -2, -2, -2, -2, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,
-        0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -2, // aNPC_ACTION_TYPE_WAIT
+        -2, // aNPC_ACTION_TYPE_WAIT_KI
+        -2, // aNPC_ACTION_TYPE_WAIT_DO
+        -2, // aNPC_ACTION_TYPE_WAIT_AI
+        -2, // aNPC_ACTION_TYPE_WAIT_NEMU
+        -2, // aNPC_ACTION_TYPE_WAIT_SICK
+        1, // aNPC_ACTION_TYPE_WALK
+        1, // aNPC_ACTION_TYPE_WALK_KI
+        1, // aNPC_ACTION_TYPE_WALK_DO
+        1, // aNPC_ACTION_TYPE_WALK_AI
+        1, // aNPC_ACTION_TYPE_WALK_SICK
+        2, // aNPC_ACTION_TYPE_RUN
+        2, // aNPC_ACTION_TYPE_RUN_KI
+        2, // aNPC_ACTION_TYPE_RUN_DO
+        2, // aNPC_ACTION_TYPE_RUN_AI
+        0, // aNPC_ACTION_TYPE_TURN
+        0, // aNPC_ACTION_TYPE_TURN2
+        0, // aNPC_ACTION_TYPE_TALK_TURN
+        0, // aNPC_ACTION_TYPE_TALK
+        0, // aNPC_ACTION_TYPE_KEITAI_ON
+        0, // aNPC_ACTION_TYPE_KEITAI_OFF
+        0, // aNPC_ACTION_TYPE_TRANS_MOVE
+        0, // aNPC_ACTION_TYPE_TRANSFER
+        0, // aNPC_ACTION_TYPE_TRANS_WAIT
+        0, // aNPC_ACTION_TYPE_SEND_MAIL
+        0, // aNPC_ACTION_TYPE_GET_MOVE
+        0, // aNPC_ACTION_TYPE_GET
+        0, // aNPC_ACTION_TYPE_GET_PULL
+        0, // aNPC_ACTION_TYPE_GET_PULL_WAIT
+        0, // aNPC_ACTION_TYPE_GET_PUTAWAY
+        0, // aNPC_ACTION_TYPE_GET_EAT
+        0, // aNPC_ACTION_TYPE_GET_CHANGE
+        0, // aNPC_ACTION_TYPE_GET_RETURN
+        0, // aNPC_ACTION_TYPE_GET_F
+        0, // aNPC_ACTION_TYPE_GET_PULL_F
+        0, // aNPC_ACTION_TYPE_GET_PULL_WAIT_F
+        0, // aNPC_ACTION_TYPE_GET_PUTAWAY_F
+        0, // aNPC_ACTION_TYPE_GET_RETURN_F
+        0, // aNPC_ACTION_TYPE_ESTIMATE_F
+        0, // aNPC_ACTION_TYPE_PRESENTOPEN
+        0, // aNPC_ACTION_TYPE_GET_CHANGE2
+        0, // aNPC_ACTION_TYPE_CONTRACT
+        0, // aNPC_ACTION_TYPE_CONTRACT_PULL
+        0, // aNPC_ACTION_TYPE_CONTRACT_PUTAWAY
+        0, // aNPC_ACTION_TYPE_NOT_CONTRACT
+        0, // aNPC_ACTION_TYPE_ENSOU
+        0, // aNPC_ACTION_TYPE_WAIT_E
     };
 
     int fatigue = nactorx->condition_info.fatigue;
@@ -165,49 +211,53 @@ typedef struct {
 static void aNPC_setupAction(NPC_ACTOR* nactorx, u8 action) {
     // clang-format off
     static aNPC_setup_data_c setup_data[aNPC_ACTION_TYPE_NUM] = {
-        {FALSE, 0x0100, 0x00},
-        {FALSE, 0x0100, 0x00},
-        {FALSE, 0x0100, 0x00},
-        {FALSE, 0x0100, 0x00},
-        {FALSE, 0x0100, 0x00},
-        {FALSE, 0x0400, 0x01},
-        {FALSE, 0x0400, 0x01},
-        {FALSE, 0x0400, 0x01},
-        {FALSE, 0x0400, 0x01},
-        {FALSE, 0x0400, 0x02},
-        {FALSE, 0x0400, 0x02},
-        {FALSE, 0x0400, 0x02},
-        {FALSE, 0x0400, 0x02},
-        {FALSE, 0x0800, 0x00},
-        {FALSE, 0x0800, 0x00},
-        {FALSE, 0x0800, 0x00},
-        { TRUE, 0x0400, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        {FALSE, 0x0000, 0x00},
-        { TRUE, 0x0000, 0x00},
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT_KI
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT_DO
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT_AI
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT_NEMU
+        {FALSE, 0x0100, 0x00}, // aNPC_ACTION_TYPE_WAIT_SICK
+        {FALSE, 0x0400, 0x01}, // aNPC_ACTION_TYPE_WALK
+        {FALSE, 0x0400, 0x01}, // aNPC_ACTION_TYPE_WALK_KI
+        {FALSE, 0x0400, 0x01}, // aNPC_ACTION_TYPE_WALK_DO
+        {FALSE, 0x0400, 0x01}, // aNPC_ACTION_TYPE_WALK_AI
+        {FALSE, 0x0400, 0x01}, // aNPC_ACTION_TYPE_WALK_SICK
+        {FALSE, 0x0400, 0x02}, // aNPC_ACTION_TYPE_RUN
+        {FALSE, 0x0400, 0x02}, // aNPC_ACTION_TYPE_RUN_KI
+        {FALSE, 0x0400, 0x02}, // aNPC_ACTION_TYPE_RUN_DO
+        {FALSE, 0x0400, 0x02}, // aNPC_ACTION_TYPE_RUN_AI
+        {FALSE, 0x0800, 0x00}, // aNPC_ACTION_TYPE_TURN
+        {FALSE, 0x0800, 0x00}, // aNPC_ACTION_TYPE_TURN2
+        {FALSE, 0x0800, 0x00}, // aNPC_ACTION_TYPE_TALK_TURN
+        { TRUE, 0x0400, 0x00}, // aNPC_ACTION_TYPE_TALK
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_KEITAI_ON
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_KEITAI_OFF
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_TRANS_MOVE
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_TRANSFER
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_TRANS_WAIT
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_SEND_MAIL
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_MOVE
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PULL
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PULL_WAIT
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PUTAWAY
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_EAT
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_CHANGE
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_RETURN
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PULL_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PULL_WAIT_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_PUTAWAY_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_RETURN_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_ESTIMATE_F
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_PRESENTOPEN
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_GET_CHANGE2
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_CONTRACT
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_CONTRACT_PULL
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_CONTRACT_PUTAWAY
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_NOT_CONTRACT
+        {FALSE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_ENSOU
+        { TRUE, 0x0000, 0x00}, // aNPC_ACTION_TYPE_WAIT_E
     };
     // clang-format on
 

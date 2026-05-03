@@ -405,6 +405,9 @@ static void aNPC_chk_request_act(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         }
 
         if (nactorx->request.act_idx != prev_idx) {
+            if (nactorx->action.prev_idx == aNPC_ACT_WAIT && nactorx->condition_info.sick_flg == TRUE) {
+                nactorx->actor_class.status_data.weight = 50;
+            }
             (*aNPC_act_proc[nactorx->action.idx])(nactorx, play, aNPC_ACTION_PROC_TYPE_INIT);
         }
     }
