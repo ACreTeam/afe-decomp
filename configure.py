@@ -593,7 +593,7 @@ config.libs = [
         "foresta",
         [
             Object(Matching, "audio.c"),
-            Object(NonMatching, "c_keyframe.c"),
+            Object(Matching, "c_keyframe.c"),
             Object(Matching, "ev_cherry_manager.c"),
             Object(Matching, "evw_anime.c"),
             Object(Matching, "executor.c"),
