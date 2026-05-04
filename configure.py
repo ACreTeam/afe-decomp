@@ -1196,7 +1196,7 @@ config.libs = [
             Object(NonMatching, "game/m_start_data_init.c"),
             Object(NonMatching, "game/m_string.c"),
             Object(NonMatching, "game/m_submenu.c"),
-            Object(NonMatching, "game/m_submenu_ovl.c"),
+            Object(Matching, "game/m_submenu_ovl.c"),
             Object(NonMatching, "game/m_tag_ovl.c"),
             Object(Matching, "game/m_text.c"),
             Object(Matching, "game/m_time.c"),

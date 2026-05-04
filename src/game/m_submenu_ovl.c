@@ -40,6 +40,9 @@
 #include "m_tag_ovl.h"
 #include "m_hand_ovl.h"
 #include "m_haniwaPortrait_ovl.h"
+#include "m_alarmIn_ovl.h"
+#include "m_shutter_ovl.h"
+#include "m_film_ovl.h"
 
 static Submenu_Overlay_c ovl_base;
 
@@ -636,6 +639,22 @@ extern u16 inv_mwin_39ishidai_pal[];
 extern u8 inv_mwin_39ishidai_tex[];
 extern u16 inv_mwin_40piraruku_pal[];
 extern u8 inv_mwin_40piraruku_tex[];
+extern u16 icon_s1_41aji_pal[];
+extern u16 icon_s1_42karei_pal[];
+extern u16 icon_s1_43hirame_pal[];
+extern u16 icon_s1_44tatu_pal[];
+extern u16 icon_s1_45ika_pal[];
+extern u16 icon_s1_46tako_pal[];
+extern u16 icon_s1_47hari_pal[];
+extern u16 icon_s1_48kajiki_pal[];
+extern u8 icon_s1_41aji_tex[];
+extern u8 icon_s1_42karei_tex[];
+extern u8 icon_s1_43hirame_tex[];
+extern u8 icon_s1_44tatu_tex[];
+extern u8 icon_s1_45ika_tex[];
+extern u8 icon_s1_46tako_tex[];
+extern u8 icon_s1_47hari_tex[];
+extern u8 icon_s1_48kajiki_tex[];
 
 extern u16 inv_mwin_fuku3_pal[];
 extern u8 inv_mwin_fuku3_tex[];
@@ -670,8 +689,8 @@ extern u8 inv_mwin_tokei_tex[];
 extern u16 inv_mwin_hankati_pal[];
 extern u8 inv_mwin_hankati_tex[];
 
-extern u16 inv_mwin_glasses_pal[];
-extern u8 inv_mwin_glasses_tex[];
+extern u16 inv_mwin_megane_pal[];
+extern u8 inv_mwin_megane_tex[];
 
 extern u16 inv_mwin_aki_pal[];
 extern u8 inv_mwin_akikan_tex[];
@@ -864,6 +883,22 @@ extern u16 inv_mwin_39ari_pal[];
 extern u8 inv_mwin_39ari_tex[];
 extern u16 inv_mwin_40ka_pal[];
 extern u8 inv_mwin_40ka_tex[];
+extern u16 icon_m1_41nomi_pal[];
+extern u8 icon_m1_41nomi_tex[];
+extern u16 icon_m1_42gen_pal[];
+extern u8 icon_m1_42gen_tex[];
+extern u16 icon_m1_43fun_pal[];
+extern u8 icon_m1_43fun_tex[];
+extern u16 icon_m1_44arex_pal[];
+extern u8 icon_m1_44arex_tex[];
+extern u16 icon_m1_45hera_pal[];
+extern u8 icon_m1_45hera_tex[];
+extern u16 icon_m1_46kani_pal[];
+extern u8 icon_m1_46kani_tex[];
+extern u16 icon_m1_47yasi_pal[];
+extern u8 icon_m1_47yasi_tex[];
+extern u16 icon_m1_48yado_pal[];
+extern u8 icon_m1_48yado_tex[];
 extern u16 inv_mwin_hitodama_pal[];
 extern u8 inv_mwin_hitodama1_tex[];
 extern u8 inv_mwin_hitodama2_tex[];
@@ -888,6 +923,28 @@ extern u8 inv_mwin_cabu3_tex[];
 extern u16 inv_mwin_2cabu1_pal[];
 extern u8 inv_mwin_2cabu1_tex[];
 
+extern u8 icon_qbox1_tex_rgb_ci4[];
+extern u16 icon_qbox1_tex_rgb_ci4_pal[];
+extern u8 icon_qbox2_tex_rgb_ci4[];
+extern u16 icon_qbox2_tex_rgb_ci4_pal[];
+extern u8 icon_qbox3_tex_rgb_ci4[];
+extern u16 icon_qbox3_tex_rgb_ci4_pal[];
+extern u8 icon_qbox4_tex_rgb_ci4[];
+extern u16 icon_qbox4_tex_rgb_ci4_pal[];
+extern u8 icon_qbox5_tex_rgb_ci4[];
+extern u16 icon_qbox5_tex_rgb_ci4_pal[];
+
+extern u16 icon_cracker_pal[];
+extern u8 icon_cracker_tex[];
+extern u16 icon_medicin_pal[];
+extern u8 icon_medicin_tex[];
+
+extern u16 icon_music_live1_pal[];
+extern u8 icon_music_live1_tex[];
+
+extern u16 icon_q_tegami_pal[];
+extern u8 icon_q_tegami_tex[];
+
 static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_name_t item, int present_flag,
                           int color_flag, int anim_frame, int shadow_flag, int mark_flag) {
     static mSM_inventory_icon_info_c furniture_tex_data = { inv_mwin_leaf_pal, inv_mwin_leaf_tex };
@@ -909,6 +966,23 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
         { inv_mwin_pbox4_tex_rgb_ci4_pal, inv_mwin_pbox4_tex_rgb_ci4 },
         { inv_mwin_pbox5_tex_rgb_ci4_pal, inv_mwin_pbox5_tex_rgb_ci4 },
         { inv_mwin_pbox5_tex_rgb_ci4_pal, inv_mwin_pbox5_tex_rgb_ci4 },
+    };
+    // clang-format on
+
+    // clang-format off
+    static mSM_inventory_icon_info_c qbox_tex_data[] = {
+        { icon_qbox1_tex_rgb_ci4_pal, icon_qbox1_tex_rgb_ci4 },
+        { icon_qbox1_tex_rgb_ci4_pal, icon_qbox1_tex_rgb_ci4 },
+        { icon_qbox1_tex_rgb_ci4_pal, icon_qbox1_tex_rgb_ci4 },
+        { icon_qbox1_tex_rgb_ci4_pal, icon_qbox1_tex_rgb_ci4 },
+        { icon_qbox2_tex_rgb_ci4_pal, icon_qbox2_tex_rgb_ci4 },
+        { icon_qbox2_tex_rgb_ci4_pal, icon_qbox2_tex_rgb_ci4 },
+        { icon_qbox3_tex_rgb_ci4_pal, icon_qbox3_tex_rgb_ci4 },
+        { icon_qbox3_tex_rgb_ci4_pal, icon_qbox3_tex_rgb_ci4 },
+        { icon_qbox4_tex_rgb_ci4_pal, icon_qbox4_tex_rgb_ci4 },
+        { icon_qbox4_tex_rgb_ci4_pal, icon_qbox4_tex_rgb_ci4 },
+        { icon_qbox5_tex_rgb_ci4_pal, icon_qbox5_tex_rgb_ci4 },
+        { icon_qbox5_tex_rgb_ci4_pal, icon_qbox5_tex_rgb_ci4 },
     };
     // clang-format on
 
@@ -1024,6 +1098,18 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
         { inv_mwin_utiwa_pal, inv_mwin_utiwa_tex },
         { inv_mwin_utiwa_pal, inv_mwin_utiwa_tex },
         { inv_mwin_utiwa_pal, inv_mwin_utiwa_tex },
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_cracker_pal, icon_cracker_tex},
+        {icon_medicin_pal, icon_medicin_tex},
     };
     // clang-format on
 
@@ -1069,6 +1155,14 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
         { inv_mwin_38tai_pal, inv_mwin_38tai_tex }, // 37
         { inv_mwin_39ishidai_pal, inv_mwin_39ishidai_tex }, // 38
         { inv_mwin_40piraruku_pal, inv_mwin_40piraruku_tex }, // 39
+        {icon_s1_47hari_pal, icon_s1_47hari_tex},
+        {icon_s1_43hirame_pal, icon_s1_43hirame_tex},
+        {icon_s1_45ika_pal, icon_s1_45ika_tex},
+        {icon_s1_48kajiki_pal, icon_s1_48kajiki_tex},
+        {icon_s1_42karei_pal, icon_s1_42karei_tex},
+        {icon_s1_46tako_pal, icon_s1_46tako_tex},
+        {icon_s1_44tatu_pal, icon_s1_44tatu_tex},
+        {icon_s1_41aji_pal, icon_s1_41aji_tex},
     };
     // clang-format on
 
@@ -1080,19 +1174,19 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
 
     // clang-format off
     static mSM_inventory_icon_info_c etc_tex_table[] = {
-        { inv_mwin_mtegami_pal, inv_mwin_mtegami_tex },
+        { icon_q_tegami_pal, icon_q_tegami_tex },
         { inv_mwin_fuku3_pal, inv_mwin_fuku3_tex },
-        { inv_mwin_okane1_pal, inv_mwin_okane1_tex },
-        { inv_mwin_video_pal, inv_mwin_video_tex },
-        { inv_mwin_tetyou_pal, inv_mwin_tetyou_tex },
-        { inv_mwin_pokepi_pal, inv_mwin_pokepi_tex },
-        { inv_mwin_manga_pal, inv_mwin_manga_tex },
-        { inv_mwin_ehon_pal, inv_mwin_ehon_tex },
-        { inv_mwin_GB_pal, inv_mwin_GB_tex },
+        { inv_mwin_turi_tex_pal, inv_mwin_turi_tex },
+        { inv_mwin_mushi_pal, inv_mwin_mushi_tex },
+        { inv_mwin_scoop_pal, inv_mwin_scoop_tex },
+        { inv_mwin_ono_pal, inv_mwin_ono_tex },
+        { inv_mwin_kazaguruma_pal, inv_mwin_kazaguruma_tex },
+        { inv_mwin_utiwa_pal, inv_mwin_utiwa_tex },
+        { inv_mwin_haniwa_pal, inv_mwin_haniwa_tex },
         { inv_mwin_camera2_pal, inv_mwin_camera_tex },
         { inv_mwin_tokei_pal, inv_mwin_tokei_tex },
         { inv_mwin_hankati_pal, inv_mwin_hankati_tex },
-        { inv_mwin_glasses_pal, inv_mwin_glasses_tex },
+        { inv_mwin_megane_pal, inv_mwin_megane_tex },
         { inv_mwin_okane1_pal, inv_mwin_okane1_tex },
         { inv_mwin_aki_pal, inv_mwin_akikan_tex },
         { inv_mwin_kutu_pal, inv_mwin_kutu_tex },
@@ -1174,8 +1268,9 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
     // clang-format on
 
     // clang-format off
-    static mSM_inventory_icon_info_c minidisk_tex_table[1] = {
+    static mSM_inventory_icon_info_c minidisk_tex_table[] = {
         { inv_mwin_onpu_pal, inv_mwin_onpu_tex },
+        { icon_music_live1_pal, icon_music_live1_tex },
     };
     // clang-format on
 
@@ -1343,6 +1438,14 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
         { inv_mwin_38kumo_pal, inv_mwin_38kumo_tex }, // 37
         { inv_mwin_39ari_pal, inv_mwin_39ari_tex }, // 38
         { inv_mwin_40ka_pal, inv_mwin_40ka_tex }, // 39
+        {icon_m1_44arex_pal, icon_m1_44arex_tex},
+        {icon_m1_43fun_pal, icon_m1_43fun_tex},
+        {icon_m1_42gen_pal, icon_m1_42gen_tex},
+        {icon_m1_45hera_pal, icon_m1_45hera_tex},
+        {icon_m1_46kani_pal, icon_m1_46kani_tex},
+        {icon_m1_41nomi_pal, icon_m1_41nomi_tex},
+        {icon_m1_48yado_pal, icon_m1_48yado_tex},
+        {icon_m1_47yasi_pal, icon_m1_47yasi_tex},
         { inv_mwin_hitodama_pal, inv_mwin_hitodama1_tex }, // 40
         { inv_mwin_hitodama_pal, inv_mwin_hitodama2_tex }, // 41
         { inv_mwin_hitodama_pal, inv_mwin_hitodama3_tex }, // 42
@@ -1403,15 +1506,27 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
         return;
     }
 
-    if (present_flag) {
-        if (anim_frame > 11) {
-            /* Start fading out */
-            icon = &present_tex_data[11];
-            if (anim_frame > 22) {
-                alpha_flag = TRUE;
+    if (present_flag != 0) {
+        if (present_flag == 1) {
+            if (anim_frame > 11) {
+                /* Start fading out */
+                icon = &present_tex_data[11];
+                if (anim_frame > 22) {
+                    alpha_flag = TRUE;
+                }
+            } else {
+                icon = &present_tex_data[anim_frame];
             }
         } else {
-            icon = &present_tex_data[anim_frame];
+            if (anim_frame > 11) {
+                /* Start fading out */
+                icon = &qbox_tex_data[11];
+                if (anim_frame > 22) {
+                    alpha_flag = TRUE;
+                }
+            } else {
+                icon = &qbox_tex_data[anim_frame];
+            }
         }
     } else {
         if (item >= HANIWA_START && item <= HANIWA_END) {
@@ -1433,10 +1548,16 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
                 case ITEM1_CAT_PAPER:
                     icon = &item_tex_data_table[category][1 + PAPER2STACK(item - ITM_PAPER_START)] - 1;
                     break;
+                case ITEM1_CAT_MINIDISK:
+                    if (ITEM_IS_MINIDISK_LIVE(item)) {
+                        icon = &item_tex_data_table[category][1];
+                    } else {
+                        icon = &item_tex_data_table[category][0];
+                    }
+                    break;
                 case ITEM1_CAT_CLOTH:
                 case ITEM1_CAT_CARPET:
                 case ITEM1_CAT_WALL:
-                case ITEM1_CAT_MINIDISK:
                 case ITEM1_CAT_DUMMY:
                     icon = &item_tex_data_table[category][0];
                     break;
@@ -1448,11 +1569,18 @@ static void mSM_draw_item(GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, mActor_
     }
 
     if (icon != NULL) {
-        if ((category == ITEM1_CAT_FISH || category == ITEM1_CAT_INSECT) && anim_frame != 0) {
-            /* Fish & insects have two back-to-back palettes for inventory & collection windows */
-            palette = 16 + icon->pal;
-        } else {
-            palette = icon->pal;
+        switch (category) {
+            case ITEM1_CAT_FISH:
+            case ITEM1_CAT_INSECT:
+                if (anim_frame != 0) {
+                    palette = 16 + icon->pal;
+                } else {
+                    palette = icon->pal;
+                }
+                break;
+            default:
+                palette = icon->pal;
+                break;
         }
 
         if (color_flag) {
@@ -1601,7 +1729,7 @@ extern void mSM_draw_original(Submenu* submenu, GRAPH* graph, f32 pos_x, f32 pos
     }
 }
 
-static mSM_Ovl_dlftbl_c mSM_program_dlftbl[] = {
+static mSM_Ovl_dlftbl_c mSM_program_dlftbl[mSM_OVL_NUM] = {
     {
         0,
         0,
@@ -1912,6 +2040,36 @@ static mSM_Ovl_dlftbl_c mSM_program_dlftbl[] = {
         &mPC_passwordChk_ovl_set_proc,
         FALSE,
     },
+    {
+        0,
+        0,
+        NULL,
+        NULL,
+        &mAL_alarmIn_ovl_construct,
+        &mAL_alarmIn_ovl_destruct,
+        &mAL_alarmIn_ovl_set_proc,
+        FALSE,
+    },
+    {
+        0,
+        0,
+        NULL,
+        NULL,
+        &mST_shutter_ovl_construct,
+        &mST_shutter_ovl_destruct,
+        &mST_shutter_ovl_set_proc,
+        FALSE,
+    },
+    {
+        0,
+        0,
+        NULL,
+        NULL,
+        &mFL_film_ovl_construct,
+        &mFL_film_ovl_destruct,
+        &mFL_film_ovl_set_proc,
+        FALSE,
+    },
 };
 
 // clang-format off
@@ -1974,7 +2132,7 @@ static void mSM_ovl_prog_seg(Submenu* submenu, mSM_Ovl_dlftbl_c* dlftbl) {
 }
 
 static void mSM_set_other_seg(Submenu* submenu) {
-    static u8 flg_table[] = {
+    static u8 flg_table[mSM_OVL_NUM] = {
         mSM_OVL_FLAG_NONE,
         mSM_OVL_FLAG_USE_ITEM | mSM_OVL_FLAG_USE_TAG | mSM_OVL_FLAG_USE_HAND,
         mSM_OVL_FLAG_USE_HANIWA_PORTRAIT,
@@ -2004,6 +2162,9 @@ static void mSM_set_other_seg(Submenu* submenu) {
         mSM_OVL_FLAG_NONE,
         mSM_OVL_FLAG_NONE,
         mSM_OVL_FLAG_NONE,
+        mSM_OVL_FLAG_NONE,
+        mSM_OVL_FLAG_NONE,
+        mSM_OVL_FLAG_USE_HANIWA_PORTRAIT,
         mSM_OVL_FLAG_NONE,
         mSM_OVL_FLAG_NONE,
     };
@@ -2050,7 +2211,7 @@ typedef struct submenu_ovl_start_data_s {
 
 static void mSM_set_new_start_data(Submenu* submenu) {
     // clang-format off
-    static mSM_ovl_start_data_c data_table[] = {
+    static mSM_ovl_start_data_c data_table[mSM_OVL_NUM] = {
         { 0.0, 0.0, 0.0, 0.0, },
         { 300.0, 0.0, 75.0, 0.0, },
         { 0.0, 300.0, 0.0, 75.0, },
@@ -2082,6 +2243,9 @@ static void mSM_set_new_start_data(Submenu* submenu) {
         { 0.0, 300.0, 0.0, 75.0, },
         { 0.0, 300.0, 0.0, 75.0, },
         { 0.0, 300.0, 0.0, 75.0, },
+        { 0.0f, 300.0f, 0.0f, 75.0f, },
+        { 0.0f, 0.0f, 0.0f, 0.0f, },
+        { 300.0f, 0.0f, 75.0f, 0.0f, },
     };
     // clang-format on
     int type = submenu->menu_type;
