@@ -734,6 +734,7 @@ extern int mMC_check_birth();
 extern int mMC_check_birth_day();
 extern void mMC_check_delete();
 extern void mMC_set_time();
+extern int mEv_check_run_calendar_event(void);
 
 #define mEv_IsEventActive(event) mEv_check_status(event, mEv_STATUS_ACTIVE)
 
