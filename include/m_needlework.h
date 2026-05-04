@@ -57,8 +57,9 @@ typedef struct original_texture_s {
 /* sizeof(mNW_original_design_c) == 0x220 */
 typedef struct original_data_s {
   /* 0x000 */ u8 name[mNW_ORIGINAL_DESIGN_NAME_LEN];
-  /* 0x010 */ u8 palette;
-  /* 0x011 */ u8 flag_design_set;
+  /* 0x00A */ u8 palette;
+  /* 0x00B */ u8 flag_design_set;
+  /* 0x00C */ u8 style;
   /* 0x020 */ mNW_original_tex_c design; /* this is aligned to 32 bytes for ARAM transfer */
 } mNW_original_design_c;
 

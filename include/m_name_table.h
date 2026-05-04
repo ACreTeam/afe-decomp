@@ -143,6 +143,21 @@ enum {
     mNT_TREE_SIZE_NUM
 };
 
+enum {
+    mNT_STYLE_COOL,
+    mNT_STYLE_CUTE,
+    mNT_STYLE_FUNKY,
+    mNT_STYLE_FRESH,
+    mNT_STYLE_FANCY,
+    mNT_STYLE_SUBTLE,
+    mNT_STYLE_REFINED,
+    mNT_STYLE_GAUDY,
+    mNT_STYLE_STRIKING,
+    mNT_STYLE_STRANGE,
+
+    mNT_STYLE_NUM
+};
+
 typedef struct offset_table_s {
     int type;
     mCoBG_OffsetTable_c table;
@@ -207,6 +222,7 @@ extern int mNT_ItIsStoneCoin10(mActor_name_t actor);
 extern int mNT_ItIsReserveDummy(mActor_name_t actor);
 extern int mNT_check_unknown(mActor_name_t item_no);
 extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);
+extern mActor_name_t mNT_ftr_idx_to_ftr_item_no(int ftr_idx, int rotation);
 extern int mNT_get_cloth_type(mActor_name_t cloth, u8 org_idx);
 extern int mNT_get_org_umb_type(mActor_name_t umb);
 
