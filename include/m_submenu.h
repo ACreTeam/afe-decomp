@@ -199,7 +199,7 @@ struct submenu_s {
     /* 0x038 */ Mail_c mail;   /* selected mail */
     /* 0x0F2 */ u8 open_flag;  // only set to 0 or 1, checked at least once in aQMgr_actor_move_talk_sub_hand_item_wait
     /* 0x0F3 */ u8 after_mode; /* relates to code which runs after the submenu process */
-    /* 0x0F4 */ u8 unk_164;    // only set to 0 in mSM_move_LINKWait in AC
+    /* 0x0F4 */ u8 unk_F4;    // only set to 0 in mSM_move_LINKWait in AC
     /* 0x0F5 */ u8 start_refuse;       /* when set to TRUE, the START button input will be ignored */
     /* 0x0F6 */ u8 start_refuse_timer; /* timer for when to disable the start button ignore flag */
     /* 0x0F7 */ u8 capture_display_mode; // 0 = submenu, 1 = film (screenshot)
@@ -209,7 +209,7 @@ struct submenu_s {
     /* 0x10A */ s16 selected_item_num; /* number of selected items in the item array */
     /* 0x10C */ Submenu_Item_c items[mPr_POCKETS_SLOT_COUNT];
     /* 0x148 */ u16 receive_mail_bitfield;
-    /* 0x14A */ u8 _14A[0x150 - 0x14A];
+    /* 0x14C */ u32 unable_shutter_label;
 };
 
 extern int mSM_COLLECT_INSECT_GET(int idx);
@@ -233,10 +233,17 @@ extern void mSM_open_submenu_new2(Submenu* submenu, int type, int arg0, int arg1
 extern void mSM_submenu_ctrl(GAME_PLAY* play);
 extern void mSM_submenu_move(Submenu* submenu);
 extern void mSM_submenu_draw(Submenu* submenu, GAME* game);
+extern int mSM_check_item_for_shrine1(int slot_no);
+extern int mSM_check_item_for_shrine2(int slot_no);
 extern int mSM_check_open_inventory_itemlist(int type, int param_2);
 extern void mSM_Object_Exchange_keep_new_Menu(GAME_PLAY* play);
 extern u8* mSM_Get_ground_tex_p(GAME_PLAY* play);
 extern u16* mSM_Get_ground_pallet_p(GAME_PLAY* play);
+extern u32 mSM_Get_unable_shutter_label(GAME_PLAY* play);
+extern int mSM_Check_unable_shutter_label(GAME_PLAY* play);
+extern int mSM_CheckOwner_unable_shutter_label(GAME_PLAY* play, u32 label);
+extern int mSM_CheckAbleChange_unable_shutter_label(GAME_PLAY* play, u32 label);
+extern void mSM_Set_unable_shutter_label(GAME_PLAY* play, u32 label);
 
 #ifdef __cplusplus
 }

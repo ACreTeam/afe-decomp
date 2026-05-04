@@ -9,6 +9,8 @@ extern "C" {
 
 extern void S_CRV32SET(int v);
 extern void mSD_static_clear(void);
+extern int mCsd_sdcard_sweet_chk(void);
+extern void mCsd_exitence_chk_start(void);
 
 #ifdef __cplusplus
 }

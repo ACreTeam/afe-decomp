@@ -7,6 +7,7 @@
 #include "m_msg.h"
 #include "m_quest.h"
 #include "libultra/libultra.h"
+#include "m_sdcard.h"
 
 static mSM_dlftbl_c SubmenuArea_dlftbl[mSM_DLF_NUM] = { { NULL, 0, 0, 0, 0, 0, "submenu_ovl" },
                                                         { NULL, 0, 0, 0, 0, 0, "player_actor" } };
@@ -15,13 +16,13 @@ static mSM_dlftbl_c* SubmenuArea_visit = NULL;
 static void* SubmenuArea_allocp = NULL;
 
 extern int mSM_COLLECT_INSECT_GET(int idx) {
-    u32 ftr_idx = (0x2F2 << 2) + (idx << 2);
+    u32 ftr_idx = (FTR_SUM_MONSHIRO << 2) + (idx << 2);
     return (Common_Get(now_private)->furniture_collected_bitfield[ftr_idx >> 2 >> 5] &
             (1 << ((ftr_idx >> 2) & 0x1F))) != 0;
 }
 
 extern void mSM_COLLECT_INSECT_SET(int idx) {
-    u32 ftr_idx = (0x2F2 << 2) + (idx << 2);
+    u32 ftr_idx = (FTR_SUM_MONSHIRO << 2) + (idx << 2);
     Common_Get(now_private)->furniture_collected_bitfield[ftr_idx >> 2 >> 5] |= (1 << ((ftr_idx >> 2) & 0x1F));
 }
 
@@ -57,13 +58,13 @@ extern int mSM_CHECK_LAST_INSECT_GET(int idx) {
 }
 
 extern int mSM_COLLECT_FISH_GET(int idx) {
-    u32 ftr_idx = (0x31A << 2) + (idx << 2);
+    u32 ftr_idx = (FTR_SUM_FUNA << 2) + (idx << 2);
     return (Common_Get(now_private)->furniture_collected_bitfield[ftr_idx >> 2 >> 5] &
             (1 << ((ftr_idx >> 2) & 0x1F))) != 0;
 }
 
 extern void mSM_COLLECT_FISH_SET(int idx) {
-    u32 ftr_idx = (0x31A << 2) + (idx << 2);
+    u32 ftr_idx = (FTR_SUM_FUNA << 2) + (idx << 2);
     Common_Get(now_private)->furniture_collected_bitfield[ftr_idx >> 2 >> 5] |= (1 << ((ftr_idx >> 2) & 0x1F));
 }
 
@@ -201,6 +202,7 @@ extern void mSM_open_submenu_new2(Submenu* submenu, int type, int arg0, int arg1
     submenu->param1 = arg1;
     submenu->param2 = arg2;
     submenu->param3 = arg3;
+    submenu->capture_display_mode = mSM_CAPTURE_DISPLAY_MODE_SUBMENU;
 }
 
 static void mSM_Reset_player_btn_type1(GAME_PLAY* play) {
@@ -220,35 +222,92 @@ static void mSM_Reset_player_btn_type2(GAME_PLAY* play) {
     }
 }
 
+#define mSM_MAP_CHK_BANNED_SCENE(scene_no) ((scene_no) == SCENE_COTTAGE_MY || (scene_no) == SCENE_COTTAGE_NPC)
+
 static int mSM_check_open_map_new(GAME_PLAY* play) {
+    ACTOR* playerx;
+    int bx, bz;
+    int ret = FALSE;
+
+    if (mSM_CHECK_OPEN_MAP() == TRUE) {
+        playerx = GET_PLAYER_ACTOR_ACTOR(play);
+        if (playerx != NULL && mSM_MAP_CHK_BANNED_SCENE(Save_Get(scene_no)) == FALSE) {
+            mFI_Wpos2BlockNum(&bx, &bz, playerx->world.position);
+            if (mFI_CheckBlockKind_OR(bx, bz, mRF_BLOCKKIND_OCEAN) == FALSE) {
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int mSM_check_open_INVENTORY(GAME_PLAY* play) {
+    int ret = FALSE;
+
+    if (chkTrigger(mSM_INV_BUTTON_0) || chkTrigger(mSM_INV_BUTTON_1)) {
+        if (!Common_Get(reset_flag) && !play->submenu.start_refuse && play->submenu.start_refuse_timer == 0 &&
+            mPlib_able_submenu_type1((GAME*)play) && mEv_CheckFirstIntro() == FALSE) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static int mSM_check_open_MAP(GAME_PLAY* play) {
+    int ret = FALSE;
+
+    if (mSM_check_open_map_new(play) == TRUE && !Common_Get(reset_flag) && play->submenu.start_refuse == FALSE &&
+        play->submenu.start_refuse_timer == 0 && mPlib_able_submenu_type1((GAME*)play) &&
+        mEv_CheckFirstIntro() == FALSE) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static int mSM_check_open_FG(GAME_PLAY* play) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
-    int open_map = FALSE;
-    int bx;
-    int bz;
+    int ret = FALSE;
 
-    if (mSM_CHECK_OPEN_MAP()) {
-        open_map = TRUE;
+    if (player != NULL && player->a_btn_pressed == TRUE && !Common_Get(reset_flag) &&
+        play->submenu.start_refuse == FALSE && play->submenu.start_refuse_timer == 0 &&
+        mPlib_able_submenu_type1((GAME*)play)) {
+        s16 y_dir = player->actor_class.shape_info.rotation.y;
+
+        y_dir -= DEG2SHORT_ANGLE(-180.0f);
+        if (ABS(y_dir) < DEG2SHORT_ANGLE(45.0f)) {
+            ret = TRUE;
+        }
     }
 
-    if (open_map == FALSE) {
-        return FALSE;
+    return ret;
+}
+
+static int mSM_check_open_SHUTTER_condition(GAME_PLAY* play) {
+    int ret = FALSE;
+
+    if (mPlib_able_shutter_type1((GAME*)play) && !mSM_Check_unable_shutter_label(play) && mCsd_sdcard_sweet_chk()) {
+        ret = TRUE;
     }
 
-    if (player == NULL) {
-        return FALSE;
+    return ret;
+}
+
+static int mSM_check_open_SHUTTER(GAME_PLAY* play) {
+    int ret = FALSE;
+
+    if (chkTrigger(BUTTON_Z) && mSM_check_open_SHUTTER_condition(play)) {
+        mCsd_exitence_chk_start();
+        ret = TRUE;
     }
 
-    if (Save_Get(scene_no) == SCENE_COTTAGE_MY || Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
-        return FALSE;
-    }
-
-    mFI_Wpos2BlockNum(&bx, &bz, player->actor_class.world.position);
-    return mFI_CheckBlockKind_OR(bx, bz, mRF_BLOCKKIND_OCEAN) == FALSE;
+    return ret;
 }
 
 extern void mSM_submenu_ctrl(GAME_PLAY* play) {
     Submenu* submenu = &play->submenu;
-    int open_inventory;
 
     if (submenu->process_status != mSM_PROCESS_WAIT) {
         return;
@@ -262,49 +321,33 @@ extern void mSM_submenu_ctrl(GAME_PLAY* play) {
         return;
     }
 
-    open_inventory = FALSE;
-    if (chkTrigger(mSM_INV_BUTTON_0) || chkTrigger(mSM_INV_BUTTON_1)) {
-        open_inventory = TRUE;
-    }
-
-    if (((open_inventory && Common_Get(reset_flag) == FALSE) ||
-         (mSM_check_open_map_new(play) == TRUE && Common_Get(reset_flag) == FALSE)) &&
-        submenu->start_refuse == FALSE && submenu->start_refuse_timer == 0 && mPlib_able_submenu_type1((GAME*)play) &&
-        mEv_CheckFirstIntro() == FALSE) {
-        if (open_inventory) {
-            mSM_open_submenu(submenu, mSM_OVL_INVENTORY, 0, 0);
-        } else {
-            mSM_open_submenu(submenu, mSM_OVL_MAP, 1, 0);
-        }
-
+    if (mSM_check_open_INVENTORY(play) == TRUE) {
+        mSM_open_submenu(submenu, mSM_OVL_INVENTORY, 0, 0);
         mSM_Reset_player_btn_type2(play);
-    } else {
-        PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
-
-        if (player != NULL && player->a_btn_pressed == TRUE && Common_Get(reset_flag) == FALSE &&
-            submenu->start_refuse == FALSE && submenu->start_refuse_timer == 0 &&
-            mPlib_able_submenu_type1((GAME*)play)) {
-            s16 y_dir = player->actor_class.shape_info.rotation.y;
-            int dir;
-
-            y_dir -= -0x8000;
-            dir = ABS(y_dir);
-
-            if (dir < DEG2SHORT_ANGLE(45.0f)) {
-                switch (player->item_in_front) {
-                    case MESSAGE_BOARD1:
-                    case MESSAGE_BOARD0:
-                        mSM_open_submenu(submenu, mSM_OVL_NOTICE, 0, 0);
-                        mSM_Reset_player_btn_type1(play);
-                        break;
-                    case MAP_BOARD1:
-                    case MAP_BOARD0:
-                        mSM_open_submenu(submenu, mSM_OVL_MAP, 0, 0);
-                        mSM_Reset_player_btn_type1(play);
-                        break;
-                }
-            }
+    } else if (mSM_check_open_MAP(play) == TRUE) {
+        mSM_open_submenu(submenu, mSM_OVL_MAP, 1, 0);
+        mSM_Reset_player_btn_type2(play);
+    } else if (mSM_check_open_FG(play) == TRUE) {
+        switch (GET_PLAYER_ACTOR(play)->item_in_front) {
+            case MESSAGE_BOARD1:
+            case MESSAGE_BOARD0:
+                mSM_open_submenu(submenu, mSM_OVL_NOTICE, 0, 0);
+                mSM_Reset_player_btn_type1(play);
+                break;
+            case MAP_BOARD1:
+            case MAP_BOARD0:
+                mSM_open_submenu(submenu, mSM_OVL_MAP, 0, 0);
+                mSM_Reset_player_btn_type1(play);
+                break;
+            case MUSIC_BOARD1:
+            case MUSIC_BOARD0:
+                mSM_open_submenu(submenu, mSM_OVL_MSCORE, 0, 0);
+                mSM_Reset_player_btn_type1(play);
+                break;
         }
+    } else if (mSM_check_open_SHUTTER(play) == TRUE) {
+        mSM_open_submenu(submenu, mSM_OVL_SHUTTER, 0, 0);
+        submenu->capture_display_mode = mSM_CAPTURE_DISPLAY_MODE_FILM;
     }
 
     if (submenu->menu_type != mSM_OVL_NONE) {
@@ -330,6 +373,28 @@ static void mSM_move_PREWait(Submenu* submenu) {
     }
 }
 
+static void mSM_extMemberInit(Submenu* submenu) {
+    submenu->open_flag = TRUE;
+
+    if (submenu->menu_type != mSM_OVL_SHUTTER && submenu->menu_type != mSM_OVL_FILM) {
+        Submenu_Item_c* item;
+        int i;
+
+        submenu->after_mode = 7;
+        submenu->unk_F4 = 0;
+        mMl_clear_mail(&submenu->mail);
+        submenu->item_p = &submenu->items[0];
+        submenu->item_num = mPr_POCKETS_SLOT_COUNT;
+        submenu->receive_mail_bitfield = 0;
+        item = submenu->item_p;
+        for (i = 0; i < submenu->item_num; i++) {
+            item->item = EMPTY_NO;
+            item->slot_no = mPr_POCKETS_SLOT_COUNT;
+            item++;
+        }
+    }
+}
+
 static void mSM_move_LINKWait(Submenu* submenu) {
     Submenu_Item_c* item;
     mSM_dlftbl_c* dlftbl = &SubmenuArea_dlftbl[mSM_DLF_SUBMENU_OVL];
@@ -344,19 +409,7 @@ static void mSM_move_LINKWait(Submenu* submenu) {
         submenu->move_proc = (SUBMENU_PROC)mSM_ovlptr_dllcnv(&mSM_menu_ovl_init, submenu, mSM_DLF_SUBMENU_OVL);
         submenu->draw_proc = (SUBMENU_GAME_PROC)&none_proc1;
         submenu->process_status = mSM_PROCESS_PLAY;
-        submenu->open_flag = TRUE;
-        submenu->after_mode = 7;
-        submenu->unk_164 = 0;
-        mMl_clear_mail(&submenu->mail);
-        submenu->item_p = &submenu->items[0];
-        submenu->item_num = mPr_POCKETS_SLOT_COUNT;
-
-        item = submenu->item_p;
-        for (i = 0; i < submenu->item_num; i++) {
-            item->item = EMPTY_NO;
-            item->slot_no = mPr_POCKETS_SLOT_COUNT;
-            item++;
-        }
+        mSM_extMemberInit(submenu);
 
         if (submenu->mode != mSM_MODE_OTHER) {
             if ((submenu->menu_type == mSM_OVL_LEDIT && submenu->param0 == 0) ||
@@ -395,7 +448,7 @@ static void mSM_move_End(Submenu* submenu) {
         mSM_load_player_anime(play);
         submenu->start_refuse_timer = 1;
 
-        if (submenu->after_mode == 12) {
+        if (submenu->after_mode == 15) {
             mPlib_request_main_demo_wait_from_submenu((ACTOR*)submenu->overlay->menu_info[mSM_OVL_MSCORE].data2);
         }
 
@@ -425,7 +478,7 @@ static int mSM_check_item_for_furniture(int slot_no, int param_2) {
     int cat = ITEM_NAME_GET_CAT(item);
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && (mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no)) == mPr_ITEM_COND_NORMAL &&
         ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && cat != ITEM1_CAT_FISH && cat != ITEM1_CAT_KABU &&
         cat != ITEM1_CAT_INSECT && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
@@ -453,7 +506,7 @@ static int mSM_check_item_for_sell(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         (ITEM_NAME_GET_TYPE(item) != NAME_TYPE_ITEM1 || ITEM_NAME_GET_CAT(item) != ITEM1_CAT_MONEY) &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
@@ -468,7 +521,7 @@ static int mSM_check_item_for_give(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
         res = TRUE;
@@ -483,7 +536,7 @@ static int mSM_check_item_for_take(int slot_no, int param_2) {
     int cat = ITEM_NAME_GET_CAT(item);
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4) &&
         (param_2 == 0 || (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 &&
@@ -498,7 +551,7 @@ static int mSM_check_item_for_minidisk(int slot_no, int param_2) {
     Private_c* priv = Common_Get(now_private);
     mActor_name_t item = priv->inventory.pockets[slot_no];
 
-    if (mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(item) == ITEM1_CAT_MINIDISK) {
         return TRUE;
     }
@@ -506,10 +559,18 @@ static int mSM_check_item_for_minidisk(int slot_no, int param_2) {
     return FALSE;
 }
 
+extern int mSM_check_item_for_shrine1(int slot_no) {
+    u32 cond = mPR_CHK_ITEM_COND(Now_Private->inventory.item_conditions, slot_no);
+
+    return cond == mPr_ITEM_COND_QUEST || cond == 4 || cond == 8;
+}
+
+extern int mSM_check_item_for_shrine2(int slot_no) {
+    return mQst_CheckLimitbyPossessionIdx(slot_no);
+}
+
 static int mSM_check_item_for_shrine(int slot_no, int param_2) {
-    Private_c* priv = Common_Get(now_private);
-    if (mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_QUEST &&
-        mQst_CheckLimitbyPossessionIdx(slot_no)) {
+    if (mSM_check_item_for_shrine1(slot_no) && mSM_check_item_for_shrine2(slot_no)) {
         return TRUE;
     }
 
@@ -522,7 +583,7 @@ static int mSM_check_item_for_entrust(int slot_no, int param_2) {
     int res = FALSE;
 
     if (item == EMPTY_NO ||
-        mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+        mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
             (ITEM_NAME_GET_TYPE(item) != NAME_TYPE_ITEM1 || ITEM_NAME_GET_CAT(item) != ITEM1_CAT_MONEY) &&
             !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
             !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
@@ -533,11 +594,11 @@ static int mSM_check_item_for_entrust(int slot_no, int param_2) {
 }
 
 static int mSM_check_item_for_exchange(int slot_no, int exchange_id) {
-    int res = FALSE;
     Private_c* priv = Common_Get(now_private);
     mActor_name_t item = priv->inventory.pockets[slot_no];
+    int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         item != ITM_SIGNBOARD && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
         if ((ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(item) == ITEM1_CAT_FISH) &&
@@ -564,7 +625,7 @@ static int mSM_check_item_for_curator(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPr_GET_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         item != ITM_KNIFE_AND_FORK && !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
         res = TRUE;
     }
@@ -575,23 +636,25 @@ static int mSM_check_item_for_curator(int slot_no, int param_2) {
 typedef int (*mSM_INVENTORY_CHECK_PROC)(int, int);
 
 extern int mSM_check_open_inventory_itemlist(int type, int param_2) {
-    static mSM_INVENTORY_CHECK_PROC check_process[mSM_IV_OPEN_NUM] = { NULL,
-                                                                       NULL,
-                                                                       &mSM_check_item_for_entrust,
-                                                                       NULL,
-                                                                       &mSM_check_item_for_quest,
-                                                                       &mSM_check_item_for_sell,
-                                                                       &mSM_check_item_for_give,
-                                                                       NULL,
-                                                                       &mSM_check_item_for_take,
-                                                                       &mSM_check_item_for_furniture,
-                                                                       &mSM_check_item_for_minidisk,
-                                                                       &mSM_check_item_for_shrine,
-                                                                       NULL,
-                                                                       &mSM_check_item_for_exchange,
-                                                                       NULL,
-                                                                       &mSM_check_item_for_curator,
-                                                                       NULL };
+    static mSM_INVENTORY_CHECK_PROC check_process[mSM_IV_OPEN_NUM] = {
+        NULL,
+        NULL,
+        &mSM_check_item_for_entrust,
+        NULL,
+        &mSM_check_item_for_quest,
+        &mSM_check_item_for_sell,
+        &mSM_check_item_for_give,
+        NULL,
+        &mSM_check_item_for_take,
+        &mSM_check_item_for_furniture,
+        &mSM_check_item_for_minidisk,
+        &mSM_check_item_for_shrine,
+        NULL,
+        &mSM_check_item_for_exchange,
+        NULL,
+        &mSM_check_item_for_curator,
+        NULL,
+    };
 
     mSM_INVENTORY_CHECK_PROC check_proc = check_process[type];
     int i;
@@ -660,4 +723,38 @@ extern u16* mSM_Get_ground_pallet_p(GAME_PLAY* play) {
     }
 
     return (u16*)play->submenu_ground_pallet[idx];
+}
+
+extern u32 mSM_Get_unable_shutter_label(GAME_PLAY* play) {
+    return play->submenu.unable_shutter_label;
+}
+
+extern int mSM_Check_unable_shutter_label(GAME_PLAY* play) {
+    // @BUG - dev likely fat-fingered the minus key when assigning the variable
+#ifndef BUGFIXES
+    u32 current_label = -mSM_Get_unable_shutter_label(play);
+#else
+    u32 current_label = mSM_Get_unable_shutter_label(play);
+#endif
+
+    return current_label != 0;
+}
+
+extern int mSM_CheckOwner_unable_shutter_label(GAME_PLAY* play, u32 label) {
+    u32 current_label = mSM_Get_unable_shutter_label(play);
+    return current_label == label;
+}
+
+extern int mSM_CheckAbleChange_unable_shutter_label(GAME_PLAY* play, u32 label) {
+    u32 current_label = mSM_Get_unable_shutter_label(play); // @unused
+
+    if (mSM_CheckOwner_unable_shutter_label(play, label) || !mSM_Check_unable_shutter_label(play)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+extern void mSM_Set_unable_shutter_label(GAME_PLAY* play, u32 label) {
+    play->submenu.unable_shutter_label = label;
 }
