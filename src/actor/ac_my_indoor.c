@@ -263,11 +263,11 @@ static void aMI_SetClipProc(ACTOR* actorx, int set_flag) {
     MY_INDOOR_ACTOR* my_indoor = (MY_INDOOR_ACTOR*)actorx;
 
     if (set_flag == FALSE) {
-        Common_Get(clip).my_indoor_clip = NULL;
+        CLIP(my_indoor_clip) = NULL;
     } else {
         aMI_Clip_c* clip = &my_indoor->clip;
 
-        Common_Get(clip).my_indoor_clip = clip;
+        CLIP(my_indoor_clip) = clip;
 
         clip->my_indoor_actor_p = my_indoor;
         clip->change_wall_proc = &aMI_ChangeWall;
@@ -353,11 +353,11 @@ static void aMI_InitActorMember(ACTOR* actorx, GAME* game) {
         my_indoor->house_floor_no = 0;
     }
 
-    if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
-        // my_indoor->floor_num = Save_Get(island).cottage.room.wall_floor.flooring_idx;
-        // my_indoor->wall_num = Save_Get(island).cottage.room.wall_floor.wallpaper_idx;
-        my_indoor->wall_is_original_design = FALSE;
-        my_indoor->floor_is_original_design = FALSE;
+    if (Common_Get(cur_island_house_p) != NULL && Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+        my_indoor->floor_num = Common_Get(cur_island_house_p)->island.cottage.room.wall_floor.flooring_idx;
+        my_indoor->wall_num = Common_Get(cur_island_house_p)->island.cottage.room.wall_floor.wallpaper_idx;
+        my_indoor->floor_is_original_design = mRmTp_GetNowSceneOriginalFloorStatus();
+        my_indoor->wall_is_original_design = mRmTp_GetNowSceneOriginalWallStatus();
     } else {
         my_indoor->floor_num =
             Save_Get(homes[player_room_idx]).floors[my_indoor->house_floor_no].wall_floor.flooring_idx;
@@ -408,7 +408,7 @@ static void aMI_DrawMyStep(ACTOR* actorx, GAME* game) {
     int i;
 
     Global_kankyo_set_room_prim(game);
-    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_bg(game->graph);
 
     for (i = 0; i < aMI_STEP_TYPE_NUM; i++) {
         if (my_indoor->room_step[i] != FALSE) {
@@ -422,9 +422,9 @@ static void aMI_DrawMyStep(ACTOR* actorx, GAME* game) {
                 Matrix_translate(pos->x, pos->y, pos->z, MTX_LOAD);
                 Matrix_scale(aMI_scale_x_table[i] * 0.01f, 0.01f, 0.01f, MTX_MULT);
 
-                gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph),
+                gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph),
                           G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-                gSPDisplayList(NEXT_POLY_OPA_DISP, aMI_step_data[i].disp);
+                gSPDisplayList(NEXT_BG_OPA_DISP, aMI_step_data[i].disp);
 
                 CLOSE_DISP(game->graph);
             }
@@ -448,25 +448,25 @@ static void aMI_DrawMyFloor(ACTOR* actorx, GAME* game) {
     if (disp_info->floor_model != NULL) {
         graph = game->graph;
 
-        _texture_z_light_fog_prim(graph);
+        _texture_z_light_fog_prim_bg(graph);
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
         OPEN_DISP(graph);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
         // Set segment 8-B to the four floor textures
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, tex0);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, tex1);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, tex2);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_B, tex3);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_8, tex0);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_9, tex1);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_A, tex2);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_B, tex3);
 
         // Set segment C to the palette
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_C, data_p);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_C, data_p);
 
         // Draw model
-        gSPDisplayList(NEXT_POLY_OPA_DISP, disp_info->floor_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, disp_info->floor_model);
 
         CLOSE_DISP(graph);
     }
@@ -598,25 +598,25 @@ static void aMI_DrawMyOriginalFloor(ACTOR* actorx, GAME* game) {
     if (disp->floor_model != NULL) {
         graph = game->graph;
 
-        _texture_z_light_fog_prim(graph);
+        _texture_z_light_fog_prim_bg(graph);
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
         OPEN_DISP(graph);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
         // Set segment 8-B to the four floor textures
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, tex0);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, tex1);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, tex2);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_B, tex3);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_8, tex0);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_9, tex1);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_A, tex2);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_B, tex3);
 
         // Set segment C to the palette
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_C, data_p);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_C, data_p);
 
         // Draw model
-        gSPDisplayList(NEXT_POLY_OPA_DISP, disp->floor_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, disp->floor_model);
 
         CLOSE_DISP(graph);
     }
@@ -637,23 +637,23 @@ static void aMI_DrawMyWall(ACTOR* actorx, GAME* game) {
     if (disp_info->wall_model != NULL) {
         graph = game->graph;
 
-        _texture_z_light_fog_prim(graph);
+        _texture_z_light_fog_prim_bg(graph);
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
         OPEN_DISP(graph);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
         // Set segment 8-9 to the two wall textures
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, tex0);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, tex1);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_8, tex0);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_9, tex1);
 
         // Set segment A to the palette
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, data_p);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_A, data_p);
 
         // Draw model
-        gSPDisplayList(NEXT_POLY_OPA_DISP, disp_info->wall_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, disp_info->wall_model);
 
         CLOSE_DISP(graph);
     }
@@ -679,23 +679,23 @@ static void aMI_DrawMyOriginalWall(ACTOR* actorx, GAME* game) {
     if (disp->wall_model != NULL) {
         graph = game->graph;
 
-        _texture_z_light_fog_prim(graph);
+        _texture_z_light_fog_prim_bg(graph);
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
         OPEN_DISP(graph);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
         // Set segment 8-9 to the two wall textures
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, tex0);
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_9, tex1);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_8, tex0);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_9, tex1);
 
         // Set segment A to the palette
-        gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_A, data_p);
+        gSPSegment(NEXT_BG_OPA_DISP, G_MWO_SEGMENT_A, data_p);
 
         // Draw model
-        gSPDisplayList(NEXT_POLY_OPA_DISP, disp->wall_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, disp->wall_model);
 
         CLOSE_DISP(graph);
     }
@@ -731,14 +731,14 @@ static void aMI_Change2ReservedWall(ACTOR* actorx, GAME* game) {
 
             aMI_CopyWallTexture(actorx, my_indoor->wall_num, my_indoor->wall_bank_idx);
 
-            if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
-                // Save_Get(island).cottage.room.wall_floor.wallpaper_idx = my_indoor->wall_num;
+            if (Common_Get(cur_island_house_p) != NULL && Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+                Common_Get(cur_island_house_p)->island.cottage.room.wall_floor.wallpaper_idx = my_indoor->wall_num;
             } else {
                 Save_Get(homes[player_room_idx]).floors[my_indoor->house_floor_no].wall_floor.wallpaper_idx =
                     my_indoor->wall_num;
-                mRmTp_SetNowSceneOriginalWallStatus((u8)my_indoor->wall_is_original_design);
             }
-
+                
+            mRmTp_SetNowSceneOriginalWallStatus((u8)my_indoor->wall_is_original_design);
             mMkRm_ReportChangePlayerRoom();
             sAdo_SysTrgStart(0x11B);
         }
@@ -762,14 +762,14 @@ static void aMI_Change2ReservedFloor(ACTOR* actorx, GAME* game) {
 
             aMI_CopyFloorTexture(actorx, my_indoor->floor_num, my_indoor->floor_bank_idx);
 
-            if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
-                // Save_Get(island).cottage.room.wall_floor.flooring_idx = my_indoor->floor_num;
+            if (Common_Get(cur_island_house_p) != NULL && Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+                Common_Get(cur_island_house_p)->island.cottage.room.wall_floor.flooring_idx = my_indoor->floor_num;
             } else {
                 Save_Get(homes[player_room_idx]).floors[my_indoor->house_floor_no].wall_floor.flooring_idx =
                     my_indoor->floor_num;
-                mRmTp_SetNowSceneOriginalFloorStatus(my_indoor->floor_is_original_design);
             }
-
+                
+            mRmTp_SetNowSceneOriginalFloorStatus(my_indoor->floor_is_original_design);
             aNI_SetFloorSE(my_indoor->floor_num);
             sAdo_SysTrgStart(0x11B);
             mMkRm_ReportChangePlayerRoom();
@@ -790,9 +790,9 @@ static mActor_name_t aMI_ChangeCarpet(mActor_name_t item) {
         return EMPTY_NO;
     }
 
-    if (Common_Get(clip).my_indoor_clip != NULL &&
+    if (CLIP(my_indoor_clip) != NULL &&
         (item >= ITM_CARPET00 && item < (ITM_CARPET00 + FLOOR_PLAYER_ROOM_END))) {
-        MY_INDOOR_ACTOR* my_indoor = Common_Get(clip).my_indoor_clip->my_indoor_actor_p;
+        MY_INDOOR_ACTOR* my_indoor = CLIP(my_indoor_clip)->my_indoor_actor_p;
 
         if (my_indoor != NULL && my_indoor->floor_reserve.reserve_flag == FALSE) {
             old_floor = ITM_CARPET00 + my_indoor->floor_num;
@@ -808,7 +808,7 @@ static mActor_name_t aMI_ChangeCarpet(mActor_name_t item) {
 }
 
 static mActor_name_t aMI_FloorIdx2ChangeFloor(int idx, int is_original_flag) {
-    MY_INDOOR_ACTOR* my_indoor = Common_Get(clip).my_indoor_clip->my_indoor_actor_p;
+    MY_INDOOR_ACTOR* my_indoor = CLIP(my_indoor_clip)->my_indoor_actor_p;
     mActor_name_t old_floor;
 
     if (my_indoor != NULL) {
@@ -839,8 +839,8 @@ static mActor_name_t aMI_ChangeWall(mActor_name_t item) {
         return EMPTY_NO;
     }
 
-    if (Common_Get(clip).my_indoor_clip != NULL) {
-        MY_INDOOR_ACTOR* my_indoor = Common_Get(clip).my_indoor_clip->my_indoor_actor_p;
+    if (CLIP(my_indoor_clip) != NULL) {
+        MY_INDOOR_ACTOR* my_indoor = CLIP(my_indoor_clip)->my_indoor_actor_p;
 
         if (my_indoor != NULL && (item >= ITM_WALL00 && item < (ITM_WALL00 + WALL_ETC_END)) &&
             my_indoor->wall_reserve.reserve_flag == FALSE) {
@@ -857,7 +857,7 @@ static mActor_name_t aMI_ChangeWall(mActor_name_t item) {
 }
 
 static mActor_name_t aMI_WallIdx2ChangeWall(int idx, int is_original_flag) {
-    MY_INDOOR_ACTOR* my_indoor = Common_Get(clip).my_indoor_clip->my_indoor_actor_p;
+    MY_INDOOR_ACTOR* my_indoor = CLIP(my_indoor_clip)->my_indoor_actor_p;
     mActor_name_t wall_floor;
 
     if (my_indoor != NULL) {
@@ -886,8 +886,8 @@ static void aMI_Change2Default(void) {
 }
 
 static void aMI_IndoorDmaAgain(void) {
-    if (Common_Get(clip).my_indoor_clip != NULL) {
-        ACTOR* actorx = (ACTOR*)Common_Get(clip).my_indoor_clip->my_indoor_actor_p;
+    if (CLIP(my_indoor_clip) != NULL) {
+        ACTOR* actorx = (ACTOR*)CLIP(my_indoor_clip)->my_indoor_actor_p;
         MY_INDOOR_ACTOR* my_indoor = (MY_INDOOR_ACTOR*)actorx;
 
         if (my_indoor != NULL) {
