@@ -30,7 +30,7 @@ static mActor_name_t* mSP_diary_list[mSP_LIST_NUM] = { diary_listA, diary_listB,
                                                        NULL,        NULL,        NULL,        NULL, NULL, NULL,
                                                        NULL,        NULL,        NULL,        NULL, NULL };
 
-static mActor_name_t** mSP_goods_seg_inf[mSP_KIND_EXTENDED_MAX] = { mSP_ftr_list,    mSP_binsen_list, mSP_cloth_list,
+static mActor_name_t** mSP_goods_seg_inf[mSP_KIND_MAX] = { mSP_ftr_list,    mSP_binsen_list, mSP_cloth_list,
                                                                     mSP_carpet_list, mSP_wall_list,   mSP_diary_list };
 
 static void mSP_InitItemTable(mActor_name_t* item_table, int count) {
@@ -492,7 +492,7 @@ static int mSP_NoList(mActor_name_t* items_table, int count, mActor_name_t* list
 }
 
 static void mSP_SetDummyItem(mActor_name_t* items_table, int count, int kind) {
-    mActor_name_t dummy_table[mSP_KIND_EXTENDED_MAX] = {
+    mActor_name_t dummy_table[mSP_KIND_MAX] = {
         FTR_START(FTR_SUM_CLCHEST03), ITM_PAPER00, ITM_CLOTH000, ITM_CARPET00, ITM_WALL00, ITM_DIARY00
     };
 
@@ -1515,6 +1515,8 @@ static void mSP_DecideGoodsCommonList() {
     mSP_DecideUniqueCommonList(&priority_lists[mSP_KIND_CLOTH]);
     mSP_DecideUniqueCommonList(&priority_lists[mSP_KIND_CARPET]);
     mSP_DecideUniqueCommonList(&priority_lists[mSP_KIND_WALLPAPER]);
+
+    // @BUG - diaries are not rolled but have been given a shop kind
 }
 
 extern void mSP_ShopGameStartCt(GAME* game) {

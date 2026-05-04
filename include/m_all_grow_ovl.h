@@ -168,6 +168,8 @@ extern void mAGrw_SetHideUtInfo(u16* hide, mActor_name_t* items);
 extern void mAGrw_SearchDump(mFI_unit_c* dump_info);
 extern void mAGrw_SpoilKabuIsland(Island_c* island);
 extern void mAGrw_RenewalFgItem_ovl(lbRTC_time_c* now_time, int* deposit_haniwa);
+extern int mAGrw_CheckFreeSSPosInfo_com(mAGrw_SSPosInfo_c* ss_pos_info);
+extern int mAGrw_KillTree(mActor_name_t* tree);
 
 #ifdef __cplusplus
 }

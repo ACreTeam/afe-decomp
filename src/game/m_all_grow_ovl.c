@@ -11,6 +11,9 @@
 #include "m_snowman.h"
 #include "m_shop.h"
 #include "m_scene_table.h"
+#include "m_monument.h"
+
+static void mAGrw_SetMoneyStone_com(mAGrw_SSPosInfo_c* pos_info, mActor_name_t* items);
 
 static u8 l_candidate_num[FG_BLOCK_TOTAL_NUM];
 
@@ -78,7 +81,7 @@ static void mAGrw_ClearShinePosInfo(mAGrw_AllGrow_c* allgrow, int idx) {
     }
 }
 
-static int mAGrw_CheckFreeSSPosInfo_com(mAGrw_SSPosInfo_c* ss_pos_info) {
+extern int mAGrw_CheckFreeSSPosInfo_com(mAGrw_SSPosInfo_c* ss_pos_info) {
     int free = FALSE;
 
     if (ss_pos_info->block_x == 0 && ss_pos_info->block_z == 0) {
@@ -96,6 +99,22 @@ static mActor_name_t mAGrw_ToMoneyStone(mActor_name_t stone) {
 static mActor_name_t mAGrw_ToStone(mActor_name_t money_stone) {
     mActor_name_t stone = money_stone - MONEY_ROCK_A;
     return stone + ROCK_A;
+}
+
+static mActor_name_t mAGrw_RstStone2Stone(mActor_name_t stone) {
+    if (IS_ITEM_RST_STONE(stone)) {
+        return stone - RST_ROCK_A + ROCK_A;
+    }
+
+    if (IS_ITEM_CRACKED_STONE(stone)) {
+        return stone - C_ROCK_A + ROCK_A;
+    }
+
+    if (IS_ITEM_RST_HOLE(stone)) {
+        return stone - RST_HOLE_A + ROCK_A;
+    }
+
+    return stone;
 }
 
 #define mAGrw_IsStone(item) ((item) >= ROCK_A && (item) <= ROCK_E)
@@ -163,6 +182,8 @@ extern void mAGrw_ClearAllShine_Stone() {
                 *items = mAGrw_ToStone(*items);
             } else if (*items == SHINE_SPOT) {
                 *items = EMPTY_NO;
+            } else if (IS_ITEM_RST_STONE(*items) || IS_ITEM_CRACKED_STONE(*items) || IS_ITEM_RST_HOLE(*items)) {
+                *items = mAGrw_RstStone2Stone(*items);
             }
 
             items++;
@@ -208,9 +229,9 @@ static void mAGrw_SetMoneyStone_player(mAGrw_AllGrow_c* allgrow, int player_no) 
                 mFM_fg_c* fg_block = &Save_Get(fg[block_z][block_x]);
                 mActor_name_t* item = &fg_block->items[player_ss_pos_info->ut_z][player_ss_pos_info->ut_x];
 
-                if (!mAGrw_IsMoneyStone(*item) && (mAGrw_IsStone(*item) || mAGrw_IsMoneyStone(*item))) {
+                if (!mAGrw_IsMoneyStone(*item) && (mAGrw_IsStone(*item) || mAGrw_IsMoneyStone(*item) || IS_ITEM_RST_STONE(*item) || IS_ITEM_CRACKED_STONE(*item))) {
                     *item = mAGrw_ToMoneyStone(*item);
-                } else if (!mAGrw_IsStone(*item) && !mAGrw_IsMoneyStone(*item)) {
+                } else if (!mAGrw_IsStone(*item) && !mAGrw_IsMoneyStone(*item) && !IS_ITEM_RST_STONE(*item) && !IS_ITEM_CRACKED_STONE(*item)) {
                     mAGrw_ClearSSPosInfo_com(player_ss_pos_info); // not a stone at this location
                 }
             } else {
@@ -222,12 +243,106 @@ static void mAGrw_SetMoneyStone_player(mAGrw_AllGrow_c* allgrow, int player_no) 
     }
 }
 
+static void mAgrw_RenewResetStoneTime(mAGrw_AllGrow_c* allgrow, lbRTC_ymd_c* date) {
+    lbRTC_time_c set_date;
+    lbRTC_time_c renew_time;
+    set_date.year = date->year;
+    set_date.month = date->month;
+    set_date.day = date->day;
+
+    lbRTC_Add_DD(&set_date, RANDOM(lbRTC_WEEK));
+
+    allgrow->reset_stone_date.year = set_date.year;
+    allgrow->reset_stone_date.month = set_date.month;
+    allgrow->reset_stone_date.day = set_date.day;
+
+    renew_time.year = date->year;
+    renew_time.month = date->month;
+    renew_time.day = date->day;
+    lbRTC_Add_DD(&renew_time, lbRTC_WEEK);
+
+    allgrow->reset_stone_renew_date.year = renew_time.year;
+    allgrow->reset_stone_renew_date.month = renew_time.month;
+    allgrow->reset_stone_renew_date.day = renew_time.day;
+}
+
+static void mAGrw_InitResetStoneTime(mAGrw_AllGrow_c* allgrow, lbRTC_ymd_c* date) {
+    lbRTC_time_c now;
+    lbRTC_ymd_c week_start_date;
+
+    now.year = date->year;
+    now.month = date->month;
+    now.day = date->day;
+    lbRTC_Sub_DD(&now, Common_Get(time.rtc_time.weekday));
+    week_start_date.year = now.year;
+    week_start_date.month = now.month;
+    week_start_date.day = now.day;
+    mAgrw_RenewResetStoneTime(allgrow, &week_start_date);
+}
+
+#define mAGrw_DATE_CHK(ymd) ((ymd)->year >= (GAME_YEAR_MIN + 1) && (ymd)->year <= (GAME_YEAR_MAX - 2) && (ymd)->month >= lbRTC_JANUARY && (ymd)->month <= lbRTC_DECEMBER && (ymd)->day >= 1 && (ymd)->day <= 31)
+
+static int mAGrw_CheckResetStoneTime(mAGrw_AllGrow_c* allgrow) {
+    int ret = TRUE;
+
+    if (!mAGrw_DATE_CHK(&allgrow->reset_stone_date) || !mAGrw_DATE_CHK(&allgrow->reset_stone_renew_date)) {
+        ret = FALSE;
+    } else {
+        lbRTC_ymd_c date;
+        int delta_days;
+
+        date.year = Common_Get(time.rtc_time.year);
+        date.month = Common_Get(time.rtc_time.month);
+        date.day = Common_Get(time.rtc_time.day);
+        delta_days = lbRTC_GetIntervalDays2(&date, &allgrow->reset_stone_renew_date);
+        if (delta_days >= lbRTC_WEEK || delta_days < 0) {
+            ret = FALSE;
+        }
+    }
+
+    return ret;
+}
+
+static void mAGrw_SetResetStone(mAGrw_AllGrow_c* allgrow) {
+    mAGrw_SSPosInfo_c* stone_pos = &allgrow->reset_stone_pos;
+    lbRTC_ymd_c date;
+
+    date.year = Common_Get(time.rtc_time.year);
+    date.month = Common_Get(time.rtc_time.month);
+    date.day = Common_Get(time.rtc_time.day);
+    if (!mAGrw_CheckResetStoneTime(allgrow)) {
+        mAGrw_InitResetStoneTime(allgrow, &date);
+    } else if (lbRTC_GetIntervalDays2(&date, &allgrow->reset_stone_renew_date) <= 0) {
+        mAgrw_RenewResetStoneTime(allgrow, &allgrow->reset_stone_renew_date);
+    }
+
+    if (lbRTC_GetIntervalDays2(&date, &allgrow->reset_stone_date) == 0) {
+        if (mAGrw_CheckFreeSSPosInfo_com(stone_pos) == TRUE) {
+            mAGrw_SetMoneyStone_com(stone_pos, Save_GetFG());
+
+            if (stone_pos->block_x > 0 && stone_pos->block_x < 6 && stone_pos->block_z > 0 && stone_pos->block_z < 7 &&
+                stone_pos->ut_x < UT_X_NUM && stone_pos->ut_z < UT_Z_NUM) {
+                int bx = stone_pos->block_x - 1;
+                int bz = stone_pos->block_z - 1;
+                mActor_name_t* fg_p = ((mActor_name_t*)Save_Get(fg[bz][bx]).items) + (stone_pos->ut_z << 4) + stone_pos->ut_x;
+
+                if (IS_ITEM_STONE(*fg_p)) {
+                    *fg_p = RST_ROCK_A + *fg_p - ROCK_A;
+                }
+            }
+        }
+    } else {
+        mAGrw_ClearSSPosInfo_com(stone_pos);
+    }
+}
+
 extern void mAGrw_RestoreStoneShine(int player_no) {
     mAGrw_AllGrow_c* ss_pos_info = Save_GetPointer(allgrow_ss_pos_info);
     if (player_no >= mPr_PLAYER_0 && player_no < mPr_PLAYER_NUM) {
         mAGrw_SetMoneyStone_player(ss_pos_info, player_no);
         mAGrw_SetShineGround_player(ss_pos_info, player_no);
     }
+    mAGrw_SetResetStone(ss_pos_info);
 }
 
 static int mAGrw_CheckMoneyStonePos(mAGrw_SSPosInfo_c* pos_info) {
@@ -245,6 +360,10 @@ static int mAGrw_CheckMoneyStonePos(mAGrw_SSPosInfo_c* pos_info) {
     }
 
     return res;
+}
+
+static int mAGrw_CheckMonumentOrder(void) {
+    return mMM_set_monument();
 }
 
 static void mAGrw_ClearGrowInfo(mAGrw_GrowInfo_c* grow_info) {
@@ -286,14 +405,14 @@ static void mAGrw_SetAroundBlockInfo(mAGrw_GrowInfo_c* grow_info, int block_x, i
     }
 }
 
-static void mAGrw_SetAroundBlockInfoIsland(mAGrw_GrowInfo_c* grow_info, int island_side) {
+static void mAGrw_SetAroundBlockInfoIsland(mAGrw_GrowInfo_c* grow_info, int island_side, Island_c* island) {
     mAGrw_ClearAroundBlockInfo(grow_info);
 
-    // if (island_side == mISL_ISLAND_BLOCK_LEFT) {
-    //     grow_info->around_block[mAGrw_AROUND_RIGHT] = Save_GetPointer(island.fgblock[0][1]);
-    // } else if (island_side == mISL_ISLAND_BLOCK_RIGHT) {
-    //     grow_info->around_block[mAGrw_AROUND_LEFT] = Save_GetPointer(island.fgblock[0][0]);
-    // }
+    if (island_side == mISL_ISLAND_BLOCK_LEFT) {
+        grow_info->around_block[mAGrw_AROUND_RIGHT] = &island->fgblock[0][1];
+    } else if (island_side == mISL_ISLAND_BLOCK_RIGHT) {
+        grow_info->around_block[mAGrw_AROUND_LEFT] = &island->fgblock[0][0];
+    }
 }
 
 static lbRTC_day_t mAGrw_get_pastDays(lbRTC_time_c* now, lbRTC_time_c* last_grow_time) {
@@ -345,12 +464,13 @@ static int mAGrw_CheckFlowerTime(lbRTC_time_c* time) {
     return res;
 }
 
-static int aAGrw_GrowFlower(mActor_name_t* item) {
+static int aAGrw_GrowFlower(mActor_name_t* item_p) {
+    mActor_name_t item = *item_p;
     int res = FALSE;
 
-    if (*item >= FLOWER_LEAVES_PANSIES0 && *item <= FLOWER_TULIP2) {
-        if (*item <= FLOWER_LEAVES_TULIP2) {
-            *item += (FLOWER_PANSIES0 - FLOWER_LEAVES_PANSIES0);
+    if (IS_ITEM_FLOWER(item)) {
+        if (item <= FLOWER_LEAVES_TULIP2) {
+            *item_p = item - FLOWER_LEAVES_PANSIES0 + FLOWER_PANSIES0;
         }
 
         res = TRUE;
@@ -391,9 +511,8 @@ static void mAGrw_GetRightUt(mActor_name_t** ut_p, mActor_name_t* ut, mFM_fg_c* 
     }
 }
 
-static void mAGrw_KillTree(mActor_name_t* tree) {
-    static mActor_name_t d_table[mNT_TREE_TYPE_NUM] = { DEAD_SAPLING, DEAD_PALM_SAPLING, DEAD_CEDAR_SAPLING,
-                                                        DEAD_GOLD_SAPLING };
+static void mAGrw_KillTree_com(mActor_name_t* tree) {
+    static mActor_name_t d_table[mNT_TREE_TYPE_NUM] = { DEAD_SAPLING, DEAD_PALM_SAPLING, DEAD_CEDAR_SAPLING, DEAD_GOLD_SAPLING, };
 
     int type = FGTreeType_check(*tree);
 
@@ -402,6 +521,19 @@ static void mAGrw_KillTree(mActor_name_t* tree) {
     }
 
     *tree = d_table[type];
+}
+
+extern int mAGrw_KillTree(mActor_name_t* tree) {
+    int ret = FALSE;
+
+    if (tree != NULL) {
+        if ((*tree >= TREE_SAPLING && *tree <= TREE_30000BELLS) || (*tree >= TREE_100BELLS_SAPLING && *tree <= TREE_PALM_FRUIT) || (*tree >= CEDAR_TREE_SAPLING && *tree <= CEDAR_TREE) || (*tree >= GOLD_TREE_SAPLING && *tree <= GOLD_TREE)) {
+            mAGrw_KillTree_com(tree);
+            ret = TRUE;
+        }
+    }
+
+    return ret;
 }
 
 typedef void (*mAGrw_GET_NEAR_PROC)(mActor_name_t**, mActor_name_t*, mFM_fg_c*, int, int);
@@ -440,7 +572,7 @@ static int mAGrw_CheckNearTree(mActor_name_t* item, mAGrw_GrowInfo_c* grow_info,
                         (*near >= TREE_PALM_STUMP001 && *near <= TREE_PALM_STUMP004) ||
                         (*near >= CEDAR_TREE_STUMP001 && *near <= CEDAR_TREE_STUMP004) ||
                         (*near >= GOLD_TREE_STUMP001 && *near <= GOLD_TREE_STUMP004)) {
-                        mAGrw_KillTree(item);
+                        mAGrw_KillTree_com(item);
                         res = FALSE;
                         break;
                     }
@@ -476,7 +608,7 @@ static int mAGrw_CheckNearTree(mActor_name_t* item, mAGrw_GrowInfo_c* grow_info,
                          (*near >= TREE_PALM_STUMP001 && *near <= TREE_PALM_STUMP004) ||
                          (*near >= CEDAR_TREE_STUMP001 && *near <= CEDAR_TREE_STUMP004) ||
                          (*near >= GOLD_TREE_STUMP001 && *near <= GOLD_TREE_STUMP004))) {
-                        mAGrw_KillTree(item);
+                        mAGrw_KillTree_com(item);
                     }
                 }
             }
@@ -651,7 +783,7 @@ static int mAGrw_GrowTree(mActor_name_t* item, mAGrw_GrowInfo_c* grow_info, int 
             if (i == mAGrw_TREE_TYPE_NUM) {
                 for (i = 0; i < mAGrw_KILL_TREE_NUM; i++) {
                     if ((*kill_tree_proc[i])(*item, block_height, ocean_row) == TRUE) {
-                        mAGrw_KillTree(item);
+                        mAGrw_KillTree_com(item);
                         break;
                     }
                 }
@@ -695,7 +827,7 @@ static int mAGrw_GrowPlant(mActor_name_t* item, mAGrw_GrowInfo_c* grow_info) {
 
                     if (res == FALSE) {
                         if (IS_ITEM_ALIVE_TREE(*item)) {
-                            mAGrw_KillTree(item);
+                            mAGrw_KillTree_com(item);
                             res = TRUE;
                         } else if (IS_ITEM_DEAD_SAPLING(*item)) {
                             *item = EMPTY_NO; /* Clear dead saplings */
@@ -1255,7 +1387,7 @@ static void mAGrw_KillTree0(mActor_name_t* items, u16* tree0_info, int* normal_t
                 if (kill_normal_tree == is_normal_tree) {
                     if (selected_tree <= 0) {
                         tree0_info[0] &= ~(1 << x); /* remove the tree from the bitfield */
-                        mAGrw_KillTree(items);      /* remove the tree item */
+                        mAGrw_KillTree_com(items);      /* remove the tree item */
                         trees[0]--;                 /* remove the tree from the 'other tree' count */
                         z = UT_Z_NUM;               /* break out of outer loop */
 
@@ -1808,20 +1940,6 @@ static void mAGrw_LimitTreeLineIsland(mFM_fg_c* island_block) {
     static mAGrw_CHECK_FG_PROC check_fg[mAGrw_TREE_STAGE_NUM] = { &mAGrw_CheckTree000, &mAGrw_CheckTree001,
                                                                   &mAGrw_CheckTree002, &mAGrw_CheckTree003,
                                                                   &mAGrw_CheckTree004, };
-// TODO: Ordering needs to be fixed, this seems fake
-#if VERSION >= VER_GAFU01_00
-    int tree_size_count_tbl[mAGrw_TREE_STAGE_NUM];
-    mFM_fg_c* island_block_p;
-    u8 ignored_record;
-    int max_trees;
-    int selected;
-    mActor_name_t* items;
-    int trees;
-    int ut_x;
-    int ut_z;
-    int tree_size;
-    int block;
-#else
     int tree_size_count_tbl[mAGrw_TREE_STAGE_NUM];
     mFM_fg_c* island_block_p;
     u8 ignored_record;
@@ -1833,7 +1951,6 @@ static void mAGrw_LimitTreeLineIsland(mFM_fg_c* island_block) {
     int trees;
     int tree_size;
     int block;
-#endif
 
     island_block_p = island_block;
 
@@ -1876,7 +1993,7 @@ static void mAGrw_LimitTreeLineIsland(mFM_fg_c* island_block) {
                     items = island_block->items[ut_z];
                     for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
                         if ((*check_fg[tree_size])(*items) == TRUE) {
-                            mAGrw_KillTree(items);
+                            mAGrw_KillTree_com(items);
                         }
 
                         items++;
@@ -1906,7 +2023,7 @@ static void mAGrw_LimitTreeLineIsland(mFM_fg_c* island_block) {
                         for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
                             if ((*check_fg[tree_size])(*items) == TRUE) {
                                 if (selected == 0) {
-                                    mAGrw_KillTree(items);
+                                    mAGrw_KillTree_com(items);
                                     block = mISL_FG_BLOCK_X_NUM;
 
                                     break;
@@ -1935,58 +2052,77 @@ static void mAGrw_LimitTreeLineIsland(mFM_fg_c* island_block) {
     }
 }
 
-static void mAGr_GrowIslandFgItem(lbRTC_time_c* now_time, lbRTC_time_c* grow_time, int flower_time, int spoil_kabu,
+static void mAGr_GrowIslandFgItem_house_idx(lbRTC_time_c* now_time, lbRTC_time_c* grow_time, int house_idx, int flower_time, int spoil_kabu,
                                   int proc_type) {
     static u16 tree0_info[UT_Z_NUM];
+    static mActor_name_t base_bg_name[] = { BG_TYPE_GRD_S_IL_1, BG_TYPE_GRD_S_IR_1 };
 
-    // mAGrw_GrowInfo_c grow_info;
-    // int island_block_x_nums[mISL_FG_BLOCK_X_NUM];
-    // mFM_fg_c* island_block = Save_Get(island).fgblock[0];
-    // mCoBG_Collision_u* col;
-    // int bx;
+    mAGrw_GrowInfo_c grow_info;
+    int island_block_x_nums[mISL_FG_BLOCK_X_NUM];
+    Island_c* island = &Save_Get(homes[house_idx]).island;
+    mFM_fg_c* island_block = island->fgblock[0];
+    mCoBG_Collision_u* col;
+    int bx;
 
-    // mAGrw_ClearGrowInfo(&grow_info);
-    // grow_info.spoil_kabu = spoil_kabu;
+    mAGrw_ClearGrowInfo(&grow_info);
+    grow_info.spoil_kabu = spoil_kabu;
 
-    // if (proc_type == mAGrw_GROW) {
-    //     grow_info.past_days = mAGrw_get_pastDays(now_time, grow_time);
-    // } else if (proc_type == mAGrw_GROW_FIRST_FORCE) {
-    //     if (now_time->day != Save_Get(all_grow_renew_time).day) {
-    //         grow_info.past_days = -1;
-    //     } else {
-    //         grow_info.past_days = 0;
-    //     }
-    // }
+    if (proc_type == mAGrw_GROW) {
+        grow_info.past_days = mAGrw_get_pastDays(now_time, grow_time);
+    } else if (proc_type == mAGrw_GROW_FIRST_FORCE) {
+        if (now_time->day != Save_Get(all_grow_renew_time).day) {
+            grow_info.past_days = -1;
+        } else {
+            grow_info.past_days = 0;
+        }
+    }
 
-    // grow_info.flower_time = flower_time;
-    // mFI_GetIslandBlockNumX(island_block_x_nums);
-    // grow_info.ocean_row = TRUE;
+    grow_info.flower_time = flower_time;
+    mFI_GetIslandBlockNumX(island_block_x_nums);
+    grow_info.ocean_row = TRUE;
 
-    // for (bx = 0; bx < mISL_FG_BLOCK_X_NUM; bx++) {
-    //     u8 normal_trees = 0;
-    //     u8 other_trees = 0;
+    for (bx = 0; bx < mISL_FG_BLOCK_X_NUM; bx++) {
+        u8 normal_trees = 0;
+        u8 other_trees = 0;
 
-    //     mAGrw_SetTree0Info(tree0_info, island_block->items[0]);
-    //     grow_info.block_x = island_block_x_nums[bx];
-    //     grow_info.block_z = mISL_BLOCK_Z;
-    //     col = mFI_GetBkNum2ColTop(grow_info.block_x, mISL_BLOCK_Z);
+        mAGrw_SetTree0Info(tree0_info, island_block->items[0]);
+        grow_info.block_x = island_block_x_nums[bx];
+        grow_info.block_z = mISL_BLOCK_Z;
+        col = mFM_GetBgName2Col(base_bg_name[bx] + (island->bg_data[bx] & 3));
 
-    //     if (col != NULL) {
-    //         if (proc_type == mAGrw_GROW) {
-    //             mAGrw_SetAroundBlockInfoIsland(&grow_info, bx);
-    //         }
+        if (col != NULL) {
+            if (proc_type == mAGrw_GROW) {
+                mAGrw_SetAroundBlockInfoIsland(&grow_info, bx, island);
+            }
 
-    //         mAGrw_GrowBlockFgItem(island_block->items[0], col, Save_Get(island.deposit[bx]), &grow_info,
-    //                               proc_type + mAGrw_GROW_ISLAND_FIRST);
-    //     }
+            mAGrw_GrowBlockFgItem(island_block->items[0], col, island->deposit[bx], &grow_info,
+                                  proc_type + mAGrw_GROW_ISLAND_FIRST);
+        }
 
-    //     mAGrw_ResetTree0Info(tree0_info, &normal_trees, &other_trees, island_block->items[0]);
-    //     mAGrw_ThinTree(island_block->items[0], tree0_info, normal_trees, other_trees, mAGrw_ISL_MAX_TREES_PER_BLOCK);
+        mAGrw_ResetTree0Info(tree0_info, &normal_trees, &other_trees, island_block->items[0]);
+        mAGrw_ThinTree(island_block->items[0], tree0_info, normal_trees, other_trees, mAGrw_ISL_MAX_TREES_PER_BLOCK);
 
-    //     island_block++;
-    // }
+        island_block++;
+    }
+}
 
-    // mAGrw_LimitTreeLineIsland(Save_Get(island).fgblock[0]);
+static void mAGr_GrowIslandFgItem(lbRTC_time_c* now_time, lbRTC_time_c* grow_time, int flower_time, int spoil_kabu,
+    int proc_type) {
+    int i;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        int house_idx = Save_Get(homes[i]).island.house_idx;
+
+        if (house_idx != -1) {
+            mAGr_GrowIslandFgItem_house_idx(now_time, grow_time, i, flower_time, spoil_kabu, proc_type);
+        }
+    }
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (Save_Get(homes[i]).island.house_idx != -1) {
+            mAGrw_LimitTreeLineIsland(Save_Get(homes[i]).island.fgblock[0]);
+        }
+    }
 }
 
 static void mAGrw_CancelOn(u16* cancel, int x, int z) {
@@ -2537,6 +2673,8 @@ static void mAGrw_SpoilAllPossession(int spoil_kabu) {
                 haniwa_item++;
             }
         }
+
+        mAGrw_SpoilPossession(Save_Get(police_box).keep_items, mPB_POLICE_BOX_ITEM_STORAGE_COUNT);
     }
 }
 
@@ -3005,6 +3143,7 @@ static void mAGrw_ZuruSpoilKabuFieldFgItem() {
 }
 
 static void mAGrw_ZuruSpoilKabuIslandFgItem(Island_c* island) {
+    static mActor_name_t base_bg_name[] = { BG_TYPE_GRD_S_IL_1, BG_TYPE_GRD_S_IR_1 };
     mAGrw_GrowInfo_c grow_info;
     mFM_fg_c* fg_block = island->fgblock[0];
     mCoBG_Collision_u* col;
@@ -3019,8 +3158,7 @@ static void mAGrw_ZuruSpoilKabuIslandFgItem(Island_c* island) {
         grow_info.block_x = island_bx[bx];
         grow_info.block_z = mISL_BLOCK_Z;
 
-        col = mFI_GetBkNum2ColTop(island_bx[bx], mISL_BLOCK_Z);
-
+        col = mFM_GetBgName2Col(base_bg_name[bx] + (island->bg_data[bx] & 3));
         if (col != NULL) {
             mAgrw_ZuruSpoilKabuBlockFgItem(fg_block->items[0], col, &grow_info);
         }
@@ -3030,12 +3168,148 @@ static void mAGrw_ZuruSpoilKabuIslandFgItem(Island_c* island) {
 }
 
 static void mAGrw_ZuruSpoilKabu(lbRTC_time_c* now_time) {
+    mHm_hs_c* house = Save_Get(homes);
+    int i;
+
     if (Save_Get(save_exist) == TRUE &&
         lbRTC_IsEqualDate(now_time->year, now_time->month, now_time->day, Save_Get(save_check).time.year,
                           Save_Get(save_check).time.month, Save_Get(save_check).time.day) < lbRTC_EQUAL) {
         mAGrw_ZuruSpoilKabuFieldFgItem();
-        // mAGrw_ZuruSpoilKabuIslandFgItem(Save_GetPointer(island));
+
+        for (i = 0; i < mHS_HOUSE_NUM; i++) {
+            if (house->island.house_idx != -1) {
+                mAGrw_ZuruSpoilKabuIslandFgItem(&house->island);
+            }
+
+            house++;
+        }
+
         mAGrw_SpoilAllPossession(TRUE);
+    }
+}
+
+typedef struct all_grow_block_s {
+    int x;
+    int z;
+} mAGrw_Block_c;
+
+#define FLOWER_BLOCK_NUM (BLOCK_X_NUM * (BLOCK_Z_NUM - 2))
+
+static int mAGrw_ChoiceEnableSetSpecialFlowerBlock(mAGrw_Block_c* block) {
+    int x;
+    int z;
+    int count;
+
+    count = 0;
+    bzero(block, FLOWER_BLOCK_NUM * sizeof(mAGrw_Block_c));
+    for (x = 1; x < BLOCK_X_NUM; x++) {
+        for (z = 1; z < BLOCK_Z_NUM - 4; z++) {
+            if (mFI_CheckBlockKind_OR(x, z, mRF_BLOCKKIND_CLIFF) == TRUE &&
+                mFI_GetItemNumOnBlock(x, z, FLOWER_JACOBS_LADDER, FLOWER_JACOBS_LADDER) == 0) {
+                count++;
+                block->x = x;
+                block->z = z;
+                block++;
+            }
+        }
+    }
+
+    return count;
+}
+
+static int mAGrw_ChoiceEnableSetSpecialFlowerUt(mAGrw_Block_c* unit, const mAGrw_Block_c* block, const u16* cancel_ut_p) {
+    int z;
+    int x;
+    int check_x;
+    int check_z;
+    int count;
+    mCoBG_Collision_u* col;
+    int attr;
+    mActor_name_t fg;
+
+    count = 0;
+    bzero(unit, UT_TOTAL_NUM * sizeof(mAGrw_Block_c));
+    col = mFI_GetBkNum2ColTop(block->x, block->z);
+
+    if (col != NULL) {
+        cancel_ut_p += (block->z * FG_BLOCK_X_NUM + block->x) * UT_Z_NUM;
+
+        for (z = 1; z < UT_Z_NUM - 1; z++) {
+            for (x = 1; x < UT_X_NUM - 1; x++) {
+                mCoBG_Collision_u* col_p = col + (z << 4) + x;
+                
+                switch (col_p->data.unit_attribute) {
+                    case mCoBG_ATTRIBUTE_47:
+                        check_x = x;
+                        check_z = z + 1;
+                        col_p = col + (check_z << 4) + check_x;
+                        attr = col_p->data.unit_attribute;
+                        break;
+                    case mCoBG_ATTRIBUTE_50:
+                        check_x = x;
+                        check_z = z - 1;
+                        col_p = col + (check_z << 4) + check_x;
+                        attr = col_p->data.unit_attribute;
+                        break;
+                    case mCoBG_ATTRIBUTE_48:
+                        check_x = x - 1;
+                        check_z = z;
+                        col_p = col + (check_z << 4) + check_x;
+                        attr = col_p->data.unit_attribute;
+                        break;
+                    case mCoBG_ATTRIBUTE_49:
+                        check_x = x + 1;
+                        check_z = z;
+                        col_p = col + (check_z << 4) + check_x;
+                        attr = col_p->data.unit_attribute;
+                        break;
+                    default:
+                        attr = mCoBG_ATTRIBUTE_WATER;
+                        break;
+                }
+
+                switch (attr) {
+                    case mCoBG_ATTRIBUTE_GRASS0:
+                    case mCoBG_ATTRIBUTE_GRASS1:
+                    case mCoBG_ATTRIBUTE_SOIL0:
+                    case mCoBG_ATTRIBUTE_SOIL1:
+                        if (mFI_GetBlockUtNum2FG(&fg, block->x, block->z, check_x, check_z) == TRUE) {
+                            if ((fg == EMPTY_NO || fg == RSV_NO) && ((cancel_ut_p[check_z] >> check_x) & 1) != 1) {
+                                unit->x = check_x;
+                                unit->z = check_z;
+                                count++;
+                                unit++;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    return count;
+}
+
+static void mAGrw_SetSpecialFlower(u16* cancel_ut_p) {
+    if (mFAs_GetFieldRank() == mFAs_FIELDRANK_SIX) {
+        float exist_flower_count = (u32)mFI_GetItemNumField(FLOWER_JACOBS_LADDER, FLOWER_JACOBS_LADDER);
+        mAGrw_Block_c block[FLOWER_BLOCK_NUM];
+
+        if (RANDOM_F(1.0f) < 1.0f / ((exist_flower_count + 1.0f) * 2.0f)) {
+            int block_count = mAGrw_ChoiceEnableSetSpecialFlowerBlock(block);
+
+            if (block_count > 0) {
+                mAGrw_Block_c unit[UT_TOTAL_NUM];
+                mAGrw_Block_c* block_p = block + RANDOM(block_count);
+                int unit_count = mAGrw_ChoiceEnableSetSpecialFlowerUt(unit, block_p, cancel_ut_p);
+
+                if (unit_count > 0) {
+                    mAGrw_Block_c* unit_p = unit + RANDOM(unit_count);
+                    
+                    mFI_BlockUtNumtoFGSet(FLOWER_JACOBS_LADDER, block_p->x, block_p->z, unit_p->x, unit_p->z);
+                }
+            }
+        }
     }
 }
 
@@ -3141,6 +3415,9 @@ extern void mAGrw_RenewalFgItem_ovl(lbRTC_time_c* now_time, int* deposit_haniwa)
                     if (Save_Get(clear_grass) == FALSE) {
                         mAGrw_SetGrass(now_time, &grow_time, l_cancel_ut);
                     }
+
+                    mAGrw_SetSpecialFlower(l_cancel_ut);
+                    mAGrw_CheckMonumentOrder();
 
                     mAGrw_SetCarp(last_grow_time);
                     mPB_force_set_keep_item();

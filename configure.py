@@ -1069,7 +1069,7 @@ config.libs = [
             Object(Matching, "game/m_add_npc.c"),
             Object(NonMatching, "game/m_address_ovl.c"),
             Object(NonMatching, "game/m_all_grow.c"),
-            Object(NonMatching, "game/m_all_grow_ovl.c"),
+            Object(Matching, "game/m_all_grow_ovl.c"),
             Object(NonMatching, "game/m_bank_ovl.c"),
             Object(NonMatching, "game/m_banti.c"),
             Object(Matching, "game/m_bg_item.c"),
