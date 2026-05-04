@@ -1101,7 +1101,7 @@ config.libs = [
             Object(NonMatching, "game/m_debug_hayakawa.c"),
             Object(NonMatching, "game/m_debug_mode.c"),
             Object(Matching, "game/m_demo.c"),
-            Object(NonMatching, "game/m_design_ovl.c"),
+            Object(Matching, "game/m_design_ovl.c"),
             Object(Equivalent, "game/m_diary.c"), # matching but needs investigation
             Object(NonMatching, "game/m_diary_ovl.c"),
             Object(NonMatching, "game/m_eappli.c"),
@@ -1121,7 +1121,7 @@ config.libs = [
             Object(NonMatching, "game/m_font.c"),
             Object(Matching, "game/m_fuusen.c"),
             Object(Matching, "game/m_game_dlftbls.c"),
-            Object(NonMatching, "game/m_gba_ovl.c"),
+            Object(Matching, "game/m_gba_ovl.c"),
             Object(NonMatching, "game/m_hand_ovl.c"),
             Object(NonMatching, "game/m_handbill.c"),
             Object(NonMatching, "game/m_haniwaPortrait_ovl.c"),

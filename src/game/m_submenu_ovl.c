@@ -2333,7 +2333,7 @@ extern void mSM_menu_ovl_init(Submenu* submenu) {
     submenu->overlay->draw_mail_proc = &mSM_draw_mail;
     submenu->overlay->setup_view_proc = &mSM_setup_view;
     submenu->overlay->change_view_proc = &mSM_change_view;
-    submenu->overlay->unused_func_968 = NULL;
+    submenu->overlay->unused_func_A40 = NULL;
 
     mSM_set_proc(submenu);
     submenu->move_proc = &mSM_menu_ovl_move;

@@ -16,7 +16,7 @@
 
 #define mDE_POS2TEXEL(x, y) ((((x) & 7) + ((y) & 7) * 8 + ((((x) & 0x18) >> 3) + (((y) & 0x18) >> 3) * 4) * 0x40) >> 1)
 
-u16 mDE_SinCosTBL[] = {
+static u16 mDE_SinCosTBL[] = {
     0,    6,    12,   18,   25,   31,   37,   43,   49,   56,   62,   68,   74,   80,   86,   92,   97,   103,  109,
     115,  120,  126,  131,  136,  142,  147,  152,  157,  162,  167,  171,  176,  181,  185,  189,  193,  197,  201,
     205,  209,  212,  216,  219,  222,  225,  228,  231,  234,  236,  238,  241,  243,  244,  246,  248,  249,  251,
@@ -37,18 +37,18 @@ u16 mDE_SinCosTBL[] = {
 };
 
 // clang-format off
-u8 mDE_pen_2[] = {
+static u8 mDE_pen_2[] = {
     1,1,
     1,1,
 };
 
-u8 mDE_pen_3[] = {
+static u8 mDE_pen_3[] = {
     1,1,1,
     1,1,1,
     1,1,1,
 };
 
-u8 mDE_heart[] = {
+static u8 mDE_heart[] = {
     0,1,1,1,0,0,0,0,1,1,1,0,
     1,1,1,1,1,0,0,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,
@@ -63,7 +63,7 @@ u8 mDE_heart[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_star[] = {
+static u8 mDE_star[] = {
     0,0,0,0,0,1,1,0,0,0,0,0,
     0,0,0,0,0,1,1,0,0,0,0,0,
     0,0,0,0,1,1,1,1,0,0,0,0,
@@ -78,7 +78,7 @@ u8 mDE_star[] = {
     0,1,1,0,0,0,0,0,0,1,1,0,
 };
 
-u8 mDE_circle[] = {
+static u8 mDE_circle[] = {
     0,0,0,0,1,1,1,1,0,0,0,0,
     0,0,1,1,0,0,0,0,1,1,0,0,
     0,1,0,0,0,0,0,0,0,0,1,0,
@@ -93,7 +93,7 @@ u8 mDE_circle[] = {
     0,0,0,0,1,1,1,1,0,0,0,0,
 };
 
-u8 mDE_square[] = {
+static u8 mDE_square[] = {
     1,1,1,1,1,1,1,1,1,1,1,1,
     1,0,0,0,0,0,0,0,0,0,0,1,
     1,0,0,0,0,0,0,0,0,0,0,1,
@@ -108,7 +108,7 @@ u8 mDE_square[] = {
     1,1,1,1,1,1,1,1,1,1,1,1,
 };
 
-u8 mDE_kao1[] = {
+static u8 mDE_kao1[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,1,1,1,1,0,0,0,0,
     0,0,0,1,0,0,0,0,1,0,0,0,
@@ -123,7 +123,7 @@ u8 mDE_kao1[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_kao2[] = {
+static u8 mDE_kao2[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,1,0,0,0,0,0,0,0,0,0,
     0,0,1,0,0,1,1,1,0,0,0,0,
@@ -138,7 +138,7 @@ u8 mDE_kao2[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_kao3[] = {
+static u8 mDE_kao3[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,1,1,1,0,0,0,0,
     0,0,0,0,1,0,0,0,1,0,0,0,
@@ -153,7 +153,7 @@ u8 mDE_kao3[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_kao4[] = {
+static u8 mDE_kao4[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,
@@ -168,7 +168,7 @@ u8 mDE_kao4[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_kao5[] = {
+static u8 mDE_kao5[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,
@@ -183,7 +183,7 @@ u8 mDE_kao5[] = {
     0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-u8 mDE_paint_mizutama[0x100] = { 
+static u8 mDE_paint_mizutama[0x100] = { 
     0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0, 
     0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0, 
     0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0, 
@@ -202,7 +202,7 @@ u8 mDE_paint_mizutama[0x100] = {
     0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0 
 };
 
-u8 mDE_paint_mask_cat_mask[0x400] = {  
+static u8 mDE_paint_mask_cat_mask[0x400] = {  
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1, 
     1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1, 
@@ -252,7 +252,7 @@ enum {
     mDE_MOVE_DIR_NUM
 };
 
-void mDE_setup_action(mDE_Ovl_c* design_ovl, int param_2);
+static void mDE_setup_action(mDE_Ovl_c* design_ovl, int param_2);
 
 #define mDE_EXTRACT_COMPONENT(c, s, b) (((c) & (((1 << (b)) - 1)) << (s)) >> (s))
 
@@ -906,7 +906,7 @@ static void mDE_farbado(mDE_Ovl_c* designOvl, int startX, int startY, int fillCo
     } while (stackReadIdx != stackWriteIdx);
 }
 
-void mDE_set_texture_template(mDE_Ovl_c* design_ovl, u8* param_2, int offsetX, int offsetY, int param_5, int param_6,
+static void mDE_set_texture_template(mDE_Ovl_c* design_ovl, u8* param_2, int offsetX, int offsetY, int param_5, int param_6,
                               int param_7, int param_8) {
     int i;
     for (i = 0; i < param_5 * param_6; i++) {
@@ -918,7 +918,7 @@ void mDE_set_texture_template(mDE_Ovl_c* design_ovl, u8* param_2, int offsetX, i
     }
 }
 
-void mDE_mask_cat_mask(mDE_Ovl_c* design_ovl) {
+static void mDE_mask_cat_mask(mDE_Ovl_c* design_ovl) {
     int i;
     for (i = 0; i < ARRAY_COUNT(mDE_paint_mask_cat_mask); i++) {
         int y = i / 32;
@@ -929,7 +929,7 @@ void mDE_mask_cat_mask(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_paint(mDE_Ovl_c* design_ovl, int pal) {
+static void mDE_paint(mDE_Ovl_c* design_ovl, int pal) {
     int i;
     int j;
     switch (design_ovl->_6A1) {
@@ -979,11 +979,11 @@ void mDE_paint(mDE_Ovl_c* design_ovl, int pal) {
     }
 }
 
-void mDE_print_texture(mDE_Ovl_c* design_ovl) {
+static void mDE_print_texture(mDE_Ovl_c* design_ovl) {
     return;
 }
 
-void mDE_save_maskcat_texture(mDE_Ovl_c* design_ovl) {
+static void mDE_save_maskcat_texture(mDE_Ovl_c* design_ovl) {
     int i, j;
     for (i = 0; i < 0x20; i++) {
         for (j = 0; j < 0x20; j++) {
@@ -994,11 +994,11 @@ void mDE_save_maskcat_texture(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_set_undo_texture(mDE_Ovl_c* design_ovl) {
+static void mDE_set_undo_texture(mDE_Ovl_c* design_ovl) {
     bcopy(&design_ovl->work_texture, &design_ovl->undo_texture, sizeof(design_ovl->work_texture));
 }
 
-void mDE_undo(mDE_Ovl_c* design_ovl) {
+static void mDE_undo(mDE_Ovl_c* design_ovl) {
     design_ovl->_6DA = !design_ovl->_6DA;
     if (design_ovl->_6DA) {
         sAdo_SysTrgStart(0x45b);
@@ -1010,7 +1010,7 @@ void mDE_undo(mDE_Ovl_c* design_ovl) {
     bcopy(&design_ovl->texture, &design_ovl->undo_texture, sizeof(design_ovl->texture));
 }
 
-void mDE_main_pen_move(mDE_Ovl_c* design_ovl) {
+static void mDE_main_pen_move(mDE_Ovl_c* design_ovl) {
     design_ovl->_699 = 0;
     design_ovl->_698 = 1;
     if (chkTrigger(BUTTON_A)) {
@@ -1118,7 +1118,7 @@ void mDE_main_pen_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_main_nuri_move(mDE_Ovl_c* design_ovl) {
+static void mDE_main_nuri_move(mDE_Ovl_c* design_ovl) {
     design_ovl->_699 = 1;
     if (chkTrigger(BUTTON_A)) {
         sAdo_SysTrgStart(0x455);
@@ -1127,7 +1127,7 @@ void mDE_main_nuri_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_waku_set_start(mDE_Ovl_c* design_ovl) {
+static void mDE_waku_set_start(mDE_Ovl_c* design_ovl) {
     if (design_ovl->_678 > design_ovl->cursor_x) {
         design_ovl->_680 = design_ovl->_650;
     } else {
@@ -1140,7 +1140,7 @@ void mDE_waku_set_start(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_waku_set_main_start_end(mDE_Ovl_c* design_ovl, int* x_start, int* y_start, int* x_end, int* y_end) {
+static void mDE_waku_set_main_start_end(mDE_Ovl_c* design_ovl, int* x_start, int* y_start, int* x_end, int* y_end) {
     if (design_ovl->_678 > design_ovl->cursor_x) {
         *x_start = design_ovl->cursor_x;
         *x_end = design_ovl->_678;
@@ -1158,7 +1158,7 @@ void mDE_waku_set_main_start_end(mDE_Ovl_c* design_ovl, int* x_start, int* y_sta
     }
 }
 
-void mDE_waku_line(mDE_Ovl_c* design_ovl, int _param_2, int _param_3, int param_4, int param_5) {
+static void mDE_waku_line(mDE_Ovl_c* design_ovl, int _param_2, int _param_3, int param_4, int param_5) {
     int iVar4;
     int param_2;
     int param_3;
@@ -1209,7 +1209,7 @@ void mDE_waku_line(mDE_Ovl_c* design_ovl, int _param_2, int _param_3, int param_
     }
 }
 
-void mDE_waku_circle_write(mDE_Ovl_c* design_ovl, u8 fill) {
+static void mDE_waku_circle_write(mDE_Ovl_c* design_ovl, u8 fill) {
     // stack variables
     int x_start;
     int y_start;
@@ -1267,7 +1267,7 @@ void mDE_waku_circle_write(mDE_Ovl_c* design_ovl, u8 fill) {
     }
 }
 
-void mDE_waku_square_write(mDE_Ovl_c* design_ovl, u8 fill) {
+static void mDE_waku_square_write(mDE_Ovl_c* design_ovl, u8 fill) {
     int x_start;
     int y_start;
     int x_end;
@@ -1296,7 +1296,7 @@ void mDE_waku_square_write(mDE_Ovl_c* design_ovl, u8 fill) {
     }
 }
 
-void mDE_main_waku_move(mDE_Ovl_c* design_ovl) {
+static void mDE_main_waku_move(mDE_Ovl_c* design_ovl) {
     if (design_ovl->_6A2 == 4) {
         design_ovl->_699 = 9;
     } else {
@@ -1366,7 +1366,7 @@ void mDE_main_waku_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_main_mark_move(mDE_Ovl_c* design_ovl) {
+static void mDE_main_mark_move(mDE_Ovl_c* design_ovl) {
     if (Save_Get(scene_no) == SCENE_START_DEMO3 || GETREG(NMREG, 0x5f)) {
         switch (design_ovl->_6A3) {
             case 0: {
@@ -1450,7 +1450,7 @@ void mDE_main_mark_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_main_undo_move(mDE_Ovl_c* design_ovl) {
+static void mDE_main_undo_move(mDE_Ovl_c* design_ovl) {
     design_ovl->_699 = 7;
     if (chkTrigger(BUTTON_A)) {
         mDE_undo(design_ovl);
@@ -1553,7 +1553,7 @@ BOOL mDE_mode_tool_check(mDE_Ovl_c* design_ovl, int param_2, int param_3, int pa
     return moved;
 }
 
-void mDE_main_mode_setup_action(mDE_Ovl_c* design_ovl, int mode) {
+static void mDE_main_mode_setup_action(mDE_Ovl_c* design_ovl, int mode) {
     static mDE_OVL_PROC process[] = {
         mDE_main_pen_move,
         mDE_main_nuri_move,
@@ -1575,7 +1575,7 @@ void mDE_main_mode_setup_action(mDE_Ovl_c* design_ovl, int mode) {
     design_ovl->main_mode_proc = process[mode];
 }
 
-void mde_main_move_sound(mDE_Ovl_c* design_ovl) {
+static void mde_main_move_sound(mDE_Ovl_c* design_ovl) {
     if (chkButton(BUTTON_A) && design_ovl->main_mode_act == mDE_MAIN_MODE_PEN) {
         switch (design_ovl->_6A0) {
             case 1: {
@@ -1593,7 +1593,7 @@ void mde_main_move_sound(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_main_shortcut_tool(mDE_Ovl_c* design_ovl, int param_2) {
+static void mDE_mode_main_shortcut_tool(mDE_Ovl_c* design_ovl, int param_2) {
     int prevAction = param_2 - 1;
     int nextAction = param_2 + 1;
     switch (param_2) {
@@ -1614,14 +1614,14 @@ void mDE_mode_main_shortcut_tool(mDE_Ovl_c* design_ovl, int param_2) {
     }
 }
 
-void mDE_cursor_waku(mDE_Ovl_c* design_ovl, int param_2) {
+static void mDE_cursor_waku(mDE_Ovl_c* design_ovl, int param_2) {
     if (mDE_cursor_waku_rotate(design_ovl, param_2) == FALSE) {
         mDE_cursor_move(design_ovl, param_2);
     }
     mde_main_move_sound(design_ovl);
 }
 
-void mDE_cursor_waku_naname(mDE_Ovl_c* design_ovl, int param_2, int param_3, int param_4) {
+static void mDE_cursor_waku_naname(mDE_Ovl_c* design_ovl, int param_2, int param_3, int param_4) {
     if (mDE_cursor_waku_genten_rotate(design_ovl, param_2)) {
         mDE_cursor_move(design_ovl, param_3);
         mDE_cursor_move(design_ovl, param_4);
@@ -1633,7 +1633,7 @@ void mDE_cursor_waku_naname(mDE_Ovl_c* design_ovl, int param_2, int param_3, int
     mde_main_move_sound(design_ovl);
 }
 
-void mDE_mode_stick_control_waku(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_stick_control_waku(mDE_Ovl_c* design_ovl) {
     if (mDE_cursor_move_check(design_ovl, 3) && mDE_cursor_move_check(design_ovl, 0)) {
         mDE_cursor_waku_naname(design_ovl, 4, 3, 0);
     } else if (mDE_cursor_move_check(design_ovl, 3) && mDE_cursor_move_check(design_ovl, 1)) {
@@ -1653,7 +1653,7 @@ void mDE_mode_stick_control_waku(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_stick_control(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_stick_control(mDE_Ovl_c* design_ovl) {
     if (mDE_cursor_move_check(design_ovl, 3) && mDE_cursor_move_check(design_ovl, 0)) {
         mde_main_move_sound(design_ovl);
         mDE_cursor_move(design_ovl, 3);
@@ -1685,7 +1685,7 @@ void mDE_mode_stick_control(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_stick_control_analog(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_stick_control_analog(mDE_Ovl_c* design_ovl) {
     int oldCursorX = design_ovl->cursor_x;
     if (oldCursorX != (int)(design_ovl->_660 / 5.f) || design_ovl->cursor_y != -(int)(design_ovl->_664 / 5.f)) {
         int oldCursorY = design_ovl->cursor_y;
@@ -1709,7 +1709,7 @@ void mDE_mode_stick_control_analog(mDE_Ovl_c* design_ovl) {
     mDE_cursor_analog_move(design_ovl);
 }
 
-void mDE_mode_main_move(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_main_move(mDE_Ovl_c* design_ovl) {
     design_ovl->move_pR = gamePT->mcon.move_pR;
     design_ovl->_6C4 = 1;
     if (design_ovl->main_mode_act == mDE_MAIN_MODE_PEN && chkButton(BUTTON_A)) {
@@ -1889,7 +1889,7 @@ void mDE_mode_main_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_pallet_move(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_pallet_move(mDE_Ovl_c* design_ovl) {
     int old6A5 = design_ovl->_6A5;
     design_ovl->move_pR = gamePT->mcon.move_pR;
     if (GETREG(NMREG, 0x10)) {
@@ -1947,7 +1947,7 @@ void mDE_mode_pallet_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_grid_move(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_grid_move(mDE_Ovl_c* design_ovl) {
     if (chkTrigger(BUTTON_A)) {
         design_ovl->_69D = !design_ovl->_69D;
         if (design_ovl->_69D == FALSE) {
@@ -1958,7 +1958,7 @@ void mDE_mode_grid_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_mode_tool_move(mDE_Ovl_c* design_ovl) {
+static void mDE_mode_tool_move(mDE_Ovl_c* design_ovl) {
     design_ovl->move_pR = gamePT->mcon.move_pR;
     if (GETREG(NMREG, 0x12)) {
         design_ovl->_6C4 = GETREG(NMREG, 0x12);
@@ -2039,7 +2039,7 @@ void mDE_mode_tool_move(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_setup_action(mDE_Ovl_c* design_ovl, int mode) {
+static void mDE_setup_action(mDE_Ovl_c* design_ovl, int mode) {
     static mDE_OVL_PROC process[] = {
         mDE_mode_main_move,
         mDE_mode_pallet_move,
@@ -2065,11 +2065,11 @@ void mDE_setup_action(mDE_Ovl_c* design_ovl, int mode) {
     design_ovl->act_proc = process[mode];
 }
 
-void mDE_move_Move(Submenu* submenu, mSM_MenuInfo_c* info) {
+static void mDE_move_Move(Submenu* submenu, mSM_MenuInfo_c* info) {
     submenu->overlay->move_Move_proc(submenu, info);
 }
 
-void mDE_move_tool_decide(mDE_Ovl_c* design_ovl) {
+static void mDE_move_tool_decide(mDE_Ovl_c* design_ovl) {
     switch (design_ovl->_69F) {
         case 0: {
             design_ovl->_6A0 = design_ovl->_69E;
@@ -2093,7 +2093,7 @@ void mDE_move_tool_decide(mDE_Ovl_c* design_ovl) {
     }
 }
 
-void mDE_move_Play(Submenu* submenu, mSM_MenuInfo_c* info) {
+static void mDE_move_Play(Submenu* submenu, mSM_MenuInfo_c* info) {
     u32 trigger = submenu->overlay->menu_control.trigger;
     mDE_Ovl_c* design_ovl = submenu->overlay->design_ovl;
     if (submenu->current_menu_type == mSM_OVL_DESIGN) {
@@ -2133,7 +2133,7 @@ void mDE_move_Play(Submenu* submenu, mSM_MenuInfo_c* info) {
     }
 }
 
-void mDE_move_Wait(Submenu* submenu, mSM_MenuInfo_c* info) {
+static void mDE_move_Wait(Submenu* submenu, mSM_MenuInfo_c* info) {
     Submenu_Overlay_c* overlay = submenu->overlay;
     mDE_Ovl_c* design_ovl = overlay->design_ovl;
     if (overlay->menu_info[mSM_OVL_EDITENDCHK].proc_status == mSM_OVL_PROC_MOVE &&
@@ -2168,11 +2168,11 @@ void mDE_move_Wait(Submenu* submenu, mSM_MenuInfo_c* info) {
     }
 }
 
-void mDE_move_End(Submenu* submenu, mSM_MenuInfo_c* info) {
+static void mDE_move_End(Submenu* submenu, mSM_MenuInfo_c* info) {
     submenu->overlay->move_End_proc(submenu, info);
 }
 
-void mDE_design_ovl_move(Submenu* submenu) {
+static void mDE_design_ovl_move(Submenu* submenu) {
     static mSM_MOVE_PROC ovl_move_proc[] = {
         &mDE_move_Move,
         &mDE_move_Play,
@@ -2209,7 +2209,7 @@ extern Gfx des_sen_waku_model[], des_win_before[], des_win_before_model[], des_w
     des_win_suuji3_model[], des_win_suuji4_model[], des_win_suuji2_model[], des_win_suuji1_model[],
     des_win_marking_model[], des_win_marking2T_model[];
 
-void mDE_set_frame_tool_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_tool_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
 
     static Gfx* tool_pen_table[] = { des_tool_pen1_tex_rgb_ia8, des_tool_pen2_tex_rgb_ia8, des_tool_pen3_tex_rgb_ia8 };
     static Gfx* tool_nuri_table[] = { des_tool_nuri1_tex_rgb_ia8, des_tool_nuri2_tex_rgb_ia8,
@@ -2266,7 +2266,7 @@ void mDE_set_frame_tool_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-void mDE_set_frame_suuji_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_suuji_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
 
     static Gfx* suuji_table[] = { des_win_suuji0_tex_rgb_i4, des_win_suuji1_tex_rgb_i4, des_win_suuji2_tex_rgb_i4,
                                   des_win_suuji3_tex_rgb_i4, des_win_suuji4_tex_rgb_i4, des_win_suuji5_tex_rgb_i4,
@@ -2306,7 +2306,7 @@ void mDE_set_frame_suuji_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) 
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-void mDE_set_frame_mark_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_mark_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     GRAPH* graph = game->graph;
     mDE_Ovl_c* design_ovl = submenu->overlay->design_ovl;
     Matrix_scale(16.f, 16.f, 1.f, MTX_LOAD);
@@ -2357,27 +2357,27 @@ void mDE_set_frame_mark_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-void mDE_waku_right_top(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
+static void mDE_waku_right_top(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
     *param_3 = param_1;
     *param_4 = DEG2SHORT_ANGLE2(90);
 }
 
-void mDE_waku_right_bottom(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
+static void mDE_waku_right_bottom(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
     // nothing;
 }
 
-void mDE_waku_left_top(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
+static void mDE_waku_left_top(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
     *param_3 = param_1;
     *param_2 = -1.f * param_1;
     *param_4 = DEG2SHORT_ANGLE2(180);
 }
 
-void mDE_waku_left_bottom(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
+static void mDE_waku_left_bottom(f32 param_1, f32* param_2, f32* param_3, s16* param_4) {
     *param_2 = -1.f * param_1;
     *param_4 = DEG2SHORT_ANGLE2(270);
 }
 
-void mDE_set_cursor_waku_rotate(mDE_Ovl_c* design_ovl, u32 param_2, f32* param_3, f32* param_4, s16* param_5) {
+static void mDE_set_cursor_waku_rotate(mDE_Ovl_c* design_ovl, u32 param_2, f32* param_3, f32* param_4, s16* param_5) {
     f32 v = 1.f;
     if (param_2) {
         v = -1.f;
@@ -2398,7 +2398,7 @@ void mDE_set_cursor_waku_rotate(mDE_Ovl_c* design_ovl, u32 param_2, f32* param_3
     }
 }
 
-void mDE_set_frame_cursor_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_cursor_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     static Gfx* cursor_table[] = { des_cursor_penT_model,  des_cursor_nuriT_model, des_cursor_waku1T_model,
                                    des_cursor_mark1_model, des_cursor_mark2_model, des_cursor_mark3_model,
                                    des_cursor_mark4_model, des_cursor_undo_model,  des_cursor_spT_model,
@@ -2565,7 +2565,7 @@ void mDE_set_frame_cursor_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu)
     }
 }
 
-void mDE_set_frame_main_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_main_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     int i;
     static Gfx* area_table[] = { des_win_area1_model, des_win_area2_model, des_win_area4_model, des_win_area3_model };
 
@@ -2612,27 +2612,27 @@ void mDE_set_frame_main_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     CLOSE_POLY_OPA_DISP(graph);
 }
 
-void mDE_set_frame_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
+static void mDE_set_frame_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     mDE_set_frame_main_dl(submenu, game, menu);
     mDE_set_frame_tool_dl(submenu, game, menu);
     mDE_set_frame_suuji_dl(submenu, game, menu);
     mDE_set_frame_mark_dl(submenu, game, menu);
     mDE_set_frame_cursor_dl(submenu, game, menu);
 }
-void mDE_design_ovl_draw(Submenu* submenu, GAME* game) {
+static void mDE_design_ovl_draw(Submenu* submenu, GAME* game) {
     mSM_MenuInfo_c* menu = &submenu->overlay->menu_info[mSM_OVL_DESIGN];
     menu->pre_draw_func(submenu, game);
     mDE_set_frame_dl(submenu, game, menu);
 }
 
-void mDE_design_ovl_set_proc(Submenu* submenu) {
+extern void mDE_design_ovl_set_proc(Submenu* submenu) {
     Submenu_Overlay_c* ovl = submenu->overlay;
 
     ovl->menu_control.menu_move_func = mDE_design_ovl_move;
     ovl->menu_control.menu_draw_func = mDE_design_ovl_draw;
 }
 
-void mDE_design_ovl_init(Submenu* submenu) {
+static void mDE_design_ovl_init(Submenu* submenu) {
     Submenu_Overlay_c* ovl = submenu->overlay;
     mDE_Ovl_c* design_ovl = submenu->overlay->design_ovl;
     mSM_MenuInfo_c* menu_info = &ovl->menu_info[mSM_OVL_DESIGN];
@@ -2690,7 +2690,7 @@ void mDE_design_ovl_init(Submenu* submenu) {
     osWritebackDCache(&design_ovl->undo_texture, sizeof(design_ovl->undo_texture));
 }
 
-void mDE_maskcat_init(MaskCat_c* mask_cat) {
+extern void mDE_maskcat_init(MaskCat_c* mask_cat) {
     int i;
     mask_cat->palette_no = 15;
     for (i = 0; i < ARRAY_COUNT(mask_cat->design.design.data); i++) {
@@ -2698,7 +2698,7 @@ void mDE_maskcat_init(MaskCat_c* mask_cat) {
     }
 }
 
-void mDE_design_ovl_construct(Submenu* submenu) {
+extern void mDE_design_ovl_construct(Submenu* submenu) {
     Submenu_Overlay_c* ovl = submenu->overlay;
 
     if (ovl->design_ovl == NULL) {
@@ -2709,6 +2709,6 @@ void mDE_design_ovl_construct(Submenu* submenu) {
     mDE_design_ovl_set_proc(submenu);
 }
 
-void mDE_design_ovl_destruct(Submenu* submenu) {
+extern void mDE_design_ovl_destruct(Submenu* submenu) {
     submenu->overlay->design_ovl = NULL;
 }

@@ -94,6 +94,9 @@ enum submenu_overlay {
     mSM_OVL_CALENDAR,
     mSM_OVL_PASSWORDMAKE,
     mSM_OVL_PASSWORDCHK,
+    mSM_OVL_ALARMIN,
+    mSM_OVL_SHUTTER,
+    mSM_OVL_FILM,
 
     mSM_OVL_NUM
 };

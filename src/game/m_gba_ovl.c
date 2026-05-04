@@ -357,9 +357,9 @@ extern void mGB_gba_ovl_construct(Submenu* submenu) {
     Submenu_Overlay_c* overlay = submenu->overlay;
 
     if (overlay->gba_ovl == NULL) {
-        // @cleanup - why are we allocating 0xA20 bytes for the ovl when it's clearly only 0xC bytes?
+        // @cleanup - why are we allocating 0xB00 bytes for the ovl when it's clearly only 0xC bytes?
         // maybe size is left over from an earlier iteration or scrapped content?
-        overlay->gba_ovl = (mGB_Ovl_c*)zelda_malloc_align(0xA20, 32);
+        overlay->gba_ovl = (mGB_Ovl_c*)zelda_malloc_align(0xB00, 32);
         mem_clear((u8*)overlay->gba_ovl, sizeof(mGB_Ovl_c), 0);
         overlay->gba_ovl->original_p = (mNW_original_design_c*)submenu->param2;
     }
