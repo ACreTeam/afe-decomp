@@ -1,0 +1,124 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
+static int Player_actor_request_main_pickup_flower(GAME* game, mActor_name_t flower_tool, const xyz_t* target_pos_p,
+                                                   const xyz_t* item_pos_p) {
+    if (Player_actor_check_able_request_main_index_for_reset(mPlayer_INDEX_PICKUP) == FALSE &&
+        mPlib_Check_now_handin_item() == FALSE) {
+        PLAYER_ACTOR* player = GET_PLAYER_ACTOR_GAME(game);
+        mPlayer_request_pickup_flower_c* req_pickup_flower_p = &player->requested_main_index_data.pickup_flower;
+
+        req_pickup_flower_p->flower_tool = flower_tool;
+        req_pickup_flower_p->target_pos = *target_pos_p;
+        req_pickup_flower_p->item_pos = *item_pos_p;
+
+        Player_actor_request_main_index(game, mPlayer_INDEX_PICKUP_FLOWER, mPlayer_REQUEST_PRIORITY_8);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void Player_actor_setup_main_Pickup_flower(ACTOR* actorx, GAME* game) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+    mPlayer_request_pickup_flower_c* req_pickup_flower_p = &player->requested_main_index_data.pickup_flower;
+    mPlayer_main_pickup_flower_c* main_pickup_flower_p = &player->main_data.pickup_flower;
+    int anim1_idx;
+    int part_table_idx;
+
+    Player_actor_Set_ItemNoSubmenu(req_pickup_flower_p->flower_tool);
+
+    main_pickup_flower_p->target_pos = req_pickup_flower_p->target_pos;
+    main_pickup_flower_p->item_pos = req_pickup_flower_p->item_pos;
+
+    Player_actor_SetupItem_Base1(actorx, mPlayer_ANIM_HANA_PICKUP1, -6.0f, &anim1_idx, &part_table_idx);
+    Player_actor_InitAnimation_Base2(actorx, game, mPlayer_ANIM_HANA_PICKUP1, mPlayer_ANIM_HANA_PICKUP1, 1.0f, 1.0f,
+                                     0.5f, -6.0f, cKF_FRAMECONTROL_STOP, mPlayer_PART_TABLE_NORMAL);
+    Player_actor_setup_main_Base(actorx, game);
+}
+
+static void Player_actor_Movement_Pickup_flower(ACTOR* actorx) {
+    Player_actor_Movement_Base_Stop(actorx, FALSE);
+}
+
+static int Player_actor_CulcAnimation_Pickup_flower(ACTOR* actorx, f32* last_anim0_cur_frame_p) {
+    return Player_actor_CulcAnimation_Base2(actorx, last_anim0_cur_frame_p);
+}
+
+static void Player_actor_ObjCheck_Pickup_flower(ACTOR* actorx, GAME* game) {
+    Player_actor_Excute_Corect_forStand(actorx, game);
+}
+
+static void Player_actor_BGcheck_Pickup_flower(ACTOR* actorx) {
+    Player_actor_BGcheck_common_type1(actorx);
+}
+
+static void Player_actor_ChangeFGNumber_Pickup_flower(ACTOR* actorx, GAME* game) {
+    if (Common_Get(clip).bg_item_clip != NULL && Common_Get(clip).bg_item_clip->fly_entry_proc != NULL) {
+        PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+        cKF_SkeletonInfo_R_c* kf0_p = &player->keyframe0;
+        cKF_FrameControl_c* fc0_p = &kf0_p->frame_control;
+
+        if (Player_actor_Check_AnimationFrame(fc0_p, 22.0f)) {
+            mPlayer_main_pickup_flower_c* main_pickup_flower_p = &player->main_data.pickup_flower;
+            xyz_t* target_pos_p = &main_pickup_flower_p->target_pos;
+            mActor_name_t* fg_p = mFI_GetUnitFG(*target_pos_p);
+
+            if (fg_p != NULL) {
+                if ((*fg_p == FLOWER_JACOBS_LADDER || IS_ITEM_GROWN_FLOWER(*fg_p)) != FALSE) {
+                    xyz_t effect_pos = main_pickup_flower_p->item_pos;
+                    effect_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(main_pickup_flower_p->item_pos, 0.0f);
+                    eEC_CLIP->effect_make_proc(eEC_EFFECT_HANATIRI, effect_pos, 2, 0, game, RSV_NO, *fg_p, 0);
+
+                    if (CLIP(bg_item_clip) != NULL && CLIP(bg_item_clip)->fade_entry_proc != NULL) {
+                        CLIP(bg_item_clip)->fade_entry_proc(*fg_p, &effect_pos);
+                    }
+                }
+            }
+        }
+    }
+}
+
+static void Player_actor_SetSound_Pickup_flower(ACTOR* actorx) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+    cKF_SkeletonInfo_R_c* kf0_p = &player->keyframe0;
+    cKF_FrameControl_c* fc0_p = &kf0_p->frame_control;
+
+    if (Player_actor_Check_AnimationFrame(fc0_p, 7.0f)) {
+        Player_actor_sound_FlowerGet(actorx);
+        Player_actor_set_viblation_Remove_grass();
+    }
+}
+
+static void Player_actor_SearchAnimation_Pickup_flower(ACTOR* actorx, GAME* game, f32 frame) {
+    if (Player_actor_Check_AnimationFrame_PerfectEquel(actorx, frame) == FALSE) {
+        Player_actor_ChangeFGNumber_Pickup_flower(actorx, game);
+        Player_actor_SetSound_Pickup_flower(actorx);
+    }
+}
+
+static void Player_actor_request_proc_index_fromPickup_flower(ACTOR* actorx, GAME* game, int end_flag) {
+    if (end_flag) {
+        Player_actor_SettleRequestMainIndexPriority(actorx);
+        Player_actor_request_main_wait_all(game, -5.0f, 0.0f, 0, mPlayer_REQUEST_PRIORITY_1);
+    }
+}
+
+static void Player_actor_main_Pickup_flower(ACTOR* actorx, GAME* game) {
+    f32 last_anim0_cur_frame;
+    int end_flag;
+
+    Player_actor_Movement_Pickup_flower(actorx);
+    Player_actor_Reinput_force_position_angle(actorx, game);
+    end_flag = Player_actor_CulcAnimation_Pickup_flower(actorx, &last_anim0_cur_frame);
+    Player_actor_SearchAnimation_Pickup_flower(actorx, game, last_anim0_cur_frame);
+    Player_actor_recover_lean_angle(actorx);
+    Player_actor_set_eye_pattern_normal(actorx);
+    Player_actor_ObjCheck_Pickup_flower(actorx, game);
+    Player_actor_BGcheck_Pickup_flower(actorx);
+    Player_actor_Item_main(actorx, game);
+    Player_actor_request_proc_index_fromPickup_flower(actorx, game, end_flag);
+}

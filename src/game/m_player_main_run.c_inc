@@ -89,8 +89,9 @@ static void Player_actor_request_proc_index_fromRun_common(ACTOR* actor, GAME* g
     Player_actor_CheckAndRequest_main_scoop_all(game, mPlayer_REQUEST_PRIORITY_4);
     Player_actor_CheckAndRequest_main_umbrella_all(game, mPlayer_REQUEST_PRIORITY_4);
     Player_actor_CheckAndRequest_main_fan_all(game, 1, 1, mPlayer_REQUEST_PRIORITY_4);
+    Player_actor_CheckAndRequest_main_cracker_all(game, mPlayer_REQUEST_PRIORITY_4);
     Player_actor_CheckAndRequest_main_shake_tree_all(game);
-    Player_actor_CheckAndRequest_main_pickup_all(game);
+    Player_actor_CheckAndRequest_main_pickup_all(game, FALSE);
 
     speed = (player->keyframe0.frame_control.speed * player->keyframe0.frame_control.speed) / 0.048f;
 

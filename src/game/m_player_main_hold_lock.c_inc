@@ -1,0 +1,87 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
+static int Player_actor_request_main_hold_lock(GAME* game, int ftr_no, int index, const xyz_t* pos, f32 speed, int flags,
+                                      int priority) {
+    if (Player_actor_check_request_main_able(game, mPlayer_INDEX_HOLD_LOCK, priority) &&
+        Player_actor_Check_able_request_main_hold(game)) {
+        PLAYER_ACTOR* player = GET_PLAYER_ACTOR_GAME(game);
+
+        player->requested_main_index_data.hold.ftr_no = ftr_no;
+        player->requested_main_index_data.hold.angle_y = Player_actor_Get_Angle_fromIndex(index);
+        player->requested_main_index_data.hold.player_pos = *pos;
+        player->requested_main_index_data.hold.morph_speed = speed;
+        player->requested_main_index_data.hold.flags = flags;
+
+        Player_actor_request_main_index(game, mPlayer_INDEX_HOLD_LOCK, priority);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void Player_actor_setup_main_Hold_lock(ACTOR* actor, GAME* game) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
+    int flags = player->requested_main_index_data.hold.flags;
+
+    player->main_data.hold.ftr_no = player->requested_main_index_data.hold.ftr_no;
+    player->main_data.hold.angle_y = player->requested_main_index_data.hold.angle_y;
+    player->main_data.hold.player_pos = player->requested_main_index_data.hold.player_pos;
+
+    if (flags & 1) {
+        Player_actor_InitAnimation_Base1(actor, game, mPlayer_ANIM_HOLD_WAIT1, mPlayer_ANIM_HOLD_WAIT1, 1.0f, 1.0f,
+                                         0.5f, player->requested_main_index_data.hold.morph_speed, 0);
+    }
+
+    Player_actor_setup_main_Base(actor, game);
+}
+
+static int Player_actor_CulcAnimation_Hold_lock(ACTOR* actor) {
+    return Player_actor_CulcAnimation_Hold(actor);
+}
+
+static void Player_actor_Movement_Hold_lock(ACTOR* actor) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
+    f32 x = player->main_data.hold.player_pos.x;
+    f32 z = player->main_data.hold.player_pos.z;
+    s16 angle = player->main_data.hold.angle_y;
+
+    Player_actor_Movement_Hold_common(actor, angle, x, z);
+}
+
+static void Player_actor_ObjCheck_Hold_lock(ACTOR* actor, GAME* game) { 
+    Player_actor_ObjCheck_Hold(actor, game); 
+}
+
+static void Player_actor_BGcheck_Hold_lock(ACTOR* actor) { 
+    Player_actor_BGcheck_Hold(actor); 
+}
+
+static void Player_actor_request_proc_index_fromHold_lock(ACTOR* actor, GAME* game) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
+    int ftr_no;
+    xyz_t* pos;
+    s16 angle;
+
+    ftr_no = player->main_data.hold.ftr_no;
+    angle = player->main_data.hold.angle_y;
+    pos = &player->main_data.hold.player_pos;
+
+    Player_actor_request_proc_index_fromHold_common(actor, game, ftr_no, angle, pos);
+}
+
+static void Player_actor_main_Hold_lock(ACTOR* actor, GAME* game) {
+    Player_actor_Movement_Hold_lock(actor);
+    Player_actor_Reinput_force_position_angle(actor, game);
+    Player_actor_CulcAnimation_Hold_lock(actor);
+    Player_actor_recover_lean_angle(actor);
+    Player_actor_set_eye_pattern_normal(actor);
+    Player_actor_ObjCheck_Hold_lock(actor, game);
+    Player_actor_BGcheck_Hold_lock(actor);
+    Player_actor_Item_main(actor, game);
+    Player_actor_request_proc_index_fromHold_lock(actor, game);
+}

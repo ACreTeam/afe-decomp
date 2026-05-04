@@ -55,7 +55,7 @@ static void Player_actor_setup_main_Demo_get_golden_item(ACTOR* actorx, GAME* ga
     Player_actor_setup_main_Base(actorx, game);
 
     if (type >= 0 && type < mPlayer_GOLDEN_ITEM_TYPE_NUM) {
-        u8 bgm_num = Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(type);
+        u16 bgm_num = Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(type);
 
         mBGMPsComp_make_ps_fanfare(bgm_num, 0x168);
     }
@@ -68,7 +68,7 @@ static void Player_actor_settle_main_Demo_get_golden_item(ACTOR* actorx, GAME* g
 
     if (type >= 0 && type < mPlayer_GOLDEN_ITEM_TYPE_NUM) {
         static u8 data[] = { (1 << 0), (1 << 1), (1 << 2), (1 << 3) };
-        u8 bgm_num = Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(type);
+        u16 bgm_num = Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(type);
 
         mBGMPsComp_delete_ps_fanfare(bgm_num, 0x168);
         Now_Private->golden_items_collected |= data[type];

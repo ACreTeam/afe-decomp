@@ -252,7 +252,12 @@ static int Player_actor_CatchSomethingCheck_common(ACTOR* actor, f32 frame) {
                 player->item_net_catch_type = type;
 
                 if (type == 0 && label != 0) {
-                    player->item_net_catch_insect_idx = ((aINS_INSECT_ACTOR*)label)->type;
+                    int insect_type = ((aINS_INSECT_ACTOR*)label)->type;
+
+                    if (insect_type >= aINS_INSECT_TYPE_NONE) {
+                        insect_type = aINS_INSECT_TYPE_YELLOW_BUTTERFLY;
+                    }
+                    player->item_net_catch_insect_idx = insect_type;
                 } else if (label != 0) {
                     if (((ACTOR*)label)->id == mAc_PROFILE_BEE) {
                         player->item_net_catch_insect_idx = aINS_INSECT_TYPE_BEE;
@@ -330,7 +335,7 @@ static void Player_actor_request_proc_index_fromSwing_net(ACTOR* actor, GAME* ga
                 Player_actor_set_viblation_Swing_net();
             }
         } else if (Player_actor_request_main_stop_net(game, mPlayer_REQUEST_PRIORITY_26)) {
-            Player_actor_CheckAndSet_UZAI_forNpc(hit_actor);
+            Player_actor_CheckAndSet_UZAI_forNpc(hit_actor, TRUE);
 
             if (hit != FALSE) {
                 Player_actor_sound_AMI_HIT(actor);

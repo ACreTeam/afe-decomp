@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
 static int Player_actor_request_main_remove_grass(GAME* game, const xyz_t* target_pos_p, const xyz_t* grass_pos_p) {
     if (Player_actor_check_able_request_main_index_for_reset(mPlayer_INDEX_REMOVE_GRASS) == FALSE) {
         PLAYER_ACTOR* player = GET_PLAYER_ACTOR_GAME(game);
@@ -56,6 +62,10 @@ static void Player_actor_ChangeFGNumber_Remove_grass(ACTOR* actorx, GAME* game) 
                                                mCoBG_Wpos2Attribute(*grass_pos_p, NULL), 8);
                     Player_actor_sound_zassou_nuku(grass_pos_p);
                     Player_actor_set_viblation_Remove_grass();
+
+                    if (mFI_CheckInIsland() == FALSE) {
+                        mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_REMOVE_GRASS);
+                    }
                 }
             }
         }

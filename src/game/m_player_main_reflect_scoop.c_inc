@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
 static int Player_actor_request_main_reflect_scoop_all(GAME* game, const xyz_t* pos, mActor_name_t item,
                                                        ACTOR* hit_actor, int priority) {
     if (Player_actor_check_request_main_able(game, mPlayer_INDEX_REFLECT_SCOOP, priority)) {
@@ -54,54 +60,76 @@ static int Player_actor_CulcAnimation_Reflect_scoop(ACTOR* actor, f32* frame_cal
 static void Player_actor_SetEffectHit_Reflect_scoop(ACTOR* actor, GAME* game) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
     cKF_FrameControl_c* fc = &player->keyframe0.frame_control;
-
+    
     if (Player_actor_Check_AnimationFrame(fc, 13.0f)) {
-        u32 item;
-        s16 attr;
         f32 sin;
         f32 cos;
-        xyz_t* pos;
-        int check;
-        s16 rot;
-        int stone;
+        xyz_t* pos_p;
+        xyz_t pos;
+        xyz_t ef_pos;
         xyz_t ac_pos;
         mPlayer_main_reflect_scoop_c* main_scoop;
         ACTOR* reflected;
+        s16 rot;
+        mActor_name_t item;
         int col_tree;
+        s16 attr;
+        int i;
 
         main_scoop = &player->main_data.reflect_scoop;
-        pos = &main_scoop->target_pos;
+        pos_p = &main_scoop->target_pos;
         item = main_scoop->item;
         reflected = main_scoop->reflect_actor_p;
 
         attr = -1;
-        check = IS_ITEM_COLLIDEABLE_TREE(item);
 
-        if (check) {
+        if (IS_ITEM_COLLIDEABLE_TREE(item) != FALSE) {
             int ut_x;
             int ut_z;
 
-            if (mFI_Wpos2UtNum(&ut_x, &ut_z, *pos)) {
+            if (mFI_Wpos2UtNum(&ut_x, &ut_z, *pos_p)) {
                 Player_actor_Set_EffectBgTree(game, item, EffectBG_EFFECT_SHAKE_SMALL, ut_x, ut_z);
             }
 
-            attr = 7;
+            attr = mCoBG_ATTRIBUTE_STONE;
         }
 
-        stone = FALSE;
-
-        if (IS_ITEM_STONE_TC(item)) {
-            stone = TRUE;
-        }
-
-        if (stone) {
-            Player_actor_Search_STONE_TC(actor, pos);
+        if (IS_ITEM_STONE_TC(item) != FALSE) {
+            Player_actor_Search_STONE_TC(actor, pos_p);
             if (attr < 0) {
-                attr = 7;
+                attr = mCoBG_ATTRIBUTE_STONE;
             }
         }
 
-        if (reflected) {
+        if (Now_Private->reset_count >= 2 && IS_ITEM_RST_STONE(item) != FALSE) {
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK, main_scoop->target_pos, 2, actor->shape_info.rotation.y, game, RSV_NO, 0, (mActor_name_t)(C_ROCK_A + item - RST_ROCK_A));
+
+            if (Common_Get(time.season) == mTM_SEASON_WINTER) {
+                xyz_t_move(&pos, &main_scoop->target_pos);
+                pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos(pos, -33.0f);
+
+                for (i = 0; i < 5; i++) {
+                    ef_pos.x = pos.x + RANDOM2_F(30.0f);
+                    ef_pos.y = pos.y;
+                    ef_pos.z = pos.z + RANDOM2_F(30.0f);
+                    eEC_CLIP->effect_make_proc(eEC_EFFECT_BUSH_YUKI, ef_pos, 2, 0, game, RSV_NO, 0, 1);
+                }
+            }
+
+            if (attr < 0) {
+                attr = mCoBG_ATTRIBUTE_STONE;
+            }
+        } else if (IS_ITEM_CRACKED_STONE(item) != FALSE) {
+            mFI_SetFG_common(RST_HOLE_A + item - C_ROCK_A, main_scoop->target_pos, TRUE);
+
+            if (attr < 0) {
+                attr = mCoBG_ATTRIBUTE_STONE;
+            }
+
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK, main_scoop->target_pos, 2, actor->shape_info.rotation.y, game, RSV_NO, 1, 0);
+        }
+
+        if (reflected != NULL) {
             switch (reflected->id) {
                 case mAc_PROFILE_SNOWMAN:
                     ((SNOWMAN_ACTOR*)reflected)->flags |= 2;
@@ -150,7 +178,7 @@ static void Player_actor_SetOrderNPC_Reflect_scoop(ACTOR* actor) {
     mPlayer_main_reflect_scoop_c* main_scoop = &player->main_data.reflect_scoop;
 
     if (Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 13.0f)) {
-        Player_actor_CheckAndSet_UZAI_forNpc(main_scoop->reflect_actor_p);
+        Player_actor_CheckAndSet_UZAI_forNpc(main_scoop->reflect_actor_p, FALSE);
     }
 }
 
@@ -160,9 +188,8 @@ static void Player_actor_SetSound_Reflect_scoop(ACTOR* actor) {
     if (Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 13.0f)) {
         mPlayer_main_reflect_scoop_c* main_scoop;
         ACTOR* reflected;
-        u32 item;
+        mActor_name_t item;
         xyz_t* pos;
-        int check;
 
         main_scoop = &player->main_data.reflect_scoop;
         pos = &main_scoop->target_pos;
@@ -187,18 +214,20 @@ static void Player_actor_SetSound_Reflect_scoop(ACTOR* actor) {
             }
             return;
         }
-        check = IS_ITEM_COLLIDEABLE_TREE(item) ? TRUE : FALSE;
 
-        if (check || item == DUMMY_RESERVE) {
+        if (IS_ITEM_COLLIDEABLE_TREE(item) != FALSE || item == DUMMY_RESERVE) {
             Player_actor_sound_scoop_tree_hit(actor);
             Player_actor_set_viblation_Reflect_scoop_hard();
         } else {
-            int type = ITEM_NAME_GET_TYPE(item);
-            switch (type) {
+            switch (ITEM_NAME_GET_TYPE(item)) {
                 case NAME_TYPE_FTR0:
                 case NAME_TYPE_ITEM1:
                 case NAME_TYPE_FTR1:
-                    Player_actor_sound_scoop_item_hit(actor);
+                    if (IS_ITEM_SHELL(item) != FALSE) {
+                        Player_actor_sound_SE_HitScoopShell(actor);
+                    } else {
+                        Player_actor_sound_scoop_item_hit(actor);
+                    }
                     Player_actor_set_viblation_Reflect_scoop_soft();
 
                     break;

@@ -232,9 +232,9 @@ static int Player_actor_MessageControl_Get_scoop(ACTOR* actor, int end_flag) {
         default:
             if (!mDemo_Check(mDemo_TYPE_REPORT, actor)) {
                 if (main_scoop->success_flag) {
-                    return 0x3F;
+                    return 0x40;
                 } else {
-                    return !main_scoop->submenu_flag + 0x3F;
+                    return !main_scoop->submenu_flag + 0x40;
                 }
             }
             return -1;
@@ -260,11 +260,11 @@ static void Player_actor_request_proc_index_fromGet_scoop(ACTOR* actor, GAME* ga
     mPlayer_main_get_scoop_c* main_scoop = &player->main_data.get_scoop;
 
     switch (cntrl) {
-        case 0x3F:
+        case 0x40:
             Player_actor_request_main_putaway_scoop_all(game, &main_scoop->target_pos, main_scoop->item,
                                                         main_scoop->submenu_flag, mPlayer_REQUEST_PRIORITY_21);
             break;
-        case 0x40:
+        case 0x41:
             Player_actor_request_main_putin_scoop_all(game, &main_scoop->target_pos, EMPTY_NO, FALSE,
                                                       mPlayer_REQUEST_PRIORITY_21);
             break;

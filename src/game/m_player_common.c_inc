@@ -20,128 +20,134 @@ static void Player_actor_request_main_index(GAME* game, int request_index, int p
 
 static void Player_actor_Set_start_refuse(ACTOR* actorx, GAME* game) {
     // clang-format off
-    static const s8 data[] = {
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        TRUE,
-        TRUE,
-        TRUE,
-        TRUE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
-        FALSE,
+    static const s8 data[mPlayer_INDEX_NUM] = {
+        FALSE, // mPlayer_INDEX_DMA
+        FALSE, // mPlayer_INDEX_INTRO
+        FALSE, // mPlayer_INDEX_REFUSE
+        FALSE, // mPlayer_INDEX_REFUSE_PICKUP
+        FALSE, // mPlayer_INDEX_RETURN_DEMO
+        FALSE, // mPlayer_INDEX_RETURN_OUTDOOR
+        FALSE, // mPlayer_INDEX_RETURN_OUTDOOR2
+        TRUE, // mPlayer_INDEX_WAIT
+        TRUE, // mPlayer_INDEX_WALK
+        TRUE, // mPlayer_INDEX_RUN
+        TRUE, // mPlayer_INDEX_DASH
+        FALSE, // mPlayer_INDEX_TUMBLE
+        FALSE, // mPlayer_INDEX_TUMBLE_GETUP
+        FALSE, // mPlayer_INDEX_TURN_DASH
+        FALSE, // mPlayer_INDEX_FALL
+        FALSE, // mPlayer_INDEX_WADE
+        FALSE, // mPlayer_INDEX_DOOR
+        FALSE, // mPlayer_INDEX_OUTDOOR
+        FALSE, // mPlayer_INDEX_INVADE
+        FALSE, // mPlayer_INDEX_HOLD
+        FALSE, // mPlayer_INDEX_HOLD_LOCK
+        FALSE, // mPlayer_INDEX_PUSH
+        FALSE, // mPlayer_INDEX_PULL
+        FALSE, // mPlayer_INDEX_ROTATE_FURNITURE
+        FALSE, // mPlayer_INDEX_OPEN_FURNITURE
+        FALSE, // mPlayer_INDEX_WAIT_OPEN_FURNITURE
+        FALSE, // mPlayer_INDEX_CLOSE_FURNITURE
+        FALSE, // mPlayer_INDEX_LIE_BED
+        FALSE, // mPlayer_INDEX_WAIT_BED
+        FALSE, // mPlayer_INDEX_ROLL_BED
+        FALSE, // mPlayer_INDEX_STANDUP_BED
+        FALSE, // mPlayer_INDEX_PICKUP
+        FALSE, // mPlayer_INDEX_PICKUP_JUMP
+        FALSE, // mPlayer_INDEX_PICKUP_FURNITURE
+        FALSE, // mPlayer_INDEX_PICKUP_EXCHANGE
+        FALSE, // mPlayer_INDEX_SITDOWN
+        FALSE, // mPlayer_INDEX_SITDOWN_WAIT
+        FALSE, // mPlayer_INDEX_STANDUP
+        FALSE, // mPlayer_INDEX_SWING_AXE
+        FALSE, // mPlayer_INDEX_AIR_AXE
+        FALSE, // mPlayer_INDEX_REFLECT_AXE
+        FALSE, // mPlayer_INDEX_BROKEN_AXE
+        FALSE, // mPlayer_INDEX_SLIP_NET
+        FALSE, // mPlayer_INDEX_READY_NET
+        FALSE, // mPlayer_INDEX_READY_WALK_NET
+        FALSE, // mPlayer_INDEX_SWING_NET
+        FALSE, // mPlayer_INDEX_PULL_NET
+        FALSE, // mPlayer_INDEX_STOP_NET
+        FALSE, // mPlayer_INDEX_NOTICE_NET
+        FALSE, // mPlayer_INDEX_PUTAWAY_NET
+        FALSE, // mPlayer_INDEX_READY_ROD
+        FALSE, // mPlayer_INDEX_CAST_ROD
+        FALSE, // mPlayer_INDEX_AIR_ROD
+        FALSE, // mPlayer_INDEX_RELAX_ROD
+        FALSE, // mPlayer_INDEX_COLLECT_ROD
+        FALSE, // mPlayer_INDEX_VIB_ROD
+        FALSE, // mPlayer_INDEX_FLY_ROD
+        FALSE, // mPlayer_INDEX_NOTICE_ROD
+        FALSE, // mPlayer_INDEX_PUTAWAY_ROD
+        FALSE, // mPlayer_INDEX_DIG_SCOOP
+        FALSE, // mPlayer_INDEX_FILL_SCOOP
+        FALSE, // mPlayer_INDEX_REFLECT_SCOOP
+        FALSE, // mPlayer_INDEX_AIR_SCOOP
+        FALSE, // mPlayer_INDEX_GET_SCOOP
+        FALSE, // mPlayer_INDEX_PUTAWAY_SCOOP
+        FALSE, // mPlayer_INDEX_PUTIN_SCOOP
+        FALSE, // mPlayer_INDEX_TALK
+        FALSE, // mPlayer_INDEX_RECIEVE_WAIT
+        FALSE, // mPlayer_INDEX_RECIEVE_STRETCH
+        FALSE, // mPlayer_INDEX_RECIEVE
+        FALSE, // mPlayer_INDEX_RECIEVE_PUTAWAY
+        FALSE, // mPlayer_INDEX_GIVE
+        FALSE, // mPlayer_INDEX_GIVE_WAIT
+        FALSE, // mPlayer_INDEX_TAKEOUT_ITEM
+        FALSE, // mPlayer_INDEX_PUTIN_ITEM
+        FALSE, // mPlayer_INDEX_DEMO_WAIT
+        FALSE, // mPlayer_INDEX_DEMO_WALK
+        FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN
+        FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN_WAIT
+        FALSE, // mPlayer_INDEX_DEMO_GETOFF_TRAIN
+        FALSE, // mPlayer_INDEX_DEMO_STANDING_TRAIN
+        FALSE, // mPlayer_INDEX_DEMO_WADE
+        FALSE, // mPlayer_INDEX_HIDE
+        FALSE, // mPlayer_INDEX_GROUNDHOG
+        FALSE, // mPlayer_INDEX_RELEASE_CREATURE
+        FALSE, // mPlayer_INDEX_WASH_CAR
+        FALSE, // mPlayer_INDEX_TIRED
+        FALSE, // mPlayer_INDEX_ROTATE_OCTAGON
+        FALSE, // mPlayer_INDEX_THROW_MONEY
+        FALSE, // mPlayer_INDEX_PRAY
+        FALSE, // mPlayer_INDEX_SHAKE_TREE
+        FALSE, // mPlayer_INDEX_MAIL_JUMP
+        FALSE, // mPlayer_INDEX_MAIL_LAND
+        FALSE, // mPlayer_INDEX_READY_PITFALL
+        FALSE, // mPlayer_INDEX_FALL_PITFALL
+        FALSE, // mPlayer_INDEX_STRUGGLE_PITFALL
+        FALSE, // mPlayer_INDEX_CLIMBUP_PITFALL
+        FALSE, // mPlayer_INDEX_STUNG_BEE
+        FALSE, // mPlayer_INDEX_NOTICE_BEE
+        FALSE, // mPlayer_INDEX_REMOVE_GRASS
+        FALSE, // mPlayer_INDEX_SHOCK
+        FALSE, // mPlayer_INDEX_KNOCK_DOOR
+        FALSE, // mPlayer_INDEX_CHANGE_CLOTH
+        FALSE, // mPlayer_INDEX_PUSH_SNOWBALL
+        FALSE, // mPlayer_INDEX_ROTATE_UMBRELLA
+        FALSE, // mPlayer_INDEX_WADE_SNOWBALL
+        FALSE, // mPlayer_INDEX_COMPLETE_PAYMENT
+        FALSE, // mPlayer_INDEX_FAIL_EMU
+        FALSE, // mPlayer_INDEX_STUNG_MOSQUITO
+        FALSE, // mPlayer_INDEX_NOTICE_MOSQUITO
+        FALSE, // mPlayer_INDEX_SWING_FAN
+        FALSE, // mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE
+        FALSE, // mPlayer_INDEX_RADIO_EXERCISE
+        FALSE, // mPlayer_INDEX_PULL_CRACKER
+        FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT
+        FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN
+        FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_WAIT
+        FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_WADE
+        FALSE, // mPlayer_INDEX_DEMO_GETOFF_BOAT_STANDUP
+        FALSE, // mPlayer_INDEX_DEMO_GETOFF_BOAT
+        FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM
+        FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2
+        FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT
+        FALSE, // mPlayer_INDEX_PICKUP_FLOWER
+        FALSE, // mPlayer_INDEX_READY_SECRETBASE
+        FALSE, // mPlayer_INDEX_FALL_SECRETBASE
+        FALSE, // mPlayer_INDEX_STRUGGLE_SECRETBASE
     };
     // clang-format on
 
@@ -160,128 +166,134 @@ static void Player_actor_Set_start_refuse(ACTOR* actorx, GAME* game) {
 
 static void Player_actor_Set_address_able_display(ACTOR* actorx) {
     // clang-format off
-    static const s8 data[] = {
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_READY_NET,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_MOVEMENT,
-        mPlayer_ADDRESSABLE_TRUE,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
-        mPlayer_ADDRESSABLE_FALSE_TALKING,
+    static const s8 data[mPlayer_INDEX_NUM] = {
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_DMA
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_INTRO
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_REFUSE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_REFUSE_PICKUP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RETURN_DEMO
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RETURN_OUTDOOR
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RETURN_OUTDOOR2
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_WAIT
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_WALK
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RUN
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_DASH
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_TUMBLE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_TUMBLE_GETUP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_TURN_DASH
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_FALL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_WADE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_DOOR
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_OUTDOOR
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_INVADE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_HOLD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_HOLD_LOCK
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PUSH
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PULL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_ROTATE_FURNITURE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_OPEN_FURNITURE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_WAIT_OPEN_FURNITURE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_CLOSE_FURNITURE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_LIE_BED
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_WAIT_BED
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_ROLL_BED
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STANDUP_BED
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PICKUP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PICKUP_JUMP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PICKUP_FURNITURE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PICKUP_EXCHANGE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_SITDOWN
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_SITDOWN_WAIT
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STANDUP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_SWING_AXE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_AIR_AXE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_REFLECT_AXE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_BROKEN_AXE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_SLIP_NET
+        mPlayer_ADDRESSABLE_FALSE_READY_NET, // mPlayer_INDEX_READY_NET
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_READY_WALK_NET
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_SWING_NET
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_PULL_NET
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_STOP_NET
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_NOTICE_NET
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_PUTAWAY_NET
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_READY_ROD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_CAST_ROD
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_AIR_ROD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RELAX_ROD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_COLLECT_ROD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_VIB_ROD
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_FLY_ROD
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_NOTICE_ROD
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_PUTAWAY_ROD
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_DIG_SCOOP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_FILL_SCOOP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_REFLECT_SCOOP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_AIR_SCOOP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_GET_SCOOP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PUTAWAY_SCOOP
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PUTIN_SCOOP
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_TALK
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_RECIEVE_WAIT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_RECIEVE_STRETCH
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_RECIEVE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_RECIEVE_PUTAWAY
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_GIVE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_GIVE_WAIT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_TAKEOUT_ITEM
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_PUTIN_ITEM
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_WAIT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_WALK
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_TRAIN
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_TRAIN_WAIT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETOFF_TRAIN
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_STANDING_TRAIN
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_WADE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_HIDE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_GROUNDHOG
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_RELEASE_CREATURE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_WASH_CAR
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_TIRED
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_ROTATE_OCTAGON
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_THROW_MONEY
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PRAY
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_SHAKE_TREE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_MAIL_JUMP
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_MAIL_LAND
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_READY_PITFALL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_FALL_PITFALL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STRUGGLE_PITFALL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_CLIMBUP_PITFALL
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STUNG_BEE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_NOTICE_BEE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_REMOVE_GRASS
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_SHOCK
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_KNOCK_DOOR
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_CHANGE_CLOTH
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PUSH_SNOWBALL
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_ROTATE_UMBRELLA
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_WADE_SNOWBALL
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_COMPLETE_PAYMENT
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_FAIL_EMU
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STUNG_MOSQUITO
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_NOTICE_MOSQUITO
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_SWING_FAN
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_RADIO_EXERCISE
+        mPlayer_ADDRESSABLE_TRUE, // mPlayer_INDEX_PULL_CRACKER
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_BOAT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_BOAT_WAIT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETON_BOAT_WADE
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETOFF_BOAT_STANDUP
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GETOFF_BOAT
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2
+        mPlayer_ADDRESSABLE_FALSE_TALKING, // mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_PICKUP_FLOWER
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_READY_SECRETBASE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_FALL_SECRETBASE
+        mPlayer_ADDRESSABLE_FALSE_MOVEMENT, // mPlayer_INDEX_STRUGGLE_SECRETBASE
     };
     // clang-format on
 
@@ -322,7 +334,7 @@ static void Player_actor_SetupShadow(ACTOR* actorx) {
 
     if (mPlayer_MAIN_INDEX_VALID(idx) != FALSE) {
         // clang-format off
-        static const s8 data[] = {
+                static const s8 data[] = {
             mPlayer_SHADOW_TYPE_NONE,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
@@ -350,67 +362,10 @@ static void Player_actor_SetupShadow(ACTOR* actorx) {
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NONE,
             mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NONE,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
-            mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
@@ -436,6 +391,65 @@ static void Player_actor_SetupShadow(ACTOR* actorx) {
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NONE,
             mPlayer_SHADOW_TYPE_NONE,
             mPlayer_SHADOW_TYPE_NONE,
@@ -444,6 +458,10 @@ static void Player_actor_SetupShadow(ACTOR* actorx) {
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
             mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NORMAL,
+            mPlayer_SHADOW_TYPE_NONE,
+            mPlayer_SHADOW_TYPE_NONE,
         };
         // clang-format on
 
@@ -511,6 +529,9 @@ static void Player_actor_SetupSpeedF(ACTOR* actorx) {
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
+            TRUE,
+            TRUE,
             TRUE,
             TRUE,
             TRUE,
@@ -518,8 +539,6 @@ static void Player_actor_SetupSpeedF(ACTOR* actorx) {
             TRUE,
             TRUE,
             TRUE,
-            TRUE,
-            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -540,16 +559,6 @@ static void Player_actor_SetupSpeedF(ACTOR* actorx) {
             FALSE,
             FALSE,
             FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            TRUE,
-            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -567,6 +576,16 @@ static void Player_actor_SetupSpeedF(ACTOR* actorx) {
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
+            TRUE,
+            TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
             TRUE,
             TRUE,
             TRUE,
@@ -592,9 +611,14 @@ static void Player_actor_SetupSpeedF(ACTOR* actorx) {
             TRUE,
             TRUE,
             TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
+            TRUE,
         };
         // clang-format on
 
@@ -626,6 +650,7 @@ static int Player_actor_Get_SetupRequestMainIndexPriority(int main_index) {
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_43,
+            mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_21,
@@ -720,6 +745,7 @@ static int Player_actor_Get_SetupRequestMainIndexPriority(int main_index) {
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_20,
+            mPlayer_REQUEST_PRIORITY_20,
             mPlayer_REQUEST_PRIORITY_19,
             mPlayer_REQUEST_PRIORITY_19,
             mPlayer_REQUEST_PRIORITY_18,
@@ -729,6 +755,10 @@ static int Player_actor_Get_SetupRequestMainIndexPriority(int main_index) {
             mPlayer_REQUEST_PRIORITY_34,
             mPlayer_REQUEST_PRIORITY_34,
             mPlayer_REQUEST_PRIORITY_33,
+            mPlayer_REQUEST_PRIORITY_20,
+            mPlayer_REQUEST_PRIORITY_26,
+            mPlayer_REQUEST_PRIORITY_27,
+            mPlayer_REQUEST_PRIORITY_28,
         };
         // clang-format on
 
@@ -775,6 +805,7 @@ static void Player_actor_SettleRequestMainIndexPriority(ACTOR* actorx) {
             mPlayer_REQUEST_PRIORITY_0,
             mPlayer_REQUEST_PRIORITY_NONE,
             mPlayer_REQUEST_PRIORITY_0,
+            mPlayer_REQUEST_PRIORITY_NONE,
             mPlayer_REQUEST_PRIORITY_NONE,
             mPlayer_REQUEST_PRIORITY_NONE,
             mPlayer_REQUEST_PRIORITY_NONE,
@@ -871,6 +902,7 @@ static void Player_actor_SettleRequestMainIndexPriority(ACTOR* actorx) {
             mPlayer_REQUEST_PRIORITY_0,
             mPlayer_REQUEST_PRIORITY_0,
             mPlayer_REQUEST_PRIORITY_0,
+            mPlayer_REQUEST_PRIORITY_0,
             mPlayer_REQUEST_PRIORITY_18,
             mPlayer_REQUEST_PRIORITY_18,
             mPlayer_REQUEST_PRIORITY_18,
@@ -879,6 +911,10 @@ static void Player_actor_SettleRequestMainIndexPriority(ACTOR* actorx) {
             mPlayer_REQUEST_PRIORITY_18,
             mPlayer_REQUEST_PRIORITY_0,
             mPlayer_REQUEST_PRIORITY_0,
+            mPlayer_REQUEST_PRIORITY_NONE,
+            mPlayer_REQUEST_PRIORITY_0,
+            mPlayer_REQUEST_PRIORITY_NONE,
+            mPlayer_REQUEST_PRIORITY_NONE,
             mPlayer_REQUEST_PRIORITY_NONE,
         };
         // clang-format on
@@ -1017,73 +1053,17 @@ static void Player_actor_SetupTextureAnimation(ACTOR* actorx) {
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
@@ -1091,7 +1071,12 @@ static void Player_actor_SetupTextureAnimation(ACTOR* actorx) {
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
@@ -1099,6 +1084,38 @@ static void Player_actor_SetupTextureAnimation(ACTOR* actorx) {
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
@@ -1108,9 +1125,34 @@ static void Player_actor_SetupTextureAnimation(ACTOR* actorx) {
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
             mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
-            mPlayer_SETUP_TEXTURE_ANIMATION_NONE
+            mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_EYE | mPlayer_SETUP_TEXTURE_ANIMATION_MOUTH,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
+            mPlayer_SETUP_TEXTURE_ANIMATION_NONE,
         };
         // clang-format on
 
@@ -1181,9 +1223,9 @@ static void Player_actor_SetupWeight(ACTOR* actorx) {
                 50,
                 50,
                 50,
-                255,
+                MASSTYPE_IMMOVABLE,
                 50,
-                255,
+                MASSTYPE_IMMOVABLE,
                 50,
                 50,
                 50,
@@ -1218,38 +1260,38 @@ static void Player_actor_SetupWeight(ACTOR* actorx) {
                 50,
                 50,
                 50,
-                254,
-                254,
-                254,
-                254,
-                254,
-                254,
                 50,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
                 50,
                 50,
                 50,
                 50,
                 50,
                 50,
-                254,
-                254,
-                254,
-                254,
-                254,
-                254,
-                254,
                 50,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
+                MASSTYPE_HEAVY,
                 50,
-                254,
-                255,
                 50,
+                MASSTYPE_HEAVY,
+                MASSTYPE_IMMOVABLE,
                 50,
                 50,
                 50,
-                255,
                 50,
-                255,
+                MASSTYPE_IMMOVABLE,
                 50,
+                MASSTYPE_IMMOVABLE,
                 50,
                 50,
                 50,
@@ -1258,35 +1300,41 @@ static void Player_actor_SetupWeight(ACTOR* actorx) {
                 50,
                 50,
                 50,
-                255,
-                255,
-                255,
-                255,
                 50,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
                 50,
                 50,
                 50,
                 50,
                 50,
-                255,
                 50,
-                255,
+                MASSTYPE_IMMOVABLE,
                 50,
+                MASSTYPE_IMMOVABLE,
                 50,
                 50,
                 50,
                 50,
                 50,
                 50,
-                255,
-                255,
-                255,
-                255,
-                255,
-                255,
                 50,
                 50,
-                50
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                50,
+                50,
+                50,
+                50,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
+                MASSTYPE_IMMOVABLE,
             };
             // clang-format on
 
@@ -1360,59 +1408,10 @@ static void Player_actor_Setup_status_for_bee(ACTOR* actorx) {
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_ATTACK,
-            mPlayer_STATUS_FOR_BEE_ATTACK,
-            mPlayer_STATUS_FOR_BEE_ATTACK,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_ATTACK,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_ATTACK,
+            mPlayer_STATUS_FOR_BEE_ATTACK,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
@@ -1422,6 +1421,57 @@ static void Player_actor_Setup_status_for_bee(ACTOR* actorx) {
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_ATTACK,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_ATTACK,
+            mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
@@ -1439,7 +1489,11 @@ static void Player_actor_Setup_status_for_bee(ACTOR* actorx) {
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
             mPlayer_STATUS_FOR_BEE_WAIT,
-            mPlayer_STATUS_FOR_BEE_WAIT
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
+            mPlayer_STATUS_FOR_BEE_WAIT,
         };
         // clang-format on
 
@@ -1532,7 +1586,7 @@ static int Player_actor_Search_exist_npc_inCircle_forWade(GAME* game, xyz_t* ori
     f32 origin_x = origin->x;
     f32 origin_z = origin->z;
 
-    for (actorx_p; actorx_p != NULL; actorx_p = actorx_p->next_actor) {
+    for (; actorx_p != NULL; actorx_p = actorx_p->next_actor) {
         xyz_t* pos_p = &actorx_p->world.position;
         f32 dx = pos_p->x - origin_x;
         f32 dz = pos_p->z - origin_z;
@@ -2755,6 +2809,7 @@ static int Player_actor_CheckScene_AbleOutItem(int scene_no) {
         FALSE,
         FALSE,
         FALSE,
+        FALSE,
     };
     // clang-format on
 
@@ -2801,6 +2856,7 @@ static int Player_actor_CheckPlayer_AbleOutItem(int main_index) {
             mPlayer_ABLE_ITEM_RESTRICTED,
             mPlayer_ABLE_ITEM_RESTRICTED,
             mPlayer_ABLE_ITEM_RESTRICTED,
+            mPlayer_ABLE_ITEM_RESTRICTED,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_NONE,
@@ -2883,6 +2939,7 @@ static int Player_actor_CheckPlayer_AbleOutItem(int main_index) {
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_RESTRICTED,
             mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
@@ -2892,6 +2949,10 @@ static int Player_actor_CheckPlayer_AbleOutItem(int main_index) {
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
         };
         // clang-format on
 
@@ -2935,6 +2996,7 @@ static int Player_actor_CheckPlayer_AbleLoadItem(int main_index) {
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_NONE,
@@ -2981,20 +3043,20 @@ static int Player_actor_CheckPlayer_AbleLoadItem(int main_index) {
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
-            mPlayer_ABLE_ITEM_NONE,
-            mPlayer_ABLE_ITEM_NONE,
-            mPlayer_ABLE_ITEM_NONE,
-            mPlayer_ABLE_ITEM_NONE,
-            mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
-            mPlayer_ABLE_ITEM_NONE,
-            mPlayer_ABLE_ITEM_CAN_USE_ALL,
-            mPlayer_ABLE_ITEM_CAN_USE_ALL,
-            mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
@@ -3017,6 +3079,7 @@ static int Player_actor_CheckPlayer_AbleLoadItem(int main_index) {
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_NONE,
             mPlayer_ABLE_ITEM_NONE,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
@@ -3026,6 +3089,10 @@ static int Player_actor_CheckPlayer_AbleLoadItem(int main_index) {
             mPlayer_ABLE_ITEM_CAN_USE_ALL,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
             mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
+            mPlayer_ABLE_ITEM_CAN_USE_ALL,
         };
         // clang-format on
 
@@ -3102,6 +3169,7 @@ static int Player_actor_Check_is_demo_mode(int main_index) {
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
             TRUE,
             TRUE,
             TRUE,
@@ -3149,6 +3217,7 @@ static int Player_actor_Check_is_demo_mode(int main_index) {
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
             TRUE,
             TRUE,
             TRUE,
@@ -3158,6 +3227,10 @@ static int Player_actor_Check_is_demo_mode(int main_index) {
             TRUE,
             TRUE,
             TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
         };
         // clang-format on
 
@@ -3810,7 +3883,13 @@ static void Player_actor_SetFootMark_for_settle_main(ACTOR* actorx, GAME* game) 
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
             TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
             FALSE,
             FALSE,
             FALSE,
@@ -4018,36 +4097,6 @@ static int Player_actor_check_cancel_request_change_proc_index(int requested_mai
             FALSE,
             FALSE,
             FALSE,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            TRUE,
-            TRUE,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
             FALSE,
             TRUE,
             FALSE,
@@ -4056,31 +4105,21 @@ static int Player_actor_check_cancel_request_change_proc_index(int requested_mai
             FALSE,
             FALSE,
             FALSE,
+            TRUE,
+            TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -4091,6 +4130,47 @@ static int Player_actor_check_cancel_request_change_proc_index(int requested_mai
             FALSE,
             FALSE,
             TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
             TRUE,
             FALSE,
             FALSE,
@@ -4107,12 +4187,17 @@ static int Player_actor_check_cancel_request_change_proc_index(int requested_mai
             TRUE,
             TRUE,
             TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -4159,28 +4244,8 @@ static int Player_actor_able_request_main_index_for_reset(int request_main_index
             FALSE,
             FALSE,
             FALSE,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
             FALSE,
             TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            FALSE,
-            TRUE,
-            FALSE,
-            FALSE,
             FALSE,
             FALSE,
             FALSE,
@@ -4192,6 +4257,27 @@ static int Player_actor_able_request_main_index_for_reset(int request_main_index
             TRUE,
             TRUE,
             TRUE,
+            TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -4241,12 +4327,17 @@ static int Player_actor_able_request_main_index_for_reset(int request_main_index
             TRUE,
             FALSE,
             TRUE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
             FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            TRUE,
             FALSE,
             FALSE,
             FALSE,
@@ -4259,11 +4350,7 @@ static int Player_actor_able_request_main_index_for_reset(int request_main_index
     return FALSE;
 }
 
-#if VERSION >= VER_GAFU01_00
 #define Player_actor_RESET_COUNT_FOR_RESET 4
-#else
-#define Player_actor_RESET_COUNT_FOR_RESET 2
-#endif
 
 static int Player_actor_check_able_request_main_index_for_reset(int request_main_index) {
     if (Common_Get(reset_flag) && Now_Private->reset_count == Player_actor_RESET_COUNT_FOR_RESET &&
@@ -4400,66 +4487,13 @@ static void Player_actor_cancel_request_change_proc_index_by_A_btn(ACTOR* actorx
                 FALSE,
                 FALSE,
                 FALSE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
                 FALSE,
                 TRUE,
                 TRUE,
                 TRUE,
                 TRUE,
                 TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
+                TRUE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -4472,7 +4506,66 @@ static void Player_actor_cancel_request_change_proc_index_by_A_btn(ACTOR* actorx
                 FALSE,
                 FALSE,
                 FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
                 TRUE,
+                TRUE,
+                TRUE,
+                TRUE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -4996,6 +5089,10 @@ static int Player_actor_Check_RightFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fr
     static const s16 right_data_taisou7_1[] = { -1 };
     static const s16 right_data_taisou7_2[] = { -1 };
     static const s16 right_data_omairi_us1[] = { -1 };
+    static const s16 right_data_cracker_fire1[] = { -1 };
+    static const s16 right_data_cracker_wait1[] = { -1 };
+    static const s16 right_data_hana_pickup1[] = { -1 };
+    static const s16 right_data_hana_wait1[] = { -1 };
 
     static const s16* const data_p_table[] = {
         right_data_wait1,
@@ -5155,6 +5252,10 @@ static int Player_actor_Check_RightFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fr
         right_data_taisou7_1,
         right_data_taisou7_2,
         right_data_omairi_us1,
+        right_data_cracker_fire1,
+        right_data_cracker_wait1,
+        right_data_hana_pickup1,
+        right_data_hana_wait1,
     };
 
     // clang-format off
@@ -5301,6 +5402,10 @@ static int Player_actor_Check_RightFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fr
         1,
         1,
         3,
+        1,
+        1,
+        1,
+        1,
         1,
         1,
         1,
@@ -5482,6 +5587,10 @@ static int Player_actor_Check_LeftFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fra
     static const s16 left_data_taisou7_1[] = { -1 };
     static const s16 left_data_taisou7_2[] = { -1 };
     static const s16 left_data_omairi_us1[] = { -1 };
+    static const s16 left_data_cracker_fire1[] = { -1 };
+    static const s16 left_data_cracker_wait1[] = { -1 };
+    static const s16 left_data_hana_pickup1[] = { -1 };
+    static const s16 left_data_hana_wait1[] = { -1 };
 
     static const s16* const data_p_table[] = {
         left_data_wait1,
@@ -5641,6 +5750,10 @@ static int Player_actor_Check_LeftFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fra
         left_data_taisou7_1,
         left_data_taisou7_2,
         left_data_omairi_us1,
+        left_data_cracker_fire1,
+        left_data_cracker_wait1,
+        left_data_hana_pickup1,
+        left_data_hana_wait1,
     };
 
     // clang-format off
@@ -5801,7 +5914,11 @@ static int Player_actor_Check_LeftFootMark_AnimeFrame_fromAnimeIndex(f32 cur_fra
             1,
             1,
             1,
-            1.
+            1,
+            1,
+            1,
+            1,
+            1,
     };
     // clang-format on
 
@@ -5982,6 +6099,10 @@ static int Player_actor_CheckAble_FootMark_Sound(ACTOR* actorx) {
             FALSE,
             FALSE,
             TRUE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
             FALSE,
             FALSE,
             FALSE,
@@ -6521,166 +6642,179 @@ static void Player_actor_reset_pitfall(ACTOR* actorx) {
     }
 }
 
+static int Player_actor_Check_main_index_able_pitfall_secretbase(ACTOR* actorx) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+    int main_index = player->now_main_index;
+
+    if (mPlayer_MAIN_INDEX_VALID(main_index) != FALSE) {
+        // clang-format off
+        static const s8 data[mPlayer_INDEX_NUM] = {
+            FALSE, // mPlayer_INDEX_DMA
+            FALSE, // mPlayer_INDEX_INTRO
+            FALSE, // mPlayer_INDEX_REFUSE
+            FALSE, // mPlayer_INDEX_REFUSE_PICKUP
+            FALSE, // mPlayer_INDEX_RETURN_DEMO
+            FALSE, // mPlayer_INDEX_RETURN_OUTDOOR
+            FALSE, // mPlayer_INDEX_RETURN_OUTDOOR2
+            TRUE, // mPlayer_INDEX_WAIT
+            TRUE, // mPlayer_INDEX_WALK
+            TRUE, // mPlayer_INDEX_RUN
+            TRUE, // mPlayer_INDEX_DASH
+            FALSE, // mPlayer_INDEX_TUMBLE
+            FALSE, // mPlayer_INDEX_TUMBLE_GETUP
+            TRUE, // mPlayer_INDEX_TURN_DASH
+            FALSE, // mPlayer_INDEX_FALL
+            FALSE, // mPlayer_INDEX_WADE
+            FALSE, // mPlayer_INDEX_DOOR
+            FALSE, // mPlayer_INDEX_OUTDOOR
+            FALSE, // mPlayer_INDEX_INVADE
+            FALSE, // mPlayer_INDEX_HOLD
+            FALSE, // mPlayer_INDEX_HOLD_LOCK
+            FALSE, // mPlayer_INDEX_PUSH
+            FALSE, // mPlayer_INDEX_PULL
+            FALSE, // mPlayer_INDEX_ROTATE_FURNITURE
+            FALSE, // mPlayer_INDEX_OPEN_FURNITURE
+            FALSE, // mPlayer_INDEX_WAIT_OPEN_FURNITURE
+            FALSE, // mPlayer_INDEX_CLOSE_FURNITURE
+            FALSE, // mPlayer_INDEX_LIE_BED
+            FALSE, // mPlayer_INDEX_WAIT_BED
+            FALSE, // mPlayer_INDEX_ROLL_BED
+            FALSE, // mPlayer_INDEX_STANDUP_BED
+            FALSE, // mPlayer_INDEX_PICKUP
+            FALSE, // mPlayer_INDEX_PICKUP_JUMP
+            FALSE, // mPlayer_INDEX_PICKUP_FURNITURE
+            FALSE, // mPlayer_INDEX_PICKUP_EXCHANGE
+            FALSE, // mPlayer_INDEX_SITDOWN
+            FALSE, // mPlayer_INDEX_SITDOWN_WAIT
+            FALSE, // mPlayer_INDEX_STANDUP
+            FALSE, // mPlayer_INDEX_SWING_AXE
+            FALSE, // mPlayer_INDEX_AIR_AXE
+            FALSE, // mPlayer_INDEX_REFLECT_AXE
+            FALSE, // mPlayer_INDEX_BROKEN_AXE
+            TRUE, // mPlayer_INDEX_SLIP_NET
+            TRUE, // mPlayer_INDEX_READY_NET
+            TRUE, // mPlayer_INDEX_READY_WALK_NET
+            FALSE, // mPlayer_INDEX_SWING_NET
+            FALSE, // mPlayer_INDEX_PULL_NET
+            FALSE, // mPlayer_INDEX_STOP_NET
+            FALSE, // mPlayer_INDEX_NOTICE_NET
+            FALSE, // mPlayer_INDEX_PUTAWAY_NET
+            FALSE, // mPlayer_INDEX_READY_ROD
+            FALSE, // mPlayer_INDEX_CAST_ROD
+            FALSE, // mPlayer_INDEX_AIR_ROD
+            FALSE, // mPlayer_INDEX_RELAX_ROD
+            FALSE, // mPlayer_INDEX_COLLECT_ROD
+            FALSE, // mPlayer_INDEX_VIB_ROD
+            FALSE, // mPlayer_INDEX_FLY_ROD
+            FALSE, // mPlayer_INDEX_NOTICE_ROD
+            FALSE, // mPlayer_INDEX_PUTAWAY_ROD
+            FALSE, // mPlayer_INDEX_DIG_SCOOP
+            FALSE, // mPlayer_INDEX_FILL_SCOOP
+            FALSE, // mPlayer_INDEX_REFLECT_SCOOP
+            FALSE, // mPlayer_INDEX_AIR_SCOOP
+            FALSE, // mPlayer_INDEX_GET_SCOOP
+            FALSE, // mPlayer_INDEX_PUTAWAY_SCOOP
+            FALSE, // mPlayer_INDEX_PUTIN_SCOOP
+            FALSE, // mPlayer_INDEX_TALK
+            FALSE, // mPlayer_INDEX_RECIEVE_WAIT
+            FALSE, // mPlayer_INDEX_RECIEVE_STRETCH
+            FALSE, // mPlayer_INDEX_RECIEVE
+            FALSE, // mPlayer_INDEX_RECIEVE_PUTAWAY
+            FALSE, // mPlayer_INDEX_GIVE
+            FALSE, // mPlayer_INDEX_GIVE_WAIT
+            FALSE, // mPlayer_INDEX_TAKEOUT_ITEM
+            FALSE, // mPlayer_INDEX_PUTIN_ITEM
+            FALSE, // mPlayer_INDEX_DEMO_WAIT
+            FALSE, // mPlayer_INDEX_DEMO_WALK
+            FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN
+            FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN_WAIT
+            FALSE, // mPlayer_INDEX_DEMO_GETOFF_TRAIN
+            FALSE, // mPlayer_INDEX_DEMO_STANDING_TRAIN
+            FALSE, // mPlayer_INDEX_DEMO_WADE
+            FALSE, // mPlayer_INDEX_HIDE
+            FALSE, // mPlayer_INDEX_GROUNDHOG
+            FALSE, // mPlayer_INDEX_RELEASE_CREATURE
+            FALSE, // mPlayer_INDEX_WASH_CAR
+            FALSE, // mPlayer_INDEX_TIRED
+            FALSE, // mPlayer_INDEX_ROTATE_OCTAGON
+            FALSE, // mPlayer_INDEX_THROW_MONEY
+            FALSE, // mPlayer_INDEX_PRAY
+            FALSE, // mPlayer_INDEX_SHAKE_TREE
+            FALSE, // mPlayer_INDEX_MAIL_JUMP
+            FALSE, // mPlayer_INDEX_MAIL_LAND
+            FALSE, // mPlayer_INDEX_READY_PITFALL
+            FALSE, // mPlayer_INDEX_FALL_PITFALL
+            FALSE, // mPlayer_INDEX_STRUGGLE_PITFALL
+            FALSE, // mPlayer_INDEX_CLIMBUP_PITFALL
+            FALSE, // mPlayer_INDEX_STUNG_BEE
+            FALSE, // mPlayer_INDEX_NOTICE_BEE
+            FALSE, // mPlayer_INDEX_REMOVE_GRASS
+            FALSE, // mPlayer_INDEX_SHOCK
+            FALSE, // mPlayer_INDEX_KNOCK_DOOR
+            FALSE, // mPlayer_INDEX_CHANGE_CLOTH
+            TRUE, // mPlayer_INDEX_PUSH_SNOWBALL
+            FALSE, // mPlayer_INDEX_ROTATE_UMBRELLA
+            FALSE, // mPlayer_INDEX_WADE_SNOWBALL
+            FALSE, // mPlayer_INDEX_COMPLETE_PAYMENT
+            FALSE, // mPlayer_INDEX_FAIL_EMU
+            FALSE, // mPlayer_INDEX_STUNG_MOSQUITO
+            FALSE, // mPlayer_INDEX_NOTICE_MOSQUITO
+            FALSE, // mPlayer_INDEX_SWING_FAN
+            FALSE, // mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE
+            FALSE, // mPlayer_INDEX_RADIO_EXERCISE
+            FALSE, // mPlayer_INDEX_PULL_CRACKER
+            FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT
+            FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN
+            FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_WAIT
+            FALSE, // mPlayer_INDEX_DEMO_GETON_BOAT_WADE
+            FALSE, // mPlayer_INDEX_DEMO_GETOFF_BOAT_STANDUP
+            FALSE, // mPlayer_INDEX_DEMO_GETOFF_BOAT
+            FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM
+            FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2
+            FALSE, // mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT
+            FALSE, // mPlayer_INDEX_PICKUP_FLOWER
+            FALSE, // mPlayer_INDEX_READY_SECRETBASE
+            FALSE, // mPlayer_INDEX_FALL_SECRETBASE
+            FALSE, // mPlayer_INDEX_STRUGGLE_SECRETBASE
+        };
+        // clang-format on
+
+        return data[main_index];
+    }
+
+    return FALSE;
+}
+
 static void Player_actor_check_pitfall(ACTOR* actorx, GAME* game) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
 
     Player_actor_reset_pitfall(actorx);
     if (Common_Get(clip).bg_item_clip != NULL && Common_Get(clip).bg_item_clip->pit_fall_proc != NULL) {
-        int main_index = player->now_main_index;
+        if (Player_actor_Check_main_index_able_pitfall_secretbase(actorx) != FALSE) {
+            xyz_t* player_pos_p = &actorx->world.position;
+            xyz_t pitfall_check_pos;
 
-        if (mPlayer_MAIN_INDEX_VALID(main_index) != FALSE) {
-            // clang-format off
-            static const s8 data[] = {
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               TRUE,
-               TRUE,
-               TRUE,
-               TRUE,
-               FALSE,
-               FALSE,
-               TRUE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               TRUE,
-               TRUE,
-               TRUE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               TRUE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-               FALSE,
-            };
-            // clang-format on
+            if (mFI_Wpos2UtCenterWpos(&pitfall_check_pos, *player_pos_p)) {
+                f32 dist = Math3DLengthSquare2D(pitfall_check_pos.x, pitfall_check_pos.y, player_pos_p->x,
+                                                player_pos_p->y);
 
-            if (data[main_index] != FALSE) {
-                xyz_t* player_pos_p = &actorx->world.position;
-                xyz_t pitfall_check_pos;
+                if (dist <= SQ(19.0f)) {
+                    mActor_name_t* fg_p = mFI_GetUnitFG(pitfall_check_pos);
 
-                if (mFI_Wpos2UtCenterWpos(&pitfall_check_pos, *player_pos_p)) {
-                    f32 dist = Math3DLengthSquare2D(pitfall_check_pos.x, pitfall_check_pos.y, player_pos_p->x,
-                                                    player_pos_p->y);
+                    if (fg_p != NULL) {
+                        mActor_name_t item = *fg_p;
 
-                    if (dist <= SQ(19.0f)) {
-                        mActor_name_t* fg_p = mFI_GetUnitFG(pitfall_check_pos);
+                        if (ITEM_IS_BURIED_PITFALL_HOLE(item)) {
+                            pitfall_check_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(pitfall_check_pos, 0.0f);
+                            if (Player_actor_request_main_ready_pitfall_all(game, &pitfall_check_pos,
+                                                                            mPlayer_REQUEST_PRIORITY_26)) {
+                                int ut_x;
+                                int ut_z;
 
-                        if (fg_p != NULL) {
-                            mActor_name_t item = *fg_p;
-
-                            if (ITEM_IS_BURIED_PITFALL_HOLE(item)) {
-                                pitfall_check_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(pitfall_check_pos, 0.0f);
-                                if (Player_actor_request_main_ready_pitfall_all(game, &pitfall_check_pos,
-                                                                                mPlayer_REQUEST_PRIORITY_26)) {
-                                    int ut_x;
-                                    int ut_z;
-
-                                    if (mFI_Wpos2UtNum(&ut_x, &ut_z, pitfall_check_pos)) {
-                                        Common_Get(clip).bg_item_clip->pit_fall_proc(item, ut_x, ut_z, EMPTY_NO);
-                                        player->pitfall_pos = pitfall_check_pos;
-                                        player->pitfall_flag = TRUE;
-                                    }
+                                if (mFI_Wpos2UtNum(&ut_x, &ut_z, pitfall_check_pos)) {
+                                    Common_Get(clip).bg_item_clip->pit_fall_proc(item, ut_x, ut_z, EMPTY_NO);
+                                    player->pitfall_pos = pitfall_check_pos;
+                                    player->pitfall_flag = TRUE;
                                 }
                             }
                         }
@@ -6920,6 +7054,7 @@ static void Player_actor_Set_bgm_volume(ACTOR* actorx, int main_index) {
             mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_NORMAL,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_COLLECT_INSECTS,
             mPlayer_BGM_VOLUME_MODE_COLLECT_INSECTS,
             mPlayer_BGM_VOLUME_MODE_COLLECT_INSECTS,
@@ -6935,6 +7070,11 @@ static void Player_actor_Set_bgm_volume(ACTOR* actorx, int main_index) {
             mPlayer_BGM_VOLUME_MODE_FISHING,
             mPlayer_BGM_VOLUME_MODE_FISHING,
             mPlayer_BGM_VOLUME_MODE_FISHING,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
+            mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_NORMAL,
             mPlayer_BGM_VOLUME_MODE_NORMAL,
@@ -7115,10 +7255,10 @@ static void Player_actor_Culc_wade_end_pos(const xyz_t* src_pos_p, xyz_t* wade_e
 
     *wade_end_pos_p = *src_pos_p;
     if (mFI_Wpos2BlockNum(&bx, &bz, *src_pos_p)) {
+        static const xyz_t local_border_pos = { 0.0f, 0.0f, 0.0f };
         xyz_t wpos;
-        xyz_t lpos = { 0.0f, 0.0f, 0.0f };
 
-        mFI_LposInBKtoWpos(&wpos, lpos, bx, bz);
+        mFI_LposInBKtoWpos(&wpos, local_border_pos, bx, bz);
         switch (direction) {
             case mFI_MOVEDIR_RIGHT:
             case mFI_MOVEDIR_LEFT: {
@@ -7213,7 +7353,7 @@ static mActor_name_t* Player_actor_CheckItem_fromPosition(const xyz_t* pos_p, f3
         mActor_name_t* fg_p = mFI_GetUnitFG(*pos_p);
 
         if (fg_p != NULL) {
-            if (IS_ITEM_GRASS(*fg_p) != FALSE) {
+            if (IS_ITEM_GRASS(*fg_p) != FALSE || (*fg_p == FLOWER_JACOBS_LADDER || IS_ITEM_GROWN_FLOWER(*fg_p)) != FALSE) {
                 if (Player_actor_CheckItemPosition_forPickup(pos_p, max_dist_sq, max_dist_y, target_pos_p,
                                                              item_pos_p)) {
                     return fg_p;
@@ -7296,7 +7436,7 @@ static mActor_name_t Player_actor_Get_itemNo_forWindow(ACTOR* actorx) {
         xyz_t target_pos;
 
         if (Player_actor_check_putin_item(actorx, &itemNo, &target_pos, &item_pos)) {
-            if (IS_ITEM_GRASS(itemNo) == FALSE) {
+            if (IS_ITEM_GRASS(itemNo) == FALSE && (itemNo == FLOWER_JACOBS_LADDER || IS_ITEM_GROWN_FLOWER(itemNo)) == FALSE) {
                 return itemNo;
             }
         }
@@ -7352,66 +7492,13 @@ static int Player_actor_able_submenu_request_main_index(GAME* game) {
                 FALSE,
                 FALSE,
                 FALSE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
                 FALSE,
                 TRUE,
                 TRUE,
                 TRUE,
                 TRUE,
                 TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
+                TRUE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -7424,7 +7511,66 @@ static int Player_actor_able_submenu_request_main_index(GAME* game) {
                 FALSE,
                 FALSE,
                 FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
                 TRUE,
+                TRUE,
+                TRUE,
+                TRUE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -7457,7 +7603,7 @@ static void Player_actor_Request_main_refuse_pickup_all(GAME* game, int refuse_p
     mDemo_Request(mDemo_TYPE_REPORT, actorx, &Player_actor_Refuse_pickup_demo_ct);
 }
 
-static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game) {
+static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game, int destroy_flower) {
     int field_type = Common_Get(field_type);
 
     if ((field_type == mFI_FIELDTYPE2_FG || field_type == mFI_FIELDTYPE2_PLAYER_ROOM) &&
@@ -7468,14 +7614,20 @@ static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game) {
 
         if (mEv_IsNotTitleDemo()) {
             /* Check for picking up items in your house */
-            if (Common_Get(clip).my_room_clip != NULL) {
-                mActor_name_t item = Common_Get(clip).my_room_clip->search_pickup_ftr_proc(game);
-                int item_slot = mPlib_Get_space_putin_item_forTICKET(&item);
+            if (CLIP(my_room_clip) != NULL) {
+                xyz_t item_pos;
+                xyz_t target_pos;
+                mActor_name_t item2;
+                mActor_name_t item;
+                int item_slot;
 
+                Player_actor_check_putin_item(GET_PLAYER_ACTOR_GAME_ACTOR(game), &item2, &target_pos, &item_pos);
+                item = CLIP(my_room_clip)->search_pickup_ftr_proc(item2, game);
+                item_slot = mPlib_Get_space_putin_item_forTICKET(&item);
                 if (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1) {
                     xyz_t item_pos;
 
-                    Common_Get(clip).my_room_clip->leaf_start_pos_proc(&item_pos);
+                    CLIP(my_room_clip)->leaf_start_pos_proc(&item_pos);
                     if (item_slot >= 0 || ITEM_IS_MYMANNIQUIN(item) || ITEM_IS_MYUMBRELLA(item) || can_exchange) {
                         if (Player_actor_request_main_pickup_jump(game, item_slot, item, &item_pos, FALSE, FALSE)) {
                             return TRUE;
@@ -7486,8 +7638,8 @@ static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game) {
                 } else if (item != EMPTY_NO) {
                     xyz_t ftr_pos;
 
-                    Common_Get(clip).my_room_clip->leaf_start_pos_proc(&ftr_pos);
-                    if (Common_Get(clip).my_room_clip->pickup_ftr_layer_proc() == mCoBG_LAYER1) {
+                    CLIP(my_room_clip)->leaf_start_pos_proc(&ftr_pos);
+                    if (CLIP(my_room_clip)->pickup_ftr_layer_proc() == mCoBG_LAYER1) {
                         if (item_slot >= 0 || ITEM_IS_MYMANNIQUIN(item) || ITEM_IS_MYUMBRELLA(item) || can_exchange) {
                             if (Player_actor_request_main_pickup_jump(
                                     game, item_slot, mRmTp_FtrItemNo2Item1ItemNo(item, TRUE), &ftr_pos, TRUE, FALSE)) {
@@ -7510,14 +7662,14 @@ static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game) {
             }
 
             /* Check for knife & fork */
-            if (Common_Get(clip).htbl_clip != NULL) {
-                mActor_name_t htbl_item = Common_Get(clip).htbl_clip->search_pick_up_item_layer2_proc(game);
+            if (CLIP(htbl_clip) != NULL) {
+                mActor_name_t htbl_item = CLIP(htbl_clip)->search_pick_up_item_layer2_proc(game);
 
                 if (htbl_item == ITM_KNIFE_AND_FORK) {
                     int item_slot = mPr_GetPossessionItemIdxWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL);
 
                     if (item_slot >= 0) {
-                        xyz_t pickup_pos = Common_Get(clip).htbl_clip->pickup_pos;
+                        xyz_t pickup_pos = CLIP(htbl_clip)->pickup_pos;
 
                         if (Player_actor_request_main_pickup_jump(game, item_slot, htbl_item, &pickup_pos, FALSE,
                                                                   TRUE)) {
@@ -7543,6 +7695,14 @@ static int Player_actor_CheckAndRequest_main_pickup_all(GAME* game) {
                 if (IS_ITEM_GRASS(item) != FALSE) {
                     if (Player_actor_request_main_remove_grass(game, &target_pos, &item_pos)) {
                         return TRUE;
+                    }
+                } else if ((item == FLOWER_JACOBS_LADDER || IS_ITEM_GROWN_FLOWER(item)) != FALSE) {
+                    if (!destroy_flower) {
+                        mActor_name_t flower_tool = item != FLOWER_JACOBS_LADDER ? ITM_FLOWER0 + item - FLOWER_PANSIES0 : ITM_FLOWER9;
+
+                        if (Player_actor_request_main_pickup_flower(game, flower_tool, &target_pos, &item_pos)) {
+                            return TRUE;
+                        }
                     }
                 } else {
                     mActor_name_t changed_item = ITEM_IS_SIGNBOARD(item) ? ITM_SIGNBOARD : item;
@@ -7631,6 +7791,7 @@ static int Player_actor_CheckScene_AbleSubmenu(void) {
             FALSE,
             TRUE,
             TRUE,
+            TRUE,
         };
         // clang-format on 
     
@@ -7646,6 +7807,12 @@ static int Player_actor_check_cancel_event_without_priority(GAME* game) {
     if (mPlayer_MAIN_INDEX_VALID(main_index) != FALSE) {
         // clang-format off
         static const s8 data[] = {
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
+            FALSE,
             FALSE,
             FALSE,
             FALSE,
@@ -7799,15 +7966,15 @@ static void Player_actor_Reset_able_force_speak_label(ACTOR* actorx, int main_in
     }
 }
 
-static int Player_actor_CheckAndSet_UZAI_forNpc(ACTOR* actorx) {
+static int Player_actor_CheckAndSet_UZAI_forNpc(ACTOR* actorx, int skip_check) {
     if (actorx != NULL && actorx->part == ACTOR_PART_NPC) {
         NPC_ACTOR* npc_actor = (NPC_ACTOR*)actorx;
-        Animal_c* animal = npc_actor->npc_info.animal;
+        Animal_c* animal = npc_actor->npc_info.animal_orig;
 
         if (animal != NULL &&
             mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM) != -1) {
             if (ITEM_NAME_GET_TYPE(actorx->npc_id) == NAME_TYPE_NPC &&
-                (npc_actor->condition_info.demo_flg & aNPC_COND_DEMO_SKIP_UZAI_CHECK) == 0) {
+                (npc_actor->condition_info.demo_flg & aNPC_COND_DEMO_SKIP_UZAI_CHECK) == 0 && (!skip_check || npc_actor->insect_actor == NULL)) {
                 npc_actor->condition_info.uzai_tool++;
                 npc_actor->condition_info.uzai_flag = TRUE;
             }
@@ -7839,6 +8006,36 @@ static int Player_actor_Check_stung_mosquito(GAME* game, void* label) {
             }
             break;
         }
+    }
+
+    return FALSE;
+}
+
+static int Player_actor_Check_reflect(GAME* game, xyz_t* hit_pos) {
+    if (mPlib_get_player_actor_main_index(game) == mPlayer_INDEX_REFLECT_AXE) {
+        PLAYER_ACTOR* player = GET_PLAYER_ACTOR_GAME(game);
+
+        if (Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 15.0f)) {
+            if (hit_pos != NULL) {
+                *hit_pos = player->main_data.reflect_axe.axe_common.target_pos;
+            }
+
+            return TRUE;
+        }
+    } else if (mPlib_get_player_actor_main_index(game) == mPlayer_INDEX_REFLECT_SCOOP) {
+        PLAYER_ACTOR* player = GET_PLAYER_ACTOR_GAME(game);
+
+        if (Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 13.0f)) {
+            if (hit_pos != NULL) {
+                *hit_pos = player->main_data.reflect_scoop.target_pos;
+            }
+
+            return TRUE;
+        }
+    }
+
+    if (hit_pos != NULL) {
+        *hit_pos = ZeroVec;
     }
 
     return FALSE;
@@ -8108,37 +8305,6 @@ static void Player_actor_Check_player_change_color_for_main(ACTOR* actorx) {
     }
 }
 
-#if VERSION == VER_GAFE01_00
-static int Player_actor_Check_InBlockRadioExercise(ACTOR* actorx) {
-    // @BUG - the logic in this prevents radio exercise from working
-    // indoors when an aerobics event is active
-    if (mEv_check_status(mEv_EVENT_MORNING_AEROBICS, mEv_STATUS_RUN) ||
-        mEv_check_status(mEv_EVENT_SPORTS_FAIR_AEROBICS, mEv_STATUS_RUN)) {
-        int bx;
-        int bz;
-
-        if (mFI_BlockKind2BkNum(&bx, &bz, mRF_BLOCKKIND_SHRINE)) {
-            int player_bx;
-            int player_bz;
-
-            if (mFI_Wpos2BlockNum(&player_bx, &player_bz, actorx->world.position)) {
-                if (player_bx == bx && player_bz == bz) {
-                    return TRUE;
-                }
-            }
-        }
-    } else {
-        /* Check if the aerobics radio is playing in the house */
-        int field_type = Common_Get(field_type);
-
-        if (field_type != mFI_FIELDTYPE2_FG && aMR_RadioBgmNow()) {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-#else
 static int Player_actor_Check_InBlockRadioExercise(ACTOR* actorx) {
     int field_type = Common_Get(field_type);
     if (field_type == mFI_FIELDTYPE2_FG) { 
@@ -8164,7 +8330,6 @@ static int Player_actor_Check_InBlockRadioExercise(ACTOR* actorx) {
 
     return FALSE;
 }
-#endif
 
 static int Player_actor_Check_AbleRadioExercise(ACTOR* actorx) {
     /* Player must be in the same block as aerobics radio, or in a house room with one playing */
@@ -8460,15 +8625,21 @@ static int Player_actor_check_able_change_camera_normal_index(ACTOR* actorx) {
                 FALSE,
                 FALSE,
                 FALSE,
+                FALSE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
                 TRUE,
                 FALSE,
                 FALSE,
                 FALSE,
                 FALSE,
                 FALSE,
-                FALSE,
-                FALSE,
-                TRUE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -8598,10 +8769,28 @@ static void Player_actor_Set_Indoor_Camera_Index(ACTOR* actorx, GAME* game) {
     }
 }
 
-#if VERSION >= VER_GAFU01_00
+static void Player_actor_CheckAndRequest_NextGoToSecretbase_common(ACTOR* actorx, f32* counter_p, int* changed_scenes_p) {
+    f32 counter = *counter_p;
+    counter += 1.0f;
+    if (counter >= 16.0f) {
+        if (*changed_scenes_p == FALSE) {
+            mDemo_Request(mDemo_TYPE_EXITSCENE, actorx, Player_actor_set_nextgoto_info_type3);
+        }
+
+        if (counter >= 26.0f) {
+            if (*changed_scenes_p == FALSE) {
+                Player_actor_set_nextgoto_info_type2(actorx, FALSE, changed_scenes_p);
+            }
+
+            counter = 16.0f;
+        }
+    }
+
+    *counter_p = counter;
+}
+
 static void Player_actor_Reset_item_net_catch_correct_pos(ACTOR* actorx) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
 
     player->item_net_catch_correct_pos_set = FALSE;
 }
-#endif

@@ -534,6 +534,7 @@ extern int mNT_get_org_umb_type(mActor_name_t umb);
 #define IS_ITEM_RST_HOLE(item) ((item) >= RST_HOLE_A && (item) <= RST_HOLE_E)
 
 #define IS_ITEM_GRASS(item) ((item) >= GRASS_A && (item) <= GRASS_C) /* aka IS_ITEM_WEED */
+#define IS_ITEM_SHELL(item) ((item) >= ITM_SHELL0 && (item) <= ITM_SHELL7)
 
 #define IS_ITEM_HANIWA(item) ((item) >= HANIWA_START && (item) <= HANIWA_END)
 
@@ -2145,7 +2146,19 @@ enum {
 #define ITM_FAN_FAN 0x2259
 #define ITM_FLOWER_FAN 0x225A
 #define ITM_LEAF_FAN 0x225B
-#define ITM_TOOL_END (ITM_LEAF_FAN + 1)
+#define ITM_CRACKER 0x225C
+#define ITM_FLOWER0 0x225D
+#define ITM_FLOWER1 0x225E
+#define ITM_FLOWER2 0x225F
+#define ITM_FLOWER3 0x2260
+#define ITM_FLOWER4 0x2261
+#define ITM_FLOWER5 0x2262
+#define ITM_FLOWER6 0x2263
+#define ITM_FLOWER7 0x2264
+#define ITM_FLOWER8 0x2265
+#define ITM_FLOWER9 0x2266
+#define ITM_MEDICINE 0x2267
+#define ITM_TOOL_END (ITM_MEDICINE + 1)
 
 #define ITM_FISH_START 0x2300
 #define ITM_FISH00 (ITM_FISH_START + 0)

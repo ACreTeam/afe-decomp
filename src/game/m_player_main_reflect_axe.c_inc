@@ -84,7 +84,7 @@ static void Player_actor_SetAngleSpeedF_Reflect_axe(ACTOR* actor, int) {
     }
 }
 
-static void Player_actor_SetOrderNPC_Reflect_axe(ACTOR* actor, mPlayer_main_reflect_axe_c* main_axe, int) {
+static void Player_actor_SetOrderNPC_Reflect_axe(ACTOR* actor, GAME* game, mPlayer_main_reflect_axe_c* main_axe, int flag) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
     int rock;
     if (Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 15.0f)) {
@@ -102,7 +102,7 @@ static void Player_actor_SetOrderNPC_Reflect_axe(ACTOR* actor, mPlayer_main_refl
                     return;
 
                 default:
-                    if (Player_actor_CheckAndSet_UZAI_forNpc(reflect_actor)) {
+                    if (Player_actor_CheckAndSet_UZAI_forNpc(reflect_actor, FALSE)) {
                         return;
                     }
             }
@@ -117,7 +117,37 @@ static void Player_actor_SetOrderNPC_Reflect_axe(ACTOR* actor, mPlayer_main_refl
         if (rock) {
             if (Player_actor_Search_STONE_TC(actor, &main_axe->axe_common.target_pos)) {
                 return;
-            };
+            }
+        }
+
+        if (Now_Private->reset_count >= 2) {
+            if (IS_ITEM_RST_STONE(item) != FALSE) {
+                eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK, main_axe->axe_common.target_pos, 2, actor->shape_info.rotation.y, game, RSV_NO, 0, (mActor_name_t)(C_ROCK_A + item - RST_ROCK_A));
+
+                if (Common_Get(time.season) == mTM_SEASON_WINTER) {
+                    xyz_t pos;
+                    int i;
+
+                    xyz_t_move(&pos, &main_axe->axe_common.target_pos);
+                    pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos(pos, -32.0f);
+
+                    for (i = 0; i < 5; i++) {
+                        xyz_t ef_pos;
+
+                        ef_pos.x = pos.x + RANDOM2_F(30.0f);
+                        ef_pos.y = pos.y;
+                        ef_pos.z = pos.z + RANDOM2_F(30.0f);
+                        eEC_CLIP->effect_make_proc(eEC_EFFECT_BUSH_YUKI, ef_pos, 2, actor->shape_info.rotation.y, game, RSV_NO, 0, 1);
+                    }
+                }
+
+                return;
+            }
+        }
+
+        if (IS_ITEM_CRACKED_STONE(item) != FALSE) {
+            mFI_SetFG_common(RST_HOLE_A + item - C_ROCK_A, main_axe->axe_common.target_pos, TRUE);
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_RESETBREAK, main_axe->axe_common.target_pos, 2, 0, game, RSV_NO, 1, 0);
         }
     }
 }
@@ -169,7 +199,7 @@ static void Player_actor_SearchAnimation_Reflect_axe(ACTOR* actor, GAME* game, m
     if (!Player_actor_Check_AnimationFrame_PerfectEquel(actor, frame)) {
         Player_actor_SetEffect_Reflect_axe(actor, game, flag);
         Player_actor_SetAngleSpeedF_Reflect_axe(actor, flag);
-        Player_actor_SetOrderNPC_Reflect_axe(actor, main_axe, flag);
+        Player_actor_SetOrderNPC_Reflect_axe(actor, game, main_axe, flag);
         Player_actor_SetSound_Reflect_axe(actor, main_axe, flag);
         Player_actor_Set_FootMark_Base1(actor, game, 0, 0);
         Player_actor_ChangeItemNo_Reflect_axe(actor, main_axe, flag);

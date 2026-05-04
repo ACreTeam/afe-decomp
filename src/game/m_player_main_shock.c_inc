@@ -71,6 +71,7 @@ static void Player_actor_Set_FeelEffect_Shock(ACTOR* actorx) {
 
         if (Player_actor_Check_AnimationFrame(fc0_p, 5.0f)) {
             player->draw_effect_idx = eEC_EFFECT_SHOCK + 1;
+            player->draw_effect_arg1 = 0;
         }
     }
 }

@@ -57,6 +57,7 @@ static void Player_actor_SetEffect_Ready_pitfall(ACTOR* actorx) {
 
     if (Player_actor_Check_AnimationFrame(fc0_p, 5.0f)) {
         player->draw_effect_idx = eEC_EFFECT_ASE2 + 1;
+        player->draw_effect_arg1 = 0;
     }
 }
 

@@ -63,8 +63,25 @@ static void Player_actor_setup_main_Pickup(ACTOR* actorx, GAME* game) {
                                      cKF_FRAMECONTROL_STOP, mPlayer_PART_TABLE_PICK_UP);
     Player_actor_setup_main_Base(actorx, game);
 
-    if (item == ITM_FOOD_COCONUT) {
-        mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_PICKUP_COCONUT);
+    if (mFI_CheckInIsland() == TRUE) {
+        if (item == ITM_FOOD_COCONUT) {
+            mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_PICKUP_COCONUT);
+        }
+    } else {
+        mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_ITEM);
+        mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_9);
+
+        if (item == ITM_PRESENT) {
+            mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_PRESENT);
+        } else if (mFAs_CheckDust(item) == TRUE) {
+            mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_DUST);
+            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_19);
+            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_BURY_DUST);
+        }
+    }
+
+    if (target_pos_p != NULL) {
+        mQst_SetLostCondition(item, slot_idx);
     }
 }
 

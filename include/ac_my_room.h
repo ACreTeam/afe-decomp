@@ -80,7 +80,7 @@ typedef struct my_room_clock_info_s {
 
 typedef int (*aMR_JUDGE_BREED_NEW_FTR_PROC)(GAME* game, u16 ftr_no, int* ut_x, int* ut_z, u16* rotation,
                                             int* square_offset, int* layer);
-typedef mActor_name_t (*aMR_SEARCH_PICKUP_FURNITURE_PROC)(GAME* game);
+typedef mActor_name_t (*aMR_SEARCH_PICKUP_FURNITURE_PROC)(mActor_name_t item, GAME* game);
 typedef void (*aMR_FURNITURE2ITEMBAG_PROC)(GAME* game);
 typedef int (*aMR_JUDGE_PLAYER_ACTION_PROC)(xyz_t* wpos0, xyz_t* wpos1, int ftr_actor_idx);
 typedef void (*aMR_PLAYER_MOVE_FURNITURE_PROC)(int ftr_actor_idx, const xyz_t* wpos);

@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
 static int Player_actor_request_main_complete_payment(GAME* game, int prio) {
     if (Player_actor_check_request_main_able(game, mPlayer_INDEX_COMPLETE_PAYMENT, prio)) {
         Player_actor_request_main_index(game, mPlayer_INDEX_COMPLETE_PAYMENT, prio);
@@ -10,25 +16,20 @@ static int Player_actor_request_main_complete_payment(GAME* game, int prio) {
 static void Player_actor_setup_main_Complete_payment(ACTOR* actorx, GAME* game) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
     mPlayer_main_complete_payment_c* complete_payment_p = &player->main_data.complete_payment;
-    u8 bgm_num;
+    u16 bgm_num;
 
     complete_payment_p->timer = 0.0f;
     complete_payment_p->msg_mode = 0;
 
-#if VERSION >= VER_GAFU01_00
-    Player_actor_InitAnimation_Base2(actorx, game, mPlayer_ANIM_YATTA1, mPlayer_ANIM_YATTA1, 1.0f, 1.0f, 0.6f, 0.0f,
-                                     cKF_FRAMECONTROL_STOP, mPlayer_PART_TABLE_NORMAL);
-#else
     Player_actor_InitAnimation_Base2(actorx, game, mPlayer_ANIM_YATTA1, mPlayer_ANIM_YATTA1, 1.0f, 1.0f, 0.5f, 0.0f,
                                      cKF_FRAMECONTROL_STOP, mPlayer_PART_TABLE_NORMAL);
-#endif
     Player_actor_setup_main_Base(actorx, game);
     bgm_num = Player_actor_sound_Get_bgm_num_forCompletePayment();
     mBGMPsComp_make_ps_fanfare(bgm_num, 0x168);
 }
 
 static void Player_actor_settle_main_Complete_payment(ACTOR* actorx, GAME* game) {
-    u8 bgm_num;
+    u16 bgm_num;
 
     bgm_num = Player_actor_sound_Get_bgm_num_forCompletePayment();
     mBGMPsComp_delete_ps_fanfare(bgm_num, 0x168);
@@ -68,10 +69,20 @@ static void Player_actor_Complete_payment_demo_ct(ACTOR* actorx) {
 
     switch (Common_Get(complete_payment_type)) {
         case mPlayer_COMPLETE_PAYMENT_TYPE_ARBEIT:
-            msg_no = 0x17B6;
+            if (Now_Private->moved_from_plus == TRUE) {
+                msg_no = 0x17AD;
+            } else {
+                msg_no = 0x17B6;
+            }
+            break;
+        case mPlayer_COMPLETE_PAYMENT_TYPE_HOUSE:
+            msg_no = 0x17B7;
+            break;
+        case mPlayer_COMPLETE_PAYMENT_TYPE_ISLAND:
+            msg_no = 0x17B0;
             break;
         default:
-            msg_no = 0x17B7;
+            msg_no = 0x17B1;
             break;
     }
 

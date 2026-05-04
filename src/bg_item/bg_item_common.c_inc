@@ -664,7 +664,7 @@ static void bIT_common_hole_throw(mActor_name_t fg_item, mActor_name_t fg_hole_i
                     if (!mFI_CheckInIsland()) {
                         if (mFAs_CheckDust(buried_item) == TRUE) {
                             mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_BURY_DUST);
-                            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_21);
+                            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_DUST);
                         }
                     }
                 }

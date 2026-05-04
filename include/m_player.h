@@ -86,6 +86,7 @@ enum {
     mPlayer_COMPLETE_PAYMENT_TYPE_NONE,
     mPlayer_COMPLETE_PAYMENT_TYPE_ARBEIT,
     mPlayer_COMPLETE_PAYMENT_TYPE_HOUSE,
+    mPlayer_COMPLETE_PAYMENT_TYPE_ISLAND,
 
     mPlayer_COMPLETE_PAYMENT_TYPE_NUM
 };
@@ -1321,6 +1322,26 @@ typedef struct player_request_demo_getoff_boat_s {
     s16 angle_y;
 } mPlayer_request_demo_getoff_boat_c;
 
+typedef struct player_request_pickup_flower_s {
+    /* 0x00 */ mActor_name_t flower_tool;
+    /* 0x04 */ xyz_t target_pos;
+    /* 0x10 */ xyz_t item_pos;
+} mPlayer_request_pickup_flower_c;
+
+typedef struct player_request_ready_secretbase_s {
+    xyz_t pos;
+} mPlayer_request_ready_secretbase_c;
+
+typedef struct player_request_fall_secretbase_s {
+    f32 counter;
+    int changed_scene;
+} mPlayer_request_fall_secretbase_c;
+
+typedef struct player_request_struggle_secretbase_s {
+    f32 counter;
+    int changed_scene;
+} mPlayer_request_struggle_secretbase_c;
+
 typedef struct player_request_give_from_submenu_s {
     xyz_t unused; // assumed based on size
     mActor_name_t item;
@@ -1418,6 +1439,10 @@ typedef union {
     mPlayer_request_change_cloth_c change_cloth;
     mPlayer_request_swing_fan_c swing_fan;
     mPlayer_request_radio_exercise_c radio_exercise;
+    mPlayer_request_pickup_flower_c pickup_flower;
+    mPlayer_request_ready_secretbase_c ready_secretbase;
+    mPlayer_request_fall_secretbase_c fall_secretbase;
+    mPlayer_request_struggle_secretbase_c struggle_secretbase;
     mPlayer_request_demo_geton_boat_wade_c demo_geton_boat_wade;
     mPlayer_request_demo_getoff_boat_c demo_getoff_boat;
     u64 align; // TODO: is this necessary? it makes the size correct for this and mPlayer_request_main_data
@@ -1520,6 +1545,10 @@ typedef union {
     mPlayer_request_change_cloth_c change_cloth;
     mPlayer_request_swing_fan_c swing_fan;
     mPlayer_request_radio_exercise_c radio_exercise;
+    mPlayer_request_pickup_flower_c pickup_flower;
+    mPlayer_request_ready_secretbase_c ready_secretbase;
+    mPlayer_request_fall_secretbase_c fall_secretbase;
+    mPlayer_request_struggle_secretbase_c struggle_secretbase;
     mPlayer_request_demo_geton_boat_wade_c demo_geton_boat_wade;
     mPlayer_request_demo_getoff_boat_c demo_getoff_boat;
     mPlayer_request_takeout_item_c takeout_item;
@@ -1997,6 +2026,26 @@ typedef struct player_main_demo_get_golden_axe_wait_s {
     f32 timer;
 } mPlayer_main_demo_get_golden_axe_wait_c;
 
+typedef struct player_main_pickup_flower_s {
+    /* 0x00 */ xyz_t target_pos;
+    /* 0x0C */ xyz_t item_pos;
+} mPlayer_main_pickup_flower_c;
+
+typedef struct player_main_ready_secretbase_s {
+    f32 counter;
+    int changed_scenes;
+} mPlayer_main_ready_secretbase_c;
+
+typedef struct player_main_fall_secretbase_s {
+    f32 counter;
+    int changed_scenes;
+} mPlayer_main_fall_secretbase_c;
+
+typedef struct player_main_struggle_secretbase_s {
+    f32 counter;
+    int changed_scenes;
+} mPlayer_main_struggle_secretbase_c;
+
 typedef struct player_main_uki_s {
     xyz_t cast_goal_point;
 } mPlayer_main_uki_c;
@@ -2088,6 +2137,10 @@ typedef union {
     mPlayer_main_notice_mosquito_c notice_mosquito;
     mPlayer_main_radio_exercise_c radio_exercise;
     mPlayer_main_wade_snowball_c wade_snowball;
+    mPlayer_main_pickup_flower_c pickup_flower;
+    mPlayer_main_ready_secretbase_c ready_secretbase;
+    mPlayer_main_fall_secretbase_c fall_secretbase;
+    mPlayer_main_struggle_secretbase_c struggle_secretbase;
     mPlayer_main_demo_geton_boat_wade_c demo_geton_boat_wade;
     mPlayer_main_demo_geton_boat_sitdown_c demo_geton_boat_sitdown;
     mPlayer_main_demo_getoff_boat_standup_c demo_getoff_boat_standup;
@@ -2343,7 +2396,7 @@ struct player_actor_s {
     /* 0x1394 */ int (*check_cancel_event_without_priority_proc)(GAME*);
     /* 0x1398 */ int (*CheckScene_AbleSubmenu_proc)();
     /* 0x139C */ int (*Check_stung_mosquito_proc)(GAME*, void*);
-    /* 0x13A0 */ int (*Check_reflect_proc)(GAME* game, const xyz_t* pos);
+    /* 0x13A0 */ int (*Check_reflect_proc)(GAME* game, xyz_t* pos);
     /* 0x13A4 */ int a_btn_pressed;
     /* 0x13A8 */ int a_btn_triggers_submenu;
     /* 0x13AC */ mActor_name_t item_in_front; /* item directly in front of the player */

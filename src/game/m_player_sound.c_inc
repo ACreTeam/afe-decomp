@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "audio.h"
+#include "m_common_data.h"
+#endif
+
 typedef enum player_status_level_s {
     mPlayer_WAIT,
     mPlayer_WALK,
@@ -55,7 +62,7 @@ static void Player_actor_sound_FootStep1(ACTOR* actor, u16 id) {
 
     attr = mCoBG_Wpos2Attribute(apos, 0);
     if (sAdo_CheckOnPlussBridge(pos, attr)) {
-        id = 0x420A;
+        id = NA_SE_FOOTSTEP_PLUSSBRIDGE;
     }
 
     sAdo_PlyWalkSe(id, pos);
@@ -258,7 +265,7 @@ static void Player_actor_sound_umbrella_rotate(ACTOR* actor) {
     Player_actor_set_sound_common2(actor, NA_SE_UMBRELLA_ROTATE);
 }
 
-static u8 Player_actor_sound_Get_bgm_num_forCompletePayment(void) {
+static u16 Player_actor_sound_Get_bgm_num_forCompletePayment(void) {
     switch (Common_Get(complete_payment_type)) {
         case mPlayer_COMPLETE_PAYMENT_TYPE_ARBEIT:
             return BGM_INTRO_CHORES_COMPLETE;
@@ -267,7 +274,7 @@ static u8 Player_actor_sound_Get_bgm_num_forCompletePayment(void) {
     }
 }
 
-static u8 Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(int type) {
+static u16 Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(int type) {
     switch (type) {
         case mPlayer_GOLDEN_ITEM_TYPE_AXE:
             return BGM_INTRO_CHORES_COMPLETE;
@@ -320,6 +327,10 @@ static void Player_actor_sound_uchiwa(ACTOR* actor) {
     Player_actor_set_sound_common2(actor, NA_SE_UCHIWA);
 }
 
+static void Player_actor_sound_cracker(ACTOR* actor) {
+    Player_actor_set_sound_common2(actor, NA_SE_CRACKER);
+}
+
 static void Player_actor_sound_move_temochi_kazaguruma(ACTOR* actor) {
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actor;
     f32 speed;
@@ -335,4 +346,16 @@ static void Player_actor_sound_move_temochi_kazaguruma(ACTOR* actor) {
         sAdo_kazagurumaLevel(speed);
         sAdo_OngenPos((u32)player, NA_SE_TEMOCHI_KAZAGURUMA, &actor->world.position);
     }
+}
+
+static void Player_actor_sound_ResetKanshiCenterIn(ACTOR* actor) {
+    Player_actor_set_sound_common2(actor, NA_SE_RESET_KANSHI_CENTER_IN);
+}
+
+static void Player_actor_sound_FlowerGet(ACTOR* actor) {
+    Player_actor_set_sound_common2(actor, NA_SE_FLOWER_GET);
+}
+
+static void Player_actor_sound_SE_HitScoopShell(ACTOR* actor) {
+    Player_actor_set_sound_common2(actor, NA_SE_131);
 }

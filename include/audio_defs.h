@@ -112,6 +112,7 @@ typedef enum audio_sound_effects {
     NA_SE_52 = 0x52,
     NA_SE_53 = 0x53,
     NA_SE_KOKORO_TOGURU = 0x54,
+    NA_SE_FLOWER_GET = 0x55,
 
     NA_SE_ITEM_HORIDASHI = 0x57,
     NA_SE_CLEAN_UP_FTR = 0x58,
@@ -205,6 +206,7 @@ typedef enum audio_sound_effects {
 
     NA_SE_12D = 0x12D,
 
+    NA_SE_131 = 0x131,
     NA_SE_GOKI_JUMP_AWAY = 0x132,
 
     NA_SE_TREE_TOUCH = 0x134,
@@ -216,9 +218,9 @@ typedef enum audio_sound_effects {
     NA_SE_DOYON = 0x13F,
 
     NA_SE_KIRIBASU_SCOOP = 0x148,
-    NA_SE_KIRIBASU_OUT,
 
-    NA_SE_SOUND_KNOCK,
+    NA_SE_SOUND_KNOCK = 0x14A,
+    NA_SE_CRACKER = 0x14F,
 
     NA_SE_TUMBLE_SAND = 0x156,
     NA_SE_TUMBLE_WAVE,
@@ -318,6 +320,10 @@ typedef enum audio_sound_effects {
     NA_SE_461 = 0x461,
 
     NA_SE_COIN_GASAGOSO = 0x465,
+
+    NA_SE_RESET_KANSHI_CENTER_IN = 0x474,
+
+    NA_SE_KIRIBASU_OUT = 0x47E,
 
     NA_SE_501 = 0x501,
     NA_SE_505 = 0x505,

@@ -47,8 +47,10 @@ static void Player_actor_setup_main_Notice_rod(ACTOR* actor, GAME* game) {
         main_notice->not_full_pocket = FALSE;
     }
 
-    if (type == aGYO_TYPE_BARRED_KNIFEJAW) {
-        mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_NOTICE_FISHING_ROD);
+    if (type == aGYO_TYPE_SWORDFISH) {
+        if (mFI_CheckInIsland() == TRUE) {
+            mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_NOTICE_FISHING_ROD);
+        }
     }
     Player_actor_InitAnimation_Base2(actor, game, mPlayer_ANIM_GET_T2, mPlayer_ANIM_GET_T2, 1.0f, 1.0f, 0.5f, -3.0f, 0,
                                      0);
@@ -137,11 +139,15 @@ static void Player_actor_DeleteMark_Notice_rod(ACTOR* actor) {
     }
 }
 
-static int Player_actor_Get_sakana_msg_num(int msg_offs) {
-    int ret_msg_no = msg_offs + 0x2FA9;
+static int Player_actor_Get_sakana_msg_num(int idx) {
+    int ret_msg_no;
 
-    if (msg_offs < 0x20) {
-        ret_msg_no = msg_offs + 0x1327;
+    if (idx < 32) {
+        ret_msg_no = 0x1327 + idx;
+    } else if (idx < 40) {
+        ret_msg_no = 0x2FC9 + idx - 32;
+    } else {
+        ret_msg_no = 0x17C1 + idx - 40;
     }
 
     return ret_msg_no;
@@ -175,7 +181,7 @@ static void Player_actor_Notice_rod_demo_ct(ACTOR* actor) {
                     msg_no = Player_actor_Get_sakana_msg_num(type);
                 }
             } else {
-                msg_no = type + 0x1997;
+                msg_no = 0x19C0 + type - (aGYO_TYPE_NUM + 1);
             }
         }
     }
@@ -234,13 +240,8 @@ static int Player_actor_MessageControl_Notice_rod(ACTOR* actor, GAME* game, int 
 
         case 2:
             if (!mMsg_Check_MainNormal(win)) {
-#if VERSION >= VER_GAFU01_00
-                Player_actor_InitAnimation_Base2(actor, game, mPlayer_ANIM_YATTA2, mPlayer_ANIM_YATTA2, 1.0f, 1.0f,
-                                                 0.6f, -5.0f, 0, 0);
-#else
                 Player_actor_InitAnimation_Base2(actor, game, mPlayer_ANIM_YATTA2, mPlayer_ANIM_YATTA2, 1.0f, 1.0f,
                                                  0.5f, -5.0f, 0, 0);
-#endif
                 mBGMPsComp_delete_ps_fanfare(0x28, 0x168);
                 mBGMPsComp_make_ps_fanfare(0x4C, 0x168);
                 mMsg_Set_LockContinue(win);
@@ -289,9 +290,9 @@ static int Player_actor_MessageControl_Notice_rod(ACTOR* actor, GAME* game, int 
 
         default:
             if (main_notice->not_full_pocket) {
-                return 0x39;
+                return 0x3A;
             } else {
-                return !main_notice->exchange_flag ? 0x53 : 0x39;
+                return !main_notice->exchange_flag ? 0x54 : 0x3A;
             }
     }
 }
@@ -302,12 +303,12 @@ static void Player_actor_request_proc_index_fromNotice_rod(ACTOR* actor, GAME* g
     UKI_ACTOR* uki;
 
     switch (msg_control) {
-        case 0x39:
+        case 0x3A:
             Player_actor_request_main_putaway_rod(game, main_notice->angle_y, main_notice->exchange_flag,
                                                   mPlayer_REQUEST_PRIORITY_29);
             break;
 
-        case 0x53:
+        case 0x54:
             uki = (UKI_ACTOR*)player->fishing_rod_actor_p;
 
             if (uki != NULL) {

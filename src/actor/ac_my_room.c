@@ -1485,7 +1485,7 @@ static void aMR_InitFurnitureTable(FTR_ACTOR* ftr_actor, int count) {
 
 static int aMR_JudgeBreedNewFurniture(GAME* game, u16 ftr_no, int* ut_x, int* ut_z, u16* rotation, int* square_offset,
                                       int* layer);
-static mActor_name_t aMR_SearchPickupFurniture(GAME* game);
+static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game);
 static void aMR_Furniture2ItemBag(GAME* game);
 static int aMR_JudgePlayerAction(xyz_t* wpos0, xyz_t* wpos1, int ftr_actor_idx);
 static void aMR_PlayerMoveFurniture(int ftr_actor_idx, const xyz_t* wpos);

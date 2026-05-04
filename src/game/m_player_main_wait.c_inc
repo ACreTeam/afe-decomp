@@ -98,7 +98,7 @@ static void Player_actor_request_proc_index_fromWait(ACTOR* actor, GAME* game) {
     if ((Player_actor_GetController_move_percentX()) || (Player_actor_GetController_move_percentY())) {
         Player_actor_request_main_walk_all(game, NULL, -5.0f, 4, mPlayer_REQUEST_PRIORITY_1);
     }
-    Player_actor_CheckAndRequest_main_pickup_all(game);
+    Player_actor_CheckAndRequest_main_pickup_all(game, FALSE);
     Player_actor_CheckAndRequest_main_radio_exercise_all(game, mPlayer_REQUEST_PRIORITY_0);
 }
 

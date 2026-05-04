@@ -121,7 +121,9 @@ static mActor_name_t Player_actor_Get_TreeNoToStumpNo(ACTOR* actor, GAME* game, 
             if (check <= 0) {
                 mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_CHOP_TREE);
                 if (IS_ITEM_ANY_PALM_TREE(item) != FALSE) {
-                    mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_CHOP_PALM_TREE);
+                    if (mFI_CheckInIsland() == TRUE) {
+                        mISL_SetNowPlayerAction(mISL_PLAYER_ACTION_CHOP_PALM_TREE);
+                    }
                 }
 
                 return bg_item_fg_sub((mActor_name_t)item, 0);

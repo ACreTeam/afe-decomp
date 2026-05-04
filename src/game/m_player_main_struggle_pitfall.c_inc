@@ -20,6 +20,7 @@ static void Player_actor_setup_main_Struggle_pitfall(ACTOR* actorx, GAME* game) 
     Player_actor_InitAnimation_Base1(actorx, game, mPlayer_ANIM_MOGAKU1, mPlayer_ANIM_MOGAKU1, 1.0f, 1.0f, 0.5f, -5.0f,
                                      mPlayer_PART_TABLE_NORMAL);
     player->draw_effect_idx = eEC_EFFECT_ASE2 + 1;
+    player->draw_effect_arg1 = 0;
     Player_actor_setup_main_Base(actorx, game);
 }
 

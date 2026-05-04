@@ -1,3 +1,9 @@
+#ifdef __INTELLISENSE__
+#include "m_player.h"
+#include "m_player_lib.h"
+#include "m_common_data.h"
+#endif
+
 static void Player_actor_Set_ItemNoSubmenu(mActor_name_t item) {
     if (mEv_IsNotTitleDemo()) {
         Common_Get(now_private)->equipment = item;
@@ -36,8 +42,7 @@ static s8 Player_actor_Get_ItemKind(ACTOR* actor, int kind) {
         if (able == mPlayer_ABLE_ITEM_CAN_USE_ALL) {
             return scene_kind;
         } else if (able == mPlayer_ABLE_ITEM_CAN_USE_UMBRELLA) {
-            if ((mPlayer_ITEM_IS_UMBRELLA(scene_kind) || mPlayer_ITEM_IS_BALLOON(scene_kind) ||
-                 mPlayer_ITEM_IS_WINDMILL(scene_kind) || mPlayer_ITEM_IS_FAN(scene_kind)) != FALSE) {
+            if (mPlayer_ITEM_IS_NOT_TOOL(scene_kind) != FALSE) {
                 return scene_kind;
             }
         }
@@ -127,6 +132,17 @@ static int Player_actor_Get_BasicItemMainIndex_fromItemKind(int kind) {
         mPlayer_ITEM_MAIN_FAN_NORMAL,
         mPlayer_ITEM_MAIN_FAN_NORMAL,
         mPlayer_ITEM_MAIN_FAN_NORMAL,
+        mPlayer_ITEM_MAIN_CRACKER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
+        mPlayer_ITEM_MAIN_FLOWER_NORMAL,
     };
     // clang-format on
 
@@ -423,8 +439,14 @@ static int Player_actor_Check_ItemAnimationToItemKind(int kind, int anim) {
     } else if (mPlayer_ITEM_IS_SHOVEL(kind) != FALSE) {
         res = anim < 0;
     } else if (mPlayer_ITEM_IS_BALLOON(kind) != FALSE) {
-        res = anim < 0;
+        res = mPlib_Get_Item_DataPointerType(anim) == mPlayer_ITEM_DATA_TYPE_BALLOON_ANIMATION;
     } else if (mPlayer_ITEM_IS_WINDMILL(kind) != FALSE) {
+        res = mPlib_Get_Item_DataPointerType(anim) == mPlayer_ITEM_DATA_TYPE_PINWHEEL_ANIMATION;
+    } else if (mPlayer_ITEM_IS_FAN(kind) != FALSE) {
+        res = anim < 0;
+    } else if (mPlayer_ITEM_IS_CRACKER(kind) != FALSE) {
+        res = anim < 0;
+    } else if (mPlayer_ITEM_IS_FLOWER(kind) != FALSE) {
         res = anim < 0;
     } else {
         res = FALSE;

@@ -125,7 +125,7 @@ static int Player_actor_check_able_request_main_index_for_reset(int request_main
 static void Player_actor_putin_item(int slot, mActor_name_t item, xyz_t* pos_p);
 static void Player_actor_putin_item_layer2(int slot, mActor_name_t item, xyz_t* pos_p);
 static void Player_actor_putin_furniture(GAME* game, int slot, mActor_name_t item);
-static int Player_actor_Check_reflect(GAME* game, const xyz_t* pos);
+static int Player_actor_Check_reflect(GAME* game, xyz_t* pos);
 
 static void Player_actor_sound_SetStatus(ACTOR* actor);
 static void Player_actor_set_sound_common1(xyz_t* pos, u16 id);
@@ -169,8 +169,8 @@ static void Player_actor_sound_hachi_sasareru(ACTOR* actor);
 static void Player_actor_sound_wear(ACTOR* actor);
 static void Player_actor_sound_dai_ue_kakunou(ACTOR* actor);
 static void Player_actor_sound_umbrella_rotate(ACTOR* actor);
-static u8 Player_actor_sound_Get_bgm_num_forCompletePayment(void);
-static u8 Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(int type);
+static u16 Player_actor_sound_Get_bgm_num_forCompletePayment(void);
+static u16 Player_actor_sound_Get_bgm_num_forDemoGetGoldenItem(int type);
 static void Player_actor_sound_camera_move1(void);
 static void Player_actor_sound_camera_move2();
 static void Player_actor_sound_karaburi(ACTOR* actor);
@@ -225,6 +225,7 @@ static int Player_actor_request_main_invade_all(GAME*, int);
 // static int Player_actor_request_main_wait_all(GAME*, f32, f32, int, int);
 static int Player_actor_request_main_talk_all(GAME*, ACTOR*, int, f32, int, int);
 static int Player_actor_request_main_hold(GAME*, int, int, const xyz_t*, f32, int, int);
+static int Player_actor_request_main_hold_lock(GAME*, int, int, const xyz_t*, f32, int, int);
 static int Player_actor_request_main_recieve_wait(GAME*, ACTOR*, int, int, mActor_name_t, int, int);
 static int Player_actor_request_main_give_all(GAME*, ACTOR*, int, int, mActor_name_t, int, int, int, int);
 static int Player_actor_request_main_sitdown(GAME*, int, const xyz_t*, int, int);
@@ -354,6 +355,13 @@ static int Player_actor_request_main_demo_geton_boat_sitdown_all(GAME* game, int
 static int Player_actor_request_main_demo_geton_boat_wait_all(GAME* game, int prio);
 static int Player_actor_request_main_demo_getoff_boat_all(GAME* game, const xyz_t* pos_p, s16 angle_y, int prio);
 static int Player_actor_request_main_pull_cracker_all(GAME* game, int prio);
+static int Player_actor_request_main_pickup_flower(GAME* game, mActor_name_t flower_tool, const xyz_t* target_pos_p, const xyz_t* item_pos_p);
+static int Player_actor_request_main_ready_secretbase_all(GAME* game, const xyz_t* pos_p, int prio);
+static int Player_actor_request_main_fall_secretbase_all(GAME* game, f32 counter, int changed_scene, int prio);
+static int Player_actor_request_main_struggle_secretbase_all(GAME* game, f32 counter, int changed_scene, int prio);
+
+static void Player_actor_set_nextgoto_info_type2(ACTOR* actorx, int end_flag, int* changed_scenes_p);
+static void Player_actor_set_nextgoto_info_type3(ACTOR* actorx);
 
 /* Tool Models */
 #include "../src/game/m_player_tools.c_inc"
@@ -404,6 +412,7 @@ static int Player_actor_request_main_pull_cracker_all(GAME* game, int prio);
 #include "../src/game/m_player_main_outdoor.c_inc"
 #include "../src/game/m_player_main_invade.c_inc"
 #include "../src/game/m_player_main_hold.c_inc"
+#include "../src/game/m_player_main_hold_lock.c_inc"
 #include "../src/game/m_player_main_push.c_inc"
 #include "../src/game/m_player_main_pull.c_inc"
 #include "../src/game/m_player_main_rotate_furniture.c_inc"
@@ -496,6 +505,11 @@ static int Player_actor_request_main_pull_cracker_all(GAME* game, int prio);
 #include "../src/game/m_player_main_swing_fan.c_inc"
 #include "../src/game/m_player_main_switch_on_lighthouse.c_inc"
 #include "../src/game/m_player_main_radio_exercise.c_inc"
+#include "../src/game/m_player_main_pull_cracker.c_inc"
+#include "../src/game/m_player_main_pickup_flower.c_inc"
+#include "../src/game/m_player_main_ready_secretbase.c_inc"
+#include "../src/game/m_player_main_fall_secretbase.c_inc"
+#include "../src/game/m_player_main_struggle_secretbase.c_inc"
 #include "../src/game/m_player_main_demo_geton_boat_sitdown.c_inc"
 #include "../src/game/m_player_main_demo_geton_boat_wait.c_inc"
 #include "../src/game/m_player_main_demo_geton_boat_wade.c_inc"
@@ -746,6 +760,7 @@ static void Player_actor_request_main_change_from_submenu(ACTOR* actorx, GAME* g
         NULL,
         NULL,
         NULL,
+        NULL,
         &Player_actor_request_main_putin_scoop_from_submenu,
         NULL,
         NULL,
@@ -800,7 +815,12 @@ static void Player_actor_request_main_change_from_submenu(ACTOR* actorx, GAME* g
         NULL,
         NULL,
         NULL,
+        NULL,
         &Player_actor_request_main_demo_get_golden_item_from_submenu,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         NULL,
     };
@@ -923,6 +943,7 @@ static void Player_actor_settle_main(ACTOR* actorx, GAME* game) {
         &Player_actor_settle_main_Outdoor,
         NULL,
         NULL,
+        NULL,
         &Player_actor_settle_main_Push,
         &Player_actor_settle_main_Pull,
         NULL,
@@ -1015,6 +1036,7 @@ static void Player_actor_settle_main(ACTOR* actorx, GAME* game) {
         NULL,
         &Player_actor_settle_main_Switch_on_lighthouse,
         &Player_actor_settle_main_Radio_exercise,
+        NULL,
         &Player_actor_settle_main_Demo_geton_boat,
         NULL,
         NULL,
@@ -1024,6 +1046,10 @@ static void Player_actor_settle_main(ACTOR* actorx, GAME* game) {
         &Player_actor_settle_main_Demo_get_golden_item,
         &Player_actor_settle_main_Demo_get_golden_item2,
         NULL,
+        NULL,
+        Player_actor_settle_main_Ready_secretbase,
+        Player_actor_settle_main_Fall_secretbase,
+        Player_actor_settle_main_Struggle_secretbase,
     };
 
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
@@ -1184,6 +1210,7 @@ static int Player_actor_change_main_index(ACTOR* actorx, GAME* game) {
         &Player_actor_setup_main_Outdoor,
         &Player_actor_setup_main_Invade,
         &Player_actor_setup_main_Hold,
+        &Player_actor_setup_main_Hold_lock,
         &Player_actor_setup_main_Push,
         &Player_actor_setup_main_Pull,
         &Player_actor_setup_main_Rotate_furniture,
@@ -1276,6 +1303,7 @@ static int Player_actor_change_main_index(ACTOR* actorx, GAME* game) {
         &Player_actor_setup_main_Swing_fan,
         &Player_actor_setup_main_Switch_on_lighthouse,
         &Player_actor_setup_main_Radio_exercise,
+        &Player_actor_setup_main_Pull_cracker,
         &Player_actor_setup_main_Demo_geton_boat,
         &Player_actor_setup_main_Demo_geton_boat_sitdown,
         &Player_actor_setup_main_Demo_geton_boat_wait,
@@ -1285,6 +1313,10 @@ static int Player_actor_change_main_index(ACTOR* actorx, GAME* game) {
         &Player_actor_setup_main_Demo_get_golden_item,
         &Player_actor_setup_main_Demo_get_golden_item2,
         &Player_actor_setup_main_Demo_get_golden_axe_wait,
+        &Player_actor_setup_main_Pickup_flower,
+        &Player_actor_setup_main_Ready_secretbase,
+        &Player_actor_setup_main_Fall_secretbase,
+        &Player_actor_setup_main_Struggle_secretbase,
     };
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
 
@@ -1463,6 +1495,7 @@ extern void Player_actor_move(ACTOR* actorx, GAME* game) {
         &Player_actor_main_Outdoor,
         &Player_actor_main_Invade,
         &Player_actor_main_Hold,
+        &Player_actor_main_Hold_lock,
         &Player_actor_main_Push,
         &Player_actor_main_Pull,
         &Player_actor_main_Rotate_furniture,
@@ -1555,6 +1588,7 @@ extern void Player_actor_move(ACTOR* actorx, GAME* game) {
         &Player_actor_main_Swing_fan,
         &Player_actor_main_Switch_on_lighthouse,
         &Player_actor_main_Radio_exercise,
+        &Player_actor_main_Pull_cracker,
         &Player_actor_main_Demo_geton_boat,
         &Player_actor_main_Demo_geton_boat_sitdown,
         &Player_actor_main_Demo_geton_boat_wait,
@@ -1564,6 +1598,10 @@ extern void Player_actor_move(ACTOR* actorx, GAME* game) {
         &Player_actor_main_Demo_get_golden_item,
         &Player_actor_main_Demo_get_golden_item2,
         &Player_actor_main_Demo_get_golden_axe_wait,
+        &Player_actor_main_Pickup_flower,
+        &Player_actor_main_Ready_secretbase,
+        &Player_actor_main_Fall_secretbase,
+        &Player_actor_main_Struggle_secretbase,
     };
     PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
     int idx;
@@ -1584,36 +1622,132 @@ static void Player_actor_draw_Normal(ACTOR*, GAME*);
 
 extern void Player_actor_draw(ACTOR* actorx, GAME* game) {
     static const s8 data[] = {
-        mPlayer_DRAW_TYPE_NONE,   mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NONE,   mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
-        mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL, mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NONE,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NONE,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
+        mPlayer_DRAW_TYPE_NORMAL,
         mPlayer_DRAW_TYPE_NORMAL,
     };
 

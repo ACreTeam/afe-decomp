@@ -79,6 +79,7 @@ static void Player_actor_Set_FeelEffect_common(ACTOR* actorx, int* feel_type_p) 
     if (player->animation0_idx == mPlayer_ANIM_GAAAN1 &&
         Player_actor_Check_AnimationFrame(&player->keyframe0.frame_control, 5.0f)) {
         player->draw_effect_idx = eEC_EFFECT_SHOCK + 1;
+        player->draw_effect_arg1 = 0;
     }
 }
 

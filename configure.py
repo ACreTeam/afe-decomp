@@ -1171,7 +1171,7 @@ config.libs = [
             Object(NonMatching, "game/m_passwordMake_ovl.c"),
             Object(Matching, "game/m_pause.c"),
             Object(Matching, "game/m_play.c"),
-            Object(NonMatching, "game/m_player.c"),
+            Object(Matching, "game/m_player.c"),
             Object(NonMatching, "game/m_player_call.c"),
             Object(NonMatching, "game/m_player_lib.c"),
             Object(NonMatching, "game/m_police_box.c"),

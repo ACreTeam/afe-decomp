@@ -153,6 +153,56 @@ static void Player_actor_set_nextgoto_info_type1(ACTOR* actor) {
     }
 }
 
+static void Player_actor_set_nextgoto_info_type2(ACTOR* actorx, int end_flag, int* changed_scenes_p) {
+    static Door_data_c door_data = { SCENE_RESET_HOUSE, mSc_DIRECT_WEST, 0, 0, { 340, 0, 160 }, EMPTY_NO, WIPE_TYPE_TRIFORCE, { 0, 0, 0 } };
+
+    if (changed_scenes_p == NULL || *changed_scenes_p == FALSE) {
+        if (goto_other_scene((GAME_PLAY*)gamePT, &door_data, TRUE) != TRUE) {
+            if (end_flag) {
+                mDemo_End(actorx);
+            }
+        } else {
+            Door_data_c* str_door_p = Common_GetPointer(structure_exit_door_data);
+            s16 rot_y = actorx->shape_info.rotation.y;
+            xyz_t pos;
+
+            str_door_p->next_scene_id = Save_Get(scene_no);
+            str_door_p->exit_orientation = mSc_DIRECT_SOUTH;
+            str_door_p->exit_type = 0;
+            str_door_p->extra_data = 0;
+
+            pos.x = actorx->world.position.x - 40.0f * sin_s(rot_y);
+            pos.y = actorx->world.position.y;
+            pos.z = actorx->world.position.z - 40.0f * cos_s(rot_y);
+            str_door_p->exit_position.x = (s16)pos.x;
+            str_door_p->exit_position.y = (s16)pos.y;
+            str_door_p->exit_position.z = (s16)pos.z;
+            str_door_p->door_actor_name = FORTUNE_TENT; // strange choice but ok
+            str_door_p->wipe_type = WIPE_TYPE_TRIFORCE;
+            mBGMPsComp_make_ps_wipe(0x2168);
+        }
+
+        if (changed_scenes_p != NULL) {
+            *changed_scenes_p = TRUE;
+        }
+    }
+}
+
+static void Player_actor_set_nextgoto_info_type3(ACTOR* actorx) {
+    PLAYER_ACTOR* player = (PLAYER_ACTOR*)actorx;
+    int* changed_scene_p = NULL;
+
+    if (mPlib_get_player_actor_main_index(gamePT) == mPlayer_INDEX_READY_SECRETBASE) {
+        changed_scene_p = &player->main_data.ready_secretbase.changed_scenes;
+    } else if (mPlib_get_player_actor_main_index(gamePT) == mPlayer_INDEX_FALL_SECRETBASE) {
+        changed_scene_p = &player->main_data.fall_secretbase.changed_scenes;
+    } else if (mPlib_get_player_actor_main_index(gamePT) == mPlayer_INDEX_STRUGGLE_SECRETBASE) {
+        changed_scene_p = &player->main_data.struggle_secretbase.changed_scenes;
+    }
+
+    Player_actor_set_nextgoto_info_type2(actorx, TRUE, changed_scene_p);
+}
+
 static int Player_actor_check_bg_for_next_goto(ACTOR* actor, mActor_name_t door) {
     mCoBG_Collision_u* col;
 
@@ -175,29 +225,41 @@ static void Player_actor_check_nextgoto(ACTOR* actor, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     mActor_name_t door = player->item_in_front;
 
-    if (ITEM_NAME_GET_TYPE(door) == NAME_TYPE_WARP && Player_actor_check_bg_for_next_goto(actor, door) != FALSE &&
-        mEv_IsNotTitleDemo() && play->fb_wipe_mode == WIPE_MODE_NONE) {
-        if (door >= EXIT_DOOR && door < EXIT_DOOR1) {
-            mDemo_Request(mDemo_TYPE_EXITSCENE, actor, Player_actor_set_nextgoto_info_type0);
+    if (ITEM_NAME_GET_TYPE(door) == NAME_TYPE_WARP && Player_actor_check_bg_for_next_goto(actor, door) != FALSE) {
+        if (mEv_IsNotTitleDemo() && play->fb_wipe_mode == WIPE_MODE_NONE) {
+            if (door >= EXIT_DOOR && door < EXIT_DOOR1) {
+                mDemo_Request(mDemo_TYPE_EXITSCENE, actor, Player_actor_set_nextgoto_info_type0);
 
-            if (player->update_scene_bg_mode != FALSE) {
-                mBGMPsComp_scene_mode(0xE);
-                player->update_scene_bg_mode = FALSE;
+                if (player->update_scene_bg_mode != FALSE) {
+                    mBGMPsComp_scene_mode(0xE);
+                    player->update_scene_bg_mode = FALSE;
+                }
+            } else if (door >= DOOR_START && door < EXIT_DOOR) {
+                if ((mFI_GetUnitCol(actor->world.position)->data.center !=
+                        mFI_GetUnitCol(actor->world.position)->data.top_left ||
+                    mFI_GetUnitCol(actor->world.position)->data.center !=
+                        mFI_GetUnitCol(actor->world.position)->data.bot_left ||
+                    mFI_GetUnitCol(actor->world.position)->data.center !=
+                        mFI_GetUnitCol(actor->world.position)->data.bot_right ||
+                    mFI_GetUnitCol(actor->world.position)->data.center !=
+                        mFI_GetUnitCol(actor->world.position)->data.top_right) &&
+                    mFI_GET_TYPE(mFI_GetFieldId()) == mFI_FIELD_PLAYER0_ROOM) {
+                    aMR_SaveWaltzTempo2();
+                    mBGMPsComp_make_ps_wipe(0x10E);
+                }
+                mDemo_Request(mDemo_TYPE_EXITSCENE, actor, Player_actor_set_nextgoto_info_type1);
             }
-        } else if (door >= DOOR_START && door < EXIT_DOOR) {
-            if ((mFI_GetUnitCol(actor->world.position)->data.center !=
-                     mFI_GetUnitCol(actor->world.position)->data.top_left ||
-                 mFI_GetUnitCol(actor->world.position)->data.center !=
-                     mFI_GetUnitCol(actor->world.position)->data.bot_left ||
-                 mFI_GetUnitCol(actor->world.position)->data.center !=
-                     mFI_GetUnitCol(actor->world.position)->data.bot_right ||
-                 mFI_GetUnitCol(actor->world.position)->data.center !=
-                     mFI_GetUnitCol(actor->world.position)->data.top_right) &&
-                mFI_GET_TYPE(mFI_GetFieldId()) == mFI_FIELD_PLAYER0_ROOM) {
-                aMR_SaveWaltzTempo2();
-                mBGMPsComp_make_ps_wipe(0x10E);
-            }
-            mDemo_Request(mDemo_TYPE_EXITSCENE, actor, Player_actor_set_nextgoto_info_type1);
+        }
+    } else {
+        xyz_t ut_pos;
+        mActor_name_t* fg_p;
+
+        mFI_Wpos2UtCenterWpos(&ut_pos, actor->world.position);
+        ut_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(ut_pos, 0.0f);
+        fg_p = mFI_GetUnitFG(ut_pos);
+
+        if (fg_p != NULL && !mPlib_check_player_warp_forEvent() && !Common_Get(reset_flag) && Player_actor_Check_main_index_able_pitfall_secretbase(actor) && IS_ITEM_RST_HOLE(*fg_p)) {
+            Player_actor_request_main_ready_secretbase_all(game, &ut_pos, mPlayer_REQUEST_PRIORITY_26);
         }
     }
 }

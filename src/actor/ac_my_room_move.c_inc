@@ -1638,7 +1638,7 @@ static int aMR_JudgePickUpCommon(mActor_name_t* pickup_item_p, ACTOR* actorx, in
 
 static int square_offset_data[] = { 0, -1, -UT_X_NUM, -(UT_X_NUM + 1) };
 
-static mActor_name_t aMR_SearchPickupFurniture(GAME* game) {
+static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game) {
     ACTOR* actorx = aMR_CLIP->my_room_actor_p;
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     u32 player_no = Common_Get(player_no);
