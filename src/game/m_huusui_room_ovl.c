@@ -26,9 +26,7 @@ typedef struct huusui_room_ftr_info_s {
 } mHsRm_ftr_info_c;
 
 /* table of feng shui data for every item, clearly copy-pasted... should be mHsRm_ftr_info */
-static mHsRm_ftr_info_c mMkRm_ftr_info[FTR_NUM] = {
 #include "../src/game/m_huusui_room_ovl_data.inc" /* data moved out of file due to length */
-};
 
 /* maximum unit position for each main floor size */
 static int mHsRm_unit_max[mHm_HOMESIZE_NUM - 2] = {
@@ -107,7 +105,7 @@ static void mHsRm_EvaluateHuusuiPoint_Single(mActor_name_t ftr, int ut_x, int ut
     *money_power = 0;
     *goods_power = 0;
 
-    ftr_idx = mRmTp_FtrItemNo2FtrIdx(ftr);
+    ftr_idx = mNT_ftr_item_no_to_ftr_idx(ftr);
     ftr_rot = FTR_GET_ROTATION(ftr);
     huusui_type = mMkRm_ftr_info[ftr_idx].huusui_type;
     has_face = mMkRm_ftr_info[ftr_idx].has_face;
@@ -296,14 +294,8 @@ extern void mHsRm_HuusuiRoomOvl(int player_no) {
     }
 
     /* Adjust goods power by dividing it in half and rounding up */
-    real_goods_power = (f32)goods_power * 0.5f;
-    goods_power = real_goods_power;
-
-    /* Always round up if there's any fractional part to goods_power */
-    real_goods_power -= goods_power;
-    if (real_goods_power > 0.0f) {
-        goods_power++;
-    }
+    goods_power += (goods_power >= 0 ? 1 : -1);
+    goods_power /= 2;
 
     Common_Set(money_power, money_power);
     Common_Set(goods_power, goods_power);

@@ -1131,7 +1131,7 @@ config.libs = [
             Object(Matching, "game/m_home.c"),
             Object(Matching, "game/m_house.c"),
             Object(Matching, "game/m_huusui_room.c"),
-            Object(NonMatching, "game/m_huusui_room_ovl.c"),
+            Object(Matching, "game/m_huusui_room_ovl.c"),
             Object(NonMatching, "game/m_inventory_ovl.c"),
             Object(NonMatching, "game/m_island.c"),
             Object(NonMatching, "game/m_item_name.c"),
