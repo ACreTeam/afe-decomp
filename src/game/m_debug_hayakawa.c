@@ -29,6 +29,9 @@
 #include "gfxalloc.h"
 #include "dolphin/vi.h"
 #include "libu64/gfxprint.h"
+#include "m_malloc.h"
+#include "libc64/malloc.h"
+#include "libc64/sleep.h"
 
 /**
  * @brief Set or retrieve bits of a Hayakawa register based on the current state.
@@ -197,7 +200,23 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 }
             }
         }
-        /* Fallthrough 4 -> 6 */
+        /* Fallthrough 4 -> 5 */
+        case 5: {
+            hreg_init_check(5);
+            if (GETREG(HREG, HREG_STATE_ARGS_START) != 0) {
+                if (zelda_MallocIsInitalized()) {
+                    SETREG(HREG, 82, zelda_CheckArena());
+                }
+
+                if (MallocIsInitalized()) {
+                    SETREG(HREG, 83, CheckArena());
+                }
+            }
+            if (GETREG(HREG, HREG_STATE_ARGS_START) < 0) {
+                SETREG(HREG, HREG_STATE_ARGS_START, 0);
+            }
+        }
+        /* Fallthrough 5 -> 6 */
         case 6: {
             if (hreg_init_check(6)) {
                 SETREG(HREG, HREG_STATE_ARGS_START, 1);
@@ -212,6 +231,19 @@ extern void debug_hayakawa_move(pad_t* pad) {
             hreg_init_check(8);
             if (GETREG(HREG, HREG_STATE_ARGS_START) < 0) {
                 SETREG(HREG, HREG_STATE_ARGS_START, 0);
+            }
+        } break;
+
+        // case 9:
+        //     break;
+
+        case 10:
+            break;
+
+        case 11: {
+            hreg_init_check(11);
+            if (GETREG(HREG, HREG_STATE_ARGS_START) > 0) {
+                usleep(GETREG(HREG, HREG_STATE_ARGS_START));
             }
         } break;
 
@@ -299,6 +331,9 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 SETREG(HREG, 85, ScreenWidth);
             }
         } break;
+
+        case 38:
+            break;
 
         /**
          * Unknown function.
