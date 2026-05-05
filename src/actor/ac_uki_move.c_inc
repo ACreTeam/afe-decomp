@@ -1,3 +1,46 @@
+#ifdef __INTELLISENSE__
+#include "ac_uki.h"
+
+#include "m_play.h"
+#include "m_name_table.h"
+#include "ac_set_ovl_gyoei.h"
+#include "m_vibctl.h"
+#include "m_common_data.h"
+#include "ef_effect_control.h"
+#include "m_player_lib.h"
+#include "sys_matrix.h"
+#include "m_actor_shadow.h"
+
+enum {
+    aUKI_PROC_CARRY,
+    aUKI_PROC_READY,
+    aUKI_PROC_AIR,
+    aUKI_PROC_CAST,
+    aUKI_PROC_WAIT,
+    aUKI_PROC_HIT,
+    aUKI_PROC_TOUCH,
+    aUKI_PROC_BITE,
+    aUKI_PROC_CATCH,
+    aUKI_PROC_GET,
+    aUKI_PROC_FORCE,
+
+    aUKI_PROC_NUM
+};
+
+#include "../src/actor/ac_gyoei_type.c_inc"
+
+typedef struct uki_vib_s {
+    int n_frames;
+    int attack_frames;
+    int sustain_frames;
+    int release_frames;
+} aUKI_vib_c;
+
+static void aUKI_set_value(ACTOR* actorx, xyz_t pos, xyz_t pos_speed, int angle_speed_y, int command);
+static mActor_name_t aUKI_get_fish_type(ACTOR* actorx);
+static void aUKI_set_proc(ACTOR* actorx, GAME* game, int proc, int arg);
+#endif
+
 static void set_collision(ACTOR* actorx, GAME* game) {
     UKI_ACTOR* uki = (UKI_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
@@ -59,11 +102,19 @@ static mActor_name_t aUKI_get_fish_type(ACTOR* actorx) {
         ITM_FISH37,
         ITM_FISH38,
         ITM_FISH39,
+        ITM_FISH40,
+        ITM_FISH41,
+        ITM_FISH42,
+        ITM_FISH43,
+        ITM_FISH44,
+        ITM_FISH45,
+        ITM_FISH46,
+        ITM_FISH47,
         ITM_FISH39,
         ITM_DUST0_EMPTY_CAN,
         ITM_DUST1_BOOT,
         ITM_DUST2_OLD_TIRE,
-        ITM_FISH22,
+        ITM_FISH39,
     };
     // clang-format on
     mActor_name_t item = EMPTY_NO;
@@ -112,7 +163,7 @@ static void aUKI_BGcheck(ACTOR* actorx) {
         case mCoBG_ATTRIBUTE_WAVE:
         case mCoBG_ATTRIBUTE_SAND: {
             ground_y = mCoBG_GetBgY_AngleS_FromWpos(NULL, actorx->world.position, 0.0f);
-            water_y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 237);
+            water_y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 186);
             uki->range = 5.0f;
             if ((water_y - ground_y) < 10.0f) {
                 y = 0.0f;
@@ -286,7 +337,7 @@ static void aUKI_effect_sibuki(ACTOR* actorx, GAME* game, s16 arg) {
     xyz_t pos = actorx->world.position;
     s16 flow_angle;
 
-    pos.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 575);
+    pos.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 524);
     flow_angle = aUKI_Get_flow_angle(actorx);
 
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_MIZU, pos, 1, flow_angle, game, EMPTY_NO, arg, 0);
@@ -296,7 +347,7 @@ static void aUKI_effect_hamon(ACTOR* actorx, GAME* game, s16 arg) {
     xyz_t pos = actorx->world.position;
     s16 flow_angle;
 
-    pos.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 603);
+    pos.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 552);
     flow_angle = aUKI_Get_flow_angle(actorx);
 
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_HAMON, pos, 1, flow_angle, game, EMPTY_NO, arg, 0);
@@ -372,7 +423,7 @@ static void aUKI_set_spd_relations_in_water(ACTOR* actorx, GAME* game) {
     UKI_ACTOR* uki = (UKI_ACTOR*)actorx;
     s16 flow_angle;
     int idx;
-    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 772);
+    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 721);
 
     if (uki->gyo_command == 2) {
         if (uki->gyo_status == 4) {
@@ -473,7 +524,7 @@ static void aUKI_set_spd_relations_in_water(ACTOR* actorx, GAME* game) {
 
 static void aUKI_color(ACTOR* actorx) {
     UKI_ACTOR* uki = (UKI_ACTOR*)actorx;
-    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 911);
+    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 860);
 
     if (actorx->world.position.y < (water_height - 3.0f)) {
         aUKI_chase_color(&uki->color[0], 100, -52);
