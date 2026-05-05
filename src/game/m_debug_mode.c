@@ -27,6 +27,7 @@
 #include "jsyswrap.h"
 #include "boot.h"
 #include "m_common_data.h"
+#include "m_font.h"
 
 #define DEBUG_MODE_PRINT_BUF_COUNT 6
 #define DEBUG_MODE_PRINT_OUTPUT_X 26
@@ -488,7 +489,11 @@ extern void Debug_mode_input(pad_t* pad) {
         }
 
         if (DEBUG_MODE_CHECK_TRIGGER_GAME(BUTTON_CRIGHT)) {
-            field_assessment_status ^= 1;
+            field_assessment_status++;
+
+            if (field_assessment_status > 2) {
+                field_assessment_status = 0;
+            }
         }
     }
 }
@@ -599,14 +604,7 @@ static haniwa_tempo_data tempo_data[PLAYER_NUM] = {
 };
 
 static void DebugHaniwaTempo(gfxprint_t* gfxprint) {
-    int i;
-    for (i = 0; i < PLAYER_NUM; i++) {
-        gfxprint_color(gfxprint, 250, 200, 200, 255);
-        gfxprint_locate8x8(gfxprint, 3, 23 + i);
-        gfxprint_printf(gfxprint, "S%d,%dGt%d,%dBS%d,%dAS%d,%d", Save_Get(homes[i].haniwa_tempo.tempo),
-                        Save_Get(homes[i].haniwa_tempo.beat), tempo_data[i].Gt.tempo, tempo_data[i].Gt.beat,
-                        tempo_data[i].BS.tempo, tempo_data[i].BS.beat, tempo_data[i].AS.tempo, tempo_data[i].AS.beat);
-    }
+    // nothing
 }
 
 #define GFXLIST_RESERVED_SIZE (int)(512 * sizeof(Gfx)) /* requires 0x1000 bytes, or 512 free Gfx */
@@ -717,7 +715,7 @@ extern void Debug_mode_output(GRAPH* graph) {
                 mNpc_PrintRemoveInfo(print_p);
             }
 
-            if (field_assessment_status & 1) {
+            if (field_assessment_status == 1) {
                 mFAs_PrintFieldAssessment(print_p);
                 mAGrw_PrintFossilHaniwa_debug(print_p);
 
@@ -727,11 +725,17 @@ extern void Debug_mode_output(GRAPH* graph) {
                 }
 
                 mPr_PrintMapInfo_debug(print_p);
+            } else if (field_assessment_status == 2) {
+                mNpc_PrintRelation_fdebug(print_p);
             }
 
             mFRm_PrintSavedDebug(print_p);
             mCD_PrintErrInfo(print_p);
             mFRm_display_errInfo(print_p);
+
+            if (ZURUMODE2_ENABLED()) {
+                mFont_KanjiLevel_debug(print_p);
+            }
         }
 
         last_gfx = gfxprint_close(print_p);

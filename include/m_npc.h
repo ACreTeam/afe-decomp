@@ -573,6 +573,7 @@ extern void mNpc_set_addd_edit_bit(int bit);
 extern void mNpc_set_addd_edit_info(int mtype, int disp_add);
 extern void mNpc_SetTalkAnimalIdx_fdebug(AnmPersonalID_c* anm_id);
 extern void mNpc_PrintFriendship_fdebug(gfxprint_t* gfxprint);
+extern void mNpc_PrintRelation_fdebug(gfxprint_t* gfxprint);
 
 extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 card_id);
 extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id);

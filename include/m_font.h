@@ -7,6 +7,7 @@
 #include "game.h"
 #include "libforest/gbi_extensions.h"
 #include "charmap.h"
+#include "libu64/gfxprint.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -294,6 +295,8 @@ extern void mFontSentence_gppDraw(mFontSentence* this, GAME* game, Gfx** gfx_pp)
 extern f32 mFont_SetMarkChar(GAME* game, u8 mark_type, f32 x, f32 y, int r, int g, int b, int a, int revert_flag, f32 scale_x, f32 scale_y, int mode);
 extern void mFont_gppSetRectMode(Gfx** gfx_pp);
 extern void mFont_Change_RubyToKana(u8* str, int len);
+
+extern void mFont_KanjiLevel_debug(gfxprint_t* gfxprint);
 
 #ifdef __cplusplus
 }
