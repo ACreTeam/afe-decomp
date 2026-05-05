@@ -966,7 +966,7 @@ extern int mPlib_Get_BasicItemAnimeIndex_fromItemKind(int item_kind) {
 extern u8 mPlib_Get_Item_DataPointerType(int data_idx) {
     if (data_idx >= 0 && data_idx < mPlayer_ITEM_DATA_NUM) {
         // clang-format off
-        static const u8 mPlib_Item_DataPointerType[] = {
+        static const u8 mPlib_Item_DataPointerType[mPlayer_ITEM_DATA_NUM] = {
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
@@ -1009,6 +1009,7 @@ extern u8 mPlib_Get_Item_DataPointerType(int data_idx) {
             mPlayer_ITEM_DATA_TYPE_SKELETON,
             mPlayer_ITEM_DATA_TYPE_SKELETON,
             mPlayer_ITEM_DATA_TYPE_PINWHEEL_ANIMATION,
+            mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
             mPlayer_ITEM_DATA_TYPE_GFX,
@@ -1637,6 +1638,28 @@ extern s8 mPlib_Get_ItemNoToItemKind(mActor_name_t itemNo) {
             return mPlayer_ITEM_KIND_FLOWER_FAN;
         case ITM_LEAF_FAN:
             return mPlayer_ITEM_KIND_LEAF_FAN;
+        case ITM_CRACKER:
+            return mPlayer_ITEM_KIND_CRACKER;
+        case ITM_FLOWER6:
+            return mPlayer_ITEM_KIND_FLOWER01;
+        case ITM_FLOWER3:
+            return mPlayer_ITEM_KIND_FLOWER02;
+        case ITM_FLOWER0:
+            return mPlayer_ITEM_KIND_FLOWER03;
+        case ITM_FLOWER7:
+            return mPlayer_ITEM_KIND_FLOWER04;
+        case ITM_FLOWER4:
+            return mPlayer_ITEM_KIND_FLOWER05;
+        case ITM_FLOWER1:
+            return mPlayer_ITEM_KIND_FLOWER06;
+        case ITM_FLOWER8:
+            return mPlayer_ITEM_KIND_FLOWER07;
+        case ITM_FLOWER5:
+            return mPlayer_ITEM_KIND_FLOWER08;
+        case ITM_FLOWER2:
+            return mPlayer_ITEM_KIND_FLOWER09;
+        case ITM_FLOWER9:
+            return mPlayer_ITEM_KIND_FLOWER10;
         default:
             return -1;
     }
@@ -1765,167 +1788,172 @@ extern u8 ply_1_yatta22_tex_index[];
 extern u8 ply_1_yatta32_tex_index[];
 extern u8 ply_1_mosquito12_tex_index[];
 extern u8 ply_1_axe_break12_tex_index[];
+extern u8 ply_1_cracker_fire12_tex_index[];
 
 extern u8* mPlib_Get_PlayerEyeTexAnimation_p(int anim_idx) {
     if (anim_idx >= 0 && anim_idx < mPlayer_ANIM_NUM) {
-        static u8* const eye_tex_index_table[] = {
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_get_change12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_kokeru_a12_tex_index,
-            ply_1_kokeru_getup_a12_tex_index,
-            ply_1_kokeru_getup_n12_tex_index,
-            ply_1_kokeru_n12_tex_index,
-            NULL,
-            NULL,
-            ply_1_axe_swing12_tex_index,
-            NULL,
-            ply_1_kokeru12_tex_index,
-            ply_1_kokeru_getup12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_axe_hane12_tex_index,
-            ply_1_axe_suka12_tex_index,
-            NULL,
-            NULL,
-            ply_1_get_t12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_menu_change12_tex_index,
-            NULL,
-            ply_1_not_sao_swing12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_not_dig12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_dig_suka12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_shake12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_eat12_tex_index,
-            ply_1_gaaan12_tex_index,
-            NULL,
-            ply_1_deru12_tex_index,
-            ply_1_guratuku12_tex_index,
-            NULL,
-            ply_1_otiru12_tex_index,
-            NULL,
-            NULL,
-            ply_1_biku12_tex_index,
-            ply_1_hati12_tex_index,
-            ply_1_hati22_tex_index,
-            ply_1_hati32_tex_index,
-            NULL,
-            ply_1_deru22_tex_index,
-            ply_1_otiru22_tex_index,
-            ply_1_itazura12_tex_index,
-            NULL,
-            NULL,
-            ply_1_yatta12_tex_index,
-            ply_1_yatta22_tex_index,
-            ply_1_yatta32_tex_index,
-            NULL,
-            ply_1_mosquito12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_axe_break12_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
+        static u8* const eye_tex_index_table[mPlayer_ANIM_NUM] = {
+            NULL, // mPlayer_ANIM_WAIT1
+            NULL, // mPlayer_ANIM_WALK1
+            NULL, // mPlayer_ANIM_AXE1
+            NULL, // mPlayer_ANIM_RUN1
+            NULL, // mPlayer_ANIM_PUSH1
+            NULL, // mPlayer_ANIM_PULL1
+            NULL, // mPlayer_ANIM_HOLD_WAIT1
+            NULL, // mPlayer_ANIM_PICKUP1
+            NULL, // mPlayer_ANIM_LTURN1
+            NULL, // mPlayer_ANIM_RTURN1
+            NULL, // mPlayer_ANIM_GET1
+            ply_1_get_change12_tex_index, // mPlayer_ANIM_GET_CHANGE1
+            NULL, // mPlayer_ANIM_GET_PUTAWAY1
+            NULL, // mPlayer_ANIM_OPEN1
+            NULL, // mPlayer_ANIM_PUTAWAY1
+            NULL, // mPlayer_ANIM_TRANS_WAIT1
+            NULL, // mPlayer_ANIM_TRANSFER1
+            NULL, // mPlayer_ANIM_UMB_OPEN1
+            NULL, // mPlayer_ANIM_UMBRELLA1
+            NULL, // mPlayer_ANIM_DASH1
+            NULL, // mPlayer_ANIM_RUN_SLIP1
+            NULL, // mPlayer_ANIM_GET_PULL1
+            NULL, // mPlayer_ANIM_GET_M1
+            NULL, // mPlayer_ANIM_KAMAE_MOVE_M1
+            NULL, // mPlayer_ANIM_KAMAE_WAIT_M1
+            ply_1_kokeru_a12_tex_index, // mPlayer_ANIM_KOKERU_A1
+            ply_1_kokeru_getup_a12_tex_index, // mPlayer_ANIM_KOKERU_GETUP_A1
+            ply_1_kokeru_getup_n12_tex_index, // mPlayer_ANIM_KOKERU_GETUP_N1
+            ply_1_kokeru_n12_tex_index, // mPlayer_ANIM_KOKERU_N1
+            NULL, // mPlayer_ANIM_NET1
+            NULL, // mPlayer_ANIM_NET_SWING1
+            ply_1_axe_swing12_tex_index, // mPlayer_ANIM_AXE_SWING1
+            NULL, // mPlayer_ANIM_KAMAE_SLIP_M1
+            ply_1_kokeru12_tex_index, // mPlayer_ANIM_KOKERU1
+            ply_1_kokeru_getup12_tex_index, // mPlayer_ANIM_KOKERU_GETUP1
+            NULL, // mPlayer_ANIM_SITDOWN1
+            NULL, // mPlayer_ANIM_SITDOWN_WAIT1
+            NULL, // mPlayer_ANIM_STANDUP1
+            NULL, // mPlayer_ANIM_PUTAWAY_M1
+            NULL, // mPlayer_ANIM_BED_WAIT1
+            NULL, // mPlayer_ANIM_INBED_L1
+            NULL, // mPlayer_ANIM_INBED_R1
+            NULL, // mPlayer_ANIM_INTRAIN1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_D1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_H1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_K1
+            NULL, // mPlayer_ANIM_NEGAERI_L1
+            NULL, // mPlayer_ANIM_NEGAERI_R1
+            NULL, // mPlayer_ANIM_OUTBED_L1
+            NULL, // mPlayer_ANIM_OUTBED_R1
+            NULL, // mPlayer_ANIM_OUTTRAIN1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_D1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_H1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_K1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_D1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_H1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_K1
+            NULL, // mPlayer_ANIM_GO_OUT_O1
+            NULL, // mPlayer_ANIM_GO_OUT_S1
+            NULL, // mPlayer_ANIM_INTO_S1
+            ply_1_axe_hane12_tex_index, // mPlayer_ANIM_AXE_HANE1
+            ply_1_axe_suka12_tex_index, // mPlayer_ANIM_AXE_SUKA1
+            NULL, // mPlayer_ANIM_HOLD_WAIT_H1
+            NULL, // mPlayer_ANIM_HOLD_WAIT_O1
+            ply_1_get_t12_tex_index, // mPlayer_ANIM_GET_T1
+            NULL, // mPlayer_ANIM_GET_T2
+            NULL, // mPlayer_ANIM_PUTAWAY_T1
+            NULL, // mPlayer_ANIM_SAO1
+            NULL, // mPlayer_ANIM_SAO_SWING1
+            NULL, // mPlayer_ANIM_TURI_HIKI1
+            NULL, // mPlayer_ANIM_TURI_WAIT1
+            NULL, // mPlayer_ANIM_NOT_GET_T1
+            NULL, // mPlayer_ANIM_MENU_CATCH1
+            ply_1_menu_change12_tex_index, // mPlayer_ANIM_MENU_CHANGE1
+            NULL, // mPlayer_ANIM_UMB_CLOSE1
+            ply_1_not_sao_swing12_tex_index, // mPlayer_ANIM_NOT_SAO_SWING1
+            NULL, // mPlayer_ANIM_INTRAIN_WAIT1
+            NULL, // mPlayer_ANIM_CLEAR_TABLE1
+            NULL, // mPlayer_ANIM_DIG1
+            NULL, // mPlayer_ANIM_FILL_UP1
+            ply_1_not_dig12_tex_index, // mPlayer_ANIM_NOT_DIG1
+            NULL, // mPlayer_ANIM_CLEAR_TABLE_L1
+            NULL, // mPlayer_ANIM_PICKUP_L1
+            NULL, // mPlayer_ANIM_SCOOP1
+            NULL, // mPlayer_ANIM_CONFIRM1
+            ply_1_dig_suka12_tex_index, // mPlayer_ANIM_DIG_SUKA1
+            NULL, // mPlayer_ANIM_GET_D1
+            NULL, // mPlayer_ANIM_PUTAWAY_D1
+            NULL, // mPlayer_ANIM_DIG_KABU1
+            NULL, // mPlayer_ANIM_FILL_UP_I1
+            NULL, // mPlayer_ANIM_SEND_MAIL1
+            NULL, // mPlayer_ANIM_GET_F1
+            NULL, // mPlayer_ANIM_GET_PULL_F1
+            NULL, // mPlayer_ANIM_GET_PUTAWAY_F1
+            NULL, // mPlayer_ANIM_TRANS_WAIT_F1
+            NULL, // mPlayer_ANIM_TRANSFER_F1
+            NULL, // mPlayer_ANIM_SHAKE1
+            ply_1_shake12_tex_index, // mPlayer_ANIM_TIRED1
+            NULL, // mPlayer_ANIM_WASH1
+            NULL, // mPlayer_ANIM_WASH2
+            NULL, // mPlayer_ANIM_WASH3
+            NULL, // mPlayer_ANIM_WASH4
+            NULL, // mPlayer_ANIM_WASH5
+            NULL, // mPlayer_ANIM_FUKUBIKI1
+            NULL, // mPlayer_ANIM_OMAIRI1
+            NULL, // mPlayer_ANIM_SAISEN1
+            NULL, // mPlayer_ANIM_RETURN_MAIL1
+            NULL, // mPlayer_ANIM_RETURN_MAIL2
+            NULL, // mPlayer_ANIM_RETURN_MAIL3
+            ply_1_eat12_tex_index, // mPlayer_ANIM_EAT1
+            ply_1_gaaan12_tex_index, // mPlayer_ANIM_GAAAN1
+            NULL, // mPlayer_ANIM_GAAAN2
+            ply_1_deru12_tex_index, // mPlayer_ANIM_DERU1
+            ply_1_guratuku12_tex_index, // mPlayer_ANIM_GURATUKU1
+            NULL, // mPlayer_ANIM_MOGAKU1
+            ply_1_otiru12_tex_index, // mPlayer_ANIM_OTIRU1
+            NULL, // mPlayer_ANIM_ZASSOU1
+            NULL, // mPlayer_ANIM_KNOCK1
+            ply_1_biku12_tex_index, // mPlayer_ANIM_BIKU1
+            ply_1_hati12_tex_index, // mPlayer_ANIM_HATI1
+            ply_1_hati22_tex_index, // mPlayer_ANIM_HATI2
+            ply_1_hati32_tex_index, // mPlayer_ANIM_HATI3
+            NULL, // mPlayer_ANIM_PUSH_YUKI1
+            ply_1_deru22_tex_index, // mPlayer_ANIM_DERU2
+            ply_1_otiru22_tex_index, // mPlayer_ANIM_OTIRU2
+            ply_1_itazura12_tex_index, // mPlayer_ANIM_ITAZURA1
+            NULL, // mPlayer_ANIM_UMB_ROT1
+            NULL, // mPlayer_ANIM_PICKUP_WAIT1
+            ply_1_yatta12_tex_index, // mPlayer_ANIM_YATTA1
+            ply_1_yatta22_tex_index, // mPlayer_ANIM_YATTA2
+            ply_1_yatta32_tex_index, // mPlayer_ANIM_YATTA3
+            NULL, // mPlayer_ANIM_KAZA1
+            ply_1_mosquito12_tex_index, // mPlayer_ANIM_MOSQUITO1
+            NULL, // mPlayer_ANIM_MOSQUITO2
+            NULL, // mPlayer_ANIM_RIDE1
+            NULL, // mPlayer_ANIM_RIDE2
+            NULL, // mPlayer_ANIM_RIDEWAIT
+            NULL, // mPlayer_ANIM_GETOFF1
+            NULL, // mPlayer_ANIM_GETOFF2
+            NULL, // mPlayer_ANIM_UTIWA_WAIT1
+            NULL, // mPlayer_ANIM_UTIWA_D1
+            ply_1_axe_break12_tex_index, // mPlayer_ANIM_AXE_BREAK1
+            NULL, // mPlayer_ANIM_AXE_BREAKWAIT1
+            NULL, // mPlayer_ANIM_LIGHT_ON1
+            NULL, // mPlayer_ANIM_TAISOU1
+            NULL, // mPlayer_ANIM_TAISOU2_1
+            NULL, // mPlayer_ANIM_TAISOU2_2
+            NULL, // mPlayer_ANIM_TAISOU3
+            NULL, // mPlayer_ANIM_TAISOU4_1
+            NULL, // mPlayer_ANIM_TAISOU4_2
+            NULL, // mPlayer_ANIM_TAISOU5_1
+            NULL, // mPlayer_ANIM_TAISOU5_2
+            NULL, // mPlayer_ANIM_TAISOU6_1
+            NULL, // mPlayer_ANIM_TAISOU6_2
+            NULL, // mPlayer_ANIM_TAISOU7_1
+            NULL, // mPlayer_ANIM_TAISOU7_2
+            NULL, // mPlayer_ANIM_OMAIRI_US1
+            ply_1_cracker_fire12_tex_index, // mPlayer_ANIM_CRACKER_FIRE1
+            NULL, // mPlayer_ANIM_CRACKER_WAIT1
+            NULL, // mPlayer_ANIM_HANA_PICKUP1
+            NULL, // mPlayer_ANIM_HANA_WAIT1
         };
 
         return eye_tex_index_table[anim_idx];
@@ -1969,167 +1997,172 @@ extern u8 ply_1_yatta21_tex_index[];
 extern u8 ply_1_yatta31_tex_index[];
 extern u8 ply_1_mosquito11_tex_index[];
 extern u8 ply_1_axe_break11_tex_index[];
+extern u8 ply_1_cracker_fire11_tex_index[];
 
 extern u8* mPlib_Get_PlayerMouthTexAnimation_p(int anim_idx) {
     if (anim_idx >= 0 && anim_idx < mPlayer_ANIM_NUM) {
-        static u8* const mouth_tex_index_table[] = {
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_get_change11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_kokeru_a11_tex_index,
-            ply_1_kokeru_getup_a11_tex_index,
-            ply_1_kokeru_getup_n11_tex_index,
-            ply_1_kokeru_n11_tex_index,
-            NULL,
-            NULL,
-            ply_1_axe_swing11_tex_index,
-            NULL,
-            ply_1_kokeru11_tex_index,
-            ply_1_kokeru_getup11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_axe_hane11_tex_index,
-            ply_1_axe_suka11_tex_index,
-            NULL,
-            NULL,
-            ply_1_get_t11_tex_index,
-            ply_1_get_t21_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_not_get_t11_tex_index,
-            NULL,
-            ply_1_menu_change11_tex_index,
-            NULL,
-            ply_1_not_sao_swing11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_not_dig11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_dig_suka11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_eat11_tex_index,
-            ply_1_gaaan11_tex_index,
-            NULL,
-            ply_1_deru11_tex_index,
-            ply_1_guratuku11_tex_index,
-            ply_1_mogaku11_tex_index,
-            ply_1_otiru11_tex_index,
-            NULL,
-            NULL,
-            ply_1_biku11_tex_index,
-            ply_1_hati11_tex_index,
-            ply_1_hati21_tex_index,
-            ply_1_hati31_tex_index,
-            NULL,
-            ply_1_deru21_tex_index,
-            ply_1_otiru21_tex_index,
-            ply_1_itazura11_tex_index,
-            NULL,
-            NULL,
-            ply_1_yatta11_tex_index,
-            ply_1_yatta21_tex_index,
-            ply_1_yatta31_tex_index,
-            NULL,
-            ply_1_mosquito11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            ply_1_axe_break11_tex_index,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
+        static u8* const mouth_tex_index_table[mPlayer_ANIM_NUM] = {
+            NULL, // mPlayer_ANIM_WAIT1
+            NULL, // mPlayer_ANIM_WALK1
+            NULL, // mPlayer_ANIM_AXE1
+            NULL, // mPlayer_ANIM_RUN1
+            NULL, // mPlayer_ANIM_PUSH1
+            NULL, // mPlayer_ANIM_PULL1
+            NULL, // mPlayer_ANIM_HOLD_WAIT1
+            NULL, // mPlayer_ANIM_PICKUP1
+            NULL, // mPlayer_ANIM_LTURN1
+            NULL, // mPlayer_ANIM_RTURN1
+            NULL, // mPlayer_ANIM_GET1
+            ply_1_get_change11_tex_index, // mPlayer_ANIM_GET_CHANGE1
+            NULL, // mPlayer_ANIM_GET_PUTAWAY1
+            NULL, // mPlayer_ANIM_OPEN1
+            NULL, // mPlayer_ANIM_PUTAWAY1
+            NULL, // mPlayer_ANIM_TRANS_WAIT1
+            NULL, // mPlayer_ANIM_TRANSFER1
+            NULL, // mPlayer_ANIM_UMB_OPEN1
+            NULL, // mPlayer_ANIM_UMBRELLA1
+            NULL, // mPlayer_ANIM_DASH1
+            NULL, // mPlayer_ANIM_RUN_SLIP1
+            NULL, // mPlayer_ANIM_GET_PULL1
+            NULL, // mPlayer_ANIM_GET_M1
+            NULL, // mPlayer_ANIM_KAMAE_MOVE_M1
+            NULL, // mPlayer_ANIM_KAMAE_WAIT_M1
+            ply_1_kokeru_a11_tex_index, // mPlayer_ANIM_KOKERU_A1
+            ply_1_kokeru_getup_a11_tex_index, // mPlayer_ANIM_KOKERU_GETUP_A1
+            ply_1_kokeru_getup_n11_tex_index, // mPlayer_ANIM_KOKERU_GETUP_N1
+            ply_1_kokeru_n11_tex_index, // mPlayer_ANIM_KOKERU_N1
+            NULL, // mPlayer_ANIM_NET1
+            NULL, // mPlayer_ANIM_NET_SWING1
+            ply_1_axe_swing11_tex_index, // mPlayer_ANIM_AXE_SWING1
+            NULL, // mPlayer_ANIM_KAMAE_SLIP_M1
+            ply_1_kokeru11_tex_index, // mPlayer_ANIM_KOKERU1
+            ply_1_kokeru_getup11_tex_index, // mPlayer_ANIM_KOKERU_GETUP1
+            NULL, // mPlayer_ANIM_SITDOWN1
+            NULL, // mPlayer_ANIM_SITDOWN_WAIT1
+            NULL, // mPlayer_ANIM_STANDUP1
+            NULL, // mPlayer_ANIM_PUTAWAY_M1
+            NULL, // mPlayer_ANIM_BED_WAIT1
+            NULL, // mPlayer_ANIM_INBED_L1
+            NULL, // mPlayer_ANIM_INBED_R1
+            NULL, // mPlayer_ANIM_INTRAIN1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_D1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_H1
+            NULL, // mPlayer_ANIM_KAGU_OPEN_K1
+            NULL, // mPlayer_ANIM_NEGAERI_L1
+            NULL, // mPlayer_ANIM_NEGAERI_R1
+            NULL, // mPlayer_ANIM_OUTBED_L1
+            NULL, // mPlayer_ANIM_OUTBED_R1
+            NULL, // mPlayer_ANIM_OUTTRAIN1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_D1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_H1
+            NULL, // mPlayer_ANIM_KAGU_CLOSE_K1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_D1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_H1
+            NULL, // mPlayer_ANIM_KAGU_WAIT_K1
+            NULL, // mPlayer_ANIM_GO_OUT_O1
+            NULL, // mPlayer_ANIM_GO_OUT_S1
+            NULL, // mPlayer_ANIM_INTO_S1
+            ply_1_axe_hane11_tex_index, // mPlayer_ANIM_AXE_HANE1
+            ply_1_axe_suka11_tex_index, // mPlayer_ANIM_AXE_SUKA1
+            NULL, // mPlayer_ANIM_HOLD_WAIT_H1
+            NULL, // mPlayer_ANIM_HOLD_WAIT_O1
+            ply_1_get_t11_tex_index, // mPlayer_ANIM_GET_T1
+            ply_1_get_t21_tex_index, // mPlayer_ANIM_GET_T2
+            NULL, // mPlayer_ANIM_PUTAWAY_T1
+            NULL, // mPlayer_ANIM_SAO1
+            NULL, // mPlayer_ANIM_SAO_SWING1
+            NULL, // mPlayer_ANIM_TURI_HIKI1
+            NULL, // mPlayer_ANIM_TURI_WAIT1
+            ply_1_not_get_t11_tex_index, // mPlayer_ANIM_NOT_GET_T1
+            NULL, // mPlayer_ANIM_MENU_CATCH1
+            ply_1_menu_change11_tex_index, // mPlayer_ANIM_MENU_CHANGE1
+            NULL, // mPlayer_ANIM_UMB_CLOSE1
+            ply_1_not_sao_swing11_tex_index, // mPlayer_ANIM_NOT_SAO_SWING1
+            NULL, // mPlayer_ANIM_INTRAIN_WAIT1
+            NULL, // mPlayer_ANIM_CLEAR_TABLE1
+            NULL, // mPlayer_ANIM_DIG1
+            NULL, // mPlayer_ANIM_FILL_UP1
+            ply_1_not_dig11_tex_index, // mPlayer_ANIM_NOT_DIG1
+            NULL, // mPlayer_ANIM_CLEAR_TABLE_L1
+            NULL, // mPlayer_ANIM_PICKUP_L1
+            NULL, // mPlayer_ANIM_SCOOP1
+            NULL, // mPlayer_ANIM_CONFIRM1
+            ply_1_dig_suka11_tex_index, // mPlayer_ANIM_DIG_SUKA1
+            NULL, // mPlayer_ANIM_GET_D1
+            NULL, // mPlayer_ANIM_PUTAWAY_D1
+            NULL, // mPlayer_ANIM_DIG_KABU1
+            NULL, // mPlayer_ANIM_FILL_UP_I1
+            NULL, // mPlayer_ANIM_SEND_MAIL1
+            NULL, // mPlayer_ANIM_GET_F1
+            NULL, // mPlayer_ANIM_GET_PULL_F1
+            NULL, // mPlayer_ANIM_GET_PUTAWAY_F1
+            NULL, // mPlayer_ANIM_TRANS_WAIT_F1
+            NULL, // mPlayer_ANIM_TRANSFER_F1
+            NULL, // mPlayer_ANIM_SHAKE1
+            NULL, // mPlayer_ANIM_TIRED1
+            NULL, // mPlayer_ANIM_WASH1
+            NULL, // mPlayer_ANIM_WASH2
+            NULL, // mPlayer_ANIM_WASH3
+            NULL, // mPlayer_ANIM_WASH4
+            NULL, // mPlayer_ANIM_WASH5
+            NULL, // mPlayer_ANIM_FUKUBIKI1
+            NULL, // mPlayer_ANIM_OMAIRI1
+            NULL, // mPlayer_ANIM_SAISEN1
+            NULL, // mPlayer_ANIM_RETURN_MAIL1
+            NULL, // mPlayer_ANIM_RETURN_MAIL2
+            NULL, // mPlayer_ANIM_RETURN_MAIL3
+            ply_1_eat11_tex_index, // mPlayer_ANIM_EAT1
+            ply_1_gaaan11_tex_index, // mPlayer_ANIM_GAAAN1
+            NULL, // mPlayer_ANIM_GAAAN2
+            ply_1_deru11_tex_index, // mPlayer_ANIM_DERU1
+            ply_1_guratuku11_tex_index, // mPlayer_ANIM_GURATUKU1
+            ply_1_mogaku11_tex_index, // mPlayer_ANIM_MOGAKU1
+            ply_1_otiru11_tex_index, // mPlayer_ANIM_OTIRU1
+            NULL, // mPlayer_ANIM_ZASSOU1
+            NULL, // mPlayer_ANIM_KNOCK1
+            ply_1_biku11_tex_index, // mPlayer_ANIM_BIKU1
+            ply_1_hati11_tex_index, // mPlayer_ANIM_HATI1
+            ply_1_hati21_tex_index, // mPlayer_ANIM_HATI2
+            ply_1_hati31_tex_index, // mPlayer_ANIM_HATI3
+            NULL, // mPlayer_ANIM_PUSH_YUKI1
+            ply_1_deru21_tex_index, // mPlayer_ANIM_DERU2
+            ply_1_otiru21_tex_index, // mPlayer_ANIM_OTIRU2
+            ply_1_itazura11_tex_index, // mPlayer_ANIM_ITAZURA1
+            NULL, // mPlayer_ANIM_UMB_ROT1
+            NULL, // mPlayer_ANIM_PICKUP_WAIT1
+            ply_1_yatta11_tex_index, // mPlayer_ANIM_YATTA1
+            ply_1_yatta21_tex_index, // mPlayer_ANIM_YATTA2
+            ply_1_yatta31_tex_index, // mPlayer_ANIM_YATTA3
+            NULL, // mPlayer_ANIM_KAZA1
+            ply_1_mosquito11_tex_index, // mPlayer_ANIM_MOSQUITO1
+            NULL, // mPlayer_ANIM_MOSQUITO2
+            NULL, // mPlayer_ANIM_RIDE1
+            NULL, // mPlayer_ANIM_RIDE2
+            NULL, // mPlayer_ANIM_RIDEWAIT
+            NULL, // mPlayer_ANIM_GETOFF1
+            NULL, // mPlayer_ANIM_GETOFF2
+            NULL, // mPlayer_ANIM_UTIWA_WAIT1
+            NULL, // mPlayer_ANIM_UTIWA_D1
+            ply_1_axe_break11_tex_index, // mPlayer_ANIM_AXE_BREAK1
+            NULL, // mPlayer_ANIM_AXE_BREAKWAIT1
+            NULL, // mPlayer_ANIM_LIGHT_ON1
+            NULL, // mPlayer_ANIM_TAISOU1
+            NULL, // mPlayer_ANIM_TAISOU2_1
+            NULL, // mPlayer_ANIM_TAISOU2_2
+            NULL, // mPlayer_ANIM_TAISOU3
+            NULL, // mPlayer_ANIM_TAISOU4_1
+            NULL, // mPlayer_ANIM_TAISOU4_2
+            NULL, // mPlayer_ANIM_TAISOU5_1
+            NULL, // mPlayer_ANIM_TAISOU5_2
+            NULL, // mPlayer_ANIM_TAISOU6_1
+            NULL, // mPlayer_ANIM_TAISOU6_2
+            NULL, // mPlayer_ANIM_TAISOU7_1
+            NULL, // mPlayer_ANIM_TAISOU7_2
+            NULL, // mPlayer_ANIM_OMAIRI_US1
+            ply_1_cracker_fire11_tex_index, // mPlayer_ANIM_CRACKER_FIRE1
+            NULL, // mPlayer_ANIM_CRACKER_WAIT1
+            NULL, // mPlayer_ANIM_HANA_PICKUP1
+            NULL, // mPlayer_ANIM_HANA_WAIT1
         };
 
         return mouth_tex_index_table[anim_idx];
@@ -2617,6 +2650,158 @@ extern int mPlib_able_submenu_type1(GAME* game) {
 
 static int mPlib_check_priority_event_type1(GAME* game) {
     return GET_PLAYER_ACTOR_GAME(game)->check_request_main_priority_proc(game, mPlayer_REQUEST_PRIORITY_17) > 0;
+}
+
+extern int mPlib_Check_able_shutter(GAME* game) {
+    static const s8 data[mPlayer_INDEX_NUM] = {
+        FALSE, // mPlayer_INDEX_DMA
+        FALSE, // mPlayer_INDEX_INTRO
+        FALSE, // mPlayer_INDEX_REFUSE
+        TRUE,  // mPlayer_INDEX_REFUSE_PICKUP
+        TRUE,  // mPlayer_INDEX_RETURN_DEMO
+        FALSE, // mPlayer_INDEX_RETURN_OUTDOOR
+        FALSE, // mPlayer_INDEX_RETURN_OUTDOOR2
+        TRUE,  // mPlayer_INDEX_WAIT
+        TRUE,  // mPlayer_INDEX_WALK
+        TRUE,  // mPlayer_INDEX_RUN
+        TRUE,  // mPlayer_INDEX_DASH
+        TRUE,  // mPlayer_INDEX_TUMBLE
+        TRUE,  // mPlayer_INDEX_TUMBLE_GETUP
+        TRUE,  // mPlayer_INDEX_TURN_DASH
+        TRUE,  // mPlayer_INDEX_FALL
+        TRUE,  // mPlayer_INDEX_WADE
+        FALSE, // mPlayer_INDEX_DOOR
+        FALSE, // mPlayer_INDEX_OUTDOOR
+        FALSE, // mPlayer_INDEX_INVADE
+        TRUE,  // mPlayer_INDEX_HOLD
+        TRUE,  // mPlayer_INDEX_HOLD_LOCK
+        TRUE,  // mPlayer_INDEX_PUSH
+        TRUE,  // mPlayer_INDEX_PULL
+        TRUE,  // mPlayer_INDEX_ROTATE_FURNITURE
+        TRUE,  // mPlayer_INDEX_OPEN_FURNITURE
+        TRUE,  // mPlayer_INDEX_WAIT_OPEN_FURNITURE
+        TRUE,  // mPlayer_INDEX_CLOSE_FURNITURE
+        TRUE,  // mPlayer_INDEX_LIE_BED
+        TRUE,  // mPlayer_INDEX_WAIT_BED
+        TRUE,  // mPlayer_INDEX_ROLL_BED
+        TRUE,  // mPlayer_INDEX_STANDUP_BED
+        TRUE,  // mPlayer_INDEX_PICKUP
+        TRUE,  // mPlayer_INDEX_PICKUP_JUMP
+        TRUE,  // mPlayer_INDEX_PICKUP_FURNITURE
+        TRUE,  // mPlayer_INDEX_PICKUP_EXCHANGE
+        TRUE,  // mPlayer_INDEX_SITDOWN
+        TRUE,  // mPlayer_INDEX_SITDOWN_WAIT
+        TRUE,  // mPlayer_INDEX_STANDUP
+        TRUE,  // mPlayer_INDEX_SWING_AXE
+        TRUE,  // mPlayer_INDEX_AIR_AXE
+        TRUE,  // mPlayer_INDEX_REFLECT_AXE
+        TRUE,  // mPlayer_INDEX_BROKEN_AXE
+        TRUE,  // mPlayer_INDEX_SLIP_NET
+        TRUE,  // mPlayer_INDEX_READY_NET
+        TRUE,  // mPlayer_INDEX_READY_WALK_NET
+        TRUE,  // mPlayer_INDEX_SWING_NET
+        TRUE,  // mPlayer_INDEX_PULL_NET
+        TRUE,  // mPlayer_INDEX_STOP_NET
+        TRUE,  // mPlayer_INDEX_NOTICE_NET
+        TRUE,  // mPlayer_INDEX_PUTAWAY_NET
+        TRUE,  // mPlayer_INDEX_READY_ROD
+        TRUE,  // mPlayer_INDEX_CAST_ROD
+        TRUE,  // mPlayer_INDEX_AIR_ROD
+        TRUE,  // mPlayer_INDEX_RELAX_ROD
+        TRUE,  // mPlayer_INDEX_COLLECT_ROD
+        TRUE,  // mPlayer_INDEX_VIB_ROD
+        TRUE,  // mPlayer_INDEX_FLY_ROD
+        TRUE,  // mPlayer_INDEX_NOTICE_ROD
+        TRUE,  // mPlayer_INDEX_PUTAWAY_ROD
+        TRUE,  // mPlayer_INDEX_DIG_SCOOP
+        TRUE,  // mPlayer_INDEX_FILL_SCOOP
+        TRUE,  // mPlayer_INDEX_REFLECT_SCOOP
+        TRUE,  // mPlayer_INDEX_AIR_SCOOP
+        TRUE,  // mPlayer_INDEX_GET_SCOOP
+        TRUE,  // mPlayer_INDEX_PUTAWAY_SCOOP
+        TRUE,  // mPlayer_INDEX_PUTIN_SCOOP
+        TRUE,  // mPlayer_INDEX_TALK
+        TRUE,  // mPlayer_INDEX_RECIEVE_WAIT
+        TRUE,  // mPlayer_INDEX_RECIEVE_STRETCH
+        TRUE,  // mPlayer_INDEX_RECIEVE
+        TRUE,  // mPlayer_INDEX_RECIEVE_PUTAWAY
+        TRUE,  // mPlayer_INDEX_GIVE
+        TRUE,  // mPlayer_INDEX_GIVE_WAIT
+        TRUE,  // mPlayer_INDEX_TAKEOUT_ITEM
+        TRUE,  // mPlayer_INDEX_PUTIN_ITEM
+        TRUE,  // mPlayer_INDEX_DEMO_WAIT
+        TRUE,  // mPlayer_INDEX_DEMO_WALK
+        FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN
+        FALSE, // mPlayer_INDEX_DEMO_GETON_TRAIN_WAIT
+        FALSE, // mPlayer_INDEX_DEMO_GETOFF_TRAIN
+        FALSE, // mPlayer_INDEX_DEMO_STANDING_TRAIN
+        TRUE,  // mPlayer_INDEX_DEMO_WADE
+        FALSE, // mPlayer_INDEX_HIDE
+        TRUE,  // mPlayer_INDEX_GROUNDHOG
+        TRUE,  // mPlayer_INDEX_RELEASE_CREATURE
+        TRUE,  // mPlayer_INDEX_WASH_CAR
+        TRUE,  // mPlayer_INDEX_TIRED
+        TRUE,  // mPlayer_INDEX_ROTATE_OCTAGON
+        TRUE,  // mPlayer_INDEX_THROW_MONEY
+        TRUE,  // mPlayer_INDEX_PRAY
+        TRUE,  // mPlayer_INDEX_SHAKE_TREE
+        FALSE, // mPlayer_INDEX_MAIL_JUMP
+        FALSE, // mPlayer_INDEX_MAIL_LAND
+        TRUE,  // mPlayer_INDEX_READY_PITFALL
+        TRUE,  // mPlayer_INDEX_FALL_PITFALL
+        TRUE,  // mPlayer_INDEX_STRUGGLE_PITFALL
+        TRUE,  // mPlayer_INDEX_CLIMBUP_PITFALL
+        TRUE,  // mPlayer_INDEX_STUNG_BEE
+        TRUE,  // mPlayer_INDEX_NOTICE_BEE
+        TRUE,  // mPlayer_INDEX_REMOVE_GRASS
+        TRUE,  // mPlayer_INDEX_SHOCK
+        FALSE, // mPlayer_INDEX_KNOCK_DOOR
+        TRUE,  // mPlayer_INDEX_CHANGE_CLOTH
+        TRUE,  // mPlayer_INDEX_PUSH_SNOWBALL
+        TRUE,  // mPlayer_INDEX_ROTATE_UMBRELLA
+        TRUE,  // mPlayer_INDEX_WADE_SNOWBALL
+        TRUE,  // mPlayer_INDEX_COMPLETE_PAYMENT
+        FALSE, // mPlayer_INDEX_FAIL_EMU
+        TRUE,  // mPlayer_INDEX_STUNG_MOSQUITO
+        TRUE,  // mPlayer_INDEX_NOTICE_MOSQUITO
+        TRUE,  // mPlayer_INDEX_SWING_FAN
+        TRUE,  // mPlayer_INDEX_SWITCH_ON_LIGHTHOUSE
+        TRUE,  // mPlayer_INDEX_RADIO_EXERCISE
+        TRUE,  // mPlayer_INDEX_PULL_CRACKER
+        TRUE,  // mPlayer_INDEX_DEMO_GETON_BOAT
+        TRUE,  // mPlayer_INDEX_DEMO_GETON_BOAT_SITDOWN
+        TRUE,  // mPlayer_INDEX_DEMO_GETON_BOAT_WAIT
+        TRUE,  // mPlayer_INDEX_DEMO_GETON_BOAT_WADE
+        TRUE,  // mPlayer_INDEX_DEMO_GETOFF_BOAT_STANDUP
+        TRUE,  // mPlayer_INDEX_DEMO_GETOFF_BOAT
+        TRUE,  // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM
+        TRUE,  // mPlayer_INDEX_DEMO_GET_GOLDEN_ITEM2
+        TRUE,  // mPlayer_INDEX_DEMO_GET_GOLDEN_AXE_WAIT
+        TRUE,  // mPlayer_INDEX_PICKUP_FLOWER
+        FALSE, // mPlayer_INDEX_READY_SECRETBASE
+        FALSE, // mPlayer_INDEX_FALL_SECRETBASE
+        FALSE, // mPlayer_INDEX_STRUGGLE_SECRETBASE
+    };
+
+    if (Common_Get(player_actor_exists)) {
+        int main_index = GET_PLAYER_ACTOR_GAME(game)->now_main_index;
+
+        if (mPlayer_MAIN_INDEX_VALID(main_index) != FALSE) {
+            return data[main_index];
+        }
+    }
+
+    return FALSE;
+}
+
+extern int mPlib_able_shutter_type1(GAME* game) {
+    if (mPlib_Check_able_shutter(game) != FALSE && mPlib_Check_SetOrderSubmenu() == FALSE &&
+        mPlib_check_request_change_item() == FALSE && mPlib_check_player_warp_forEvent() == FALSE &&
+        mPlib_CheckScene_AbleSubmenu() != FALSE) {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 extern int mPlib_check_player_open_umbrella(GAME* game) {
@@ -3138,9 +3323,11 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                 int is_tree;
                 int is_rsv;
                 int is_special_scoop_item;
+                int is_rst_stone;
 
                 is_stump = FALSE;
                 is_stone_tencoin = FALSE;
+                is_rst_stone = FALSE;
                 is_tree = FALSE;
                 is_rsv = FALSE;
                 is_special_scoop_item = TRUE;
@@ -3149,6 +3336,8 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                     is_stump = TRUE;
                 } else if (IS_ITEM_STONE_TC(scoop_fg) != FALSE) {
                     is_stone_tencoin = TRUE;
+                } else if ((IS_ITEM_RST_STONE(scoop_fg) || IS_ITEM_CRACKED_STONE(scoop_fg)) != FALSE) {
+                    is_rst_stone = TRUE;
                 } else if (IS_ITEM_HITTABLE_TREE(scoop_fg) != FALSE) {
                     is_tree = TRUE;
                 } else if (scoop_fg == DUMMY_RESERVE) {
@@ -3183,7 +3372,7 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                         return mPlayer_INDEX_AIR_SCOOP;
                     }
 
-                    if (is_stump || is_stone_tencoin || is_tree || is_rsv) {
+                    if (is_stump || is_stone_tencoin || is_rst_stone || is_tree || is_rsv) {
                         pos_p->y = mCoBG_GetBgY_OnlyCenter_FromWpos2(*pos_p, 0.0f);
                         diff_pos_y = pos_p->y - player_pos_p->y;
                     }
@@ -3220,6 +3409,15 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                             mCoBG_LineCheck_RemoveFg(&rev2_pos, start2_pos, end2_pos, &mNT_ItIsStoneCoin10,
                                                      mCoBG_LINE_CHECK_WALL);
                             mCoBG_LineCheck_RemoveFg(&rev4_pos, end2_pos, start2_pos, &mNT_ItIsStoneCoin10,
+                                                     mCoBG_LINE_CHECK_WALL);
+                        } else if (is_rst_stone) {
+                            mCoBG_LineCheck_RemoveFg(&rev_pos, start_pos, end_pos, &mNT_ItIsRstStone,
+                                                     mCoBG_LINE_CHECK_WALL);
+                            mCoBG_LineCheck_RemoveFg(&rev3_pos, end_pos, start_pos, &mNT_ItIsRstStone,
+                                                     mCoBG_LINE_CHECK_WALL);
+                            mCoBG_LineCheck_RemoveFg(&rev2_pos, start2_pos, end2_pos, &mNT_ItIsRstStone,
+                                                     mCoBG_LINE_CHECK_WALL);
+                            mCoBG_LineCheck_RemoveFg(&rev4_pos, end2_pos, start2_pos, &mNT_ItIsRstStone,
                                                      mCoBG_LINE_CHECK_WALL);
                         } else if (is_rsv) {
                             mCoBG_LineCheck_RemoveFg(&rev_pos, start_pos, end_pos, &mNT_ItIsReserveDummy,
@@ -3261,12 +3459,10 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                             /* Don't let the player hit NPCs with the shovel */
                             hit_actor_p = mPlib_Search_exist_npc_inCircle_forScoop(game, pos_p, SQ(39.0f));
                             if (hit_actor_p != NULL) {
-#if VERSION >= VER_GAFU01_00
                                 if (is_stone_tencoin) {
                                     *item_p = scoop_fg;
                                     return mPlayer_INDEX_REFLECT_SCOOP;
                                 }
-#endif
 
                                 return mPlayer_INDEX_AIR_SCOOP;
                             }
@@ -3314,6 +3510,8 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                                         return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else if (is_stone_tencoin) {
                                         return mPlayer_INDEX_REFLECT_SCOOP;
+                                    } else if (is_rst_stone) {
+                                        return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else {
                                         return mPlayer_INDEX_FILL_SCOOP;
                                     }
@@ -3324,6 +3522,8 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                                         return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else if (is_stone_tencoin) {
                                         return mPlayer_INDEX_REFLECT_SCOOP;
+                                    } else if (is_rst_stone) {
+                                        return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else {
                                         return mPlayer_INDEX_DIG_SCOOP;
                                     }
@@ -3333,6 +3533,8 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                                         return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else if (is_stone_tencoin) {
                                         return mPlayer_INDEX_REFLECT_SCOOP;
+                                    } else if (is_rst_stone) {
+                                        return mPlayer_INDEX_REFLECT_SCOOP;
                                     } else {
                                         return mPlayer_INDEX_GET_SCOOP;
                                     }
@@ -3341,6 +3543,8 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
                                     return mPlayer_INDEX_AIR_SCOOP;
                                 default:
                                     if (is_stone_tencoin) {
+                                        *item_p = scoop_fg;
+                                    } else if (is_rst_stone) {
                                         *item_p = scoop_fg;
                                     }
                                     return mPlayer_INDEX_REFLECT_SCOOP;
@@ -3353,6 +3557,10 @@ extern int mPlib_Check_scoop_after(GAME* game, xyz_t* pos_p, mActor_name_t* item
     }
 
     return -1;
+}
+
+extern int mPlib_Check_reflect(GAME* game, xyz_t* pos_p) {
+    return GET_PLAYER_ACTOR_GAME(game)->Check_reflect_proc(game, pos_p);
 }
 
 extern int mPlib_Check_scene_able_change_camera_pos(void) {
@@ -3483,7 +3691,7 @@ extern int mPlib_Check_CorrectPlayerPos_forEvent(void) {
 
         if (mPlayer_MAIN_INDEX_VALID(main_index) != FALSE) {
             // clang-format off
-            static const s8 data[] = {
+            static const s8 data[mPlayer_INDEX_NUM] = {
                 FALSE,
                 FALSE,
                 FALSE,
@@ -3506,14 +3714,6 @@ extern int mPlib_Check_CorrectPlayerPos_forEvent(void) {
                 FALSE,
                 FALSE,
                 FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                FALSE,
-                TRUE,
-                TRUE,
-                TRUE,
-                TRUE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -3521,6 +3721,20 @@ extern int mPlib_Check_CorrectPlayerPos_forEvent(void) {
                 FALSE,
                 TRUE,
                 TRUE,
+                TRUE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                TRUE,
+                TRUE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
+                FALSE,
                 FALSE,
                 FALSE,
                 FALSE,
@@ -3799,4 +4013,56 @@ extern void mPlib_Set_change_color_request(void) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR_NOW();
 
     player->change_color_request = TRUE;
+}
+
+extern int mPlib_Change_main_talk_data_talk_actor_p(ACTOR* talk_actor_p) {
+    PLAYER_ACTOR* player = GET_PLAYER_ACTOR_NOW();
+
+    if (player->now_main_index == mPlayer_INDEX_TALK) {
+        player->main_data.talk.talk_actor_p = talk_actor_p;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+extern int mPlib_Set_ItemFlowerPalletFromItemNo(GAME *game, mActor_name_t item_no) {
+    return mPlib_Set_ItemFlowerPalletFromItemKind(game, mPlib_Get_ItemNoToItemKind(item_no));
+}
+
+extern int mPlib_Set_ItemFlowerPalletFromItemKind(GAME *game, int item_kind) {
+    if (g_fdinfo != NULL) {
+        void* palette = NULL;
+
+        switch (item_kind) {
+            case mPlayer_ITEM_KIND_FLOWER01:
+            case mPlayer_ITEM_KIND_FLOWER02:
+            case mPlayer_ITEM_KIND_FLOWER03:
+                palette = g_fdinfo->field_palette.flower0_pal;
+                break;
+            case mPlayer_ITEM_KIND_FLOWER04:
+            case mPlayer_ITEM_KIND_FLOWER05:
+            case mPlayer_ITEM_KIND_FLOWER06:
+                palette = g_fdinfo->field_palette.flower1_pal;
+                break;
+            case mPlayer_ITEM_KIND_FLOWER07:
+            case mPlayer_ITEM_KIND_FLOWER08:
+            case mPlayer_ITEM_KIND_FLOWER09:
+                palette = g_fdinfo->field_palette.flower2_pal;
+                break;
+            case mPlayer_ITEM_KIND_FLOWER10:
+                palette = g_fdinfo->field_palette.flower3_pal;
+                break;
+        }
+
+        if (palette != NULL) {
+            OPEN_POLY_OPA_DISP(game->graph);
+            gSPSegment(POLY_OPA_DISP++, ANIME_4_TXT_SEG, palette);
+            CLOSE_POLY_OPA_DISP(game->graph);
+
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }

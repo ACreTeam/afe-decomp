@@ -1174,7 +1174,7 @@ config.libs = [
             Object(Matching, "game/m_play.c"),
             Object(Matching, "game/m_player.c"),
             Object(Matching, "game/m_player_call.c"),
-            Object(NonMatching, "game/m_player_lib.c"),
+            Object(Matching, "game/m_player_lib.c"),
             Object(NonMatching, "game/m_police_box.c"),
             Object(NonMatching, "game/m_post_office.c"),
             Object(Matching, "game/m_prenmi.c"),

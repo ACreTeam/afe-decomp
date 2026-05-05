@@ -219,6 +219,7 @@ extern mNT_offset_table_c* obj_hight_table_item0_nogrow(mActor_name_t item);
 extern int FGTreeType_check(mActor_name_t tree);
 extern int mNT_ItIsStump(mActor_name_t actor);
 extern int mNT_ItIsStoneCoin10(mActor_name_t actor);
+extern int mNT_ItIsRstStone(mActor_name_t actor);
 extern int mNT_ItIsReserveDummy(mActor_name_t actor);
 extern int mNT_check_unknown(mActor_name_t item_no);
 extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);

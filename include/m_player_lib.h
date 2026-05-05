@@ -187,7 +187,7 @@ extern int mPlib_CheckButtonOnly_forDush(void);
 extern int mPlib_Check_golden_item_get_demo_end(int gold_item_type);
 extern void mPlib_Set_change_color_request(void);
 extern int mPlib_Set_ItemFlowerPalletFromItemKind(GAME* game, int item_kind);
-extern void mPlib_Change_main_talk_data_talk_actor_p(ACTOR* talk_actor_p);
+extern int mPlib_Change_main_talk_data_talk_actor_p(ACTOR* talk_actor_p);
 extern int mPlib_able_shutter_type1(GAME* game);
 
 #define GET_PLAYER_ACTOR(play) get_player_actor_withoutCheck(play)
