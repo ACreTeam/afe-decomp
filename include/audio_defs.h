@@ -26,6 +26,8 @@ enum {
 #define SE_ECHO(id) ((id) | 0x4000)
 #define SE_SINGLETON(id) ((id) | 0x8000)
 
+#define POS_SE_ECHO(id) ((id) | 0x80)
+
 // TODO: Make the rest of Sound Effects with parameters
 #define SE_REGISTER MONO(NA_SE_REGISTER)
 
@@ -150,6 +152,7 @@ typedef enum audio_sound_effects {
     NA_SE_TOOL_BROKEN3,
 
     NA_SE_78 = 0x78,
+    NA_SE_79 = 0x79,
 
     NA_SE_STONECOIN_ROLL = 0x7D,
     NA_SE_STONECOIN_DRAG = 0x7E,

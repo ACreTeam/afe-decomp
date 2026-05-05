@@ -65,8 +65,13 @@ static void aLS_RequestPoleToStop(ACTOR* actorx, GAME* game) {
     actor->ls_pole.state = 0;
     actor->ls_pole.keyframe_state = 0;
     mEnv_RequestChangeLightOFF((GAME_PLAY*)game, mEnv_LIGHT_TYPE_TENT, 0.002f);
-    sAdo_SysLevStop(0xC9);
-    sAdo_SysTrgStart(SE_ECHO(0x79));
+
+    if (actor->pole_sfx_type == 0) {
+        sAdo_SysLevStop(POS_SE_ECHO(NA_ONGEN_POS_SE_49));
+    } else {
+        sAdo_SysLevStop(NA_ONGEN_POS_SE_66);
+    }
+    sAdo_SysTrgStart(SE_ECHO(NA_SE_79));
 }
 
 static void aLS_RequestPoleToMove(ACTOR* actorx, GAME* game) {
@@ -77,7 +82,8 @@ static void aLS_RequestPoleToMove(ACTOR* actorx, GAME* game) {
     pole->timer = 0;
     pole->state = 1;
     pole->speed = 0.0f;
-    sAdo_SysLevStart(0xC9);
+    sAdo_SysLevStart(POS_SE_ECHO(NA_ONGEN_POS_SE_49));
+    actor->pole_sfx_type = 0;
     kf_p->frame_control.start_frame = 1.0f;
     kf_p->frame_control.end_frame = 100.0f;
 }
@@ -111,8 +117,9 @@ static void aLS_RequestSwitchOFF(ACTOR* actorx, GAME* game) {
 extern cKF_Skeleton_R_c cKF_bs_r_obj_toudai_pole;
 extern cKF_Animation_R_c cKF_ba_r_obj_toudai_pole;
 
-static void aLS_PoleCt(aLS_pole_c* pole, GAME* game, int on) {
+static void aLS_PoleCt(ACTOR* actorx, aLS_pole_c* pole, GAME* game, int on) {
     static xyz_t pos = { 0.0f, 0.0f, 0.0f };
+    LIGHTHOUSE_SWITCH_ACTOR* actor = (LIGHTHOUSE_SWITCH_ACTOR*)actorx;
     cKF_SkeletonInfo_R_c* kf_p = &pole->keyframe;
 
     pole->timer = 0;
@@ -127,7 +134,8 @@ static void aLS_PoleCt(aLS_pole_c* pole, GAME* game, int on) {
         pole->state = 1;
         pole->speed = 0.5f;
         pole->timer = 48;
-        sAdo_SysLevStart(0xC9);
+        sAdo_SysLevStart(NA_ONGEN_POS_SE_66);
+        actor->pole_sfx_type = 1;
     }
 
     kf_p->frame_control.speed = pole->speed;
@@ -159,18 +167,18 @@ static void Lighthouse_Switch_Actor_ct(ACTOR* actorx, GAME* game) {
     int nice_status = aLS_GetNiceStatus();
 
     if (nice_status == aLS_NICE_STATUS_SWITCH_ON) {
-        aLS_PoleCt(pole, game, TRUE);
+        aLS_PoleCt(actorx, pole, game, TRUE);
         aLS_SwitchCt(sw, game, TRUE);
         mRmTp_IndexLightSwitchON(mRmTp_LIGHT_SWITCH_LIGHTHOUSE);
     } else if (nice_status == aLS_NICE_STATUS_OFF) {
-        aLS_PoleCt(pole, game, FALSE);
+        aLS_PoleCt(actorx, pole, game, FALSE);
         aLS_SwitchCt(sw, game, FALSE);
         mRmTp_IndexLightSwitchOFF(mRmTp_LIGHT_SWITCH_LIGHTHOUSE);
     } else if (mRmTp_Index2LightSwitchStatus(mRmTp_LIGHT_SWITCH_LIGHTHOUSE)) {
-        aLS_PoleCt(pole, game, TRUE);
+        aLS_PoleCt(actorx, pole, game, TRUE);
         aLS_SwitchCt(sw, game, TRUE);
     } else {
-        aLS_PoleCt(pole, game, FALSE);
+        aLS_PoleCt(actorx, pole, game, FALSE);
         aLS_SwitchCt(sw, game, FALSE);
     }
 }
@@ -179,7 +187,11 @@ static void Lighthouse_Switch_Actor_dt(ACTOR* actorx, GAME* game) {
     LIGHTHOUSE_SWITCH_ACTOR* actor = (LIGHTHOUSE_SWITCH_ACTOR*)actorx;
 
     if (actor->ls_pole.state == 1) {
-        sAdo_SysLevStop(0xC9);
+        if (actor->pole_sfx_type == 0) {
+            sAdo_SysLevStop(POS_SE_ECHO(NA_ONGEN_POS_SE_49));
+        } else {
+            sAdo_SysLevStop(NA_ONGEN_POS_SE_66);
+        }
     }
 }
 

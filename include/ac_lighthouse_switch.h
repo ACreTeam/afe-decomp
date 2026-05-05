@@ -52,6 +52,7 @@ struct lighthouse_switch_actor_s {
     aLS_switch_c ls_switch;
     aLS_pole_c ls_pole;
     s16 turning_on;
+    s16 pole_sfx_type;
 };
 
 extern ACTOR_PROFILE Lighthouse_Switch_Profile;
