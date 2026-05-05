@@ -179,8 +179,8 @@ typedef struct offset_table_s {
 #define FISH_NUM 48
 #define CLOTH_NUM 255
 #define ETC_NUM 49
-#define CARPET_NUM 67
-#define WALL_NUM 67
+#define CARPET_NUM 69
+#define WALL_NUM 69
 #define FRUIT_NUM 8
 #define PLANT_NUM 11
 #define MINIDISK_AIRCHECK_NUM 70
@@ -4277,10 +4277,10 @@ enum ftr1_e {
 #define RSV_HOLE 0xFE1C
 #define RSV_TREE 0xFE1A
 #define RSV_DOOR 0xFE1E
-#define RSV_FE1C 0xFE1C
+#define RSV_FE1C 0xFE1F
 #define RSV_BRIDGE0 0xFE1D
 #define RSV_BRIDGE1 0xFE1E
-#define RSV_FE1F 0xFE1F
+#define RSV_FE1F 0xFE22
 #define RSV_CLOTH 0xFE23
 #define RSV_CLOTH1 0xFE24
 #define RSV_CLOTH2 0xFE22

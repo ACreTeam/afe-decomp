@@ -1149,7 +1149,7 @@ config.libs = [
             Object(Matching, "game/m_malloc.c"),
             Object(NonMatching, "game/m_map_ovl.c"),
             Object(Matching, "game/m_mark_room.c"),
-            Object(NonMatching, "game/m_mark_room_ovl.c"),
+            Object(Matching, "game/m_mark_room_ovl.c"),
             Object(Matching, "game/m_matching.c"),
             Object(Matching, "game/m_melody.c"),
             Object(Matching, "game/m_monument.c"),
