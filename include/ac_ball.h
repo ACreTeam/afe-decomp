@@ -36,6 +36,8 @@ typedef struct actor_ball_s {
     s16 state_flags;
     s16 unk20A;
     s16 unk20C;
+    int in_reset_hole;
+    float reset_scale_mod;
 } BALL_ACTOR;
 
 extern ACTOR_PROFILE Ball_Profile;

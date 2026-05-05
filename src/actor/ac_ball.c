@@ -68,6 +68,8 @@ static void aBALL_process_ground(ACTOR*, GAME*);
 static void aBALL_process_air(ACTOR*, GAME*);
 static void aBALL_process_air_water_init(ACTOR* actor, GAME*);
 static void aBALL_process_ground_water_init(ACTOR* actor, GAME*);
+static void aBALL_process_reset_hole_init(ACTOR*, GAME*);
+static void aBALL_process_reset_hole(ACTOR*, GAME*);
 
 static int aBALL_Random_pos_set(xyz_t* pos) {
     int x_max;
@@ -119,16 +121,20 @@ static void aBALL_actor_ct(ACTOR* actor, GAME* game) {
     Global_Actor_p = ball;
 
     if ((0.0f == Common_Get(ball_pos).x) && (0.0f == Common_Get(ball_pos).y) && (0.0f == Common_Get(ball_pos).z)) {
+        u8 type;
+
         if (aBALL_Random_pos_set(&actor->world.position) == 0) {
             actor->world.position = actor->home.position;
         }
         actor->world.position.y = mCoBG_GetBgY_AngleS_FromWpos(NULL, actor->world.position, 0.0f);
-        Common_Set(ball_type, RANDOM(3.0f));
+        type = (u8)RANDOM_F(3.0f);
+        Common_Set(ball_type, type);
         Common_Set(ball_pos, actor->world.position);
-        ball->type = Common_Get(ball_type);
+        ball->type = type;
     } else {
         actor->world.position = Common_Get(ball_pos);
-        ball->type = Common_Get(ball_type);
+        ball->type = Common_Get(ball_type) & 0xF;
+        Common_Set(ball_type, Common_Get(ball_type) & 0xF);
     }
     Common_Get(clip).ball_redma_proc = NULL;
     Shape_Info_init(actor, 0.0f, &mAc_ActorShadowEllipse, 9.0f, 17.0f);
@@ -167,7 +173,9 @@ static void aBALL_actor_dt(ACTOR* actor, GAME* game) {
     } else {
         Common_Set(ball_pos, actor->world.position);
     }
-    Common_Get(clip).ball_redma_proc = NULL;
+
+    Common_Get(ball_type) |= 0x10; // destroyed
+    CLIP(ball_redma_proc) = NULL;
     ClObjPipe_dt(game, &ball->ball_pipe);
 }
 
@@ -184,7 +192,7 @@ static void aBALL_position_move(BALL_ACTOR* actor) {
         chase_f(&actor->actor_class.speed, actor->ball_max_speed, actor->ball_acceleration);
     }
 
-    if (!(actor->state_flags & aBALL_STATE_IN_HOLE)) {
+    if (!(actor->state_flags & aBALL_STATE_IN_HOLE) || actor->process_proc == aBALL_process_reset_hole) {
         mRlib_spdF_Angle_to_spdXZ(&actor->actor_class.position_speed, &actor->actor_class.speed,
                                   &actor->actor_class.world.angle.y);
         chase_f(&actor->actor_class.position_speed.y, actor->actor_class.max_velocity_y, actor->actor_class.gravity);
@@ -376,11 +384,16 @@ static void aBALL_OBJcheck(BALL_ACTOR* actor, GAME*) {
     }
 }
 
-static void aBALL_House_Tree_Rev_Check(BALL_ACTOR* actor) {
-    if (mRlib_HeightGapCheck_And_ReversePos(&actor->actor_class) != 1) {
+static int aBALL_House_Tree_Rev_Check(BALL_ACTOR* actor) {
+    int ret = FALSE;
+
+    if (mRlib_HeightGapCheck_And_ReversePos(&actor->actor_class) != TRUE) {
         actor->state_flags |= aBALL_STATE_DEAD;
         Actor_delete(&actor->actor_class);
+        ret = TRUE;
     }
+
+    return ret;
 }
 
 static void aBALL_process_air_init(ACTOR* actor, GAME* game) {
@@ -444,6 +457,12 @@ static void aBALL_process_ground(ACTOR* actor, GAME* game) {
     if (mRlib_Get_ground_norm_inHole(actor, &norm, &distance, &angle, &angle_rate, 1.0f) != 0) {
         f32 dist;
         f32 distance_add;
+        mActor_name_t* fg_p = mFI_GetUnitFG(actor->world.position);
+
+        if (fg_p != NULL && IS_ITEM_RST_HOLE(*fg_p)) {
+            aBALL_process_reset_hole_init(actor, game);
+            return;
+        }
 
         distance_add = (distance - 40.0f) - 5.0f;
         dist = 0.0f;
@@ -532,7 +551,7 @@ static void aBALL_set_spd_relations_in_water(ACTOR* actor, GAME* game) {
 
     int apply_angle;
 
-    height = mCoBG_GetWaterHeight_File(actor->world.position, __FILE__, 0x361);
+    height = mCoBG_GetWaterHeight_File(actor->world.position, __FILE__, 0x374);
     add_calc0(&ball->ball_y, 0.5f, 100.0f);
     mCoBG_GetWaterFlow(&pos_flow, actor->bg_collision_check.result.unit_attribute);
 
@@ -615,12 +634,12 @@ static void aBALL_process_ground_water(ACTOR* actor, GAME* game) {
     aBALL_set_spd_relations_in_water(actor, game);
     ball->ball_speed = actor->speed;
 
-    if (Common_Get(clip).gyo_clip != NULL) {
-        Common_Get(clip).gyo_clip->ballcheck_gyoei_proc(&actor->world.position, 20.0f, 1);
+    if (CLIP(gyo_clip) != NULL) {
+        CLIP(gyo_clip)->ballcheck_gyoei_proc(&actor->world.position, 20.0f, 1);
     }
 
     if (actor->bg_collision_check.result.on_ground) {
-        if (!(actor->bg_collision_check.result.is_in_water) && (currentUT != 11) && currentUT != 22) {
+        if (!(actor->bg_collision_check.result.is_in_water) && (currentUT != mCoBG_ATTRIBUTE_WAVE) && currentUT != mCoBG_ATTRIBUTE_SAND) {
             aBALL_process_ground_init(actor, game);
         }
     } else if (!ball->actor_class.bg_collision_check.result.is_in_water) {
@@ -629,12 +648,11 @@ static void aBALL_process_ground_water(ACTOR* actor, GAME* game) {
         aBALL_process_air_water_init(actor, game);
     }
 
-    if (currentUT == 11 || currentUT == 22) {
+    if (currentUT == mCoBG_ATTRIBUTE_WAVE || currentUT == mCoBG_ATTRIBUTE_SAND) {
         pos = &ball->bgpos;
-
         actor->world.position.y += (0.5f * pos->y);
 
-        if (currentUT == 22) {
+        if (currentUT == mCoBG_ATTRIBUTE_SAND) {
             height = ABS(pos->y);
 
             if (height < 1.0f) {
@@ -642,6 +660,85 @@ static void aBALL_process_ground_water(ACTOR* actor, GAME* game) {
             }
         }
     }
+}
+
+static void aBALL_process_reset_hole_init(ACTOR* actorx, GAME* game) {
+    BALL_ACTOR* ball = (BALL_ACTOR*)actorx;
+
+    actorx->shape_info.draw_shadow = FALSE;
+    ball->reset_scale_mod = 0.0f;
+    ball->timer = 0;
+    ball->process_proc = aBALL_process_reset_hole;
+}
+
+static void aBALL_process_reset_hole(ACTOR* actorx, GAME* game) {
+    BALL_ACTOR* actor = (BALL_ACTOR*)actorx;
+    xyz_t norm;
+    f32 dist;
+    s16 angle_rate;
+    s16 angle_y;
+    float decay;
+
+    if (mRlib_Get_ground_norm_inHole(actorx, &norm, &dist, &angle_y, &angle_rate, 1.0f)) {
+        if (actor->state_flags & aBALL_STATE_IN_HOLE) {
+            f32 scale = actorx->scale.x;
+            float s;
+            float s2;
+
+            actor->reset_scale_mod -= 0.00002f;
+            scale += actor->reset_scale_mod;
+            if (scale <= 0.0f) {
+                actor->in_reset_hole = TRUE;
+                return;
+            }
+
+            actorx->scale.x = scale;
+            actorx->scale.y = scale;
+            actorx->scale.z = scale;
+            s = 0.0f;
+            s2 = (dist - 40.0f) - 5.0f;
+            if (s2 < 0.0f) {
+                s = s2;
+            }
+            s *= 30.0f;
+            add_calc(&actor->ball_y, s, 0.5f, 200.0f, 5.0f);
+            actorx->position_speed.x *= 0.83666f;
+            actorx->position_speed.z *= 0.83666f;
+            if (dist < 1.0f && ABS(actorx->position_speed.x) < 1.0f && ABS(actorx->position_speed.z) < 1.0f) {
+                actorx->speed = 0.0f;
+            }
+        } else {
+            if (dist < 15.0f) {
+                actor->timer++;
+                if (actor->timer > 10) {
+                    actorx->status_data.weight = MASSTYPE_HEAVY;
+                    actor->state_flags |= aBALL_STATE_IN_HOLE;
+                }
+            } else {
+                actor->timer = 0;
+            }
+        }
+    } else if ((actor->state_flags & aBALL_STATE_IN_HOLE) == 0) {
+        aBALL_process_ground_init(actorx, game);
+        return;
+    }
+
+    if (!F32_IS_ZERO(norm.x) || !F32_IS_ZERO(norm.z)) {
+        if (Math3d_normalizeXyz_t(&norm)) {
+            actorx->position_speed.x += norm.x * 1.35f;
+            actorx->position_speed.z += norm.z * 1.35f;
+            mRlib_spdXZ_to_spdF_Angle(&actorx->position_speed, &actor->ball_max_speed, &actorx->world.angle.y);
+            actor->ball_max_speed = MIN(actor->ball_max_speed, 8.0f);
+            actor->ball_acceleration = 0.05f;
+        }
+    } else {
+        actor->ball_max_speed = 0.0f;
+        actor->ball_acceleration = 0.06f;
+    }
+
+    actorx->max_velocity_y = -20.0f;
+    actorx->gravity = 0.3f;
+    actor->ball_speed = actorx->speed;
 }
 
 static void aBALL_calc_axis(ACTOR* actor) {
@@ -737,11 +834,14 @@ static void aBALL_actor_move(ACTOR* actor, GAME* game) {
     BALL_ACTOR* ball = (BALL_ACTOR*)actor;
     GAME_PLAY* play = (GAME_PLAY*)game;
 
-    aBALL_House_Tree_Rev_Check(ball);
+    if (aBALL_House_Tree_Rev_Check(ball) == TRUE) {
+        return;
+    }
 
     if (!(actor->state_bitfield & ACTOR_STATE_NO_CULL)) {
         if (actor->bg_collision_check.result.is_in_water || (ball->state_flags & aBALL_STATE_IN_HOLE)) {
             Actor_delete(actor);
+            return;
         }
         if (actor->speed == 0.0f) {
             return;
@@ -750,6 +850,12 @@ static void aBALL_actor_move(ACTOR* actor, GAME* game) {
     Common_Set(ball_pos, actor->world.position);
     aBALL_position_move(ball);
     ball->process_proc(actor, game);
+
+    if (ball->in_reset_hole == TRUE) {
+        Actor_delete(actor);
+        return;
+    }
+
     aBALL_BGcheck(ball);
     aBALL_OBJcheck(ball, game);
 
@@ -761,18 +867,16 @@ static void aBALL_actor_move(ACTOR* actor, GAME* game) {
 
 static void aBALL_actor_draw(ACTOR* actor, GAME* game) {
     BALL_ACTOR* ball = (BALL_ACTOR*)actor;
-    GRAPH* graph;
-    Gfx* gfx;
+    GRAPH* graph = game->graph;
 
-    graph = game->graph;
 
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
+    OPEN_POLY_OPA_DISP(graph);
+
     Matrix_translate(0.0f, ball->ball_y, 0.0f, MTX_MULT);
     Matrix_rotateXYZ(ball->angle.x, ball->angle.y, ball->angle.z, MTX_MULT);
-    gDPPipeSync(gfx++);
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, ball_model_tbl[ball->type]);
-    NOW_POLY_OPA_DISP = gfx;
-    CLOSE_DISP(graph);
+    gDPPipeSync(POLY_OPA_DISP++);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, ball_model_tbl[ball->type]);
+
+    CLOSE_POLY_OPA_DISP(graph);
 }

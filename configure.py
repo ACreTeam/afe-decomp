@@ -629,7 +629,7 @@ config.libs = [
             Object(Matching, "actor/ac_aprilfool_control.c"),
             Object(Matching, "actor/ac_arrange_ftr.c"),
             Object(Matching, "actor/ac_arrange_room.c"),
-            Object(NonMatching, "actor/ac_ball.c"),
+            Object(Matching, "actor/ac_ball.c"),
             Object(Matching, "actor/ac_balloon.c"),
             Object(Matching, "actor/ac_bee.c"),
             Object(NonMatching, "actor/ac_birth_control.c"),
