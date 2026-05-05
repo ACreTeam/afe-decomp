@@ -293,6 +293,7 @@ extern void mFontSentence_set(mFontSentence* this, u8* sentence_p, int len, u32 
 extern void mFontSentence_gppDraw(mFontSentence* this, GAME* game, Gfx** gfx_pp);
 extern f32 mFont_SetMarkChar(GAME* game, u8 mark_type, f32 x, f32 y, int r, int g, int b, int a, int revert_flag, f32 scale_x, f32 scale_y, int mode);
 extern void mFont_gppSetRectMode(Gfx** gfx_pp);
+extern void mFont_Change_RubyToKana(u8* str, int len);
 
 #ifdef __cplusplus
 }

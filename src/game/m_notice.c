@@ -18,6 +18,7 @@
 #include "m_fishrecord.h"
 #include "m_event.h"
 #include "m_common_data.h"
+#include "m_msg.h"
 
 #define lbRTC_TIME_TO_U32(t) ((u32)(((t)->year << 16) + ((t)->month << 8) + (t)->day))
 
@@ -184,7 +185,7 @@ static int mNtc_get_auto_nwrite_data_last_idx() {
 }
 
 static void mNtc_ClearPage(mNtc_board_post_c* page, int count) {
-    for (count; count != 0; count--) {
+    for (; count != 0; count--) {
         page->post_time = mTM_rtcTime_clear_code;
         mem_clear(page->message, MAIL_BODY_LEN, CHAR_SPACE);
         page++;
@@ -196,7 +197,7 @@ extern void mNtc_SetInitData() {
     lbRTC_time_c rtc_time;
     int header_back_pos;
     int handbill_no_tbl[4] = { 0x1E, 0x1F, 0x20, 0x21 };
-    u8 header[mHandbill_HEADER_LEN];
+    u8 header[mHandbill_HEADER_LEN+4];
     u8 footer[mHandbill_FOOTER_LEN];
     int i;
 
@@ -252,14 +253,19 @@ extern void mNtc_notice_write(mNtc_board_post_c* new_post) {
     }
 }
 
+static u8 land_name_end[] = { CHAR_PP_035, CHAR_PP_123 };
+
 static int mNtc_set_landname_string(u8* buf) {
+    int len;
+
     mem_copy(buf, Save_Get(land_info.name), LAND_NAME_SIZE);
-    return mMl_strlen(Save_Get(land_info.name), LAND_NAME_SIZE, CHAR_SPACE);
+    len = mMl_strlen(Save_Get(land_info.name), LAND_NAME_SIZE, CHAR_SPACE);
+    mem_copy(buf + len, land_name_end, ARRAY_COUNT(land_name_end));
+
+    return len + ARRAY_COUNT(land_name_end);
 }
 
 static void mNtc_set_treasure_string(AnmPersonalID_c* sender_id, mActor_name_t item_no, int block_x, int block_z) {
-    static u8 choume_str[BLOCK_X_NUM] = "QABCDEF";
-
     int land_name_len;
     u8 b_str;
     u8 land_name[LAND_NAME_SIZE];
@@ -271,7 +277,7 @@ static void mNtc_set_treasure_string(AnmPersonalID_c* sender_id, mActor_name_t i
     mIN_copy_name_str(item_name, item_no);
     mHandbill_Set_free_str_art(2, item_name, mIN_ITEM_NAME_LEN, mIN_get_item_article(item_no));
 
-    b_str = choume_str[block_z];
+    b_str = mFI_COL_TO_CHARSTR(block_z);
     mHandbill_Set_free_str(3, &b_str, 1); /* z-acre friendly name (A-F) */
 
     b_str = mFI_COL_TO_CHARSTR(block_x);
@@ -281,105 +287,6 @@ static void mNtc_set_treasure_string(AnmPersonalID_c* sender_id, mActor_name_t i
     mHandbill_Set_free_str(5, land_name, land_name_len);
 }
 
-// TODO: deviation implies fakematch
-#if VERSION != VER_GAFE01_00
-static void mNtc_check_treasure() {
-    lbRTC_time_c* treasure_buried_time;
-    lbRTC_time_c* treasure_checked_time;
-    Animal_c* animal;
-    mLd_land_info_c* land_info;
-    u32 comp_time_rtc;
-    u32 comp_time_buried;
-    lbRTC_time_c rtc_time;
-    int valid_animal_ids[ANIMAL_NUM_MAX];
-    int* valid_id_p;
-    Animal_c* selected_animal;
-    int valid_animal_num;
-    int i;
-    u8 header[mHandbill_FOOTER_LEN];
-    u8 footer[mHandbill_FOOTER_LEN];
-    int mem;
-    int interval_days;
-    int header_back_pos;
-    mNtc_board_post_c post;
-    mActor_name_t item;
-    int b_x;
-    int b_z;
-    f32 rng;
-    int list_type;
-
-    treasure_buried_time = Save_GetPointer(treasure_buried_time);
-    treasure_checked_time = Save_GetPointer(treasure_checked_time);
-    animal = Save_Get(animals);
-    land_info = Save_GetPointer(land_info);
-    valid_animal_num = 0;
-    rtc_time = Common_Get(time.rtc_time);
-
-    if (rtc_time.hour >= mTM_FIELD_RENEW_HOUR) {
-        comp_time_rtc = lbRTC_TIME_TO_U32(&rtc_time);
-        comp_time_buried = lbRTC_TIME_TO_U32(treasure_buried_time);
-        if (comp_time_rtc > comp_time_buried) {
-            interval_days = lbRTC_GetIntervalDays(treasure_buried_time, &rtc_time);
-        } else if (comp_time_rtc < comp_time_buried) {
-            interval_days = lbRTC_GetIntervalDays(&rtc_time, treasure_buried_time);
-        } else {
-            interval_days = 0;
-        }
-
-        if (lbRTC_IsEqualTime(treasure_buried_time, &mTM_rtcTime_clear_code, lbRTC_CHECK_ALL) ||
-            interval_days >= mNtc_MIN_DAYS_BETWEEN_TREASURE) {
-            if (lbRTC_IsEqualTime(treasure_checked_time, &mTM_rtcTime_clear_code, lbRTC_CHECK_ALL) ||
-                treasure_checked_time->year != rtc_time.year || treasure_checked_time->month != rtc_time.month ||
-                treasure_checked_time->day != rtc_time.day) {
-                for (i = 0, valid_id_p = valid_animal_ids; i < ANIMAL_NUM_MAX; i++, animal++) {
-                    if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
-                        for (mem = 0; mem < ANIMAL_MEMORY_NUM; mem++) {
-                            if (animal->memories[mem].memory_player_id.land_id == land_info->id &&
-                                mLd_CheckCmpLandName(animal->memories[mem].memory_player_id.land_name,
-                                                     land_info->name)) {
-                                if (valid_animal_num == ANIMAL_NUM_MAX) {
-                                    return;
-                                }
-
-                                valid_animal_num++;
-                                *valid_id_p++ = i;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (valid_animal_num != 0 && fqrand() < mNtc_TREASURE_CHANCE) {
-                    b_x = 0;
-                    b_z = 0;
-
-                    /* 1/3rd chance of pitfall, 2/3rds chance of rare furniture */
-                    rng = fqrand();
-                    if (rng < (1.0f / 3.0f)) {
-                        item = ITM_PITFALL;
-                    } else {
-                        list_type = rng < (2.0f / 3.0f)
-                                        ? mSP_LISTTYPE_LOTTERY
-                                        : mSP_LISTTYPE_EVENT; /* 50/50 to roll redd or lottery furniture*/
-                        mSP_SelectRandomItem_New(NULL, &item, 1, NULL, 0, mSP_KIND_FURNITURE, list_type, FALSE);
-                    }
-
-                    if (mFI_SetTreasure(&b_x, &b_z, item)) {
-                        selected_animal =
-                            Save_GetPointer(animals[valid_animal_ids[RANDOM(valid_animal_num) % valid_animal_num]]);
-                        mNtc_set_treasure_string(&selected_animal->id, item, b_x, b_z);
-                        lbRTC_TimeCopy(&post.post_time, &rtc_time);
-                        mHandbill_Load_HandbillFromRom(header, &header_back_pos, footer, post.message,
-                                                       0x1F0 + selected_animal->id.looks * 3 + (RANDOM(3) % 3));
-                        mNtc_notice_write(&post);
-                        lbRTC_TimeCopy(treasure_buried_time, &rtc_time);
-                    }
-                }
-            }
-        }
-    }
-}
-#else
 static void mNtc_check_treasure() {
     lbRTC_time_c* treasure_buried_time;
     lbRTC_time_c* treasure_checked_time;
@@ -474,7 +381,6 @@ static void mNtc_check_treasure() {
         }
     }
 }
-#endif
 
 static void mNtc_set_near_old_nwrite_data(lbRTC_time_c* nwrite_time, lbRTC_year_t* nwrite_year, u8* nwrite_num) {
     mNtc_date_data_c* auto_nwrite_p;
@@ -507,41 +413,47 @@ static void mNtc_set_near_old_nwrite_data(lbRTC_time_c* nwrite_time, lbRTC_year_
 static int mNtc_make_auto_nwrite_day_string(u8* str, int month, int day) {
     int month_len;
     int day_len;
-    u8 buf[24];
+    u8 month_buf[mMsg_FREE_STRING_LEN];
+    u8 day_buf[mMsg_FREE_STRING_LEN];
 
-    month_len = mString_Load_MonthStringFromRom(buf, month);
-    mem_copy(str, buf, month_len);
-    str[month_len] = CHAR_SPACE;
-    day_len = mString_Load_DayStringFromRom(buf, day);
-    mem_copy(str + month_len + 1, buf, day_len);
-    return month_len + day_len + 1;
+    mem_clear(month_buf, mMsg_FREE_STRING_LEN, CHAR_SPACE);
+    month_len = mString_Load_MonthStringFromRom(month_buf, month);
+    mFont_Change_RubyToKana(month_buf, month_len);
+    month_len = mMsg_Get_Length_String(month_buf, mMsg_FREE_STRING_LEN);
+    mem_copy(str, month_buf, month_len);
+    mem_clear(day_buf, mMsg_FREE_STRING_LEN, CHAR_SPACE);
+    day_len = mString_Load_DayStringFromRom(day_buf, day);
+    mFont_Change_RubyToKana(day_buf, day_len);
+    day_len = mMsg_Get_Length_String(day_buf, mMsg_FREE_STRING_LEN);
+    mem_copy(str + month_len, day_buf, day_len);
+    return month_len + day_len;
 }
 
 static void mNtc_set_auto_nwrite_common_string() {
     int land_name_len;
     u8 land_name[LAND_NAME_SIZE];
-    u8 shop_name[16];
+    u8 shop_name[mMsg_FREE_STRING_LEN];
 
     land_name_len = mNtc_set_landname_string(land_name);
     mHandbill_Set_free_str(0, land_name, land_name_len);
 
-    mString_Load_StringFromRom(shop_name, 16, 0x558 + mSP_GetShopLevel());
-    mHandbill_Set_free_str(1, shop_name, 16);
+    mString_Load_StringFromRom(shop_name, mMsg_FREE_STRING_LEN, 0x558 + mSP_GetShopLevel());
+    mHandbill_Set_free_str(1, shop_name, mMsg_FREE_STRING_LEN);
 }
 
 static void mNtc_set_auto_nwrite_fishing_string(const lbRTC_ymd_c* date) {
-    u8 month_str[] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-    u8 day_str[] = { ' ', ' ', ' ', ' ' };
-    u8 size_str[] = { ' ', ' ' };
+    u8 month_str[] = { CHAR_PP_032, CHAR_PP_032, CHAR_PP_231, CHAR_PP_017 };
+    u8 day_str[] = { CHAR_PP_032, CHAR_PP_032, CHAR_PP_021, CHAR_PP_016 };
+    u8 size_str[] = { CHAR_PP_032, CHAR_PP_032 };
     PersonalID_c winner_pid;
     u32 size;
     lbRTC_ymd_c win_date = *date;
 
     mEv_fishRecord_holder(&winner_pid, &size, &win_date);
-    mFont_UnintToString(size_str, 2, size, 2, 0, 0, TRUE);
-    mString_Load_MonthStringFromRom(month_str, date->month);
-    mHandbill_Set_free_str(0, month_str, 9);
-    mString_Load_DayStringFromRom(day_str, date->day);
+    mFont_UnintToString(month_str, 2, date->month, 2, 0, 0, FALSE);
+    mFont_UnintToString(day_str, 2, date->day, 2, 0, 0, FALSE);
+    mFont_UnintToString(size_str, 2, size, 2, 0, 0, FALSE);
+    mHandbill_Set_free_str(0, month_str, 4);
     mHandbill_Set_free_str(1, day_str, 4);
     mHandbill_Set_free_str(2, winner_pid.player_name, PLAYER_NAME_LEN);
     mHandbill_Set_free_str(3, size_str, 2);
@@ -551,7 +463,7 @@ static void mNtc_set_auto_nwrite_string(lbRTC_year_t year) {
     lbRTC_ymd_c harvest_moon_date;
     int autumnal_equi_day;
     int len;
-    u8 buf[28];
+    u8 buf[140]; // TODO: get the actual size for this
 
     lbRk_HarvestMoonDay(&harvest_moon_date, year);
     len = mNtc_make_auto_nwrite_day_string(buf, harvest_moon_date.month, harvest_moon_date.day);

@@ -1162,7 +1162,7 @@ config.libs = [
             Object(NonMatching, "game/m_name_table.c"),
             Object(NonMatching, "game/m_needlework.c"),
             Object(NonMatching, "game/m_needlework_ovl.c"),
-            Object(NonMatching, "game/m_notice.c"),
+            Object(Matching, "game/m_notice.c"),
             Object(NonMatching, "game/m_notice_ovl.c"),
             Object(NonMatching, "game/m_npc.c"),
             Object(Matching, "game/m_npc_schedule.c"),
