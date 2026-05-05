@@ -644,7 +644,7 @@ config.libs = [
             Object(Matching, "actor/ac_buggy.c"),
             Object(NonMatching, "actor/ac_conveni.c"),
             Object(NonMatching, "actor/ac_cottage.c"),
-            Object(NonMatching, "actor/ac_count02.c"),
+            Object(Matching, "actor/ac_count02.c"),
             Object(Matching, "actor/ac_countdown.c"),
             Object(NonMatching, "actor/ac_depart.c"),
             Object(Matching, "actor/ac_douzou.c"),

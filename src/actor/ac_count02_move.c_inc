@@ -53,8 +53,12 @@ static void aCOU_wait(STRUCTURE_ACTOR* actor, GAME_PLAY* play) {
         return;
     }
 
-    if (CLIP(countdown_clip) != NULL && CLIP(countdown_clip)->anime_play_flag == FALSE && actor->arg0 <= 2) {
-        CLIP(countdown_clip)->anime_play_proc();
+    if (CLIP(countdown_clip) != NULL) {
+        int chk_frame = mCD_castingoff_mura_chk() ? 0 : 2;
+
+        if (CLIP(countdown_clip)->anime_play_flag == FALSE && actor->arg0 <= chk_frame) {
+            CLIP(countdown_clip)->anime_play_proc();
+        }
     }
 
     if (actor->arg1 != actor->arg0) {
