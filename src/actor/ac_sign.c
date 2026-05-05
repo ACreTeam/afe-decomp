@@ -64,13 +64,26 @@ static void aSIGN_single_erase(SIGN_ACTOR* sign, GAME* game);
 static void aSIGN_actor_ct(ACTOR* actorx, GAME* game) {
     SIGN_ACTOR* sign = (SIGN_ACTOR*)actorx;
 
-    Common_Get(clip).sign_control_actor = sign;
+    CLIP(sign_control_actor) = sign;
     sign->is_winter = Common_Get(time.season) == mTM_SEASON_WINTER;
     aSIGN_setup_action(sign, aSIGN_ACTION_WAIT);
 }
 
 static void aSIGN_actor_dt(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).sign_control_actor = NULL;
+    SIGN_ACTOR* sign = (SIGN_ACTOR*)actorx;
+    int i;
+
+    for (i = 0; i < aSIGN_SINGLE_NUM; i++) {
+        if (sign->single[i].exist_flag == TRUE) {
+            xyz_t pos;
+
+            mFI_BkandUtNum2CenterWpos(&pos, sign->single[i].block.x, sign->single[i].block.z, sign->single[i].unit.x,
+                                      sign->single[i].unit.z);
+            mFI_SetFG_common(SIGNBOARD, pos, TRUE);
+        }
+    }
+
+    CLIP(sign_control_actor) = NULL;
 }
 
 static int aSIGN_no_cull_check(GAME_PLAY* play, int bz, int bx, int ut_z, int ut_x) {
@@ -323,14 +336,8 @@ static int aSIGN_actor_set_target(SIGN_ACTOR* sign, GAME* game) {
                                     int abs_angle_y = ABS(angle_y);
 
                                     if (abs_angle_y < DEG2SHORT_ANGLE2(45.0f)) {
-// TODO: fakematch? Why do these differ?
-#if VERSION == VER_GAFU01_00
                                         s16 d_angle_y =
-                                            (s16)(angle_y + DEG2SHORT_ANGLE2(180.0f)) - player_actor->shape_info.rotation.y;
-#else
-                                            s16 d_angle_y =
-                                                (angle_y + DEG2SHORT_ANGLE2(180.0f)) - player_actor->shape_info.rotation.y;
-#endif
+                                            (angle_y + DEG2SHORT_ANGLE2(180.0f)) - player_actor->shape_info.rotation.y;
                                         s16 diff_angle_y = ABS(d_angle_y);
 
                                         if (diff_angle_y <= DEG2SHORT_ANGLE2(68.83483f)) {
@@ -540,7 +547,7 @@ static void aSIGN_talk_end(SIGN_ACTOR* sign, GAME* game) {
 
 static void aSIGN_wait(SIGN_ACTOR* sign, GAME* game) {
     if (mDemo_Get_talk_actor() == NULL && aSIGN_actor_set_target(sign, game) && chkTrigger(BUTTON_A) &&
-        mDemo_Get_talk_actor() == NULL) {
+        mDemo_Get_talk_actor() == NULL && Common_Get(reset_flag) == FALSE) {
         mDemo_Request(mDemo_TYPE_SPEAK, &sign->actor_class, &aSIGN_set_talk_info);
         aSIGN_setup_action(sign, aSIGN_ACTION_TALK);
     }
@@ -766,15 +773,17 @@ static void aSIGN_random_set(void) {
 
         for (bx = 0; bx < bx_max; bx++) {
             fg_p = mFI_BkNumtoUtFGTop(bx, bz);
-            for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-                for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
-                    if (*fg_p == TREE && GETREG(NMREG, 0) == 1000) {
-                        mFI_UtNumtoFGSet_common(SIGNBOARD_START + (qrand() >> 27), bx * UT_X_NUM + ut_x,
-                                                bz * UT_Z_NUM + ut_z, TRUE);
-                    } else if (*fg_p == EMPTY_NO && GETREG(NMREG, 0) == 100) {
-                        if ((ut_z & 1) != 0 && (ut_x & 1) != 0) {
-                            mFI_UtNumtoFGSet_common(SIGNBOARD_START + (u16)(qrand() >> 27), bx * UT_X_NUM + ut_x,
+            if (fg_p != NULL) {
+                for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
+                    for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
+                        if (*fg_p == TREE && GETREG(NMREG, 0) == 1000) {
+                            mFI_UtNumtoFGSet_common(SIGNBOARD_START + (qrand() >> 27), bx * UT_X_NUM + ut_x,
                                                     bz * UT_Z_NUM + ut_z, TRUE);
+                        } else if (*fg_p == EMPTY_NO && GETREG(NMREG, 0) == 100) {
+                            if ((ut_z & 1) != 0 && (ut_x & 1) != 0) {
+                                mFI_UtNumtoFGSet_common(SIGNBOARD_START + (u16)(qrand() >> 27), bx * UT_X_NUM + ut_x,
+                                                        bz * UT_Z_NUM + ut_z, TRUE);
+                            }
                         }
                     }
                 }
@@ -795,10 +804,12 @@ static void aSIGN_all_clear(void) {
     for (bz = 0; bz < bz_max; bz++) {
         for (bx = 0; bx < bx_max; bx++) {
             fg_p = mFI_BkNumtoUtFGTop(bx, bz);
-            for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-                for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
-                    if (*fg_p >= SIGNBOARD_START && *fg_p < (SIGNBOARD_END + 1)) {
-                        mFI_UtNumtoFGSet_common(EMPTY_NO, bx * UT_X_NUM + ut_x, bz * UT_Z_NUM + ut_z, TRUE);
+            if (fg_p != NULL) {
+                for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
+                    for (ut_x = 0; ut_x < UT_X_NUM; ut_x++, fg_p++) {
+                        if (*fg_p >= SIGNBOARD_START && *fg_p < (SIGNBOARD_END + 1)) {
+                            mFI_UtNumtoFGSet_common(EMPTY_NO, bx * UT_X_NUM + ut_x, bz * UT_Z_NUM + ut_z, TRUE);
+                        }
                     }
                 }
             }
@@ -899,65 +910,67 @@ static void aSIGN_actor_draw(ACTOR* actorx, GAME* game) {
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 2; j++) {
             fg_p = mFI_BkNumtoUtFGTop(draw_p->block.x, draw_p->block.z);
-            for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-                exist_bitfield = draw_p->exist_bitfield[ut_z];
+            if (fg_p != NULL) {
+                for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
+                    exist_bitfield = draw_p->exist_bitfield[ut_z];
 
-                if (exist_bitfield == 0) {
-                    fg_p += UT_X_NUM;
-                } else {
-                    for (ut_x = 0, ut_bit = 1; ut_x < UT_X_NUM; ut_x++) {
-                        if ((exist_bitfield & ut_bit) != 0) {
-                            mActor_name_t item = *fg_p;
+                    if (exist_bitfield == 0) {
+                        fg_p += UT_X_NUM;
+                    } else {
+                        for (ut_x = 0, ut_bit = 1; ut_x < UT_X_NUM; ut_x++) {
+                            if ((exist_bitfield & ut_bit) != 0) {
+                                mActor_name_t item = *fg_p;
 
-                            if (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM0 &&
-                                ITEM_NAME_GET_CAT(item) == ITEM0_CAT_SIGN) {
-                                xyz_t sign_pos;
-                                u32 player_no;
-                                int my_original_idx;
-                                u16* pal_p;
-                                u8* tex_p;
+                                if (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM0 &&
+                                    ITEM_NAME_GET_CAT(item) == ITEM0_CAT_SIGN) {
+                                    xyz_t sign_pos;
+                                    u32 player_no;
+                                    int my_original_idx;
+                                    u16* pal_p;
+                                    u8* tex_p;
 
-                                mFI_BkandUtNum2CenterWpos(&sign_pos, draw_p->block.x, draw_p->block.z, ut_x, ut_z);
-                                sign_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(sign_pos, 0.0f);
+                                    mFI_BkandUtNum2CenterWpos(&sign_pos, draw_p->block.x, draw_p->block.z, ut_x, ut_z);
+                                    sign_pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(sign_pos, 0.0f);
 
-                                player_no = (item >> 3) & 3;
-                                my_original_idx = item & 7;
+                                    player_no = (item >> 3) & 3;
+                                    my_original_idx = item & 7;
 
-                                OPEN_POLY_OPA_DISP(graph);
+                                    OPEN_POLY_OPA_DISP(graph);
 
-                                /* Copy sign position to world matrix translation */
-                                mtxf->mf[3][0] = sign_pos.x;
-                                mtxf->mf[3][1] = sign_pos.y;
-                                mtxf->mf[3][2] = sign_pos.z;
+                                    /* Copy sign position to world matrix translation */
+                                    mtxf->mf[3][0] = sign_pos.x;
+                                    mtxf->mf[3][1] = sign_pos.y;
+                                    mtxf->mf[3][2] = sign_pos.z;
 
-                                if ((item >> 5) & 1) {
-                                    pal_p = hakushi_pal;
-                                    tex_p = hakushi_tex;
-                                } else {
-                                    pal_p = mNW_PaletteIdx2Palette(
-                                        Save_Get(private_data[player_no]).my_org[my_original_idx].palette);
-                                    tex_p = Save_Get(private_data[player_no]).my_org[my_original_idx].design.data;
+                                    if ((item >> 5) & 1) {
+                                        pal_p = hakushi_pal;
+                                        tex_p = hakushi_tex;
+                                    } else {
+                                        pal_p = mNW_PaletteIdx2Palette(
+                                            Save_Get(private_data[player_no]).my_org[my_original_idx].palette);
+                                        tex_p = Save_Get(private_data[player_no]).my_org[my_original_idx].design.data;
+                                    }
+
+                                    gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG, pal_p);
+                                    gSPSegment(POLY_OPA_DISP++, ANIME_2_TXT_SEG, tex_p);
+                                    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph),
+                                            G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+                                    gSPDisplayList(POLY_OPA_DISP++, write_model);
+                                    gSPDisplayList(POLY_OPA_DISP++, mdl[sign->is_winter]);
+
+                                    CLOSE_POLY_OPA_DISP(graph);
+
+                                    /* Draw shadow behind the sign */
+                                    mtxf->mf[3][0] = sign_pos.x;
+                                    mtxf->mf[3][1] = sign_pos.y;
+                                    mtxf->mf[3][2] = sign_pos.z - 1.0f;
+                                    aSIGN_draw_shadow(game, &aSIGN_shadow_data);
                                 }
-
-                                gSPSegment(POLY_OPA_DISP++, ANIME_1_TXT_SEG, pal_p);
-                                gSPSegment(POLY_OPA_DISP++, ANIME_2_TXT_SEG, tex_p);
-                                gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph),
-                                          G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-                                gSPDisplayList(POLY_OPA_DISP++, write_model);
-                                gSPDisplayList(POLY_OPA_DISP++, mdl[sign->is_winter]);
-
-                                CLOSE_POLY_OPA_DISP(graph);
-
-                                /* Draw shadow behind the sign */
-                                mtxf->mf[3][0] = sign_pos.x;
-                                mtxf->mf[3][1] = sign_pos.y;
-                                mtxf->mf[3][2] = sign_pos.z - 1.0f;
-                                aSIGN_draw_shadow(game, &aSIGN_shadow_data);
                             }
-                        }
 
-                        ut_bit <<= 1;
-                        fg_p++;
+                            ut_bit <<= 1;
+                            fg_p++;
+                        }
                     }
                 }
             }
