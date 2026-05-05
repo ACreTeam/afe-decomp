@@ -383,7 +383,7 @@ static int aSNMgr_check_safe_ut(int bx, int bz, int ux, int uz, mActor_name_t it
     if (col_p != NULL) {
         xyz_t pos;
 
-        if (mNpc_CheckNpcSet_fgcol(item, col_p->data.unit_attribute)) {
+        if (mNpc_CheckNpcSet_fgcol(item, col_p->data.unit_attribute) && !mFI_CheckLapPolice(bx, bz, ux, uz)) {
             mFI_BkandUtNum2Wpos(&pos, bx, bz, ux, uz);
 
             if (!mCoBG_ExistHeightGap_KeepAndNow(pos)) {
@@ -471,7 +471,7 @@ static int aSNMgr_get_safe_utnum_3x3(int* safe_ux, int* safe_uz, int bx, int bz)
     return ret;
 }
 
-static int aSNMgr_get_safe_utnum_in_block(int* safe_ux, int* safe_uz, int bx, int bz) {
+extern int aSNMgr_get_safe_utnum_in_block(int* safe_ux, int* safe_uz, int bx, int bz, int ut_bounds_ofs) {
     static u16 candidate_ut[16];
     u16* candidate_ut_p = candidate_ut;
     int candidate_num = 0;
@@ -486,7 +486,7 @@ static int aSNMgr_get_safe_utnum_in_block(int* safe_ux, int* safe_uz, int bx, in
         bzero(candidate_ut, sizeof(candidate_ut));
         for (i = 0; i < UT_Z_NUM; i++) {
             for (j = 0; j < UT_X_NUM; j++) {
-                if (j >= 1 && j < (UT_X_NUM - 1) && i >= 1 && i < (UT_Z_NUM - 1)) {
+                if (j >= ut_bounds_ofs && j < (UT_X_NUM - ut_bounds_ofs) && i >= ut_bounds_ofs && i < (UT_Z_NUM - ut_bounds_ofs)) {
                     if (aSNMgr_check_safe_ut(bx, bz, j, i, *fg_p, col_p) == TRUE) {
                         (*candidate_ut_p) |= 1 << j;
                         candidate_num++;
@@ -527,13 +527,13 @@ static int aSNMgr_get_safe_utnum_in_block(int* safe_ux, int* safe_uz, int bx, in
     return ret;
 }
 
-static int aSNMgr_get_safe_utnum_regular(int* safe_ux, int* safe_uz, int bx, int bz) {
+extern int aSNMgr_get_safe_utnum_regular(int* safe_ux, int* safe_uz, int bx, int bz, int ut_bounds_ofs) {
     int ret;
 
     aSNMgr_get_safe_sp_event_structure(safe_ux, safe_uz, mFI_BkNumtoUtFGTop(bx, bz));
     ret = aSNMgr_get_safe_utnum_3x3(safe_ux, safe_uz, bx, bz);
     if (!ret) {
-        ret = aSNMgr_get_safe_utnum_in_block(safe_ux, safe_uz, bx, bz);
+        ret = aSNMgr_get_safe_utnum_in_block(safe_ux, safe_uz, bx, bz, ut_bounds_ofs);
     }
 
     return ret;
@@ -572,7 +572,7 @@ static int aSNMgr_get_safe_utnum(int* safe_ux, int* safe_uz, int bx, int bz, mNp
     if (status == mNpcW_APPEAR_STATUS_GUEST) {
         return aSNMgr_get_safe_utnum_guest(safe_ux, safe_uz, bx, bz, way);
     } else {
-        return aSNMgr_get_safe_utnum_regular(safe_ux, safe_uz, bx, bz);
+        return aSNMgr_get_safe_utnum_regular(safe_ux, safe_uz, bx, bz, 1);
     }
 }
 
@@ -661,12 +661,16 @@ static void aSNMgr_move_event_set(SET_NPC_MANAGER_ACTOR* manager) {
     }
 }
 
-static void aSNMgr_get_event_name(mActor_name_t* name_p, aSNMgr_event_info_c* info_p, int animal_idx) {
+static void aSNMgr_get_event_name(mActor_name_t* name_p, aSNMgr_event_info_c* info_p, int animal_idx, int bx, int bz, int ux, int uz) {
     int idx = -1;
 
-    if (info_p->type != mEv_EVENT_NUM && info_p->type != mEv_EVENT_KAMAKURA) {
+    if (info_p->type != mEv_EVENT_NUM && info_p->type != mEv_EVENT_KAMAKURA && info_p->type != mEv_EVENT_SUMMER_CAMPER) {
         if (info_p->event_map_idx != -1) {
             idx = aSNMgr_get_event_npc_idx(info_p->save_p->animal_idx, info_p->joint_npc_max, animal_idx);
+
+            if (idx != -1) {
+                mEvMN_be_flat_unit(bx, bz, ux, uz);
+            }
         }
 
         mEvMN_GetEventNpcName(name_p, info_p->type, animal_idx, idx);
@@ -713,7 +717,7 @@ static int aSNMgr_set_make_npc(aSNMgr_make_c* make_p, mActor_name_t name, int bx
 
         sel_make_p->name = name;
         sel_make_p->make_name = name;
-        aSNMgr_get_event_name(&sel_make_p->make_name, info_p, animal_idx);
+        aSNMgr_get_event_name(&sel_make_p->make_name, info_p, animal_idx, bx, bz, ux, uz);
         sel_make_p->bx = bx;
         sel_make_p->bz = bz;
         sel_make_p->ux = ux;
@@ -963,7 +967,7 @@ static int aSNMgr_set_go_home_status_sub(SET_NPC_MANAGER_ACTOR* manager, int anm
     int ret = FALSE;
 
 
-    if (aSNMgr_get_safe_utnum_in_block(&ux, &uz, bx, bz) == TRUE) {
+    if (aSNMgr_get_safe_utnum_in_block(&ux, &uz, bx, bz, 1) == TRUE) {
         mNpc_NpcList_c* list_p = &manager->npc_info.list_p[anm_idx];
         mNpcW_info_c* winfo_p = manager->npc_info.winfo_p[anm_idx];
 
@@ -1155,7 +1159,7 @@ static void aSNMgr_set_npc_regular(SET_NPC_MANAGER_ACTOR* manager) {
         if (aSNMgr_chk_exist_and_appear(manager, mNpcW_APPEAR_STATUS_REGULAR, i) == TRUE) {
             if (aSNMgr_check_in_scope(list_p->position, &manager->scope) == TRUE) {
                 if (((joint_event >> i) & 1) == 1) {
-                    if (info_p->type != mEv_EVENT_KAMAKURA) {
+                    if (info_p->type != mEv_EVENT_KAMAKURA && info_p->type != mEv_EVENT_SUMMER_CAMPER) {
                         aSNMgr_set_npc_event(animal_p, list_p, info_p, i);
                     } else {
                         set = FALSE;

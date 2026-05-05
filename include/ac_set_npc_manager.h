@@ -85,6 +85,9 @@ struct set_npc_manager_actor_s {
     aSNMgr_npc_info_c npc_info;
 };
 
+extern int aSNMgr_get_safe_utnum_in_block(int* safe_ux, int* safe_uz, int bx, int bz, int ut_bounds_ofs);
+extern int aSNMgr_get_safe_utnum_regular(int* safe_ux, int* safe_uz, int bx, int bz, int ut_bounds_ofs);
+
 extern ACTOR_PROFILE Set_Npc_Manager_Profile;
 
 #ifdef __cplusplus

@@ -369,7 +369,7 @@ enum event_table {
 
     mEv_EVENT_77, // some unused rumor?
 
-    mEv_EVENT_NUM = mEv_EVENT_77
+    mEv_EVENT_NUM
 };
 
 enum {
