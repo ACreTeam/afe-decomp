@@ -132,7 +132,7 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 }
             }
         }
-        /* Fallthrough 1 -> 2 -> 3 -> 4 -> 6 */
+        /* Fallthrough 1 -> 2 -> 3 -> 4 -> 5 -> 6 */
         /**
          * Loads the active thread count into HREG.
          * HREG[81] = < 0, load threads
@@ -145,7 +145,7 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 SETREG(HREG, 82, OSCheckActiveThreads());
             }
         }
-        /* Fallthrough 2 -> 3 -> 4 -> 6 */
+        /* Fallthrough 2 -> 3 -> 4 -> 5 -> 6 */
         /**
          * Dumps the root heap info to console along with free size of the heap.
          * HREG[81] = < 0, check should dump
@@ -165,8 +165,7 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 }
             }
         }
-        /* Fallthrough 3 -> 4 -> 6 */
-        // break;
+        /* Fallthrough 3 -> 4 -> 5 -> 6 */
 
         /**
          * Modifies video settings
@@ -224,18 +223,12 @@ extern void debug_hayakawa_move(pad_t* pad) {
             }
         } break;
 
-        case 7:
-            break;
-
         case 8: {
             hreg_init_check(8);
             if (GETREG(HREG, HREG_STATE_ARGS_START) < 0) {
                 SETREG(HREG, HREG_STATE_ARGS_START, 0);
             }
         } break;
-
-        // case 9:
-        //     break;
 
         case 10:
             break;
@@ -265,6 +258,9 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 SETREG(HREG, 47, GETREG(HREG, 47) & (~8));
             }
         } break;
+
+        case 19:
+            break;
 
         /**
          * Toggles 'FreeBlockTest' mode for __osMalloc.
@@ -331,6 +327,12 @@ extern void debug_hayakawa_move(pad_t* pad) {
                 SETREG(HREG, 85, ScreenWidth);
             }
         } break;
+
+        // case 36:
+        //     break;
+
+        case 37:
+            break;
 
         case 38:
             break;

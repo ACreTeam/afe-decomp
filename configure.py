@@ -1099,7 +1099,7 @@ config.libs = [
             Object(NonMatching, "game/m_cpwarning_ovl.c"),
             Object(Matching, "game/m_debug.c"),
             Object(Matching, "game/m_debug_display.c"),
-            Object(NonMatching, "game/m_debug_hayakawa.c"),
+            Object(Matching, "game/m_debug_hayakawa.c"),
             Object(Matching, "game/m_debug_mode.c"),
             Object(Matching, "game/m_demo.c"),
             Object(Matching, "game/m_design_ovl.c"),
