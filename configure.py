@@ -1081,7 +1081,7 @@ config.libs = [
             Object(NonMatching, "game/m_board_ovl.c"),
             Object(Matching, "game/m_calendar.c"),
             Object(NonMatching, "game/m_calendar_ovl.c"),
-            Object(NonMatching, "game/m_camera2.c"),
+            Object(Matching, "game/m_camera2.c"),
             Object(NonMatching, "game/m_card.c"),
             Object(NonMatching, "game/m_catalog_ovl.c"),
             Object(NonMatching, "game/m_choice.c"),

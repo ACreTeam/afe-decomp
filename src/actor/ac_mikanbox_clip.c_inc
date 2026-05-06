@@ -1,3 +1,16 @@
+#ifdef __INTELLISENSE__
+#include "ac_mikanbox_clip.h"
+#include "ac_mikanbox.h"
+#include "m_common_data.h"
+#include "m_string.h"
+#include "m_font.h"
+#include "m_msg.h"
+#include "m_bgm.h"
+#include "m_player_lib.h"
+#include "sys_matrix.h"
+#include "m_rcp.h"
+#endif
+
 static u8 totakeke_str[aMIK_STRING_LEN * aMIK_STRING_NUM];
 
 // clang-format off
@@ -151,7 +164,7 @@ static void aNTT_roll1_init(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
     mBGMPsComp_make_ps_demo(bgm_no, 0x168);
     mBGMPsComp_delete_ps_quiet();
     kk->npc_class.condition_info.demo_flg = aNPC_COND_DEMO_SKIP_KUTIPAKU | aNPC_COND_DEMO_SKIP_HEAD_LOOKAT;
-    Camera2_request_main_staff_roll(play, GET_PLAYER_ACTOR_ACTOR(play), (ACTOR*)kk, 5);
+    Camera2_request_main_staff_roll(play, GET_PLAYER_ACTOR_ACTOR(play), (ACTOR*)kk, 5, CAMERA2_PROCESS_STAFF_ROLL, 0);
     play->draw_chk_proc = &aNTT_draw_chk_proc;
 }
 

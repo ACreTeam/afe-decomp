@@ -297,35 +297,36 @@ typedef struct camera_perspective_s {
     f32 scale;
 } CameraPerspective;
 
+/* sizeof(Camera2) == 0x138 */
 typedef struct camera_s {
-    CameraLookat lookat;
-    CameraPerspective perspective;
+    /* 0x000 */ CameraLookat lookat;
+    /* 0x024 */ CameraPerspective perspective;
 
-    s_xyz direction;          /* camera orientation */
-    s_xyz direction_velocity; /* camera orentation rate of change */
+    /* 0x038 */ s_xyz direction;          /* camera orientation */
+    /* 0x03E */ s_xyz direction_velocity; /* camera orentation rate of change */
 
-    xyz_t movement_velocity; /* camera world position velocity */
+    /* 0x044 */ xyz_t movement_velocity; /* camera world position velocity */
 
-    f32 focus_distance;          /* distance to the camera focal point/subject */
-    f32 focus_distance_velocity; /* rate of change of the camera focus */
+    /* 0x050 */ f32 focus_distance;          /* distance to the camera focal point/subject */
+    /* 0x054 */ f32 focus_distance_velocity; /* rate of change of the camera focus */
 
-    int indoor_distance_addition_idx;  /* index of indoor distance adjustment LUT value to apply */
-    int indoor_direction_addition_idx; /* index of indoor direction adjustment LUT value to apply */
+    /* 0x058 */ int indoor_distance_addition_idx;  /* index of indoor distance adjustment LUT value to apply */
+    /* 0x05C */ int indoor_direction_addition_idx; /* index of indoor direction adjustment LUT value to apply */
 
-    int now_main_index;                /* current main index type */
-    int last_main_index;               /* previous main index type */
-    int requested_main_index;          /* requested main index type */
-    int requested_main_index_priority; /* requested main index priority value */
-    int requested_main_index_flag;     /* TRUE/FALSE requested main index has been set */
+    /* 0x060 */ int now_main_index;                /* current main index type */
+    /* 0x064 */ int last_main_index;               /* previous main index type */
+    /* 0x068 */ int requested_main_index;          /* requested main index type */
+    /* 0x06C */ int requested_main_index_priority; /* requested main index priority value */
+    /* 0x070 */ int requested_main_index_flag;     /* TRUE/FALSE requested main index has been set */
 
-    CameraMainData main_data;       /* current main index data */
-    CameraRequestData request_data; /* requested index data */
+    /* 0x074 */ CameraMainData main_data;       /* current main index data */
+    /* 0x0C8 */ CameraRequestData request_data; /* requested index data */
 
-    xyz_t mic_pos; /* mic position */
-    u32 flags;     /* camera flags */
+    /* 0x110 */ xyz_t mic_pos; /* mic position */
+    /* 0x11C */ u32 flags;     /* camera flags */
 
-    xyz_t offset_eye;
-    xyz_t offset_center;
+    /* 0x120 */ xyz_t offset_eye;
+    /* 0x12C */ xyz_t offset_center;
 } Camera2;
 
 extern s16 getCamera2AngleY(GAME_PLAY* play);
@@ -372,7 +373,7 @@ extern int Camera2_request_BuySikimono_WallPaper(GAME_PLAY* play, xyz_t* center,
 extern int Camera2_Inter_set_reverse_mode(GAME_PLAY* play);
 extern int Camera2_request_main_inter(GAME_PLAY* play, const xyz_t* start_center, const xyz_t* start_eye, const xyz_t* goal_center,
                                       const xyz_t* goal_eye, f32 s0, f32 s1, u32 flags, int morph_counter, int priority);
-extern int Camera2_request_main_staff_roll(GAME_PLAY* play, ACTOR* speaker, ACTOR* listener, int priority);
+extern int Camera2_request_main_staff_roll(GAME_PLAY* play, ACTOR* speaker, ACTOR* listener, int priority, int type, int subtype);
 extern void Init_Camera2(GAME_PLAY* play);
 extern void Camera2_process(GAME_PLAY* play);
 extern void Camera2_draw(GAME_PLAY* play);
