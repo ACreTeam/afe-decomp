@@ -1,6 +1,7 @@
 #include "m_needlework.h"
 
 #include "m_string.h"
+#include "m_font.h"
 #include "m_private.h"
 #include "m_common_data.h"
 #include "jsyswrap.h"
@@ -12,13 +13,44 @@
  *
  * @param player_no The index of the player whose designs will be updated
  **/
-static void mNW_InitMyOriginalPallet(int player_no) {
-    static u8 pal_table[mPr_ORIGINAL_DESIGN_COUNT] = { 0, 8, 7, 7, 0, 0, 0, 0 };
-
+static void mNW_InitMyOriginalPal(int player_no) {
+    static u8 pal_table[mPr_ORIGINAL_DESIGN_COUNT] = {
+        mNW_PALETTE0,
+        mNW_PALETTE8,
+        mNW_PALETTE7,
+        mNW_PALETTE7,
+        mNW_PALETTE0,
+        mNW_PALETTE0,
+        mNW_PALETTE0,
+        mNW_PALETTE0,
+    };
     int i;
 
     for (i = 0; i < mPr_ORIGINAL_DESIGN_COUNT; i++) {
         Save_Set(private_data[player_no & 3].my_org[i & 7].palette, pal_table[i]);
+    }
+}
+
+/**
+ * @brief Initializes all designs' attributes for a player.
+ *
+ * @param player_no The index of the player whose designs will be updated
+ **/
+static void mNW_InitMyOriginalAttr(int player_no) {
+    static u8 attr_table[mPr_ORIGINAL_DESIGN_COUNT] = {
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+    };
+    int i;
+
+    for (i = 0; i < mPr_ORIGINAL_DESIGN_COUNT; i++) {
+        Save_Set(private_data[player_no & 3].my_org[i & 7].attr, attr_table[i]);
     }
 }
 
@@ -48,7 +80,7 @@ static void mNW_InitMyOriginalTexture(int player_no) {
 
     player_no &= 3;
     for (i = 0; i < mNW_DEFAULT_ORIGINAL_TEX_NUM; i++) {
-        _JW_GetResourceAram(JW_GetAramAddress(27) + i * mNW_DESIGN_TEX_SIZE,
+        _JW_GetResourceAram(JW_GetAramAddress(RESOURCE_MY_ORIGINAL) + i * mNW_DESIGN_TEX_SIZE,
                             Save_Get(private_data[player_no].my_org[i & 7].design.data), mNW_DESIGN_TEX_SIZE);
     }
 }
@@ -72,7 +104,8 @@ extern void mNW_InitMyOriginal() {
 extern void mNW_InitOneMyOriginal(int player_no) {
     int i;
 
-    mNW_InitMyOriginalPallet(player_no & 3);
+    mNW_InitMyOriginalPal(player_no & 3);
+    mNW_InitMyOriginalAttr(player_no & 3);
     mNW_InitMyOriginalName(player_no & 3);
     mNW_InitMyOriginalTexture(player_no & 3);
 
@@ -88,7 +121,7 @@ extern void mNW_InitOneMyOriginal(int player_no) {
  * @param tex_no The index of the texture to retrieve (0-7)
  **/
 static void mNW_CopyNeedleworkDefaultTexture(u8* dst, int tex_no) {
-    u32 addr = JW_GetAramAddress(28);
+    u32 addr = JW_GetAramAddress(RESOURCE_NEEDLEWORK);
     _JW_GetResourceAram(addr + (tex_no & 7) * mNW_DESIGN_TEX_SIZE, dst, mNW_DESIGN_TEX_SIZE);
 }
 
@@ -107,12 +140,42 @@ static void mNW_InitNeedleworkTexture() {
  * @brief Initializes all Able Sisters' designs to their default palettes.
  **/
 static void mNW_InitNeedleworkPelatteNo() {
-    static u8 pal_table[mNW_TOTAL_DESIGN_NUM] = { 7, 1, 10, 3, 6, 0, 6, 7 };
+    static u8 pal_table[mNW_TOTAL_DESIGN_NUM] = {
+        mNW_PALETTE7,
+        mNW_PALETTE1,
+        mNW_PALETTE10,
+        mNW_PALETTE3,
+        mNW_PALETTE6,
+        mNW_PALETTE0,
+        mNW_PALETTE6,
+        mNW_PALETTE7,
+    };
 
     int i;
 
     for (i = 0; i < mNW_TOTAL_DESIGN_NUM; i++) {
         Save_Set(needlework.original_design[i & 7].palette, pal_table[i]);
+    }
+}
+
+/**
+ * @brief Initializes all Able Sisters' designs to their default attributes.
+ **/
+static void mNW_InitNeedleworkAttr() {
+    static u8 attr_table[mNW_TOTAL_DESIGN_NUM] = {
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+    };
+    int i;
+
+    for (i = 0; i < mNW_TOTAL_DESIGN_NUM; i++) {
+        Save_Set(needlework.original_design[i & 7].attr, attr_table[i]);
     }
 }
 
@@ -134,6 +197,7 @@ static void mNW_InitNeedleworkTextureName() {
 extern void mNW_InitNeedleworkData() {
     mNW_InitNeedleworkTexture();
     mNW_InitNeedleworkPelatteNo();
+    mNW_InitNeedleworkAttr();
     mNW_InitNeedleworkTextureName();
 }
 
@@ -379,14 +443,16 @@ extern void mNW_SwapOriginalData(mNW_original_design_c* org0, mNW_original_desig
  * @param design The design which will be initialized
  **/
 extern void mNW_InitOriginalData(mNW_original_design_c* design) {
-    static u8 name[mNW_ORIGINAL_DESIGN_NAME_LEN] = "blank     ";
+    static u8 name[mNW_ORIGINAL_DESIGN_NAME_LEN] = { CHAR_PP_035, CHAR_PP_237, CHAR_PP_024, CHAR_PP_022, CHAR_PP_024,
+                                                     CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032 };
 
     u8* tex;
     mNW_OverWriteOriginalName(design, name);
     tex = design->design.data;
     mem_clear(tex, mNW_DESIGN_TEX_SIZE, 0xFF);
     DCStoreRangeNoSync(tex, mNW_DESIGN_TEX_SIZE);
-    design->palette = 0;
+    design->palette = mNW_PALETTE0;
+    design->attr = mNT_STYLE_FRESH;
 }
 
 /**

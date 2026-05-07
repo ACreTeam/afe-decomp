@@ -1160,7 +1160,7 @@ config.libs = [
             Object(Matching, "game/m_mushroom.c"),
             Object(NonMatching, "game/m_music_ovl.c"),
             Object(NonMatching, "game/m_name_table.c"),
-            Object(NonMatching, "game/m_needlework.c"),
+            Object(Matching, "game/m_needlework.c"),
             Object(NonMatching, "game/m_needlework_ovl.c"),
             Object(Matching, "game/m_notice.c"),
             Object(NonMatching, "game/m_notice_ovl.c"),

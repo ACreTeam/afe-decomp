@@ -521,6 +521,6 @@ extern void mRC_remove_collect_data_P_to_PP(Private_c* pp_priv, u8* p_priv) {
     memcpy(pp_priv->my_org, (u8*)(p_priv + 0xC40), sizeof(pp_priv->my_org));
 
     for (i = 0; i < mPr_ORIGINAL_DESIGN_COUNT; i++) {
-        pp_priv->my_org[i].style = RANDOM(mNT_STYLE_NUM);
+        pp_priv->my_org[i].attr = RANDOM(mNT_STYLE_NUM);
     }
 }
