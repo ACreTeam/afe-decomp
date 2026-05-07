@@ -413,8 +413,8 @@ static void mHm_RehouseWallDoor(mHm_hs_c* home, int home_size) {
         mHm_ROOMTYPE_MEDIUM, /* mHm_HOMESIZE_MEDIUM */
         mHm_ROOMTYPE_LARGE,  /* mHm_HOMESIZE_LARGE */
         mHm_ROOMTYPE_LARGE,  /* mHm_HOMESIZE_UPPER */
-        mHm_ROOMTYPE_SMALL,  /* mHm_HOMESIZE_FINAL_STATUE */
-        mHm_ROOMTYPE_SMALL, /* mHm_HOMESIZE_FINAL_NO_STATUE */
+        mHm_ROOMTYPE_SMALL,  /* mHm_HOMESIZE_ISLAND */
+        mHm_ROOMTYPE_SMALL, /* mHm_HOMESIZE_FINAL_STATUE */
     };
 
     int new_size;
@@ -452,7 +452,7 @@ extern void mHm_CheckRehouseOrder() {
                 home->outlook_pal = home->next_outlook_pal;
             }
 
-            if (home->size_info.size != home->size_info.next_size && home->size_info.next_size < mHm_HOMESIZE_FINAL_STATUE) {
+            if (home->size_info.size != home->size_info.next_size && home->size_info.next_size < mHm_HOMESIZE_ISLAND) {
                 if (CHECK_ORDER_DATE(home, rtc_time)) {
                     home->outlook_pal = home->ordered_outlook_pal;
                     home->next_outlook_pal = home->ordered_outlook_pal;
@@ -468,7 +468,7 @@ extern void mHm_CheckRehouseOrder() {
                     }
                 } else if (home->size_info.statue_ordered == TRUE) {
                     if (CHECK_ORDER_DATE(home, rtc_time)) {
-                        home->size_info.next_size = mHm_HOMESIZE_FINAL_NO_STATUE;
+                        home->size_info.next_size = mHm_HOMESIZE_FINAL_STATUE;
                     }
                 }
             }

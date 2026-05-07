@@ -22,7 +22,7 @@ static int aDOU_set_check(int house_no) {
         return FALSE;
     } else if (mLd_PlayerManKindCheckNo(player_no) || mPr_CheckPrivate(priv) == FALSE) {
         return FALSE;
-    } else if (mPr_NullCheckPersonalID(&house->ownerID) == FALSE && house->size_info.next_size == mHm_HOMESIZE_FINAL_NO_STATUE) {
+    } else if (mPr_NullCheckPersonalID(&house->ownerID) == FALSE && house->size_info.next_size == mHm_HOMESIZE_FINAL_STATUE) {
         return TRUE;
     } else {
         return FALSE;

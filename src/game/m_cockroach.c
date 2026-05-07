@@ -13,7 +13,7 @@
  * @param count The new cockroach count
  * @return The clamped cockroach count
  **/
-static int mCkRh_GokiFamilyCount2Good(int count) {
+static int mCkRh_CorrectGokiCount(int count) {
     if (count < 0) {
         return 0;
     }
@@ -56,8 +56,6 @@ extern void mCkRh_InitGokiSaveData_1Room_ByHomeData(mHm_hs_c* home) {
     home->goki.time = Common_Get(time.rtc_time);
 }
 
-// Aus changed init time to all 0
-#if VERSION >= VER_GAFU01_00
 /**
  * @brief Initializes island cottage cockroach data.
  **/
@@ -68,20 +66,6 @@ extern void mCkRh_InitGokiSaveData_IslandPlayerRoom(mHm_cottage_c* cottage) {
     cottage->goki.time.month = 0;
     cottage->goki.time.day = 0;
 }
-#else
-/**
- * @brief Initializes island cottage cockroach data.
- **/
-extern void mCkRh_InitGokiSaveData_IslandPlayerRoom() {
-    const lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
-
-    Save_Set(island.cottage.goki.num, 0);
-    Save_Set(island.cottage.goki.pad, 0);
-    Save_Set(island.cottage.goki.time.year, rtc_time->year);
-    Save_Set(island.cottage.goki.time.month, rtc_time->month);
-    Save_Set(island.cottage.goki.time.day, rtc_time->day);
-}
-#endif
 
 /**
  * @brief Initializes all houses' cockroach data even if a player owns it.
@@ -101,9 +85,13 @@ extern void mCkRh_InitGokiSaveData_AllRoom() {
  **/
 extern void mCkRh_SetGoingOutCottageTime(int scene_id) {
     if (scene_id == SCENE_COTTAGE_MY) {
-        // Save_Set(island.cottage.goki.time.year, Common_Get(time.rtc_time.year));
-        // Save_Set(island.cottage.goki.time.month, Common_Get(time.rtc_time.month));
-        // Save_Set(island.cottage.goki.time.day, Common_Get(time.rtc_time.day));
+        mHm_hs_c* cur_island_house_p = Common_Get(cur_island_house_p);
+
+        if (Common_Get(field_type) == mFI_FIELDTYPE2_PLAYER_ROOM && cur_island_house_p != NULL) {
+            cur_island_house_p->island.cottage.goki.time.year = Common_Get(time.rtc_time.year);
+            cur_island_house_p->island.cottage.goki.time.month = Common_Get(time.rtc_time.month);
+            cur_island_house_p->island.cottage.goki.time.day = Common_Get(time.rtc_time.day);
+        }
     }
 }
 
@@ -153,14 +141,15 @@ static int mCkRh_DaysGapCompareWithSaveTime(int player_no) {
  * @brief Gets the day interval between current time and the island cottage
  * cockroach last enter time.
  *
+ * @param cottage The island cottage whose cockroach data will be compared
  * @return days between current time and last island cottage enter time
  **/
-static int mCkRh_DaysGapCompareWithCottageSaveTime() {
+static int mCkRh_DaysGapCompareWithCottageSaveTime(mHm_cottage_c* cottage) {
     lbRTC_time_c goki_time;
 
-    // goki_time.year = Save_Get(island.cottage.goki.time.year);
-    // goki_time.month = Save_Get(island.cottage.goki.time.month);
-    // goki_time.day = Save_Get(island.cottage.goki.time.day);
+    goki_time.year = cottage->goki.time.year;
+    goki_time.month = cottage->goki.time.month;
+    goki_time.day = cottage->goki.time.day;
     goki_time.weekday = lbRTC_Week(goki_time.year, goki_time.month, goki_time.day);
     goki_time.hour = 1;
     goki_time.min = 1;
@@ -188,56 +177,50 @@ extern void mCkRh_DecideNowGokiFamilyCount(int player_no) {
     int goki_num;
 
     /* player must live in town */
-    if (player_no < PLAYER_NUM) {
+    if (player_no < mPr_FOREIGNER) {
         day_gap = mCkRh_DaysGapCompareWithSaveTime(player_no);
         home_no = mHS_get_arrange_idx(player_no) & 3;
         if (day_gap > mCkRh_INTERVAL_DAYS) {
             goki_num = Save_Get(homes[home_no].goki.num);
             count = goki_num > 0 ? day_gap : day_gap - mCkRh_INTERVAL_DAYS;
-            Save_Set(homes[home_no].goki.num, mCkRh_GokiFamilyCount2Good(count + goki_num));
+            Save_Set(homes[home_no].goki.num, mCkRh_CorrectGokiCount(count + goki_num));
+        }
+
+        if (Save_Get(homes[home_no]).size_info.next_size >= mHm_HOMESIZE_ISLAND && Save_Get(homes[home_no]).island.cottage.goki.time.year != 0) {
+            day_gap = mCkRh_DaysGapCompareWithCottageSaveTime(&Save_Get(homes[home_no]).island.cottage);
+            if (day_gap > mCkRh_INTERVAL_DAYS) {
+                goki_num = Save_Get(homes[home_no].island.cottage.goki.num);
+                count = goki_num > 0 ? day_gap : day_gap - mCkRh_INTERVAL_DAYS;
+                Save_Set(homes[home_no].island.cottage.goki.num, mCkRh_CorrectGokiCount(count + goki_num));
+            }
         }
     }
-
-// Aus checks the year isn't set to 0
-#if VERSION >= VER_GAFU01_00
-    // if (Save_Get(island).cottage.goki.time.year != 0) {
-    //     day_gap = mCkRh_DaysGapCompareWithCottageSaveTime();
-    //     if (day_gap > mCkRh_INTERVAL_DAYS) {
-    //         u8* goki_num = Save_GetPointer(island.cottage.goki.num);
-    //         count = (int)*goki_num > 0 ? day_gap : day_gap - mCkRh_INTERVAL_DAYS;
-    //         *goki_num = mCkRh_GokiFamilyCount2Good(count + (int)*goki_num);
-    //     }
-    // }
-#else
-    day_gap = mCkRh_DaysGapCompareWithCottageSaveTime();
-    if (day_gap > mCkRh_INTERVAL_DAYS) {
-        u8* goki_num = Save_GetPointer(island.cottage.goki.num);
-        count = (int)*goki_num > 0 ? day_gap : day_gap - mCkRh_INTERVAL_DAYS;
-        *goki_num = mCkRh_GokiFamilyCount2Good(count + (int)*goki_num);
-    }
-#endif
 }
 
 /**
  * @brief Adds a specific amount of cockroaches to the current player's house.
  *
  * @param count The number of cockroaches to add (total clamped to mCkRh_MAX_NUM)
+ * @param scene_no The current scene id
  * @return TRUE/FALSE cockroach data was updated
  **/
 extern int mCkRh_PlussGokiN_NowRoom(int count, int scene_no) {
-    mActor_name_t fieldid = mFI_GetFieldId();
-
-    if (mFI_IS_PLAYER_ROOM(fieldid)) {
+    mHm_hs_c* island_house_p = Common_Get(cur_island_house_p);
+    
+    if (Common_Get(field_type) == mFI_FIELDTYPE2_PLAYER_ROOM) {
         int player_no = Common_Get(player_no);
-        int house_field_id = mFI_GET_PLAYER_ROOM_NO(fieldid);
         int home_id = mHS_get_arrange_idx(player_no) & 3;
-        if ((player_no < PLAYER_NUM) && (house_field_id == home_id)) {
-            Save_Set(homes[home_id].goki.num, mCkRh_GokiFamilyCount2Good(count + Save_Get(homes[home_id].goki.num)));
+        
+        if (scene_no == SCENE_COTTAGE_MY && island_house_p != NULL) {
+            u8* goki_num = &island_house_p->island.cottage.goki.num;
+            *goki_num = mCkRh_CorrectGokiCount(count + *goki_num);
             return TRUE;
+        } else {
+            if (mFI_IS_PLAYER_ROOM(mFI_GetFieldId())) {
+                Save_Set(homes[home_id].goki.num, mCkRh_CorrectGokiCount(count + Save_Get(homes[home_id].goki.num)));
+                return TRUE;
+            }
         }
-    } else if (scene_no == SCENE_COTTAGE_MY) {
-        // u8* goki_num = Save_GetPointer(island.cottage.goki.num);
-        // *goki_num = mCkRh_GokiFamilyCount2Good(count + *goki_num);
     }
 
     return FALSE;
@@ -247,24 +230,11 @@ extern int mCkRh_PlussGokiN_NowRoom(int count, int scene_no) {
  * @brief Removes a specific amount of cockroaches to the current player's house.
  *
  * @param count The number of cockroaches to remove (minimum clamped to 0)
+ * @param scene_no The current scene id
  * @return TRUE/FALSE cockroach data was updated
  **/
-extern int mCkRh_MinusGokiN_NowRoom(int count, int scene_id) {
-    mActor_name_t field_id = mFI_GetFieldId();
-    if (mFI_IS_PLAYER_ROOM(field_id)) {
-        int player_no = Common_Get(player_no);
-        int house_field_id = mFI_GET_PLAYER_ROOM_NO(field_id);
-        int home_no = mHS_get_arrange_idx(player_no) & 3;
-        if (player_no < PLAYER_NUM && house_field_id == home_no) {
-            Save_Set(homes[home_no].goki.num, mCkRh_GokiFamilyCount2Good(Save_Get(homes[home_no].goki.num) - count));
-            return TRUE;
-        }
-    } else if (scene_id == SCENE_COTTAGE_MY) {
-        // u8* goki_num = Save_GetPointer(island.cottage.goki.num);
-        // *goki_num = mCkRh_GokiFamilyCount2Good(*goki_num - count);
-    }
-
-    return FALSE;
+extern int mCkRh_MinusGokiN_NowRoom(int count, int scene_no) {
+    return mCkRh_PlussGokiN_NowRoom(-count, scene_no);
 }
 
 /**
@@ -276,11 +246,21 @@ extern int mCkRh_MinusGokiN_NowRoom(int count, int scene_id) {
  *  - elsewhere: 0
  **/
 extern int mCkRh_NowSceneGokiFamilyCount() {
-    mActor_name_t fieldid = mFI_GetFieldId();
-    if (mFI_IS_PLAYER_ROOM(fieldid)) {
-        return Save_Get(homes[mFI_GET_PLAYER_ROOM_NO(fieldid)].goki.num);
-    } else if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
-        // return Save_Get(island.cottage.goki.num);
+    mHm_hs_c* island_house_p = Common_Get(cur_island_house_p);
+
+    if (Save_Get(scene_no) == SCENE_COTTAGE_MY && island_house_p != NULL) {
+        return mCkRh_CorrectGokiCount(island_house_p->island.cottage.goki.num);
+    } else if (mFI_IS_PLAYER_ROOM(mFI_GetFieldId())) {
+        // @BUG - Failure mode is -1 which is not a valid house index.
+        int house_idx = mFI_IS_PLAYER_ROOM(mFI_GetFieldId()) != FALSE ? mFI_GET_PLAYER_ROOM_NO(mFI_GetFieldId()) : -1;
+
+#ifdef BUGFIXES
+        if (house_idx == -1) {
+            return 0;
+        }
+#endif
+        
+        return mCkRh_CorrectGokiCount(Save_Get(homes[house_idx].goki.num));
     }
 
     return 0;
@@ -305,19 +285,19 @@ extern void mCkRh_InitCanLookGokiCount() {
  * @return TRUE/FALSE were number of visible cockroaches updated?
  **/
 extern int mCkRh_CalcCanLookGokiCount(int count) {
-    count += Common_Get(can_look_goki_count);
+    int new_count = count + mCkRh_GetCanLookGokiCount();
 
-    if (count < 0) {
+    if (new_count < 0) {
         Common_Set(can_look_goki_count, 0);
         return FALSE;
     }
 
-    if (count > mCkRh_CAN_LOOK_GOKI_NUM) {
+    if (new_count > mCkRh_CAN_LOOK_GOKI_NUM) {
         Common_Set(can_look_goki_count, mCkRh_CAN_LOOK_GOKI_NUM);
         return FALSE;
     }
 
-    Common_Set(can_look_goki_count, count);
+    Common_Set(can_look_goki_count, new_count);
     return TRUE;
 }
 
@@ -327,5 +307,5 @@ extern int mCkRh_CalcCanLookGokiCount(int count) {
  * @return number of cockroaches currently visible to the player
  **/
 extern int mCkRh_GetCanLookGokiCount() {
-    return Common_Get(can_look_goki_count);
+    return CLAMP(Common_Get(can_look_goki_count), 0, mCkRh_CAN_LOOK_GOKI_NUM);
 }

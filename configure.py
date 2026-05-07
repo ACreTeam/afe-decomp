@@ -1086,7 +1086,7 @@ config.libs = [
             Object(NonMatching, "game/m_catalog_ovl.c"),
             Object(NonMatching, "game/m_choice.c"),
             Object(Matching, "game/m_clip.c"),
-            Object(NonMatching, "game/m_cockroach.c"),
+            Object(Matching, "game/m_cockroach.c"),
             Object(Matching, "game/m_collision_bg.c"),
             Object(Matching, "game/m_collision_bg_math.c"),
             Object(Matching, "game/m_collision_obj.c"),

@@ -43,8 +43,8 @@ enum {
     mHm_HOMESIZE_MEDIUM, /* paid off first debt */
     mHm_HOMESIZE_LARGE,  /* paid off second debt (excluding basement) */
     mHm_HOMESIZE_UPPER,  /* paid off third debt & basement */
+    mHm_HOMESIZE_ISLAND, /* paid off upstairs debt */
     mHm_HOMESIZE_FINAL_STATUE, /* paid off final debt */
-    mHm_HOMESIZE_FINAL_NO_STATUE,
 
     mHm_HOMESIZE_NUM
 };
