@@ -15,20 +15,20 @@ extern "C" {
 #define mAGrw_DUMP_HEIGHT 4
 
 enum {
-  mAGrw_XMAS_PROC_CLEAR,
-  mAGrw_XMAS_PROC_SET,
+    mAGrw_XMAS_PROC_CLEAR,
+    mAGrw_XMAS_PROC_SET,
 
-  mAGrw_XMAS_PROC_NUM
+    mAGrw_XMAS_PROC_NUM
 };
 
 enum {
-  mAGrw_FRUIT_APPLE,
-  mAGrw_FRUIT_CHERRY,
-  mAGrw_FRUIT_PEAR,
-  mAGrw_FRUIT_PEACH,
-  mAGrw_FRUIT_ORANGE,
+    mAGrw_FRUIT_APPLE,
+    mAGrw_FRUIT_CHERRY,
+    mAGrw_FRUIT_PEAR,
+    mAGrw_FRUIT_PEACH,
+    mAGrw_FRUIT_ORANGE,
 
-  mAGrw_FRUIT_NUM
+    mAGrw_FRUIT_NUM
 };
 
 #define mAGrw_XMAS_LIGHTS_MAX_BLOCK 3
@@ -38,12 +38,14 @@ enum {
 extern void mAGrw_PrintFossilHaniwa_debug(gfxprint_t* gfxprint);
 extern int mAGrw_CheckKabuPeddler();
 extern void mAGrw_OrderSetHaniwa();
-extern void mAGrw_ChangeItemBlock(mActor_name_t* block_items, mActor_name_t new_item, mActor_name_t target_item, u8 possible_num);
+extern void mAGrw_ChangeItemBlock(mActor_name_t* block_items, mActor_name_t new_item, mActor_name_t target_item,
+                                  u8 possible_num);
 extern void mAGrw_SetXmasTree();
 extern void mAGrw_RenewalFgItem(lbRTC_time_c* time);
 extern void mAGrw_ChangeTree2FruitTree();
 extern void mAGrw_ChangeTree2Cedar();
 extern void mAGrw_ChangeCedar2Tree();
+extern void mAGrw_RepairErrorDeposit();
 
 #ifdef __cplusplus
 }
