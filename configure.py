@@ -1136,7 +1136,7 @@ config.libs = [
             Object(NonMatching, "game/m_island.c"),
             Object(NonMatching, "game/m_item_name.c"),
             Object(Matching, "game/m_kabu_manager.c"),
-            Object(NonMatching, "game/m_kankyo.c"),
+            Object(Matching, "game/m_kankyo.c"),
             Object(Matching, "game/m_land.c"),
             Object(NonMatching, "game/m_ledit_ovl.c"),
             Object(Matching, "game/m_lib.c"),
