@@ -2251,7 +2251,7 @@ extern void Global_kankyo_set(GAME_PLAY* play, Kankyo* kankyo, Global_light* glo
     mEnv_SetFog(kankyo, global_light);
     mEnv_PermitCheckDiffuseLight(kankyo);
     mEnv_TaimatuPointLightWaveMoveProc(play);
-    mEnv_CheckNpcLight_ToSwitchON(play);
+    mEnv_countdown_proc(play);
     mEnv_MakeWindowLightAlpha(TRUE);
     mEnv_rainbow_power_calc();
 

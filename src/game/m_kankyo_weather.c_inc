@@ -84,7 +84,7 @@ extern void mEnv_RandomWeather(s16* next_weather, s16* next_intensity) {
     mEnv_MAKE_WEATHER_TABLE_ENTRY( 8, 2, 0, 0, 0, 0, 0), // 80% chance of clear weather, 20% chance of rain
     mEnv_MAKE_WEATHER_TABLE_ENTRY(10, 0, 0, 0, 0, 0, 0), // 100% chance of clear weather
     mEnv_MAKE_WEATHER_TABLE_ENTRY( 7, 2, 1, 0, 0, 0, 0), // 70% chance of clear weather, 20% chance of rain, 10% chance of thunderstorms
-    mEnv_MAKE_WEATHER_TABLE_ENTRY( 5, 3, 2, 0, 0, 0, 0), // 50% chance of clear weather, 30% chance of rain, 20% chance of thunderstorms
+    mEnv_MAKE_WEATHER_TABLE_ENTRY( 2, 5, 3, 0, 0, 0, 0), // 20% chance of clear weather, 50% chance of rain, 30% chance of thunderstorms
     mEnv_MAKE_WEATHER_TABLE_ENTRY( 9, 0, 1, 0, 0, 0, 0), // 90% chance of clear weather, 10% chance of thunderstorms
     mEnv_MAKE_WEATHER_TABLE_ENTRY( 6, 0, 4, 0, 0, 0, 0), // 60% chance of clear weather, 40% chance of thunderstorms
     mEnv_MAKE_WEATHER_TABLE_ENTRY( 8, 2, 0, 0, 0, 0, 0), // 80% chance of clear weather, 20% chance of rain
