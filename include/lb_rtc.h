@@ -138,6 +138,8 @@ extern int lbRTC_Weekly_day(lbRTC_year_t year, lbRTC_month_t month, int weeks, i
 #define lbRTC_HOURS_PER_DAY 24
 #define lbRTC_MINUTES_PER_HOUR 60
 #define lbRTC_SECONDS_PER_MINUTE 60
+#define lbRTC_SECONDS_PER_HOUR 3600
+#define lbRTC_SECONDS_PER_DAY 86400
 
 #define lbRTC_IS_LEAPYEAR(year) \
   (((year % 4) == 0 && ((year % 100) != 0)) || ((year % 400) == 0))

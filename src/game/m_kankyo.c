@@ -8,6 +8,8 @@
 #include "m_player_lib.h"
 #include "libultra/libultra.h"
 
+static void mEnv_countdown_init(GAME* game);
+
 #define mEnv_TIME_TO_SECS(hour, min, sec) ((hour) * mTM_SECONDS_IN_HOUR + (min) * mTM_SECONDS_IN_MINUTE + (sec))
 
 static int klight_chg_tim[mEnv_TERM_NUM + 1] = {
@@ -853,7 +855,27 @@ static BaseLight l_mEnv_kcolor_lighthouse = {
     1280,        // fog far
 
     { 0, 20, 30 },     // shadow color
-    { 135, 125, 105 }, // room color
+    { 85, 85, 85 }, // room color
+    { 0, 0, 0 },       // window sun color
+    { 0, 0, 0 },       // window moon color
+    { 0, 0, 0 }        // background color
+};
+
+static BaseLight l_mEnv_kcolor_resetcenter = {
+    { 125, 125, 125 }, // ambient color
+
+    { 0, 69, 97 }, // sun direction
+    { 0, 0, 0 },   // sun color
+
+    { 0, 223, 115 }, // moon direction
+    { 0, 0, 0 },     // moon color
+
+    { 0, 0, 0 }, // fog color
+    2000,        // fog near
+    1280,        // fog far
+
+    { 0, 20, 30 },     // shadow color
+    { 185, 185, 205 }, // room color
     { 0, 0, 0 },       // window sun color
     { 0, 0, 0 },       // window moon color
     { 0, 0, 0 }        // background color
@@ -914,7 +936,7 @@ static int mEnv_Pointlight_on_check();
 static f32 mEnv_DiffuseLightEffectRate() {
     if (mRmTp_GetNowSceneLightSwitchIndex() != -1) {
         if (!mSc_IS_SCENE_BASEMENT(Save_Get(scene_no)) && Save_Get(scene_no) != SCENE_LIGHTHOUSE &&
-            Save_Get(scene_no) != SCENE_TENT) {
+            Save_Get(scene_no) != SCENE_TENT && Save_Get(scene_no) != SCENE_RESET_HOUSE) {
             return 0.7f;
         }
     }
@@ -1162,6 +1184,20 @@ static int mEnv_GetNowRoomPointLightInfo(GAME_PLAY* play, s_xyz* pos, u8* color,
                     break;
                 }
 
+                case SCENE_RESET_HOUSE: {
+                    pos->x = 120;
+                    pos->y = 80;
+                    pos->z = 160;
+
+                    color[0] = 95; // r
+                    color[1] = 95; // g
+                    color[2] = 105; // b
+
+                    power[0] = 6000;
+
+                    break;
+                }
+
                 case SCENE_TENT: {
                     pos->x = 120;
                     pos->y = 80;
@@ -1350,7 +1386,8 @@ extern void Global_kankyo_ct(GAME* game, Kankyo* kankyo) {
 
     switch (Save_Get(scene_no)) {
         case SCENE_LIGHTHOUSE:
-        case SCENE_TENT: {
+        case SCENE_TENT:
+        case SCENE_RESET_HOUSE: {
             l_mEnv_electric_light.point_light_min = 0.14f;
             break;
         }
@@ -1367,7 +1404,7 @@ extern void Global_kankyo_ct(GAME* game, Kankyo* kankyo) {
     SETREG(MYKREG, 28, 100);
     Common_Set(transition._00, 0);
     mEnv_set_time(kankyo);
-    kankyo->countdown_timer = 0xFF;
+    mEnv_countdown_init(game);
     mEnv_RoomTypeLightSet(game, kankyo);
     mEnv_regist_nature(kankyo, (NATURE_PROC)none_proc1, NULL);
     mEnv_MakeWindowLightAlpha(FALSE);
@@ -1532,7 +1569,8 @@ static void mEnv_ChangeDiffuseVctlSet(BaseLight* base_light) {
         case SCENE_MY_ROOM_BASEMENT_M:
         case SCENE_MY_ROOM_BASEMENT_L:
         case SCENE_MY_ROOM_BASEMENT_LL1:
-        case SCENE_LIGHTHOUSE: {
+        case SCENE_LIGHTHOUSE:
+        case SCENE_RESET_HOUSE: {
             base_light->sun_dir[0] = 0;  // x
             base_light->sun_dir[1] = 69; // y
             base_light->sun_dir[2] = 97; // z
@@ -1775,6 +1813,10 @@ static void mEnv_SetBaseLight(Kankyo* kankyo) {
                 mEnv_CalcSetLight(&kankyo->base_light, &l_mEnv_kcolor_lighthouse, &l_mEnv_kcolor_lighthouse,
                                   &l_mEnv_kcolor_lighthouse, &l_mEnv_kcolor_lighthouse, kankyo, 0.5f);
                 l_mEnv_electric_light.shadow_alpha = 115;
+            } else if (Save_Get(scene_no) == SCENE_RESET_HOUSE) {
+                mEnv_CalcSetLight(&kankyo->base_light, &l_mEnv_kcolor_resetcenter, &l_mEnv_kcolor_resetcenter,
+                                  &l_mEnv_kcolor_resetcenter, &l_mEnv_kcolor_resetcenter, kankyo, 0.5f);
+                l_mEnv_electric_light.shadow_alpha = 115;
             } else if (Save_Get(scene_no) == SCENE_MUSEUM_ROOM_INSECT) {
                 BaseLight* now = l_mEnv_normal_kcolor_insect_data[l_mEnv_electric_light.now_weather];
                 BaseLight* nxt = l_mEnv_normal_kcolor_insect_data[l_mEnv_electric_light.next_weather];
@@ -1968,6 +2010,19 @@ static void mEnv_check_countdown_start(GAME_PLAY* play) {
     }
 }
 
+static void mEnv_countdown_init(GAME* game) {
+    u8 countdown_timer = 0;
+
+    if (Common_Get(field_draw_type) != FIELD_DRAW_TYPE_TRAIN && Common_Get(field_draw_type) != FIELD_DRAW_TYPE_PLAYER_SELECT && mEv_check_status(mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN, mEv_STATUS_ACTIVE) == TRUE) {
+        mEnv_check_countdown_start((GAME_PLAY*)game);
+        if (mEv_check_status(mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN, mEv_STATUS_PLAYSOUND) == TRUE && Common_Get(time.rtc_time.month) == lbRTC_DECEMBER) {
+            countdown_timer = lbRTC_SECONDS_PER_DAY - Common_Get(time).now_sec;
+        }
+    }
+
+    ((GAME_PLAY*)game)->kankyo.countdown_timer = countdown_timer;
+}
+
 static void mEnv_countdown_proc(GAME_PLAY* play) {
     if (Common_Get(field_draw_type) == FIELD_DRAW_TYPE_TRAIN ||
         Common_Get(field_draw_type) == FIELD_DRAW_TYPE_PLAYER_SELECT) {
@@ -2060,8 +2115,11 @@ static void mEnv_LightAnimeToSwitchON() {
     l_mEnv_electric_light.light_anime_frame++;
 }
 
+#define mEnv_chk_trigger_light_switch() (chkTrigger(BUTTON_DUP) || chkTrigger(BUTTON_DDOWN) || chkTrigger(BUTTON_DLEFT) || chkTrigger(BUTTON_DRIGHT))
+
 extern void mEnv_ManagePointLight(GAME_PLAY* play, Kankyo* kankyo, Global_light* global_light) {
-    PLAYER_ACTOR* player = get_player_actor_withoutCheck(play); // unused
+    mActor_name_t field_id = mFI_GetFieldId();
+    PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play); // unused
 
     int lightswitch_on = mRmTp_Index2LightSwitchStatus(mRmTp_GetNowSceneLightSwitchIndex());
 
@@ -2075,13 +2133,21 @@ extern void mEnv_ManagePointLight(GAME_PLAY* play, Kankyo* kankyo, Global_light*
                 add_calc(&l_mEnv_electric_light.point_light_percent, 1.0f, 0.01f, 0.01f, 0.01f);
             }
 
-            if (chkTrigger(BUTTON_Z) && mRmTp_PleaseDrawLightSwitch()) {
+            if (mEnv_chk_trigger_light_switch() && mRmTp_PleaseDrawLightSwitch()) {
                 mEnv_RequestChangeLightOFF(play, mEnv_LIGHT_TYPE_PLAYER, 0.0f);
             }
         }
-    } else {
-        mActor_name_t field_id = mFI_GetFieldId();
 
+        if (mRmTp_GetNowSceneLightSwitchIndex() == mRmTp_LIGHT_SWITCH_NPC) {
+            int idx = mRmTp_GetNowSceneLightSwitchIndex(); // @unused
+            if (!mEnv_CheckNpcRoomPointLightNiceStatus()) {
+                mRmTp_IndexLightSwitchOFF(mRmTp_LIGHT_SWITCH_NPC);
+                l_mEnv_electric_light.point_light_off_type = mEnv_LIGHT_TYPE_PLAYER;
+                l_mEnv_electric_light.point_light_off_step = 0.0f;
+                sAdo_SysTrgStart(NA_SE_LIGHT_OFF);
+            }
+        }
+    } else {
         if (l_mEnv_electric_light.point_light_off_type == mEnv_LIGHT_TYPE_PLAYER) {
             add_calc(&l_mEnv_electric_light.point_light_percent, l_mEnv_electric_light.point_light_min, 0.2f, 0.2f,
                      0.02f);
@@ -2095,7 +2161,7 @@ extern void mEnv_ManagePointLight(GAME_PLAY* play, Kankyo* kankyo, Global_light*
             }
         }
 
-        if (chkTrigger(BUTTON_Z) && mRmTp_PleaseDrawLightSwitch()) {
+        if (mEnv_chk_trigger_light_switch() && mRmTp_PleaseDrawLightSwitch()) {
             mEnv_RequestChangeLightON(play, mEnv_LIGHT_TYPE_PLAYER, TRUE);
         } else if (mFI_GET_TYPE(field_id) == mFI_FIELD_NPCROOM0 && Common_Get(last_scene_no) == SCENE_FG) {
             mEnv_CheckNpcRoomPointLightNiceStatus();
@@ -2186,7 +2252,6 @@ extern void Global_kankyo_set(GAME_PLAY* play, Kankyo* kankyo, Global_light* glo
     mEnv_PermitCheckDiffuseLight(kankyo);
     mEnv_TaimatuPointLightWaveMoveProc(play);
     mEnv_CheckNpcLight_ToSwitchON(play);
-    mEnv_countdown_proc(play);
     mEnv_MakeWindowLightAlpha(TRUE);
     mEnv_rainbow_power_calc();
 
@@ -2200,20 +2265,20 @@ static int mEnv_CheckNpcRoomPointLightNiceStatus() {
     Animal_c* animal;
 
     if (Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
-//         animal = Save_GetPointer(island.animal);
-//         schedule = Common_GetPointer(npc_schedule[ANIMAL_NUM_MAX]);
+        mHm_hs_c* island_home_p = Common_Get(cur_island_house_p);
 
-//         if (schedule != NULL) {
-//             if (
-// #if VERSION < VER_GAFU01_00
-//             schedule->current_type == mNPS_SCHED_IN_HOUSE &&
-// #endif
-//             animal->is_home == TRUE &&
-//                 (Common_Get(time).now_sec < mEnv_NPC_LIGHTS_OFF_TIME ||
-//                  Common_Get(time).now_sec >= mEnv_NPC_LIGHTS_ON_TIME)) {
-//                 return TRUE;
-//             }
-//         }
+        if (island_home_p != NULL) {
+            animal = &island_home_p->island.animal;
+            schedule = Common_GetPointer(npc_schedule[ANIMAL_NUM_MAX]);
+
+            if (schedule != NULL) {
+                if (animal->is_home == TRUE &&
+                    (Common_Get(time).now_sec < mEnv_NPC_LIGHTS_OFF_TIME ||
+                    Common_Get(time).now_sec >= mEnv_NPC_LIGHTS_ON_TIME)) {
+                    return TRUE;
+                }
+            }
+        }
     } else {
         animal = mNpc_GetAnimalInfoP(Common_Get(house_owner_name));
 
@@ -2221,11 +2286,7 @@ static int mEnv_CheckNpcRoomPointLightNiceStatus() {
             schedule = mNPS_get_schedule_area(&animal->id);
 
             if (schedule != NULL) {
-                if (
-#if VERSION < VER_GAFU01_00
-                    schedule->current_type == mNPS_SCHED_IN_HOUSE &&
-#endif
-                    animal->is_home == TRUE &&
+                if (animal->is_home == TRUE &&
                     (Common_Get(time).now_sec < mEnv_NPC_LIGHTS_OFF_TIME ||
                      Common_Get(time).now_sec >= mEnv_NPC_LIGHTS_ON_TIME)) {
                     return TRUE;
@@ -2265,12 +2326,11 @@ static void mEnv_CheckNpcLight_ToSwitchON(GAME_PLAY* play) {
 }
 
 static void mEnv_PointLightSet(GAME_PLAY* play, f32 fade_rate) {
-    PLAYER_ACTOR* player = get_player_actor_withoutCheck(play);
-    s16* kk_event_data = (s16*)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 10);
+    ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
 
-    Light_point_ct(&play->kankyo.point_light, player->actor_class.world.position.x,
-                   player->actor_class.world.position.y, player->actor_class.world.position.z - 25.0f, 255, 255, 220,
-                   (f32)kk_event_data[0] * (1.0f - fade_rate));
+    Light_point_ct(&play->kankyo.point_light, playerx->world.position.x,
+                   playerx->world.position.y, playerx->world.position.z - 25.0f, 255, 255, 220,
+                   (float)Common_Get(event_common).mikanbox_light_radius * (1.0f - fade_rate));
 
     l_mEnv_electric_light.point_light_color[0] = 255;
     l_mEnv_electric_light.point_light_color[1] = 255;

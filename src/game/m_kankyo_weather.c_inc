@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "m_kankyo.h"
+#include "sys_math3d.h"
+#include "lb_rtc.h"
+#include "m_common_data.h"
+#include "m_debug.h"
+#endif
+
 extern void mEnv_DecideWindDirect(s_xyz* dir, s16 x, s16 z) {
   xyz_t wind_dir = { 0.0f, -100.0f, 0.0f };
   f32 x_f = x;
@@ -23,8 +31,8 @@ static int mEnv_GetWeatherChangeStep() {
     { lbRTC_APRIL,      8 }, // April 8th - April 8th
     { lbRTC_APRIL,     19 }, // April 9th - April 19th
     { lbRTC_APRIL,     20 }, // April 20th - April 20th
-    { lbRTC_JUNE,      25 }, // April 21st - June 25th
-    { lbRTC_JULY,      15 }, // June 26th - July 15th
+    { lbRTC_JUNE,      28 }, // April 21st - June 28th
+    { lbRTC_JULY,      15 }, // June 29th - July 15th
     { lbRTC_AUGUST,    31 }, // July 16th - August 31st
     { lbRTC_SEPTEMBER, 30 }, // September 1st - September 30th
     { lbRTC_OCTOBER,   30 }, // October 1st - October 30th
