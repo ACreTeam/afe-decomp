@@ -1106,7 +1106,7 @@ config.libs = [
             Object(Equivalent, "game/m_diary.c"), # matching but needs investigation
             Object(NonMatching, "game/m_diary_ovl.c"),
             Object(NonMatching, "game/m_eappli.c"),
-            Object(NonMatching, "game/m_editEndChk_ovl.c"),
+            Object(Matching, "game/m_editEndChk_ovl.c"),
             Object(NonMatching, "game/m_editor_ovl.c"),
             Object(NonMatching, "game/m_event.c"),
             Object(Matching, "game/m_event_map_npc.c"),

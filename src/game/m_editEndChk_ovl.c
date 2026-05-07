@@ -30,10 +30,23 @@ static mEE_win_data_c win_data[] = {
     { 3, lat_sentaku_winT_model, lat_sentaku_c_model, -81.0f, 58.0f, 60.0f, -71.0f, 1.0f, -4.0f },
 };
 
-static u8 mEE_str_table[11] = "Is this OK?";
-static u8 mEE_str_data0[3] = "Yes";
-static u8 mEE_str_data1[7] = "Rewrite";
-static u8 mEE_str_data2[12] = "Throw it out";
+static u8 mEE_str_table[9] = {
+    CHAR_PP_009, CHAR_PP_126, CHAR_PP_244, CHAR_PP_001, CHAR_PP_001, CHAR_PP_244, CHAR_PP_012, CHAR_PP_005,
+    CHAR_PP_063
+};
+
+static u8 mEE_str_data0[2] = {
+    CHAR_PP_025, CHAR_PP_001
+};
+
+static u8 mEE_str_data1[5] = {
+    CHAR_PP_030, CHAR_PP_241, CHAR_PP_020, CHAR_PP_004, CHAR_PP_012
+};
+
+static u8 mEE_str_data2[9] = {
+    CHAR_PP_020, CHAR_PP_005, CHAR_PP_204, CHAR_PP_015, CHAR_PP_009, CHAR_PP_019, CHAR_PP_021, CHAR_PP_012,
+    CHAR_PP_125
+};
 
 static void mEE_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     (*submenu->overlay->move_Move_proc)(submenu, menu_info);
@@ -123,55 +136,48 @@ extern Gfx lat_kakunin_wakuT_model[];
 extern Gfx lat_kakunin_c_model[];
 
 static void mEE_set_question_field(Submenu* submenu, GRAPH* graph, f32 x, f32 y) {
-    Gfx* gfx;
-
     Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
     Matrix_translate(x, y, 140.0f, MTX_MULT);
 
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
+    OPEN_POLY_OPA_DISP(graph);
 
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, lat_kakunin_DL_mode);
-    gSPDisplayList(gfx++, lat_kakunin_wakuT_model);
-    gDPPipeSync(gfx++);
-    gDPSetPrimColor(gfx++, 0, 255, 0, 0, 255, submenu->overlay->editEndChk_ovl->question_alpha);
-    gSPDisplayList(gfx++, lat_kakunin_c_model);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, lat_kakunin_DL_mode);
+    gSPDisplayList(POLY_OPA_DISP++, lat_kakunin_wakuT_model);
+    gDPPipeSync(POLY_OPA_DISP++);
+    gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 0, 0, 255, submenu->overlay->editEndChk_ovl->question_alpha);
+    gSPDisplayList(POLY_OPA_DISP++, lat_kakunin_c_model);
 
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
+    CLOSE_POLY_OPA_DISP(graph);
 }
 
 static void mEE_set_answer_field(Submenu* submenu, GRAPH* graph, mEE_win_data_c* data, f32 x, f32 y) {
     f32 scale = submenu->overlay->editEndChk_ovl->scale;
-    Gfx* gfx;
 
     Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
     Matrix_translate(x, y, 140.0f, MTX_MULT);
     Matrix_scale(scale, scale, 1.0f, MTX_MULT);
 
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
+    OPEN_POLY_OPA_DISP(graph);
 
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, lat_kakunin_DL_mode);
-    gSPDisplayList(gfx++, data->win_model);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, lat_kakunin_DL_mode);
+    gSPDisplayList(POLY_OPA_DISP++, data->win_model);
 
     if (scale == 1.0f) {
         Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
         Matrix_translate(x, y - ((f32)submenu->overlay->editEndChk_ovl->selected_answer * 16.0f), 140.0f, MTX_MULT);
-        gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        gSPDisplayList(gfx++, data->char_model);
+        gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPDisplayList(POLY_OPA_DISP++, data->char_model);
     }
 
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
+    CLOSE_POLY_OPA_DISP(graph);
 }
 
 static void mEE_set_question_character(Submenu* submenu, GRAPH* graph, GAME* game, f32 x, f32 y) {
     (*submenu->overlay->set_char_matrix_proc)(graph);
-    mFont_SetLineStrings(game, mEE_str_table, sizeof(mEE_str_table), 107.0f + x, 194.0f - y, 80, 80, 230, 255, FALSE,
-                         TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+    mFont_SetLineStrings(game, mEE_str_table, sizeof(mEE_str_table), 96.0f + x, 194.0f - y, 80, 80, 230, 255, FALSE,
+                         FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 }
 
 typedef struct editEndChk_str_s {
@@ -202,7 +208,7 @@ static void mEE_set_answer_character(Submenu* submenu, GRAPH* graph, GAME* game,
         int idx = i == editEndChk_ovl->selected_answer ? 1 : 0;
         int* col = col_table[idx];
 
-        mFont_SetLineStrings(game, str_p->str, str_p->len, x, y, col[0], col[1], col[2], 255, FALSE, TRUE, scale, scale,
+        mFont_SetLineStrings(game, str_p->str, str_p->len, x, y, col[0], col[1], col[2], 255, FALSE, FALSE, scale, scale,
                              mFont_MODE_POLY);
 
         y += scale * 16.0f;
