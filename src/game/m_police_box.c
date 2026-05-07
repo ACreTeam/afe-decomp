@@ -121,24 +121,26 @@ extern void mPB_keep_all_item_in_block(int blk_x, int blk_z) {
 
     bzero(new_items, mPB_POLICE_BOX_ITEM_STORAGE_COUNT * sizeof(mActor_name_t));
 
-    for (i = 0; i < UT_TOTAL_NUM; i++) {
-        item = *block_items;
+    if (block_items != NULL) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            item = *block_items;
 
-        /* only accept items in the 0x1XXX, 2XXX, and 3XXX range */
-        item_type = ITEM_NAME_GET_TYPE(item);
-        if (item_type == NAME_TYPE_FTR0 || item_type == NAME_TYPE_ITEM1 || item_type == NAME_TYPE_FTR1) {
-            if (count < mPB_POLICE_BOX_ITEM_STORAGE_COUNT) {
-                /* space is still available, so directly add it */
-                new_items[count] = item;
-                count++;
-            } else {
-                /* randomly overwrite one of the items in the lost and found */
-                new_items[RANDOM(mPB_POLICE_BOX_ITEM_STORAGE_COUNT)] = item;
+            /* only accept items in the 0x1XXX, 2XXX, and 3XXX range */
+            item_type = ITEM_NAME_GET_TYPE(item);
+            if (item_type == NAME_TYPE_FTR0 || item_type == NAME_TYPE_ITEM1 || item_type == NAME_TYPE_FTR1) {
+                if (count < mPB_POLICE_BOX_ITEM_STORAGE_COUNT) {
+                    /* space is still available, so directly add it */
+                    new_items[count] = item;
+                    count++;
+                } else {
+                    /* randomly overwrite one of the items in the lost and found */
+                    new_items[RANDOM(mPB_POLICE_BOX_ITEM_STORAGE_COUNT)] = item;
+                }
+
+                *block_items = EMPTY_NO;
             }
-
-            *block_items = EMPTY_NO;
+            block_items++;
         }
-        block_items++;
     }
 
     if (count > 0) {
@@ -175,11 +177,11 @@ typedef mActor_name_t (*mPB_get_force_set_proc)();
  * @return The randomly selected item
  **/
 static mActor_name_t mPB_get_force_set_item_goods() {
-    static int category_table[mSP_KIND_MAX] = {
+    static int category_table[] = {
         mSP_KIND_FURNITURE, mSP_KIND_PAPER, mSP_KIND_CLOTH, mSP_KIND_CARPET, mSP_KIND_WALLPAPER,
     };
 
-    static int prob_table[mSP_KIND_MAX] = {
+    static int prob_table[] = {
         35, /* furniture   0-35 (36%) */
         58, /* stationery 36-58 (23%) */
         88, /* clothing   59-88 (30%) */
@@ -187,12 +189,12 @@ static mActor_name_t mPB_get_force_set_item_goods() {
         100 /* wallpaper  95-99 (5%) (fqrand is [min, max) so 100 is not possible) */
     };
 
-    int category = mSP_KIND_MAX;
+    int category = ARRAY_COUNT(category_table);
     mActor_name_t item = EMPTY_NO;
-    int roll = (int)(fqrand() * 100.0f);
+    int roll = RANDOM(100);
     int i;
 
-    for (i = 0; i < mSP_KIND_MAX; i++) {
+    for (i = 0; i < ARRAY_COUNT(category_table); i++) {
         if (roll <= prob_table[i]) {
             category = i;
             break;
