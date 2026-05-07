@@ -2421,31 +2421,135 @@ static void Camera2_main_Inter(GAME_PLAY* play) {
     Camera2_change_main_index(play);
 }
 
+/*
+ * Staff roll presets: `mCm2_staffroll_prm_staffroll[]` / birthday tables.
+ * `mCm2_sr_*` — accessors; suffix `_x2f`/`_x2i` multiplies raw by 2.0 as f32/int;
+ * `_f01` multiplies raw by 0.01 (Hermite slopes, radial-distance sine depth).
+ */
+
+#define mCm2_sr_i_yaw   0
+#define mCm2_sr_i_hsc   1  /* center lateral scale */
+#define mCm2_sr_i_rr    2  /* rΔ wrap divisor */
+#define mCm2_sr_i_r0    3  /* initial phase for rΔ */
+#define mCm2_sr_i_dst   4  /* radial distance baseline */
+#define mCm2_sr_i_rpct  5  /* radial sine % (_f01 → float) */
+#define mCm2_sr_i_px    6  /* pitch-cycle half */
+#define mCm2_sr_i_p0    7  /* initial rotation_xΔ */
+#define mCm2_sr_i_pt    8  /* pitch sine scale */
+#define mCm2_sr_i_min   9  /* morph enter (frames half) */
+#define mCm2_sr_i_mout  10 /* morph exit */
+#define mCm2_sr_i_h0    11 /* Hermite slope in */
+#define mCm2_sr_i_h1    12 /* Hermite slope out */
+
+#define mCm2_sr_yaw() mCm2_get_staffroll_prm(mCm2_sr_i_yaw)
+#define mCm2_sr_yaw_x2i() ((int)((f32)mCm2_sr_yaw() * 2.0f))
+
+#define mCm2_sr_hsc() mCm2_get_staffroll_prm(mCm2_sr_i_hsc)
+
+#define mCm2_sr_rr() mCm2_get_staffroll_prm(mCm2_sr_i_rr)
+#define mCm2_sr_rr_x2i() ((int)((f32)mCm2_sr_rr() * 2.0f))
+
+#define mCm2_sr_r0_x2f() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_r0) * 2.0f)
+
+#define mCm2_sr_dst() mCm2_get_staffroll_prm(mCm2_sr_i_dst)
+
+#define mCm2_sr_rpct_f01() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_rpct) * 0.01f)
+
+#define mCm2_sr_px() mCm2_get_staffroll_prm(mCm2_sr_i_px)
+#define mCm2_sr_px_x2i() ((int)((f32)mCm2_sr_px() * 2.0f))
+
+#define mCm2_sr_p0_x2f() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_p0) * 2.0f)
+
+#define mCm2_sr_pt() mCm2_get_staffroll_prm(mCm2_sr_i_pt)
+
+#define mCm2_sr_min_x2f() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_min) * 2.0f)
+#define mCm2_sr_min_x2i() ((int)mCm2_sr_min_x2f())
+
+#define mCm2_sr_mout_x2i() ((int)((f32)mCm2_get_staffroll_prm(mCm2_sr_i_mout) * 2.0f))
+
+#define mCm2_sr_h0_f01() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_h0) * 0.01f)
+#define mCm2_sr_h1_f01() ((f32)mCm2_get_staffroll_prm(mCm2_sr_i_h1) * 0.01f)
+
 static s16* mCm2_staffroll_prm_p = NULL;
 
 static s16 mCm2_staffroll_prm_staffroll[13] = {
-    0x0514, 0x002D, 0x08FC, 0x000A, 0x023F, 0x0014, 0x07D0, 0x0014,
-    0x1388, 0x00A0, 0x0078, 0x01EA, 0x0000
+    0x0514, // mCm2_sr_i_yaw
+    0x002D, // mCm2_sr_i_hsc
+    0x08FC, // mCm2_sr_i_rr
+    0x000A, // mCm2_sr_i_r0
+    0x023F, // mCm2_sr_i_dst
+    0x0014, // mCm2_sr_i_rpct
+    0x07D0, // mCm2_sr_i_px
+    0x0014, // mCm2_sr_i_p0
+    0x1388, // mCm2_sr_i_pt
+    0x00A0, // mCm2_sr_i_min
+    0x0078, // mCm2_sr_i_mout
+    0x01EA, // mCm2_sr_i_h0
+    0x0000, // mCm2_sr_i_h1
 };
 
 static s16 mCm2_staffroll_prm_birthday_1[13] = {
-    0x0370, 0xFFBA, 0x08FC, 0x000A, 0x02A3, 0x0014, 0x07D0, 0x0014,
-    0x1388, 0x00A0, 0x0078, 0x01EA, 0x0000
+    0x0370, // mCm2_sr_i_yaw
+    0xFFBA, // mCm2_sr_i_hsc
+    0x08FC, // mCm2_sr_i_rr
+    0x000A, // mCm2_sr_i_r0
+    0x02A3, // mCm2_sr_i_dst
+    0x0014, // mCm2_sr_i_rpct
+    0x07D0, // mCm2_sr_i_px
+    0x0014, // mCm2_sr_i_p0
+    0x1388, // mCm2_sr_i_pt
+    0x00A0, // mCm2_sr_i_min
+    0x0078, // mCm2_sr_i_mout
+    0x01EA, // mCm2_sr_i_h0
+    0x0000, // mCm2_sr_i_h1
 };
 
 static s16 mCm2_staffroll_prm_birthday_2[13] = {
-    0x02D0, 0xFFBA, 0x08FC, 0x000A, 0x02A3, 0x0014, 0x0640, 0x0014,
-    0x1388, 0x00A0, 0x0078, 0x01EA, 0x0000
+    0x02D0, // mCm2_sr_i_yaw
+    0xFFBA, // mCm2_sr_i_hsc
+    0x08FC, // mCm2_sr_i_rr
+    0x000A, // mCm2_sr_i_r0
+    0x02A3, // mCm2_sr_i_dst
+    0x0014, // mCm2_sr_i_rpct
+    0x0640, // mCm2_sr_i_px
+    0x0014, // mCm2_sr_i_p0
+    0x1388, // mCm2_sr_i_pt
+    0x00A0, // mCm2_sr_i_min
+    0x0078, // mCm2_sr_i_mout
+    0x01EA, // mCm2_sr_i_h0
+    0x0000, // mCm2_sr_i_h1
 };
 
 static s16 mCm2_staffroll_prm_birthday_3[13] = {
-    0x02A8, 0xFFBA, 0x08FC, 0x000A, 0x02A3, 0x0014, 0x05DC, 0x0014,
-    0x1388, 0x00A0, 0x0078, 0x01EA, 0x0000
+    0x02A8, // mCm2_sr_i_yaw
+    0xFFBA, // mCm2_sr_i_hsc
+    0x08FC, // mCm2_sr_i_rr
+    0x000A, // mCm2_sr_i_r0
+    0x02A3, // mCm2_sr_i_dst
+    0x0014, // mCm2_sr_i_rpct
+    0x05DC, // mCm2_sr_i_px
+    0x0014, // mCm2_sr_i_p0
+    0x1388, // mCm2_sr_i_pt
+    0x00A0, // mCm2_sr_i_min
+    0x0078, // mCm2_sr_i_mout
+    0x01EA, // mCm2_sr_i_h0
+    0x0000, // mCm2_sr_i_h1
 };
 
 static s16 mCm2_staffroll_prm_birthday_4[13] = {
-    0x028A, 0xFFBA, 0x08FC, 0x000A, 0x02A3, 0x0014, 0x0578, 0x0014,
-    0x1388, 0x00A0, 0x0078, 0x01EA, 0x0000
+    0x028A, // mCm2_sr_i_yaw
+    0xFFBA, // mCm2_sr_i_hsc
+    0x08FC, // mCm2_sr_i_rr
+    0x000A, // mCm2_sr_i_r0
+    0x02A3, // mCm2_sr_i_dst
+    0x0014, // mCm2_sr_i_rpct
+    0x0578, // mCm2_sr_i_px
+    0x0014, // mCm2_sr_i_p0
+    0x1388, // mCm2_sr_i_pt
+    0x00A0, // mCm2_sr_i_min
+    0x0078, // mCm2_sr_i_mout
+    0x01EA, // mCm2_sr_i_h0
+    0x0000, // mCm2_sr_i_h1
 };
 
 static s16 mCm2_get_staffroll_prm(int idx) {
@@ -2460,16 +2564,16 @@ extern int Camera2_request_main_staff_roll(GAME_PLAY* play, ACTOR* speaker, ACTO
         switch (type) {
             case CAMERA2_PROCESS_STAFF_ROLL2:
                 switch (subtype) {
-                    case 1:
+                    case mCm_STAFFROLL_TYPE_BIRTHDAY_1:
                         mCm2_staffroll_prm_p = mCm2_staffroll_prm_birthday_1;
                         break;
-                    case 2:
+                    case mCm_STAFFROLL_TYPE_BIRTHDAY_2:
                         mCm2_staffroll_prm_p = mCm2_staffroll_prm_birthday_2;
                         break;
-                    case 3:
+                    case mCm_STAFFROLL_TYPE_BIRTHDAY_3:
                         mCm2_staffroll_prm_p = mCm2_staffroll_prm_birthday_3;
                         break;
-                    case 4:
+                    case mCm_STAFFROLL_TYPE_BIRTHDAY_4:
                         mCm2_staffroll_prm_p = mCm2_staffroll_prm_birthday_4;
                         break;
                     default:
@@ -2500,11 +2604,11 @@ static void Camera2_setup_main_Staff_roll(GAME_PLAY* play) {
     staff_roll->speaker_actor = camera->request_data.staff_roll.speaker_actor;
     staff_roll->listener_actor = camera->request_data.staff_roll.listener_actor;
     staff_roll->rotation_y_delta = 0;
-    staff_roll->r_delta = mCm2_get_staffroll_prm(3) * 2.0f;
-    staff_roll->rotation_x_delta = mCm2_get_staffroll_prm(7) * 2.0f;
+    staff_roll->r_delta = mCm2_sr_r0_x2f();
+    staff_roll->rotation_x_delta = mCm2_sr_p0_x2f();
     staff_roll->flags = 1;
     staff_roll->dist_counter = 0;
-    staff_roll->morph_counter = mCm2_get_staffroll_prm(9) * 2.0f;
+    staff_roll->morph_counter = mCm2_sr_min_x2f();
     Camera2_setup_main_Base(play);
     play->camera.requested_main_index_priority = 0;
 }
@@ -2512,6 +2616,7 @@ static void Camera2_setup_main_Staff_roll(GAME_PLAY* play) {
 static void Camera2_Staff_Roll_Center(GAME_PLAY* play, ACTOR* speaker, ACTOR* listener, xyz_t* center, f32 distance,
                                       f32 t, int update) {
     Camera2* camera = &play->camera;
+    CameraStaffRoll* staff_roll = &camera->main_data.staff_roll;
 
     xyz_t* pos0;
     xyz_t* pos1;
@@ -2550,24 +2655,33 @@ static void Camera2_Staff_Roll_Center(GAME_PLAY* play, ACTOR* speaker, ACTOR* li
         center_y = (pos0->y + pos1->y) / 2.0f - y_shift;
         center_z = (pos0->z + pos1->z) / 2.0f;
 
-        h = cKF_HermitCalc(t, 1.0f, 0.0f, 1.0f, mCm2_get_staffroll_prm(11) * 0.01f, mCm2_get_staffroll_prm(12) * 0.01f);
-        h *= ((1.0f + (mCm2_get_staffroll_prm(5) * 0.01f) * sin_s((s16)(((f32)camera->main_data.staff_roll.r_delta / (int)(mCm2_get_staffroll_prm(2) * 2.0f)) * 65535.0f))) - (mCm2_get_staffroll_prm(5) * 0.01f)) * mCm2_get_staffroll_prm(1);
+        h = cKF_HermitCalc(t, 1.0f, 0.0f, 1.0f, mCm2_sr_h0_f01(),
+                           mCm2_sr_h1_f01());
+        h *= ((1.0f +
+               mCm2_sr_rpct_f01() *
+                   sin_s((s16)(((f32)staff_roll->r_delta /
+                               mCm2_sr_rr_x2i()) *
+                              65535.0f))) -
+              mCm2_sr_rpct_f01()) *
+             mCm2_sr_hsc();
 
         temp =
-            (int)((-(f32)camera->main_data.staff_roll.rotation_y_delta / (int)(mCm2_get_staffroll_prm(0) * 2.0f)) *
+            (int)((-(f32)staff_roll->rotation_y_delta /
+                   mCm2_sr_yaw_x2i()) *
                   65535.0f) +
             0x10000;
-        temp += camera->main_data.staff_roll.last_direction.y;
+        temp += staff_roll->last_direction.y;
         y_rot_x = sin_s(temp + DEG2SHORT_ANGLE2(-90.0f));
 
         goal_center.y = center_y;
         goal_center.x = center_x + h * y_rot_x;
 
         temp =
-            (int)((-(f32)camera->main_data.staff_roll.rotation_y_delta / (int)(mCm2_get_staffroll_prm(0) * 2.0f)) *
+            (int)((-(f32)staff_roll->rotation_y_delta /
+                   mCm2_sr_yaw_x2i()) *
                   65535.0f) +
             0x10000;
-        temp += camera->main_data.staff_roll.last_direction.y;
+        temp += staff_roll->last_direction.y;
         y_rot_z = cos_s(temp + DEG2SHORT_ANGLE2(-90.0f));
 
         goal_center.z = center_z + h * y_rot_z;
@@ -2582,12 +2696,12 @@ static void Camera2_Staff_Roll_Center(GAME_PLAY* play, ACTOR* speaker, ACTOR* li
 
 static void Camera2_Staff_Roll_DistAngle(GAME_PLAY* play, ACTOR* speaker, ACTOR* listener, s_xyz* angle, f32 distance) {
     Camera2* camera = &play->camera;
+    CameraStaffRoll* staff_roll = &camera->main_data.staff_roll;
     f32 dist;
 
-    dist = ((1.0f + (mCm2_get_staffroll_prm(5) * 0.01f) * sin_s((s16)(((f32)camera->main_data.staff_roll.r_delta / (int)(mCm2_get_staffroll_prm(2) * 2.0f)) * 65535.0f))) - (mCm2_get_staffroll_prm(5) * 0.01f)) * mCm2_get_staffroll_prm(4);
-    angle->x = (s16)(mCm2_get_staffroll_prm(8) * sin_s((s16)(((f32)camera->main_data.staff_roll.rotation_x_delta / (int)(mCm2_get_staffroll_prm(6) * 2.0f)) * 65536.0f)));
-    angle->y = (s16)((-(f32)camera->main_data.staff_roll.rotation_y_delta / (int)(mCm2_get_staffroll_prm(0) * 2.0f)) * 65535.0f) +
-               camera->main_data.staff_roll.last_direction.y + (u16)SHT_MIN_S;
+    dist = ((1.0f + mCm2_sr_rpct_f01() * sin_s((s16)(((f32)staff_roll->r_delta / mCm2_sr_rr_x2i()) * 65535.0f))) - mCm2_sr_rpct_f01()) * mCm2_sr_dst();
+    angle->x = (s16)(mCm2_sr_pt() * sin_s((s16)(((f32)staff_roll->rotation_x_delta / mCm2_sr_px_x2i()) * 65536.0f)));
+    angle->y = (s16)((-(f32)staff_roll->rotation_y_delta / mCm2_sr_yaw_x2i()) * 65535.0f) + staff_roll->last_direction.y + (u16)SHT_MIN_S;
     angle->z = 0;
 
     Camera2_MoveDistancePosAndSpeed(play, dist, FALSE);
@@ -2597,7 +2711,7 @@ static void Camera2_main_Staff_Roll_SetPos(GAME_PLAY* play) {
     Camera2* camera = &play->camera;
     ACTOR* speaker = camera->main_data.staff_roll.speaker_actor;
     ACTOR* listener = camera->main_data.staff_roll.listener_actor;
-    CameraMainData* main_data = &camera->main_data;
+    CameraStaffRoll* staff_roll = &camera->main_data.staff_roll;
     f32 distance;
     xyz_t center;
     xyz_t eye;
@@ -2611,49 +2725,48 @@ static void Camera2_main_Staff_Roll_SetPos(GAME_PLAY* play) {
             distance = search_position_distance(&speaker->world.position, &listener->world.position);
         }
 
-        /* TODO: cast kk_save_area to correct struct type */
-        if ((Common_Get(event_common).exist_flags1 & 0x8000) && (main_data->staff_roll.flags & 2) == 0) {
+        if ((Common_Get(event_common).exist_flags1 & 0x8000) && (staff_roll->flags & 2) == 0) {
             /* Start camera sequence? */
-            main_data->staff_roll.flags &= ~1;
-            main_data->staff_roll.flags |= 2;
-            main_data->staff_roll.morph_counter = (int)(mCm2_get_staffroll_prm(10) * 2.0f);
+            staff_roll->flags &= ~1;
+            staff_roll->flags |= 2;
+            staff_roll->morph_counter = mCm2_sr_mout_x2i();
         }
 
-        if (main_data->staff_roll.flags & 2) {
-            Camera2_Lock_SetCenterPos(play, &main_data->staff_roll.last_center_pos,
-                                      main_data->staff_roll.morph_counter);
-            Camera2_Lock_SetEyePos(play, &main_data->staff_roll.last_eye_pos, main_data->staff_roll.morph_counter);
+        if (staff_roll->flags & 2) {
+            Camera2_Lock_SetCenterPos(play, &staff_roll->last_center_pos,
+                                      staff_roll->morph_counter);
+            Camera2_Lock_SetEyePos(play, &staff_roll->last_eye_pos, staff_roll->morph_counter);
             Camera2_DirectionCalc(play);
 
-            if (main_data->staff_roll.morph_counter != 0) {
-                main_data->staff_roll.morph_counter--;
+            if (staff_roll->morph_counter != 0) {
+                staff_roll->morph_counter--;
             } else {
-                camera->focus_distance = main_data->staff_roll.last_distance;
-                camera->direction = main_data->staff_roll.last_direction;
+                camera->focus_distance = staff_roll->last_distance;
+                camera->direction = staff_roll->last_direction;
                 Camera2_change_priority(play, 0);
                 Camera2_request_main_normal(play, 0, 5);
             }
-        } else if (main_data->staff_roll.flags & 1) {
+        } else if (staff_roll->flags & 1) {
             xyz_t* center_vel_p = &camera->movement_velocity;
             xyz_t* center_p = &camera->lookat.center;
             f32 t;
 
             last_center = *center_p;
-            t = ((float)(int)(mCm2_get_staffroll_prm(9) * 2.0f) - (f32)(u32)(main_data->staff_roll.morph_counter)) / ((float)(int)(mCm2_get_staffroll_prm(9) * 2.0f));
+            t = ((f32)mCm2_sr_min_x2i() - (f32)(staff_roll->morph_counter)) / (f32)mCm2_sr_min_x2i();
             Camera2_Staff_Roll_Center(play, speaker, listener, &center, distance, t, FALSE);
-            Camera2_Lock_SetCenterPos(play, &center, main_data->staff_roll.morph_counter);
+            Camera2_Lock_SetCenterPos(play, &center, staff_roll->morph_counter);
             center_vel_p->x = center_p->x - last_center.x;
             center_vel_p->y = center_p->y - last_center.y;
             center_vel_p->z = center_p->z - last_center.z;
             Camera2_Staff_Roll_DistAngle(play, speaker, listener, &angle, distance);
             Camera2_PolaPosCalc(&eye, angle.x + (u16)SHT_MIN_S, angle.y + (u16)SHT_MIN_S, &center,
                                 camera->focus_distance);
-            Camera2_Lock_SetEyePos(play, &eye, main_data->staff_roll.morph_counter);
+            Camera2_Lock_SetEyePos(play, &eye, staff_roll->morph_counter);
 
-            if (main_data->staff_roll.morph_counter != 0) {
-                main_data->staff_roll.morph_counter--;
+            if (staff_roll->morph_counter != 0) {
+                staff_roll->morph_counter--;
             } else {
-                main_data->staff_roll.flags &= ~1;
+                staff_roll->flags &= ~1;
             }
 
             Camera2_DirectionCalc(play);
@@ -2663,20 +2776,20 @@ static void Camera2_main_Staff_Roll_SetPos(GAME_PLAY* play) {
             Camera2_MoveDirectionAngleXYZ_morph(play, &angle, 0);
             Camera2_SetEyePos_fromCenterPos(play);
 
-            main_data->staff_roll.r_delta++;
-            if (main_data->staff_roll.r_delta > (int)(mCm2_get_staffroll_prm(2) * 2.0f)) {
-                main_data->staff_roll.r_delta = 0;
+            staff_roll->r_delta++;
+            if (staff_roll->r_delta > mCm2_sr_rr_x2i()) {
+                staff_roll->r_delta = 0;
             }
 
-            main_data->staff_roll.rotation_x_delta++;
-            if (main_data->staff_roll.rotation_x_delta > (int)(mCm2_get_staffroll_prm(6) * 2.0f)) {
-                main_data->staff_roll.rotation_x_delta = 0;
+            staff_roll->rotation_x_delta++;
+            if (staff_roll->rotation_x_delta > mCm2_sr_px_x2i()) {
+                staff_roll->rotation_x_delta = 0;
             }
         }
 
-        main_data->staff_roll.rotation_y_delta++;
-        if (main_data->staff_roll.rotation_y_delta > (int)(mCm2_get_staffroll_prm(0) * 2.0f)) {
-            main_data->staff_roll.rotation_y_delta = 0;
+        staff_roll->rotation_y_delta++;
+        if (staff_roll->rotation_y_delta > mCm2_sr_yaw_x2i()) {
+            staff_roll->rotation_y_delta = 0;
         }
 
         Camera2_SetView(play);

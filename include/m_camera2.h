@@ -28,6 +28,16 @@ enum {
     CAMERA2_PROCESS_NUM
 };
 
+enum {
+    mCm_STAFFROLL_TYPE_NORMAL,
+    mCm_STAFFROLL_TYPE_BIRTHDAY_1,
+    mCm_STAFFROLL_TYPE_BIRTHDAY_2,
+    mCm_STAFFROLL_TYPE_BIRTHDAY_3,
+    mCm_STAFFROLL_TYPE_BIRTHDAY_4,
+
+    mCm_STAFFROLL_TYPE_NUM
+};
+
 typedef struct camera_main_cust_talk_s {
     ACTOR* speaker_actor;
     ACTOR* listener_actor;
