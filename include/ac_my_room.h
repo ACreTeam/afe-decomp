@@ -303,6 +303,7 @@ extern Gfx* aMR_IconNo2Gfx2(int icon_no);
 extern int aMR_RadioBgmNow(void);
 extern void aMR_ThrowItem_FurnitureLock(void);
 extern void aMR_ThrowItem_FurnitureUnlock(void);
+extern int aMR_check_valid_furniture(mActor_name_t item);
 
 #ifdef __cplusplus
 }

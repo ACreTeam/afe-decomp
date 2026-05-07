@@ -31,16 +31,17 @@ extern u8 ftrName_table[];
 extern u8 ftrName2_table[];
 
 enum item_article {
-  mIN_ARTICLE_NONE,
-  mIN_ARTICLE_A,
-  mIN_ARTICLE_AN,
-  mIN_ARTICLE_THE,
-  mIN_ARTICLE_SOME,
+    mIN_ARTICLE_NONE,
+    mIN_ARTICLE_A,
+    mIN_ARTICLE_AN,
+    mIN_ARTICLE_THE,
+    mIN_ARTICLE_SOME,
 
-  mIN_ARTICLE_NUM
+    mIN_ARTICLE_NUM
 };
 
 extern void mIN_copy_name_str(u8* str, mActor_name_t item_no);
+extern void mIN_copy_cloth_name_str(u8* dst, mActor_name_t cloth, u8 design_idx);
 extern int mIN_get_item_article(mActor_name_t item_no);
 
 #ifdef __cplusplus
