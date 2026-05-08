@@ -297,6 +297,7 @@ extern void mFont_gppSetRectMode(Gfx** gfx_pp);
 extern void mFont_Change_RubyToKana(u8* str, int len);
 
 extern void mFont_KanjiLevel_debug(gfxprint_t* gfxprint);
+extern void mFont_CopyStrings(u8* dst, u8* src, int len);
 
 #ifdef __cplusplus
 }

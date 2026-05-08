@@ -18,10 +18,6 @@
 
 static int mNpc_CheckIslandAnimalID(AnmPersonalID_c* anm_id);
 
-extern mNpc_Default_Data_c npc_def_list[];
-extern s8 npc_grow_list[];
-extern mNpc_NpcHouseData_c npc_house_list[];
-
 typedef struct sp_actor_name_data_s {
     mActor_name_t sp_npc_id;
     u16 sex;

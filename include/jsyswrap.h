@@ -164,6 +164,13 @@ extern void JW_Init2();
 extern void JW_Init3();
 extern void JW_Init4();
 extern void JW_Cleanup();
+extern void JW_Set_request_type_AgbProg(int type);
+extern u32 JW_Get_AgbTargetNpcHead_InAgbArchiveFile0_data_p(void);
+extern u32 JW_Get_AgbTargetNpcPal_InAgbArchiveFile0_data_p(void);
+extern u32 JW_Get_AgbTargetNpcBody_InAgbArchiveFile0_data_p(void);
+extern u32 JW_Get_AgbTargetPlayerHead_InAgbArchiveFile0_data_p(void);
+extern u32 JW_Get_AgbTargetPlayerBody_InAgbArchiveFile0_data_p(void);
+extern u32 JW_Get_AgbTargetPlayerPal_InAgbArchiveFile0_data_p(void);
 
 #ifdef __cplusplus
 }

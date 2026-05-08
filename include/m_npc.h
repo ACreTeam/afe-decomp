@@ -347,6 +347,9 @@ typedef struct npc_default_data_s {
     mActor_name_t cloth;
     u16 catchphrase_str_idx;
     s8 umbrella;
+    u8 agb_body_type;
+    u8 love_cloth_type;
+    u8 hate_cloth_type;
 } mNpc_Default_Data_c;
 
 enum __sick_level__ {
@@ -587,6 +590,11 @@ extern int mNpc_GetRelationAnimal(Animal_c* animal0, Animal_c* animal1);
 extern void mNpc_AddRelationPoint(Animal_c* animal0, Animal_c* animal1, int point);
 extern u8 mNpc_GetDefAnimalClothHAttr(Animal_c* animal);
 extern u8 mNpc_GetDefAnimalClothLAttr(Animal_c* animal);
+extern int mNpc_get_npc_param(u8* buf, mActor_name_t npc_name);
+
+extern mNpc_Default_Data_c npc_def_list[];
+extern s8 npc_grow_list[];
+extern mNpc_NpcHouseData_c npc_house_list[];
 
 #ifdef __cplusplus
 }
