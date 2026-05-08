@@ -630,47 +630,47 @@ libultra/ultra.c:
 	.text       start:0x80060664 end:0x800607A4
 	.bss        start:0x80233C60 end:0x80233CA0
 
-libultra/coss.c:
+libultra/gu/coss.c:
 	.text       start:0x800607A4 end:0x800607CC
 
-libultra/lookat.c:
+libultra/gu/lookat.c:
 	.text       start:0x800607CC end:0x80060B74
 	.sdata2     start:0x80292310 end:0x80292330
 
-libultra/lookathil.c:
+libultra/gu/lookathil.c:
 	.text       start:0x80060B74 end:0x80061540
 	.sdata2     start:0x80292330 end:0x80292370
 
-libultra/mtxutil.c:
+libultra/gu/mtxutil.c:
 	.text       start:0x80061540 end:0x800617A4
 	.sdata2     start:0x80292370 end:0x80292380
 
-libultra/normalize.c:
+libultra/gu/normalize.c:
 	.text       start:0x800617A4 end:0x80061860
 	.sdata2     start:0x80292380 end:0x802923A0
 
-libultra/ortho.c:
+libultra/gu/ortho.c:
 	.text       start:0x80061860 end:0x80061A5C
 	.sdata2     start:0x802923A0 end:0x802923B0
 
-libultra/perspective.c:
+libultra/gu/perspective.c:
 	.text       start:0x80061A5C end:0x80061C9C
 	.sdata2     start:0x802923B0 end:0x802923D8
 
-libultra/rotate.c:
+libultra/gu/rotate.c:
 	.text       start:0x80061C9C end:0x80061E1C
 	.sdata      start:0x80290D50 end:0x80290D58
 	.sdata2     start:0x802923D8 end:0x802923E0
 
-libultra/scale.c:
+libultra/gu/scale.c:
 	.text       start:0x80061E1C end:0x80061EA8
 	.sdata2     start:0x802923E0 end:0x802923E8
 
-libultra/sins.c:
+libultra/gu/sins.c:
 	.text       start:0x80061EA8 end:0x80061EF4
 	.data       start:0x80101118 end:0x80101918
 
-libultra/translate.c:
+libultra/gu/translate.c:
 	.text       start:0x80061EF4 end:0x80061F60
 
 libultra/xldtob.c:
