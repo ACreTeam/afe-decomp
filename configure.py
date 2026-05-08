@@ -595,7 +595,7 @@ config.libs = [
         "progress_category": "library",
         "src_dir": "src/static",
         "objects": [
-            Object(NonMatching, "libc64/__osMalloc.c"),
+            Object(Matching, "libc64/__osMalloc.c"),
             Object(Matching, "libc64/aprintf.c"),
             Object(NonMatching, "libc64/math64.c"),
             Object(Matching, "libc64/qrand.c"),
