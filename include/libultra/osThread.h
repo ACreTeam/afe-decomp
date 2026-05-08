@@ -9,5 +9,7 @@ typedef s32 OSId;
 
 
 OSId osGetThreadId(OSThread*);
+void osYieldThread(void);
+BOOL osIsTerminatedThread(OSThread*);
 
 #endif
