@@ -117,10 +117,16 @@ enum field_room {
     /* TODO: others */
 };
 
+#define mFI_GET_ROOMTYPE() mFI_GET_TYPE(mFI_GetFieldId())
+
 #define mFI_GET_PLAYER_ROOM_NO(field_id) (((field_id) - mFI_FIELD_PLAYER0_ROOM) & 3)
 #define mFI_IS_PLAYER_ROOM(field_id)                                                 \
     ((field_id) == mFI_FIELD_PLAYER0_ROOM || (field_id) == mFI_FIELD_PLAYER1_ROOM || \
      (field_id) == mFI_FIELD_PLAYER2_ROOM || (field_id) == mFI_FIELD_PLAYER3_ROOM)
+
+#define mFI_IS_ROOM(field_id) (mFI_GET_TYPE(field_id) == mFI_FIELD_PLAYER0_ROOM || \
+    mFI_GET_TYPE(field_id) == mFI_FIELD_ROOM0 || \
+    mFI_GET_TYPE(field_id) == mFI_FIELD_NPCROOM0)
 
 /* "wade" between acres (acre transition) */
 enum player_wade_state {
