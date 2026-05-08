@@ -88,15 +88,4 @@ extern inline double sqrt(double x) {
 // }
 // #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// double atan2(double, double);
-// double acos(float);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif

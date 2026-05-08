@@ -591,17 +591,17 @@ config.libs = [
     {
         "lib": "libc64",
         "mw_version": config.linker_version,
-        "cflags": cflags_static,
+        "cflags": [*cflags_static, "-inline off", "-sym on"],
         "progress_category": "library",
         "src_dir": "src/static",
         "objects": [
             Object(Matching, "libc64/__osMalloc.c"),
             Object(Matching, "libc64/aprintf.c"),
-            Object(NonMatching, "libc64/math64.c"),
+            Object(Matching, "libc64/math64.c"),
             Object(Matching, "libc64/qrand.c"),
-            Object(NonMatching, "libc64/sleep.c"),
+            Object(Matching, "libc64/sleep.c"),
             Object(Matching, "libc64/sprintf.c"),
-            Object(NonMatching, "libc64/malloc.c"),
+            Object(Matching, "libc64/malloc.c"),
         ],
     },
     {
