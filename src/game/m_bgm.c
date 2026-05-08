@@ -8,6 +8,8 @@
 #include "m_melody.h"
 #include "m_player_lib.h"
 
+#define BGM_NONE 0xFFFF
+
 #define mBGMPs_FLAG_REMOVE (1 << 0)
 #define mBGMPs_FLAG_UPDATE_VOLUME (1 << 1)
 #define mBGMPs_FLAG_EXECUTE (1 << 2)
@@ -49,8 +51,7 @@ enum {
 };
 
 typedef struct bgm_elem_s {
-    u8 bgm_num;
-    u8 _pad0;
+    u16 bgm_num;
     u16 _pad1;
     u16 stop_type0;
     u16 stop_type1;
@@ -127,9 +128,8 @@ typedef struct bgm_ps_comp_stop_s {
 
 typedef struct bgm_ps_comp_start_s {
     u8 req_flag;
-    u8 bgm_num;
+    u16 bgm_num;
     u8 flags;
-    u8 _pad;
 } mBGMPsComp_Start;
 
 typedef struct bgm_ps_comp_volume_s {
@@ -198,6 +198,11 @@ typedef struct bgm_ps_comp_museum_s {
     u16 _pad;
 } mBGMPsComp_Museum;
 
+typedef struct bgm_ps_comp_island_s {
+    u8 req_flag;
+    u8 state;
+} mBGMPsComp_Island;
+
 typedef struct bgm_ps_comp_s {
     mBGMPs ps[mBGM_BGMPs_NUM];
     int ps_num;
@@ -213,6 +218,7 @@ typedef struct bgm_ps_comp_s {
     mBGMPsComp_MDPlayerPos md;
     mBGMPsComp_Arm arm;
     mBGMPsComp_Museum museum;
+    mBGMPsComp_Island island;
 } mBGMPsComp;
 
 typedef struct bgm_force_s {
@@ -235,38 +241,79 @@ typedef struct bgm_s {
 
 static mBGM M_bgm;
 
-static int mBGM_check_MD(u8 bgm_num) {
+static void mBGMPsComp_island_set(void);
+
+static int mBGM_check_MD(u16 bgm_num) {
     int res = FALSE;
 
-    if ((bgm_num >= 0x80 && bgm_num <= 0xB3) || (bgm_num >= 0xB4 && bgm_num <= 0xB6)) {
+    if (bgm_num >= BGM_MD0 && bgm_num <= BGM_367) {
         res = TRUE;
     }
 
     return res;
 }
 
-static int mBGM_check_ignore_talk_volume(u8 bgm_num) {
-    /* TODO: defines/enums for these ids */
-    static const u8 bgm_data[44] = { 40,  73,  68,  74,  76,  75,  49,  50,  71,  64,  66,  78,  122, 125, 92,
-                                     93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107,
-                                     108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121 };
+static int mBGM_check_ignore_talk_volume(u16 bgm_num) {
+    static const u16 bgm_data[] = {
+        BGM_DIG_ITEM,
+        BGM_INTRO_CHORES_COMPLETE,
+        BGM_BEE_STUNG,
+        BGM_DEBT_PAID,
+        BGM_ALL_FISH,
+        BGM_ALL_INSECTS,
+        BGM_INTRO_SELECT_HOUSE,
+        BGM_INTRO_SELECT_HOUSE2,
+        BGM_TRAIN_ARRIVAL_WAIT,
+        BGM_TRAIN_BOARD,
+        BGM_RESET,
+        BGM_RESET2,
+        BGM_DON_RESETTI,
+        BGM_MOSQUITO_BITE,
+        BGM_KAPPA_SONG0,
+        BGM_KAPPA_SONG1,
+        BGM_KAPPA_SONG2,
+        BGM_KAPPA_SONG3,
+        BGM_KAPPA_SONG4,
+        BGM_KAPPA_SONG5,
+        BGM_KAPPA_SONG6,
+        BGM_KAPPA_SONG7,
+        BGM_KAPPA_SONG8,
+        BGM_KAPPA_SONG9,
+        BGM_KAPPA_SONG10,
+        BGM_KAPPA_SONG11,
+        BGM_KAPPA_SONG12,
+        BGM_KAPPA_SONG13,
+        BGM_KAPPA_SONG14,
+        BGM_KAPPA_SONG15,
+        BGM_KAPPA_SONG16,
+        BGM_KAPPA_SONG17,
+        BGM_KAPPA_SONG18,
+        BGM_KAPPA_SONG19,
+        BGM_KAPPA_SONG20,
+        BGM_KAPPA_SONG21,
+        BGM_KAPPA_SONG22,
+        BGM_KAPPA_SONG23,
+        BGM_KAPPA_SONG24,
+        BGM_KAPPA_SONG25,
+        BGM_KAPPA_SONG26,
+        BGM_KAPPA_SONG27,
+        BGM_KAPPA_SONG28,
+        BGM_KAPPA_SONG29,
+    };
 
-    const u8* bgm_data_p = bgm_data;
     int i;
 
     for (i = 0; i < ARRAY_COUNT(bgm_data); i++) {
-        if (bgm_num == *bgm_data_p) {
+        if (bgm_num == bgm_data[i]) {
             return TRUE;
         }
-
-        bgm_data_p++;
     }
 
     return FALSE;
 }
 
-static int mBGM_check_ignore_collect_insects_volume(u8 bgm_num) {
-    if (bgm_num == 40) {
+static int mBGM_check_ignore_collect_insects_volume(u16 bgm_num) {
+    if (bgm_num == BGM_DIG_ITEM) {
         return TRUE;
     }
 
@@ -274,7 +321,7 @@ static int mBGM_check_ignore_collect_insects_volume(u8 bgm_num) {
 }
 
 static void mBGMElem_default_set(mBGMElem* elem) {
-    static mBGMElem default_data = { 127, 0, 0, 0x168, 0x168 };
+    static mBGMElem default_data = { BGM_NONE, 0, 0x168, 0x168 };
 
     bcopy(&default_data, elem, sizeof(mBGMElem));
 }
@@ -379,34 +426,34 @@ static void mBGMClock_ct(mBGMClock* clock) {
 /* mBGMDemo */
 
 static void mBGMDemo_make_scene_bgm(mBGMDemo* demo) {
-    if (demo->elem.bgm_num == 127 && mFI_CheckFieldData()) {
+    if (demo->elem.bgm_num == BGM_NONE && mFI_CheckFieldData()) {
         mActor_name_t field_id = mFI_GetFieldId();
-        u8 bgm_num;
+        u16 bgm_num;
 
         switch (field_id) {
             case mFI_FIELD_DEMO_STARTDEMO:
             case mFI_FIELD_DEMO_STARTDEMO2:
-                bgm_num = 42;
+                bgm_num = BGM_INTRO_TRAIN;
                 break;
 
             case mFI_FIELD_DEMO_STARTDEMO3:
-                bgm_num = 123;
+                bgm_num = BGM_TRAIN_RIDE;
                 break;
 
             case mFI_FIELD_DEMO_PLAYERSELECT:
                 if (Save_Get(scene_no) == SCENE_PLAYERSELECT_SAVE) {
-                    bgm_num = 46;
+                    bgm_num = BGM_SAVE;
                 } else {
-                    bgm_num = 43;
+                    bgm_num = BGM_INTRO_KK;
                 }
                 break;
 
             default:
-                bgm_num = 127;
+                bgm_num = BGM_NONE;
                 break;
         }
 
-        if (bgm_num != 127) {
+        if (bgm_num != BGM_NONE) {
             mBGMElem_default_set(&demo->elem);
             demo->elem.bgm_num = bgm_num;
             mBGMPsComp_make_ps_demo(bgm_num, 0x168);
@@ -415,9 +462,9 @@ static void mBGMDemo_make_scene_bgm(mBGMDemo* demo) {
 }
 
 static void mBGMDemo_delete_scene_bgm(mBGMDemo* demo) {
-    if (demo->elem.bgm_num != 127) {
+    if (demo->elem.bgm_num != BGM_NONE) {
         mBGMPsComp_delete_ps_demo(demo->elem.bgm_num, 0x168);
-        demo->elem.bgm_num = 127;
+        demo->elem.bgm_num = BGM_NONE;
     }
 }
 
@@ -469,32 +516,34 @@ static void mBGMRoom_shop_close_time_set(mBGMRoom* room) {
     }
 }
 
-static u8 mBGMRoom_make_scene_bgm_shop_get(mBGMRoom* room, mActor_name_t field_id) {
-    u8 bgm_num;
+static u16 mBGMRoom_make_scene_bgm_shop_get(mBGMRoom* room, mActor_name_t field_id) {
+    u16 bgm_num;
 
-    if (mEv_CheckRealArbeit() == FALSE &&
+    if (mSP_force_opend()) {
+        bgm_num = BGM_NOOKS_SHOP_MIDNIGHT;
+    } else if (mEv_CheckRealArbeit() == FALSE &&
         mBGMClock_after_time_check(&M_bgm.clock, room->shop_close_time1,
                                    mBGMClock_CHK_hh | mBGMClock_CHK_mm | mBGMClock_CHK_ss)) {
         /* Play 'almost closing' music */
         if (field_id == mFI_FIELD_ROOM_SHOP0) {
-            bgm_num = 79;
+            bgm_num = BGM_SHOP0_LATE;
         } else if (field_id == mFI_FIELD_ROOM_SHOP1) {
-            bgm_num = 80;
+            bgm_num = BGM_SHOP1_LATE;
         } else if (field_id == mFI_FIELD_ROOM_SHOP2) {
-            bgm_num = 81;
+            bgm_num = BGM_SHOP2_LATE;
         } else {
-            bgm_num = 82;
+            bgm_num = BGM_SHOP3_LATE;
         }
     } else {
         /* Play normal music */
         if (field_id == mFI_FIELD_ROOM_SHOP0) {
-            bgm_num = 44;
+            bgm_num = BGM_SHOP0;
         } else if (field_id == mFI_FIELD_ROOM_SHOP1) {
-            bgm_num = 37;
+            bgm_num = BGM_SHOP1;
         } else if (field_id == mFI_FIELD_ROOM_SHOP2) {
-            bgm_num = 38;
+            bgm_num = BGM_SHOP2;
         } else {
-            bgm_num = 39;
+            bgm_num = BGM_SHOP3;
         }
     }
 
@@ -502,9 +551,9 @@ static u8 mBGMRoom_make_scene_bgm_shop_get(mBGMRoom* room, mActor_name_t field_i
 }
 
 static void mBGMRoom_make_scene_bgm(mBGMRoom* room) {
-    if (room->elem.bgm_num == 127 && mFI_CheckFieldData()) {
+    if (room->elem.bgm_num == BGM_NONE && mFI_CheckFieldData()) {
         mActor_name_t field_id = mFI_GetFieldId();
-        u8 bgm_num;
+        u16 bgm_num;
 
         switch (field_id) {
             case mFI_FIELD_ROOM_SHOP0:
@@ -516,31 +565,31 @@ static void mBGMRoom_make_scene_bgm(mBGMRoom* room) {
                 break;
 
             case mFI_FIELD_ROOM_BROKER_SHOP:
-                bgm_num = 25;
+                bgm_num = BGM_BROKERS_SHOP;
                 break;
 
             case mFI_FIELD_ROOM_POST_OFFICE:
                 if (Common_Get(post_girl_npc_type) != 0) {
-                    bgm_num = 62;
+                    bgm_num = BGM_POST_OFFICE1;
                 } else {
-                    bgm_num = 41;
+                    bgm_num = BGM_POST_OFFICE0;
                 }
                 break;
 
             case mFI_FIELD_ROOM_POLICE_BOX:
-                bgm_num = 45;
+                bgm_num = BGM_POLICE_BOX;
                 break;
 
             case mFI_FIELD_ROOM_BUGGY:
-                bgm_num = 26;
+                bgm_num = BGM_FORTUNE_TELLER;
                 break;
 
             case mFI_FIELD_ROOM_KAMAKURA:
-                bgm_num = 77;
+                bgm_num = BGM_KAMAKURA;
                 break;
 
             case mFI_FIELD_ROOM_TENT:
-                bgm_num = 254;
+                bgm_num = BGM_SUMMER_CAMPER;
                 break;
 
             case mFI_FIELD_ROOM_MUSEUM_ENTRANCE:
@@ -548,23 +597,27 @@ static void mBGMRoom_make_scene_bgm(mBGMRoom* room) {
             case mFI_FIELD_ROOM_MUSEUM_FOSSIL:
             case mFI_FIELD_ROOM_MUSEUM_INSECT:
             case mFI_FIELD_ROOM_MUSEUM_FISH:
-                bgm_num = 88;
+                bgm_num = BGM_MUSEUM;
                 break;
 
             case mFI_FIELD_ROOM_NEEDLEWORK:
-                bgm_num = 89;
+                bgm_num = BGM_TAILORS;
                 break;
 
             case mFI_FIELD_ROOM_LIGHTHOUSE:
-                bgm_num = 90;
+                bgm_num = BGM_LIGHTHOUSE;
+                break;
+
+            case mFI_FIELD_ROOM_RESET_HOUSE:
+                bgm_num = BGM_RESET_CENTER;
                 break;
 
             default:
-                bgm_num = 127;
+                bgm_num = BGM_NONE;
                 break;
         }
 
-        if (bgm_num != 127) {
+        if (bgm_num != BGM_NONE) {
             mBGMElem_default_set(&room->elem);
             room->elem.bgm_num = bgm_num;
             mBGMPsComp_make_ps_room(bgm_num, 0x168);
@@ -573,9 +626,9 @@ static void mBGMRoom_make_scene_bgm(mBGMRoom* room) {
 }
 
 static void mBGMRoom_delete_scene_bgm(mBGMRoom* room) {
-    if (room->elem.bgm_num != 127) {
+    if (room->elem.bgm_num != BGM_NONE) {
         mBGMPsComp_delete_ps_room(room->elem.bgm_num, 0x168);
-        room->elem.bgm_num = 127;
+        room->elem.bgm_num = BGM_NONE;
     }
 }
 
@@ -684,6 +737,10 @@ static int mBGMTime_silent_check(mBGMTime* time) {
         return FALSE;
     }
 
+    if (mCD_castingoff_mura_chk()) {
+        return FALSE;
+    }
+
     /* Silent between XX:59:52 and XX:00:16 */
     return mBGMClock_range_time_check(&M_bgm.clock, mBGMClock_MIN_TO_BGM_MIN(59) | mBGMClock_SEC_TO_BGM_SEC(52),
                                       mBGMClock_MIN_TO_BGM_MIN(0) | mBGMClock_SEC_TO_BGM_SEC(16),
@@ -766,7 +823,7 @@ static void mBGMFieldSuddenEv_flag_set(mBGMFieldSuddenEv* field_sudden_ev, GAME*
 }
 
 static void mBGMFieldSuddenEv_ps_compose(mBGMFieldSuddenEv* field_sudden_ev, GAME* game) {
-    static u8 bgm_num_data[3] = { 91, 127, 52 };
+    static u16 bgm_num_data[3] = { BGM_SIMPLE_ISLAND_LIFE, BGM_NONE, BGM_INTRO_CHORES };
     int now;
     int old;
     int i = 0;
@@ -835,36 +892,36 @@ enum {
 
 typedef struct bgm_event_data_s {
     s16 event_type;
-    u8 bgm_num;
+    u16 bgm_num;
     u8 event_area;
     u32 block_type;
 } mBGMEventData;
 
 static mBGMEventData mbgm_event_data[mBGMFieldSchedEv_EVENT_NUM] = {
-    { -1, 127, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { mEv_EVENT_FIREWORKS_SHOW, 55, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { mEv_EVENT_HALLOWEEN, 53, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
-    { mEv_EVENT_TALK_TOY_DAY, 54, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
-    { mEv_EVENT_CHERRY_BLOSSOM_FESTIVAL, 56, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_MORNING_AEROBICS, 27, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_HARVEST_MOON_FESTIVAL, 30, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { mEv_EVENT_HARVEST_FESTIVAL, 253, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_SPORTS_FAIR_AEROBICS, 27, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_SPORTS_FAIR_FOOT_RACE, 28, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_SPORTS_FAIR_BALL_TOSS, 29, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_SPORTS_FAIR_TUG_OF_WAR, 60, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN, 31, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { -1, 32, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { -1, 33, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { -1, 34, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { -1, 35, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { -1, 57, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
-    { mEv_EVENT_NEW_YEARS_DAY, 59, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { -1, 255, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
-    { -1, 36, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
-    { -1, 61, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
-    { mEv_EVENT_GROUNDHOG_DAY, 251, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
-    { mEv_EVENT_METEOR_SHOWER, 250, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL }
+    { -1, BGM_NONE, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { mEv_EVENT_FIREWORKS_SHOW, BGM_FIREWORKS_FESTIVAL, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { mEv_EVENT_HALLOWEEN, BGM_HALLOWEEN, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
+    { mEv_EVENT_TALK_TOY_DAY, BGM_XMAS_EVE, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
+    { mEv_EVENT_CHERRY_BLOSSOM_FESTIVAL, BGM_CHERRY_BLOSSOM_FESTIVAL, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_MORNING_AEROBICS, BGM_SPORTSFAIR_AEROBICS, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_HARVEST_MOON_FESTIVAL, BGM_HARVEST_MOON, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { mEv_EVENT_HARVEST_FESTIVAL, BGM_HARVEST_FESTIVAL, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_SPORTS_FAIR_AEROBICS, BGM_SPORTSFAIR_AEROBICS, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_SPORTS_FAIR_FOOT_RACE, BGM_SPORTSFAIR_FOOTRACE, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_SPORTS_FAIR_BALL_TOSS, BGM_SPORTSFAIR_BALLTOSS, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_SPORTS_FAIR_TUG_OF_WAR, BGM_SPORTSFAIR_TUGOFWAR, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN, BGM_NEW_YEARS_1HR, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { -1, BGM_NEW_YEARS_30MIN, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { -1, BGM_NEW_YEARS_10MIN, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { -1, BGM_NEW_YEARS_5MIN, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { -1, BGM_NEW_YEARS_NOW, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { -1, BGM_NEW_YEARS_PARTY, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL },
+    { mEv_EVENT_NEW_YEARS_DAY, BGM_NEW_YEARS_WISH, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { -1, BGM_373, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
+    { -1, BGM_NEW_YEARS_DAY, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
+    { -1, BGM_NEW_YEARS_MORNING, mBGMEventArea_ALL, mRF_BLOCKKIND_NONE },
+    { mEv_EVENT_GROUNDHOG_DAY, BGM_GROUNDHOG_DAY, mBGMEventArea_BLOCK, mRF_BLOCKKIND_SHRINE },
+    { mEv_EVENT_METEOR_SHOWER, BGM_METEOR_SHOWER, mBGMEventArea_BLOCK, mRF_BLOCKKIND_POOL }
 };
 
 enum {
@@ -1251,7 +1308,7 @@ static void mBGMFieldSchedEv_ps_compose(mBGMFieldSchedEv* sched_ev, GAME* game) 
             int now_vol = mbgm_pattern_data[data->event_area][info->attr];
             int old_vol = mbgm_pattern_data[data->event_area][info->old_attr];
 
-            if (now_vol != old_vol && now_vol != 0 && old_vol != 0 && data->bgm_num != 127) {
+            if (now_vol != old_vol && now_vol != 0 && old_vol != 0 && data->bgm_num != BGM_NONE) {
                 mBGMFieldSchedEv_Info_ps_volume_change(info, data);
             }
         }
@@ -1297,8 +1354,33 @@ static void mBGMFieldSchedEv_ct(mBGMFieldSchedEv* sched_ev) {
 
 /* mBGMFieldNorm */
 
-static u8 mBGMFieldNorm_bgm_num_get(int hour) {
-    static u8 bgm_table[24] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 };
+static u16 mBGMFieldNorm_bgm_num_get(int hour) {
+    static u16 bgm_table[24] = {
+        BGM_FIELD_00,
+        BGM_FIELD_01,
+        BGM_FIELD_02,
+        BGM_FIELD_03,
+        BGM_FIELD_04,
+        BGM_FIELD_05,
+        BGM_FIELD_06,
+        BGM_FIELD_07,
+        BGM_FIELD_08,
+        BGM_FIELD_09,
+        BGM_FIELD_10,
+        BGM_FIELD_11,
+        BGM_FIELD_12,
+        BGM_FIELD_13,
+        BGM_FIELD_14,
+        BGM_FIELD_15,
+        BGM_FIELD_16,
+        BGM_FIELD_17,
+        BGM_FIELD_18,
+        BGM_FIELD_19,
+        BGM_FIELD_20,
+        BGM_FIELD_21,
+        BGM_FIELD_22,
+        BGM_FIELD_23,
+    };
 
     return bgm_table[hour];
 }
@@ -1313,7 +1395,7 @@ static void mBGMFieldNorm_elem_set(mBGMFieldNorm* norm) {
 static void mBGMPsComp_make_ps_fieldNorm(u16 bgm_num, u16 stop_type);
 
 static void mBGMFieldNorm_make_bgm(mBGMFieldNorm* norm, GAME* game) {
-    if (norm->elem.bgm_num == 127) {
+    if (norm->elem.bgm_num == BGM_NONE) {
         mBGMFieldNorm_elem_set(norm);
         mBGMPsComp_make_ps_fieldNorm(norm->elem.bgm_num, 0x168);
     }
@@ -1322,9 +1404,9 @@ static void mBGMFieldNorm_make_bgm(mBGMFieldNorm* norm, GAME* game) {
 static void mBGMPsComp_delete_ps_fieldNorm(u16 bgm_num, u16 stop_type);
 
 static void mBGMFieldNorm_delete_bgm(mBGMFieldNorm* norm) {
-    if (norm->elem.bgm_num != 127) {
+    if (norm->elem.bgm_num != BGM_NONE) {
         mBGMPsComp_delete_ps_fieldNorm(norm->elem.bgm_num, norm->elem.stop_type0);
-        norm->elem.bgm_num = 127;
+        norm->elem.bgm_num = BGM_NONE;
     }
 }
 
@@ -1413,7 +1495,7 @@ static int mBGMPsComp_search_insert_pos_kategorie(mBGMPsComp* ps_comp, int kateg
 static int mBGMPsComp_search_pos_kategorie_bgm_num(mBGMPsComp* ps_comp, int kategorie, u16 bgm_num, int counter_flag,
                                                    int del_pass) {
     int kategorie_valid = kategorie < mBGM_KATEGORIE_NUM;
-    int bgm_is_reset = bgm_num != 127;
+    int bgm_is_reset = bgm_num != BGM_NONE;
     int res = -1;
     u8 delete_mask = del_pass == 0;
 
@@ -1825,7 +1907,7 @@ static void mBGMPsComp_arm_delete();
 
 static void mBGMPsComp_Arm_main_inform_sound(mBGMPsComp_Arm* arm) {
     if (arm->req_flag) {
-        if (mBGMPsComp_execute_bgm_num_get() == 43) {
+        if (mBGMPsComp_execute_bgm_num_get() == BGM_INTRO_KK) {
             sAdos_TTKK_ARM(arm->arm_state);
 
             if (arm->arm_state == 0) {
@@ -1853,12 +1935,16 @@ static void mBGMPsComp_Start_main_inform_sound(mBGMPsComp_Start* start) {
         } else {
             sAdo_BgmStart(start->bgm_num);
 
-            if (start->bgm_num == 43) {
+            if (start->bgm_num == BGM_INTRO_KK) {
                 if (Save_Get(scene_no) == SCENE_PLAYERSELECT_2) {
-                    mBGMPsComp_arm_make(1);
+                    mBGMPsComp_arm_make(TRUE);
                 } else {
-                    mBGMPsComp_arm_make(0);
+                    mBGMPsComp_arm_make(FALSE);
                 }
+            }
+
+            if (start->bgm_num == BGM_SIMPLE_ISLAND_LIFE) {
+                mBGMPsComp_island_set();
             }
         }
 
@@ -1890,6 +1976,13 @@ static void mBGMPsComp_Museum_main_inform_sound(mBGMPsComp_Museum* museum) {
     }
 }
 
+static void mBGMPsComp_Island_main_inform_sound(mBGMPsComp_Island* island) {
+    if (island->req_flag) {
+        island->req_flag = FALSE;
+        sAdo_PrivateIslandStatus(island->state);
+    }
+}
+
 static void mBGMPsComp_main_inform_sound(mBGMPsComp* ps_comp) {
     mBGMPsComp_MDPlayerPos_main_inform_sound(&ps_comp->md);
     mBGMPsComp_Arm_main_inform_sound(&ps_comp->arm);
@@ -1898,6 +1991,7 @@ static void mBGMPsComp_main_inform_sound(mBGMPsComp* ps_comp) {
     mBGMPsComp_Pause_main_inform_sound(&ps_comp->pause);
     mBGMPsComp_Volume_main_inform_sound(&ps_comp->volume);
     mBGMPsComp_Museum_main_inform_sound(&ps_comp->museum);
+    mBGMPsComp_Island_main_inform_sound(&ps_comp->island);
 }
 
 static void mBGMPsComp_main_counter_dec(mBGMPsComp* ps_comp) {
@@ -1919,7 +2013,7 @@ static void mBGMPsComp_main_fo_check(mBGMPsComp* ps_comp) {
         if (ps->cf_flags & mBGMPs_FLAG_FADEOUT) {
             int execute_pos = mBGMPsComp_execute_ps_pos_get(ps_comp);
 
-            if ((execute_pos >= i || execute_pos < 0) || (ps_comp->ps[execute_pos].elem.bgm_num == 127) ||
+            if ((execute_pos >= i || execute_pos < 0) || (ps_comp->ps[execute_pos].elem.bgm_num == BGM_NONE) ||
                 (ps_comp->ps[execute_pos].cf_flags & mBGMPs_FLAG_SILENT)) {
                 if (sAdo_BgmFadeoutCheck() == FALSE) {
                     continue; /* don't clear the fadeout flag */
@@ -1975,7 +2069,7 @@ extern void mBGMPsComp_make_ps_fanfare(u16 bgm_num, u16 stop_type) {
     _mBGMPsComp_make_ps_fanfare(bgm_num, stop_type);
 }
 
-static void _mBGMPsComp_make_ps_lost_fanfare(u8 bgm_num, u16 stop_type) {
+static void _mBGMPsComp_make_ps_lost_fanfare(u16 bgm_num, u16 stop_type) {
     mBGMElem elem;
 
     mBGMElem_default_set(&elem);
@@ -1996,7 +2090,7 @@ static void _mBGMPsComp_make_ps_wipe(u16 stop_type) {
     mBGMElem elem;
 
     if (mBGMForce_wipe_ps_make_permit(force) &&
-        mBGMPsComp_search_pos_kategorie_bgm_num(ps_comp, mBGM_KATEGORIE_WIPE, 127, FALSE, FALSE) < 0) {
+        mBGMPsComp_search_pos_kategorie_bgm_num(ps_comp, mBGM_KATEGORIE_WIPE, BGM_NONE, FALSE, FALSE) < 0) {
         mBGMElem_default_set(&elem);
         elem.stop_type1 = stop_type;
         mBGMPsComp_make_ps(&M_bgm.ps_comp, &elem, mBGM_KATEGORIE_WIPE, -1, mBGMPs_FLAG_SILENT, 0xFF);
@@ -2159,7 +2253,7 @@ static void mBGMPsComp_make_ps_fieldSchedEv(u16 bgm_num, int update_volume_move_
         flags |= mBGMPs_FLAG_CROSSFADE;
     }
 
-    if (bgm_num == 127) {
+    if (bgm_num == BGM_NONE) {
         flags |= mBGMPs_FLAG_SILENT;
     }
 
@@ -2193,11 +2287,11 @@ extern void mBGMPsComp_delete_ps_fanfare(u16 bgm_num, u16 stop_type) {
 }
 
 static void mBGMPsComp_delete_ps_wipe() {
-    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_WIPE, 127, 0x168, FALSE);
+    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_WIPE, BGM_NONE, 0x168, FALSE);
 }
 
 static void _mBGMPsComp_delete_ps_quiet() {
-    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIET, 127, 0x168, TRUE);
+    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIET, BGM_NONE, 0x168, TRUE);
 }
 
 extern void mBGMPsComp_delete_ps_quiet() {
@@ -2221,7 +2315,7 @@ extern void mBGMPsComp_delete_ps_happening(u16 bgm_num, u16 stop_type) {
 }
 
 static void mBGMPsComp_delete_ps_quietRoom() {
-    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIETROOM, 127, 0x168, TRUE);
+    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIETROOM, BGM_NONE, 0x168, TRUE);
 }
 
 static void _mBGMPsComp_delete_ps_room(u16 bgm_num, u16 stop_type) {
@@ -2233,11 +2327,11 @@ extern void mBGMPsComp_delete_ps_room(u16 bgm_num, u16 stop_type) {
 }
 
 static void mBGMPsComp_delete_ps_time() {
-    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_TIME, 127, 0x168, FALSE);
+    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_TIME, BGM_NONE, 0x168, FALSE);
 }
 
 static void _mBGMPsComp_delete_ps_quietField() {
-    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIETFIELD, 127, 0x168, TRUE);
+    mBGMPsComp_delete_ps(&M_bgm.ps_comp, mBGM_KATEGORIE_QUIETFIELD, BGM_NONE, 0x168, TRUE);
 }
 
 extern void mBGMPsComp_delete_ps_quietField() {
@@ -2388,11 +2482,18 @@ extern void mBGMPsComp_museum_status(u8 status) {
     ps_comp->museum.type = status;
 }
 
+static void mBGMPsComp_island_set(void) {
+    mBGMPsComp* ps_comp = &M_bgm.ps_comp;
+
+    ps_comp->island.req_flag = TRUE;
+    ps_comp->island.state = mISL_CheckAppearIslandNpc();
+}
+
 extern int mBGMPsComp_execute_bgm_num_get() {
     mBGMPsComp* ps_comp = &M_bgm.ps_comp;
     int pos = mBGMPsComp_execute_ps_pos_get(ps_comp);
 
-    if (pos >= 0 && ps_comp->ps[pos].elem.bgm_num != 127 && (ps_comp->ps[pos].cf_flags & mBGMPs_FLAG_SILENT) == 0) {
+    if (pos >= 0 && ps_comp->ps[pos].elem.bgm_num != BGM_NONE && (ps_comp->ps[pos].cf_flags & mBGMPs_FLAG_SILENT) == 0) {
         return ps_comp->ps[pos].elem.bgm_num;
     }
 
@@ -2565,7 +2666,7 @@ extern void mBGM_init() {
 
         if (field_type == mFI_FIELD_FG) {
             if (mEv_IsTitleDemo()) {
-                mBGMPsComp_make_ps_demo(70, 0x168); // Play title music
+                mBGMPsComp_make_ps_demo(BGM_TITLE, 0x168); // Play title music
             } else {
                 if ((force->inform != mBGMForce_INFORM_3 && force->inform != mBGMForce_INFORM_7) || force->flag) {
                     mBGMFieldNorm_make_req();
