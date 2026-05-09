@@ -22,7 +22,7 @@ s16 props_profile_table[] = {
     mAc_PROFILE_PSNOWMAN, mAc_PROFILE_PSNOWMAN, mAc_PROFILE_TRAINDOOR, mAc_PROFILE_NAMEPLATE,
 };
 
-u8 npc_looks_table[NPC_NUM + 2] = {
+u8 npc_looks_table[NPC_NUM + 1] = {
     mNpc_LOOKS_BOY,         mNpc_LOOKS_NANIWA_LADY, mNpc_LOOKS_GIRL,        mNpc_LOOKS_GIRL,
     mNpc_LOOKS_KO_GIRL,     mNpc_LOOKS_GRIM_MAN,    mNpc_LOOKS_KO_GIRL,     mNpc_LOOKS_NANIWA_LADY,
     mNpc_LOOKS_SPORT_MAN,   mNpc_LOOKS_NANIWA_LADY, mNpc_LOOKS_NANIWA_LADY, mNpc_LOOKS_GRIM_MAN,
@@ -82,8 +82,50 @@ u8 npc_looks_table[NPC_NUM + 2] = {
     mNpc_LOOKS_BOY,         mNpc_LOOKS_KO_GIRL,     mNpc_LOOKS_NANIWA_LADY, mNpc_LOOKS_KO_GIRL,
     mNpc_LOOKS_GIRL,        mNpc_LOOKS_BOY,         mNpc_LOOKS_GRIM_MAN,    mNpc_LOOKS_GIRL,
     mNpc_LOOKS_KO_GIRL,     mNpc_LOOKS_SPORT_MAN,   mNpc_LOOKS_NANIWA_LADY, mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
+    mNpc_LOOKS_BOY,
     mNpc_LOOKS_BOY,         mNpc_LOOKS_KO_GIRL
 };
+
+static u8 item1_1_tableNo[] = { 9, 9, 9, 9 };
+
+static u8 item1_5_tableNo[] = {
+    0x16, 0x1E, 0x23, 0x22, 0x24, 0x21, 0x2A, 0x2B,
+    0x10, 0x0D, 0x0D, 0x0D, 0x0D, 0x09, 0x15, 0x15,
+    0x15, 0x14, 0x17, 0x1D, 0x19, 0x18, 0x18, 0x18,
+    0x19, 0x19, 0x18, 0x1A, 0x0E, 0x0B, 0x13, 0x0E,
+    0x0E, 0x0E, 0x0E, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F,
+    0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F,
+    0x34
+};
+
+static u8 item1_C_tableNo[] = {
+    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
+    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
+    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
+    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
+};
+
+static u8 item1_E_tableNo[] = { 46, 46 };
+
+static u8 item1_F_tableNo[] = { 7, 7, 7, 7 };
 
 static u8 item1_0_tableNo[] = {
     44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
@@ -97,18 +139,29 @@ static u8 item1_0_tableNo[] = {
     44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
 };
 
-static u8 item1_1_tableNo[] = { 9, 9, 9, 9 };
-
 static u8 item1_2_tableNo[] = {
-    34, 33, 36, 35, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41,
-    41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 19, 19,
-    19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 38, 37, 40, 39, 33, 33, 33, 33, 33, 33, 33, 19,
-    19, 19, 19, 19, 19, 19, 19, 42, 42, 42, 42, 42, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 43,
+    0x22, 0x21, 0x24, 0x23, 0x29, 0x29, 0x29, 0x29,
+    0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+    0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+    0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+    0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29, 0x29,
+    0x29, 0x29, 0x29, 0x29, 0x13, 0x13, 0x13, 0x13,
+    0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13,
+    0x13, 0x26, 0x25, 0x28, 0x27, 0x21, 0x21, 0x21,
+    0x21, 0x21, 0x21, 0x21, 0x13, 0x13, 0x13, 0x13,
+    0x13, 0x13, 0x13, 0x13, 0x2A, 0x2A, 0x2A, 0x2A,
+    0x2A, 0x2A, 0x2A, 0x2A, 0x2B, 0x2B, 0x2B, 0x2B,
+    0x2B, 0x2B, 0x2B, 0x2B, 0x36, 0x13, 0x13, 0x13,
+    0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x38,
 };
 
-static u8 item1_3_tableNo[] = {
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+static u8 item1_3_tableNo[48] = {
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+    0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
 };
 
 static u8 item1_4_tableNo[] = {
@@ -123,21 +176,16 @@ static u8 item1_4_tableNo[] = {
     30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
 };
 
-static u8 item1_5_tableNo[] = {
-    22, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 9,  21, 21, 21, 20, 23, 29, 25, 24, 24, 24, 25,
-    25, 24, 26, 14, 11, 19, 14, 14, 14, 14, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 52,
-};
-
 static u8 item1_6_tableNo[] = {
     31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
     31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
-    31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
+    31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
 };
 
 static u8 item1_7_tableNo[] = {
     32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
     32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
 };
 
 static u8 item1_8_tableNo[] = { 1, 5, 4, 3, 2, 6, 27, 28 };
@@ -145,34 +193,40 @@ static u8 item1_8_tableNo[] = { 1, 5, 4, 3, 2, 6, 27, 28 };
 static u8 item1_9_tableNo[] = { 17, 17, 45, 45, 45, 45, 45, 45, 45, 45, 45 };
 
 static u8 item1_A_tableNo[] = {
-    48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-    48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+    0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35, 0x35,
+    0x35, 0x35, 0x35, 0x35,
 };
 
 // ?? Shouldn't these be different from saplings?
-static u8 item1_B_tableNo[] = { 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 };
-
-static u8 item1_C_tableNo[] = {
-    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
-    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
-    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
-    49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
-};
+static u8 item1_B_tableNo[] = { 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51 };
 
 static u8 item1_D_tableNo[] = {
     18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
-    18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+    18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+    18, 18, 18, 18, 18, 18, 18,
 };
-
-static u8 item1_E_tableNo[] = { 46, 46 };
-
-static u8 item1_F_tableNo[] = { 7, 7, 7, 7 };
 
 extern int mNT_get_itemTableNo(mActor_name_t item) {
     static u8* item1_tableNo[ITEM1_CAT_NUM] = { item1_0_tableNo, item1_1_tableNo, item1_2_tableNo, item1_3_tableNo,
                                                 item1_4_tableNo, item1_5_tableNo, item1_6_tableNo, item1_7_tableNo,
                                                 item1_8_tableNo, item1_9_tableNo, item1_A_tableNo, item1_B_tableNo,
-                                                item1_C_tableNo, item1_D_tableNo, item1_E_tableNo, item1_F_tableNo };
+                                                item1_C_tableNo, item1_D_tableNo, item1_E_tableNo, item1_F_tableNo, };
 
     switch (ITEM_NAME_GET_TYPE(item)) {
         case NAME_TYPE_FTR0:
@@ -396,14 +450,32 @@ extern int mNT_ItIsStoneCoin10(mActor_name_t actor) {
     return res != FALSE;
 }
 
+extern int mNT_ItIsRstStone(mActor_name_t item) {
+    return (item >= RST_ROCK_A && item <= C_ROCK_E) !=  FALSE;
+}
+
 extern int mNT_ItIsReserveDummy(mActor_name_t actor) {
     return actor == DUMMY_RESERVE;
 }
 
 extern int mNT_check_unknown(mActor_name_t item_no) {
     static s16 item1_kinds[ITEM1_CAT_NUM] = {
-        PAPER_NUM, MONEY_NUM, TOOL_NUM,     FISH_NUM,  CLOTH_NUM,  ETC_NUM,    CARPET_NUM,     WALL_NUM,
-        FRUIT_NUM, PLANT_NUM, MINIDISK_NUM, DIARY_NUM, TICKET_NUM, INSECT_NUM, HUKUBUKURO_NUM, KABU_NUM,
+        PAPER_NUM, // ITEM1_CAT_PAPER
+        MONEY_NUM, // ITEM1_CAT_MONEY
+        TOOL_NUM, // ITEM1_CAT_TOOL
+        FISH_NUM, // ITEM1_CAT_FISH
+        CLOTH_NUM, // ITEM1_CAT_CLOTH
+        ETC_NUM, // ITEM1_CAT_ETC
+        CARPET_NUM, // ITEM1_CAT_CARPET
+        WALL_NUM, // ITEM1_CAT_WALL
+        FRUIT_NUM, // ITEM1_CAT_FRUIT
+        PLANT_NUM, // ITEM1_CAT_PLANT
+        MINIDISK_NUM, // ITEM1_CAT_MINIDISK
+        DIARY_NUM, // ITEM1_CAT_DUMMY
+        TICKET_NUM, // ITEM1_CAT_TICKET
+        INSECT_NUM, // ITEM1_CAT_INSECT
+        HUKUBUKURO_NUM, // ITEM1_CAT_HUKUBUKURO
+        KABU_NUM, // ITEM1_CAT_KABU
     };
 
     int index = ITEM_NAME_GET_INDEX(item_no);
@@ -419,8 +491,9 @@ extern int mNT_check_unknown(mActor_name_t item_no) {
             break;
         }
 
+        case NAME_TYPE_FTR0:
         case NAME_TYPE_FTR1: {
-            int FtrIdx = mRmTp_FtrItemNo2FtrIdx(item_no);
+            int FtrIdx = mNT_ftr_item_no_to_ftr_idx(item_no);
 
             if (FtrIdx < 0 || FtrIdx >= FTR_NUM) {
                 res = TRUE;
@@ -431,4 +504,332 @@ extern int mNT_check_unknown(mActor_name_t item_no) {
     }
 
     return res;
+}
+
+extern int mNT_get_org_umb_type(mActor_name_t umb) {
+    if (ITEM_IS_MYUMBRELLA_TOOL(umb)) {
+        return Save_Get(needlework).original_design[(umb - ITM_MY_ORG_UMBRELLA0) & 7].attr;
+    }
+
+    return 0xFF;
+}
+
+extern int mNT_get_cloth_type(mActor_name_t cloth, u8 org_idx) {
+    // clang-format off
+    static u8 cloth_type_table[CLOTH_NUM] = {
+        mNT_STYLE_COOL,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_COOL,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_COOL,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_COOL,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_COOL,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_COOL,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_COOL,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_COOL,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_COOL,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_STRIKING,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_CUTE,
+        mNT_STYLE_SUBTLE,
+        mNT_STYLE_REFINED,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_FUNKY,
+        mNT_STYLE_STRANGE,
+        mNT_STYLE_GAUDY,
+        mNT_STYLE_FANCY,
+        mNT_STYLE_FRESH,
+        mNT_STYLE_FANCY,
+    };
+    // clang-format on
+
+    if (ITEM_IS_CLOTH(cloth)) {
+        return cloth_type_table[ITEM1_CLOTH2IDX(cloth)];
+    } else if (cloth == RSV_CLOTH) {
+        return Now_Private->my_org[(org_idx - (CLOTH_NUM + 1)) & 7].attr;
+    } else if (cloth == RSV_CLOTH1) {
+        return Save_Get(needlework).original_design[org_idx & 7].attr;
+    } else {
+        return 0xFF;
+    }
+}
+
+extern mActor_name_t mNT_get_new_music_live_version(int idx) {
+    Private_c* priv = Now_Private;
+    int free_slots = mPr_GetFreePossessionItemSum(priv);
+
+    if (mLd_PlayerManKindCheck() == NATIVE && priv != NULL && BITCHK(Save_Get(song_cards_scanned), idx & 0xF) && BITCHK(priv->new_music_card_scanned, idx & 0xF) && free_slots > 0) {
+        return ITM_MINIDISK_LIVE58 + idx;
+    }
+    
+    return EMPTY_NO;
+}
+
+extern void mNT_present_new_music_live_version(int idx) {
+    Private_c* priv = Now_Private;
+
+    if (mLd_PlayerManKindCheck() == NATIVE && priv != NULL) {
+        u16 bit = ~(1 << (idx & 0xF));
+        priv->new_music_card_scanned &= bit;
+    }
+}
+
+extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no) {
+    if (ITEM_IS_FTR(item_no)) {
+        switch (ITEM_NAME_GET_TYPE(item_no)) {
+            case NAME_TYPE_FTR0:
+                return (item_no - FTR0_START) >> 2;
+            case NAME_TYPE_FTR1:
+                return 0x400 + ((item_no - FTR1_START) >> 2);
+        }
+    }
+    return 0;
+}
+
+extern mActor_name_t mNT_ftr_idx_to_ftr_item_no(int ftr_idx, int rotation) {
+    mActor_name_t ftr_item_no;
+    int real_direct = rotation & 3;
+
+    if (ftr_idx < 0) {
+        return FTR0_START;
+    }
+
+    ftr_item_no = FTR1_START + ((ftr_idx - 0x400) << 2) + real_direct;
+    if (ftr_idx < 0x400) {
+        ftr_item_no = FTR0_START + (ftr_idx << 2) + real_direct;
+    }
+
+    return ftr_item_no;
 }

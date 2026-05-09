@@ -176,7 +176,7 @@ typedef struct offset_table_s {
 // #define FTR_NUM 1266
 #define PAPER_NUM 256
 #define MONEY_NUM 4
-#define TOOL_NUM 92
+#define TOOL_NUM 104
 #define FISH_NUM 48
 #define CLOTH_NUM 255
 #define ETC_NUM 49
@@ -227,6 +227,8 @@ extern int mNT_ftr_item_no_to_ftr_idx(mActor_name_t item_no);
 extern mActor_name_t mNT_ftr_idx_to_ftr_item_no(int ftr_idx, int rotation);
 extern int mNT_get_cloth_type(mActor_name_t cloth, u8 org_idx);
 extern int mNT_get_org_umb_type(mActor_name_t umb);
+extern mActor_name_t mNT_get_new_music_live_version(int idx);
+extern void mNT_present_new_music_live_version(int idx);
 
 /* Retrieve the item actor's category */
 #define ITEM_NAME_GET_TYPE(n) (((n) & 0xF000) >> 12)
@@ -248,6 +250,7 @@ extern int mNT_get_org_umb_type(mActor_name_t umb);
 #define ITEM_IS_WISP(n) ((n) >= ITM_SPIRIT0 && (n) <= ITM_SPIRIT4)
 #define ITEM_IS_PAPER(n) ((n) >= ITM_PAPER_START && (n) <= (ITM_PAPER_END - 1))
 #define ITEM_IS_CLOTH(n) ((n) >= ITM_CLOTH_START && (n) < ITM_CLOTH_END)
+#define ITEM1_CLOTH2IDX(cloth) (ITEM_IS_CLOTH(cloth) ? (cloth - ITM_CLOTH_START) : 0)
 #define ITEM_IS_NPC_CLOTH(n) ((n) == RSV_CLOTH || ITEM_IS_CLOTH(n) || (n) == RSV_CLOTH1)
 
 #define ITEM_IS_RSVCLOTH(n) ((n) >= RSV_CLOTH && (n) <= RSV_CLOTH7)

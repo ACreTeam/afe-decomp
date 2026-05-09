@@ -323,6 +323,7 @@ extern int mPr_GetPossessionItemIdxKindWithCond(Private_c* priv, mActor_name_t k
                                                 u32 cond);
 extern u32 mPr_GetPossessionItemSum(Private_c* priv, mActor_name_t item);
 extern u32 mPr_GetPossessionItemSumWithCond(Private_c* priv, mActor_name_t item, u32 cond);
+#define mPr_GetFreePossessionItemSum(priv) mPr_GetPossessionItemSumWithCond(priv, EMPTY_NO, mPr_ITEM_COND_NORMAL)
 extern u32 mPr_GetPossessionItemSumFGTypeWithCond_cancel(Private_c* priv, mActor_name_t fg_type, u32 cond,
                                                          mActor_name_t cancel_item);
 extern u32 mPr_GetPossessionItemSumItemCategoryWithCond_cancel(Private_c* priv, u8 item1_type, u32 cond,

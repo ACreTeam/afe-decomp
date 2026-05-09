@@ -106,6 +106,11 @@ typedef u32 unknown;
 #define ARRAY_SIZE(arr, type) (sizeof(arr) / sizeof(type))
 #define ARRAY_COUNT(arr) (int)(sizeof(arr) / sizeof(arr[0]))
 
+#define BITCHK(v, b) (((v) >> (b)) & 1)
+#define BITSET(v, b) ((v) |= (1 << (b)))
+#define BITCLR(v, b) ((v) &= ~(1 << (b)))
+#define BITRVS(v, b) ((v) ^= (1 << (b)))
+
 #ifndef MAX
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
