@@ -27,6 +27,10 @@ extern "C" {
 #define mSP_SUPER_SUM 90000   // sales sum for upgrading to Nookway
 #define mSP_DSUPER_SUM 240000 // sales sum for upgrading to Nookington's
 
+#define mSP_SELL_BUY_RATIO 4
+#define mSP_DOOR_HIT_OPEN_NUM 3
+#define mSP_DOOR_HIT_OPEN_TIMER 20
+
 enum {
     mSP_ROOF_COLOR_RED,
     mSP_ROOF_COLOR_ORANGE,
@@ -176,8 +180,22 @@ enum {
     mSP_TANUKI_SHOP_STATUS_HALLOWEEN,
     mSP_TANUKI_SHOP_STATUS_FUKUBIKI,
     mSP_TANUKI_SHOP_STATUS_HUKUBUKURO_SALE,
+    mSP_TANUKI_SHOP_STATUS_CRACKER,
 
     mSP_TANUKI_SHOP_STATUS_NUM
+};
+
+enum {
+    mSP_BARGAIN_FTR,
+    mSP_BARGAIN_CARPET,
+    mSP_BARGAIN_WALL,
+    mSP_BARGAIN_CLOTH,
+    mSP_BARGAIN_CRACKER,
+    mSP_BARGAIN_WINDMILL,
+    mSP_BARGAIN_FAN,
+    mSP_BARGAIN_BALLOON,
+
+    mSP_BARGAIN_NUM
 };
 
 /* sizeof(mSP_goods_priority_list_c) == 1 */
@@ -223,14 +241,16 @@ extern void mSP_SelectRandomItem_New(GAME* game, mActor_name_t* goods_table, int
 extern int mSP_ShopSaleReport(mActor_name_t sold_item, mActor_name_t* goods_table, int goods_count,
                               mActor_name_t rsv_item);
 extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no);
+extern u32 mSP_ItemNo2ItemPrice_Tanu(mActor_name_t item_no);
+extern u32 mSP_ItemNo2ItemPrice_TakeBack(mActor_name_t item_no);
 extern int mSP_SearchItemCategoryPriority(mActor_name_t item_no, int category, int list_type, GAME* game);
 extern int mSP_CountElementInGoodsList();
 extern int mSP_CheckExchangeDay2();
 extern int mSP_CheckExchangeMonth();
 extern void mSP_NewExchangeDay();
-extern void mSP_ShopItsumoChirashi(int house_no, int shop_level, mActor_name_t item, int type, int send_proc);
-extern void mSP_SetShopRareFurnitureChirashi(int player_no, mActor_name_t* goods_list, int goods_count, GAME* game);
-extern void mSP_SetRenewalChiraswhi_AppoDay();
+extern void mSP_ShopRareLeaflet(int house_no, int shop_level, mActor_name_t item, int send_proc);
+extern void mSP_SetShopRareFurnitureLeaflet(int player_no, mActor_name_t* goods_list, int goods_count, GAME* game);
+extern void mSP_SetRenewalLeaflet_AppoDay();
 extern void mSP_ExchangeLineUp_InGame(GAME* game);
 extern void mSP_PlusSales(u32 sum);
 extern int mSP_SetNewVisitor();
@@ -240,7 +260,7 @@ extern int mSP_RenewShopLevel();
 extern int mSP_GetRealShopLevel();
 extern int mSP_GetGoodsPercent(int priority);
 extern void mSP_PrintNowShopSalesSum(gfxprint_t* gfxprint);
-extern void mSP_GetGoodsPriority(u8* abc_priorities, int category);
+extern void mSP_GetListPriorityABC(u8* abc_priorities, int category);
 extern void mSP_ExchangeLineUp_ZeldaMalloc();
 extern void mSP_LotteryLineUp_ZeldaMalloc();
 extern void mSP_ExchangeLineUp_GameAlloc(GAME* game);
@@ -256,23 +276,36 @@ extern lbRTC_hour_t mSP_GetShopCloseTime_Bgm();
 extern int mSP_InRenewal();
 extern int mSP_ShopOpen();
 extern void mSP_RandomHaniwaSelect(mActor_name_t* haniwa_list, int count);
-extern void mSP_RandomMDSelect(mActor_name_t* md_list, int count);
+extern void mSP_RandomWindMillSelect(mActor_name_t* item_list, int count);
+extern void mSP_RandomFanSelect(mActor_name_t* item_list, int count);
+extern void mSP_RandomBalloonSelect(mActor_name_t* item_list, int count);
 extern void mSP_RandomUmbSelect(mActor_name_t* umb_list, int count);
 extern mActor_name_t mSP_RandomOneFossilSelect(int multi_fossil);
 extern int mSP_Chk_HukubukuroSail();
 extern int mSP_CheckFukubikiDay();
 extern int mSP_SetGoods2ReservedPoint(mActor_name_t goods, mActor_name_t reserved_no);
 extern int mSP_CheckHallowinDay();
+extern int mSP_CheckCrackerDay();
+extern int mSP_CheckShopNormalStatus_Quest(void);
 extern void mSP_SetTanukiShopStatus();
 extern int mSP_money_check(u32 amount);
 extern void mSP_get_sell_price(u32 amount);
 extern mActor_name_t mSP_SelectFishingPresent(int player_no);
 extern void mSP_SelectRandomItemToAGB();
 extern const char* mSP_ShopStatus2String(int status);
+extern int mSP_GetBargainNum(int category, int shop_level);
+extern void mSP_MakeBargainGoods(void);
+extern mActor_name_t mSP_get_old_password_furniture(void);
+extern int mSP_get_no_use_num(u32* use_bitfield, int count);
+extern void mSP_set_use(u32* use_bitfield, int idx, int count);
+extern mActor_name_t mSP_GetRandomItemABC(const int* kinds, const int kind_count);
 extern mActor_name_t mSP_GetRandomStationToyItemNo();
 extern mActor_name_t mSP_get_directed_type_cloth_no(int type);
 
 extern void mSP_init_check_door(void);
+extern void mSP_start_check_door(ACTOR* actor, xyz_t* pos);
+extern void mSP_checking_door(GAME* game, ACTOR* actorx);
+extern void mSP_end_check_door(void);
 extern int mSP_force_opend(void);
 
 #ifdef __cplusplus

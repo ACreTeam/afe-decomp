@@ -11,6 +11,8 @@
 #include "m_name_table.h"
 #include "m_room_type.h"
 #include "m_fg_type.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
 
 extern mActor_name_t* mSP_ftr_list[];
 extern mActor_name_t* mSP_binsen_list[];
@@ -19,19 +21,18 @@ extern mActor_name_t* mSP_carpet_list[];
 extern mActor_name_t* mSP_wall_list[];
 
 static mActor_name_t diary_listA[6] = { ITM_DIARY01, ITM_DIARY04, ITM_DIARY07, ITM_DIARY10, ITM_DIARY13, EMPTY_NO };
-
 static mActor_name_t diary_listB[6] = { ITM_DIARY02, ITM_DIARY05, ITM_DIARY08, ITM_DIARY11, ITM_DIARY14, EMPTY_NO };
-
 static mActor_name_t diary_listC[7] = { ITM_DIARY03, ITM_DIARY06, ITM_DIARY09, ITM_DIARY12,
                                         ITM_DIARY15, ITM_DIARY00, EMPTY_NO };
 
-static mActor_name_t* mSP_diary_list[mSP_LIST_NUM] = { diary_listA, diary_listB, diary_listC, NULL, NULL, NULL,
-                                                       NULL,        NULL,        NULL,        NULL, NULL, NULL,
-                                                       NULL,        NULL,        NULL,        NULL, NULL, NULL,
-                                                       NULL,        NULL,        NULL,        NULL, NULL };
+static mActor_name_t* mSP_diary_list[mSP_LIST_NUM] = {
+    diary_listA, diary_listB, diary_listC, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,        NULL,        NULL,        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+};
 
-static mActor_name_t** mSP_goods_seg_inf[mSP_KIND_MAX] = { mSP_ftr_list,    mSP_binsen_list, mSP_cloth_list,
-                                                                    mSP_carpet_list, mSP_wall_list,   mSP_diary_list };
+static mActor_name_t** mSP_goods_list_table[mSP_KIND_MAX] = {
+    mSP_ftr_list, mSP_binsen_list, mSP_cloth_list, mSP_carpet_list, mSP_wall_list, mSP_diary_list,
+};
 
 static void mSP_InitItemTable(mActor_name_t* item_table, int count) {
     int i;
@@ -140,6 +141,30 @@ static mActor_name_t* mSP_SelectListFromPriority(mActor_name_t** lists, u8* prio
     return list;
 }
 
+static void mSP_SetSeasonFTR_local_rnd(mActor_name_t* item_tbl, int count, mActor_name_t* src_item_tbl, int src_count) {
+    u8 use_tbl[100];
+    int placed_count;
+    int i;
+
+    if (count > ARRAY_COUNT(use_tbl) || src_count > ARRAY_COUNT(use_tbl) || count > src_count) {
+        return;
+    }
+
+    for (i = 0; i < ARRAY_COUNT(use_tbl); i++) {
+        use_tbl[i] = FALSE;
+    }
+
+    placed_count = 0;
+    while (placed_count < count) {
+        int rnd_idx = RANDOM(src_count);
+        if (use_tbl[rnd_idx] == FALSE) {
+            item_tbl[placed_count] = src_item_tbl[rnd_idx];
+            use_tbl[rnd_idx] = TRUE;
+            placed_count++;
+        }
+    }
+}
+
 static void mSP_SetSeasonFTR_local_december(mActor_name_t* item_table, int count, mActor_name_t ftr0,
                                             mActor_name_t ftr1) {
     if (count > 1) {
@@ -158,11 +183,17 @@ static void mSP_SetSeasonFTR(mActor_name_t* item_table, int count) {
     lbRTC_day_t day = rtc_time.day;
 
     if (count > 0 && month == lbRTC_DECEMBER) {
-
         if (day <= 24) {
             mSP_SetSeasonFTR_local_december(item_table, count, FTR_START(FTR_NOG_XTREE), FTR_START(FTR_KON_XTREE02));
         } else if (day >= 26) {
-            mSP_SetSeasonFTR_local_december(item_table, count, FTR_START(FTR_YAZ_CANDLE), FTR_START(FTR_YOS_KFLAG));
+            static mActor_name_t candidacy_table[] = { FTR_START(FTR_SUM_KADOMATU), FTR_START(FTR_SUM_KAGAMOCHI),
+                                                       FTR_START(FTR_YAZ_CANDLE), FTR_START(FTR_YOS_KFLAG) };
+
+            if (count > 1) {
+                count = 2;
+            }
+
+            mSP_SetSeasonFTR_local_rnd(item_table, count, candidacy_table, ARRAY_COUNT(candidacy_table));
         }
     }
 }
@@ -221,7 +252,7 @@ extern int mSP_CollectCheck(mActor_name_t item) {
         case NAME_TYPE_FTR0:
         case NAME_TYPE_FTR1: {
             bitfield = Common_Get(now_private)->furniture_collected_bitfield;
-            idx = mRmTp_FtrItemNo2FtrIdx(ftr_item);
+            idx = mNT_ftr_item_no_to_ftr_idx(ftr_item);
             break;
         }
 
@@ -247,7 +278,7 @@ extern int mSP_CollectCheck(mActor_name_t item) {
 
                 case ITEM1_CAT_MINIDISK: {
                     bitfield = Common_Get(now_private)->music_collected_bitfield;
-                    idx = (mActor_name_t)(ftr_item - ITM_MINIDISK_START);
+                    idx = ftr_item - ITM_MINIDISK_START;
                     break;
                 }
             }
@@ -274,12 +305,12 @@ static int mSP_CountElementInCommonList(mActor_name_t* list) {
 static int mSP_CountElementInCommonList_collect(mActor_name_t* list, int* selected_idx, int uncollected_only) {
     int count = 0;
     int selected;
+    int idx = 0;
     mActor_name_t* list_p;
 
     if (uncollected_only == FALSE) {
         count = mSP_CountElementInCommonList(list);
-        selected_idx[0] = RANDOM(count);
-
+        *selected_idx = RANDOM(count);
         return count;
     }
 
@@ -291,18 +322,22 @@ static int mSP_CountElementInCommonList_collect(mActor_name_t* list, int* select
     }
 
     if (count == 0) {
-        selected_idx[0] = 0;
+        *selected_idx = 0;
         return 0;
     }
 
     selected = RANDOM(count);
-    selected_idx[0] = 0;
-    for (list_p = list; list_p[0] != EMPTY_NO && selected > 0; list_p++) {
+    *selected_idx = 0;
+    for (list_p = list; list_p[0] != EMPTY_NO; list_p++) {
         if (mSP_CollectCheck(list_p[0]) == FALSE) {
-            selected--;
+            if (idx == selected) {
+                break;
+            }
+
+            idx++;
         }
 
-        selected_idx[0]++;
+        (*selected_idx)++;
     }
 
     return count;
@@ -476,21 +511,6 @@ static int mSP_CountElementInClothList_collect(mActor_name_t* list, int* selecte
     }
 }
 
-static int mSP_NoList(mActor_name_t* items_table, int count, mActor_name_t* list) {
-    if (list == NULL) {
-        int i;
-
-        for (i = 0; i < count; i++) {
-            items_table[0] = EMPTY_NO;
-            items_table++;
-        }
-
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
 static void mSP_SetDummyItem(mActor_name_t* items_table, int count, int kind) {
     mActor_name_t dummy_table[mSP_KIND_MAX] = {
         FTR_START(FTR_SUM_CLCHEST03), ITM_PAPER00, ITM_CLOTH000, ITM_CARPET00, ITM_WALL00, ITM_DIARY00
@@ -510,79 +530,58 @@ extern void mSP_SelectRandomItem_New(GAME* game, mActor_name_t* goods_table, int
     mSP_InitItemTable(goods_table, goods_count);
 
     if (goods_count != 0 && goods_table != NULL) {
-        if (goods_table != NULL) {
-            u8 abc_priorities[3];
-            mActor_name_t** goods_seg_p = mSP_goods_seg_inf[category];
-            int i = 0;
+        u8 abc_priorities[3];
+        mActor_name_t** goods_seg_p = mSP_goods_list_table[category];
+        int i = 0;
 
-            mSP_GetGoodsPriority(abc_priorities, category);
+        mSP_GetListPriorityABC(abc_priorities, category);
 
-            while (i < goods_count) {
-                mActor_name_t* item_list_p = mSP_GetItemList(goods_seg_p, abc_priorities, list_type);
-                int list_item_count;
-                int selected_idx;
+        while (i < goods_count) {
+            mActor_name_t* item_list_p = mSP_GetItemList(goods_seg_p, abc_priorities, list_type);
+            int list_item_count;
+            int selected_idx;
 
-                if (mSP_NoList(goods_table, goods_count, item_list_p) != FALSE) {
-                    mSP_SetDummyItem(goods_table, goods_count, category);
-                    return;
-                }
-
-                if (category == mSP_KIND_CLOTH && (list_type == mSP_LISTTYPE_ABC || list_type == mSP_LIST_A ||
-                                                   list_type == mSP_LIST_B || list_type == mSP_LIST_C)) {
-                    list_item_count = mSP_CountElementInClothList_collect(item_list_p, &selected_idx, uncollected_only);
-                } else {
-                    list_item_count =
-                        mSP_CountElementInCommonList_collect(item_list_p, &selected_idx, uncollected_only);
-                }
-
-                if (list_item_count == 0) {
-                    mSP_InitItemTable(goods_table, goods_count);
-                    return;
-                }
-
-                if (mSP_GoodsExistAlready(goods_table, goods_count, item_list_p[selected_idx]) == FALSE &&
-                    mSP_GoodsExistAlready(goods_exist_table, goods_exist_count, item_list_p[selected_idx]) == FALSE &&
-                    Save_Get(shop).rare_item != item_list_p[selected_idx]) {
-                    goods_table[i] = item_list_p[selected_idx];
-                    i++;
-                } else if (list_item_count < goods_count + goods_exist_count) {
-                    /* forcibly add duplicate items if the list size is less than total possible goods */
-                    goods_table[i] = item_list_p[selected_idx];
-                    i++;
-                }
+            if (category == mSP_KIND_CLOTH && (list_type == mSP_LISTTYPE_ABC || list_type == mSP_LIST_A ||
+                                               list_type == mSP_LIST_B || list_type == mSP_LIST_C)) {
+                list_item_count = mSP_CountElementInClothList_collect(item_list_p, &selected_idx, uncollected_only);
+            } else {
+                list_item_count = mSP_CountElementInCommonList_collect(item_list_p, &selected_idx, uncollected_only);
             }
-        } else {
-            mSP_SetDummyItem(goods_table, goods_count, category); // ?????
+
+            if (list_item_count == 0) {
+                return;
+            }
+
+            if (mSP_GoodsExistAlready(goods_table, goods_count, item_list_p[selected_idx]) == FALSE &&
+                mSP_GoodsExistAlready(goods_exist_table, goods_exist_count, item_list_p[selected_idx]) == FALSE &&
+                Save_Get(shop).rare_item != item_list_p[selected_idx]) {
+                goods_table[i] = item_list_p[selected_idx];
+                i++;
+            } else if (list_item_count < goods_count + goods_exist_count) {
+                /* forcibly add duplicate items if the list size is less than total possible goods */
+                goods_table[i] = item_list_p[selected_idx];
+                i++;
+            }
         }
+    } else {
+        mSP_SetDummyItem(goods_table, goods_count, category);
     }
-}
-
-static int mSP_CountPriceTableElement(u16* price_table) {
-    int n = 0;
-
-    while (price_table[0] != 0xFFFF) {
-        price_table++;
-        n++;
-    }
-
-    return n;
 }
 
 extern int mSP_ShopSaleReport(mActor_name_t sold_item, mActor_name_t* goods_table, int goods_count,
                               mActor_name_t rsv_item) {
+    mActor_name_t* event_items = Save_Get(event_save_data).special.event.bargin.items;
     int i;
 
-    if (sold_item == ITM_HUKUBUKURO_BAG) {
-        Save_Get(shop).flowers_candy_grab_bag_count--;
-        return FALSE;
+    if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
+        for (i = 0; i < mEv_BARGIN_ITEM_NUM; i++) {
+            if (event_items[i] == sold_item) {
+                event_items[i] = rsv_item;
+            }
+        }
     }
 
-    if (sold_item == ITM_FOOD_CANDY) {
-        Save_Get(shop).flowers_candy_grab_bag_count--;
-        return FALSE;
-    }
-
-    for (i = 0; i < goods_count; i++) {
+    for (i = goods_count - 1; i >= 0; i--) {
         if (sold_item == goods_table[i]) {
             goods_table[i] = rsv_item;
             return FALSE;
@@ -597,17 +596,115 @@ extern int mSP_ShopSaleReport(mActor_name_t sold_item, mActor_name_t* goods_tabl
     return FALSE;
 }
 
-extern u16 binsen_price_table[];
-extern u16 cloth_price_table[];
-extern u16 carpet_price_table[];
-extern u16 wall_price_table[];
-extern u16 tool_price_table[];
-extern u16 plant_price_table[];
-extern u16 food_price_table[];
-extern u16 fish_price_table[];
-extern u16 md_price_table[];
-extern u16 diary_price_table[];
-extern u16 insect_price_table[];
+static u16 binsen_price_table[256] = {
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0000,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0000, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0000, 0x0028,
+};
+
+static u16 tool_price_table[104] = {
+    0x01F4, 0x0190, 0x01F4, 0x01F4, 0x00DC, 0x01E0, 0x0168, 0x0140, 0x0122, 0x01EA, 0x014A, 0x0122, 0x0122,
+    0x01A4, 0x017C, 0x017C, 0x0154, 0x0040, 0x01A4, 0x017C, 0x00BE, 0x00E6, 0x00F0, 0x0058, 0x01E0, 0x015E,
+    0x0154, 0x00FA, 0x0078, 0x01EA, 0x01EA, 0x017C, 0x0168, 0x01E0, 0x0064, 0x0122, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0190, 0x03D4, 0x03D4, 0x03D4, 0x03D4, 0x03D4, 0x03D4, 0x03D4,
+    0x03D4, 0x03D4, 0x03D4, 0x03D4, 0x03D4, 0x0000, 0x0000, 0x0000, 0x0000, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0050, 0x0050, 0x0050, 0x01E0, 0x01E0,
+    0x01E0, 0x01E0, 0x01E0, 0x01E0, 0x0320, 0x0320, 0x0258, 0x0258, 0x0258, 0x0258, 0x0258, 0x0320, 0x03E8,
+    0x0208, 0x0078, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x0004, 0x04B0,
+};
+
+static u16 fish_price_table[48] = {
+    0x01E0, 0x0258, 0x04B0, 0x1F40, 0x0320, 0x0320, 0x04B0, 0x2EE0, 0x01E0, 0x2EE0, 0x6590, 0x0320,
+    0x0320, 0x0320, 0x1450, 0x04B0, 0x04B0, 0x1450, 0x1450, 0x9C40, 0x0A28, 0xEA60, 0x0A28, 0x1450,
+    0x6590, 0x9C40, 0x1F40, 0x04B0, 0x2EE0, 0x1450, 0x1450, 0xEA60, 0x03E8, 0x03E8, 0x04B0, 0x0190,
+    0x0280, 0x2EE0, 0x4E20, 0x9C40, 0x0320, 0x0C80, 0x0640, 0x9C40, 0x0320, 0x0708, 0x1770, 0x01E0,
+};
+
+static u16 cloth_price_table[255] = {
+    0x0168, 0x0168, 0x0168, 0x0186, 0x0168, 0x014A, 0x01A4, 0x0122, 0x017C, 0x017C, 0x0168, 0x01AE, 0x0168, 0x014A,
+    0x01AE, 0x014A, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x015E, 0x017C, 0x0190, 0x1900, 0x1900, 0x1900, 0x1900, 0x1900, 0x1900, 0x0000, 0x0172, 0x0186, 0x017C, 0x0172,
+    0x0172, 0x0172, 0x1A90, 0x0140, 0x1518, 0x01A4, 0x01CC, 0x01CC, 0x16A8, 0x0154, 0x1C20, 0x0186, 0x1838, 0x017C,
+    0x017C, 0x017C, 0x017C, 0x017C, 0x0154, 0x0154, 0x0154, 0x0154, 0x0154, 0x0154, 0x0154, 0x0154, 0x0154, 0x0140,
+    0x0140, 0x0140, 0x017C, 0x017C, 0x017C, 0x0154, 0x0140, 0x0140, 0x019A, 0x01AE, 0x0186, 0x017C, 0x017C, 0x015E,
+    0x0140, 0x0140, 0x0172, 0x0154, 0x0154, 0x0168, 0x0168, 0x0122, 0x1400, 0x015E, 0x015E, 0x1770, 0x0172, 0x0172,
+    0x0168, 0x017C, 0x0154, 0x0154, 0x0154, 0x007B, 0x0140, 0x01E0, 0x0140, 0x0186, 0x017C, 0x0122, 0x0168, 0x0168,
+    0x0168, 0x0168, 0x0168, 0x01A4, 0x01E0, 0x0122, 0x0104, 0x0140, 0x0186, 0x0172, 0x01E0, 0x0168, 0x0168, 0x0208,
+    0x0208, 0x017C, 0x01A4, 0x01A4, 0x0122, 0x0168, 0x0154, 0x0186, 0x0186, 0x0168, 0x0309, 0x1900, 0x0172, 0x015E,
+    0x0168, 0x0154, 0x0186, 0x0168, 0x017C, 0x017C, 0x017C, 0x017C, 0x017C, 0x017C, 0x0140, 0x0140, 0x0140, 0x017C,
+    0x0168, 0x0186, 0x017C, 0x0172, 0x017C, 0x017C, 0x0172, 0x0172, 0x0168, 0x0168, 0x0168, 0x0140, 0x01CC, 0x017C,
+    0x01A4, 0x0190, 0x0172, 0x0186, 0x00FA, 0x00FA, 0x00FA, 0x00FA, 0x00FA, 0x00FA, 0x00FA, 0x015E, 0x0168, 0x0032,
+    0x015E, 0x0190, 0x1388, 0x01E0, 0x01AE, 0x1838, 0x1838, 0x0168, 0x0186, 0x017C, 0x0186, 0x017C, 0x015E, 0x017C,
+    0x017C, 0x017C, 0x01CC, 0x014A, 0x014A, 0x014A, 0x0154, 0x0080, 0x1900, 0x01A4, 0x01A4, 0x01AE, 0x01A4, 0x0140,
+    0x0168, 0x00B4, 0x00B4, 0x0140, 0x00B4, 0x017C, 0x0154, 0x0140, 0x01A4, 0x1838, 0x0186, 0x1900, 0x1900, 0x1900,
+    0x1900, 0x0154, 0x0154, 0x0140, 0x017C, 0x0172, 0x0168, 0x015E, 0x014A, 0x015E, 0x0168, 0x015E, 0x017C, 0x0172,
+    0x017C, 0x0168, 0x1900, 0x0186, 0x0190, 0x1A90, 0x014A, 0x015E, 0x0140, 0x1838, 0x1770, 0x0154, 0x16A8, 0x015E,
+    0x01A4, 0x1A90, 0x014A
+};
+
+static u16 carpet_price_table[69] = { 0x0870, 0x08FC, 0x0690, 0x0320, 0x0690, 0x0320, 0x1770, 0x07BC, 0x071C, 0x1F40,
+                                      0x047E, 0x0320, 0x0532, 0x0604, 0x1964, 0x1F40, 0x1B58, 0xA118, 0x1A90, 0x0604,
+                                      0x062C, 0x0B22, 0x06D6, 0x0604, 0x0690, 0x8AE0, 0x0370, 0x1C20, 0x0884, 0x0762,
+                                      0x0834, 0x053C, 0x0550, 0x04CE, 0x0320, 0x0ABE, 0x0BA4, 0x04CE, 0x0564, 0x056E,
+                                      0x0BA4, 0x0604, 0x05C8, 0x1A90, 0x2580, 0x07A8, 0x1A90, 0xBF40, 0x1C20, 0x1E78,
+                                      0x08FC, 0x092E, 0x2134, 0x206C, 0x065E, 0x02D0, 0x1C20, 0x1C20, 0x071C, 0x0C80,
+                                      0x2008, 0x0550, 0x0500, 0x0514, 0x1F40, 0x2710, 0x12C0, 0x1A90, 0x0370 };
+
+static u16 wall_price_table[69] = { 0x07A8, 0x0834, 0x0460, 0x0320, 0x058C, 0x0370, 0x1770, 0x0758, 0x058C, 0x1B58,
+                                    0x0884, 0x06D6, 0x0460, 0x04B0, 0x15E0, 0x1DB0, 0x1900, 0xA118, 0x1770, 0x041A,
+                                    0x04EC, 0x08C0, 0x05AA, 0x05AA, 0x05C8, 0x8AE0, 0x0320, 0x1900, 0x07A8, 0x06F4,
+                                    0x062C, 0x047E, 0x047E, 0x0460, 0x04B0, 0x0992, 0x0A64, 0x041A, 0x04E2, 0x04B0,
+                                    0x08C0, 0x0528, 0x0320, 0x1B58, 0x23F0, 0x05BE, 0x1A90, 0xBF40, 0x1F40, 0x1CE8,
+                                    0x0834, 0x0866, 0x1D4C, 0x1C20, 0x05DC, 0x0320, 0x1B58, 0x2328, 0x0690, 0x08CA,
+                                    0x23F0, 0x0528, 0x04D8, 0x0500, 0x1F40, 0x2328, 0x12C0, 0x1770, 0x0320 };
+
+static u16 food_price_table[8] = {
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x4E20, 0x0064, 0x0258,
+};
+
+static u16 plant_price_table[11] = { 0x003C, 0x003C, 0x0078, 0x0078, 0x0078, 0x0078,
+                                     0x0078, 0x0078, 0x0078, 0x0078, 0x0078 };
+
+static u16 md_price_table[140] = {
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014,
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014,
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014,
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014,
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0014,
+    0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014, 0x0014
+};
+
+static u16 diary_price_table[16] = {
+    0x00B4, 0x00C8, 0x04EC, 0x05AA, 0x0118, 0x0366, 0x03D4, 0x0370,
+    0x04E2, 0x04B0, 0x0140, 0x0140, 0x0140, 0x0140, 0x0140, 0x035C,
+};
+
+static u16 insect_price_table[] = {
+    0x0140, 0x0140, 0x0320, 0x1F40, 0x04B0, 0x0640, 0x0D48, 0x0320, 0x4650, 0x0208, 0x0140, 0x0320, 0x4650, 0x0320,
+    0x1518, 0x0208, 0x0208, 0x06B8, 0x0190, 0x0140, 0x1518, 0x1F40, 0x2EE0, 0x0320, 0x0208, 0x0320, 0x06B8, 0x03E8,
+    0x0014, 0x1F40, 0x1F40, 0x9C40, 0x03E8, 0x0320, 0x0208, 0x03E8, 0x03E8, 0x04B0, 0x0140, 0x0208, 0x2EE0, 0x0640,
+    0x03E8, 0xAFC8, 0x0258, 0x0118, 0x0320, 0x04B0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+};
 
 static u16* l_binsen_price_info = binsen_price_table;
 static u16* l_cloth_price_info = cloth_price_table;
@@ -615,53 +712,144 @@ static u16* l_carpet_price_info = carpet_price_table;
 static u16* l_wall_price_info = wall_price_table;
 static u16* l_tool_price_info = tool_price_table;
 static u16* l_plant_price_info = plant_price_table;
-static u16* l_food_price_info = food_price_table;
 static u16* l_fish_price_info = fish_price_table;
+static u16* l_food_price_info = food_price_table;
 static u16* l_md_price_info = md_price_table;
 static u16* l_diary_price_info = diary_price_table;
 static u16* l_insect_price_info = insect_price_table;
 
-static u16** l_price_info[ITEM1_CAT_NUM] = { &l_binsen_price_info,
-                                             NULL,
-                                             &l_tool_price_info,
-                                             &l_fish_price_info,
-                                             &l_cloth_price_info,
-                                             NULL,
-                                             &l_carpet_price_info,
-                                             &l_wall_price_info,
-                                             &l_food_price_info,
-                                             &l_plant_price_info,
-                                             &l_md_price_info,
-                                             &l_diary_price_info,
-                                             NULL,
-                                             &l_insect_price_info,
-                                             NULL,
-                                             NULL };
-
-static mActor_name_t mSP_item1_start_idx_table[ITEM1_CAT_NUM] = {
-    ITM_PAPER_START,  ITM_MONEY_START,  ITM_TOOL_START,       ITM_FISH_START, ITM_CLOTH_START,    ITM_ETC_START,
-    ITM_CARPET_START, ITM_WALL_START,   ITM_FOOD_START,       ITM_ENV_START,  ITM_MINIDISK_START, ITM_DIARY_START,
-    ITM_TICKET_START, ITM_INSECT_START, ITM_HUKUBUKURO_START, ITM_KABU_START
+static u16** l_price_info[ITEM1_CAT_NUM] = {
+    &l_binsen_price_info,
+    NULL,
+    &l_tool_price_info,
+    &l_fish_price_info,
+    &l_cloth_price_info,
+    NULL,
+    &l_carpet_price_info,
+    &l_wall_price_info,
+    &l_food_price_info,
+    &l_plant_price_info,
+    &l_md_price_info,
+    &l_diary_price_info,
+    NULL,
+    &l_insect_price_info,
+    NULL,
+    NULL,
 };
 
-extern u16 ftr_price_table[];
+static u16 ftr_price_table[] = {
+    0xA118, 0x0A00, 0x0780, 0x04B0, 0xBF40, 0x0EEC, 0x08C0, 0x09B0, 0x08C0, 0x08FC, 0x0578, 0x0BEA, 0x0960, 0x0A00,
+    0x0884, 0xBF40, 0x0DC0, 0x0960, 0x0870, 0x0870, 0xA118, 0x0910, 0x0640, 0x0AA0, 0x0A00, 0x0870, 0x08CA, 0x0960,
+    0x0866, 0x0898, 0x0884, 0x0514, 0x08CA, 0x0578, 0x04B0, 0x0320, 0x03E8, 0x04B0, 0x0672, 0x021C, 0x0352, 0x04B0,
+    0x0640, 0x04B0, 0x0578, 0x0578, 0x0802, 0x0708, 0x04B0, 0x07BC, 0x07D0, 0x0640, 0x0640, 0x0640, 0x0640, 0x06A4,
+    0x0708, 0x0A00, 0x0898, 0x0640, 0x0320, 0x0D20, 0x0708, 0x0898, 0x0640, 0x0A00, 0x0578, 0x0D20, 0x076C, 0x0320,
+    0x0320, 0x0320, 0x0320, 0x0320, 0x0320, 0x04B0, 0x0834, 0x09EC, 0x0640, 0x0578, 0x0578, 0x0578, 0x0578, 0x0514,
+    0x06A4, 0x0870, 0x0708, 0x08C0, 0x0708, 0x07D0, 0x0DAC, 0x0640, 0x08E8, 0x0640, 0x07D0, 0x0884, 0x0898, 0x0640,
+    0x0640, 0x0640, 0x0C30, 0x03E8, 0x0960, 0x07D0, 0x0708, 0x0A00, 0x07D0, 0x0578, 0x08FC, 0x06A4, 0x071C, 0x0640,
+    0x0AF0, 0x0960, 0x076C, 0x0708, 0x0640, 0x0514, 0x0320, 0x0320, 0x0320, 0x0A50, 0x0258, 0x0898, 0x06A4, 0x0834,
+    0x0514, 0x0000, 0x04B0, 0x04B0, 0x04B0, 0x06A4, 0x06A4, 0x09D8, 0x0898, 0x0708, 0x0A14, 0x0708, 0x0834, 0x07BC,
+    0x07BC, 0x044C, 0x0898, 0x08FC, 0x04B0, 0x0320, 0x04B0, 0x076C, 0x0708, 0x07BC, 0x0320, 0x0320, 0x04B0, 0x0898,
+    0x03E8, 0x076C, 0x076C, 0x076C, 0x09C4, 0x0578, 0x0578, 0x0578, 0x04B0, 0x0708, 0x07BC, 0x08E8, 0x0708, 0x0960,
+    0x0992, 0x0546, 0x0708, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07A8,
+    0x07A8, 0x07A8, 0x07A8, 0x07A8, 0x07C6, 0x0514, 0x0000, 0x05DC, 0x0640, 0x0708, 0x06A4, 0x07D0, 0x0640, 0x0578,
+    0x02BC, 0x02BC, 0x0309, 0x076C, 0x0578, 0x0708, 0x0708, 0x0514, 0x04B0, 0x08CA, 0x08FC, 0x076C, 0x0910, 0x07BC,
+    0x0A14, 0x09B0, 0x0A3C, 0x0708, 0x0834, 0x076C, 0x04B0, 0x0834, 0x076C, 0x0708, 0x0870, 0x0708, 0x04B0, 0x08F2,
+    0x0960, 0x0708, 0x06A4, 0x0960, 0x09B0, 0x08E8, 0x08FC, 0x0834, 0x04B0, 0x0514, 0x04B0, 0x04B0, 0x07D0, 0x0514,
+    0x0514, 0x0514, 0x05DC, 0x0514, 0x04B0, 0x0514, 0x0514, 0x04B0, 0x06A4, 0x03E8, 0x0708, 0x0708, 0x0708, 0x0640,
+    0x0708, 0x076C, 0x0640, 0x04B0, 0x0320, 0x0640, 0x05DC, 0x06A4, 0x044C, 0x0320, 0x0320, 0x0258, 0x06A4, 0x06A4,
+    0x0708, 0x0640, 0x04B0, 0x04B0, 0x0578, 0x0578, 0x06A4, 0x03E8, 0x0CB2, 0x0320, 0x0320, 0x0320, 0x06A4, 0x04B0,
+    0x0578, 0x044C, 0x0514, 0x0514, 0x0708, 0x08FC, 0x01F4, 0x01F4, 0x0898, 0x0960, 0x0708, 0x0ED8, 0x0730, 0x0320,
+    0x06D6, 0x0000, 0x0708, 0x0258, 0x076C, 0x09C4, 0x0578, 0x0320, 0x0640, 0x07BC, 0xA118, 0x101C, 0xA118, 0x0000,
+    0xA118, 0xA118, 0xA118, 0x0C80, 0x0A28, 0x0870, 0x0834, 0x0898, 0x0960, 0x094C, 0x0A14, 0x0960, 0x0AF0, 0xA118,
+    0xA118, 0x09EC, 0x0640, 0x0708, 0x06A4, 0x0708, 0x0258, 0x04B0, 0x0B40, 0x0258, 0x07D0, 0x0708, 0x0640, 0x0960,
+    0x6400, 0x0A00, 0x0640, 0x0258, 0x0924, 0x0640, 0x0578, 0xA118, 0x07D0, 0x0898, 0x05DC, 0x076C, 0x0AF0, 0x05DC,
+    0x06A4, 0x0C30, 0x0ADC, 0x0C80, 0x0C1C, 0x0960, 0x0834, 0x07D0, 0x076C, 0x012C, 0x01E0, 0x030C, 0x03D4, 0x02A8,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0, 0x0CF0,
+    0x0CF0, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C,
+    0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x012C, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+    0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8,
+    0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x0BB8, 0x9C40, 0x9C40, 0x9C40, 0x9C40, 0x0BB8,
+    0x0730, 0x0A14, 0x0F0A, 0x05DC, 0x05DC, 0x0ABE, 0x5DC0, 0x07BC, 0xBF40, 0xBF40, 0xBF40, 0xBF40, 0xBF40, 0xBF40,
+    0xBF40, 0xBF40, 0x0320, 0x0898, 0x0866, 0x04B0, 0x0578, 0x0708, 0x092E, 0x07D0, 0x02BC, 0x0640, 0x05DC, 0x0708,
+    0x0514, 0x044C, 0x0514, 0x06A4, 0x06A4, 0x1194, 0x07D0, 0x0546, 0x09B0, 0x0AF0, 0x0AF0, 0x5AA0, 0x5AA0, 0x0AF0,
+    0x0AF0, 0x5AA0, 0x5AA0, 0x0AF0, 0x0AF0, 0x03E8, 0x03E8, 0x0514, 0x05C8, 0x0834, 0x0898, 0x0898, 0x076C, 0x0578,
+    0x0708, 0x09C4, 0x0640, 0x0578, 0x0384, 0x55F0, 0x4650, 0x4E20, 0x5DC0, 0x4E20, 0x55F0, 0x4E20, 0x3E80, 0x4650,
+    0x4E20, 0x3E80, 0x4650, 0x3E80, 0x4650, 0x4650, 0x3E80, 0x4650, 0x4650, 0x2EE0, 0x2710, 0x12C0, 0x0FA0, 0x1130,
+    0x15E0, 0x1450, 0x0578, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x8AE0, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x1388, 0x0AA0, 0x0FA0, 0x1180, 0x0500, 0x1130,
+    0x0F50, 0x9C40, 0x0D20, 0x0910, 0x1DB0, 0x5DC0, 0x1400, 0x0AA0, 0x1DB0, 0x1C20, 0x23F0, 0x23F0, 0x1450, 0x11F8,
+    0x0028, 0x0028, 0x0028, 0x0028, 0x0028, 0x0050, 0x0050, 0x0050, 0x23F0, 0x23F0, 0x15E0, 0x1DB0, 0xFA00, 0x8CA0,
+    0xFA00, 0xB3B0, 0xBB80, 0x1CE8, 0x1C20, 0x1C20, 0x1C20, 0x28A0, 0x9C40, 0x9C40, 0x12C0, 0x0785, 0x3B60, 0x3B60,
+    0xB3B0, 0x0500, 0x0FA0, 0x12C0, 0x6A40, 0x04E2, 0x0578, 0x0578, 0x0370, 0xBB80, 0x52D0, 0x1770, 0x2EE0, 0x2710,
+    0x3200, 0x7D00, 0x4E20, 0x2710, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00,
+    0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xFA00, 0xA978, 0x04B0, 0x0578, 0x04B0, 0x09C4, 0x0050, 0x00B4, 0x00C8, 0x04EC,
+    0x05AA, 0x0118, 0x0366, 0x03D4, 0x0370, 0x04E2, 0x04B0, 0x0140, 0x0140, 0x0140, 0x0140, 0x0140, 0x035C, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0564, 0x0898, 0x092E, 0x0578, 0x03D4,
+    0x2710, 0x073A, 0x0640, 0x062C, 0x0578, 0x0578, 0x06E0, 0x0640, 0x0C80, 0x035C, 0x0000, 0x0000, 0x04B0, 0x0078,
+    0x09C4, 0x0352, 0x1068, 0x0352, 0x033E, 0x0352, 0x04D8, 0x04D8, 0x0528, 0x0352, 0x2648, 0x041A, 0x0366, 0x23F0,
+    0x062C, 0x033E, 0x20D0, 0x0384, 0x22C4, 0x04B0, 0x16A8, 0x0834, 0x05AA, 0x06E0, 0x094C, 0x049C, 0x0898, 0x0898,
+    0x03DE, 0x0640, 0x0758, 0x0366, 0x0654, 0x07D0, 0x0334, 0x08F2, 0x0528, 0x02A8, 0x0200, 0x04EC, 0x05A0, 0x1194,
+    0x05FA, 0x0FA0, 0x0640, 0x0528, 0x0D34, 0x05FA, 0xDAC0, 0xDAC0, 0x0208, 0x03FC, 0x0348, 0x0884, 0x0370, 0x044C,
+    0x1B58, 0x1B58, 0x3414, 0x0ED8, 0x0E60, 0x056E, 0x3414, 0x3414, 0x3414, 0x3414, 0x3414, 0x3414, 0x0400, 0x0400,
+    0x3414, 0x0400, 0x3414, 0x0400, 0x3414, 0x0400, 0x0400, 0x0400, 0x0400, 0x0400, 0x037A, 0x0400, 0x04CE, 0x0A8C,
+    0x041A, 0x157C, 0x1A90, 0x1A90, 0x049C, 0x0528, 0x0BAE, 0x0C76, 0x0E06, 0x0550, 0x08C0, 0x0D84, 0x0668, 0x09F6,
+    0x07BC, 0x1C20, 0x03A2, 0x03A2, 0x03A2, 0x038E, 0x038E, 0x038E, 0x03AC, 0x03AC, 0x03AC, 0x049C, 0x0AC8, 0x0514,
+    0x0D34, 0x07A8, 0x05BE, 0x0758, 0x06FE, 0x0640, 0x0762, 0x0078, 0x0064, 0x01A4, 0x0410, 0x0500, 0x0848, 0x1130,
+    0x0064, 0x021C, 0x03C0, 0x05A0, 0x07A8, 0x0C80, 0x00C8, 0x0258, 0x0370, 0x0460, 0x05F0, 0x0E10, 0x003C, 0x0154,
+    0x0370, 0x0000,
+};
 
 extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no) {
-    static u32 shellfish_price_table[ITM_SHELL_END - ITM_SHELL_START] = { 160, 80, 600, 120, 240, 1800, 1400, 1000 };
+    static u32 shell_price_table[ITM_SHELL_END - ITM_SHELL_START] = { 160, 80, 600, 120, 240, 1800, 1400, 1000 };
 
     lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
     lbRTC_year_t year = rtc_time.year;
     u32 price = 0;
 
+    item_no = mRmTp_FtrItemNo2Item1ItemNo(item_no, FALSE);
     if (item_no == ITM_HUKUBUKURO_BAG) {
         return year;
     }
 
-    item_no = mRmTp_FtrItemNo2Item1ItemNo(item_no, FALSE);
     if (item_no >= ITM_SHELL0 && item_no <= ITM_SHELL7) {
         u32 idx = item_no - ITM_SHELL0;
 
-        return shellfish_price_table[idx % 8];
+        return shell_price_table[idx % 8];
     }
 
     if (item_no == ITM_SIGNBOARD) {
@@ -672,41 +860,27 @@ extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no) {
         case NAME_TYPE_ITEM1: {
             u16** price_list_pp = l_price_info[ITEM_NAME_GET_CAT(item_no)];
 
-            if (price_list_pp != NULL && &price != NULL) {
+            if (price_list_pp != NULL) {
+                int idx = item_no & 0xFF;
                 u16* price_list_p = *price_list_pp;
-                int idx = item_no - mSP_item1_start_idx_table[ITEM_NAME_GET_CAT(item_no)];
 
                 if (item_no >= ITM_PAPER_START && item_no <= (ITM_PAPER_END - 1)) {
                     int paper_idx = (item_no - ITM_PAPER_START);
 
                     idx = (item_no - ITM_PAPER_START) % PAPER_UNIQUE_NUM;
-                    if (idx < mSP_CountPriceTableElement(price_list_p)) {
-                        price = price_list_p[idx];
-                        price = price * ((paper_idx / 64) + 1);
-                        return price;
-                    }
-                }
-
-                if (idx < mSP_CountPriceTableElement(price_list_p)) {
-                    switch (item_no) {
-                        case ITM_FOOD_APPLE:
-                        case ITM_FOOD_CHERRY:
-                        case ITM_FOOD_PEAR:
-                        case ITM_FOOD_PEACH:
-                        case ITM_FOOD_ORANGE: {
-                            if (Save_Get(fruit) != item_no) {
-                                return mSP_FOREIGN_FRUIT_PRICE;
-                            }
-
-                            break;
-                        }
-                    }
-
                     price = price_list_p[idx];
+                    price = price * ((paper_idx / 64) + 1);
                     return price;
                 }
 
-                return 0;
+                if (item_no == ITM_FOOD_APPLE || item_no == ITM_FOOD_CHERRY || item_no == ITM_FOOD_PEAR ||
+                    item_no == ITM_FOOD_PEACH || item_no == ITM_FOOD_ORANGE) {
+                    if (Save_Get(fruit) != item_no) {
+                        return mSP_FOREIGN_FRUIT_PRICE;
+                    }
+                }
+
+                return price_list_p[idx];
             }
 
             break;
@@ -714,19 +888,8 @@ extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no) {
 
         case NAME_TYPE_FTR0:
         case NAME_TYPE_FTR1: {
-            if (&price != NULL) {
-                int ftr_idx = mRmTp_FtrItemNo2FtrIdx(item_no);
-                u16* price_list_p = ftr_price_table;
-
-                if (ftr_idx < mSP_CountPriceTableElement(price_list_p)) {
-                    price = price_list_p[ftr_idx];
-                    return price;
-                }
-
-                return 0;
-            }
-
-            break;
+            int ftr_idx = mNT_ftr_item_no_to_ftr_idx(item_no);
+            return ftr_price_table[ftr_idx];
         }
 
         default: {
@@ -737,14 +900,38 @@ extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no) {
     return 0;
 }
 
+extern u32 mSP_ItemNo2ItemPrice_Tanu(mActor_name_t item_no) {
+    u32 price = mSP_ItemNo2ItemPrice(item_no);
+
+    if (mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT) {
+        price *= 0.8f;
+    }
+
+    if (mSP_force_opend()) {
+        price *= 1.2f;
+    }
+
+    return price;
+}
+
+extern u32 mSP_ItemNo2ItemPrice_TakeBack(mActor_name_t item_no) {
+    u32 price = mSP_ItemNo2ItemPrice(item_no);
+
+    price /= mSP_SELL_BUY_RATIO;
+    if (mSP_force_opend()) {
+        price *= 0.7f;
+    }
+    return price;
+}
+
 extern int mSP_SearchItemCategoryPriority(mActor_name_t item_no, int category, int list_type, GAME* game) {
     u8 abc_priorities[3];
-    mActor_name_t** lists_p = mSP_goods_seg_inf[category];
+    mActor_name_t** lists_p = mSP_goods_list_table[category];
     mActor_name_t* list_p;
     int count;
     int i;
 
-    mSP_GetGoodsPriority(abc_priorities, category);
+    mSP_GetListPriorityABC(abc_priorities, category);
     list_p = mSP_GetItemList(lists_p, abc_priorities, list_type);
     count = mSP_CountElementInCommonList(list_p);
 
@@ -762,7 +949,7 @@ extern int mSP_SearchItemCategoryPriority(mActor_name_t item_no, int category, i
 static int mSP_ItemNo2GoodsListCategory(mActor_name_t item_no) {
     if (ITEM_IS_FTR(item_no)) {
         return mSP_KIND_FURNITURE;
-    } else if (item_no >= ITM_PAPER_START && item_no < ITM_PAPER_END) {
+    } else if (item_no >= ITM_PAPER_START && item_no <= ITM_PAPER_END - 1) {
         return mSP_KIND_PAPER;
     } else if (item_no >= ITM_CLOTH_START && item_no < ITM_CLOTH_END) {
         return mSP_KIND_CLOTH;
@@ -788,7 +975,7 @@ static u8 l_zakka_goods[mSP_GOODS_TYPE_NUM] = {
     0, // ??
     1, // saplings
     2, // tools
-    2  // plants
+    1  // plants
 };
 
 static u8 l_conbini_goods[mSP_GOODS_TYPE_NUM] = {
@@ -802,7 +989,7 @@ static u8 l_conbini_goods[mSP_GOODS_TYPE_NUM] = {
     0, // ??
     1, // saplings
     3, // tools
-    3  // plants
+    2  // plants
 };
 
 static u8 l_super_goods[mSP_GOODS_TYPE_NUM] = {
@@ -816,7 +1003,7 @@ static u8 l_super_goods[mSP_GOODS_TYPE_NUM] = {
     0, // ??
     2, // saplings
     2, // tools
-    4  // plants
+    3  // plants
 };
 
 static u8 l_dsuper_goods[mSP_GOODS_TYPE_NUM] = {
@@ -830,7 +1017,7 @@ static u8 l_dsuper_goods[mSP_GOODS_TYPE_NUM] = {
     0, // ??
     3, // saplings
     3, // tools
-    5  // plants
+    4  // plants
 };
 
 static u8* l_goods_count_table[mSP_SHOP_TYPE_NUM] = { l_zakka_goods, l_conbini_goods, l_super_goods, l_dsuper_goods };
@@ -892,20 +1079,6 @@ static void mSP_MakeRandomGoodsList(GAME* game, int* count, mActor_name_t* goods
     count[0] += goods_count[mSP_GOODS_TYPE_WALL];
 }
 
-extern int mSP_CountElementInGoodsList() {
-    mActor_name_t* items = Save_Get(shop).items;
-    int goods_count = 0;
-    int i;
-
-    for (i = 0; i < mSP_GOODS_COUNT; i++) {
-        if (items[i] != EMPTY_NO) {
-            goods_count++;
-        }
-    }
-
-    return goods_count;
-}
-
 static void mSP_SelectTool(mActor_name_t* goods_list, int* count, int tool_num, int shop_level) {
     static int table[4] = { ITM_SHOVEL, ITM_NET, ITM_ROD, ITM_AXE };
 
@@ -937,7 +1110,7 @@ static void mSP_SelectTool(mActor_name_t* goods_list, int* count, int tool_num, 
       rolling all four unique tools in a single go.
     */
     while (tools_added < tool_num) {
-        int idx = RANDOM_F(tool_max);
+        int idx = RANDOM(tool_max);
         mActor_name_t tool = table[idx];
 
         /* Don't allow duplicate tools */
@@ -956,11 +1129,8 @@ static void mSP_SelectTool(mActor_name_t* goods_list, int* count, int tool_num, 
 
         goods_list[count[0]] = ITM_RED_PAINT + paint_idx;
         paint_idx++;
-#if VERSION == VER_GAFU01_00
-        Save_Get(shop).shop_info.paint_color = (u16)paint_idx;
-#else
         Save_Get(shop).shop_info.paint_color = paint_idx;
-#endif
+
         count[0]++;
         goods_list[count[0]] = ITM_SIGNBOARD;
         count[0]++;
@@ -968,6 +1138,10 @@ static void mSP_SelectTool(mActor_name_t* goods_list, int* count, int tool_num, 
 
     /* Add umbrella */
     mSP_RandomUmbSelect(goods_list + count[0], 1);
+    count[0]++;
+
+    // add medicine
+    goods_list[count[0]] = ITM_MEDICINE;
     count[0]++;
 }
 
@@ -977,7 +1151,17 @@ static void mSP_SelectPlant(mActor_name_t* goods_list, int* count, int flower_co
     int i;
 
     if (mSP_CheckHallowinDay()) {
-        Save_Get(shop).flowers_candy_grab_bag_count = flower_count;
+        for (i = 0; i < flower_count; i++) {
+            goods_list[count[0]] = ITM_FOOD_CANDY;
+            count[0]++;
+        }
+        flower_count = sapling_count;
+        sapling_count = 0;
+    } else if (mSP_CheckCrackerDay()) {
+        for (i = 0; i < flower_count; i++) {
+            goods_list[count[0]] = ITM_CRACKER;
+            count[0]++;
+        }
         flower_count = sapling_count;
         sapling_count = 0;
     }
@@ -1030,11 +1214,19 @@ static void mSP_MakeGoodsList(GAME* game) {
             shop->flowers_candy_grab_bag_count += (s8)tool_count;
             shop->flowers_candy_grab_bag_count += (s8)flower_count;
             shop->flowers_candy_grab_bag_count += (s8)sapling_count;
+            shop->flowers_candy_grab_bag_count++; // add medicine
 
             if (shop_level >= mSP_SHOP_TYPE_SUPER) {
                 shop->flowers_candy_grab_bag_count++; // add signboard & paint
                 shop->flowers_candy_grab_bag_count++;
             }
+
+            for (; shop->flowers_candy_grab_bag_count > 0; shop->flowers_candy_grab_bag_count--) {
+                shop_items[count] = ITM_HUKUBUKURO_BAG;
+                count++;
+            }
+
+            mSP_RandomUmbSelect(shop_items + count, 1);
         } else {
             mSP_SelectTool(shop_items, &count, tool_count, shop_level & 3);
             mSP_SelectPlant(shop_items, &count, flower_count, sapling_count, shop_level & 3);
@@ -1084,13 +1276,15 @@ extern void mSP_NewExchangeDay() {
 /* @unused size: 0x104 */
 // ? mSP_SearchRareFurniture(...)
 
-extern void mSP_ShopItsumoChirashi(int house_no, int shop_level, mActor_name_t item, int type, int send_proc) {
-    static int rare_chirashi_bunmen[mSP_SHOP_TYPE_NUM][2] = { { 18, 18 }, { 19, 19 }, { 21, 20 }, { 23, 22 } };
+extern void mSP_ShopRareLeaflet(int house_no, int shop_level, mActor_name_t item, int send_proc) {
+    static int rare_leaflet_bunmen[mSP_SHOP_TYPE_NUM][2] = { { 18, 18 }, { 19, 19 }, { 21, 20 }, { 23, 22 } };
 
     if (Save_Get(homes[house_no]).ownerID.land_id != 0xFFFF) {
         int free_mail_idx = mMl_chk_mail_free_space(Save_Get(homes[house_no]).mailbox, HOME_MAILBOX_SIZE);
+        int pl_no = mHS_get_pl_no(house_no) & 3;
+        int type = RANDOM(10) & 1;
 
-        if (mEv_ArbeitPlayer(mHS_get_pl_no(house_no) & 3) != TRUE) {
+        if (mEv_ArbeitPlayer(pl_no) != TRUE) {
             u8 item_name_str[mIN_ITEM_NAME_LEN];
             Mail_c leaflet;
             int header_back_start;
@@ -1098,8 +1292,9 @@ extern void mSP_ShopItsumoChirashi(int house_no, int shop_level, mActor_name_t i
             mIN_copy_name_str(item_name_str, item);
             mHandbill_Set_free_str(mHandbill_FREE_STR7, item_name_str, mIN_ITEM_NAME_LEN);
             mMl_clear_mail(&leaflet);
-            mHandbill_Load_HandbillFromRom(leaflet.content.text.split.header, &header_back_start, leaflet.content.text.split.footer,
-                                           leaflet.content.text.split.body, rare_chirashi_bunmen[shop_level][type & 1]);
+            mHandbill_Load_HandbillFromRom(leaflet.content.text.split.header, &header_back_start,
+                                           leaflet.content.text.split.footer, leaflet.content.text.split.body,
+                                           rare_leaflet_bunmen[shop_level][type]);
             leaflet.content.font = mMl_FONT_RECV;
             leaflet.content.header_back_start = header_back_start;
             leaflet.content.mail_type = mMl_TYPE_SHOP_SALE_LEAFLET;
@@ -1128,92 +1323,93 @@ extern void mSP_ShopItsumoChirashi(int house_no, int shop_level, mActor_name_t i
     }
 }
 
-extern void mSP_SetShopRareFurnitureChirashi(int player_no, mActor_name_t* goods_list, int goods_count, GAME* game) {
+extern void mSP_SetShopRareFurnitureLeaflet(int player_no, mActor_name_t* goods_list, int goods_count, GAME* game) {
     const int p = player_no;
-    int shop_level = mSP_GetShopLevel();
-    int is_rare_item = FALSE;
-    mActor_name_t rare_item = EMPTY_NO;
-    int arrange_idx = mHS_get_arrange_idx(p);
-    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
 
-    if (player_no != mHS_get_pl_no_detail(arrange_idx)) {
-        mCkRh_SavePlayTime(player_no);
-        return;
-    }
+    if (p >= 0 && p < mPr_FOREIGNER) {
+        int shop_level = mSP_GetShopLevel();
+        mActor_name_t rare_item = EMPTY_NO;
+        int arrange_idx = mHS_get_arrange_idx(p);
+        lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
 
-    /* Check if we're on the last day of the month */
-    if (Common_Get(time.rtc_time).day ==
-        lbRTC_GetDaysByMonth(Common_Get(time.rtc_time).year, Common_Get(time.rtc_time).month)) {
-        mCkRh_SavePlayTime(player_no);
-    } else if (mEv_CheckEvent(mEv_SAVED_RENEWSHOP) == TRUE) {
-        mCkRh_SavePlayTime(player_no); // shop was already 'renewed' today
-    } else {
-        u16 bargain_day = mEv_get_bargain_day();
-        lbRTC_time_c goki_time;
-        mHm_hs_c* home;
-
-        if (bargain_day != 0) {
-            u32 month = mEv_TO_MONTH(bargain_day);
-            u32 day = mEv_TO_DAY(bargain_day);
-            if (Common_Get(time.rtc_time).month == month && Common_Get(time.rtc_time).day == day) {
-                mCkRh_SavePlayTime(player_no); // shop 'bargin' event is active
-                return;
-            }
+        if (p != mHS_get_pl_no_detail(arrange_idx)) {
+            mCkRh_SavePlayTime(p);
+            return;
         }
 
-        goki_time = Save_Get(homes[arrange_idx]).goki.time;
-        lbRTC_Add_DD(&goki_time, 1);
-        home = Save_GetPointer(homes[arrange_idx]);
-
-        /* check if the current date & time is past the renew time */
-        if (home->goki.time.year == rtc_time->year && home->goki.time.month == rtc_time->month &&
-            home->goki.time.day == rtc_time->day)
-            return;
-
-        if (goki_time.year == rtc_time->year && goki_time.month == rtc_time->month && goki_time.day == rtc_time->day &&
-            goki_time.hour < mTM_FIELD_RENEW_HOUR)
-            return;
-
-        if (rtc_time->hour < mTM_FIELD_RENEW_HOUR || rtc_time->hour > mSP_GetShopCloseTime())
-            return;
-
-        if (mSP_SearchItemCategoryPriority(Save_Get(shop).rare_item, mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, game)) {
-            rare_item = Save_Get(shop).rare_item;
-            is_rare_item = TRUE;
+        /* Check if we're on the last day of the month */
+        if (Common_Get(time.rtc_time).day ==
+            lbRTC_GetDaysByMonth(Common_Get(time.rtc_time).year, Common_Get(time.rtc_time).month)) {
+            mCkRh_SavePlayTime(p);
+        } else if (mEv_CheckEvent(mEv_SAVED_RENEWSHOP) == TRUE) {
+            mCkRh_SavePlayTime(p); // shop was already 'renewed' today
         } else {
-            int i;
+            u16 bargain_day = mEv_get_bargain_day();
+            lbRTC_time_c goki_time;
+            mHm_hs_c* home;
 
-            /* spotlight item in shop wasn't the rare item, so check all
-             * the goods for one */
-            for (i = 0; i < goods_count; i++) {
-                if (mSP_ItemNo2GoodsListCategory(goods_list[i]) == mSP_KIND_FURNITURE) {
-                    is_rare_item =
-                        mSP_SearchItemCategoryPriority(goods_list[i], mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, game);
+            if (bargain_day != 0) {
+                u32 month = mEv_TO_MONTH(bargain_day);
+                u32 day = mEv_TO_DAY(bargain_day);
+                if (Common_Get(time.rtc_time).month == month && Common_Get(time.rtc_time).day == day) {
+                    mCkRh_SavePlayTime(p); // shop 'bargin' event is active
+                    return;
+                }
+            }
 
-                    if (is_rare_item != FALSE) {
-                        rare_item = goods_list[i];
+            goki_time = Save_Get(homes[arrange_idx]).goki.time;
+            lbRTC_Add_DD(&goki_time, 1);
+            home = Save_GetPointer(homes[arrange_idx]);
 
-                        break;
+            /* check if the current date & time is past the renew time */
+            if (home->goki.time.year == rtc_time->year && home->goki.time.month == rtc_time->month &&
+                home->goki.time.day == rtc_time->day)
+                return;
+
+            if (goki_time.year == rtc_time->year && goki_time.month == rtc_time->month &&
+                goki_time.day == rtc_time->day && goki_time.hour < mTM_FIELD_RENEW_HOUR)
+                return;
+
+            if (rtc_time->hour < mTM_FIELD_RENEW_HOUR || rtc_time->hour > mSP_GetShopCloseTime())
+                return;
+
+            if (mSP_SearchItemCategoryPriority(Save_Get(shop).rare_item, mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, game)) {
+                rare_item = Save_Get(shop).rare_item;
+            } else {
+                int i;
+
+                /* spotlight item in shop wasn't the rare item, so check all
+                 * the goods for one */
+                for (i = 0; i < goods_count; i++) {
+                    if (mSP_ItemNo2GoodsListCategory(goods_list[i]) == mSP_KIND_FURNITURE) {
+                        int is_rare_item =
+                            mSP_SearchItemCategoryPriority(goods_list[i], mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, game);
+
+                        if (is_rare_item != FALSE) {
+                            rare_item = goods_list[i];
+
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        /* check if a rare item was found, and if so, send the notice
-         * leaflet to the player */
-        if (is_rare_item != FALSE) {
-            int arrange_idx = mHS_get_arrange_idx(p);
+            /* check if a rare item was found, and if so, send the notice
+             * leaflet to the player */
+            if (rare_item != EMPTY_NO) {
+                int arrange_idx = mHS_get_arrange_idx(p);
 
-            if (mHS_get_pl_no_detail(arrange_idx) != -1) {
-                mSP_ShopItsumoChirashi(arrange_idx, shop_level, rare_item, is_rare_item, mPO_SENDTYPE_LEAFLET);
-                mCkRh_SavePlayTime(player_no);
+                if (mHS_get_pl_no_detail(arrange_idx) != -1) {
+                    mSP_ShopRareLeaflet(arrange_idx, shop_level, rare_item, mPO_SENDTYPE_LEAFLET);
+                    mCkRh_SavePlayTime(p);
+                }
             }
         }
     }
 }
 
-extern void mSP_SetRenewalChiraswhi_AppoDay() {
-    static int chirashi_idx_appoday[mSP_SHOP_TYPE_NUM] = { 0x1B, 0x1B, 0x1C, 0x1D };
+extern void mSP_SetRenewalLeaflet_AppoDay() {
+    static int leaflet_idx_appoday[mSP_SHOP_TYPE_NUM] = { 0x1B, 0x1B, 0x1C, 0x1D };
     Mail_c leaflet;
     Mail_ct_c* content = &leaflet.content;
     int header_back_start;
@@ -1230,8 +1426,9 @@ extern void mSP_SetRenewalChiraswhi_AppoDay() {
                 mEv_ArbeitPlayer(player_no) == FALSE) {
 
                 mMl_clear_mail(&leaflet);
-                mHandbill_Load_HandbillFromRom(content->text.split.header, &header_back_start, content->text.split.footer, content->text.split.body,
-                                               chirashi_idx_appoday[shop_level]);
+                mHandbill_Load_HandbillFromRom(content->text.split.header, &header_back_start,
+                                               content->text.split.footer, content->text.split.body,
+                                               leaflet_idx_appoday[shop_level]);
                 leaflet.content.font = mMl_FONT_RECV;
                 leaflet.content.header_back_start = header_back_start;
                 leaflet.content.mail_type = mMl_TYPE_SHOP_SALE_LEAFLET;
@@ -1258,7 +1455,7 @@ extern void mSP_ExchangeLineUp_InGame(GAME* game) {
         mSP_NewExchangeDay();
         mSP_ExchangeLineUp_GameAlloc(game);
         Save_Get(shop).shop_info.not_loaded_before = TRUE;
-        mSP_SetShopRareFurnitureChirashi(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, game);
+        mSP_SetShopRareFurnitureLeaflet(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, game);
     }
 }
 
@@ -1418,12 +1615,8 @@ extern void mSP_PrintNowShopSalesSum(gfxprint_t* gfxprint) {
     }
 }
 
-extern void mSP_GetGoodsPriority(u8* abc_priorities, int category) {
+extern void mSP_GetListPriorityABC(u8* abc_priorities, int category) {
     mSP_goods_priority_list_c* priorities = Save_Get(shop).priority_lists;
-
-    if (category == mSP_KIND_DIARY) {
-        category = mSP_KIND_FURNITURE;
-    }
 
     abc_priorities[0] = priorities[category].a;
     abc_priorities[1] = priorities[category].b;
@@ -1441,6 +1634,16 @@ static void mSP_InitGoods() {
 
     for (i = 0; i < mSP_GOODS_COUNT; i++) {
         *items++ = EMPTY_NO;
+    }
+}
+
+static void mSP_InitEventGoods(void) {
+    Shop_c* shop = Save_GetPointer(shop);
+    mActor_name_t* event_goods = shop->event_goods;
+    int i;
+
+    for (i = 0; i < mSP_GOODS_COUNT; i++) {
+        *event_goods++ = EMPTY_NO;
     }
 }
 
@@ -1466,16 +1669,10 @@ extern void mSP_LotteryLineUp_GameAlloc(GAME* game) {
 
 extern void mSP_InitShopSaveData() {
     Shop_c* shop = Save_GetPointer(shop);
-    // PersonalID_c* pid = shop->unused_ids;
     mActor_name_t* lottery_items = shop->lottery_items;
     int i = 0;
 
-    // while (i < mSP_PERSONAL_ID_COUNT) {
-    //     mPr_ClearPersonalID(pid);
-    //     pid++;
-    //     i++;
-    // }
-
+    mPr_ClearPersonalID(&shop->unused_id);
     mSP_InitGoods();
     Save_Get(shop).rare_item = EMPTY_NO;
 
@@ -1528,7 +1725,7 @@ extern void mSP_ShopGameStartCt(GAME* game) {
 extern mActor_name_t mSP_GetNowShopBgNum() {
     switch (Save_Get(scene_no)) {
         case SCENE_SHOP0: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
+            if (mSP_force_opend() == FALSE && Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return BG_TYPE_ROM_SHOP1_FUKU;
             }
 
@@ -1536,7 +1733,7 @@ extern mActor_name_t mSP_GetNowShopBgNum() {
         }
 
         case SCENE_CONVENI: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
+            if (mSP_force_opend() == FALSE && Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return BG_TYPE_ROM_SHOP2_FUKU;
             }
 
@@ -1544,7 +1741,7 @@ extern mActor_name_t mSP_GetNowShopBgNum() {
         }
 
         case SCENE_SUPER: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
+            if (mSP_force_opend() == FALSE && Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return BG_TYPE_ROM_SHOP3_FUKU;
             }
 
@@ -1552,7 +1749,7 @@ extern mActor_name_t mSP_GetNowShopBgNum() {
         }
 
         case SCENE_DEPART: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
+            if (mSP_force_opend() == FALSE && Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return BG_TYPE_ROM_SHOP4_FUKU;
             }
 
@@ -1578,26 +1775,6 @@ extern mActor_name_t mSP_GetNowShopFgNum() {
 
     switch (Save_Get(scene_no)) {
         case SCENE_SHOP0: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-                if (event_kind == mSP_KIND_FURNITURE) {
-                    mSP_what_special_sale = mSP_KIND_FURNITURE;
-                    return FG_TYPE_ROM_SHOP1_SALE_FTR;
-                }
-
-                if (event_kind == mSP_KIND_CLOTH) {
-                    mSP_what_special_sale = mSP_KIND_CLOTH;
-                    return FG_TYPE_ROM_SHOP1_SALE_CLOTH;
-                }
-
-                if (event_kind == mSP_KIND_WALLPAPER) {
-                    mSP_what_special_sale = mSP_KIND_WALLPAPER;
-                    return FG_TYPE_ROM_SHOP1_SALE_WALL;
-                }
-
-                mSP_what_special_sale = mSP_KIND_CARPET;
-                return FG_TYPE_ROM_SHOP1_SALE_CARPET;
-            }
-
             if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return FG_TYPE_ROM_SHOP1_FUKU;
             }
@@ -1606,26 +1783,6 @@ extern mActor_name_t mSP_GetNowShopFgNum() {
         }
 
         case SCENE_CONVENI: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_FURNITURE) {
-                    mSP_what_special_sale = mSP_KIND_FURNITURE;
-                    return FG_TYPE_ROM_SHOP2_SALE_FTR;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_CLOTH) {
-                    mSP_what_special_sale = mSP_KIND_CLOTH;
-                    return FG_TYPE_ROM_SHOP2_SALE_CLOTH;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_WALLPAPER) {
-                    mSP_what_special_sale = mSP_KIND_WALLPAPER;
-                    return FG_TYPE_ROM_SHOP2_SALE_WALL;
-                }
-
-                mSP_what_special_sale = mSP_KIND_CARPET;
-                return FG_TYPE_ROM_SHOP2_SALE_CARPET;
-            }
-
             if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return FG_TYPE_ROM_SHOP2_FUKU;
             }
@@ -1634,26 +1791,6 @@ extern mActor_name_t mSP_GetNowShopFgNum() {
         }
 
         case SCENE_SUPER: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_FURNITURE) {
-                    mSP_what_special_sale = mSP_KIND_FURNITURE;
-                    return FG_TYPE_ROM_SHOP3_SALE_FTR;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_CLOTH) {
-                    mSP_what_special_sale = mSP_KIND_CLOTH;
-                    return FG_TYPE_ROM_SHOP3_SALE_CLOTH;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_WALLPAPER) {
-                    mSP_what_special_sale = mSP_KIND_WALLPAPER;
-                    return FG_TYPE_ROM_SHOP3_SALE_WALL;
-                }
-
-                mSP_what_special_sale = mSP_KIND_CARPET;
-                return FG_TYPE_ROM_SHOP3_SALE_CARPET;
-            }
-
             if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return FG_TYPE_ROM_SHOP3_FUKU;
             }
@@ -1662,10 +1799,6 @@ extern mActor_name_t mSP_GetNowShopFgNum() {
         }
 
         case SCENE_DEPART: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-                return FG_TYPE_ROM_SHOP4_1_SALE;
-            }
-
             if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
                 return FG_TYPE_ROM_SHOP4_1_FUKU;
             }
@@ -1674,26 +1807,6 @@ extern mActor_name_t mSP_GetNowShopFgNum() {
         }
 
         case SCENE_DEPART_2: {
-            if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_FURNITURE) {
-                    mSP_what_special_sale = mSP_KIND_FURNITURE;
-                    return FG_TYPE_ROM_SHOP4_2_SALE_FTR;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_CLOTH) {
-                    mSP_what_special_sale = mSP_KIND_CLOTH;
-                    return FG_TYPE_ROM_SHOP4_2_SALE_CLOTH;
-                }
-
-                if (Save_Get(event_save_data).special.event.bargin.kind == mSP_KIND_WALLPAPER) {
-                    mSP_what_special_sale = mSP_KIND_WALLPAPER;
-                    return FG_TYPE_ROM_SHOP4_2_SALE_WALL;
-                }
-
-                mSP_what_special_sale = mSP_KIND_CARPET;
-                return FG_TYPE_ROM_SHOP4_2_SALE_CARPET;
-            }
-
             return FG_TYPE_ROM_SHOP4_2;
         }
 
@@ -1749,7 +1862,7 @@ extern int mSP_InRenewal() {
 
 extern int mSP_ShopOpen() {
     lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
-    lbRTC_hour_t now_hour;
+    lbRTC_hour_t now_hour = rtc_time.hour;
 
     if (mEv_CheckFirstJob()) {
         return mSP_SHOP_STATUS_OPEN; // shop is forcefully open during chores
@@ -1795,8 +1908,6 @@ extern int mSP_ShopOpen() {
         }
     }
 
-    now_hour = rtc_time.hour;
-
     if (mSP_InRenewal() != FALSE) {
         return mSP_SHOP_STATUS_RENEW;
     }
@@ -1809,79 +1920,103 @@ extern int mSP_ShopOpen() {
         return mSP_SHOP_STATUS_PRE;
     }
 
+    if (Common_Get(shop_force_open_door_flag) == TRUE &&
+        (now_hour >= mSP_GetShopCloseTime() || now_hour < (mTM_FIELD_RENEW_HOUR - 1))) {
+        return mSP_SHOP_STATUS_OPEN;
+    }
+
     return mSP_SHOP_STATUS_END;
 }
 
+typedef mActor_name_t (*mSP_get_random_item_common_func_t)(int idx);
+
+static void mSP_get_random_item_common(mActor_name_t* item_list, int count, int max_idx,
+                                       mSP_get_random_item_common_func_t get_item_func) {
+    int i;
+
+    for (i = 0; i < count; i++) {
+        item_list[i] = EMPTY_NO;
+    }
+
+    if (max_idx != 0) {
+        for (i = 0; i < count; i++) {
+            int set = FALSE;
+
+            while (!set) {
+                mActor_name_t item = get_item_func(RANDOM(max_idx));
+
+                if (!mSP_GoodsExistAlready(item_list, count, item)) {
+                    item_list[i] = item;
+                    set = TRUE;
+                } else if (count > max_idx) {
+                    item_list[i] = item;
+                    set = TRUE;
+                }
+            }
+        }
+    }
+}
+
+static mActor_name_t mSP_haniwa_idx_to_item(int idx) {
+    return HANIWA_START + (mActor_name_t)FTR_NO_2_IDX(idx);
+}
+
+/**
+ * @brief Select random haniwa items
+ * @param haniwa_list Output list for haniwa items
+ * @param count Number of haniwa to select
+ *
+ * Selects random haniwa items, avoiding duplicates when possible.
+ * If count exceeds available haniwa, allows duplicates.
+ */
 extern void mSP_RandomHaniwaSelect(mActor_name_t* haniwa_list, int count) {
-    int i;
-
-    for (i = 0; i < count; i++) {
-        haniwa_list[i] = EMPTY_NO;
-    }
-
-    for (i = 0; i < count; i++) {
-        int set = FALSE;
-
-        while (!set) {
-            mActor_name_t haniwa = HANIWA_START + (mActor_name_t)FTR_NO_2_IDX(RANDOM(HANIWA_NUM));
-
-            if (mSP_GoodsExistAlready(haniwa_list, count, haniwa) == FALSE) {
-                haniwa_list[i] = haniwa;
-                set = TRUE;
-            } else if (count > HANIWA_NUM) {
-                haniwa_list[i] = haniwa;
-                set = TRUE;
-            }
-        }
-    }
+    mSP_get_random_item_common(haniwa_list, count, HANIWA_NUM, mSP_haniwa_idx_to_item);
 }
 
-extern void mSP_RandomMDSelect(mActor_name_t* md_list, int count) {
-    int i;
-
-    for (i = 0; i < count; i++) {
-        md_list[i] = EMPTY_NO;
-    }
-
-    for (i = 0; i < count; i++) {
-        int set = FALSE;
-
-        while (!set) {
-            mActor_name_t md = ITM_MINIDISK_START + RANDOM(NOT_SECRET_MD_NUM);
-
-            if (mSP_GoodsExistAlready(md_list, count, md) == FALSE) {
-                md_list[i] = md;
-                set = TRUE;
-            } else if (count > NOT_SECRET_MD_NUM) {
-                md_list[i] = md;
-                set = TRUE;
-            }
-        }
-    }
+static mActor_name_t mSP_windmill_idx_to_item(int idx) {
+    return ITM_YELLOW_PINWHEEL + (idx & 7);
 }
 
-extern void mSP_RandomUmbSelect(mActor_name_t* umb_list, int count) {
-    int i;
+extern void mSP_RandomWindMillSelect(mActor_name_t* item_list, int count) {
+    mSP_get_random_item_common(item_list, count, 8, mSP_windmill_idx_to_item);
+}
 
-    for (i = 0; i < count; i++) {
-        umb_list[i] = EMPTY_NO;
-    }
+static mActor_name_t mSP_fan_idx_to_item(int idx) {
+    return ITM_BLUEBELL_FAN + (idx & 7);
+}
 
-    for (i = 0; i < count; i++) {
-        int set = FALSE;
+extern void mSP_RandomFanSelect(mActor_name_t* item_list, int count) {
+    mSP_get_random_item_common(item_list, count, 8, mSP_fan_idx_to_item);
+}
 
-        while (!set) {
-            mActor_name_t umb = ITM_UMBRELLA00 + RANDOM(UMBRELLA_NUM);
+static mActor_name_t mSP_balloon_idx_to_item(int idx) {
+    return (mActor_name_t)mNT_ftr_idx_to_ftr_item_no(FTR_NOG_BALLOON_COMMON0 + (idx & 7), mRmTp_DIRECT_SOUTH);
+}
 
-            if (mSP_GoodsExistAlready(umb_list, count, umb) == FALSE) {
-                umb_list[i] = umb;
-                set = TRUE;
-            } else if (count > UMBRELLA_NUM) {
-                umb_list[i] = umb;
-                set = TRUE;
-            }
-        }
-    }
+extern void mSP_RandomBalloonSelect(mActor_name_t* item_list, int count) {
+    mSP_get_random_item_common(item_list, count, 8, mSP_balloon_idx_to_item);
+}
+
+static mActor_name_t mSP_umb_idx_to_item(int idx) {
+    return ITM_UMBRELLA00 + idx;
+}
+
+/**
+ * @brief Select random umbrella items
+ * @param umb_list Output list for umbrellas
+ * @param count Number of umbrellas to select
+ *
+ * Selects random umbrellas, avoiding duplicates when possible.
+ * If count exceeds available umbrellas, allows duplicates.
+ */
+extern void mSP_RandomUmbSelect(mActor_name_t* item_list, int count) {
+    mSP_get_random_item_common(item_list, count, UMBRELLA_NUM, mSP_umb_idx_to_item);
+}
+
+extern mActor_name_t mSP_GetRandomStationToyItemNo() {
+    static mActor_name_t train[2] = { FTR_START(FTR_IKE_K_KID01), FTR_START(FTR_IKE_K_KID02) };
+
+    return mNT_ftr_idx_to_ftr_item_no(FTR_NOG_STATION00 + RANDOM(15), mRmTp_DIRECT_SOUTH);
 }
 
 static int mSP_CountBirth(u8 birth_type) {
@@ -1908,7 +2043,7 @@ static mActor_name_t mSP_FtrBirthIdx2ItemNo(u8 birth_type, int birth_idx) {
     for (i = 0; i < FTR_NUM; i++) {
         if (birth_type_p[0] == birth_type) {
             if (count == birth_idx) {
-                return mRmTp_FtrIdx2FtrItemNo(i, mRmTp_DIRECT_SOUTH);
+                return mNT_ftr_idx_to_ftr_item_no(i, mRmTp_DIRECT_SOUTH);
             }
 
             count++;
@@ -1925,23 +2060,6 @@ extern mActor_name_t mSP_RandomOneFossilSelect(int multi_fossil) {
     int count = mSP_CountBirth(birth_type);
 
     return mSP_FtrBirthIdx2ItemNo(birth_type, RANDOM(count));
-}
-
-extern int mSP_Chk_HukubukuroSail() {
-    lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
-    lbRTC_year_t year = rtc_time.year;
-    lbRTC_month_t month = rtc_time.month;
-    lbRTC_day_t day = rtc_time.day;
-
-    if (month == lbRTC_NOVEMBER) {
-        int black_friday = lbRTC_Weekly_day(year, lbRTC_NOVEMBER, 4, lbRTC_THURSDAY) + 1;
-
-        if (black_friday == day) {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
 }
 
 extern int mSP_CheckFukubikiDay() {
@@ -1970,6 +2088,23 @@ extern int mSP_SetGoods2ReservedPoint(mActor_name_t goods, mActor_name_t reserve
     return FALSE;
 }
 
+extern int mSP_Chk_HukubukuroSail() {
+    lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
+    lbRTC_year_t year = rtc_time.year;
+    lbRTC_month_t month = rtc_time.month;
+    lbRTC_day_t day = rtc_time.day;
+
+    if (month == lbRTC_NOVEMBER) {
+        int black_friday = lbRTC_Weekly_day(year, lbRTC_NOVEMBER, 4, lbRTC_THURSDAY) + 1;
+
+        if (black_friday == day) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 extern int mSP_CheckHallowinDay() {
     int res = FALSE;
     lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
@@ -1983,6 +2118,34 @@ extern int mSP_CheckHallowinDay() {
     return res;
 }
 
+extern int mSP_CheckCrackerDay(void) {
+    int res = FALSE;
+    lbRTC_time_c rtc_time = Common_Get(time.rtc_time);
+    lbRTC_month_t month = rtc_time.month;
+    lbRTC_day_t day = rtc_time.day;
+
+    if (month == lbRTC_DECEMBER && day >= 16 && day <= 30) {
+        res = TRUE;
+    }
+
+    return res;
+}
+
+extern int mSP_CheckShopNormalStatus_Quest(void) {
+    int open_type = mSP_ShopOpen();
+
+    if (mEv_CheckEvent(mEv_SAVED_RENEWSHOP) == TRUE || mEv_CheckEvent(mEv_SPNPC_SHOP) == TRUE ||
+        mSP_CheckFukubikiDay() || mSP_Chk_HukubukuroSail() || mSP_CheckHallowinDay() || mSP_CheckCrackerDay()) {
+        return FALSE;
+    }
+
+    if (open_type == mSP_SHOP_STATUS_PRE || open_type == mSP_SHOP_STATUS_END || open_type == mSP_SHOP_STATUS_RENEW) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 extern void mSP_SetTanukiShopStatus() {
     if (mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT) {
         Common_Set(tanuki_shop_status, mSP_TANUKI_SHOP_STATUS_EVENT);
@@ -1992,8 +2155,16 @@ extern void mSP_SetTanukiShopStatus() {
         Common_Set(tanuki_shop_status, mSP_TANUKI_SHOP_STATUS_HUKUBUKURO_SALE);
     } else if (mSP_CheckHallowinDay()) {
         Common_Set(tanuki_shop_status, mSP_TANUKI_SHOP_STATUS_HALLOWEEN);
+    } else if (mSP_CheckCrackerDay()) {
+        Common_Set(tanuki_shop_status, mSP_TANUKI_SHOP_STATUS_CRACKER);
     } else {
         Common_Set(tanuki_shop_status, mSP_TANUKI_SHOP_STATUS_NORMAL);
+    }
+
+    if (Common_Get(shop_force_open_door_flag) == TRUE) {
+        Common_Set(shop_force_opend, TRUE);
+    } else {
+        Common_Set(shop_force_opend, FALSE);
     }
 }
 
@@ -2069,7 +2240,7 @@ static int mSP_GetNonePossessionItemCount_InList(mActor_name_t* list, int catego
             int collect_idx;
 
             if (category == mSP_KIND_FURNITURE) {
-                collect_idx = mRmTp_FtrItemNo2FtrIdx(list_p[0]);
+                collect_idx = mNT_ftr_item_no_to_ftr_idx(list_p[0]);
             } else if (category == mSP_KIND_CARPET) {
                 collect_idx = list_p[0] - ITM_CARPET_START;
             } else {
@@ -2099,7 +2270,7 @@ static mActor_name_t mSP_GetNonePossessionItem_InList(mActor_name_t* list, int c
             int collect_idx;
 
             if (category == mSP_KIND_FURNITURE) {
-                collect_idx = mRmTp_FtrItemNo2FtrIdx(list_p[0]);
+                collect_idx = mNT_ftr_item_no_to_ftr_idx(list_p[0]);
             } else if (category == mSP_KIND_CARPET) {
                 collect_idx = list_p[0] - ITM_CARPET_START;
             } else {
@@ -2131,35 +2302,6 @@ static mActor_name_t mSP_GetNonePossessionItem_InEventFurniture(int player_no) {
                                             (player_no >= 0 && player_no < PLAYER_NUM)
                                                 ? Save_Get(private_data[player_no]).furniture_collected_bitfield
                                                 : Common_Get(now_private)->furniture_collected_bitfield);
-}
-
-/* @fabricated @unused */
-static mActor_name_t mSP_GetNonePossessionItem_InEventWall(int player_no) {
-    return mSP_GetNonePossessionItem_InList(mSP_ftr_list[mSP_LIST_EVENT], mSP_KIND_WALLPAPER,
-                                            (player_no >= 0 && player_no < PLAYER_NUM)
-                                                ? Save_Get(private_data[player_no]).wall_collected_bitfield
-                                                : Common_Get(now_private)->wall_collected_bitfield);
-}
-
-/* @fabricated @unused */
-static mActor_name_t mSP_GetNonePossessionItem_InEventCarpet(int player_no) {
-    return mSP_GetNonePossessionItem_InList(mSP_ftr_list[mSP_LIST_EVENT], mSP_KIND_CARPET,
-                                            (player_no >= 0 && player_no < PLAYER_NUM)
-                                                ? Save_Get(private_data[player_no]).carpet_collected_bitfield
-                                                : Common_Get(now_private)->carpet_collected_bitfield);
-}
-
-/* @fabricated @unused */
-static mActor_name_t mSP_GetNonePossessionItem_InABCFurniture(int player_no) {
-    // TODO: check this impl is right using func size -- they probably did the list calc in this func itself
-    u8 abc_priorities[3];
-
-    mSP_GetGoodsPriority(abc_priorities, mSP_KIND_FURNITURE);
-
-    return mSP_GetNonePossessionItem_InList(
-        mSP_GetItemList(mSP_ftr_list, abc_priorities, mSP_LISTTYPE_ABC), mSP_KIND_FURNITURE,
-        (player_no >= 0 && player_no < PLAYER_NUM) ? Save_Get(private_data[player_no]).furniture_collected_bitfield
-                                                   : Common_Get(now_private)->furniture_collected_bitfield);
 }
 
 typedef mActor_name_t (*mSP_GET_NONE_POSSESSION_ITEM_PROC)(int);
@@ -2237,298 +2379,12 @@ extern mActor_name_t mSP_SelectFishingPresent(int player_no) {
                                                         mSP_LISTTYPE_EVENT);
 }
 
-mActor_name_t mSP_gc_famicom_table[8] = {
-    FTR_START(FTR_FAMICOM_COMMON00), FTR_START(FTR_FAMICOM_COMMON01), FTR_START(FTR_FAMICOM_COMMON02), FTR_START(FTR_FAMICOM_COMMON03),
-    FTR_START(FTR_FAMICOM_COMMON04), FTR_START(FTR_FAMICOM_COMMON05), FTR_START(FTR_FAMICOM_COMMON06), FTR_START(FTR_FAMICOM_COMMON13),
+mActor_name_t mSP_gc_famicom_table[] = {
+    FTR_START(FTR_FAMICOM_COMMON00), FTR_START(FTR_FAMICOM_COMMON01), FTR_START(FTR_FAMICOM_COMMON02),
+    FTR_START(FTR_FAMICOM_COMMON03), FTR_START(FTR_FAMICOM_COMMON04), FTR_START(FTR_FAMICOM_COMMON05),
+    FTR_START(FTR_FAMICOM_COMMON06), FTR_START(FTR_FAMICOM_COMMON13), FTR_START(FTR_FAMICOM_COMMON09),
+    FTR_START(FTR_FAMICOM_COMMON11), FTR_START(FTR_FAMICOM_COMMON12),
 };
-
-/* @unused size: 0xDC */
-// static mActor_name_t mSP_RandomOneFamicomSelect(...)
-
-static mActor_name_t mSP_AGBRandomFamicomSelect() {
-    mActor_name_t item = EMPTY_NO;
-
-    mSP_SelectRandomItem_New(NULL, &item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_ISLANDFAMICOM, FALSE);
-    return item;
-}
-
-static mActor_name_t mSP_GetRandomTrash() {
-    static mActor_name_t trash_table[3] = { ITM_DUST0_EMPTY_CAN, ITM_DUST1_BOOT, ITM_DUST2_OLD_TIRE };
-
-    return trash_table[RANDOM(3)];
-}
-
-static void mSP_SelectRandomItemToAGB_Unit(mActor_name_t* item, xyz_t* wpos, int ut_x, int ut_z) {
-    switch (item[0]) {
-        case 0xFEB2: {
-            item[0] = mSP_GetRandomTrash();
-            break;
-        }
-
-        case 0xFEA1: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_COMMON, FALSE);
-            break;
-        }
-
-        case 0xFEA2: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, FALSE);
-            break;
-        }
-
-        case 0xFEA3: {
-            if ((RANDOM(10) & 1)) {
-                mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_EVENT, FALSE);
-            } else {
-                mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_LOTTERY, FALSE);
-            }
-
-            break;
-        }
-
-        case 0xFEA5: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_ISLAND, FALSE);
-            break;
-        }
-
-        case 0xFEA4: {
-            item[0] = mSP_AGBRandomFamicomSelect();
-            break;
-        }
-
-        case 0xFEA9: {
-            mSP_RandomUmbSelect(item, 1);
-            break;
-        }
-
-        case 0xFEA6: {
-            item[0] = mSP_RandomOneFossilSelect((RANDOM(4) & 1));
-            break;
-        }
-
-        case 0xFEA7: {
-            mSP_RandomMDSelect(item, 1);
-            break;
-        }
-
-        case 0xFEA8: {
-            mSP_RandomHaniwaSelect(item, 1);
-            break;
-        }
-
-        case 0xFEAA: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_CARPET, mSP_LISTTYPE_COMMON, FALSE);
-            break;
-        }
-
-        case 0xFEAB: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_CARPET, mSP_LISTTYPE_RARE, FALSE);
-            break;
-        }
-
-        case 0xFEAC: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_WALLPAPER, mSP_LISTTYPE_COMMON, FALSE);
-            break;
-        }
-
-        case 0xFEAD: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_WALLPAPER, mSP_LISTTYPE_RARE, FALSE);
-            break;
-        }
-
-        case 0xFEAE: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_CLOTH, mSP_LISTTYPE_COMMON, FALSE);
-            break;
-        }
-
-        case 0xFEAF: {
-            mSP_SelectRandomItem_New(NULL, item, 1, NULL, 0, mSP_KIND_CLOTH, mSP_LISTTYPE_RARE, FALSE);
-            break;
-        }
-
-        case 0xFEB0: {
-            int hole_no = mCoBG_GetHoleNumber(*wpos);
-
-            if (hole_no != -1) {
-                item[0] = HOLE_START + (mActor_name_t)hole_no;
-            } else {
-                item[0] = EMPTY_NO;
-            }
-
-            break;
-        }
-
-        case 0xFEB1: {
-            item[0] = ITM_WHITE_PANSY_BAG + RANDOM(FLOWER_NUM);
-            break;
-        }
-
-        case ITM_KABU_10:
-        case ITM_KABU_50:
-        case ITM_KABU_100: {
-            item[0] = ITM_KABU_SPOILED; // spoil any turnips
-            break;
-        }
-
-        case 0xF11F: {
-            item[0] = ACTOR_PROP_VILLAGER_SIGNBOARD;
-            break;
-        }
-    }
-}
-
-#if VERSION == VER_GAFE01_00
-// @fakematch
-// @HACK - we shouldn't have to force propagation off, nor access the Save_t* struct directly
-#pragma opt_propagation off
-extern void mSP_SelectRandomItemToAGB() {
-    // int i;
-    // int ut_x;
-    // int ut_z;
-    // xyz_t* wpos_p;
-    // mActor_name_t* start_p;
-    // mActor_name_t* item_p;
-    // Save_t* save;
-    // xyz_t tpos;
-
-    // xyz_t wpos = { 0.0f, 0.0f, 0.0f };
-    // int bx = 0;
-    // int bz = 0;
-
-    // mFI_BlockKind2BkNum(&bx, &bz, mRF_BLOCKKIND_ISLAND_LEFT);
-    // save = &Common_Get(save.save);
-
-    // /* convert all unit island items to valid items */
-    // for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-    //     item_p = &save->island.fgblock[0][i].items[0][0];
-
-    //     mFI_BkNum2WposXZ(&wpos.x, &wpos.z, bx + i, bz);
-    //     wpos.x += mFI_UT_WORLDSIZE_HALF_X_F;
-    //     wpos.z += mFI_UT_WORLDSIZE_HALF_Z_F;
-    //     tpos.x = wpos.x;
-
-    //     for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-    //         wpos.x = tpos.x;
-
-    //         for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-    //             mSP_SelectRandomItemToAGB_Unit(item_p, &wpos, ut_x, ut_z);
-    //             wpos.x += mFI_UT_WORLDSIZE_X_F;
-    //             item_p++;
-    //         }
-
-    //         wpos.z += mFI_UT_WORLDSIZE_Z_F;
-    //     }
-    // }
-
-    // /* add correctly placed signboard actor */
-    // for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-    //     save = Common_GetPointer(save.save);
-    //     start_p = &save->island.fgblock[0][i].items[0][0];
-    //     item_p = &save->island.fgblock[0][i].items[0][0];
-
-    //     for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-    //         for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-    //             if (item_p[0] == COTTAGE_NPC) {
-    //                 start_p[((ut_x - 1) & 15) + (((ut_z + 1) & 0xF) << 4)] = ACTOR_PROP_VILLAGER_SIGNBOARD;
-    //             }
-
-    //             item_p++;
-    //         }
-    //     }
-    // }
-
-    // /* remove incorrectly placed signboard actors */
-    // save = Common_GetPointer(save.save);
-    // for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-    //     start_p = &save->island.fgblock[0][i].items[0][0];
-    //     item_p = &save->island.fgblock[0][i].items[0][0];
-
-    //     for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-    //         for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-    //             if (item_p[0] == ACTOR_PROP_VILLAGER_SIGNBOARD &&
-    //                 start_p[((ut_x + 1) & 15) + (((ut_z - 1) & 0xF) << 4)] != COTTAGE_NPC) {
-    //                 item_p[0] = EMPTY_NO;
-    //             }
-
-    //             item_p++;
-    //         }
-    //     }
-    // }
-    // wpos.z = wpos.z;
-}
-#pragma opt_propagation reset
-#else
-extern void mSP_SelectRandomItemToAGB() {
-    int i;
-    int ut_x;
-    int ut_z;
-    xyz_t* wpos_p;
-    mActor_name_t* start_p;
-    mActor_name_t* item_p;
-    xyz_t tpos;
-
-    xyz_t wpos = { 0.0f, 0.0f, 0.0f };
-    int bx = 0;
-    int bz = 0;
-
-    mFI_BlockKind2BkNum(&bx, &bz, mRF_BLOCKKIND_ISLAND_LEFT);
-
-    /* convert all unit island items to valid items */
-    for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-        item_p = &Save_Get(island).fgblock[0][i].items[0][0];
-
-        mFI_BkNum2WposXZ(&wpos.x, &wpos.z, bx + i, bz);
-        wpos.x += mFI_UT_WORLDSIZE_HALF_X_F;
-        wpos.z += mFI_UT_WORLDSIZE_HALF_Z_F;
-        tpos.x = wpos.x;
-
-        for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-            wpos.x = tpos.x;
-
-            for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-                mSP_SelectRandomItemToAGB_Unit(item_p, &wpos, ut_x, ut_z);
-                wpos.x += mFI_UT_WORLDSIZE_X_F;
-                item_p++;
-            }
-
-            wpos.z += mFI_UT_WORLDSIZE_Z_F;
-        }
-    }
-
-    /* add correctly placed signboard actor */
-    for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-        item_p = &Save_Get(island).fgblock[0][i].items[0][0];
-        
-        for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-            for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-                start_p = &Save_Get(island).fgblock[0][i].items[0][0];
-                if (item_p[0] == COTTAGE_NPC) {
-                    start_p[(((ut_x - 1) & 15) + (((ut_z + 1) & 0xF) << 4))] = ACTOR_PROP_VILLAGER_SIGNBOARD;
-                }
-
-                item_p++;
-            }
-        }
-    }
-
-    /* remove incorrectly placed signboard actors */
-    for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-        item_p = &Save_Get(island).fgblock[0][i].items[0][0];
-        start_p = &Save_Get(island).fgblock[0][i].items[0][0];
-
-        for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
-            for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
-                if (item_p[0] == ACTOR_PROP_VILLAGER_SIGNBOARD &&
-                    start_p[((ut_x + 1) & 15) + (((ut_z - 1) & 0xF) << 4)] != COTTAGE_NPC) {
-                    item_p[0] = EMPTY_NO;
-                }
-
-                item_p++;
-            }
-        }
-    }
-    wpos.z = wpos.z;
-}
-#endif
 
 extern const char* mSP_ShopStatus2String(int status) {
     static char dummy[] = "hahaha";
@@ -2542,13 +2398,309 @@ extern const char* mSP_ShopStatus2String(int status) {
     return dummy;
 }
 
-extern mActor_name_t mSP_GetRandomStationToyItemNo() {
-    /* TODO: where does this go? DnM+ indicates no unused functions after this, but data appears after str_table in
-     * mSP_ShopStatus2String */
-    static mActor_name_t train[2] = { FTR_START(FTR_IKE_K_KID01), FTR_START(FTR_IKE_K_KID02) };
+extern int mSP_GetBargainNum(int category, int shop_level) {
+    static u8 ftr_num_table[4] = { 1, 2, 4, 5 };
+    static u8 carpet_num_table[4] = { 1, 1, 2, 3 };
+    static u8 wall_num_table[4] = { 1, 1, 2, 3 };
+    static u8 cloth_num_table[4] = { 1, 2, 3, 5 };
+    static u8 cracker_goods[4] = { 3, 4, 4, 5 };
+    static u8 windmill_goods[4] = { 1, 2, 3, 4 };
+    static u8 fan_goods[4] = { 1, 2, 3, 4 };
+    static u8 balloon_goods[4] = { 1, 1, 3, 5 };
 
-    /* TODO: furniture item index enum/defines */
-    return mRmTp_FtrIdx2FtrItemNo(0x42A + RANDOM(15), mRmTp_DIRECT_SOUTH);
+    static u8* item_num_table[8] = {
+        ftr_num_table,    // mSP_BARGAIN_FTR
+        carpet_num_table, // mSP_BARGAIN_CARPET
+        wall_num_table,   // mSP_BARGAIN_WALL
+        cloth_num_table,  // mSP_BARGAIN_CLOTH
+        cracker_goods,    // mSP_BARGAIN_CRACKER
+        windmill_goods,   // mSP_BARGAIN_WINDMILL
+        fan_goods,        // mSP_BARGAIN_FAN
+        balloon_goods,    // mSP_BARGAIN_BALLOON
+    };
+
+    return item_num_table[category][shop_level];
+}
+
+static void mSP_SetEventGoods(int* count, mActor_name_t* goods_list) {
+    mActor_name_t* event_goods = Save_Get(event_save_data).special.event.bargin.items;
+    int i;
+
+    for (i = 0; i < mEv_BARGIN_ITEM_NUM && event_goods[i] != EMPTY_NO; i++) {
+        goods_list[*count] = event_goods[i];
+        (*count)++;
+    }
+}
+
+extern void mSP_MakeBargainGoods(void) {
+    mEv_bargin_c* bargin_p = &Save_Get(event_save_data).special.event.bargin;
+    int shop_level = mSP_GetShopLevel();
+    mActor_name_t* goods_list = Save_Get(shop).event_goods;
+    int count = 0;
+    int num;
+    int i;
+
+    mSP_InitEventGoods();
+    mSP_SetEventGoods(&count, goods_list + count);
+
+    if (bargin_p->kind != mSP_KIND_FURNITURE) {
+        num = mSP_GetBargainNum(mSP_BARGAIN_FTR, shop_level);
+        mSP_SelectRandomItem_New(NULL, goods_list + count, num, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_RARE, FALSE);
+        count += num;
+    }
+    if (bargin_p->kind != mSP_KIND_CLOTH) {
+        num = mSP_GetBargainNum(mSP_BARGAIN_CLOTH, shop_level);
+        mSP_SelectRandomItem_New(NULL, goods_list + count, num, NULL, 0, mSP_KIND_CLOTH, mSP_LISTTYPE_RARE, FALSE);
+        count += num;
+    }
+    if (bargin_p->kind != mSP_KIND_WALLPAPER) {
+        num = mSP_GetBargainNum(mSP_BARGAIN_WALL, shop_level);
+        mSP_SelectRandomItem_New(NULL, goods_list + count, num, NULL, 0, mSP_KIND_WALLPAPER, mSP_LISTTYPE_RARE, FALSE);
+        count += num;
+    }
+    if (bargin_p->kind != mSP_KIND_CARPET) {
+        num = mSP_GetBargainNum(mSP_BARGAIN_CARPET, shop_level);
+        mSP_SelectRandomItem_New(NULL, goods_list + count, num, NULL, 0, mSP_KIND_CARPET, mSP_LISTTYPE_RARE, FALSE);
+        count += num;
+    }
+
+    num = mSP_GetBargainNum(mSP_BARGAIN_CRACKER, shop_level);
+    for (i = 0; i < num; i++) {
+        goods_list[count] = ITM_CRACKER;
+        count++;
+    }
+
+    num = mSP_GetBargainNum(mSP_BARGAIN_WINDMILL, shop_level);
+    mSP_RandomWindMillSelect(goods_list + count, num);
+    count += num;
+
+    num = mSP_GetBargainNum(mSP_BARGAIN_FAN, shop_level);
+    mSP_RandomFanSelect(goods_list + count, num);
+    count += num;
+
+    num = mSP_GetBargainNum(mSP_BARGAIN_BALLOON, shop_level);
+    mSP_RandomBalloonSelect(goods_list + count, num);
+    count += num;
+
+    mSP_RandomUmbSelect(goods_list + count, 1);
+}
+
+extern mActor_name_t mSP_get_old_password_furniture(void) {
+    static mActor_name_t oldpasswd_table[] = { FTR_START(FTR_NOG_SIGNATURE), FTR_START(FTR_NOG_DISH),
+                                               FTR_START(FTR_NOG_BILLBOARD) };
+
+    return oldpasswd_table[RANDOM(ARRAY_COUNT(oldpasswd_table))];
+}
+
+extern int mSP_get_no_use_num(u32* use_bitfield, int count) {
+
+    if (use_bitfield != NULL) {
+        int i;
+        int no_use_num = 0;
+
+        for (i = 0; i < count; i++) {
+            if (((use_bitfield[i >> 5] >> (i & 31)) & 1) == 0) {
+                no_use_num++;
+            }
+        }
+
+        return no_use_num;
+    }
+
+    return 0;
+}
+
+extern void mSP_set_use(u32* use_bitfield, int idx, int count) {
+    if (use_bitfield != NULL) {
+        int i;
+        int shift;
+        int no_use_num = 0;
+
+        for (i = 0; i < count; i++) {
+            shift = i & 31;
+            if (((use_bitfield[i >> 5] >> shift) & 1) == 0) {
+                if (no_use_num == idx) {
+                    use_bitfield[i >> 5] |= 1 << shift;
+                }
+
+                no_use_num++;
+            }
+        }
+    }
+}
+
+extern mActor_name_t mSP_GetRandomItemABC(const int* kinds, const int kind_count) {
+    u32 use_bitfield = 0;
+    mActor_name_t item;
+    int selected;
+    int no_use_num;
+    int i = 0;
+
+    while (i++ < kind_count) {
+        no_use_num = mSP_get_no_use_num(&use_bitfield, kind_count);
+        if (no_use_num > 0) {
+            selected = RANDOM(no_use_num);
+            mSP_set_use(&use_bitfield, selected, kind_count);
+            mSP_SelectRandomItem_New(NULL, &item, 1, NULL, 0, kinds[selected], mSP_LISTTYPE_ABC, TRUE);
+
+            if (item != EMPTY_NO) {
+                return item;
+            }
+        }
+    }
+
+    mSP_SelectRandomItem_New(NULL, &item, 1, NULL, 0, kinds[RANDOM(kind_count)], mSP_LISTTYPE_ABC, FALSE);
+    return item;
+}
+
+typedef struct shop_check_door_work_s {
+    ACTOR* shop_actor;
+    xyz_t pos;
+    int hit_count;
+    u32 open_timer;
+} mSP_check_door_work_c;
+
+static mSP_check_door_work_c mSP_DoorHitDat;
+
+/**
+ * @brief Initialize door check work
+ *
+ * Initializes the door check work structure.
+ */
+static void mSP_init_check_door_work(void) {
+    // OSReport("mSP_init_check_door_work\n");
+    bzero(&mSP_DoorHitDat, sizeof(mSP_DoorHitDat));
+}
+
+/**
+ * @brief Initialize door check system
+ *
+ * Initializes the door check system when entering the field.
+ */
+extern void mSP_init_check_door(void) {
+    if (Save_Get(scene_no) == SCENE_FG) {
+        mSP_init_check_door_work();
+        Common_Set(prev_shop_force_open_door_flag, Common_Get(shop_force_open_door_flag));
+    }
+}
+
+/**
+ * @brief Start door check for an actor
+ * @param actor Shop actor
+ * @param pos Actor position
+ *
+ * Starts checking if the player is hitting the shop door
+ * to potentially force it open.
+ */
+extern void mSP_start_check_door(ACTOR* actor, xyz_t* pos) {
+    mSP_init_check_door_work();
+    mSP_DoorHitDat.shop_actor = actor;
+    mSP_DoorHitDat.pos = *pos;
+    Common_Set(shop_force_open_door_flag, FALSE);
+    // OSReport("mSP_start_check_door\n");
+}
+
+/**
+ * @brief Check if tool hit is special
+ * @param pos Position to check
+ * @param game Game context
+ * @return TRUE if special hit, FALSE otherwise
+ *
+ * Checks if the player's tool hit intersects with the shop area.
+ */
+static int mSP_tool_hit_special_check(xyz_t* pos, GAME* game) {
+    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+
+    if (playerx != NULL) {
+        xyz_t chk_pos = playerx->world.position;
+        f32 vec1_s[2];
+        f32 vec1_e[2];
+        f32 vec0_s[2];
+        f32 vec0_e[2];
+
+        chk_pos.x += 50.0f * sin_s(playerx->shape_info.rotation.y);
+        chk_pos.z += 50.0f * cos_s(playerx->shape_info.rotation.y);
+
+        vec0_s[0] = chk_pos.x;
+        vec0_s[1] = chk_pos.z;
+
+        vec0_e[0] = playerx->world.position.x;
+        vec0_e[1] = playerx->world.position.z;
+
+        vec1_s[0] = pos->x - 60.0f;
+        vec1_s[1] = pos->z - 60.0f;
+
+        vec1_e[0] = pos->x + 60.0f;
+        vec1_e[1] = pos->z + 60.0f;
+
+        return mCoBG_GetCrossJudge_2Vector(vec0_s, vec0_e, vec1_s, vec1_e);
+    }
+
+    return FALSE;
+}
+
+/**
+ * @brief Check door during gameplay
+ * @param game Game context
+ * @param actorx Shop actor
+ *
+ * Main door check function that:
+ * - Resets if shop is open
+ * - Counts hits when shop is closed
+ * - Forces shop open after enough hits
+ * - Handles special conditions
+ */
+extern void mSP_checking_door(GAME* game, ACTOR* actorx) {
+    int status = mSP_ShopOpen();
+
+    if (mSP_DoorHitDat.shop_actor == actorx) {
+        if (mDemo_CheckDemoType() == mDemo_TYPE_SCROLL) {
+            xyz_t pos = mSP_DoorHitDat.pos;
+            mSP_start_check_door(mSP_DoorHitDat.shop_actor, &pos);
+        }
+        if ((status == mSP_SHOP_STATUS_OPEN || status == mSP_SHOP_STATUS_OPENEVENT) &&
+            !Common_Get(shop_force_open_door_flag)) {
+            xyz_t pos = mSP_DoorHitDat.pos; // These feel like mSP_start_check_door's pos value should be pass-by-value,
+            // but that does not match.
+            mSP_start_check_door(mSP_DoorHitDat.shop_actor, &pos);
+        } else if (!Common_Get(shop_force_open_door_flag) && status == mSP_SHOP_STATUS_END) {
+            xyz_t reflect_pos;
+
+            if (mPlib_Check_reflect(game, &reflect_pos) == TRUE &&
+                mSP_tool_hit_special_check(&mSP_DoorHitDat.pos, game) && !mSP_CheckFukubikiDay() &&
+                mSP_DoorHitDat.hit_count < mSP_DOOR_HIT_OPEN_NUM) {
+                mSP_DoorHitDat.hit_count++;
+                mSP_DoorHitDat.open_timer = 0;
+            }
+
+            if (mSP_DoorHitDat.hit_count >= mSP_DOOR_HIT_OPEN_NUM) {
+                if (mSP_DoorHitDat.open_timer < mSP_DOOR_HIT_OPEN_TIMER) {
+                    mSP_DoorHitDat.open_timer++;
+                } else {
+                    Common_Set(shop_force_open_door_flag, TRUE);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * @brief End door check
+ *
+ * Ends the door check system.
+ */
+extern void mSP_end_check_door(void) {
+    mSP_init_check_door_work();
+}
+
+/**
+ * @brief Check if shop is force opened
+ * @return TRUE if force opened, FALSE otherwise
+ *
+ * Returns the current force open status.
+ */
+extern int mSP_force_opend(void) {
+    return Common_Get(shop_force_opend);
 }
 
 #include "../src/game/m_item_debug.c"

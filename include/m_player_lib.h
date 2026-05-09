@@ -189,6 +189,7 @@ extern void mPlib_Set_change_color_request(void);
 extern int mPlib_Set_ItemFlowerPalletFromItemKind(GAME* game, int item_kind);
 extern int mPlib_Change_main_talk_data_talk_actor_p(ACTOR* talk_actor_p);
 extern int mPlib_able_shutter_type1(GAME* game);
+extern int mPlib_Check_reflect(GAME* game, xyz_t* pos_p);
 
 #define GET_PLAYER_ACTOR(play) get_player_actor_withoutCheck(play)
 #define GET_PLAYER_ACTOR_NOW() get_player_actor_withoutCheck((GAME_PLAY*)gamePT)

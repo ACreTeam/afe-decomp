@@ -304,6 +304,7 @@ extern int aMR_RadioBgmNow(void);
 extern void aMR_ThrowItem_FurnitureLock(void);
 extern void aMR_ThrowItem_FurnitureUnlock(void);
 extern int aMR_check_valid_furniture(mActor_name_t item);
+extern void aMR_DeleteFurniture_MarioClub(GAME* game);
 
 #ifdef __cplusplus
 }

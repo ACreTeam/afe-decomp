@@ -261,7 +261,7 @@ static void Shop_Level_Actor_ct(ACTOR* actorx, GAME* game) {
     actorx->world.position = *pos_p;
     shop_block_flag = mFI_BlockKind2BkNum(&shop_level->bx, &shop_level->bz, mRF_BLOCKKIND_SHOP);
     if (Save_Get(scene_no) == SCENE_FG) {
-        mSP_SetShopRareFurnitureChirashi(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, NULL);
+        mSP_SetShopRareFurnitureLeaflet(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, NULL);
         Save_Get(shop).shop_info.not_loaded_before = FALSE;
     }
 
@@ -351,7 +351,7 @@ static void aSL_JudgeRenewShop(ACTOR* actorx, GAME* game) {
     }
 
     aSL_SetRenewalChiraswhi_Notice();
-    mSP_SetRenewalChiraswhi_AppoDay();
+    mSP_SetRenewalLeaflet_AppoDay();
 }
 
 static void aSL_ExchangeShopGoodsInGame(ACTOR* actorx, GAME* game, lbRTC_hour_t hour) {
