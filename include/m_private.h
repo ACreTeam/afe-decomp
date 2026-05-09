@@ -97,7 +97,8 @@ enum {
 #endif
 
 #define mPr_GET_ITEM_COND(all_cond, slot_no) ((all_cond)[slot_no])
-#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
+// #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
+#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (all_cond)[slot_no] & ~0xF | (cond))
 #define mPR_CHK_ITEM_COND(cond, slot_no) ((cond)[slot_no] & (0xF))
 
 enum {
@@ -180,13 +181,14 @@ typedef struct player_ecard_data_s {
                                                               sent to the player [0, 366] */
 } mPr_carde_data_c;
 
-#define mPr_MOTHER_MAIL_NORMAL_NUM 8
+#define mPr_MOTHER_MAIL_NORMAL_NUM 7
 #define mPr_MOTHER_MAIL_MONTHLY_NUM 2
 
 typedef struct private_mother_mail_data_s {
     u8 normal[mPr_MOTHER_MAIL_NORMAL_NUM];
     u8 monthly[mPr_MOTHER_MAIL_MONTHLY_NUM];
-    u8 august; // unique byte for month of august
+    u8 _pad;
+    u8 special;
 } mPr_mother_mail_data_c;
 
 typedef struct private_mother_mail_info_s {

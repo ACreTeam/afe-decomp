@@ -1262,7 +1262,7 @@ config.libs = [
             Object(Matching, "game/m_police_box.c"),
             Object(NonMatching, "game/m_post_office.c"),
             Object(Matching, "game/m_prenmi.c"),
-            Object(NonMatching, "game/m_private.c"),
+            Object(Matching, "game/m_private.c"),
             Object(NonMatching, "game/m_quest.c"),
             Object(NonMatching, "game/m_random_field.c"),
             Object(Matching, "game/m_random_field_ovl.c"),

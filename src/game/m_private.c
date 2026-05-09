@@ -17,6 +17,7 @@
 #include "m_submenu.h"
 #include "m_room_type.h"
 #include "m_common_data.h"
+#include "m_birthday_msg.h"
 
 static Mail_c l_mpr_mail;
 Private_c g_foreigner_private;
@@ -124,7 +125,7 @@ extern void mPr_ClearPrivateBirthday(mPr_birthday_c* birthday) {
 }
 
 extern void mPr_ClearAnimalMemory(mPr_animal_memory_c* memory) {
-    // memory->npc_id = 0xFFFF;
+    mNpc_ClearAnimalPersonalID(&memory->npc_id);
     mLd_ClearLandName(memory->land_name);
 }
 
@@ -134,6 +135,7 @@ extern void mPr_ClearPrivateInfo(Private_c* private_info) {
     mPr_ClearPersonalID(&private_info->player_ID);
     private_info->gender = mPr_SEX_MALE;
     mQst_ClearDelivery(private_info->deliveries, mPr_DELIVERY_QUEST_NUM);
+    mQst_ClearDelivery(&private_info->lost_item_quest, 1);
     mQst_ClearErrand(private_info->errands, mPr_ERRAND_QUEST_NUM);
     mMl_clear_mail_box(private_info->mail, mPr_INVENTORY_MAIL_COUNT);
     mMl_clear_mail_header_common(&private_info->saved_mail_header);
@@ -341,7 +343,7 @@ extern int mPr_GetPossessionItemIdxWithCond(Private_c* priv, mActor_name_t item,
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             mActor_name_t it = *pockets;
-            if (it == item && cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i)) {
+            if (it == item && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 idx = i;
                 break;
             }
@@ -363,7 +365,7 @@ extern int mPr_GetPossessionItemIdxFGTypeWithCond_cancel(Private_c* priv, mActor
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == fg_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i) && *pockets != cancel_item) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 idx = i;
                 break;
             }
@@ -404,7 +406,7 @@ extern int mPr_GetPossessionItemIdxItem1CategoryWithCond_cancel(Private_c* priv,
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i) && *pockets != cancel_item) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 idx = i;
                 break;
             }
@@ -425,7 +427,7 @@ extern int mPr_GetPossessionItemIdxKindWithCond(Private_c* priv, mActor_name_t k
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (*pockets >= kind_start && *pockets < kind_end &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i)) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 idx = i;
                 break;
             }
@@ -462,7 +464,7 @@ extern u32 mPr_GetPossessionItemSumWithCond(Private_c* priv, mActor_name_t item,
         int i;
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-            if (*pockets == item && cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i)) {
+            if (*pockets == item && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;
@@ -482,7 +484,7 @@ extern u32 mPr_GetPossessionItemSumFGTypeWithCond_cancel(Private_c* priv, mActor
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == fg_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i) && *pockets != cancel_item) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 sum++;
             }
             pockets++;
@@ -502,7 +504,7 @@ extern u32 mPr_GetPossessionItemSumItemCategoryWithCond_cancel(Private_c* priv, 
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i) && *pockets != cancel_item) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 sum++;
             }
             pockets++;
@@ -521,7 +523,7 @@ extern u32 mPr_GetPossessionItemSumItemCategoryWithCond(Private_c* priv, u8 item
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i)) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;
@@ -541,7 +543,7 @@ extern u32 mPr_GetPossessionItemSumKindWithCond(Private_c* priv, mActor_name_t k
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (*pockets >= kind_start && *pockets < kind_end &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i)) {
+                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;
@@ -563,7 +565,7 @@ extern void mPr_SetItemCollectBit(mActor_name_t item) {
     item_type = ITEM_NAME_GET_TYPE(ftr_item_no);
 
     if (item_type == NAME_TYPE_FTR0 || item_type == NAME_TYPE_FTR1) {
-        int ftr_idx = mRmTp_FtrItemNo2FtrIdx(ftr_item_no);
+        int ftr_idx = mNT_ftr_item_no_to_ftr_idx(ftr_item_no);
 
         if (ftr_idx >= 0 && ftr_idx < FTR_NUM) {
             Common_Get(now_private)->furniture_collected_bitfield[ftr_idx >> 5] |= (1 << (ftr_idx & 31));
@@ -582,8 +584,7 @@ extern void mPr_SetItemCollectBit(mActor_name_t item) {
             int idx = ftr_item_no - ITM_WALL_START;
             Common_Get(now_private)->wall_collected_bitfield[idx >> 5] |= (1 << (idx & 31));
         } else if (category == ITEM1_CAT_MINIDISK) {
-            mActor_name_t idx =
-                ftr_item_no - ITM_MINIDISK_START; // why is this one u16, probably mActor_name_t type or something?
+            int idx = ftr_item_no - ITM_MINIDISK_START;
             Common_Get(now_private)->music_collected_bitfield[idx >> 5] |= (1 << (idx & 31));
         }
     }
@@ -606,6 +607,7 @@ extern mActor_name_t mPr_DummyPresentToTruePresent() {
 }
 
 extern void mPr_SetPossessionItem(Private_c* priv, int idx, mActor_name_t item, u32 cond) {
+    item = mRmTp_FtrItemNo2Item1ItemNo(item, FALSE);
     switch (item) {
         case ITM_PRESENT: {
             item = mPr_DummyPresentToTruePresent();
@@ -639,8 +641,7 @@ extern void mPr_SetPossessionItem(Private_c* priv, int idx, mActor_name_t item, 
     }
 
     priv->inventory.pockets[idx] = item;
-    // priv->inventory.item_conditions =
-    //     ((priv->inventory.item_conditions & (~(u32)(mPr_ITEM_COND_NUM << (idx * 2)))) | (cond << (idx * 2)));
+    mPr_SET_ITEM_COND(priv->inventory.item_conditions, idx, cond);
 
     if (cond == mPr_ITEM_COND_NORMAL) {
         mPr_SetItemCollectBit(item);
@@ -675,7 +676,13 @@ extern int mPr_GetFirstJobHintTime(Private_c* priv) {
 }
 
 extern int mPr_CheckFirstJobHint(Private_c* priv) {
-    return (priv->hint_count & 0x80) >> 7;
+    int ret = 0;
+
+    if (priv != NULL) {
+        ret = (priv->hint_count & 0x80) >> 7;
+    }
+
+    return ret;
 }
 
 extern s16 mPr_GetMoneyPower() {
@@ -828,7 +835,7 @@ static int mPr_GetMotherMailPaperType(int month, int day) {
 
     /* TODO: should paper be enums? */
     if (priv->birthday.month == month && priv->birthday.day == day) {
-        paper = 1;
+        paper = 37;
     } else if (month == lbRTC_JANUARY && day == 1) {
         paper = 63;
     } else if (month == lbRTC_AUGUST && day == 8) {
@@ -847,8 +854,8 @@ static void mPr_GetMotherMail(Mail_c* mail, PersonalID_c* pid, mActor_name_t pre
     int header_back_pos;
 
     mMl_clear_mail(mail);
-    mHandbill_Load_HandbillFromRom(mail->content.text.split.header, &header_back_pos, mail->content.text.split.footer, mail->content.text.split.body,
-                                   mail_no);
+    mHandbill_Load_HandbillFromRom(mail->content.text.split.header, &header_back_pos, mail->content.text.split.footer,
+                                   mail->content.text.split.body, mail_no);
     mail->content.header_back_start = header_back_pos;
     mail->content.font = 0;      // TODO: enum
     mail->content.mail_type = 4; // TODO: enum, this is "from mom"
@@ -881,14 +888,28 @@ static int mPr_SendMotherMailPost(PersonalID_c* pid, int player_no, mActor_name_
     return res;
 }
 
+static int mPr_SendMotherMailFirst(mPr_mother_mail_info_c* mother_mail, lbRTC_time_c* send_time) {
+    int ret = FALSE;
+
+    if (((mother_mail->data.special >> 1) & 1) == 0) {
+        if (mPr_SendMotherMailPost(&Now_Private->player_ID, Common_Get(player_no), ITM_HUKUBUKURO_PRESENT, 17, 0x687) ==
+            TRUE) {
+            mTM_set_renew_time(&mother_mail->date, send_time);
+            mother_mail->data.special |= 1 << 1;
+        }
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
 static int mPr_SendMotherMailDate(mPr_mother_mail_info_c* mother_mail, lbRTC_time_c* send_time) {
     mActor_name_t present = EMPTY_NO;
     int mail_no = -1;
     int res = FALSE;
 
-    if (Common_Get(now_private)->birthday.month == send_time->month &&
-        Common_Get(now_private)->birthday.day == send_time->day) {
-        mail_no = 0x184 + RANDOM(mPr_MOTHER_MAIL_MONTHLY_NUM);
+    if (mBm_check_birthday(-1)) {
+        mail_no = 0x184 + RANDOM(2);
         present = FTR_START(FTR_SUM_BDCAKE01);
     } else if (send_time->month == send_time->day) {
         int letter_num = (send_time->month - 1) * mPr_MOTHER_MAIL_MONTHLY_NUM + RANDOM(mPr_MOTHER_MAIL_MONTHLY_NUM);
@@ -929,29 +950,14 @@ static int mPr_SendMotherMailDate(mPr_mother_mail_info_c* mother_mail, lbRTC_tim
     return res;
 }
 
-static int mPr_CheckMotherMailMonthly(mPr_mother_mail_data_c* send_data, int month, int idx) {
-    if (month == lbRTC_AUGUST) {
-        return (send_data->august >> (idx)) & 1; // August gets its own byte because it has more than two event letters
-    } else {
-        int shift = (month - 1) * 2;
-        int slot = shift / 8;
-        shift -= slot * 8;
-        idx += shift;
-
-        return (send_data->monthly[slot] >> idx) & 1;
-    }
-}
-
 static int mPr_GetMotherMailMonthlyNotSendNum(mPr_mother_mail_data_c* send_data, int month) {
     int slot;
     int not_send_num = 0;
     int i;
 
     if (month == lbRTC_AUGUST) {
-        for (i = 0; i < 8; i++) {
-            if (((send_data->august >> i) & 1) == 0) {
-                not_send_num++;
-            }
+        if ((send_data->special & 1) == 0) {
+            not_send_num++;
         }
     } else {
         u8 byte;
@@ -973,9 +979,8 @@ static int mPr_GetMotherMailMonthlyNotSendNum(mPr_mother_mail_data_c* send_data,
 
 static void mPr_SetMotherMailMonthly(mPr_mother_mail_data_c* send_data, int month, int idx) {
     if (month == lbRTC_AUGUST) {
-        send_data->august |= 1 << idx;
+        send_data->special |= 1;
     } else {
-        /* TODO: almost certainly a fake match */
         u8* s;
         int slot;
         int shift;
@@ -990,18 +995,30 @@ static void mPr_SetMotherMailMonthly(mPr_mother_mail_data_c* send_data, int mont
     }
 }
 
-static void mPr_GetMotherMailMonthlyData(mPr_mother_mail_data_c* send_data, int* mail_no, mActor_name_t* present,
-                                         int* event_no, int month, int not_send_num) {
+static void mPr_SetMotherMailMonthlyAll(mPr_mother_mail_data_c* send_data, int month) {
+    if (month == lbRTC_AUGUST) {
+        send_data->special |= 1;
+    } else {
+        int i;
+
+        for (i = 0; i < mPr_MOTHER_MAIL_MONTHLY_NUM; i++) {
+            mPr_SetMotherMailMonthly(send_data, month, i);
+        }
+    }
+}
+
+static void mPr_GetMotherMailMonthlyData(int* mail_no, mActor_name_t* present, int month) {
     static int mail_start_no_table[mTM_SEASON_NUM] = { 0x18C, 0x192, 0x186, 0x19E };
-    static mActor_name_t may_2_item_table[1] = { ITM_CLOTH105 }; // fortune shirt
+    static mActor_name_t may_2_item_table[1] = { ITM_CLOTH104 }; // cloudy shirt
     static mActor_name_t december_2_item_table[6] = {
-        ITM_CLOTH108, // aurora knit
-        ITM_CLOTH109, // winter sweater
-        ITM_CLOTH110, // go-go shirt
-        ITM_CLOTH144, // deer shirt
-        ITM_CLOTH145, // blue check shirt
-        ITM_CLOTH156  // fish knit
+        ITM_CLOTH107, // aurora knit
+        ITM_CLOTH108, // winter sweater
+        ITM_CLOTH109, // go-go shirt
+        ITM_CLOTH143, // deer shirt
+        ITM_CLOTH144, // blue check shirt
+        ITM_CLOTH155  // fish knit
     };
+    static int month_start_idx[] = { 2, 4, 0, 2, 4, 0, 2, 4, 0, 2, 4, 0 };
 
     int max;
     int mail_start_idx;
@@ -1023,40 +1040,30 @@ static void mPr_GetMotherMailMonthlyData(mPr_mother_mail_data_c* send_data, int*
 
     *mail_no = mail_start_no_table[mail_start_idx];
 
-    selected_event = RANDOM(not_send_num);
     max = mPr_MOTHER_MAIL_MONTHLY_NUM;
     if (month == lbRTC_AUGUST) {
         max = 8;
     }
 
-    for (i = 0; i < max; i++) {
-        if (mPr_CheckMotherMailMonthly(send_data, month, i) == FALSE) {
-            if (selected_event <= 0) {
-                *event_no = i;
-                break;
-            }
+    selected_event = RANDOM(max);
+    *mail_no += month_start_idx[month - 1] + selected_event;
 
-            selected_event--;
-        }
-    }
-
-    *mail_no += *event_no + (month - 1 - mail_start_idx * 3) * 2;
-
-    if (month == lbRTC_MAY && *event_no == 1) {
+    if (month == lbRTC_MAY && selected_event == 1) {
         *present = may_2_item_table[RANDOM(1)];
     } else if (month == lbRTC_DECEMBER) {
-        if (*event_no == 0) {
+        if (selected_event == 0) {
             *present = ITM_FOOD_APPLE;
         } else {
             *present = december_2_item_table[RANDOM(6)];
         }
-    } else if (month == lbRTC_NOVEMBER) {
+    } else if (month == lbRTC_OCTOBER) {
         *present = ITM_FOOD_MUSHROOM;
     }
 }
 
 static int mPr_GetMotherMailNormalNotSendNum(mPr_mother_mail_data_c* send_data) {
     int not_send_num = 0;
+    int count = 0;
     int i;
     int j;
 
@@ -1064,7 +1071,16 @@ static int mPr_GetMotherMailNormalNotSendNum(mPr_mother_mail_data_c* send_data) 
         for (j = 0; j < 8; j++) {
             if (((send_data->normal[i] >> j) & 1) == 0) {
                 not_send_num++;
+                count++;
             }
+
+            if (count >= 56) {
+                break;
+            }
+        }
+
+        if (count >= 56) {
+            break;
         }
     }
 
@@ -1142,24 +1158,31 @@ static void mPr_GetMotherMailNormalData(mPr_mother_mail_data_c* send_data, int* 
 
 static void mPr_SendMotherMailNormal(mPr_mother_mail_info_c* mother_mail, lbRTC_time_c* send_time) {
     int mail_no = -1;
-    int monthly_not_send_num = 0;
-    int event_no;
+    int event_no = 0;
+    int not_send_num;
+    int monthly_not_send_num;
     mActor_name_t present = EMPTY_NO;
 
     if (RANDOM(100) < 20) {
-        int not_send_num = mPr_GetMotherMailNormalNotSendNum(&mother_mail->data);
+        not_send_num = mPr_GetMotherMailNormalNotSendNum(&mother_mail->data);
+        monthly_not_send_num = mPr_GetMotherMailMonthlyNotSendNum(&mother_mail->data, send_time->month);
+
         if (not_send_num == 0) {
+            int special_save = (mother_mail->data.special >> 1) & 1;
+
             bzero(&mother_mail->data, sizeof(mPr_mother_mail_data_c));
-            monthly_not_send_num = mPr_GetMotherMailMonthlyNotSendNum(&mother_mail->data, send_time->month);
+
+            if (special_save == 1) {
+                mother_mail->data.special |= 1 << 1;
+            }
         }
 
         if (monthly_not_send_num > 0) {
-            mPr_GetMotherMailMonthlyData(&mother_mail->data, &mail_no, &present, &event_no, send_time->month,
-                                         monthly_not_send_num);
+            mPr_GetMotherMailMonthlyData(&mail_no, &present, send_time->month);
 
             if (mPr_SendMotherMailPost(&Common_Get(now_private)->player_ID, Common_Get(player_no), present,
                                        mPr_GetMotherMailPaperType(send_time->month, send_time->day), mail_no) == TRUE) {
-                mPr_SetMotherMailMonthly(&mother_mail->data, send_time->month, event_no);
+                mPr_SetMotherMailMonthlyAll(&mother_mail->data, send_time->month);
             }
         } else {
             mPr_GetMotherMailNormalData(&mother_mail->data, &mail_no, &present, &event_no, not_send_num);
@@ -1175,14 +1198,15 @@ static void mPr_SendMotherMailNormal(mPr_mother_mail_info_c* mother_mail, lbRTC_
 }
 
 static void mPr_SendMotherMail(mPr_mother_mail_info_c* mother_mail, lbRTC_time_c* send_time) {
-    if (mPr_SendMotherMailDate(mother_mail, send_time) == FALSE) {
+    if (mPr_SendMotherMailFirst(mother_mail, send_time) == FALSE &&
+        mPr_SendMotherMailDate(mother_mail, send_time) == FALSE) {
         mPr_SendMotherMailNormal(mother_mail, send_time);
     }
 }
 
 extern void mPr_SendMailFromMother() {
     Private_c* priv = Common_Get(now_private);
-    u8 player_no = Common_Get(player_no);
+    int player_no = Common_Get(player_no);
     lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
 
     if (mLd_PlayerManKindCheckNo(player_no) == FALSE && priv != NULL &&
@@ -1205,37 +1229,32 @@ extern void mPr_SendMailFromMother() {
 static void mPr_GetForeingerAnimalMail(Mail_c* mail, Private_c* priv, mPr_animal_memory_c* anm_mem) {
     AnmPersonalID_c anm_pid;
     int mail_no;
-    u8 npc_name[ANIMAL_NAME_LEN];
-    u8 header[40];
-    u8 footer[48];
+    u8 header[76];
+    u8 footer[82];
     int ofs;
-    u8 looks;
+    int looks;
     int header_back_start;
 
-    // looks = mNpc_GetLooks(anm_mem->npc_id);
+    looks = anm_mem->npc_id.looks;
     ofs = RANDOM(3);
     mail_no = 0xFC;
     mail_no += ofs + looks * 3;
-    mHandbill_Set_free_str(0, priv->player_ID.player_name, PLAYER_NAME_LEN); // player's name
-    // mNpc_LoadNpcNameString(npc_name, anm_mem->npc_id);
-    mHandbill_Set_free_str(1, npc_name, ANIMAL_NAME_LEN);                 // animal's name
-    mHandbill_Set_free_str(2, anm_mem->land_name, LAND_NAME_SIZE);        // animal's current town name
-    mHandbill_Set_free_str(3, priv->player_ID.land_name, LAND_NAME_SIZE); // player's town name
-    mHandbill_Load_HandbillFromRom2(header, 40, &header_back_start, footer, 48, mail->content.text.split.body, mail_no);
+    mHandbill_Set_free_str(mHandbill_FREE_STR0, priv->player_ID.player_name, PLAYER_NAME_LEN); // player's name
+    mHandbill_Set_free_str(mHandbill_FREE_STR1, anm_mem->npc_id.name, ANIMAL_NAME_LEN);        // animal's name
+    mHandbill_Set_free_str(mHandbill_FREE_STR2, anm_mem->land_name, LAND_NAME_SIZE); // animal's current town name
+    mHandbill_Set_free_str(mHandbill_FREE_STR3, priv->player_ID.land_name, LAND_NAME_SIZE); // player's town name
+    mHandbill_Load_HandbillFromRom2(header, 76, &header_back_start, footer, 82, mail->content.text.split.body, mail_no);
     mem_copy(mail->content.text.split.header, header, mHandbill_HEADER_LEN);
     mem_copy(mail->content.text.split.footer, footer, mHandbill_FOOTER_LEN);
 
     mail->content.header_back_start = header_back_start;
-    mail->content.font = 0;
-    mail->content.mail_type = 0;
+    mail->content.font = mMl_FONT_RECV;
+    mail->content.mail_type = mMl_TYPE_MAIL;
     mail->present = EMPTY_NO;
     mail->content.paper_type = mNpc_GetPaperType();
 
-    // anm_pid.npc_id = anm_mem->npc_id;
-    anm_pid.land_id = mLd_BITMASK;
+    mNpc_CopyAnimalPersonalID(&anm_pid, &anm_mem->npc_id);
     mLd_CopyLandName(anm_pid.land_name, anm_mem->land_name);
-    // anm_pid.name_id = anm_mem->npc_id;
-    anm_pid.looks = looks;
 
     mMl_set_mail_name_npcinfo(&mail->header.sender, &anm_pid);
     mPr_CopyPersonalID(&mail->header.recipient.personalID, &priv->player_ID);
@@ -1247,13 +1266,13 @@ extern void mPr_SendForeingerAnimalMail(Private_c* priv) {
     mPr_animal_memory_c* anm_mem = &priv->animal_memory;
 
     if (mLd_PlayerManKindCheck() == FALSE) {
-        // if (anm_mem->npc_id != RSV_NO && ITEM_NAME_GET_TYPE(anm_mem->npc_id) == NAME_TYPE_NPC &&
-        //     mPO_get_keep_mail_sum() < mPO_MAIL_STORAGE_SIZE) {
-        //     mMl_clear_mail(mail);
-        //     mPr_GetForeingerAnimalMail(mail, priv, anm_mem);
-        //     mPO_receipt_proc(mail, mPO_SENDTYPE_MAIL);
-        //     mPr_ClearAnimalMemory(anm_mem);
-        // }
+        if (mNpc_CheckFreeAnimalPersonalID(&anm_mem->npc_id) == FALSE &&
+            mPO_get_keep_mail_sum() < mPO_MAIL_STORAGE_SIZE) {
+            mMl_clear_mail(mail);
+            mPr_GetForeingerAnimalMail(mail, priv, anm_mem);
+            mPO_receipt_proc(mail, mPO_SENDTYPE_MAIL);
+            mPr_ClearAnimalMemory(anm_mem);
+        }
     }
 }
 
