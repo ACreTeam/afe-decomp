@@ -13,15 +13,15 @@
 #include "m_player_lib.h"
 
 static u8 event_table[mSC_EVENT_NUM] = {
-    mEv_EVENT_SONCHO_NEW_YEARS_DAY,
+    mEv_EVENT_NEW_YEARS_DAY,
     mEv_EVENT_SONCHO_FOUNDERS_DAY,
     mEv_EVENT_SONCHO_GRADUATION_DAY,
     mEv_EVENT_SONCHO_APRILFOOLS_DAY,
     mEv_EVENT_SONCHO_TOWN_DAY,
     mEv_EVENT_SONCHO_MOTHERS_DAY,
     mEv_EVENT_SONCHO_SALE_DAY,
-    mEv_EVENT_SONCHO_CHERRY_BLOSSOM_FESTIVAL,
-    mEv_EVENT_SONCHO_SPRING_SPORTS_FAIR,
+    mEv_EVENT_CHERRY_BLOSSOM_FESTIVAL,
+    mEv_EVENT_SPRING_EQUINOX,
     mEv_EVENT_SONCHO_NATURE_DAY,
     mEv_EVENT_SONCHO_SPRING_CLEANING,
     mEv_EVENT_SONCHO_FATHERS_DAY,
@@ -33,14 +33,14 @@ static u8 event_table[mSC_EVENT_NUM] = {
     mEv_EVENT_HARVEST_MOON_FESTIVAL,
     mEv_EVENT_SONCHO_MAYORS_DAY,
     mEv_EVENT_SONCHO_OFFICERS_DAY,
-    mEv_EVENT_SONCHO_FALL_SPORTS_FAIR,
+    mEv_EVENT_AUTUMN_EQUINOX,
     mEv_EVENT_SONCHO_HALLOWEEN,
     mEv_EVENT_SONCHO_FISHING_TOURNEY_2,
     mEv_EVENT_SONCHO_SNOW_DAY,
     mEv_EVENT_SONCHO_LABOR_DAY,
     mEv_EVENT_SONCHO_TOY_DAY,
     mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN,
-    mEv_EVENT_SONCHO_HARVEST_FESTIVAL,
+    mEv_EVENT_HARVEST_FESTIVAL,
 };
 
 extern u8 mSC_get_soncho_event() {
@@ -249,7 +249,7 @@ extern mActor_name_t mSC_trophy_item(u8 soncho_event) {
             }
 
             case mSC_EVENT_GROUNDHOG_DAY: {
-                item = mRmTp_FtrIdx2FtrItemNo(0x4DE + RANDOM(9), mRmTp_DIRECT_SOUTH); // random flower model
+                item = mNT_ftr_idx_to_ftr_item_no(FTR_NOG_FLOWER0 + RANDOM(9), mRmTp_DIRECT_SOUTH); // random flower model
                 break;
             }
 
@@ -323,14 +323,14 @@ extern void mSC_get_event_name_str(u8* buf, int buf_len, int soncho_event) {
         26, // Toy Day
         27, // New Year's Eve
         23, // Harvest Festival
-        28  // birthday
+        28, // birthday
     };
 
     mString_Load_StringFromRom(buf, buf_len, mString_SONCHO_EVENT_NAME_START + chg_string_idx[soncho_event & 0x7F]);
 }
 
 extern void mSC_event_name_set(u8 soncho_event) {
-    u8 event_name_buf[mIN_ITEM_NAME_LEN];
+    u8 event_name_buf[mMsg_FREE_STRING_LEN];
     int ofs = 0; // for town day name
 
     if (soncho_event < mSC_EVENT_NUM) {
@@ -339,8 +339,8 @@ extern void mSC_event_name_set(u8 soncho_event) {
             ofs = mMl_strlen(event_name_buf, LAND_NAME_SIZE, CHAR_SPACE);
         }
 
-        mSC_get_event_name_str(event_name_buf + ofs, mIN_ITEM_NAME_LEN - ofs, soncho_event);
-        mMsg_Set_item_str(mMsg_Get_base_window_p(), mMsg_ITEM_STR1, event_name_buf, mIN_ITEM_NAME_LEN);
+        mSC_get_event_name_str(event_name_buf + ofs, mMsg_FREE_STRING_LEN - ofs, soncho_event);
+        mMsg_Set_item_str(mMsg_Get_base_window_p(), mMsg_ITEM_STR1, event_name_buf, mMsg_FREE_STRING_LEN);
     }
 }
 
@@ -356,7 +356,7 @@ extern void mSC_set_free_str_number(int free_str_no, u32 num) {
         fig = 1;
     }
 
-    mFont_UnintToString(number, 3, num, fig, TRUE, FALSE, TRUE);
+    mFont_UnintToString(number, 3, num, fig, TRUE, FALSE, FALSE);
     mMsg_Set_free_str(mMsg_Get_base_window_p(), free_str_no, number, fig);
 }
 
@@ -715,7 +715,6 @@ static void mSCR_talk_inspection(TAISOU_NPC0_ACTOR* taisou_actor, GAME_PLAY* pla
         case 1: {
             mPlib_request_main_give_type1((GAME*)play, ITM_EXCERCISE_CARD00, 8, FALSE, FALSE);
             mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 2);
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 3);
             mMsg_Set_continue_msg_num(msg_win, 0x3422 + taisou_actor->talk_state);
             taisou_actor->talk_state++;
             break;

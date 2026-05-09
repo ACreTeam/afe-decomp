@@ -1278,7 +1278,7 @@ config.libs = [
             Object(NonMatching, "game/m_shop.c"),
             Object(Matching, "game/m_skin_matrix.c"),
             Object(Matching, "game/m_snowman.c"),
-            Object(NonMatching, "game/m_soncho.c"),
+            Object(Matching, "game/m_soncho.c"),
             Object(NonMatching, "game/m_start_data_init.c"),
             Object(NonMatching, "game/m_string.c"),
             Object(Matching, "game/m_submenu.c"),
