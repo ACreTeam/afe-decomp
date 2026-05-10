@@ -133,7 +133,7 @@ static u16* mAP_get_npc_agb_pal_data_p(mActor_name_t npc_name) {
 static u8* mAP_get_rom_npc_agb_body_chara_data_p(mActor_name_t npc_name) {
     if (ITEM_NAME_GET_TYPE(npc_name) == NAME_TYPE_NPC && (npc_name & 0xFFF) < NPC_ROM_NUM) {
         int idx = npc_name & 0xFFF;
-        int body_type = npc_def_list[idx].agb_body_type & 31;
+        int body_type = npc_def_list[idx].race & 31;
         return (u8*)(JW_Get_AgbTargetNpcBody_InAgbArchiveFile0_data_p() + body_type * 0x800);
     }
 

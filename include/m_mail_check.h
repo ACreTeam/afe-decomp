@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-extern int mMC_get_mail_hit_rate(int* len, u8* str, GAME* game);
+extern int mMC_get_mail_hit_rate(int* len, u16* str, GAME* game);
 
 #ifdef __cplusplus
 }

@@ -342,6 +342,7 @@ extern void mFM_SetBlockKindLoadCombi(GAME* game);
 extern void mFM_InitFgCombiSaveData(GAME* game);
 extern void mFM_RenewalReserve();
 extern mActor_name_t mFM_GetReseveName(int bx, int bz);
+extern mActor_name_t mFM_GetReseveName_com(int bx, int bz, mFM_fg_c* fg);
 extern void mFM_toSummer();
 extern void mFM_returnSeason();
 extern void mFM_RestoreIslandBG(int* island_x_blocks, int bx_num);

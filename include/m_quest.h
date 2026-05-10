@@ -65,11 +65,11 @@ enum {
     mQst_CONTEST_KIND_SOCCER,  /* get ball for villager */
     mQst_CONTEST_KIND_SNOWMAN, /* build snowman for villager */
     mQst_CONTEST_KIND_FLOWER,  /* plant flowers for villager */
-    mQst_CONTEST_KIND_FISH,    /* get fish for villager */
-    mQst_CONTEST_KIND_INSECT,  /* get insect for villager */
-    mQst_CONTEST_KIND_LETTER,  /* send letter to villager */
+    mQst_CONTEST_KIND_FISH = 5,    /* get fish for villager */
+    mQst_CONTEST_KIND_INSECT = 6,  /* get insect for villager */
+    mQst_CONTEST_KIND_LETTER = 4,  /* send letter to villager */
 
-    mQst_CONTEST_KIND_NUM
+    mQst_CONTEST_KIND_NUM = 7
 };
 
 enum {
