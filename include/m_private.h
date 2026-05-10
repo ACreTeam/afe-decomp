@@ -52,6 +52,8 @@ enum {
     mPr_ITEM_COND_PRESENT,
     mPr_ITEM_COND_QUEST,
 
+    mPr_ITEM_COND_LOST_ITEM = 8,
+
     mPr_ITEM_COND_NUM
 };
 
@@ -99,7 +101,7 @@ enum {
 #define mPr_GET_ITEM_COND(all_cond, slot_no) ((all_cond)[slot_no])
 // #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
 #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (all_cond)[slot_no] & ~0xF | (cond))
-#define mPR_CHK_ITEM_COND(cond, slot_no) ((cond)[slot_no] & (0xF))
+#define mPr_CHK_ITEM_COND(cond, slot_no) ((cond)[slot_no] & (0xF))
 
 enum {
     mPr_SUNBURN_RANK_MIN,

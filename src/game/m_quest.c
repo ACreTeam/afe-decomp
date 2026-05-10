@@ -11,6 +11,7 @@
 #include "m_house.h"
 #include "m_event.h"
 #include "m_common_data.h"
+#include "m_player_lib.h"
 
 typedef struct grab_s {
     mActor_name_t item;
@@ -19,36 +20,40 @@ typedef struct grab_s {
     mQst_delivery_c delivery;
 } mQst_grab_c;
 
-static lbRTC_day_t l_delivery_limit[4] = { 2, 2, 2, 2 };
+static lbRTC_day_t l_delivery_limit[] = { 2, 2, 2, 4, 1 };
 
-static lbRTC_day_t l_errand_limit[mQst_ERRAND_NUM] = { 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static lbRTC_day_t l_errand_limit[mQst_ERRAND_NUM] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static lbRTC_day_t l_contest_limit[mQst_CONTEST_KIND_NUM] = {
-    1, // mQst_CONTEST_KIND_FRUIT
-    1, // mQst_CONTEST_KIND_SOCCER
-    1, // mQst_CONTEST_KIND_SNOWMAN
-    3, // mQst_CONTEST_KIND_FLOWER
-    3, // mQst_CONTEST_KIND_FISH
-    3, // mQst_CONTEST_KIND_INSECT
-    2  // mQst_CONTEST_KIND_LETTER
+    1,  // mQst_CONTEST_KIND_SOCCER
+    3,  // mQst_CONTEST_KIND_FLOWER
+    3,  // mQst_CONTEST_KIND_FISH
+    3,  // mQst_CONTEST_KIND_INSECT
+    2,  // mQst_CONTEST_KIND_LETTER
+    3,  // mQst_CONTEST_KIND_FTR
+    1,  // mQst_CONTEST_KIND_SHOP
+    1,  // mQst_CONTEST_KIND_GRASS
+    10, // mQst_CONTEST_KIND_SICK
 };
 
 static lbRTC_day_t l_contest_fin_limit[mQst_CONTEST_KIND_NUM] = {
-    3, // mQst_CONTEST_KIND_FRUIT
     3, // mQst_CONTEST_KIND_SOCCER
-    3, // mQst_CONTEST_KIND_SNOWMAN
     3, // mQst_CONTEST_KIND_FLOWER
     3, // mQst_CONTEST_KIND_FISH
     3, // mQst_CONTEST_KIND_INSECT
-    2  // mQst_CONTEST_KIND_LETTER
+    2, // mQst_CONTEST_KIND_LETTER
+    3, // mQst_CONTEST_KIND_FTR
+    0, // mQst_CONTEST_KIND_SHOP
+    3, // mQst_CONTEST_KIND_GRASS
+    3, // mQst_CONTEST_KIND_SICK
 };
 
 static lbRTC_day_t* l_limit_table[mQst_QUEST_TYPE_NUM] = { l_delivery_limit, l_errand_limit, l_contest_limit };
 
 static int l_limit_table_max[mQst_QUEST_TYPE_NUM] = {
-    4,                    // mQst_QUEST_TYPE_DELIVERY
-    15,                   // mQst_QUEST_TYPE_ERRAND
-    mQst_CONTEST_KIND_NUM // mQst_QUEST_TYPE_CONTEST
+    mQst_DELIVERY_KIND_NUM, // mQst_QUEST_TYPE_DELIVERY
+    mQst_ERRAND_NUM,        // mQst_QUEST_TYPE_ERRAND
+    mQst_CONTEST_KIND_NUM,  // mQst_QUEST_TYPE_CONTEST
 };
 
 extern void mQst_ClearQuestInfo(mQst_base_c* quest) {
@@ -60,9 +65,15 @@ extern void mQst_ClearDelivery(mQst_delivery_c* delivery, int num) {
     int i;
 
     for (i = 0; i < num; i++) {
+        bzero(delivery, sizeof(mQst_delivery_c));
         mQst_ClearQuestInfo(&delivery->base);
         mNpc_ClearAnimalPersonalID(&delivery->recipient);
         mNpc_ClearAnimalPersonalID(&delivery->sender);
+        mNpc_ClearAnimalPersonalID(&delivery->_34);
+        mLd_ClearLandName(delivery->_48);
+        mLd_ClearLandName(delivery->_4E);
+        delivery->_56 = 1;
+        delivery->item = EMPTY_NO;
 
         delivery++;
     }
@@ -72,6 +83,7 @@ extern void mQst_ClearErrand(mQst_errand_c* errand, int num) {
     int i;
 
     for (i = 0; i < num; i++) {
+        bzero(errand, sizeof(mQst_errand_c));
         mQst_ClearQuestInfo(&errand->base);
         mNpc_ClearAnimalPersonalID(&errand->recipient);
         mNpc_ClearAnimalPersonalID(&errand->sender);
@@ -87,10 +99,11 @@ extern void mQst_ClearErrand(mQst_errand_c* errand, int num) {
 }
 
 extern void mQst_ClearContest(mQst_contest_c* contest) {
+    bzero(contest, sizeof(mQst_contest_c));
     mQst_ClearQuestInfo(&contest->base);
     contest->requested_item = EMPTY_NO;
     mPr_ClearPersonalID(&contest->player_id);
-    contest->type = mQst_QUEST_TYPE_NONE;
+    contest->type = mQst_QUEST_TYPE_ALL_NUM;
     bzero(&contest->info, sizeof(mQst_contest_info_u));
 }
 
@@ -109,35 +122,16 @@ extern void mQst_CopyQuestInfo(mQst_base_c* dst, mQst_base_c* src) {
 }
 
 extern void mQst_CopyDelivery(mQst_delivery_c* dst, mQst_delivery_c* src) {
-    mQst_CopyQuestInfo(&dst->base, &src->base);
-    mNpc_CopyAnimalPersonalID(&dst->recipient, &src->recipient);
-    mNpc_CopyAnimalPersonalID(&dst->sender, &src->sender);
+    mem_copy((u8*)dst, (u8*)src, sizeof(mQst_delivery_c));
 }
 
 extern void mQst_CopyErrand(mQst_errand_c* dst, mQst_errand_c* src) {
-    u8* info_src_p = (u8*)&src->info;
-    u8* info_dst_p = (u8*)&dst->info;
-    int i;
-
-    mQst_CopyQuestInfo(&dst->base, &src->base);
-    mNpc_CopyAnimalPersonalID(&dst->recipient, &src->recipient);
-    mNpc_CopyAnimalPersonalID(&dst->sender, &src->sender);
-    dst->item = src->item;
-    dst->pockets_idx = src->pockets_idx;
-    dst->errand_type = src->errand_type;
-    // dst->info = src->info;
-
-    /* why are we copying it like this? */
-    for (i = 0; i < (int)sizeof(mQst_errand_info_u); i++) {
-        *info_dst_p = *info_src_p;
-        info_dst_p++;
-        info_src_p++;
-    }
+    mem_copy((u8*)dst, (u8*)src, sizeof(mQst_errand_c));
 }
 
 extern int mQst_CheckFreeQuest(mQst_base_c* quest) {
     int res = FALSE;
-    if (quest->quest_type == mQst_QUEST_TYPE_NONE) {
+    if (quest != NULL && quest->quest_type == mQst_QUEST_TYPE_NONE) {
         res = TRUE;
     }
 
@@ -157,19 +151,48 @@ extern int mQst_CheckLimitOver(mQst_base_c* quest) {
                 res = TRUE;
             } else {
                 int type = quest->quest_type;
-                u32 kind = quest->quest_kind;
+                int kind = quest->quest_kind;
 
                 if ((u32)quest->quest_kind < l_limit_table_max[type]) {
                     int days = l_limit_table[type][quest->quest_kind];
 
-                    if (type == mQst_QUEST_TYPE_CONTEST && quest->progress == 0) {
-                        days += l_contest_fin_limit[kind];
+                    if (type == mQst_QUEST_TYPE_CONTEST) {
+                        if (quest->progress == 0) {
+                            u8* limit = l_contest_fin_limit;
+                            if (kind == mQst_CONTEST_KIND_SICK) {
+                                days = limit[kind];
+                            } else {
+                                days += limit[kind];
+                            }
+                        } else if (kind == mQst_CONTEST_KIND_LETTER) {
+                            if (quest->progress == 1) {
+                                days += l_contest_fin_limit[kind];
+                            }
+                        }
+                    } else if (type == mQst_QUEST_TYPE_DELIVERY) {
+                        switch (kind) {
+                            case mQst_DELIVERY_KIND_NORMAL:
+                            case mQst_DELIVERY_KIND_FOREIGN:
+                            case mQst_DELIVERY_KIND_REMOVE:
+                                if (quest->progress == 0) {
+                                    days += 3;
+                                } else if (quest->progress == 1) {
+                                    days += 7;
+                                }
+                                break;
+                            case mQst_DELIVERY_KIND_LOST_ITEM:
+                                if (quest->progress != 0) {
+                                    days += 3;
+                                }
+                                break;
+                        }
                     }
 
                     lbRTC_TimeCopy(&temp, &quest->time_limit);
                     lbRTC_Sub_DD(&temp, days);
 
-                    if (lbRTC_IsOverTime(rtc_time, &temp) == lbRTC_OVER) {
+                    if (lbRTC_IsOverTime(rtc_time, &temp) == lbRTC_OVER &&
+                        lbRTC_IsEqualTime(rtc_time, &temp, lbRTC_CHECK_ALL) == FALSE) {
                         res = TRUE;
                     }
                 }
@@ -180,10 +203,20 @@ extern int mQst_CheckLimitOver(mQst_base_c* quest) {
     return res;
 }
 
+extern int mQst_GetContestAddDay(u32 kind) {
+    int add_days = 0;
+
+    if (kind < mQst_CONTEST_KIND_NUM) {
+        add_days = l_contest_fin_limit[kind];
+    }
+
+    return add_days;
+}
+
 extern int mQst_GetOccuredDeliveryIdx(int delivery_kind) {
     int idx = -1;
     int i;
-    mQst_delivery_c* delivery = Common_Get(now_private)->deliveries;
+    mQst_delivery_c* delivery = Now_Private->deliveries;
 
     for (i = 0; i < mPr_DELIVERY_QUEST_NUM; i++) {
         if (mQst_CheckFreeQuest(&delivery->base) == FALSE && delivery->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
@@ -201,8 +234,7 @@ extern int mQst_GetOccuredDeliveryIdx(int delivery_kind) {
 static int mQst_GetDeliveryIdxbyItemIdx(int idx) {
     int d_idx = -1;
 
-    if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT &&
-        mQst_CheckFreeQuest(&Common_Get(now_private)->deliveries[idx].base) == FALSE) {
+    if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT && mQst_CheckFreeQuest(&Now_Private->deliveries[idx].base) == FALSE) {
         d_idx = idx;
     }
 
@@ -216,9 +248,9 @@ static int mQst_GetErrandIdxbyItemIdx(int idx) {
     mActor_name_t item;
 
     if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT) {
-        Private_c* priv = Common_Get(now_private);
+        Private_c* priv = Now_Private;
 
-        if (mPr_GET_ITEM_COND(priv->inventory.item_conditions, idx) == mPr_ITEM_COND_QUEST) {
+        if (mPr_CHK_ITEM_COND(priv->inventory.item_conditions, idx) == mPr_ITEM_COND_QUEST) {
             errand = priv->errands;
             item = priv->inventory.pockets[idx];
 
@@ -240,14 +272,18 @@ extern int mQst_ClearQuestbyPossessionIdx(int idx) {
     int res = FALSE;
 
     if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT) {
-        if (mQst_GetDeliveryIdxbyItemIdx(idx) != -1) {
-            mQst_ClearDelivery(Common_Get(now_private)->deliveries + idx, 1);
+        Private_c* priv = Now_Private;
+
+        if (mPr_CHK_ITEM_COND(priv->inventory.item_conditions, idx) == mPr_ITEM_COND_LOST_ITEM) {
+            mQst_ClearDelivery(&priv->lost_item_quest, 1);
+        } else if (mQst_GetDeliveryIdxbyItemIdx(idx) != -1) {
+            mQst_ClearDelivery(priv->deliveries + idx, 1);
             res = TRUE;
         } else {
             int errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
 
             if (errand_idx != -1) {
-                mQst_ClearErrand(Common_Get(now_private)->errands + errand_idx, 1);
+                mQst_ClearErrand(priv->errands + errand_idx, 1);
                 res = TRUE;
             }
         }
@@ -260,26 +296,52 @@ extern int mQst_CheckLimitbyPossessionIdx(int idx) {
     int res = FALSE;
 
     if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT) {
-        mQst_delivery_c* delivery = Common_Get(now_private)->deliveries + idx;
-        mQst_errand_c* errand = Common_Get(now_private)->errands;
-        mActor_name_t item = Common_Get(now_private)->inventory.pockets[idx];
+        int i;
+        mQst_delivery_c* delivery = Now_Private->deliveries + idx;
+        mQst_errand_c* errand = Now_Private->errands;
+        mQst_delivery_c* lost_item_quest = &Now_Private->lost_item_quest;
+        mActor_name_t item = Now_Private->inventory.pockets[idx];
+        int item_cond = Now_Private->inventory.item_conditions[idx];
 
         if (item != EMPTY_NO) {
-            if (mQst_CheckFreeQuest(&delivery->base) == FALSE && mQst_CheckLimitOver(&delivery->base) == TRUE) {
-                res = TRUE;
-            }
-
-            if (res == FALSE) {
-                int i;
-
-                for (i = 0; i < mPr_ERRAND_QUEST_NUM; i++) {
-                    if (mQst_CheckFreeQuest(&errand->base) == FALSE && errand->pockets_idx == idx &&
-                        item == errand->item && mQst_CheckLimitOver(&errand->base) == TRUE) {
-                        res = TRUE;
-                        break;
+            if ((item_cond & 0xF) == mPr_ITEM_COND_LOST_ITEM) {
+                if (mQst_CheckFreeQuest(&lost_item_quest->base) == FALSE && lost_item_quest->base.progress == 0 &&
+                    mQst_CheckLimitOver(&lost_item_quest->base) == TRUE) {
+                    res = TRUE;
+                }
+            } else {
+                if (mQst_CheckFreeQuest(&delivery->base) == FALSE) {
+                    switch (delivery->base.quest_kind) {
+                        case mQst_DELIVERY_KIND_NORMAL:
+                        case mQst_DELIVERY_KIND_FOREIGN:
+                        case mQst_DELIVERY_KIND_REMOVE:
+                            if (delivery->base.progress == 2 && mQst_CheckLimitOver(&delivery->base) == TRUE) {
+                                res = TRUE;
+                            }
+                            break;
+                        case mQst_DELIVERY_KIND_LOST_ITEM:
+                            if (delivery->base.progress == 0 && mQst_CheckLimitOver(&delivery->base) == TRUE) {
+                                res = TRUE;
+                            }
+                            break;
+                        default:
+                            if (mQst_CheckLimitOver(&delivery->base) == TRUE) {
+                                res = TRUE;
+                            }
+                            break;
                     }
+                }
 
-                    errand++;
+                if (res == FALSE) {
+                    for (i = 0; i < mPr_ERRAND_QUEST_NUM; i++) {
+                        if (mQst_CheckFreeQuest(&errand->base) == FALSE && errand->pockets_idx == idx &&
+                            item == errand->item && mQst_CheckLimitOver(&errand->base) == TRUE) {
+                            res = TRUE;
+                            break;
+                        }
+
+                        errand++;
+                    }
                 }
             }
         }
@@ -301,55 +363,75 @@ extern void mQst_ClearGrabItemInfo() {
     mQst_ClearGrabItemInfo_common(&l_mqst_grab);
 }
 
+static void mQst_SetDeliveryFreePos(mQst_delivery_c* src, mQst_delivery_c* dst, int count) {
+    int i;
+
+    if (mQst_CheckFreeQuest(&src->base) == FALSE && src->base.quest_kind != mQst_DELIVERY_KIND_LOST_ITEM) {
+        for (i = 0; i < count; i++) {
+            if (mQst_CheckFreeQuest(&dst->base) == TRUE) {
+                mQst_CopyDelivery(dst, src);
+                break;
+            }
+
+            dst++;
+        }
+    }
+}
+
 extern void mQst_CheckGrabItem(mActor_name_t item, int pocket_idx) {
-    // Private_c* priv = Common_Get(now_private);
-    // mQst_grab_c* grab = &l_mqst_grab;
-    // mQst_delivery_c* delivery = priv->deliveries;
-    // mQst_errand_c* errand = priv->errands;
-    // u32 item_cond = priv->inventory.item_conditions;
-    // int i;
+    mQst_delivery_c* src_delivery;
+    mQst_delivery_c* delivery = Now_Private->deliveries;
+    mQst_errand_c* errand = Now_Private->errands;
+    u8* item_cond = Now_Private->inventory.item_conditions;
+    mQst_grab_c* grab = &l_mqst_grab;
+    int i;
 
-    // if (pocket_idx >= 0 && pocket_idx < mPr_POCKETS_SLOT_COUNT) {
-    //     mQst_ClearGrabItemInfo_common(grab);
-    //     delivery += pocket_idx;
+    if (pocket_idx >= 0 && pocket_idx < mPr_POCKETS_SLOT_COUNT) {
+        mQst_SetDeliveryFreePos(&grab->delivery, delivery, mPr_DELIVERY_QUEST_NUM);
+        mQst_ClearGrabItemInfo_common(grab);
+        src_delivery = delivery + pocket_idx;
 
-    //     if (mQst_CheckFreeQuest(&delivery->base) == FALSE) {
-    //         grab->item = item;
-    //         grab->pocket_idx = pocket_idx;
-    //         grab->type = mQst_QUEST_TYPE_DELIVERY;
-    //         mQst_CopyDelivery(&grab->delivery, delivery);
-    //         mQst_ClearDelivery(delivery, 1);
-    //     }
+        if (mQst_CheckFreeQuest(&src_delivery->base) == FALSE &&
+            (delivery[0].base.quest_type != mQst_QUEST_TYPE_DELIVERY ||
+             delivery[0].base.quest_kind >= mQst_DELIVERY_KIND_LOST || delivery[0].base.progress > 1)) {
+            grab->item = item;
+            grab->pocket_idx = pocket_idx;
+            grab->type = mQst_QUEST_TYPE_DELIVERY;
+        }
 
-    //     if ((u32)grab->type == mQst_QUEST_TYPE_NONE &&
-    //         mPr_GET_ITEM_COND(item_cond, pocket_idx) == mPr_ITEM_COND_QUEST) {
+        mQst_CopyDelivery(&grab->delivery, src_delivery);
+        mQst_ClearDelivery(src_delivery, 1);
 
-    //         for (i = 0; i < mPr_ERRAND_QUEST_NUM; i++) {
-    //             if (mQst_CheckFreeQuest(&errand->base) == FALSE && errand->pockets_idx == pocket_idx &&
-    //                 errand->item == item) {
-    //                 grab->item = item;
-    //                 grab->pocket_idx = i;
-    //                 grab->type = mQst_QUEST_TYPE_ERRAND;
+        if ((u32)grab->type == mQst_QUEST_TYPE_NONE &&
+            mPr_CHK_ITEM_COND(item_cond, pocket_idx) == mPr_ITEM_COND_QUEST) {
 
-    //                 break;
-    //             }
+            for (i = 0; i < mPr_ERRAND_QUEST_NUM; i++) {
+                if (mQst_CheckFreeQuest(&errand->base) == FALSE && errand->pockets_idx == pocket_idx &&
+                    errand->item == item) {
+                    grab->item = item;
+                    grab->pocket_idx = i;
+                    grab->type = mQst_QUEST_TYPE_ERRAND;
 
-    //             errand++;
-    //         }
-    //     }
+                    break;
+                }
 
-    //     if ((u32)grab->type == mQst_QUEST_TYPE_NONE && item != EMPTY_NO) {
-    //         grab->item = item;
-    //     }
-    // }
+                errand++;
+            }
+        }
+
+        if ((u32)grab->type == mQst_QUEST_TYPE_NONE && item != EMPTY_NO) {
+            grab->item = item;
+        }
+    }
 }
 
 extern void mQst_CheckPutItem(mActor_name_t item, int pocket_idx) {
-    Private_c* priv = Common_Get(now_private);
+    Private_c* priv = Now_Private;
     mQst_delivery_c t_delivery;
     mQst_delivery_c* deliveries = priv->deliveries;
     mQst_errand_c* errands = priv->errands;
     mQst_grab_c* grab = &l_mqst_grab;
+    u32 grab_type;
     mActor_name_t slot_item;
     int grab_idx = grab->pocket_idx;
 
@@ -357,31 +439,39 @@ extern void mQst_CheckPutItem(mActor_name_t item, int pocket_idx) {
         slot_item = priv->inventory.pockets[pocket_idx];
 
         if (grab->item != RSV_NO && item == grab->item) {
-            switch (grab->type) {
-                case mQst_QUEST_TYPE_DELIVERY: {
+            grab_type = grab->type;
 
-                    mQst_CopyDelivery(&t_delivery, &grab->delivery);
-                    mQst_CheckGrabItem(slot_item, pocket_idx);
-                    mQst_CopyDelivery(deliveries + pocket_idx, &t_delivery);
+            mQst_CopyDelivery(&t_delivery, &grab->delivery);
+            mQst_ClearGrabItemInfo_common(grab);
+            mQst_CheckGrabItem(slot_item, pocket_idx);
+            mQst_CopyDelivery(deliveries + pocket_idx, &t_delivery);
 
-                    break;
-                }
-
-                case mQst_QUEST_TYPE_ERRAND: {
-                    mQst_CheckGrabItem(slot_item, pocket_idx);
-                    errands[grab_idx].pockets_idx = pocket_idx;
-
-                    break;
-                }
-
-                default: {
-                    mQst_CheckGrabItem(slot_item, pocket_idx);
-
-                    break;
-                }
+            if (grab_type == mQst_QUEST_TYPE_ERRAND && grab_idx != -1) {
+                errands[grab_idx].pockets_idx = pocket_idx;
             }
         } else {
             mQst_CheckGrabItem(slot_item, pocket_idx);
+        }
+    }
+}
+
+extern void mQst_PutItem_menu_end(void) {
+    mQst_grab_c* grab = &l_mqst_grab;
+    mQst_delivery_c* delivery = Now_Private->deliveries;
+    int i;
+
+    if (mQst_CheckFreeQuest(&grab->delivery.base) == FALSE) {
+        for (i = 0; i < mPr_DELIVERY_QUEST_NUM; i++) {
+            if (mQst_CheckFreeQuest(&delivery->base) == TRUE) {
+                mQst_CopyDelivery(delivery, &grab->delivery);
+                mQst_ClearGrabItemInfo_common(grab);
+                break;
+            }
+
+            // @BUG - devs forgot to increment the delivery pointer
+#ifdef BUGFIXES
+            delivery++;
+#endif
         }
     }
 }
@@ -390,30 +480,48 @@ extern int mQst_CheckNpcExistbyItemIdx(int idx, int sender_or_receipient) {
     int res = FALSE;
 
     if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT) {
-        int delivery_idx = mQst_GetDeliveryIdxbyItemIdx(idx);
-        if (delivery_idx != -1) {
-            mQst_delivery_c* delivery = Common_Get(now_private)->deliveries + delivery_idx;
+        Private_c* priv = Now_Private;
+        if (mPr_CHK_ITEM_COND(priv->inventory.item_conditions, idx) == mPr_ITEM_COND_LOST_ITEM) {
             if (sender_or_receipient == mQst_CHECK_NPC_RECEIPIENT) {
-                if (mNpc_SearchAnimalPersonalID(&delivery->recipient) != -1) {
+                if (mNpc_SearchAnimalPersonalID(&priv->lost_item_quest.recipient) != -1) {
                     res = TRUE;
                 }
             } else {
-                if (mNpc_SearchAnimalPersonalID(&delivery->sender) != -1) {
+                if (mNpc_SearchAnimalPersonalID(&priv->lost_item_quest.sender) != -1) {
                     res = TRUE;
                 }
             }
         } else {
-            int errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
+            int delivery_idx = mQst_GetDeliveryIdxbyItemIdx(idx);
 
-            if (errand_idx != -1) {
-                mQst_errand_c* errand = Common_Get(now_private)->errands + errand_idx;
-                if (sender_or_receipient == mQst_CHECK_NPC_RECEIPIENT) {
-                    if (mNpc_SearchAnimalPersonalID(&errand->recipient) != -1) {
-                        res = TRUE;
+            if (delivery_idx != -1) {
+                mQst_delivery_c* delivery = priv->deliveries + delivery_idx;
+
+                if ((delivery->base.quest_kind < mQst_DELIVERY_KIND_LOST && delivery->base.progress == 2) ||
+                    delivery->base.quest_kind >= mQst_DELIVERY_KIND_LOST) {
+                    if (sender_or_receipient == mQst_CHECK_NPC_RECEIPIENT) {
+                        if (mNpc_SearchAnimalPersonalID(&delivery->recipient) != -1) {
+                            res = TRUE;
+                        }
+                    } else {
+                        if (mNpc_SearchAnimalPersonalID(&delivery->sender) != -1) {
+                            res = TRUE;
+                        }
                     }
-                } else {
-                    if (mNpc_SearchAnimalPersonalID(&errand->sender) != -1) {
-                        res = TRUE;
+                }
+            } else {
+                int errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
+
+                if (errand_idx != -1) {
+                    mQst_errand_c* errand = Now_Private->errands + errand_idx;
+                    if (sender_or_receipient == mQst_CHECK_NPC_RECEIPIENT) {
+                        if (mNpc_SearchAnimalPersonalID(&errand->recipient) != -1) {
+                            res = TRUE;
+                        }
+                    } else {
+                        if (mNpc_SearchAnimalPersonalID(&errand->sender) != -1) {
+                            res = TRUE;
+                        }
                     }
                 }
             }
@@ -424,33 +532,42 @@ extern int mQst_CheckNpcExistbyItemIdx(int idx, int sender_or_receipient) {
 }
 
 extern int mQst_GetToFromName(u8* to_name, u8* from_name, int idx) {
+    mQst_delivery_c* delivery;
+    mQst_errand_c* errand;
+    int delivery_idx;
+    int errand_idx;
     int res = FALSE;
 
     if (idx >= 0 && idx < mPr_POCKETS_SLOT_COUNT) {
-        int delivery_idx = mQst_GetDeliveryIdxbyItemIdx(idx);
-
-        if (delivery_idx != -1) {
-            mQst_delivery_c* delivery = Common_Get(now_private)->deliveries + delivery_idx;
-
-            mNpc_GetNpcWorldNameAnm(to_name, &delivery->recipient);
-            mNpc_GetNpcWorldNameAnm(from_name, &delivery->sender);
-
+        if (mQst_GetLostOwnerName(to_name, Now_Private->inventory.pockets[idx]) == TRUE) {
+            mPr_CopyPlayerName(from_name, to_name);
             res = TRUE;
         } else {
-            int errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
+            delivery_idx = mQst_GetDeliveryIdxbyItemIdx(idx);
 
-            if (errand_idx != -1) {
-                mQst_errand_c* errand = Common_Get(now_private)->errands + errand_idx;
+            if (delivery_idx != -1) {
+                delivery = Now_Private->deliveries + delivery_idx;
 
-                mNpc_GetNpcWorldNameAnm(to_name, &errand->recipient);
-
-                if (mEv_CheckFirstJob() == TRUE && errand->errand_type == mQst_ERRAND_TYPE_FIRST_JOB) {
-                    mNpc_GetActorWorldName(from_name, SP_NPC_SHOP_MASTER);
-                } else {
-                    mNpc_GetNpcWorldNameAnm(from_name, &errand->sender);
-                }
+                mNpc_GetNpcWorldNameAnm(to_name, &delivery->recipient);
+                mNpc_GetNpcWorldNameAnm(from_name, &delivery->sender);
 
                 res = TRUE;
+            } else {
+                errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
+
+                if (errand_idx != -1) {
+                    errand = Now_Private->errands + errand_idx;
+
+                    mNpc_GetNpcWorldNameAnm(to_name, &errand->recipient);
+
+                    if (mEv_CheckFirstJob() == TRUE && errand->errand_type == mQst_ERRAND_TYPE_FIRST_JOB) {
+                        mNpc_GetActorWorldName(from_name, SP_NPC_SHOP_MASTER);
+                    } else {
+                        mNpc_GetNpcWorldNameAnm(from_name, &errand->sender);
+                    }
+
+                    res = TRUE;
+                }
             }
         }
     }
@@ -464,8 +581,26 @@ extern int mQst_GetOccuredContestIdx(int kind) {
     int i;
 
     for (i = 0; i < ANIMAL_NUM_MAX; i++) {
-        if (animal->contest_quest.base.quest_type == mQst_QUEST_TYPE_CONTEST &&
+        if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE &&
+            animal->contest_quest.base.quest_type == mQst_QUEST_TYPE_CONTEST &&
             (u32)animal->contest_quest.base.quest_kind == kind) {
+            res = i;
+            break;
+        }
+
+        animal++;
+    }
+
+    return res;
+}
+
+extern int mQst_GetFreeContestIdx(Animal_c* animal, int count) {
+    int res = -1;
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE &&
+            mQst_CheckFreeQuest(&animal->contest_quest.base) == TRUE) {
             res = i;
             break;
         }
@@ -482,6 +617,10 @@ extern int mQst_GetFlowerSeedNum(int block_x, int block_z) {
 
 extern int mQst_GetFlowerNum(int block_x, int block_z) {
     return mFI_GetItemNumOnBlockInField(block_x, block_z, FLOWER_PANSIES0, FLOWER_TULIP2);
+}
+
+extern int mQst_GetGrassNum(int block_x, int block_z) {
+    return mFI_GetItemNumOnBlockInField(block_x, block_z, GRASS_A, GRASS_C);
 }
 
 extern int mQst_GetNullNoNum(int block_x, int block_z) {
@@ -645,6 +784,38 @@ extern int mQst_SendRemail(mQst_contest_c* contest, AnmPersonalID_c* sender_id) 
     return res;
 }
 
+extern void mQst_SendRemailAll(void) {
+    Animal_c* animal = Save_Get(animals);
+    mQst_contest_c* contest;
+    lbRTC_time_c limit;
+    int i;
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+            contest = &animal->contest_quest;
+
+            if (mQst_CheckFreeQuest(&contest->base) == FALSE && contest->base.quest_type == mQst_QUEST_TYPE_CONTEST &&
+                contest->base.quest_kind == mQst_CONTEST_KIND_LETTER && contest->base.progress == 1 &&
+                mPr_NullCheckPersonalID(&contest->player_id) == FALSE && contest->type == mQst_CONTEST_DATA_LETTER &&
+                contest->info.letter_data.remail_status != mQst_REMAIL_STATUS_SENT) {
+                lbRTC_TimeCopy(&limit, &contest->base.time_limit);
+                lbRTC_Sub_DD(&limit, 2);
+
+                if (lbRTC_IsEqualTime(&limit, Common_GetPointer(time.rtc_time), lbRTC_CHECK_DATE) == FALSE) {
+                    if (mQst_SendRemail(contest, &animal->id) == TRUE) {
+                        lbRTC_Add_DD(&contest->base.time_limit, 2);
+                        contest->info.letter_data.remail_status = mQst_REMAIL_STATUS_SENT;
+                    } else {
+                        contest->info.letter_data.remail_status = mQst_REMAIL_STATUS_FAILED;
+                    }
+                }
+            }
+        }
+
+        animal++;
+    }
+}
+
 static u8 mQst_GetMailRank(u8* body, mActor_name_t present) {
     u8 rank = mQst_LETTER_RANK_MIN;
     int length = 0;
@@ -674,11 +845,45 @@ extern void mQst_SetReceiveLetter(mQst_contest_c* contest, PersonalID_c* sender_
         contest->base.progress = 1;
         contest->info.letter_data.score = mQst_GetMailRank(body, present);
         contest->info.letter_data.present = mQst_GetPresent(contest->info.letter_data.score);
+        contest->info.letter_data.remail_status = mQst_REMAIL_STATUS_PENDING;
     }
 }
 
+extern int mQst_GetPlayerBlockNum(int* bx, int* bz) {
+    ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
+    int ret = FALSE;
+
+    if (playerx != NULL) {
+        ret = mFI_Wpos2BlockNum(bx, bz, playerx->world.position);
+    }
+
+    return ret;
+}
+
+static u16 l_mqst_offer = 0;
+
+extern void mQst_ClearOfferTalk(void) {
+    l_mqst_offer = 0;
+}
+
+extern void mQst_SetOfferTalk(int idx) {
+    if (idx >= 0 && idx < mQst_CONTEST_KIND_NUM) {
+        l_mqst_offer |= 1 << idx;
+    }
+}
+
+extern int mQst_CheckOfferTalk(int idx) {
+    int ret = FALSE;
+
+    if (idx >= 0 && idx < mQst_CONTEST_KIND_NUM && ((l_mqst_offer >> idx) & 1) == 1) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
 extern mQst_errand_c* mQst_GetFirstJobData() {
-    mQst_errand_c* errand = Common_Get(now_private)->errands;
+    mQst_errand_c* errand = Now_Private->errands;
     mQst_errand_c* errand_p = errand;
     int i;
     int j;
@@ -727,7 +932,7 @@ extern int mQst_CheckFirstJobQuestbyItemIdx(int idx) {
         int errand_idx = mQst_GetErrandIdxbyItemIdx(idx);
 
         if (errand_idx != -1) {
-            res = mQst_CheckFirstJobQuest(Common_Get(now_private)->errands + errand_idx);
+            res = mQst_CheckFirstJobQuest(Now_Private->errands + errand_idx);
         }
     }
 
@@ -747,7 +952,8 @@ extern int mQst_CheckFirstJobFin(mQst_errand_c* errand) {
 extern int mQst_CheckRemoveTarget(mQst_errand_c* errand) {
     int res = FALSE;
 
-    if (errand != NULL && mNpc_SearchAnimalinfo(Save_Get(animals), errand->recipient.npc_id, ANIMAL_NUM_MAX) == -1) {
+    if (errand != NULL &&
+        mNpc_SearchAnimalPersonalID_com(&errand->recipient, Save_Get(animals), ANIMAL_NUM_MAX) == -1) {
         res = TRUE;
     }
 
@@ -979,7 +1185,7 @@ extern void mQst_NextSoccer(ACTOR* actor) {
 
             if ((*Common_Get(clip).npc_clip->force_call_req_proc)(npc_actor, 0x0D8B + looks) == TRUE) {
                 contest->base.progress = 1;
-                mPr_CopyPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID);
+                mPr_CopyPersonalID(&contest->player_id, &Now_Private->player_ID);
             }
         }
     }
@@ -988,7 +1194,7 @@ extern void mQst_NextSoccer(ACTOR* actor) {
 /* @unused int? mQst_CheckBallKeep(...?) */
 
 extern void mQst_NextSnowman(xyz_t snowman_pos) {
-    int npc_idx = mQst_GetOccuredContestIdx(mQst_CONTEST_KIND_SNOWMAN);
+    int npc_idx = mQst_GetOccuredContestIdx(0);
     int block_x;
     int block_z;
 
@@ -1001,14 +1207,14 @@ extern void mQst_NextSnowman(xyz_t snowman_pos) {
         if (contest->base.progress == 1) {
             if (mFI_Wpos2BlockNum(&block_x, &block_z, snowman_pos) == TRUE && animal->home_info.block_x == block_x &&
                 animal->home_info.block_z == block_z) {
-                mPr_CopyPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID);
+                mPr_CopyPersonalID(&contest->player_id, &Now_Private->player_ID);
             }
         }
     }
 }
 
 extern void mQst_BackSnowman(xyz_t snowman_pos) {
-    int npc_idx = mQst_GetOccuredContestIdx(mQst_CONTEST_KIND_SNOWMAN);
+    int npc_idx = mQst_GetOccuredContestIdx(0);
     int block_x;
     int block_z;
 
@@ -1028,7 +1234,7 @@ extern void mQst_BackSnowman(xyz_t snowman_pos) {
 }
 
 extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint) {
-    Private_c* priv = Common_Get(now_private);
+    Private_c* priv = Now_Private;
     mQst_delivery_c* delivery;
     mQst_errand_c* errand;
     Animal_c* animal = Save_Get(animals);

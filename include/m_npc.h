@@ -592,6 +592,7 @@ extern u8 mNpc_GetDefAnimalClothLAttr(Animal_c* animal);
 extern int mNpc_get_npc_param(u8* buf, mActor_name_t npc_name);
 extern int mNpc_GetMatchingPoint(Animal_c* animal0, Animal_c* animal1);
 extern int mNpc_GetSickAnimalIdx_com(mNpc_SickInfo_c* sick_info);
+extern int mNpc_SearchAnimalPersonalID_com(AnmPersonalID_c* anm_pid, Animal_c* animal, int count);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];

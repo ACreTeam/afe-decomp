@@ -478,7 +478,7 @@ static int mSM_check_item_for_furniture(int slot_no, int param_2) {
     int cat = ITEM_NAME_GET_CAT(item);
     int res = FALSE;
 
-    if (item != EMPTY_NO && (mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no)) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && (mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no)) == mPr_ITEM_COND_NORMAL &&
         ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && cat != ITEM1_CAT_FISH && cat != ITEM1_CAT_KABU &&
         cat != ITEM1_CAT_INSECT && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
@@ -506,7 +506,7 @@ static int mSM_check_item_for_sell(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         (ITEM_NAME_GET_TYPE(item) != NAME_TYPE_ITEM1 || ITEM_NAME_GET_CAT(item) != ITEM1_CAT_MONEY) &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
@@ -521,7 +521,7 @@ static int mSM_check_item_for_give(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
         res = TRUE;
@@ -536,7 +536,7 @@ static int mSM_check_item_for_take(int slot_no, int param_2) {
     int cat = ITEM_NAME_GET_CAT(item);
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4) &&
         (param_2 == 0 || (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 &&
@@ -551,7 +551,7 @@ static int mSM_check_item_for_minidisk(int slot_no, int param_2) {
     Private_c* priv = Common_Get(now_private);
     mActor_name_t item = priv->inventory.pockets[slot_no];
 
-    if (mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(item) == ITEM1_CAT_MINIDISK) {
         return TRUE;
     }
@@ -560,7 +560,7 @@ static int mSM_check_item_for_minidisk(int slot_no, int param_2) {
 }
 
 extern int mSM_check_item_for_shrine1(int slot_no) {
-    u32 cond = mPR_CHK_ITEM_COND(Now_Private->inventory.item_conditions, slot_no);
+    u32 cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, slot_no);
 
     return cond == mPr_ITEM_COND_QUEST || cond == 4 || cond == 8;
 }
@@ -583,7 +583,7 @@ static int mSM_check_item_for_entrust(int slot_no, int param_2) {
     int res = FALSE;
 
     if (item == EMPTY_NO ||
-        mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+        mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
             (ITEM_NAME_GET_TYPE(item) != NAME_TYPE_ITEM1 || ITEM_NAME_GET_CAT(item) != ITEM1_CAT_MONEY) &&
             !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12) && item != ITM_KNIFE_AND_FORK &&
             !(item >= ITM_SPIRIT0 && item <= ITM_SPIRIT4)) {
@@ -598,7 +598,7 @@ static int mSM_check_item_for_exchange(int slot_no, int exchange_id) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         item != ITM_SIGNBOARD && item != ITM_KNIFE_AND_FORK &&
         !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
         if ((ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(item) == ITEM1_CAT_FISH) &&
@@ -625,7 +625,7 @@ static int mSM_check_item_for_curator(int slot_no, int param_2) {
     mActor_name_t item = priv->inventory.pockets[slot_no];
     int res = FALSE;
 
-    if (item != EMPTY_NO && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
+    if (item != EMPTY_NO && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, slot_no) == mPr_ITEM_COND_NORMAL &&
         item != ITM_KNIFE_AND_FORK && !(item >= ITM_EXCERCISE_CARD00 && item <= ITM_EXCERCISE_CARD12)) {
         res = TRUE;
     }

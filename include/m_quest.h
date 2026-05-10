@@ -43,7 +43,8 @@ enum {
     mQst_QUEST_TYPE_CONTEST,  /* Villager send letter, plant flowers, bring ball, etc */
     mQst_QUEST_TYPE_NONE,
 
-    mQst_QUEST_TYPE_NUM = mQst_QUEST_TYPE_NONE
+    mQst_QUEST_TYPE_NUM = mQst_QUEST_TYPE_NONE,
+    mQst_QUEST_TYPE_ALL_NUM
 };
 
 /* sizeof(mQst_base_c) == 0xC */
@@ -61,23 +62,34 @@ typedef struct quest_base_s {
 /* Contest Quest */
 
 enum {
-    mQst_CONTEST_KIND_FRUIT,   /* get fruit for villager */
     mQst_CONTEST_KIND_SOCCER,  /* get ball for villager */
-    mQst_CONTEST_KIND_SNOWMAN, /* build snowman for villager */
     mQst_CONTEST_KIND_FLOWER,  /* plant flowers for villager */
-    mQst_CONTEST_KIND_FISH = 5,    /* get fish for villager */
-    mQst_CONTEST_KIND_INSECT = 6,  /* get insect for villager */
-    mQst_CONTEST_KIND_LETTER = 4,  /* send letter to villager */
+    mQst_CONTEST_KIND_FISH,    /* get fish for villager */
+    mQst_CONTEST_KIND_INSECT,  /* get insect for villager */
+    mQst_CONTEST_KIND_LETTER,  /* send letter to villager */
+    mQst_CONTEST_KIND_FTR,     /* get furniture for villager */
+    mQst_CONTEST_KIND_SHOP,    /* get specific item from shop */
+    mQst_CONTEST_KIND_GRASS,   /* pull weeds in villager's block */
+    mQst_CONTEST_KIND_SICK,    /* bring medicine for villager */
 
-    mQst_CONTEST_KIND_NUM = 7
+    mQst_CONTEST_KIND_NUM
 };
 
 enum {
     mQst_CONTEST_DATA_NONE,
     mQst_CONTEST_DATA_FLOWER,
     mQst_CONTEST_DATA_LETTER,
+    mQst_CONTEST_DATA_GRASS,
 
     mQst_CONTEST_DATA_NUM
+};
+
+enum {
+    mQst_REMAIL_STATUS_PENDING, /* villager owes a reply; mQst_SendRemailAll will try to send */
+    mQst_REMAIL_STATUS_SENT,    /* reply has been placed in the player's mailbox; do not retry */
+    mQst_REMAIL_STATUS_FAILED,  /* last send attempt failed (mailbox full, no destination); will retry next pass */
+
+    mQst_REMAIL_STATUS_NUM
 };
 
 /* sizeof(mQst_contest_info_u) == 4 */
@@ -87,9 +99,14 @@ typedef union quest_contest_info_s {
     } flower_data;
 
     struct {
-        /* 0x00 */ u8 score;              /* score rank of letter */
-        /* 0x02 */ mActor_name_t present; /* present sent with letter */
+        /* 0x00 */ mActor_name_t present; /* present sent with letter */
+        /* 0x02 */ u8 score;              /* score rank of letter */
+        /* 0x03 */ u8 remail_status;
     } letter_data;
+
+    struct {
+        /* 0x00 */ u8 start_grass_num; /* number of grass in villager's block */
+    } grass_data;
 } mQst_contest_info_u;
 
 /* sizeof(mQst_contest_c) == 0x28 */
@@ -108,6 +125,7 @@ enum {
     mQst_DELIVERY_KIND_FOREIGN, // delivered to a foreign animal
     mQst_DELIVERY_KIND_REMOVE,  // delivered to the animal who last left for another town
     mQst_DELIVERY_KIND_LOST,    // assumed, probably for when a delivery is 'undeliverable'
+    mQst_DELIVERY_KIND_LOST_ITEM, // found lost item
 
     mQst_DELIVERY_KIND_NUM
 };
@@ -118,9 +136,10 @@ typedef struct quest_delivery_s {
     /* 0x0C */ AnmPersonalID_c recipient; /* villager who will receive it */
     /* 0x20 */ AnmPersonalID_c sender;    /* villager who sent it */
     /* 0x34 */ AnmPersonalID_c _34;
-    /* 0x48 */ u8 _48[ANIMAL_NAME_LEN];
-    /* 0x4E */ u8 _4E[ANIMAL_NAME_LEN];
+    /* 0x48 */ u8 _48[LAND_NAME_SIZE];
+    /* 0x4E */ u8 _4E[LAND_NAME_SIZE];
     /* 0x54 */ mActor_name_t item;
+    /* 0x56 */ u8 _56;
 } mQst_delivery_c;
 
 /* Errand Quest */
@@ -150,10 +169,10 @@ enum {
     // TODO: remove when references are cleared
     // errand quests removed in e+
 #if 1
-    mQst_ERRAND_REQUEST,
-    mQst_ERRAND_REQUEST_CONTINUE,
-    mQst_ERRAND_REQUEST_FINAL,
-    mQst_ERRAND_FIRSTJOB_OPEN,
+    mQst_ERRAND_REQUEST = 11,
+    mQst_ERRAND_REQUEST_CONTINUE = 11,
+    mQst_ERRAND_REQUEST_FINAL = 11,
+    mQst_ERRAND_FIRSTJOB_OPEN = 11,
 #endif
 
     mQst_ERRAND_NUM
@@ -257,6 +276,7 @@ extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint);
 
 extern int mQst_GetIdxTalkSelect(int lower_bound, int upper_bound, int looks);
 extern void mQst_SetLostCondition(mActor_name_t item, int slot_idx);
+extern int mQst_GetLostOwnerName(u8* buf, mActor_name_t item);
 
 #ifdef __cplusplus
 }

@@ -343,7 +343,7 @@ extern int mPr_GetPossessionItemIdxWithCond(Private_c* priv, mActor_name_t item,
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             mActor_name_t it = *pockets;
-            if (it == item && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
+            if (it == item && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 idx = i;
                 break;
             }
@@ -365,7 +365,7 @@ extern int mPr_GetPossessionItemIdxFGTypeWithCond_cancel(Private_c* priv, mActor
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == fg_type &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 idx = i;
                 break;
             }
@@ -406,7 +406,7 @@ extern int mPr_GetPossessionItemIdxItem1CategoryWithCond_cancel(Private_c* priv,
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 idx = i;
                 break;
             }
@@ -427,7 +427,7 @@ extern int mPr_GetPossessionItemIdxKindWithCond(Private_c* priv, mActor_name_t k
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (*pockets >= kind_start && *pockets < kind_end &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 idx = i;
                 break;
             }
@@ -464,7 +464,7 @@ extern u32 mPr_GetPossessionItemSumWithCond(Private_c* priv, mActor_name_t item,
         int i;
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-            if (*pockets == item && mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
+            if (*pockets == item && mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;
@@ -484,7 +484,7 @@ extern u32 mPr_GetPossessionItemSumFGTypeWithCond_cancel(Private_c* priv, mActor
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == fg_type &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 sum++;
             }
             pockets++;
@@ -504,7 +504,7 @@ extern u32 mPr_GetPossessionItemSumItemCategoryWithCond_cancel(Private_c* priv, 
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && *pockets != cancel_item) {
                 sum++;
             }
             pockets++;
@@ -523,7 +523,7 @@ extern u32 mPr_GetPossessionItemSumItemCategoryWithCond(Private_c* priv, u8 item
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == NAME_TYPE_ITEM1 && GET_NAME_ITEM1_CATEGORY(*pockets) == item1_type &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;
@@ -543,7 +543,7 @@ extern u32 mPr_GetPossessionItemSumKindWithCond(Private_c* priv, mActor_name_t k
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (*pockets >= kind_start && *pockets < kind_end &&
-                mPR_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond) {
                 sum++;
             }
             pockets++;

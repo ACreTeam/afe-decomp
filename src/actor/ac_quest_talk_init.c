@@ -91,8 +91,8 @@ static int l_quest_kind_table_fj_errand[] = { mQst_ERRAND_REQUEST };
 static int l_quest_kind_table_qst_delivery[] = { mQst_DELIVERY_KIND_NORMAL, mQst_DELIVERY_KIND_FOREIGN,
                                                  mQst_DELIVERY_KIND_REMOVE, mQst_DELIVERY_KIND_LOST };
 static int l_quest_kind_table_qst_errand[] = { mQst_ERRAND_REQUEST };
-static int l_quest_kind_table_qst_contest[] = { mQst_CONTEST_KIND_FRUIT,   mQst_CONTEST_KIND_SOCCER,
-                                                mQst_CONTEST_KIND_SNOWMAN, mQst_CONTEST_KIND_FLOWER,
+static int l_quest_kind_table_qst_contest[] = { mQst_CONTEST_KIND_SOCCER,
+                                                mQst_CONTEST_KIND_FLOWER,
                                                 mQst_CONTEST_KIND_FISH,    mQst_CONTEST_KIND_INSECT,
                                                 mQst_CONTEST_KIND_LETTER };
 
@@ -399,19 +399,8 @@ static int aQMgr_actor_check_occur(u32 type, u32 kind, Animal_c* animal, int hom
         // Contest kind can't already be active
         if (mQst_GetOccuredContestIdx(kind) == -1) {
             switch (kind) {
-                case mQst_CONTEST_KIND_FRUIT:
-                    occur = TRUE;
-                    break;
                 case mQst_CONTEST_KIND_SOCCER:
                     occur = TRUE;
-                    break;
-                case mQst_CONTEST_KIND_SNOWMAN:
-                    if (((rtc_time->month == lbRTC_JANUARY) ||
-                         (rtc_time->month == lbRTC_FEBRUARY && rtc_time->day <= 17) ||
-                         (rtc_time->month == lbRTC_DECEMBER && rtc_time->day >= 25)) &&
-                        (rtc_time->hour >= 8 && rtc_time->hour <= 16)) {
-                        occur = TRUE;
-                    }
                     break;
                 case mQst_CONTEST_KIND_FLOWER:
                     if (((rtc_time->month == lbRTC_FEBRUARY && rtc_time->day >= 25) ||
@@ -855,11 +844,7 @@ static void aQMgr_actor_set_contest(aQMgr_target_c* target) {
     contest->requested_item = target->quest_item;
 
     switch (target->quest_info.quest_kind) {
-        case mQst_CONTEST_KIND_FRUIT:
-            break;
         case mQst_CONTEST_KIND_SOCCER:
-            break;
-        case mQst_CONTEST_KIND_SNOWMAN:
             break;
 
         case mQst_CONTEST_KIND_FLOWER: {
@@ -1244,9 +1229,6 @@ static void aQMgr_talk_quest_select_get_choice(QUEST_MANAGER_ACTOR* manager) {
                 }
             } else if (type == mQst_QUEST_TYPE_CONTEST) {
                 switch (kind) {
-                    case mQst_CONTEST_KIND_FRUIT:
-                        choice->choice_ids[0] = 0x96; // "It's fruit time!"
-                        break;
                     case mQst_CONTEST_KIND_FISH:
                         choice->choice_ids[0] = 0xEA; // "I brought fish."
                         break;
@@ -1267,8 +1249,6 @@ static void aQMgr_talk_quest_select_get_choice(QUEST_MANAGER_ACTOR* manager) {
             if (type == mQst_QUEST_TYPE_CONTEST) {
                 if (kind == mQst_CONTEST_KIND_SOCCER) {
                     choice->choice_ids[0] = 0x98; // "Here's the ball."
-                } else if (kind == mQst_CONTEST_KIND_SNOWMAN) {
-                    choice->choice_ids[0] = 0x99; // "Look! Snowman!"
                 } else if (kind == mQst_CONTEST_KIND_FLOWER) {
                     choice->choice_ids[0] = 0x9A; // "The flowers..."
                 }
@@ -1422,7 +1402,6 @@ static void aQMgr_actor_talk_select_talk(QUEST_MANAGER_ACTOR* manager) {
                     }
                 } else if (quest->base.quest_type == mQst_QUEST_TYPE_CONTEST &&
                            (quest->base.quest_kind == mQst_CONTEST_KIND_SOCCER ||
-                            quest->base.quest_kind == mQst_CONTEST_KIND_SNOWMAN ||
                             quest->base.quest_kind == mQst_CONTEST_KIND_FLOWER)) {
                     mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR12, quest->contest.player_id.player_name,
                                       PLAYER_NAME_LEN);

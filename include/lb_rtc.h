@@ -16,13 +16,13 @@ extern "C" {
 #define lbRTC_YEAR_MAX 2099
 
 typedef struct OSRTCTime { // from lbrtc library in N64
-  u8 sec;
-  u8 min;
-  u8 hour;
-  u8 day;
-  u8 weekday;
-  u8 month;
-  u16 year;
+    u8 sec;
+    u8 min;
+    u8 hour;
+    u8 day;
+    u8 weekday;
+    u8 month;
+    u16 year;
 } OSRTCTime; 
 
 typedef u8 lbRTC_sec_t;
@@ -33,69 +33,79 @@ typedef u8 lbRTC_weekday_t;
 typedef u8 lbRTC_month_t;
 typedef u16 lbRTC_year_t;
 
-typedef OSRTCTime lbRTC_time_c; /* Name leaked in lbRTC_time_c_save_data_check */
+typedef OSRTCTime lbRTC_time_c;
 
 typedef struct lbRTC_ymd_s {
-  lbRTC_year_t year;
-  lbRTC_month_t month;
-  lbRTC_day_t day;
-} lbRTC_ymd_c; /* Name leaked in mTM_ymd_2_time */
+    lbRTC_year_t year;
+    lbRTC_month_t month;
+    lbRTC_day_t day;
+} lbRTC_ymd_c;
 
 enum WEEKDAYS {
-  lbRTC_WEEKDAYS_BEGIN = 0,
-  lbRTC_SUNDAY = lbRTC_WEEKDAYS_BEGIN,
-  lbRTC_MONDAY,
-  lbRTC_TUESDAY,
-  lbRTC_WEDNESDAY,
-  lbRTC_THURSDAY,
-  lbRTC_FRIDAY,
-  lbRTC_SATURDAY,
-  lbRTC_WEEK,
-  lbRTC_WEEKDAYS_MAX = lbRTC_WEEK
+    lbRTC_WEEKDAYS_BEGIN = 0,
+    lbRTC_SUNDAY = lbRTC_WEEKDAYS_BEGIN,
+    lbRTC_MONDAY,
+    lbRTC_TUESDAY,
+    lbRTC_WEDNESDAY,
+    lbRTC_THURSDAY,
+    lbRTC_FRIDAY,
+    lbRTC_SATURDAY,
+    lbRTC_WEEK,
+    lbRTC_WEEKDAYS_MAX = lbRTC_WEEK
 };
 
 enum MONTHS {
-  lbRTC_MONTHS_BEGIN = 0,
-  lbRTC_JANUARY = 1,
-  lbRTC_FEBRUARY,
-  lbRTC_MARCH,
-  lbRTC_APRIL,
-  lbRTC_MAY,
-  lbRTC_JUNE,
-  lbRTC_JULY,
-  lbRTC_AUGUST,
-  lbRTC_SEPTEMBER,
-  lbRTC_OCTOBER,
-  lbRTC_NOVEMBER,
-  lbRTC_DECEMBER,
-  lbRTC_MONTHS_MAX = lbRTC_DECEMBER
+    lbRTC_MONTHS_BEGIN = 0,
+    lbRTC_JANUARY = 1,
+    lbRTC_FEBRUARY,
+    lbRTC_MARCH,
+    lbRTC_APRIL,
+    lbRTC_MAY,
+    lbRTC_JUNE,
+    lbRTC_JULY,
+    lbRTC_AUGUST,
+    lbRTC_SEPTEMBER,
+    lbRTC_OCTOBER,
+    lbRTC_NOVEMBER,
+    lbRTC_DECEMBER,
+    lbRTC_MONTHS_MAX = lbRTC_DECEMBER
 };
 
 enum RTC_EQUALITY {
-  lbRTC_LESS = -1,
-  lbRTC_EQUAL = 0,
-  lbRTC_OVER = 1
+    lbRTC_LESS = -1,
+    lbRTC_EQUAL = 0,
+    lbRTC_OVER = 1
 };
 
 enum RTC_EQUALITY_FLAGS {
-  lbRTC_CHECK_NONE = 0,           /* 0x00 */
+    lbRTC_CHECK_NONE = 0,           /* 0x00 */
 
-  lbRTC_CHECK_SECONDS = 1 << 0,   /* 0x01 */
-  lbRTC_CHECK_MINUTES = 1 << 1,   /* 0x02 */
-  lbRTC_CHECK_HOURS = 1 << 2,     /* 0x04 */
-  lbRTC_CHECK_WEEKDAYS = 1 << 3,  /* 0x08 */
-  lbRTC_CHECK_DAYS = 1 << 4,      /* 0x10 */
-  lbRTC_CHECK_MONTHS = 1 << 5,    /* 0x20 */
-  lbRTC_CHECK_YEARS = 1 << 6,     /* 0x40 */
+    lbRTC_CHECK_SECONDS = 1 << 0,   /* 0x01 */
+    lbRTC_CHECK_MINUTES = 1 << 1,   /* 0x02 */
+    lbRTC_CHECK_HOURS = 1 << 2,     /* 0x04 */
+    lbRTC_CHECK_WEEKDAYS = 1 << 3,  /* 0x08 */
+    lbRTC_CHECK_DAYS = 1 << 4,      /* 0x10 */
+    lbRTC_CHECK_MONTHS = 1 << 5,    /* 0x20 */
+    lbRTC_CHECK_YEARS = 1 << 6,     /* 0x40 */
 
-  /* 0x7F */
-  lbRTC_CHECK_ALL = lbRTC_CHECK_SECONDS |
-                    lbRTC_CHECK_MINUTES |
-                    lbRTC_CHECK_HOURS |
-                    lbRTC_CHECK_WEEKDAYS |
-                    lbRTC_CHECK_DAYS |
-                    lbRTC_CHECK_MONTHS |
-                    lbRTC_CHECK_YEARS
+    /* 0x07*/
+    lbRTC_CHECK_TIME = lbRTC_CHECK_SECONDS |
+                        lbRTC_CHECK_MINUTES |
+                        lbRTC_CHECK_HOURS,
+
+    /* 0x70 */
+    lbRTC_CHECK_DATE = lbRTC_CHECK_YEARS |
+                        lbRTC_CHECK_MONTHS |
+                        lbRTC_CHECK_DAYS,
+
+    /* 0x7F */
+    lbRTC_CHECK_ALL = lbRTC_CHECK_SECONDS |
+                        lbRTC_CHECK_MINUTES |
+                        lbRTC_CHECK_HOURS |
+                        lbRTC_CHECK_WEEKDAYS |
+                        lbRTC_CHECK_DAYS |
+                        lbRTC_CHECK_MONTHS |
+                        lbRTC_CHECK_YEARS
 };
 
 extern OSTime lbRTC_HardTime();
@@ -105,8 +115,8 @@ extern void lbRTC_SetTime(lbRTC_time_c* time);
 extern void lbRTC_GetTime(lbRTC_time_c* time);
 extern lbRTC_day_t lbRTC_GetDaysByMonth(lbRTC_year_t year, lbRTC_month_t month);
 extern int lbRTC_IsEqualDate(
-  lbRTC_year_t y0, lbRTC_month_t m0, lbRTC_day_t d0,
-  lbRTC_year_t y1, lbRTC_month_t m1, lbRTC_day_t d1
+    lbRTC_year_t y0, lbRTC_month_t m0, lbRTC_day_t d0,
+    lbRTC_year_t y1, lbRTC_month_t m1, lbRTC_day_t d1
 );
 extern int lbRTC_IsEqualTime(const lbRTC_time_c* t0, const lbRTC_time_c* t1, int flags);
 extern int lbRTC_IsOverTime(const lbRTC_time_c* t0, const lbRTC_time_c* t1);
@@ -145,7 +155,7 @@ extern int lbRTC_Weekly_day(lbRTC_year_t year, lbRTC_month_t month, int weeks, i
 #define lbRTC_DAYS_PER_LEAP_YEAR 366
 
 #define lbRTC_IS_LEAPYEAR(year) \
-  ((((year) % 4) == 0 && (((year) % 100) != 0)) || (((year) % 400) == 0))
+    ((((year) % 4) == 0 && (((year) % 100) != 0)) || (((year) % 400) == 0))
 
 #ifdef __cplusplus
 }
