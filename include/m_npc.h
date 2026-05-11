@@ -593,6 +593,10 @@ extern int mNpc_get_npc_param(u8* buf, mActor_name_t npc_name);
 extern int mNpc_GetMatchingPoint(Animal_c* animal0, Animal_c* animal1);
 extern int mNpc_GetSickAnimalIdx_com(mNpc_SickInfo_c* sick_info);
 extern int mNpc_SearchAnimalPersonalID_com(AnmPersonalID_c* anm_pid, Animal_c* animal, int count);
+extern int mNpc_GetAnimal_relation(Animal_c* src_animal, int desired_relation);
+extern int mNpc_GetAnimal_relation_point(Animal_c* src_animal, int points);
+extern int mNpc_AddRelationPoint_id(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id, int amount);
+extern int mNpc_AddFriendshipNowPlayer(AnmPersonalID_c* anm_id, int amount);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];

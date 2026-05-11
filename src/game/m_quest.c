@@ -1159,7 +1159,7 @@ extern int mQst_CheckSoccerTarget(ACTOR* actor) {
             Animal_c* animal = Save_GetPointer(animals[npc_idx]);
 
             if (animal->contest_quest.base.progress == 2) {
-                res = mNpc_CheckCmpAnimalPersonalID(&animal->id, &((NPC_ACTOR*)actor)->npc_info.animal->id);
+                res = mNpc_CheckCmpAnimalPersonalID(&animal->id, &((NPC_ACTOR*)actor)->npc_info.animal_orig->id);
             }
         }
     }
@@ -1177,13 +1177,9 @@ extern void mQst_NextSoccer(ACTOR* actor) {
         contest = &Save_Get(animals[npc_idx]).contest_quest;
 
         if (contest->base.progress == 2 && Common_Get(clip).npc_clip != NULL) {
-            Animal_c* animal = npc_actor->npc_info.animal;
+            looks = mNpc_GetNpcLooks(actor);
 
-            if (animal != NULL) {
-                looks = animal->id.looks;
-            }
-
-            if ((*Common_Get(clip).npc_clip->force_call_req_proc)(npc_actor, 0x0D8B + looks) == TRUE) {
+            if (NPC_CLIP->force_call_req_proc(npc_actor, 0x0D8B + looks) == TRUE) {
                 contest->base.progress = 1;
                 mPr_CopyPersonalID(&contest->player_id, &Now_Private->player_ID);
             }
@@ -1191,43 +1187,642 @@ extern void mQst_NextSoccer(ACTOR* actor) {
     }
 }
 
-/* @unused int? mQst_CheckBallKeep(...?) */
-
 extern void mQst_NextSnowman(xyz_t snowman_pos) {
-    int npc_idx = mQst_GetOccuredContestIdx(0);
-    int block_x;
-    int block_z;
+    // stubbed
+}
 
-    if (npc_idx != -1) {
-        mQst_contest_c* contest;
-        Animal_c* animal = Save_GetPointer(animals[npc_idx]);
+extern void mQst_BackSnowman(xyz_t snowman_pos) {
+    // stubbed
+}
 
-        contest = &animal->contest_quest;
+extern int mQst_GetRandom100(u8* prob_table, int prob_table_size) {
+    static u8 target_table[100];
+    int value;
+    int i;
+    int idx0;
+    int idx1;
+    int j;
+    int total = 0;
+    u8 tmp;
 
-        if (contest->base.progress == 1) {
-            if (mFI_Wpos2BlockNum(&block_x, &block_z, snowman_pos) == TRUE && animal->home_info.block_x == block_x &&
-                animal->home_info.block_z == block_z) {
-                mPr_CopyPersonalID(&contest->player_id, &Now_Private->player_ID);
+    bzero(target_table, sizeof(target_table));
+
+    for (value = 0; value < prob_table_size; value++) {
+        for (i = 0; i < prob_table[value]; i++) {
+            target_table[total++] = value;
+
+            if (total >= 100) {
+                break;
+            }
+        }
+
+        if (total >= 100) {
+            break;
+        }
+    }
+
+    j = 40;
+    while (j-- != 0) {
+        idx0 = RANDOM(100);
+        idx1 = RANDOM(100);
+        tmp = target_table[idx0];
+        target_table[idx0] = target_table[idx1];
+        target_table[idx1] = tmp;
+    }
+
+    return target_table[RANDOM(100)];
+}
+
+typedef struct qst_info_s {
+    u8 type : 2;
+    u8 kind : 6;
+} mQst_info_c;
+
+static mQst_info_c l_mqst_res_table[13] = {
+    { mQst_QUEST_TYPE_DELIVERY, mQst_DELIVERY_KIND_NORMAL },
+    { mQst_QUEST_TYPE_DELIVERY, mQst_DELIVERY_KIND_FOREIGN },
+    { mQst_QUEST_TYPE_DELIVERY, mQst_DELIVERY_KIND_REMOVE },
+    { mQst_QUEST_TYPE_DELIVERY, mQst_DELIVERY_KIND_LOST },
+    { mQst_QUEST_TYPE_DELIVERY, mQst_DELIVERY_KIND_LOST_ITEM },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_SOCCER },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_FLOWER },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_FISH },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_INSECT },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_LETTER },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_FTR },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_SHOP },
+    { mQst_QUEST_TYPE_CONTEST, mQst_CONTEST_KIND_GRASS },
+};
+
+typedef struct quest_reserve_s {
+    int idx;
+    AnmPersonalID_c id;
+} mQst_reserve_c;
+
+static mQst_reserve_c l_mqst_reserve[ANIMAL_NUM_MAX];
+
+static void mQst_InitReserve(mQst_reserve_c* reserve, int count) {
+    for (; count != 0; count--) {
+        reserve->idx = -1;
+        mNpc_ClearAnimalPersonalID(&reserve->id);
+        reserve++;
+    }
+}
+
+extern void mQst_InitReserveAll(void) {
+    mQst_InitReserve(l_mqst_reserve, ARRAY_COUNT(l_mqst_reserve));
+}
+
+extern void mQst_Id2InitReserve(AnmPersonalID_c* id) {
+    Animal_c* animal = Save_Get(animals);
+
+    if (mNpc_CheckFreeAnimalPersonalID(id) == FALSE) {
+        int i;
+
+        for (i = 0; i < ANIMAL_NUM_MAX; i++, animal++) {
+            if (mNpc_CheckCmpAnimalPersonalID(id, &animal->id)) {
+                mQst_InitReserve(&l_mqst_reserve[i], 1);
+                break;
             }
         }
     }
 }
 
-extern void mQst_BackSnowman(xyz_t snowman_pos) {
-    int npc_idx = mQst_GetOccuredContestIdx(0);
-    int block_x;
-    int block_z;
+static int mQst_SetReserveIdx(int* idx_p) {
+    static u8 chk[13];
+    mQst_reserve_c* reserve = l_mqst_reserve;
+    int count = 0;
+    int ret = FALSE;
+    int selected;
+    int idx;
+    int i;
 
-    if (npc_idx != -1) {
-        mQst_contest_c* contest;
-        Animal_c* animal = Save_GetPointer(animals[npc_idx]);
+    *idx_p = -1;
+    bzero(chk, sizeof(chk));
 
-        contest = &animal->contest_quest;
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        idx = reserve->idx;
 
-        if (contest->base.progress == 1) {
-            if (mFI_Wpos2BlockNum(&block_x, &block_z, snowman_pos) == TRUE && animal->home_info.block_x == block_x &&
-                animal->home_info.block_z == block_z) {
-                mPr_ClearPersonalID(&contest->player_id);
+        if (idx >= 0 && idx < ARRAY_COUNT(chk)) {
+            chk[idx] = 1;
+            count++;
+        }
+
+        reserve++;
+    }
+
+    if (count < ARRAY_COUNT(chk)) {
+        selected = RANDOM(ARRAY_COUNT(chk) - count);
+
+        for (i = 0; i < ARRAY_COUNT(chk); i++) {
+            if (chk[i] == 0) {
+                if (selected == 0) {
+                    *idx_p = i;
+                    ret = TRUE;
+                    break;
+                }
+
+                selected--;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static void mQst_GetTarget_common(AnmPersonalID_c* id, Animal_c* animal, int desired_relation, int relation_points) {
+    int idx;
+
+    idx = mNpc_GetAnimal_relation(animal, desired_relation);
+    if (idx == -1) {
+        idx = mNpc_GetAnimal_relation_point(animal, relation_points);
+    }
+
+    if (idx != -1) {
+        AnmPersonalID_c* target_id;
+
+        target_id = &Save_Get(animals[idx]).id;
+        if (mNpc_CheckFreeAnimalPersonalID(target_id) == FALSE) {
+            mNpc_CopyAnimalPersonalID(id, target_id);
+        }
+    }
+}
+
+static void mQst_GetTarget001(AnmPersonalID_c* id, Animal_c* animal) {
+    mQst_GetTarget_common(id, animal, mNpc_RELATION_NORMAL, 0);
+}
+
+static void mQst_GetTarget002(AnmPersonalID_c* id, Animal_c* animal) {
+    int idx;
+
+    idx = mNpc_GetAnimal_relation(animal, mNpc_RELATION_HATE);
+    if (idx == -1) {
+        idx = mNpc_GetAnimal_relation(animal, mNpc_RELATION_DISLIKE);
+    }
+
+    if (idx == -1) {
+        idx = mNpc_GetAnimal_relation_point(animal, -120);
+    }
+
+    if (idx != -1) {
+        AnmPersonalID_c* target_id;
+
+        target_id = &Save_Get(animals[idx]).id;
+        if (mNpc_CheckFreeAnimalPersonalID(target_id) == FALSE) {
+            mNpc_CopyAnimalPersonalID(id, target_id);
+        }
+    }
+}
+
+static void mQst_GetTarget003(AnmPersonalID_c* id, Animal_c* animal) {
+    mQst_GetTarget_common(id, animal, mNpc_RELATION_LIKE, 120);
+}
+
+typedef void (*mQst_GET_TARGET_PROC)(AnmPersonalID_c* id, Animal_c* animal);
+
+static void mQst_SetReserveTarget(AnmPersonalID_c* id, Animal_c* animal, int type) {
+    static mQst_GET_TARGET_PROC get_proc[mQst_DELIVERY_KIND_NUM] = {
+        mQst_GetTarget001, /* mQst_DELIVERY_KIND_NORMAL */
+        mQst_GetTarget002, /* mQst_DELIVERY_KIND_FOREIGN */
+        mQst_GetTarget003, /* mQst_DELIVERY_KIND_REMOVE */
+        NULL,              /* mQst_DELIVERY_KIND_LOST */
+        NULL,              /* mQst_DELIVERY_KIND_LOST_ITEM */
+    };
+
+    u32 qst_type;
+    u32 qst_kind;
+
+    if (mQst_GetReserveQuest(&qst_type, &qst_kind, type) == TRUE && qst_type == mQst_QUEST_TYPE_DELIVERY &&
+        get_proc[qst_kind] != NULL) {
+        get_proc[qst_kind](id, animal);
+    }
+}
+
+extern void mQst_SetReverveAll(void) {
+    static u8 chk[ANIMAL_NUM_MAX];
+    Animal_c* animal = Save_Get(animals);
+    f32 pool = ANIMAL_NUM_MAX;
+    int pick;
+    int success;
+    int j;
+    int i;
+
+    bzero(chk, sizeof(chk));
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++, pool -= 1.0f) {
+        pick = (int)RANDOM_F(pool);
+        success = TRUE;
+
+        for (j = 0; j < ANIMAL_NUM_MAX; j++) {
+            if (chk[j] == FALSE) {
+                if (pick == 0) {
+                    chk[j] = TRUE;
+
+                    if (mNpc_CheckFreeAnimalPersonalID(&animal[j].id) == FALSE) {
+                        if (l_mqst_reserve[j].idx == -1) {
+                            success = mQst_SetReserveIdx(&l_mqst_reserve[j].idx);
+                            if (success == TRUE) {
+                                mQst_SetReserveTarget(&l_mqst_reserve[j].id, &animal[j], l_mqst_reserve[j].idx);
+                            }
+                        }
+                    }
+
+                    break;
+                }
+
+                pick--;
+            }
+        }
+
+        if (success == FALSE) {
+            break;
+        }
+    }
+}
+
+extern int mQst_GetReserve(AnmPersonalID_c* id, Animal_c* animal) {
+    Animal_c* animals = Save_Get(animals);
+    int ret = -1;
+    int i;
+
+    if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+        for (i = 0; i < ANIMAL_NUM_MAX; i++, animals++) {
+            if (mNpc_CheckCmpAnimalPersonalID(&animal->id, &animals->id) == TRUE) {
+                ret = l_mqst_reserve[i].idx;
+                mNpc_CopyAnimalPersonalID(id, &l_mqst_reserve[i].id);
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
+extern int mQst_GetReserveQuest(u32* qst_type, u32* qst_kind, int type) {
+    mQst_info_c* info = &l_mqst_res_table[type];
+    int ret = FALSE;
+
+    if (type >= 0 && type < ARRAY_COUNT(l_mqst_res_table)) {
+        *qst_type = info->type;
+        *qst_kind = info->kind;
+        ret = TRUE;
+    }
+    return ret;
+}
+
+extern int mQst_CheckRenewalReserve(void) {
+    Animal_c* animal = Save_Get(animals);
+    mQst_reserve_c* reserve = l_mqst_reserve;
+    int ret = FALSE;
+    int count = 0;
+    int i;
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+            if (reserve->idx == -1) {
+                count++;
+            }
+        }
+
+        animal++;
+        reserve++;
+    }
+
+    if (count >= 5) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static u8 l_mqst_qbox_prob_table[5] = { 20, 20, 20, 20, 20 };
+
+static int mQst_GetQBoxItemIdx(void) {
+    return mQst_GetRandom100(l_mqst_qbox_prob_table, ARRAY_COUNT(l_mqst_qbox_prob_table));
+}
+
+extern mActor_name_t mQst_GetQBoxItem(void) {
+    int idx = mQst_GetQBoxItemIdx();
+    mActor_name_t item = ITM_PAPER_START;
+
+    if (idx == 4) {
+        mSP_RandomUmbSelect(&item, 1);
+    } else if (idx >= 0 && idx < 4) {
+        static int category_table[] = { mSP_KIND_FURNITURE, mSP_KIND_CARPET, mSP_KIND_WALLPAPER, mSP_KIND_PAPER };
+        mSP_SelectRandomItem_New(NULL, &item, 1, NULL, 0, category_table[idx], mSP_LISTTYPE_ABC, FALSE);
+    }
+
+    return item;
+}
+
+extern void mQst_OpenQBox(int idx) {
+    int delivery_idx = mQst_GetDeliveryIdxbyItemIdx(idx);
+
+    if (delivery_idx != -1) {
+        mQst_delivery_c* delivery = Now_Private->deliveries + delivery_idx;
+
+        if (delivery->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+            delivery->base.quest_kind < mQst_DELIVERY_KIND_LOST) {
+            delivery->base.progress = 1;
+
+            mNpc_AddRelationPoint_id(&delivery->sender, &delivery->recipient, -60);
+            mNpc_AddFriendshipNowPlayer(&delivery->sender, -60);
+            mNpc_CopyAnimalPersonalID(&delivery->_34, &delivery->recipient);
+            mNpc_ClearAnimalPersonalID(&delivery->recipient);
+            lbRTC_Add_DD(&delivery->base.time_limit, lbRTC_WEEK);
+        }
+    }
+}
+
+extern int mQst_GetLostOwnerName(u8* buf, mActor_name_t item) {
+    mQst_delivery_c* lost_item_quest = &Now_Private->lost_item_quest;
+    int ret = FALSE;
+
+    if (buf != NULL && IS_ITEM_LOST_ITEM(item)) {
+        if (mQst_CheckFreeQuest(&lost_item_quest->base) == FALSE &&
+            mNpc_CheckFreeAnimalPersonalID(&lost_item_quest->sender) == FALSE) {
+            mNpc_GetNpcWorldNameAnm(buf, &lost_item_quest->sender);
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static int mQst_CheckLostItemPos_bk(mActor_name_t* fg_p, mCoBG_Collision_u* col_p) {
+    int ret = 0;
+
+    if (fg_p != NULL && col_p != NULL) {
+        int i;
+
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (*fg_p == EMPTY_NO && mCoBG_CheckPlace_OrgAttr(col_p->data.unit_attribute) == TRUE) {
+                ret++;
+            }
+
+            fg_p++;
+            col_p++;
+        }
+    }
+
+    return ret;
+}
+
+static int mQst_SetLostItem_bk(mActor_name_t* lost_item_p, int bx, int bz) {
+    mActor_name_t* fg_p = NULL;
+    mCoBG_Collision_u* col_p = NULL;
+    int ret = FALSE;
+    int place_count;
+
+    if (bx > 0 && bx < BLOCK_X_NUM - 1 && bz > 0 && bz < BLOCK_Z_NUM - 3) {
+        fg_p = (mActor_name_t*)Save_Get(fg[bz - 1][bx - 1]).items;
+        col_p = mFM_GetBkNum2Col(bx, bz);
+    }
+
+    place_count = mQst_CheckLostItemPos_bk(fg_p, col_p);
+    if (place_count > 0) {
+        static mActor_name_t q_item_table[] = {
+            ITM_QST_LOST_CLOTH, ITM_QST_LOST_ROD,      ITM_QST_LOST_NET, ITM_QST_LOST_SHOVEL,
+            ITM_QST_LOST_AXE,   ITM_QST_LOST_PINWHEEL, ITM_QST_LOST_FAN, ITM_QST_LOST_GYROID,
+        };
+        mActor_name_t qst_item = q_item_table[RANDOM(ARRAY_COUNT(q_item_table))];
+        int selected = RANDOM(place_count);
+        int i;
+
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (*fg_p == EMPTY_NO && mCoBG_CheckPlace_OrgAttr(col_p->data.unit_attribute) == TRUE) {
+                if (selected == 0) {
+                    *fg_p = qst_item;
+                    *lost_item_p = qst_item;
+                    ret = TRUE;
+                    break;
+                }
+
+                selected--;
+            }
+
+            fg_p++;
+            col_p++;
+        }
+    }
+
+    return ret;
+}
+
+extern int mQst_CheckLostItemPos(int player_bx, int player_bz) {
+    int ret = FALSE;
+    int bz;
+    int bx;
+
+    for (bz = 1; bz < BLOCK_Z_NUM - 3; bz++) {
+        for (bx = 1; bx < BLOCK_X_NUM - 1; bx++) {
+            if (bx < player_bx - 1 || bx > player_bx + 1 || bz < player_bz - 1 || bz > player_bz + 1) {
+                mActor_name_t* fg_p = (mActor_name_t*)Save_Get(fg[bz - 1][bx - 1]).items;
+                mCoBG_Collision_u* col_p = mFM_GetBkNum2Col(bx, bz);
+
+                if (mQst_CheckLostItemPos_bk(fg_p, col_p) > 0) {
+                    ret = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (ret != FALSE) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+extern int mQst_SetLostItem(mActor_name_t* lost_item_p, int player_bx, int player_bz) {
+    static u8 null_ut_num[FG_BLOCK_TOTAL_NUM];
+
+    int count = 0;
+    int ret = FALSE;
+    int i = 0;
+    int bz;
+    int bx;
+    int selected;
+
+    bzero(null_ut_num, sizeof(null_ut_num));
+
+    for (bz = 1; bz < BLOCK_Z_NUM - 3; bz++) {
+        for (bx = 1; bx < BLOCK_X_NUM - 1; bx++) {
+            if (bx < player_bx - 1 || bx > player_bx + 1 || bz < player_bz - 1 || bz > player_bz + 1) {
+                mActor_name_t* fg_p = (mActor_name_t*)Save_Get(fg[bz - 1][bx - 1]).items;
+                mCoBG_Collision_u* col_p = mFM_GetBkNum2Col(bx, bz);
+
+                null_ut_num[i] = mQst_CheckLostItemPos_bk(fg_p, col_p);
+            }
+
+            if (null_ut_num[i] != 0) {
+                count++;
+            }
+
+            i++;
+            if (i >= FG_BLOCK_TOTAL_NUM) {
+                break;
+            }
+        }
+    }
+
+    if (count > 0) {
+        selected = RANDOM(count);
+
+        for (i = 0; i < FG_BLOCK_TOTAL_NUM; i++) {
+            if (null_ut_num[i] != 0) {
+                if (selected == 0) {
+                    ret = mQst_SetLostItem_bk(lost_item_p, FGIDX_2_BLOCK_X(i), FGIDX_2_BLOCK_Z(i));
+                    break;
+                }
+
+                selected--;
+            }
+        }
+    }
+
+    return ret;
+}
+
+extern int mQst_SetLostCondition(mActor_name_t item, int slot_idx) {
+    mQst_delivery_c* lost_item_quest = &Now_Private->lost_item_quest;
+    int ret = FALSE;
+
+    if (IS_ITEM_LOST_ITEM(item) && slot_idx >= 0 && slot_idx < mPr_POCKETS_SLOT_COUNT &&
+        mQst_CheckFreeQuest(&lost_item_quest->base) == FALSE && lost_item_quest->base.progress == 3 &&
+        Now_Private->inventory.pockets[slot_idx] == item) {
+        Now_Private->inventory.item_conditions[slot_idx] = mPr_ITEM_COND_LOST_ITEM;
+        lost_item_quest->base.progress = 0;
+        mNpc_CopyAnimalPersonalID(&lost_item_quest->recipient, &lost_item_quest->sender);
+    }
+
+    return ret;
+}
+
+extern int mQst_SetLostCondition_menu(void) {
+    Private_c* priv = Now_Private;
+    mQst_delivery_c* lost_item_quest;
+    u8* cond;
+    mActor_name_t* item;
+    int ret = FALSE;
+
+    if (priv != NULL) {
+        lost_item_quest = &priv->lost_item_quest;
+
+        if (mQst_CheckFreeQuest(&lost_item_quest->base) == FALSE &&
+            lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM &&
+            lost_item_quest->base.progress == 3) {
+            int i;
+
+            item = priv->inventory.pockets;
+            cond = priv->inventory.item_conditions;
+            for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+                if (IS_ITEM_LOST_ITEM(*item) && (*cond & 0xF) == mPr_ITEM_COND_LOST_ITEM) {
+                    *cond = mPr_ITEM_COND_LOST_ITEM;
+                    lost_item_quest->base.progress = 0;
+                    mNpc_CopyAnimalPersonalID(&lost_item_quest->recipient, &lost_item_quest->sender);
+                    ret = TRUE;
+                    break;
+                }
+
+                item++;
+                cond++;
+            }
+        }
+    }
+
+    return ret;
+}
+
+#if VERSION == VER_GAEJ01_01
+extern void mQst_KeepLostQuest(mActor_name_t item) {
+    Private_c* priv = Now_Private;
+    mQst_delivery_c* lost_item_quest;
+
+    if (IS_ITEM_LOST_ITEM(item)) {
+        lost_item_quest = &priv->lost_item_quest;
+
+        if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+            lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM) {
+            lost_item_quest->base.progress = 2;
+            lbRTC_Add_DD(&lost_item_quest->base.time_limit, 3);
+        }
+    }
+}
+#endif
+
+extern void mQst_ClearLostQuest(void) {
+    mFM_fg_c* fg_block_p;
+    mActor_name_t* item_p;
+    mQst_delivery_c* lost_item_quest;
+    int i;
+    int j;
+
+
+    fg_block_p = Save_Get(fg[0]);
+    for (i = 0; i < FG_BLOCK_TOTAL_NUM; i++) {
+        item_p = (mActor_name_t*)fg_block_p->items;
+
+        for (j = 0; j < UT_TOTAL_NUM; j++) {
+            if (IS_ITEM_LOST_ITEM(*item_p)) {
+                // @BUG - devs accidentally took the address of Now_Private
+#ifndef BUGFIXES
+                if (&Now_Private != NULL) {
+#else
+                if (Now_Private != NULL) {
+#endif
+                    lost_item_quest = &Now_Private->lost_item_quest;
+
+                    if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+                        lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM) {
+                        lost_item_quest->base.progress = 2;
+                        lbRTC_Add_DD(&lost_item_quest->base.time_limit, 3);
+                    }
+                }
+
+                *item_p = EMPTY_NO;
+                break;
+            }
+
+            item_p++;
+        }
+
+        if (j != UT_TOTAL_NUM) {
+            break;
+        }
+
+        fg_block_p++;
+    }
+}
+
+extern void mQst_SetLostAfterRecovery(PersonalID_c* pid) {
+    Private_c* priv;
+    mQst_delivery_c* lost_item_quest;
+    int priv_idx;
+
+    if (pid != NULL && mPr_NullCheckPersonalID(pid) == FALSE) {
+        priv_idx = mPr_GetPrivateIdx(pid);
+
+        if (priv_idx != -1) {
+            priv = &Save_Get(private_data[priv_idx]);
+
+            if (priv->exists == TRUE) {
+                lost_item_quest = &priv->lost_item_quest;
+
+                // @BUG - progress state 3 was missing
+#if VERSION == VER_GAEJ01_01
+                if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+                    lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM &&
+                    (lost_item_quest->base.progress == 3 || lost_item_quest->base.progress == 2)) {
+                    lost_item_quest->base.progress = 1;
+                }
+#else
+                if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+                    lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM &&
+                    (lost_item_quest->base.progress == 2)) {
+                    lost_item_quest->base.progress = 1;
+                }
+#endif
             }
         }
     }

@@ -275,8 +275,14 @@ extern void mQst_BackSnowman(xyz_t snowman_pos);
 extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint);
 
 extern int mQst_GetIdxTalkSelect(int lower_bound, int upper_bound, int looks);
-extern void mQst_SetLostCondition(mActor_name_t item, int slot_idx);
+extern int mQst_SetLostCondition(mActor_name_t item, int slot_idx);
+#if VERSION == VER_GAEJ01_01
+extern void mQst_KeepLostQuest(mActor_name_t item);
+#endif
+extern void mQst_ClearLostQuest(void);
+extern void mQst_SetLostAfterRecovery(PersonalID_c* pid);
 extern int mQst_GetLostOwnerName(u8* buf, mActor_name_t item);
+extern int mQst_GetReserveQuest(u32* qst_type, u32* qst_kind, int type);
 
 #ifdef __cplusplus
 }
