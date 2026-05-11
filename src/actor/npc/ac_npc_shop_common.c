@@ -616,15 +616,15 @@ static int aNSC_pc_check_password(NPC_SHOP_COMMON_ACTOR* shop_common) {
     };
 
     int res = aNSC_PSW_RES_0;
-    u8 buff[24];
+    u8 buff[1 + mMpswd_PASSWORD_DATA_LEN];
 
     if (shop_common->password_str[mMpswd_PASSWORD_STR_LEN - 1] == CHAR_SPACE) {
         res = aNSC_PSW_RES_9;
     } else {
-        if (mMpswd_decode_code(buff, shop_common->password_str) == TRUE) {
+        if (mMpswd_new_decode_code(buff, shop_common->password_str) == TRUE) {
             mMpswd_password_c* password = &shop_common->password;
 
-            mMpswd_password(buff, password);
+            mMpswd_password(password, buff);
             if (mMpswd_password_zuru_check(password) == FALSE && mMpswd_check_present(password) == TRUE) {
                 aNSC_set_pw_password_str(shop_common);
                 aNSC_set_pw_info_str(shop_common);
@@ -648,7 +648,7 @@ static int aNSC_check_possession_item_make_password(NPC_SHOP_COMMON_ACTOR* shop_
     item = Now_Private->inventory.pockets;
     for (i = 0; i < 15; i++) {
         if ((*item != EMPTY_NO) && (mPr_GET_ITEM_COND(Now_Private->inventory.item_conditions, i) == 0) &&
-            mMpswd_check_present_user(*item) == TRUE) {
+            mMpswd_new_check_present_user(*item) == TRUE) {
             res = 1;
             flags |= (1 << i);
         }
@@ -2651,7 +2651,7 @@ static void aNSC_pw_send_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* pl
                 case mChoice_CHOICE0: {
                     Submenu_Item_c* submenu_item = play->submenu.item_p;
                     mMpswd_make_password(shop_common->password_str, 0x4, 0x1, shop_common->pw_recip_str,
-                                         shop_common->pw_town_str, shop_common->pw_item, 0x0, 0x0);
+                                         shop_common->pw_town_str, NULL, shop_common->pw_item, 0x0, 0x0);
                     aNSC_set_pw_password_str(shop_common);
                     mPr_SetPossessionItem(Now_Private, submenu_item->slot_no, EMPTY_NO, mPr_ITEM_COND_NORMAL);
                     choice = 0;

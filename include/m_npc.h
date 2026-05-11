@@ -598,6 +598,9 @@ extern int mNpc_GetAnimal_relation_point(Animal_c* src_animal, int points);
 extern int mNpc_AddRelationPoint_id(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id, int amount);
 extern int mNpc_AddFriendshipNowPlayer(AnmPersonalID_c* anm_id, int amount);
 extern void mNpc_InitSickAnimal(mNpc_SickInfo_c* sick_info, AnmPersonalID_c* anm_id, lbRTC_time_c* time);
+extern void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
+    u8 paper_type, int mail_no);
+extern int mNpc_CheckCmpSickAnimalName(u8* name);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];

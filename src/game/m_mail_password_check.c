@@ -9,15 +9,35 @@
 #include "_mem.h"
 #include "m_common_data.h"
 #include "libultra/libultra.h"
+#include "m_text.h"
+#include "m_handbill.h"
+#include "m_post_office.h"
+#include "m_string.h"
+
+#ifdef __INTELLISENSE__
+#define __abs(x) ABS(x)
+#endif
 
 static u8 usable_to_fontnum[64] = {
-    CHAR_b,   CHAR_K,       CHAR_z, CHAR_FIVE, CHAR_c,       CHAR_q, CHAR_Y,     CHAR_Z,     CHAR_O,     CHAR_d,
-    CHAR_t,   CHAR_SIX,     CHAR_n, CHAR_l,    CHAR_B,       CHAR_y, CHAR_o,     CHAR_EIGHT, CHAR_FOUR,  CHAR_L,
-    CHAR_k,   CHAR_PERCENT, CHAR_A, CHAR_Q,    CHAR_m,       CHAR_D, CHAR_P,     CHAR_I,     CHAR_SEVEN, CHAR_AMPERSAND,
-    CHAR_R,   CHAR_s,       CHAR_w, CHAR_U,    CHAR_HASHTAG, CHAR_r, CHAR_THREE, CHAR_E,     CHAR_x,     CHAR_M,
-    CHAR_C,   CHAR_AT_SIGN, CHAR_e, CHAR_NINE, CHAR_g,       CHAR_v, CHAR_V,     CHAR_G,     CHAR_u,     CHAR_N,
-    CHAR_i,   CHAR_X,       CHAR_W, CHAR_f,    CHAR_T,       CHAR_J, CHAR_F,     CHAR_S,     CHAR_H,     CHAR_p,
-    CHAR_TWO, CHAR_a,       CHAR_j, CHAR_h,
+    CHAR_PP_000, CHAR_PP_001, CHAR_PP_002, CHAR_PP_003, CHAR_PP_004, CHAR_PP_005, CHAR_PP_006, CHAR_PP_007,
+    CHAR_PP_008, CHAR_PP_009, CHAR_PP_010, CHAR_PP_011, CHAR_PP_012, CHAR_PP_013, CHAR_PP_014, CHAR_PP_015,
+    CHAR_PP_016, CHAR_PP_017, CHAR_PP_018, CHAR_PP_019, CHAR_PP_020, CHAR_PP_021, CHAR_PP_022, CHAR_PP_023,
+    CHAR_PP_024, CHAR_PP_025, CHAR_PP_026, CHAR_PP_027, CHAR_PP_028, CHAR_PP_029, CHAR_PP_030, CHAR_PP_031,
+    CHAR_PP_035, CHAR_PP_036, CHAR_PP_091, CHAR_PP_093, CHAR_PP_094, CHAR_PP_096, CHAR_PP_123, CHAR_PP_124,
+    CHAR_PP_125, CHAR_PP_126, CHAR_PP_192, CHAR_PP_193, CHAR_PP_194, CHAR_PP_195, CHAR_PP_231, CHAR_PP_232,
+    CHAR_PP_233, CHAR_PP_234, CHAR_PP_235, CHAR_PP_236, CHAR_PP_237, CHAR_PP_238, CHAR_PP_239, CHAR_PP_240,
+    CHAR_PP_241, CHAR_PP_242, CHAR_PP_243, CHAR_PP_244, CHAR_PP_245, CHAR_PP_247, CHAR_PP_248, CHAR_PP_249,
+};
+
+static u8 usable_to_fontnum_new[64] = {
+    CHAR_PP_010, CHAR_PP_031, CHAR_PP_029, CHAR_PP_240, CHAR_PP_241, CHAR_PP_245, CHAR_PP_013, CHAR_PP_005,
+    CHAR_PP_242, CHAR_PP_030, CHAR_PP_231, CHAR_PP_096, CHAR_PP_235, CHAR_PP_017, CHAR_PP_023, CHAR_PP_004,
+    CHAR_PP_237, CHAR_PP_021, CHAR_PP_035, CHAR_PP_233, CHAR_PP_232, CHAR_PP_239, CHAR_PP_022, CHAR_PP_016,
+    CHAR_PP_009, CHAR_PP_244, CHAR_PP_194, CHAR_PP_018, CHAR_PP_248, CHAR_PP_192, CHAR_PP_015, CHAR_PP_195,
+    CHAR_PP_247, CHAR_PP_091, CHAR_PP_123, CHAR_PP_094, CHAR_PP_008, CHAR_PP_000, CHAR_PP_025, CHAR_PP_002,
+    CHAR_PP_249, CHAR_PP_036, CHAR_PP_026, CHAR_PP_012, CHAR_PP_236, CHAR_PP_124, CHAR_PP_014, CHAR_PP_234,
+    CHAR_PP_001, CHAR_PP_019, CHAR_PP_007, CHAR_PP_126, CHAR_PP_024, CHAR_PP_243, CHAR_PP_020, CHAR_PP_028,
+    CHAR_PP_093, CHAR_PP_003, CHAR_PP_238, CHAR_PP_027, CHAR_PP_011, CHAR_PP_125, CHAR_PP_193, CHAR_PP_006,
 };
 
 static int mMpswd_prime_number[256] = {
@@ -135,22 +155,22 @@ static u8 mMpswd_chg_code_table[256] = {
     0xe2, 0x21, 0x1e, 0xa2, 0xbd, 0x5a, 0xd8, 0x43, 0x7a,
 };
 
-static int mMpswd_select_idx0[8] = { 17, 11, 0, 10, 12, 6, 8, 4 };
-static int mMpswd_select_idx1[8] = { 3, 8, 11, 16, 4, 6, 9, 19 };
-static int mMpswd_select_idx2[8] = { 9, 14, 17, 18, 11, 10, 12, 2 };
-static int mMpswd_select_idx3[8] = { 0, 2, 1, 4, 18, 10, 12, 8 };
-static int mMpswd_select_idx4[8] = { 17, 19, 16, 7, 12, 8, 2, 9 };
-static int mMpswd_select_idx5[8] = { 16, 3, 1, 8, 18, 4, 7, 6 };
-static int mMpswd_select_idx6[8] = { 19, 6, 10, 17, 3, 16, 8, 9 };
-static int mMpswd_select_idx7[8] = { 17, 7, 18, 16, 12, 2, 11, 0 };
-static int mMpswd_select_idx8[8] = { 6, 2, 12, 1, 8, 14, 0, 16 };
-static int mMpswd_select_idx9[8] = { 19, 16, 11, 8, 17, 3, 6, 14 };
-static int mMpswd_select_idx10[8] = { 18, 12, 2, 7, 10, 11, 1, 14 };
-static int mMpswd_select_idx11[8] = { 8, 0, 14, 2, 7, 11, 12, 17 };
-static int mMpswd_select_idx12[8] = { 9, 3, 2, 0, 11, 8, 14, 10 };
-static int mMpswd_select_idx13[8] = { 10, 11, 12, 16, 19, 7, 17, 8 };
+static int mMpswd_select_idx0[8] = { 17, 11, 0, 20, 14, 6, 8, 4 };
+static int mMpswd_select_idx1[8] = { 5, 8, 11, 16, 4, 6, 9, 19 };
+static int mMpswd_select_idx2[8] = { 9, 14, 17, 21, 11, 10, 19, 2 };
+static int mMpswd_select_idx3[8] = { 0, 2, 1, 4, 18, 10, 11, 8 };
+static int mMpswd_select_idx4[8] = { 17, 19, 16, 20, 14, 8, 2, 9 };
+static int mMpswd_select_idx5[8] = { 16, 2, 1, 8, 18, 4, 7, 6 };
+static int mMpswd_select_idx6[8] = { 19, 6, 10, 17, 1, 16, 8, 9 };
+static int mMpswd_select_idx7[8] = { 17, 7, 18, 16, 15, 2, 11, 0 };
+static int mMpswd_select_idx8[8] = { 6, 2, 11, 1, 8, 14, 0, 16 };
+static int mMpswd_select_idx9[8] = { 19, 16, 11, 8, 17, 2, 6, 14 };
+static int mMpswd_select_idx10[8] = { 18, 15, 2, 7, 10, 11, 1, 14 };
+static int mMpswd_select_idx11[8] = { 8, 0, 14, 2, 20, 11, 15, 17 };
+static int mMpswd_select_idx12[8] = { 9, 1, 2, 0, 19, 8, 14, 10 };
+static int mMpswd_select_idx13[8] = { 10, 11, 14, 16, 19, 7, 17, 8 };
 static int mMpswd_select_idx14[8] = { 19, 8, 6, 1, 17, 9, 14, 10 };
-static int mMpswd_select_idx15[8] = { 9, 7, 17, 12, 19, 10, 1, 11 };
+static int mMpswd_select_idx15[8] = { 9, 7, 17, 14, 19, 10, 1, 11 };
 
 static int* mMpswd_select_idx_table[16] = {
     mMpswd_select_idx0,  mMpswd_select_idx1,  mMpswd_select_idx2,  mMpswd_select_idx3,
@@ -158,6 +178,57 @@ static int* mMpswd_select_idx_table[16] = {
     mMpswd_select_idx8,  mMpswd_select_idx9,  mMpswd_select_idx10, mMpswd_select_idx11,
     mMpswd_select_idx12, mMpswd_select_idx13, mMpswd_select_idx14, mMpswd_select_idx15,
 };
+
+static void mMpswd_shift(u8* bits, int count, int amount) {
+    u8 shift_bits[mMpswd_OLD_PASSWORD_BITS_LEN];
+    u8* shift_p;
+    int shift;
+    int i;
+
+    shift = -amount;
+    shift_p = shift_bits;
+    for (i = 0; i < count; i++) {
+        if (shift >= count) {
+            shift = 0;
+        }
+
+        if (shift < 0) {
+            shift += count;
+        }
+
+        *shift_p++ = bits[shift++];
+    }
+
+    memcpy(bits, shift_bits, sizeof(shift_bits));
+}
+
+static void mMpswd_hanten(u8* bits, int count) {
+    u8 hanten_bits[mMpswd_OLD_PASSWORD_BITS_LEN];
+    int i;
+
+    for (i = 0; i < count; i++) {
+        hanten_bits[i] = ~bits[i] & 1;
+    }
+
+    memcpy(bits, hanten_bits, sizeof(hanten_bits));
+}
+
+static void mMpswd_reverse(u8* bits, int count) {
+    u8 reverse_bits[mMpswd_OLD_PASSWORD_BITS_LEN];
+    u8* src_p;
+    u8* dst_p;
+    int max;
+    int i;
+
+    max = count - 1;
+    src_p = bits + max;
+    dst_p = reverse_bits;
+    for (i = 0; i <= max; i++) {
+        *dst_p++ = *src_p--;
+    }
+
+    memcpy(bits, reverse_bits, sizeof(reverse_bits));
+}
 
 static void mMpswd_bit_shift(u8* pswd, int shift) {
     u8 buf[mMpswd_PASSWORD_DATA_LEN - 1];
@@ -277,67 +348,99 @@ static void mMpswd_bit_arrange_reverse(u8* pswd) {
     memcpy(pswd + 2, reversed_buf + 1, mMpswd_PASSWORD_DATA_LEN - 2);
 }
 
-static int mMpswd_check_opening_sentence(const u8* sentence) {
-    int res = TRUE;
-    if (sentence[0] != CHAR_SYMBOL_KEY) {
-        res = FALSE;
+static int mMpswd_check_opening_sentence(const u16* sentence) {
+    int res = FALSE;
+
+    // あいことば
+    if (sentence[0] == CHAR_PP_000 && sentence[1] == CHAR_PP_001 && sentence[2] == CHAR_PP_009 &&
+        sentence[3] == CHAR_PP_019 && sentence[4] == CHAR_PP_246) {
+        res = TRUE;
+    } else if (sentence[0] == (0x100 + CHAR_PP_KANJI0_005)) { // key
+        res = TRUE;
     }
 
     return res;
 }
 
-static u8* mMpswd_get_password_pointer(u8* sentence) {
-    int i;
-    u8* ptr = NULL;
-
-    for (i = 0; i < 32; i++) {
-        if (sentence[0] == CHAR_NEW_LINE) {
-            if (sentence[15] == CHAR_NEW_LINE) {
-                ptr = sentence + 1;
-            }
-
-            break;
-        }
-
-        sentence++;
-    }
-
-    return ptr;
-}
-
-static void mMpswd_except_return_code(u8* dst, u8* src) {
+static int mMpswd_check_version(u16** text_pp) {
+    u16* next_p;
+    int ret = mMpswd_VERSION_BAD;
     int i;
 
-    for (i = 0; i < 29; i++, src++) {
-        // src[14] is always going to be the newline character
-        if (i != 14) {
-            dst[0] = src[0];
-            dst++;
-        }
-    }
-}
+    for (i = 0; i < 16; i++) {
+        if ((*text_pp)[0] == CHAR_NEW_LINE) {
+            next_p = (*text_pp) + 1;
 
-static void mMpswd_adjust_letter(u8* pswd_str) {
-    int i;
-
-    for (i = 0; i < mMpswd_PASSWORD_STR_LEN; i++) {
-        switch (*pswd_str) {
-            case CHAR_ZERO: {
-                *pswd_str = CHAR_O; // 0 -> O
+            if (next_p[11] == CHAR_NEW_LINE) {
+                *text_pp = next_p;
+                ret = mMpswd_VERSION_OLD;
                 break;
             }
 
-            case CHAR_ONE: {
-                *pswd_str = CHAR_l; // 1 -> l
+            if (next_p[0x1B] == CHAR_NEW_LINE) {
+                if (next_p[11] == CHAR_SPACE && next_p[0xC] == CHAR_SPACE && next_p[0xD] == CHAR_SPACE &&
+                    next_p[0xE] == CHAR_SPACE && next_p[0xF] == CHAR_SPACE) {
+                    *text_pp = next_p;
+                    ret = mMpswd_VERSION_OLD;
+                    break;
+                }
+            } else if (next_p[0x20] == CHAR_SPACE || next_p[0x20] == CHAR_NEW_LINE) {
+                if (next_p[11] == CHAR_SPACE && next_p[0xC] == CHAR_SPACE && next_p[0xD] == CHAR_SPACE &&
+                    next_p[0xE] == CHAR_SPACE && next_p[0xF] == CHAR_SPACE && next_p[0x1B] == CHAR_SPACE &&
+                    next_p[0x1C] == CHAR_SPACE && next_p[0x1D] == CHAR_SPACE && next_p[0x1E] == CHAR_SPACE &&
+                    next_p[0x1F] == CHAR_SPACE) {
+                    *text_pp = next_p;
+                    ret = mMpswd_VERSION_OLD;
+                    break;
+                }
+
+                *text_pp = next_p;
+                ret = mMpswd_VERSION_NEW;
                 break;
             }
         }
 
-        pswd_str++;
+        (*text_pp)++;
     }
+
+    return ret;
 }
 
-static void mMpswd_make_passcode(u8* passcode, int type, int hit_rate, u8* str0, u8* str1, mActor_name_t item,
+static void mMpswd_except_return_code(u8* dst, u16* src, int version) {
+    u16 password_str[mMpswd_PASSWORD_STR_LEN];
+    int len = mMpswd_PASSWORD_STR_LEN;
+
+    if (version == mMpswd_VERSION_OLD) {
+        int i;
+        int count;
+
+        mem_clear((u8*)password_str, sizeof(password_str), CHAR_NEW_LINE);
+
+        count = 0;
+        for (i = 0; i < mMpswd_PASSWORD_STR_LEN + 1; i++) {
+            switch (src[i]) {
+                case CHAR_NEW_LINE:
+                case CHAR_SPACE:
+                    break;
+                default:
+                    password_str[count] = src[i];
+                    count++;
+                    if (count >= mMpswd_OLD_PASSWORD_STR_LEN) {
+                        i = mMpswd_PASSWORD_STR_LEN;
+                    }
+                    break;
+            }
+        }
+
+        len = mMpswd_OLD_PASSWORD_STR_LEN;
+    } else {
+        mem_copy((u8*)password_str, (u8*)src, mMpswd_PASSWORD_STR_LEN * sizeof(u16));
+    }
+
+    mTxt_conv_9or8bit(password_str, dst, len);
+}
+
+static void mMpswd_make_passcode(u8* passcode, int type, int hit_rate, u8* str0, u8* str1, u8* str2, mActor_name_t item,
                                  int npc_type, int npc_code) {
     int checksum;
 
@@ -345,45 +448,58 @@ static void mMpswd_make_passcode(u8* passcode, int type, int hit_rate, u8* str0,
         case mMpswd_CODETYPE_FAMICOM:
         case mMpswd_CODETYPE_USER:
         case mMpswd_CODETYPE_CARD_E_MINI: {
-            hit_rate = 1;
+            hit_rate = 4;
+            npc_type = 0;
             npc_code = 0xFF;
             break;
         }
 
-        case mMpswd_CODETYPE_POPULAR: {
-            hit_rate =
-                4; // potential bug? when code is set to popularity contest, hitrate interferes with checksum bits
+        case mMpswd_CODETYPE_MONUMENT: {
+            npc_type &= 0xFF;
+            hit_rate = 4;
+            npc_code = 0xFF;
+            break;
+        }
+
+        case mMpswd_CODETYPE_NPC:
+        case mMpswd_CODETYPE_NPC_NEW: {
+            npc_type &= 3;
+            hit_rate = 4;
             break;
         }
 
         case mMpswd_CODETYPE_CARD_E: {
+            hit_rate &= 3;
+            npc_type &= 3;
             break;
         }
 
         case mMpswd_CODETYPE_MAGAZINE: {
-            npc_type = (hit_rate >> 2) & 1;
-            hit_rate &= 3;
+            npc_type = 0;
+            hit_rate &= 7;
             npc_code = 0xFF;
             break;
         }
 
         default: {
+            hit_rate = 4;
             type = mMpswd_CODETYPE_USER;
             break;
         }
     }
 
     passcode[0] = type << 5;
-    passcode[0] |= hit_rate << 1;
-    passcode[0] |= npc_type & 1;
-    passcode[1] = npc_code;
+    passcode[0] |= hit_rate << 2;
+    passcode[1] = npc_type;
+    passcode[2] = npc_code;
 
-    memcpy(passcode + 2, str0, PLAYER_NAME_LEN);
-    memcpy(passcode + 10, str1, PLAYER_NAME_LEN);
+    memcpy(passcode + 3, str0, PLAYER_NAME_LEN);
+    memcpy(passcode + 9, str1, PLAYER_NAME_LEN);
+    memcpy(passcode + 15, str2, PLAYER_NAME_LEN);
 
     checksum = 0;
-    passcode[18] = (item >> 8);
-    passcode[19] = item;
+    passcode[21] = (item >> 8);
+    passcode[22] = item;
 
     {
         int i;
@@ -395,11 +511,16 @@ static void mMpswd_make_passcode(u8* passcode, int type, int hit_rate, u8* str0,
         for (i = 0; i < PLAYER_NAME_LEN; i++) {
             checksum += str1[i];
         }
+
+        for (i = 0; i < PLAYER_NAME_LEN; i++) {
+            checksum += str2[i];
+        }
     }
 
     checksum += item;
     checksum += npc_code;
-    passcode[0] |= (checksum & 3) << 3;
+    passcode[0] |= (checksum & 0xC) >> 2;
+    passcode[1] |= (checksum & 0x3) << 6;
 }
 
 static void mMpswd_chg_6bits_code(u8* sixbits, u8* eightbits) {
@@ -565,7 +686,7 @@ static void mMpswd_decode_RSA_cipher(u8* pswd) {
     pow = 1;
 
     /* Calculate exponent d for decryption */
-    for (pow = 1; ; pow++) {
+    for (pow = 1;; pow++) {
         n = pow * pq_1 + 1;
         if (n % r == 0) {
             r = n / r;
@@ -661,7 +782,7 @@ static void mMpswd_decode_substitution_cipher(u8* pswd) {
 }
 
 static void mMpswd_transposition_cipher(u8* pswd, int dir, int char_idx) {
-    static int key_idx[2] = { 18, 9 };
+    static int key_idx[2] = { 22, 6 };
     mMpswd_transposition_cipher_str_c* cipher;
     u8* trans_str;
     int len;
@@ -703,7 +824,7 @@ static void mMpswd_bit_shuffle(u8* pswd, int stage) {
     int count;
 
     count = mMpswd_PASSWORD_DATA_LEN - 1;
-    key_idx = 2;
+    key_idx = 9;
 
     if (stage == 0) {
         key_idx = 13;
@@ -752,7 +873,7 @@ static void mMpswd_decode_bit_shuffle(u8* pswd, int stage) {
     int i;
 
     count = mMpswd_PASSWORD_DATA_LEN - 1;
-    key_idx = 2;
+    key_idx = 9;
 
     if (stage == 0) {
         key_idx = 13;
@@ -789,72 +910,149 @@ static void mMpswd_chg_common_font_code(u8* pswd) {
     int i;
 
     for (i = 0; i < mMpswd_PASSWORD_STR_LEN; i++) {
-        changed_pswd[i] = usable_to_fontnum[pswd[i]];
+        changed_pswd[i] = usable_to_fontnum_new[pswd[i]];
     }
 
     memcpy(pswd, changed_pswd, mMpswd_PASSWORD_STR_LEN);
 }
 
-static u8 mMpswd_chg_password_font_code_sub(u8 c) {
+static u8 mMpswd_chg_password_font_code_sub(u8 c, int version) {
+    static u8* fontnum_table_p[] = { usable_to_fontnum, usable_to_fontnum_new };
+    u8* fontnum_table;
     int i;
     int res = 0xFF;
 
+    fontnum_table = fontnum_table_p[version];
     for (i = 0; i < 64; i++) {
-        if (c == usable_to_fontnum[i]) {
+        u8 chk = *fontnum_table;
+
+        if (chk == c) {
             res = i; // probably should've used a break; here
         }
+
+        fontnum_table++;
     }
 
     return res;
 }
 
-static int mMpswd_chg_password_font_code(u8* pswd) {
+static int mMpswd_chg_password_font_code(u8* pswd, int version) {
+    static u32 pword_length_table[] = { mMpswd_OLD_PASSWORD_STR_LEN, mMpswd_PASSWORD_STR_LEN };
     u8 changed_pswd[mMpswd_PASSWORD_STR_LEN];
+    u8* changed_pswd_p;
+    u8* src_p;
+    u32 len;
     int i;
     int res = TRUE;
 
-    for (i = 0; i < mMpswd_PASSWORD_STR_LEN; i++) {
-        u8 new_code = mMpswd_chg_password_font_code_sub(pswd[i]);
+    len = pword_length_table[version];
+    src_p = pswd;
+    changed_pswd_p = changed_pswd;
+    for (i = 0; i < len; i++) {
+        u8 new_code = mMpswd_chg_password_font_code_sub(*src_p, version);
 
         if (new_code == 0xFF) {
             res = FALSE;
             break;
         }
 
-        changed_pswd[i] = new_code;
+        src_p++;
+        *changed_pswd_p++ = new_code;
     }
 
     if (res == TRUE) {
-        memcpy(pswd, changed_pswd, mMpswd_PASSWORD_STR_LEN);
+        memcpy(pswd, changed_pswd, len);
     }
 
     return res;
 }
 
-extern void mMpswd_make_password(u8* password_buf, int type, int hit_rate, u8* str0, u8* str1, mActor_name_t item,
-                                 int npc_type, int npc_code) {
+extern void mMpswd_make_password(u8* password_buf, int type, int hit_rate, u8* str0, u8* str1, u8* str2,
+                                 mActor_name_t item, int npc_type, int npc_code) {
     u8 work_buf[mMpswd_PASSWORD_STR_LEN];
+    u8* work_buf_p = work_buf + 1;
 
     bzero(work_buf, mMpswd_PASSWORD_STR_LEN);
-    mMpswd_make_passcode(work_buf, type, hit_rate, str0, str1, item, npc_type, npc_code);
-    mMpswd_substitution_cipher(work_buf);
-    mMpswd_transposition_cipher(work_buf, 1, 0);
-    mMpswd_bit_shuffle(work_buf, 0);
-    mMpswd_chg_RSA_cipher(work_buf);
-    mMpswd_bit_mix_code(work_buf);
-    mMpswd_bit_shuffle(work_buf, 1);
-    mMpswd_transposition_cipher(work_buf, 0, 1);
-    mMpswd_chg_6bits_code(password_buf, work_buf);
+    mMpswd_make_passcode(work_buf_p, type, hit_rate, str0, str1, str2, item, npc_type, npc_code);
+    mMpswd_substitution_cipher(work_buf_p);
+    mMpswd_transposition_cipher(work_buf_p, 1, 0);
+    mMpswd_bit_shuffle(work_buf_p, 0);
+    mMpswd_chg_RSA_cipher(work_buf_p);
+    mMpswd_bit_mix_code(work_buf_p);
+    mMpswd_bit_shuffle(work_buf_p, 1);
+    mMpswd_transposition_cipher(work_buf_p, 0, 1);
+    mMpswd_chg_6bits_code(password_buf, work_buf_p);
     mMpswd_chg_common_font_code(password_buf);
 }
 
-extern int mMpswd_decode_code(u8* password_data, u8* password_str) {
+static int mMpswd_old_decode_code(u8* password_data, u8* password_str) {
+    u8 work_buf[mMpswd_OLD_PASSWORD_BITS_LEN];
+    u8 decoded_data[mMpswd_OLD_PASSWORD_DATA_LEN];
+    u8 mix_code;
+    int i;
+    int ret = FALSE;
+
+    if (mMpswd_chg_password_font_code(password_str, mMpswd_VERSION_OLD) == TRUE) {
+        int idx = 0;
+        int i;
+        int bit;
+
+        for (i = 0; i < mMpswd_OLD_PASSWORD_STR_LEN; i++) {
+            for (bit = 5; bit >= 0; bit--) {
+                work_buf[idx++] = (password_str[i] >> bit) & 1;
+            }
+        }
+
+        mMpswd_shift(work_buf, mMpswd_OLD_PASSWORD_BITS_LEN, -15);
+        mix_code = (work_buf[0x80] << 3) | (work_buf[0x81] << 2) | (work_buf[0x82] << 1) | (work_buf[0x83] << 0);
+        if (mix_code > 12) {
+            mMpswd_shift(work_buf, 0x80, -mix_code * 3);
+            mMpswd_hanten(work_buf, 0x80);
+            mMpswd_reverse(work_buf, 0x80);
+        } else if (mix_code > 8) {
+            mMpswd_shift(work_buf, 0x80, mix_code * 5);
+            mMpswd_reverse(work_buf, 0x80);
+        } else if (mix_code > 4) {
+            mMpswd_hanten(work_buf, 0x80);
+            mMpswd_shift(work_buf, 0x80, mix_code * 5);
+        } else {
+            mMpswd_reverse(work_buf, 0x80);
+            mMpswd_shift(work_buf, 0x80, -mix_code * 3);
+        }
+
+        bzero(decoded_data, mMpswd_OLD_PASSWORD_DATA_LEN);
+        {
+            int idx = 0;
+            u8 decoded_byte;
+            int i;
+            int bit;
+            for (i = 0; i < 16; i++) {
+                decoded_byte = decoded_data[i];
+
+                for (bit = 7; bit >= 0; bit--) {
+                    decoded_byte |= work_buf[idx++] << bit;
+                }
+
+                decoded_data[i] = decoded_byte;
+            }
+        }
+
+        decoded_data[0x10] = mix_code;
+        for (i = 0; i < mMpswd_OLD_PASSWORD_DATA_LEN; i++) {
+            password_data[i] = decoded_data[i];
+        }
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+extern int mMpswd_new_decode_code(u8* password_data, u8* password_str) {
     u8 work_buf[mMpswd_PASSWORD_STR_LEN];
     int res = FALSE;
 
     memcpy(work_buf, password_str, mMpswd_PASSWORD_STR_LEN);
-    mMpswd_adjust_letter(work_buf);
-    if (mMpswd_chg_password_font_code(work_buf) == TRUE) {
+    if (mMpswd_chg_password_font_code(work_buf, mMpswd_VERSION_NEW) == TRUE) {
         mMpswd_chg_8bits_code(password_data, work_buf);
         mMpswd_transposition_cipher(password_data, 1, 1);
         mMpswd_decode_bit_shuffle(password_data, 1);
@@ -870,65 +1068,248 @@ extern int mMpswd_decode_code(u8* password_data, u8* password_str) {
     return res;
 }
 
-extern int mMpswd_restore_code(u8* body, u8* password) {
+extern int mMpswd_restore_code(u8* password, u8* body) {
+    u16 conv_buf[MAIL_BODY_LEN];
     u8 password_str[mMpswd_PASSWORD_STR_LEN];
     int res = FALSE;
 
-    if (mMpswd_check_opening_sentence(body) == TRUE) {
-        u8* password_str_p = mMpswd_get_password_pointer(body);
-        if (password_str_p != NULL) {
-            mMpswd_except_return_code(password_str, password_str_p);
-            res = mMpswd_decode_code(password, password_str);
+    mTxt_conv_16bit(body, conv_buf, MAIL_BODY_LEN);
+    if (mMpswd_check_opening_sentence(conv_buf) == TRUE) {
+        u16* conv_buf_p = conv_buf;
+        int version = mMpswd_check_version(&conv_buf_p);
+        if (version != mMpswd_VERSION_BAD) {
+            mMpswd_except_return_code(password_str, conv_buf_p, version);
+
+            switch (version) {
+                case mMpswd_VERSION_OLD:
+                    res = mMpswd_old_decode_code(password + 1, password_str);
+                    break;
+                case mMpswd_VERSION_NEW:
+                    res = mMpswd_new_decode_code(password + 1, password_str);
+                    break;
+            }
+
+            password[0] = version;
         }
     }
 
     return res;
 }
 
-extern void mMpswd_password(u8* password_data, mMpswd_password_c* password) {
-    u32 b0 = password_data[0];
+static void mMpswd_old_password(mMpswd_password_c* password, u8* data) {
+    int i;
 
-    password->checksum = (b0 >> 3) & 3;
-    memcpy(password->str0, password_data + 2, PLAYER_NAME_LEN);
-    memcpy(password->str1, password_data + 10, PLAYER_NAME_LEN);
-    password->item = (password_data[18] << 8) + password_data[19];
-    password->type = (b0 >> 5) & 7;
+    password->checksum = data[16];
+    for (i = 0; i < PLAYER_NAME_LEN; i++) {
+        password->str0[i] = data[8 + i];
+    }
+
+    for (i = 0; i < PLAYER_NAME_LEN; i++) {
+        password->str1[i] = data[2 + i];
+    }
+
+    password->item = (data[14] << 8) + data[15];
+    password->type = (data[0] >> 6) & 3;
 
     switch (password->type) {
-        case mMpswd_CODETYPE_POPULAR: {
-            password->hit_rate_index = (b0 >> 1) & 3;
-            password->npc_type = b0 & 1;
-            password->npc_code = password_data[1];
+        case mMpswd_CODETYPE_NPC:
+            password->hit_rate_index = 1;
+            password->npc_type = data[0] & 1;
+            password->npc_code = data[1];
             break;
-        }
-
-        case mMpswd_CODETYPE_CARD_E: {
-            password->hit_rate_index = (b0 >> 1) & 3;
-            password->npc_type = b0 & 1;
-            password->npc_code = password_data[1];
+        case mMpswd_CODETYPE_CARD_E:
+            password->hit_rate_index = (data[0] >> 1) & 3;
+            password->npc_type = data[0] & 1;
+            password->npc_code = data[1];
             break;
-        }
-
-        case mMpswd_CODETYPE_MAGAZINE: {
-            password->hit_rate_index = ((b0 >> 1) & 3) | (b0 & 1) << 2;
+        default:
+            password->hit_rate_index = data[0] & 0x3F;
             password->npc_type = -1;
             password->npc_code = -1;
             break;
-        }
-
-        default: {
-            password->hit_rate_index = (b0 >> 1) & 3;
-            password->npc_type = -1;
-            password->npc_code = -1;
-            break;
-        }
     }
 }
 
-extern int mMpswd_password_zuru_check(mMpswd_password_c* password) {
+static void mMpswd_new_password(mMpswd_password_c* password, u8* data) {
+    int b0 = data[0];
+    int b1 = data[1];
+    int b2 = data[2];
+    u32 price;
+    u8* str_p;
+    u8* str_end;
+    int len;
+    int digit;
+    int i;
+
+    bzero(password, sizeof(mMpswd_password_c));
+    password->type = (b0 >> 5) & 7;
+    password->checksum = ((b1 >> 6) & 3) | ((b0 & 3) << 2);
+    memcpy(password->str0, data + 3, PLAYER_NAME_LEN);
+    memcpy(password->str1, data + 9, PLAYER_NAME_LEN);
+    memcpy(password->str2, data + 15, PLAYER_NAME_LEN);
+    password->item = (data[21] << 8) + data[22];
+    password->npc_type = b1 & 3;
+    password->npc_code = b2;
+    password->_0B = (b1 >> 2) == 0 ? 0 : 1;
+
+    switch (password->type) {
+        case mMpswd_CODETYPE_CARD_E:
+            password->hit_rate_index = (b0 >> 2) & 3;
+            break;
+
+        case mMpswd_CODETYPE_MAGAZINE:
+            password->hit_rate_index = (b0 >> 2) & 7;
+            break;
+
+        case mMpswd_CODETYPE_MONUMENT:
+            password->hit_rate_index = (b0 >> 2) & 7;
+            password->bx = b1 & 7;
+            password->bz = (b1 >> 3) & 7;
+
+            price = 0;
+            digit = 1;
+            str_p = password->str2;
+            len = mMl_strlen(password->str2, PLAYER_NAME_LEN, CHAR_SPACE);
+            str_p += len - 1;
+            for (; len != 0; len--) {
+                if (!(*str_p >= CHAR_ZERO && *str_p <= CHAR_NINE)) {
+#ifndef BUGFIXES
+                    *str_p = 0; // @BUG - this should be set to CHAR_ZERO.
+#else
+                    *str_p = CHAR_ZERO;
+#endif
+                }
+
+                price += (*str_p - CHAR_ZERO) * digit;
+                digit *= 10;
+                str_p--;
+            }
+            password->price = price;
+            break;
+
+        default:
+            password->hit_rate_index = (b0 >> 2) & 7;
+            break;
+    }
+}
+
+extern void mMpswd_password(mMpswd_password_c* password, u8* data) {
+    switch (data[0]) {
+        case mMpswd_VERSION_OLD:
+            mMpswd_old_password(password, data + 1);
+            break;
+        case mMpswd_VERSION_NEW:
+            mMpswd_new_password(password, data + 1);
+            break;
+    }
+
+    password->version = data[0];
+}
+
+static int mMpswd_check_default_hit_rate(mMpswd_password_c* password) {
+    int ret = FALSE;
+
+    switch (password->type) {
+        case mMpswd_CODETYPE_MAGAZINE:
+            if (password->hit_rate_index <= 4) {
+                ret = TRUE;
+            }
+            break;
+        default:
+            if (password->hit_rate_index == 4) {
+                ret = TRUE;
+            }
+            break;
+    }
+
+    return ret;
+}
+
+static int mMpswd_check_default_npc_code(mMpswd_password_c* password) {
+    int ret = FALSE;
+
+    switch (password->type) {
+        case mMpswd_CODETYPE_FAMICOM:
+        case mMpswd_CODETYPE_CARD_E:
+        case mMpswd_CODETYPE_MAGAZINE:
+        case mMpswd_CODETYPE_USER:
+            if (password->npc_type == 0 && password->npc_code == 0xFF) {
+                ret = TRUE;
+            }
+            break;
+        case mMpswd_CODETYPE_MONUMENT:
+            if (password->npc_code == 0xFF) {
+                ret = TRUE;
+            }
+            break;
+
+        default:
+            ret = TRUE;
+            break;
+    }
+    return ret;
+}
+
+#if VERSION == VER_GAEJ01_01
+static int mMpswd_check_strings(u8* str, int len) {
+    int ret = TRUE;
+    int i;
+
+    for (i = 0; i < len; i++) {
+        // Don't allow control codes or msg tags
+        if (*str == CHAR_PP_127 || *str == CHAR_PP_128) {
+            ret = FALSE;
+            break;
+        }
+        str++;
+    }
+
+    return ret;
+}
+#endif
+
+static int mMpswd_old_password_zuru_check(mMpswd_password_c* password) {
+    u16 checksum = 0;
+    int ret = FALSE;
+    int i;
+
+    for (i = 0; i < PLAYER_NAME_LEN; i++) {
+        checksum += password->str0[i];
+    }
+    for (i = 0; i < PLAYER_NAME_LEN; i++) {
+        checksum += password->str1[i];
+    }
+
+    checksum += password->item;
+
+    if (password->type == mMpswd_CODETYPE_NPC || password->type == mMpswd_CODETYPE_CARD_E) {
+        checksum += (u16)(password->npc_code + ((u16)password->npc_type << 8));
+    }
+
+    if (password->type == mMpswd_CODETYPE_CARD_E) {
+        checksum += password->hit_rate_index;
+    }
+
+#if VERSION == VER_GAEJ01_01
+    if ((checksum % 16) != password->checksum) {
+        ret = TRUE;
+    } else if (!mMpswd_check_strings(password->str0, PLAYER_NAME_LEN) ||
+               !mMpswd_check_strings(password->str1, PLAYER_NAME_LEN)) {
+        ret = TRUE;
+    }
+#else
+    if ((checksum % 16) != password->checksum) {
+        ret = TRUE;
+    }
+#endif
+
+    return ret;
+}
+
+static int mMpswd_new_password_zuru_check(mMpswd_password_c* password) {
     int cheated = TRUE;
 
-    if (password->type < mMpswd_CODETYPE_NUM) {
+    if (password->type < mMpswd_CODETYPE_NUM && password->type != mMpswd_CODETYPE_CARD_E) {
         u8* str_p;
         int checksum = 0;
         int i;
@@ -941,23 +1322,118 @@ extern int mMpswd_password_zuru_check(mMpswd_password_c* password) {
             checksum += password->str1[i];
         }
 
+        for (i = 0; i < PLAYER_NAME_LEN; i++) {
+            checksum += password->str2[i];
+        }
+
         checksum += password->item;
         checksum += password->npc_code;
 
-        if ((checksum & 3) == password->checksum) {
+#if VERSION == VER_GAEJ01_01
+        if ((checksum & 0xF) == password->checksum && mMpswd_check_default_hit_rate(password) == TRUE &&
+            mMpswd_check_default_npc_code(password) == TRUE &&
+            mMpswd_check_strings(password->str0, PLAYER_NAME_LEN) == TRUE &&
+            mMpswd_check_strings(password->str1, PLAYER_NAME_LEN) == TRUE &&
+            mMpswd_check_strings(password->str2, PLAYER_NAME_LEN) == TRUE) {
             cheated = FALSE;
         }
+#else
+        if ((checksum & 0xF) == password->checksum && mMpswd_check_default_hit_rate(password) == TRUE &&
+            mMpswd_check_default_npc_code(password) == TRUE) {
+            cheated = FALSE;
+        }
+#endif
     }
 
     return cheated;
 }
 
-static int mMpswd_check_present_famicom(mActor_name_t item) {
+extern int mMpswd_password_zuru_check(mMpswd_password_c* password) {
+    int ret = TRUE;
+    switch (password->version) {
+        case mMpswd_VERSION_OLD:
+            ret = mMpswd_old_password_zuru_check(password);
+            break;
+        case mMpswd_VERSION_NEW:
+            ret = mMpswd_new_password_zuru_check(password);
+            break;
+    }
+    return ret;
+}
+
+extern u32 pswd_present_list_max;
+extern u16 pswd_present_list[];
+
+static int mMpswd_old_check_present_other(mActor_name_t item) {
+    int ret = FALSE;
+    int i;
+
+    if (item == RSV_NO) {
+        ret = TRUE;
+    }
+
+    // ftr
+    for (i = 0; i < pswd_present_list_max; i++) {
+        if (item == pswd_present_list[i]) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    // carpet
+    for (i = 0; i < 64; i++) {
+        if (0x5DC + i == item) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    // wallpaper
+    for (i = 0; i < 64; i++) {
+        if (0x7D0 + i == item) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    // clothing
+    for (i = 0; i < 255; i++) {
+        if (i >= 18 && i <= 25) {
+            continue;
+        }
+
+        if (0x9C4 + i == item) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+extern u32 pswd_old_famicom_list_max;
+extern u16 pswd_old_famicom_list[];
+
+static int mMpswd_old_check_present_famicom(mActor_name_t item) {
+    int ret = FALSE;
+    int i;
+
+    for (i = 0; i < pswd_old_famicom_list_max; i++) {
+        if (item == pswd_old_famicom_list[i]) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_new_check_present_famicom(mActor_name_t item) {
     int i;
     int res = FALSE;
 
     for (i = 0; i < pswd_famicom_list_max; i++) {
-        if (item == mRmTp_FtrIdx2FtrItemNo(pswd_famicom_list[i], 0)) {
+        if (item == mNT_ftr_idx_to_ftr_item_no(pswd_famicom_list[i], 0)) {
             res = TRUE;
             break;
         }
@@ -966,7 +1442,7 @@ static int mMpswd_check_present_famicom(mActor_name_t item) {
     return res;
 }
 
-extern int mMpswd_check_present_user(mActor_name_t item) {
+extern int mMpswd_new_check_present_user(mActor_name_t item) {
     mActor_name_t full_stack_item;
     u32 price = 0;
     int res = FALSE;
@@ -984,12 +1460,18 @@ extern int mMpswd_check_present_user(mActor_name_t item) {
             } else if (item >= FTR_UMBRELLA_START && item <= FTR_UMBRELLA_END) {
                 price = mSP_ItemNo2ItemPrice(mRmTp_FtrItemNo2Item1ItemNo(item, FALSE));
             } else if ( // TODO: furniture index values need to be declared in some header file as defines
-                (mRmTp_FtrItemNo2FtrIdx(item) >= FTR_NOG_BALLOON_COMMON0 && mRmTp_FtrItemNo2FtrIdx(item) <= FTR_NOG_BALLOON_COMMON7) || // balloons
-                (item >= FTR_START(FTR_NOG_COLLEGENOTE) && item <= FTR_END(FTR_IKE_NIKKI_WAFU1)) ||                    // diaries
-                (mRmTp_FtrItemNo2FtrIdx(item) >= FTR_UTIWA0 && mRmTp_FtrItemNo2FtrIdx(item) <= FTR_UTIWA7) || // fans
-                (mRmTp_FtrItemNo2FtrIdx(item) >= FTR_KAZAGURUMA0 && mRmTp_FtrItemNo2FtrIdx(item) <= FTR_KAZAGURUMA7) || // pinwheels
-                (mRmTp_FtrItemNo2FtrIdx(item) >= FTR_GOLD_ITEM0 && mRmTp_FtrItemNo2FtrIdx(item) <= FTR_GOLD_ITEM3) || // golden tools
-                (mRmTp_FtrItemNo2FtrIdx(item) >= FTR_TOOL0 && mRmTp_FtrItemNo2FtrIdx(item) <= FTR_TOOL3)    // regular tools
+                (mNT_ftr_item_no_to_ftr_idx(item) >= FTR_NOG_BALLOON_COMMON0 &&
+                 mNT_ftr_item_no_to_ftr_idx(item) <= FTR_NOG_BALLOON_COMMON7) ||                    // balloons
+                (item >= FTR_START(FTR_NOG_COLLEGENOTE) && item <= FTR_END(FTR_IKE_NIKKI_WAFU1)) || // diaries
+                (mNT_ftr_item_no_to_ftr_idx(item) >= FTR_UTIWA0 &&
+                 mNT_ftr_item_no_to_ftr_idx(item) <= FTR_UTIWA7) || // fans
+                (mNT_ftr_item_no_to_ftr_idx(item) >= FTR_KAZAGURUMA0 &&
+                 mNT_ftr_item_no_to_ftr_idx(item) <= FTR_KAZAGURUMA7) || // pinwheels
+                (mNT_ftr_item_no_to_ftr_idx(item) >= FTR_GOLD_ITEM0 &&
+                 mNT_ftr_item_no_to_ftr_idx(item) <= FTR_GOLD_ITEM3) || // golden tools
+                (mNT_ftr_item_no_to_ftr_idx(item) >= FTR_TOOL0 &&
+                 mNT_ftr_item_no_to_ftr_idx(item) <= FTR_TOOL3) ||   // regular tools
+                mNT_ftr_item_no_to_ftr_idx(item) == FTR_TOOL_CRACKER // cracker
             ) {
                 /* Convert furniture to their item1 variants */
                 price = mSP_ItemNo2ItemPrice(mRmTp_FtrItemNo2Item1ItemNo(item, FALSE));
@@ -1020,7 +1502,8 @@ extern int mMpswd_check_present_user(mActor_name_t item) {
                        (item >= ITM_DIARY00 && item <= ITM_DIARY15) ||
                        (item >= ITM_BLUEBELL_FAN && item <= ITM_LEAF_FAN) ||
                        (item >= ITM_YELLOW_PINWHEEL && item <= ITM_FANCY_PINWHEEL) ||
-                       (item >= ITM_GOLDEN_NET && item <= ITM_GOLDEN_ROD) || (item >= ITM_NET && item <= ITM_ROD)) {
+                       (item >= ITM_GOLDEN_NET && item <= ITM_GOLDEN_ROD) || (item >= ITM_NET && item <= ITM_ROD) ||
+                       item == ITM_CRACKER) {
                 price = mSP_ItemNo2ItemPrice(item);
             } else {
                 switch (ITEM_NAME_GET_CAT(item)) {
@@ -1075,13 +1558,30 @@ extern int mMpswd_check_present_user(mActor_name_t item) {
     return res;
 }
 
-static int mMpswd_check_present_other(mActor_name_t item) {
+static int mMpswd_new_check_present_monument(mMpswd_password_c* password) {
+    int ret = FALSE;
+
+    if (IS_ITEM_MONUMENT(password->item)) {
+        ret = TRUE;
+    } else {
+        mActor_name_t monument = password->item + MONUMENT_PARK_CLOCK;
+
+        if (IS_ITEM_MONUMENT(monument)) {
+            password->item = monument;
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_new_check_present_other(mActor_name_t item) {
     int res = FALSE;
 
     switch (ITEM_NAME_GET_TYPE(item)) {
         case NAME_TYPE_FTR0:
         case NAME_TYPE_FTR1: {
-            switch (mRmTp_FurnitureIdx2FurnitureKind(mRmTp_FtrItemNo2FtrIdx(item))) {
+            switch (mRmTp_FurnitureIdx2FurnitureKind(mNT_ftr_item_no_to_ftr_idx(item))) {
                 case mRmTp_BIRTH_TYPE_FTR_CLOTH:
                 case mRmTp_BIRTH_TYPE_FTR_UMBRELLA:
                 case mRmTp_BIRTH_TYPE_FTR_INSECT:
@@ -1130,6 +1630,12 @@ static int mMpswd_check_present_other(mActor_name_t item) {
                         break;
                     }
 
+                    /* allow crackers */
+                    if (item == ITM_CRACKER) {
+                        res = TRUE;
+                        break;
+                    }
+
                     break;
                 }
 
@@ -1166,26 +1672,48 @@ static int mMpswd_check_present_other(mActor_name_t item) {
 }
 
 extern int mMpswd_check_present(mMpswd_password_c* password) {
-    mActor_name_t present = password->item;
-    int valid;
+    int valid = FALSE;
 
-    if (present == RSV_NO) {
-        valid = TRUE;
-    } else {
-        switch (password->type) {
-            case mMpswd_CODETYPE_FAMICOM: {
-                valid = mMpswd_check_present_famicom(present);
-                break;
+    switch (password->version) {
+        case mMpswd_VERSION_OLD: {
+            switch (password->type) {
+                case mMpswd_CODETYPE_FAMICOM: {
+                    valid = mMpswd_old_check_present_famicom(password->item);
+                    break;
+                }
+
+                default: {
+                    valid = mMpswd_old_check_present_other(password->item);
+                    break;
+                }
             }
+            break;
+        }
+        case mMpswd_VERSION_NEW: {
+            if (password->item == RSV_NO) {
+                valid = TRUE;
+            } else {
+                switch (password->type) {
+                    case mMpswd_CODETYPE_FAMICOM: {
+                        valid = mMpswd_new_check_present_famicom(password->item);
+                        break;
+                    }
 
-            case mMpswd_CODETYPE_USER: {
-                valid = mMpswd_check_present_user(present);
-                break;
-            }
+                    case mMpswd_CODETYPE_USER: {
+                        valid = mMpswd_new_check_present_user(password->item);
+                        break;
+                    }
 
-            default: {
-                valid = mMpswd_check_present_other(present);
-                break;
+                    case mMpswd_CODETYPE_MONUMENT: {
+                        valid = mMpswd_new_check_present_monument(password);
+                        break;
+                    }
+
+                    default: {
+                        valid = mMpswd_new_check_present_other(password->item);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -1239,8 +1767,9 @@ extern mActor_name_t mMpswd_get_sp_npc_num(int sp_npc) {
 extern int mMpswd_check_npc_code(mMpswd_password_c* password) {
     int res = FALSE;
 
-    if ((password->npc_type == mMpswd_NPCTYPE_NORMAL && password->npc_code < NPC_NUM) ||
-        (password->npc_type == mMpswd_NPCTYPE_SPECIAL && password->npc_code < mMpswd_SPECIAL_NPC_NUM)) {
+    if ((password->npc_type == mMpswd_NPCTYPE_NORMAL && password->npc_code < NPC_ROM_NUM) ||
+        (password->npc_type == mMpswd_NPCTYPE_SPECIAL && password->npc_code < mMpswd_SPECIAL_NPC_NUM) ||
+        (password->npc_type == mMpswd_NPCTYPE_ADD_NPC)) {
         res = TRUE;
     }
 
@@ -1249,13 +1778,856 @@ extern int mMpswd_check_npc_code(mMpswd_password_c* password) {
 
 extern int mMpswd_check_name(mMpswd_password_c* password) {
     int res = FALSE;
-    Private_c* priv_data = Common_Get(now_private);
 
-    if (mPr_CheckCmpPlayerName(password->str0, Common_Get(now_private)->player_ID.player_name) == TRUE) {
-        if (mLd_CheckCmpLandName(password->str1, Common_Get(now_private)->player_ID.land_name) == TRUE) {
+    if (mLd_CheckCmpLandName(password->str0, Now_Private->player_ID.land_name) == TRUE) {
+        if (mPr_CheckCmpPlayerName(password->str1, Now_Private->player_ID.player_name) == TRUE) {
             res = TRUE;
         }
     }
 
     return res;
+}
+
+extern void mMpswd_ClearHPMail(AnmHPMail_c* hp_mail, int count) {
+    bzero(hp_mail, count * sizeof(AnmHPMail_c));
+}
+
+extern void mMpswd_AllClearHPMailPlayerIdx(int idx) {
+    Animal_c* animal = Save_Get(animals);
+    int i;
+
+    if (idx >= 0 && idx < PLAYER_NUM) {
+        for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+            mMpswd_ClearHPMail(&animal->hp_mail[idx], 1);
+            animal++;
+        }
+    }
+}
+
+extern int mMpswd_ReceiveHPMail(Mail_c* mail) {
+    static u8 password[mMpswd_PASSWORD_DATA_LEN + 1];
+    Animal_c* animal = Save_Get(animals);
+    AnmPersonalID_c anm_id;
+    int ret = FALSE;
+    int private_idx = mPr_GetPrivateIdx(&mail->header.sender.personalID);
+
+    if (mail->header.sender.type == mMl_NAME_TYPE_PLAYER && private_idx >= 0 && private_idx < PLAYER_NUM) {
+        if (mMpswd_restore_code(password, mail->content.text.split.body) == TRUE &&
+            mMl_get_npcinfo_from_mail_name(&anm_id, &mail->header.recipient) == TRUE) {
+            int npc_idx = mNpc_SearchAnimalinfo(animal, anm_id.npc_id, ANIMAL_NUM_MAX);
+
+            if (npc_idx != -1) {
+                animal = &animal[npc_idx];
+
+                if (animal != NULL) {
+                    bcopy(password, animal->hp_mail[private_idx].password, mMpswd_PASSWORD_DATA_LEN + 1);
+                    lbRTC_TimeCopy(&animal->hp_mail[private_idx].receive_time, Common_GetPointer(time.rtc_time));
+                    ret = TRUE;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_CheckHit_Rate(u8 hitrate, int n) {
+    u8 perfect_bit = 0xFF;
+    int res = FALSE;
+    int i;
+
+    for (i = 0; i < n; i++) {
+        perfect_bit &= ~(1 << i);
+    }
+
+    if ((hitrate & perfect_bit) == 0) {
+        res = TRUE;
+    }
+
+    return res;
+}
+
+static int mMpswd_GetHit_magazine(u8 hitrate) {
+    static float chk_rate[] = { 0.8f, 0.6f, 0.3f };
+    int res = FALSE;
+
+    switch (hitrate) {
+        case 4: // always win
+            res = TRUE;
+            break;
+        default:
+            if (hitrate < ARRAY_COUNT(chk_rate)) {
+                if (RANDOM_F(1.0f) <= chk_rate[hitrate]) {
+                    res = TRUE;
+                }
+            }
+            break;
+        case 3: // always fail
+            break;
+    }
+
+    return res;
+}
+
+static int mMpswd_GetHit_cardE(u8 hitrate) {
+    static float chk_rate[] = { 0.8f, 0.6f, 0.4f, 0.2f };
+
+    int res = FALSE;
+
+    if (hitrate < ARRAY_COUNT(chk_rate)) {
+        float hit = RANDOM_F(1.0f);
+
+        if (hit <= chk_rate[hitrate]) {
+            res = TRUE;
+        }
+    }
+
+    return res;
+}
+
+static void mMpswd_get_gobi_str_from_name(u8* str, mActor_name_t npc_id) {
+    if (str != NULL && ITEM_NAME_GET_TYPE(npc_id) == NAME_TYPE_NPC) {
+        int idx = npc_id & 0xFFF;
+
+/* @BUG - devs used && instead of || */
+#ifndef BUGFIXES
+        if (idx < 0 && idx >= NPC_ROM_NUM) {
+#else
+        if (idx < 0 || idx >= NPC_ROM_NUM) {
+#endif
+            idx = 0;
+        }
+
+        mString_Load_StringFromRom(str, ANIMAL_CATCHPHRASE_LEN, npc_def_list[idx].catchphrase_str_idx);
+    }
+}
+
+static mActor_name_t mMpswd_get_pw_npc_name(mMpswd_password_c* password) {
+    mActor_name_t ret = EMPTY_NO;
+
+    switch (password->npc_type) {
+        case mMpswd_NPCTYPE_NORMAL:
+            ret = NPC_START | password->npc_code;
+            break;
+        case mMpswd_NPCTYPE_SPECIAL:
+            ret = mMpswd_get_sp_npc_num(password->npc_code);
+            break;
+        case mMpswd_NPCTYPE_ADD_NPC:
+            ret = NPC_ADD_START | password->npc_code; // Probably should be + not |
+            break;
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_pw_npc_looks(mMpswd_password_c* password) {
+    int ret = mNpc_LOOKS_GIRL;
+
+    switch (password->npc_type) {
+        case mMpswd_NPCTYPE_NORMAL:
+        case mMpswd_NPCTYPE_SPECIAL: // @BUG - special NPCs are not handled correctly
+            ret = mNpc_GetLooks(NPC_START + password->npc_code);
+            break;
+        case mMpswd_NPCTYPE_ADD_NPC:
+            ret = password->_0B;
+            break;
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_receive_npc_num(mActor_name_t npc_name) {
+    int ret = -1;
+
+    if (ITEM_NAME_GET_TYPE(npc_name) == NAME_TYPE_NPC) {
+        if (IS_NPC_ADD_NPC(npc_name)) {
+            ret = npc_name - NPC_ADD_START;
+        } else {
+            ret = npc_name & 0xFFF;
+        }
+    }
+
+    return ret;
+}
+
+static void mMpswd_set_npc_name_str(u8* name_str, mActor_name_t npc_name, mMpswd_password_c* password) {
+    if (name_str != NULL) {
+        switch (ITEM_NAME_GET_TYPE(npc_name)) {
+            case NAME_TYPE_NPC:
+                if (IS_NPC_ADD_NPC(npc_name)) {
+                    mem_copy(name_str, password->str2, ANIMAL_NAME_LEN);
+                } else {
+                    mNpc_GetNpcWorldNameTableNo(name_str, npc_name);
+                }
+                break;
+
+            case NAME_TYPE_SPNPC:
+                mNpc_GetActorWorldName(name_str, npc_name);
+                break;
+        }
+    }
+}
+
+static int mMpswd_check_memory_village(mActor_name_t npc_name) {
+    int idx = mNpc_SearchAnimalinfo(Save_Get(animals), npc_name, ANIMAL_NUM_MAX);
+
+    // @BUG - whoopsies (devs checked == -1 instead of != -1, leads to invalid animal access)
+#ifndef BUGFIXES
+    if (idx == -1) {
+#else
+    if (idx != -1) {
+#endif
+        idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, Save_Get(animals[idx]).memories, ANIMAL_MEMORY_NUM);
+    }
+
+    return idx;
+}
+
+static int mMpswd_check_memory_island(mActor_name_t npc_name) {
+    int idx = mNpc_SearchIslandAnimalinfo(npc_name, 0xFF);
+
+    // They managed to get the check right here
+    if (idx != -1) {
+        idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, Save_Get(homes[idx]).island.animal.memories,
+                                      ANIMAL_MEMORY_NUM);
+    }
+
+    return idx;
+}
+
+static void mMpswd_check_memory(int* village_mem_idx, int* island_mem_idx, mActor_name_t npc_name) {
+    *village_mem_idx = -1;
+    *island_mem_idx = -1;
+
+    // Not sure why they gate against searching for DLC NPCs,
+    // they could've included the card ID to check for.
+    if (!IS_NPC_ADD_NPC(npc_name)) {
+        *village_mem_idx = mMpswd_check_memory_village(npc_name);
+
+        if (*village_mem_idx == -1) {
+            *island_mem_idx = mMpswd_check_memory_island(npc_name);
+        }
+    }
+}
+
+static int mMpswd_get_send_type_famicom(mMpswd_password_c* password, Animal_c* animal) {
+    int hit_rate = 1;
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (password->version == mMpswd_VERSION_NEW) {
+        hit_rate = 4;
+    }
+
+    if (password->hit_rate_index == hit_rate && mMpswd_password_zuru_check(password) == FALSE &&
+        mMpswd_check_present(password) == TRUE && mMpswd_check_name(password) == TRUE) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_npc(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (mMpswd_password_zuru_check(password) == FALSE && mMpswd_check_npc_code(password) == TRUE &&
+        mMpswd_check_present(password) == TRUE && mMpswd_check_name(password) == TRUE) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_cardE(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (password->npc_type != mMpswd_NPCTYPE_ADD_NPC && mMpswd_password_zuru_check(password) == FALSE &&
+        mMpswd_check_present(password) == TRUE && mMpswd_check_npc_code(password) == TRUE) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_magazine(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (mMpswd_CheckHit_Rate(password->hit_rate_index, 3) == TRUE && mMpswd_password_zuru_check(password) == FALSE &&
+        mMpswd_check_present(password) == TRUE) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_user(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (mMpswd_password_zuru_check(password) == FALSE && mMpswd_check_present(password) == TRUE &&
+        mMpswd_check_name(password) == TRUE && (int)animal->id.looks < mNpc_LOOKS_NUM) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_cardE_mini(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (mMpswd_password_zuru_check(password) == FALSE && (int)animal->id.looks < mNpc_LOOKS_NUM) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+static int mMpswd_get_send_type_new_npc(mMpswd_password_c* password, Animal_c* animal) {
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (mMpswd_password_zuru_check(password) == FALSE && mMpswd_check_present(password) == TRUE &&
+        mMpswd_check_name(password) == TRUE && (int)password->_0B < mNpc_LOOKS_NUM) {
+        if (password->version == mMpswd_VERSION_OLD) {
+            ret = mMpswd_SEND_TYPE_OLD_CORRECT;
+        } else {
+            ret = mMpswd_SEND_TYPE_CORRECT;
+        }
+    }
+
+    return ret;
+}
+
+typedef int (*mMpswd_GET_SEND_TYPE_PROC)(mMpswd_password_c* password, Animal_c* animal);
+
+static int mMpswd_get_send_type(mMpswd_password_c* password, Animal_c* animal) {
+    static mMpswd_GET_SEND_TYPE_PROC get_send_type_proc[] = {
+        &mMpswd_get_send_type_famicom,  &mMpswd_get_send_type_npc,        &mMpswd_get_send_type_cardE,
+        &mMpswd_get_send_type_magazine, &mMpswd_get_send_type_user,       &mMpswd_get_send_type_cardE_mini,
+        &mMpswd_get_send_type_new_npc,  &mMpswd_get_send_type_cardE_mini,
+    };
+    int ret = mMpswd_SEND_TYPE_NG;
+
+    if (password->type < mMpswd_CODETYPE_NUM) {
+        ret = (*get_send_type_proc[password->type])(password, animal);
+    }
+
+    return ret;
+}
+
+// Rev1 adds an optional flag to set the free strings
+#if VERSION == VER_GAEJ01_01
+static void mMpswd_make_send_mail_common(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid,
+                                         Animal_c* animal, int mail_no, u8* name_str, u8* submenu_name_str,
+                                         mActor_name_t present, int set_exchange_name, int set_strings) {
+    static int exchange_name_str_flg[] = { FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE };
+    u8 item_name_str[mIN_ITEM_NAME_LEN];
+    u8 animal_name_str[ANIMAL_NAME_LEN];
+
+    mHandbill_Set_free_str(mHandbill_FREE_STR0, pid->player_name, PLAYER_NAME_LEN);
+    if (name_str != NULL) {
+        mHandbill_Set_free_str(mHandbill_FREE_STR1, name_str, ANIMAL_NAME_LEN);
+    }
+
+    if (set_strings == TRUE) {
+        mHandbill_Set_free_str(mHandbill_FREE_STR2, password->str0, PLAYER_NAME_LEN);
+        mHandbill_Set_free_str(mHandbill_FREE_STR3, password->str1, PLAYER_NAME_LEN);
+    }
+
+    if (present != EMPTY_NO) {
+        mem_clear(item_name_str, mIN_ITEM_NAME_LEN, CHAR_SPACE);
+        mIN_copy_name_str(item_name_str, present);
+        mHandbill_Set_free_str(mHandbill_FREE_STR4, item_name_str, mIN_ITEM_NAME_LEN);
+    }
+    //
+    mem_clear(animal_name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    mNpc_GetNpcWorldNameAnm(animal_name_str, &animal->id);
+    mHandbill_Set_free_str(mHandbill_FREE_STR6, animal_name_str, ANIMAL_NAME_LEN);
+
+    mNpc_LoadMailDataCommon2(mail, pid, &animal->id, present, mNpc_GetPaperType(), mail_no);
+
+    if (set_exchange_name == TRUE && exchange_name_str_flg[password->type] == TRUE) {
+        if (submenu_name_str != NULL) {
+            bcopy(submenu_name_str, mail->header.sender.personalID.player_name, PLAYER_NAME_LEN);
+        }
+
+        bcopy(pid->player_name, mail->header.recipient.personalID.player_name, PLAYER_NAME_LEN);
+
+        if (password->npc_type == mMpswd_NPCTYPE_SPECIAL) {
+            mail->content.mail_type = mMl_TYPE_SPNPC_PASSWORD;
+        }
+    }
+}
+#else
+static void mMpswd_make_send_mail_common(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid,
+                                         Animal_c* animal, int mail_no, u8* name_str, u8* submenu_name_str,
+                                         mActor_name_t present, int set_exchange_name) {
+    static int exchange_name_str_flg[] = { FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE };
+    u8 item_name_str[mIN_ITEM_NAME_LEN];
+    u8 animal_name_str[ANIMAL_NAME_LEN];
+
+    mHandbill_Set_free_str(mHandbill_FREE_STR0, pid->player_name, PLAYER_NAME_LEN);
+    if (name_str != NULL) {
+        mHandbill_Set_free_str(mHandbill_FREE_STR1, name_str, ANIMAL_NAME_LEN);
+    }
+
+    mHandbill_Set_free_str(mHandbill_FREE_STR2, password->str0, PLAYER_NAME_LEN);
+    mHandbill_Set_free_str(mHandbill_FREE_STR3, password->str1, PLAYER_NAME_LEN);
+
+    if (present != EMPTY_NO) {
+        mem_clear(item_name_str, mIN_ITEM_NAME_LEN, CHAR_SPACE);
+        mIN_copy_name_str(item_name_str, present);
+        mHandbill_Set_free_str(mHandbill_FREE_STR4, item_name_str, mIN_ITEM_NAME_LEN);
+    }
+
+    mem_clear(animal_name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    mNpc_GetNpcWorldNameAnm(animal_name_str, &animal->id);
+    mHandbill_Set_free_str(mHandbill_FREE_STR6, animal_name_str, ANIMAL_NAME_LEN);
+
+    mNpc_LoadMailDataCommon2(mail, pid, &animal->id, present, mNpc_GetPaperType(), mail_no);
+
+    if (set_exchange_name == TRUE && exchange_name_str_flg[password->type] == TRUE) {
+        if (submenu_name_str != NULL) {
+            bcopy(submenu_name_str, mail->header.sender.personalID.player_name, PLAYER_NAME_LEN);
+        }
+
+        bcopy(pid->player_name, mail->header.recipient.personalID.player_name, PLAYER_NAME_LEN);
+
+        if (password->npc_type == mMpswd_NPCTYPE_SPECIAL) {
+            mail->content.mail_type = mMl_TYPE_SPNPC_PASSWORD;
+        }
+    }
+}
+#endif
+
+static void mMpswd_make_send_mail_famicom(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+                                          mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x24A + animal->id.looks;
+    *present = password->item;
+}
+
+static void mMpswd_make_send_mail_npc(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+                                      mMpswd_password_c* password, Animal_c* animal) {
+    mActor_name_t npc_name;
+    int receive_npc_num;
+    int looks;
+    int npc_type;
+    int idx;
+
+    npc_name = mMpswd_get_pw_npc_name(password);
+    mMpswd_set_npc_name_str(name_str, npc_name, password);
+    mem_copy(submenu_name_str, name_str, 6);
+
+    if (password->npc_type == mMpswd_NPCTYPE_NORMAL) {
+        npc_type = mMpswd_NPCTYPE_NORMAL;
+        if (IS_NPC_ADD_NPC(animal->id.npc_id)) {
+            npc_type = mMpswd_NPCTYPE_ADD_NPC;
+        }
+
+        receive_npc_num = mMpswd_get_receive_npc_num(animal->id.npc_id);
+        looks = mMpswd_get_pw_npc_looks(password);
+
+        if (npc_type == mMpswd_NPCTYPE_NORMAL && receive_npc_num == password->npc_code) {
+            *mail_no = looks + 0x256;
+        } else if (mNpc_CheckIslandAnimalTableNo(npc_name) == TRUE) {
+            *mail_no = looks + 0x262;
+        } else {
+            *mail_no = looks + 0x25C;
+        }
+    } else if (password->npc_type == mMpswd_NPCTYPE_SPECIAL) {
+        *mail_no = password->npc_code + 0x268;
+        // replace さん (-san) with spaces
+        if (submenu_name_str[4] == CHAR_PP_010 && submenu_name_str[5] == CHAR_PP_195) {
+            submenu_name_str[4] = CHAR_SPACE;
+            submenu_name_str[5] = CHAR_SPACE;
+        }
+    } else if (password->npc_type == mMpswd_NPCTYPE_ADD_NPC) {
+        mActor_name_t actor_id = animal->id.npc_id;
+
+        npc_type = mMpswd_NPCTYPE_NORMAL;
+        if (IS_NPC_ADD_NPC(actor_id)) {
+            npc_type = mMpswd_NPCTYPE_ADD_NPC;
+        }
+
+        idx = actor_id & 0xFFF;
+#if VERSION == VER_GAEJ01_01
+        looks = mMpswd_get_pw_npc_looks(password);
+#else
+        looks = mNpc_GetLooks(npc_name);
+#endif
+        if (npc_type == mMpswd_NPCTYPE_ADD_NPC && idx == (u16)password->npc_code) {
+            *mail_no = looks + 0x256;
+        } else if (mNpc_CheckIslandAnimalTableNo(npc_name) == TRUE) {
+            *mail_no = looks + 0x262;
+        } else {
+            *mail_no = looks + 0x25C;
+        }
+    }
+
+    if (password->item != RSV_NO) {
+        *present = password->item;
+    }
+}
+
+
+static void mMpswd_make_send_mail_cardE(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+                                      mMpswd_password_c* password, Animal_c* animal) {
+    static u8 gobi_str[ANIMAL_CATCHPHRASE_LEN];
+    mActor_name_t npc_name;
+    int village_mem_idx;
+    int island_mem_idx;
+    int hit_card_e;
+    int looks;
+    int hit_famicom;
+    int famicom_idx;
+    int check_present;
+
+    (void)animal;
+
+    hit_famicom = FALSE;
+    mem_clear(gobi_str, 4, CHAR_SPACE);
+
+    npc_name = mMpswd_get_pw_npc_name(password);
+    mMpswd_set_npc_name_str(name_str, npc_name, password);
+    mem_copy(submenu_name_str, name_str, 6);
+
+    if (password->npc_type == mMpswd_NPCTYPE_NORMAL) {
+        mMpswd_check_memory(&village_mem_idx, &island_mem_idx, npc_name);
+        if (village_mem_idx != -1 || island_mem_idx != -1) {
+            hit_card_e = mMpswd_GetHit_cardE(password->hit_rate_index);
+            if (hit_card_e != FALSE) {
+                looks = mMpswd_get_pw_npc_looks(password);
+                hit_famicom = TRUE;
+                if (island_mem_idx != -1) {
+                    *mail_no = looks + 0x3CA;
+                } else {
+                    *mail_no = looks + 0x3C4;
+                }
+            }
+        }
+
+        if (hit_famicom == FALSE) {
+            *mail_no = password->npc_code + 0x2B2;
+        }
+
+        mMpswd_get_gobi_str_from_name(gobi_str, npc_name);
+        mHandbill_Set_free_str(mHandbill_FREE_STR5, gobi_str, 4);
+    } else {
+        *mail_no = password->npc_code + 0x39E;
+        if (submenu_name_str[4] == 0x0A && submenu_name_str[5] == 0xC3) {
+            submenu_name_str[4] = CHAR_SPACE;
+            submenu_name_str[5] = CHAR_SPACE;
+        }
+    }
+
+    if (hit_famicom == TRUE) {
+        famicom_idx = (int)RANDOM_F(8.0f);
+        *present = mNT_ftr_idx_to_ftr_item_no(pswd_famicom_list[famicom_idx], 0);
+    } else {
+        check_present = mMpswd_check_present(password);
+        if (check_present == TRUE && password->item != RSV_NO) {
+            *present = password->item;
+        }
+    }
+}
+
+static void mMpswd_make_send_mail_magazine(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+
+    if (mMpswd_GetHit_magazine(password->hit_rate_index) == TRUE) {
+        *mail_no = 0x2A0 + animal->id.looks;
+
+        if (password->item != RSV_NO) {
+            *present = password->item;
+        }
+    } else {
+        *mail_no = 0x2A6 + animal->id.looks;
+    }
+}
+
+static void mMpswd_make_send_mail_user(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    *mail_no = 0x3D0 + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_new_npc(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    mem_copy(submenu_name_str, name_str, ANIMAL_NAME_LEN);
+    *mail_no = 0x3D0 + animal->id.looks;
+}
+
+typedef void (*mMpswd_MAKE_SEND_MAIL_PROC)(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str, 
+    mMpswd_password_c* password, Animal_c* animal);
+
+static void mMpswd_make_send_mail_correct(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid, Animal_c* animal) {
+    static mMpswd_MAKE_SEND_MAIL_PROC make_send_mail_proc[mMpswd_CODETYPE_NUM] = {
+        &mMpswd_make_send_mail_famicom,
+        &mMpswd_make_send_mail_npc,
+        &mMpswd_make_send_mail_cardE,
+        &mMpswd_make_send_mail_magazine,
+        &mMpswd_make_send_mail_user,
+        &mMpswd_make_send_mail_user,
+        &mMpswd_make_send_mail_new_npc,
+        &mMpswd_make_send_mail_user,
+    };
+
+    static u8 name_str[ANIMAL_NAME_LEN];
+    static u8 submenu_name_str[ANIMAL_NAME_LEN];
+    int mail_no;
+    mActor_name_t present = EMPTY_NO;
+
+    mem_clear(name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    mem_clear(submenu_name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    (*make_send_mail_proc[password->type])(&mail_no, &present, name_str, submenu_name_str, password, animal);
+#if VERSION == VER_GAEJ01_01
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, present, TRUE, TRUE);
+#else
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, present, TRUE);
+#endif
+}
+
+static void mMpswd_make_send_mail_NG_famicom(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x250 + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_NG_npc(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x288 + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_NG_cardE(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x3BE + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_NG_magazine(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x2AC + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_NG_common(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    *mail_no = 0x3BE + animal->id.looks;
+}
+
+static void mMpswd_make_send_mail_NG(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid, Animal_c* animal) {
+    static mMpswd_MAKE_SEND_MAIL_PROC make_send_mail_proc[mMpswd_CODETYPE_NUM] = {
+        &mMpswd_make_send_mail_NG_famicom,
+        &mMpswd_make_send_mail_NG_npc,
+        &mMpswd_make_send_mail_NG_cardE,
+        &mMpswd_make_send_mail_NG_magazine,
+        &mMpswd_make_send_mail_NG_common,
+        &mMpswd_make_send_mail_NG_common,
+        &mMpswd_make_send_mail_NG_common,
+        &mMpswd_make_send_mail_NG_common,
+    };
+
+    static u8 name_str[ANIMAL_NAME_LEN];
+    static u8 submenu_name_str[ANIMAL_NAME_LEN];
+    int mail_no;
+
+    mem_clear(name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    mem_clear(submenu_name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+
+    if (password->type >= mMpswd_CODETYPE_NUM) {
+        mMpswd_make_send_mail_NG_common(&mail_no, NULL, name_str, submenu_name_str, password, animal);
+    } else {
+        (*make_send_mail_proc[password->type])(&mail_no, NULL, name_str, submenu_name_str, password, animal);
+    }
+#if VERSION == VER_GAEJ01_01
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, EMPTY_NO, FALSE, FALSE);
+#else
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, EMPTY_NO, FALSE);
+#endif
+}
+
+static void mMpswd_make_send_mail_old_correct_famicom(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    static u8 gobi_str[ANIMAL_CATCHPHRASE_LEN];
+    
+    mem_clear(gobi_str, ANIMAL_CATCHPHRASE_LEN, CHAR_SPACE);
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    mem_copy(submenu_name_str, name_str, ANIMAL_NAME_LEN);
+    *mail_no = 0x250 + animal->id.looks;
+    mem_copy(gobi_str, animal->catchphrase, ANIMAL_CATCHPHRASE_LEN);
+    mHandbill_Set_free_str(mHandbill_FREE_STR5, gobi_str, ANIMAL_CATCHPHRASE_LEN);
+}
+
+static void mMpswd_make_send_mail_old_correct_magazine(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+    mMpswd_password_c* password, Animal_c* animal) {
+    static u8 gobi_str[ANIMAL_CATCHPHRASE_LEN];
+    
+    mem_clear(gobi_str, ANIMAL_CATCHPHRASE_LEN, CHAR_SPACE);
+    mNpc_GetNpcWorldNameAnm(name_str, &animal->id);
+    mem_copy(submenu_name_str, name_str, ANIMAL_NAME_LEN);
+    *mail_no = 0x2AC + animal->id.looks;
+    mem_copy(gobi_str, animal->catchphrase, ANIMAL_CATCHPHRASE_LEN);
+    mHandbill_Set_free_str(mHandbill_FREE_STR5, gobi_str, ANIMAL_CATCHPHRASE_LEN);
+}
+
+static void mMpswd_make_send_mail_old_correct_npc(int* mail_no, mActor_name_t* present, u8* name_str, u8* submenu_name_str,
+                                                 mMpswd_password_c* password, Animal_c* animal) {
+    static u8 gobi_str[ANIMAL_CATCHPHRASE_LEN];
+    mActor_name_t npc_name;
+
+    (void)animal;
+    (void)present;
+
+    mem_clear(gobi_str, 4, CHAR_SPACE);
+
+    npc_name = mMpswd_get_pw_npc_name(password);
+    mMpswd_set_npc_name_str(name_str, npc_name, password);
+    mem_copy(submenu_name_str, name_str, 6);
+
+    if (password->npc_type == mMpswd_NPCTYPE_NORMAL) {
+        *mail_no = password->npc_code + 0x3D6;
+        mMpswd_get_gobi_str_from_name(gobi_str, npc_name);
+        mHandbill_Set_free_str(mHandbill_FREE_STR5, gobi_str, 4);
+    } else {
+        *mail_no = password->npc_code + 0x4C2;
+        // replace さん (-san) with spaces
+        if (submenu_name_str[4] == CHAR_PP_010 && submenu_name_str[5] == CHAR_PP_195) {
+            submenu_name_str[4] = CHAR_SPACE;
+            submenu_name_str[5] = CHAR_SPACE;
+        }
+    }
+}
+
+static void mMpswd_make_send_mail_old_correct(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid, Animal_c* animal) {
+    static mMpswd_MAKE_SEND_MAIL_PROC make_send_mail_proc[mMpswd_CODETYPE_NUM] = {
+        &mMpswd_make_send_mail_old_correct_famicom,
+        &mMpswd_make_send_mail_old_correct_npc,
+        &mMpswd_make_send_mail_old_correct_npc,
+        &mMpswd_make_send_mail_old_correct_magazine,
+        &mMpswd_make_send_mail_old_correct_npc,
+        &mMpswd_make_send_mail_old_correct_npc,
+        &mMpswd_make_send_mail_old_correct_npc,
+        &mMpswd_make_send_mail_old_correct_npc,
+    };
+
+    static u8 name_str[ANIMAL_NAME_LEN];
+    static u8 submenu_name_str[ANIMAL_NAME_LEN];
+    mActor_name_t unused_present = EMPTY_NO;
+    int mail_no;
+
+    mem_clear(name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    mem_clear(submenu_name_str, ANIMAL_NAME_LEN, CHAR_SPACE);
+    (*make_send_mail_proc[password->type])(&mail_no, &unused_present, name_str, submenu_name_str, password, animal);
+#if VERSION == VER_GAEJ01_01
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, mSP_get_old_password_furniture(), TRUE, TRUE);
+#else
+    mMpswd_make_send_mail_common(mail, password, pid, animal, mail_no, name_str, submenu_name_str, mSP_get_old_password_furniture(), TRUE);
+#endif
+}
+
+static int mMpswd_make_send_mail(Mail_c* mail, mMpswd_password_c* password, PersonalID_c* pid, Animal_c* animal, int send_type) {
+    int ret = FALSE;
+
+    switch (send_type) {
+        case mMpswd_SEND_TYPE_CORRECT:
+            mMpswd_make_send_mail_correct(mail, password, pid, animal);
+            ret = TRUE;
+            break;
+        case mMpswd_SEND_TYPE_NG:
+            mMpswd_make_send_mail_NG(mail, password, pid, animal);
+            ret = TRUE;
+            break;
+        case mMpswd_SEND_TYPE_OLD_CORRECT:
+            mMpswd_make_send_mail_old_correct(mail, password, pid, animal);
+            ret = TRUE;
+            break;
+    }
+
+    return ret;
+}
+
+static int mMpswd_SendHPMail_analysis(PersonalID_c* pid, Animal_c* animal, AnmHPMail_c* hp_mail) {
+    int res = FALSE;
+    int keep_mail_sum;
+    mMpswd_password_c password;
+    Mail_c mail;
+    int send_type;
+
+    keep_mail_sum = mPO_get_keep_mail_sum();
+    if (keep_mail_sum < mPO_MAIL_STORAGE_SIZE) {
+        mMpswd_password(&password, hp_mail->password);
+        send_type = mMpswd_get_send_type(&password, animal);
+        res = mMpswd_make_send_mail(&mail, &password, pid, animal, send_type);
+        if (res == TRUE) {
+            if (mNpc_CheckCmpSickAnimalName(mail.header.sender.personalID.player_name) == 0) {
+                res = mPO_receipt_proc(&mail, mPO_SENDTYPE_MAIL);
+            }
+        }
+    }
+
+    return res;
+}
+
+extern void mMpswd_SendHPMail() {
+    Private_c* priv = Save_Get(private_data);
+    Private_c* priv_p;
+    Animal_c* animal = Save_Get(animals);
+    AnmHPMail_c* hp_mail;
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    int i;
+    int j;
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+            hp_mail = animal->hp_mail;
+            priv_p = priv;
+
+            for (j = 0; j < ANIMAL_HP_MAIL_NUM; j++) {
+                if (hp_mail->receive_time.year != 0 && hp_mail->receive_time.day != 0 &&
+                    mPr_NullCheckPersonalID(&priv_p->player_ID) == FALSE) {
+                    int days;
+
+                    if (lbRTC_IsOverTime(&hp_mail->receive_time, rtc_time) == lbRTC_OVER) {
+                        days = lbRTC_GetIntervalDays(&hp_mail->receive_time, rtc_time);
+                    } else {
+                        days = lbRTC_GetIntervalDays(rtc_time, &hp_mail->receive_time);
+                    }
+
+                    if (days >= 1 && mMpswd_SendHPMail_analysis(&priv_p->player_ID, animal, hp_mail) == TRUE) {
+                        mMpswd_ClearHPMail(hp_mail, 1);
+                    }
+                }
+
+                priv_p++;
+                hp_mail++;
+            }
+        }
+
+        animal++;
+    }
 }

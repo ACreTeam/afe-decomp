@@ -2033,7 +2033,7 @@ extern u8 mNpc_GetPaperType() {
     return (paper - ITM_PAPER_START) % PAPER_UNIQUE_NUM;
 }
 
-static void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
+extern void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
                                      u8 paper_type, int mail_no) {
     u8 super[MAIL_HEADER2_LEN];
     u8 ps[MAIL_FOOTER2_LEN];
@@ -7740,7 +7740,7 @@ static int mNpc_SendHPMail_analysis(PersonalID_c* pid, AnmPersonalID_c* anm_id, 
 
     mMpswd_password_c password;
 
-    mMpswd_password(hp_mail->password, &password);
+    mMpswd_password(&password, hp_mail->password);
 
     if (password.type < mMpswd_CODETYPE_NUM) {
         return (*send_proc[password.type])(pid, anm_id, &password);
