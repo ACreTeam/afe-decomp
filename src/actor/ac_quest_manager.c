@@ -360,9 +360,9 @@ static void aQMgr_save_contest_flower(aQMgr_regist_c* regist);
 static void aQMgr_save_contest(aQMgr_regist_c* regist);
 
 static aQMgr_CHECK_LIMIT_PROC l_errand_proc[mQst_ERRAND_NUM] = {
-    (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
-    (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
-    (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
+    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
+    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
+    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
     &aQMgr_move_own_errand_cloth,
     &aQMgr_move_own_errand_seed,
     (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
@@ -594,7 +594,7 @@ static void aQMgr_actor_change_talk_init_ovl(QUEST_MANAGER_ACTOR* manager) {
 }
 
 static void aQMgr_actor_clear_regist(aQMgr_regist_c* regist, int count) {
-    for (count; count != 0; count--) {
+    for (; count != 0; count--) {
         regist->check_limit_proc = (aQMgr_CHECK_LIMIT_PROC)&none_proc1;
         regist->check_finish_proc = NULL;
         regist->quest_info = NULL;

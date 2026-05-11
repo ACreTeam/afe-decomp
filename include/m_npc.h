@@ -597,6 +597,7 @@ extern int mNpc_GetAnimal_relation(Animal_c* src_animal, int desired_relation);
 extern int mNpc_GetAnimal_relation_point(Animal_c* src_animal, int points);
 extern int mNpc_AddRelationPoint_id(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id, int amount);
 extern int mNpc_AddFriendshipNowPlayer(AnmPersonalID_c* anm_id, int amount);
+extern void mNpc_InitSickAnimal(mNpc_SickInfo_c* sick_info, AnmPersonalID_c* anm_id, lbRTC_time_c* time);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];

@@ -147,13 +147,6 @@ typedef struct quest_delivery_s {
 #define mQst_ERRAND_CHAIN_ANIMAL_NUM 3
 
 enum {
-    // errand quests removed in e+
-#if 0
-    mQst_ERRAND_REQUEST,
-    mQst_ERRAND_REQUEST_CONTINUE,
-    mQst_ERRAND_REQUEST_FINAL,
-#endif
-
     mQst_ERRAND_FIRSTJOB_START,
     mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH,
     mQst_ERRAND_FIRSTJOB_PLANT_FLOWER,
@@ -233,22 +226,30 @@ extern void mQst_CopyDelivery(mQst_delivery_c* dst, mQst_delivery_c* src);
 extern void mQst_CopyErrand(mQst_errand_c* dst, mQst_errand_c* src);
 extern int mQst_CheckFreeQuest(mQst_base_c* quest);
 extern int mQst_CheckLimitOver(mQst_base_c* quest);
+extern int mQst_GetContestAddDay(u32 kind);
 extern int mQst_GetOccuredDeliveryIdx(int delivery_kind);
 extern int mQst_ClearQuestbyPossessionIdx(int idx);
 extern int mQst_CheckLimitbyPossessionIdx(int idx);
 extern void mQst_ClearGrabItemInfo();
 extern void mQst_CheckGrabItem(mActor_name_t item, int pocket_idx);
 extern void mQst_CheckPutItem(mActor_name_t item, int pocket_idx);
+extern void mQst_PutItem_menu_end(void);
 extern int mQst_CheckNpcExistbyItemIdx(int idx, int sender_or_receipient);
 extern int mQst_GetToFromName(u8* to_name, u8* from_name, int idx);
 extern int mQst_GetOccuredContestIdx(int kind);
 extern int mQst_GetFlowerSeedNum(int block_x, int block_z);
 extern int mQst_GetFlowerNum(int block_x, int block_z);
+extern int mQst_GetGrassNum(int block_x, int block_z);
 extern int mQst_GetNullNoNum(int block_x, int block_z);
 extern void mQst_SetItemNameStr(mActor_name_t item, int string_no);
 extern void mQst_SetItemNameFreeStr(mActor_name_t item, int string_no);
 extern int mQst_SendRemail(mQst_contest_c* contest, AnmPersonalID_c* sender_id);
+extern void mQst_SendRemailAll(void);
 extern void mQst_SetReceiveLetter(mQst_contest_c* contest, PersonalID_c* sender_id, u8* body, mActor_name_t present);
+extern int mQst_GetPlayerBlockNum(int* bx, int* bz);
+extern void mQst_ClearOfferTalk(void);
+extern void mQst_SetOfferTalk(int idx);
+extern int mQst_CheckOfferTalk(int idx);
 extern mQst_errand_c* mQst_GetFirstJobData();
 extern int mQst_CheckFirstJobQuestbyItemIdx(int idx);
 extern int mQst_CheckFirstJobFin(mQst_errand_c* errand);
@@ -272,15 +273,31 @@ extern int mQst_CheckSoccerTarget(ACTOR* actor);
 extern void mQst_NextSoccer(ACTOR* actor);
 extern void mQst_NextSnowman(xyz_t snowman_pos);
 extern void mQst_BackSnowman(xyz_t snowman_pos);
+extern int mQst_GetRandom100(u8* prob_table, int prob_table_size);
+extern void mQst_InitReserveAll(void);
+extern void mQst_Id2InitReserve(AnmPersonalID_c* id);
+extern void mQst_SetReverveAll(void);
+extern int mQst_GetReserve(AnmPersonalID_c* id, AnmPersonalID_c* chk_id);
+extern int mQst_CheckRenewalReserve(void);
+extern mActor_name_t mQst_GetQBoxItem(void);
+extern void mQst_OpenQBox(int idx);
+extern int mQst_CheckLostItemPos(int player_bx, int player_bz);
+extern int mQst_SetLostItem(mActor_name_t* lost_item_p, int player_bx, int player_bz);
+extern int mQst_CheckLostClearTime(lbRTC_time_c* lost_clear_time, lbRTC_time_c* chk_time);
+extern void mQst_OccurSick(void);
+extern void mQst_SetRewardSick(void);
+extern void mQst_ClearTalkSelect(void);
 extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint);
 
 extern int mQst_GetIdxTalkSelect(int lower_bound, int upper_bound, int looks);
 extern int mQst_SetLostCondition(mActor_name_t item, int slot_idx);
+extern int mQst_SetLostCondition_menu(void);
 #if VERSION == VER_GAEJ01_01
 extern void mQst_KeepLostQuest(mActor_name_t item);
 #endif
 extern void mQst_ClearLostQuest(void);
 extern void mQst_SetLostAfterRecovery(PersonalID_c* pid);
+extern int mQst_GetLostBkNum(int* bx, int* bz);
 extern int mQst_GetLostOwnerName(u8* buf, mActor_name_t item);
 extern int mQst_GetReserveQuest(u32* qst_type, u32* qst_kind, int type);
 

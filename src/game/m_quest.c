@@ -350,6 +350,7 @@ extern int mQst_CheckLimitbyPossessionIdx(int idx) {
     return res;
 }
 
+static u16 l_mqst_offer = 0;
 static mQst_grab_c l_mqst_grab;
 
 static void mQst_ClearGrabItemInfo_common(mQst_grab_c* grab) {
@@ -594,7 +595,7 @@ extern int mQst_GetOccuredContestIdx(int kind) {
     return res;
 }
 
-extern int mQst_GetFreeContestIdx(Animal_c* animal, int count) {
+static int mQst_GetFreeContestIdx(Animal_c* animal, int count) {
     int res = -1;
     int i;
 
@@ -859,8 +860,6 @@ extern int mQst_GetPlayerBlockNum(int* bx, int* bz) {
 
     return ret;
 }
-
-static u16 l_mqst_offer = 0;
 
 extern void mQst_ClearOfferTalk(void) {
     l_mqst_offer = 0;
@@ -1440,14 +1439,14 @@ extern void mQst_SetReverveAll(void) {
     }
 }
 
-extern int mQst_GetReserve(AnmPersonalID_c* id, Animal_c* animal) {
+extern int mQst_GetReserve(AnmPersonalID_c* id, AnmPersonalID_c* chk_id) {
     Animal_c* animals = Save_Get(animals);
     int ret = -1;
     int i;
 
-    if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+    if (mNpc_CheckFreeAnimalPersonalID(chk_id) == FALSE) {
         for (i = 0; i < ANIMAL_NUM_MAX; i++, animals++) {
-            if (mNpc_CheckCmpAnimalPersonalID(&animal->id, &animals->id) == TRUE) {
+            if (mNpc_CheckCmpAnimalPersonalID(chk_id, &animals->id) == TRUE) {
                 ret = l_mqst_reserve[i].idx;
                 mNpc_CopyAnimalPersonalID(id, &l_mqst_reserve[i].id);
                 break;
@@ -1810,7 +1809,7 @@ extern void mQst_SetLostAfterRecovery(PersonalID_c* pid) {
                 lost_item_quest = &priv->lost_item_quest;
 
                 // @BUG - progress state 3 was missing
-#if VERSION == VER_GAEJ01_01
+#if VERSION == VER_GAEJ01_01 || defined(BUGFIXES)
                 if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
                     lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM &&
                     (lost_item_quest->base.progress == 3 || lost_item_quest->base.progress == 2)) {
@@ -1826,6 +1825,331 @@ extern void mQst_SetLostAfterRecovery(PersonalID_c* pid) {
             }
         }
     }
+}
+
+extern int mQst_GetLostBkNum(int* bx, int* bz) {
+    mFM_fg_c* fg_block_p = Save_Get(fg[0]);
+    mActor_name_t* item_p;
+    int ret = FALSE;
+    int bk;
+    int ut;
+
+    *bx = 0;
+    *bz = 0;
+
+    for (bk = 0; bk < FG_BLOCK_TOTAL_NUM; bk++) {
+        item_p = (mActor_name_t*)fg_block_p->items;
+
+        for (ut = 0; ut < UT_TOTAL_NUM; ut++) {
+            if (IS_ITEM_LOST_ITEM(*item_p)) {
+                ret = TRUE;
+                *bx = FGIDX_2_BLOCK_X(bk);
+                *bz = FGIDX_2_BLOCK_Z(bk);
+                break;
+            }
+
+            item_p++;
+        }
+
+        if (ut != UT_TOTAL_NUM) {
+            break;
+        }
+
+        fg_block_p++;
+    }
+
+    return ret;
+}
+
+extern int mQst_CheckLostClearTime(lbRTC_time_c* lost_clear_time, lbRTC_time_c* chk_time) {
+    lbRTC_time_c time;
+    int ret = FALSE;
+
+    lbRTC_TimeCopy(&time, lost_clear_time);
+    lbRTC_Sub_mm(&time, 23 * lbRTC_MINUTES_PER_HOUR + 30);
+    if (lbRTC_IsOverTime(&time, chk_time) == lbRTC_OVER) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static int mQst_CheckOccurSick(mNpc_SickInfo_c* sick_info, Animal_c* animal, int count) {
+    int ret = FALSE;
+
+    if ((mLd_PlayerManKindCheck() == NATIVE && mEv_CheckFirstJob() == FALSE) || mLd_PlayerManKindCheck() != NATIVE) {
+        if (RANDOM(100) < 5 && mNpc_GetSickAnimalIdx_com(sick_info) == -1 && mNpc_CheckFreeAnimalPersonalID(&sick_info->id) == TRUE &&
+            mQst_GetOccuredContestIdx(mQst_CONTEST_KIND_SICK) == -1 && mQst_GetFreeContestIdx(animal, count) != -1) {
+            lbRTC_ymd_c renew_time;
+
+            mTM_set_renew_time(&renew_time, Common_GetPointer(time.rtc_time));
+            if (mEv_check_calendar_event(&renew_time, 0) == mEv_EVENT_NONE) {
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int mQst_DecideSickAnimalIdx(void) {
+    static u8 cand[ANIMAL_NUM_MAX];
+    Animal_c* animal = Save_Get(animals);
+    int count = 0;
+    int remove_idx = Save_Get(remove_animal_idx);
+    int ret = -1;
+    int selected;
+    int i;
+
+    bzero(cand, sizeof(cand));
+
+    if (remove_idx < 0 || remove_idx >= ANIMAL_NUM_MAX) {
+        remove_idx = -1;
+    }
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        if (i != remove_idx && mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE && Now_Private != NULL &&
+            Now_Private->birthday_present_npc != animal->id.npc_id &&
+            mQst_CheckFreeQuest(&animal->contest_quest.base) == TRUE) {
+            cand[i] = TRUE;
+            count++;
+        }
+
+        animal++;
+    }
+
+    if (count > 0) {
+        selected = RANDOM(count);
+
+        for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+            if (cand[i] == TRUE) {
+                if (selected <= 0) {
+                    ret = i;
+                    break;
+                }
+
+                selected--;
+            }
+        }
+    }
+
+    return ret;
+}
+
+extern void mQst_OccurSick(void) {
+    mNpc_SickInfo_c* sick_info = Save_GetPointer(sick_info);
+    Animal_c* animal = Save_Get(animals);
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    mQst_contest_c* contest;
+
+    if (mQst_CheckOccurSick(sick_info, animal, ANIMAL_NUM_MAX) == TRUE) {
+        int idx = mQst_DecideSickAnimalIdx();
+
+        if (idx != -1) {
+            animal += idx;
+            mNpc_InitSickAnimal(sick_info, &animal->id, rtc_time);
+            contest = &animal->contest_quest;
+            mQst_ClearContest(contest);
+            contest->base.quest_type = mQst_QUEST_TYPE_CONTEST;
+            contest->base.quest_kind = mQst_CONTEST_KIND_SICK;
+            contest->base.progress = 2;
+            contest->base.time_limit_enabled = TRUE;
+            lbRTC_TimeCopy(&contest->base.time_limit, rtc_time);
+            lbRTC_Add_DD(&contest->base.time_limit, 10);
+            contest->requested_item = ITM_MEDICINE;
+        }
+    }
+}
+
+extern void mQst_SetRewardSick(void) {
+    mNpc_SickInfo_c* sick_info = Save_GetPointer(sick_info);
+    int pid_idx = -1;
+    u8 most_medicine_given_cnt = 0;
+    mQst_contest_c* contest;
+    int sick_idx;
+    u8 count;
+    int i;
+    int j;
+    u8 tbl[TOTAL_PLAYER_NUM];
+
+    sick_idx = mQst_GetOccuredContestIdx(mQst_CONTEST_KIND_SICK);
+
+    if (sick_idx != -1 && sick_info->sick_level == mNpc_SICK_LV_NOT_SICK) {
+        contest = &Save_Get(animals[sick_idx]).contest_quest;
+
+        if (mPr_NullCheckPersonalID(&contest->player_id) == TRUE) {
+            bzero(tbl, sizeof(tbl));
+
+            for (i = 0; i < TOTAL_PLAYER_NUM; i++) {
+                count = 0;
+
+                if (mPr_NullCheckPersonalID(&sick_info->id_gave_medicine[i]) == FALSE) {
+                    for (j = i; j < TOTAL_PLAYER_NUM; j++) {
+                        if (tbl[j] == 0 &&
+                            mPr_CheckCmpPersonalID(&sick_info->id_gave_medicine[i], &sick_info->id_gave_medicine[j]) == TRUE) {
+                            tbl[j] = 1;
+                            count++;
+                        }
+                    }
+                }
+
+                if (count > most_medicine_given_cnt) {
+                    pid_idx = i;
+                    most_medicine_given_cnt = count;
+                }
+            }
+
+            if (pid_idx != -1) {
+                mPr_CopyPersonalID(&contest->player_id, &sick_info->id_gave_medicine[pid_idx]);
+                contest->base.progress = 1;
+            }
+        }
+    }
+}
+
+#define mQst_TALK_SELECT_NUM 10
+static u32 l_mqst_talk_select[mNpc_LOOKS_NUM][mQst_TALK_SELECT_NUM];
+
+extern void mQst_ClearTalkSelect(void) {
+    bzero(l_mqst_talk_select, sizeof(l_mqst_talk_select));
+}
+
+static int mQst_GetUnusedTalkSelect(u32* talk_select, int lower_bound, int count) {
+    int word_idx = lower_bound / 32;
+    int bit_idx = lower_bound - word_idx * 32;
+    u32* word_p = talk_select + word_idx;
+    int unused = 0;
+
+    for (; count > 0; count--) {
+        if (((*word_p >> bit_idx) & 1) == 0) {
+            unused++;
+        }
+
+        bit_idx++;
+        if (bit_idx >= 32) {
+            bit_idx = 0;
+            word_idx++;
+            word_p++;
+        }
+
+        if (word_idx >= mQst_TALK_SELECT_NUM) {
+            break;
+        }
+    }
+
+    return unused;
+}
+
+static void mQst_BitOnTalkSelect(u32* talk_select, int idx) {
+    if (idx < 289) {
+        int tbl_idx = idx / 32;
+        int bit_idx = idx - tbl_idx * 32;
+
+        talk_select[tbl_idx] |= 1 << bit_idx;
+    }
+}
+
+static void mQst_BitClearTalkSelect(u32* talk_select, int lower_bound, int count) {
+    int word_idx = lower_bound / 32;
+    int bit_idx = lower_bound - word_idx * 32;
+    u32* word_p = talk_select + word_idx;
+
+    for (; count > 0; count--) {
+        *word_p &= ~(1 << bit_idx);
+        bit_idx++;
+        if (bit_idx >= 32) {
+            bit_idx = 0;
+            word_idx++;
+            word_p++;
+        }
+
+        if (word_idx >= mQst_TALK_SELECT_NUM) {
+            break;
+        }
+    }
+}
+
+static int mQst_GetIdxTalkSelect_sub(u32* talk_select, int lower_bound, int count, float unused_cnt) {
+    int word_idx = lower_bound / 32;
+    int bit_idx = lower_bound - word_idx * 32;
+    int ret = -1;
+    int selected = (int)RANDOM_F(unused_cnt);
+    int i;
+    
+    talk_select += word_idx;
+
+    for (i = 0; i < count; i++) {
+        if (((*talk_select >> bit_idx) & 1) == 0) {
+            if (selected <= 0) {
+                ret = i;
+                break;
+            }
+
+            selected--;
+        }
+
+        bit_idx++;
+        if (bit_idx >= 32) {
+            bit_idx = 0;
+            word_idx++;
+            talk_select++;
+        }
+
+        if (word_idx >= mQst_TALK_SELECT_NUM) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+extern int mQst_GetIdxTalkSelect(int lower_bound, int upper_bound, int looks) {
+    u32 (*talk_select_tbl)[mQst_TALK_SELECT_NUM];
+    int count;
+    int talk_select_idx = 0;
+    int num;
+    int unused_cnt;
+    int unused_idx;
+
+    if (looks < 0 || looks >= mNpc_LOOKS_NUM) {
+        looks = 0;
+    }
+
+    talk_select_tbl = l_mqst_talk_select + looks;
+
+    if (lower_bound < 0 || lower_bound > 0x121 || upper_bound < 0 || upper_bound > 0x121) {
+        lower_bound = 0;
+        upper_bound = 1;
+    }
+
+    if (lower_bound > upper_bound) {
+        num = lower_bound;
+        lower_bound = upper_bound;
+        upper_bound = num;
+    }
+
+    if (lower_bound != upper_bound) {
+        count = upper_bound - lower_bound;
+        unused_cnt = mQst_GetUnusedTalkSelect(*talk_select_tbl, lower_bound, count);
+
+        if (unused_cnt > 0) {
+            unused_idx = mQst_GetIdxTalkSelect_sub(*talk_select_tbl, lower_bound, count, (f32)unused_cnt);
+
+            if (unused_idx != -1) {
+                talk_select_idx = unused_idx;
+
+                if (count > 1) {
+                    if (unused_cnt == 1) {
+                        mQst_BitClearTalkSelect(*talk_select_tbl, lower_bound, count);
+                    }
+
+                    mQst_BitOnTalkSelect(*talk_select_tbl, lower_bound + unused_idx);
+                }
+            }
+        }
+    }
+
+    return talk_select_idx;
 }
 
 extern void mQst_PrintQuestInfo(gfxprint_t* gfxprint) {
