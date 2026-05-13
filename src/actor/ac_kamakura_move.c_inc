@@ -80,13 +80,25 @@ static void aKKR_set_bgOffset(STRUCTURE_ACTOR* kamakura, int offs) {
         pos.z = kamakura->actor_class.home.position.z + addZ[i];
 
         pos.x = kamakura->actor_class.home.position.x + addX[0];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 205);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 208);
+#endif
 
         pos.x = kamakura->actor_class.home.position.x + addX[1];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 209);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 212);
+#endif
 
         pos.x = kamakura->actor_class.home.position.x + addX[2];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 213);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 216);
+#endif
 
         offset += 3;
     }

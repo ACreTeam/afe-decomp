@@ -410,7 +410,7 @@ static void aCD1_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         if ((event_idx & 1) == 0) {
             angle = RANDOM_F(65536.0f);
         } else {
-            int pool_idx = mFI_GetPuleIdx();
+            int pool_idx = mFI_GetPoolIdx();
 
             angle = def_angle[(event_idx >> 1) & 1][pool_idx];
         }

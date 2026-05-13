@@ -674,13 +674,11 @@ static void aWeather_MakeKaminari(ACTOR* actorx) {
 
 static void Weather_Actor_move(ACTOR* actor, GAME* game) {
     xyz_t* pos;
-    WEATHER_ACTOR* weather;
+    WEATHER_ACTOR* weather; // this/actor need to be moved into r31
     GAME_PLAY* play;
     Camera2* camera;
     CameraLookat* lookat;
     s16 angle;
-    s16 umbrella;
-    mActor_name_t field_id;
     
     pos = Camera2_getCenterPos_p();
     weather = (WEATHER_ACTOR*)actor;
@@ -701,10 +699,21 @@ static void Weather_Actor_move(ACTOR* actor, GAME* game) {
     aWeather_ChangeWeatherTime0(actor);
 
     if (Common_Get(weather) == mEnv_WEATHER_RAIN) {
+        s16 umbrella;
+        mActor_name_t field_id;
+
         umbrella = mPlib_check_player_open_umbrella(game);
+
+#if VERSION == VER_GAEJ01_00
         if (umbrella != weather->umbrella_flag) {
             aWeather_ChangeEnvSE(actor, game, weather->current_status, weather->current_level);
         }
+#else
+        field_id = mFI_GetFieldId();
+        if (mFI_GET_TYPE(field_id) == mFI_FIELDTYPE2_FG && umbrella != weather->umbrella_flag) {
+            aWeather_ChangeEnvSE(actor, game, weather->current_status, weather->current_level);
+        }
+#endif
 
         weather->umbrella_flag = umbrella;
         weather->current_yAngle = angle;

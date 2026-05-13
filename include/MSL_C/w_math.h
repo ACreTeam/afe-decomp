@@ -1,6 +1,7 @@
 #ifndef W_MATH_H
 #define W_MATH_H
 
+#include "ver.h"
 #include "MSL_C/MSL_Common/float.h"
 
 #if !defined(BUGFIXES) && !defined(FIX_SQRT_LINKAGE)
@@ -10,7 +11,38 @@
 #define SQRTF_LINKAGE static
 #endif
 
+#if VERSION == VER_GAEJ01_00
 #pragma cplusplus on
+#endif
+
+#if __MWERKS__ > 0x2301 && VERSION == VER_GAEJ01_01
+SQRTF_LINKAGE inline float sqrtf(float x)
+{
+    static const double _half = .5f;
+    static const double _three = 3.0f;
+    if (x > 0.0f)
+    {
+        double xd = (double)x;
+        double guess = __frsqrte(xd);                          // returns an approximation to
+        guess = _half * guess * (_three - guess * guess * xd); // now have 12 sig bits
+        guess = _half * guess * (_three - guess * guess * xd); // now have 24 sig bits
+        guess = _half * guess * (_three - guess * guess * xd); // now have 32 sig bits
+        return (float)(xd * guess);
+    }
+    else if (x < 0.0)
+    {
+        return NAN;
+    }
+    else if (isnan(x))
+    {
+        return NAN;
+    }
+    else
+    {
+        return x;
+    }
+}
+#else
 
 /**
  * Float square root implementation.
@@ -38,8 +70,11 @@ SQRTF_LINKAGE inline float sqrtf(float x) {
 
     return x;
 }
+#endif
 
+#if VERSION == VER_GAEJ01_00
 #pragma cplusplus reset
+#endif
 
 #ifdef SQRTF_LINKAGE
 #undef SQRTF_LINKAGE
@@ -61,6 +96,7 @@ inline float fabsf(float x) {
 #define NAN (*(float*)__float_nan)
 #define HUGE_VALF (*(float*)__float_huge)
 
+#if VERSION == VER_GAEJ01_00
 extern inline double sqrt(double x) {
     if (x > 0.0) {
         double guess = __frsqrte(x);
@@ -76,6 +112,10 @@ extern inline double sqrt(double x) {
     }
     return INFINITY;
 }
+#else
+extern double __ieee754_sqrt(double x);
+extern double sqrt(double x);
+#endif
 
 // #ifdef __cplusplus
 // namespace std {

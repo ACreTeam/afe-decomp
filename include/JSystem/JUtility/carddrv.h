@@ -57,6 +57,7 @@ extern u16 CARD_SendCSD();
 extern u16 CARD_SendCID();
 extern u16 CARD_SetBlockLength(int param_1);
 extern u16 CARD_Term();
+extern u16 CARD_SecureGetinfo(SDInfos* param1);
 
 extern RES SD_RES[CARD_NUM_CHANS];
 extern CMD SD_CMD[CARD_NUM_CHANS];

@@ -557,7 +557,11 @@ bool JKRExpHeap::isEmpty() {
 
 void JKRExpHeap::appendUsedList(JKRExpHeap::CMemBlock* blockToAppend) {
     if (!blockToAppend) {
+#if VERSION == VER_GAEJ01_00
         JPANIC(1567, ":::ERROR! appendUsedList\n");
+#else
+        JPANIC(1568, "bad appendUsedList\n");
+#endif
     }
     CMemBlock* block = mTailUsedList;
     CMemBlock* tail = mTailUsedList;
@@ -689,7 +693,11 @@ void JKRExpHeap::joinTwoBlocks(CMemBlock* block) {
         JREPORTF(":::: endAddr = %x\n", endAddr);
         JREPORTF(":::: nextAddr = %x\n", nextAddr);
         JKRGetCurrentHeap()->dump();
+#if VERSION == VER_GAEJ01_00
         JPANIC(1819, ":::: Bad Block\n");
+#else
+        JPANIC(1820, "Bad Block\n");
+#endif
     }
     if (endAddr == nextAddr) {
         block->mAllocatedSpace =

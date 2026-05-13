@@ -467,13 +467,13 @@ extern Gfx* gfx_gDPFillRectangleF(Gfx* gfx, u32 ulx, u32 uly, u32 lrx, u32 lry) 
     return gfx;
 }
 
-extern Gfx* gfx_gSPTextureRectangle1(Gfx* gfx, int xl, int yl, int xh, int yh, int tile, int s, int t, int dsdx,
+extern Gfx* gfx_gSPTextureRectangle1(Gfx* gfx, u32 xl, u32 yl, u32 xh, u32 yh, int tile, int s, int t, int dsdx,
                                      int dtdy) {
     gSPTextureRectangle(gfx++, xl << 1, yl << 1, xh << 1, yh << 1, tile, s, t, dsdx >> 1, dtdy >> 1);
     return gfx;
 }
 
-extern Gfx* gfx_gSPScisTextureRectangle1(Gfx* gfx, int xl, int yl, int xh, int yh, int tile, int s, int t, int dsdx,
+extern Gfx* gfx_gSPScisTextureRectangle1(Gfx* gfx, u32 xl, u32 yl, u32 xh, u32 yh, int tile, int s, int t, int dsdx,
                                          int dtdy) {
     gSPScisTextureRectangle(gfx++, (s16)(xl << 1), (s16)(yl << 1), xh << 1, yh << 1, tile, s, t, dsdx >> 1, dtdy >> 1);
     return gfx;

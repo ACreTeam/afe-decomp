@@ -341,6 +341,105 @@ static u8 tags_table_external_default[] = {
     END_TAG(),
 };
 
+#if VERSION == VER_GAEJ01_01
+static u8 tags_table_external_bbram_default[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    BBR_TAG(), OFS_U16(0x0000), OFS_U16(0x2000),
+    END_TAG(),
+};
+
+static u8 tags_table_external_disksystem_default[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x000000), OFS_U16(0x8000),
+    QDS_TAG(), OFS_U24(0x008000), OFS_U16(0x8000),
+    QDS_TAG(), OFS_U24(0x010000), OFS_U16(0x8000),
+    QDS_TAG(), OFS_U24(0x018000), OFS_U16(0x8000),
+    END_TAG(),
+};
+
+static u8 tags_table_external_famicom_grand_prix[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x00BA33), OFS_U16(0x0150),
+    END_TAG(),
+};
+
+static u8 tags_table_wrecking_crew[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x00A15E), OFS_U16(0x0100),
+    END_TAG(),
+};
+
+static u8 tags_table_vs_excitebike[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x00B96F), OFS_U16(0x0743),
+    QDS_TAG(), OFS_U24(0x01D465), OFS_U16(0x0080),
+    END_TAG(),
+};
+
+static u8 tags_table_kaettekita_mario_bros[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x00D2C4), OFS_U16(0x0016),
+    QDS_TAG(), OFS_U24(0x01CA34), OFS_U16(0x0060),
+    END_TAG(),
+};
+
+static u8 tags_table_doctor_mario[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GID_TAG(2), 'V', 'U',
+    GNM_TAG(12), 'D', 'O', 'C', 'T', 'O', 'R', ' ', 'M', 'A', 'R', 'I', 'O',
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    HSC_TAG(6), OFS_U16(0x8700), 0, 0, 0, 1, 0, 0,
+    HSC_TAG(10), OFS_U16(0x8710), '!', 'D', 'R', '.', 'M', 'A', 'R', 'I', 'O', '!',
+    HSC_TAG(1), OFS_U16(0x830B), 1,
+    HSC_TAG(1), OFS_U16(0x8316), 0,
+    HSC_TAG(1), OFS_U16(0x838B), 1,
+    HSC_TAG(1), OFS_U16(0x8396), 0,
+    HSC_TAG(1), OFS_U16(0x8727), 1,
+    HSC_TAG(1), OFS_U16(0x8731), 0,
+    END_TAG(),
+};
+
+static u8 tags_table_adventure_of_link[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNM_TAG(17), 'A', 'D', 'V', 'E', 'N', 'T', 'U', 'R', 'E', ' ', 'O', 'F', ' ', 'L', 'I', 'N', 'K',
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    QDS_TAG(), OFS_U24(0x00D1BB), OFS_U16(0x0338),
+    END_TAG(),
+};
+
+static u8 tags_table_adventure_of_link_rom[] = {
+    TCS_TAG(), OFS_U16(0x0000),
+    ICS_TAG(), OFS_U16(0x0000),
+    GNM_TAG(17), 'A', 'D', 'V', 'E', 'N', 'T', 'U', 'R', 'E', ' ', 'O', 'F', ' ', 'L', 'I', 'N', 'K',
+    GNO_TAG(), FAMICOM_GAME_EXTERNAL,
+    OFS_TAG(), OFS_U16(0x0000),
+    BBR_TAG(), OFS_U16(0x1400), OFS_U16(0x033B),
+    END_TAG(),
+};
+#endif
+
 typedef struct nesinfo_tag_s {
     u8* tags_table;
     size_t tags_size;

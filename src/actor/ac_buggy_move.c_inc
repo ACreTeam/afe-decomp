@@ -83,13 +83,24 @@ static void aBGY_set_bgOffset(STRUCTURE_ACTOR* buggy, int offs) {
         pos.z = buggy->actor_class.home.position.z + addZ[i];
 
         pos.x = buggy->actor_class.home.position.x + addX[0];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 228);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 231);
+#endif
 
         pos.x = buggy->actor_class.home.position.x + addX[1];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 232);
-
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 235);
+#endif
         pos.x = buggy->actor_class.home.position.x + addX[2];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 236);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 239);
+#endif
 
         offset += 3;
     }

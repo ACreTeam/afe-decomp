@@ -156,6 +156,9 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
                 sp30++;
 
                 if (var_r21 == (var_r25 - 1)) {
+#if VERSION == VER_GAEJ01_01
+                    sp28 = 0;
+#endif
                     if (sp34[0] == '\\' && sp34[1] == '\0') {
                         if ((sp2C + sp20->unk_1E) < sp20->unk_64) {
                             sp2C += sp20->unk_1E;
@@ -208,6 +211,9 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
         }
 
         var_r31 = (FSDirEntry*)temp_r20->unk_20BA4;
+#if VERSION == VER_GAEJ01_01
+        sp28 = 0;
+#endif
         var_r25 = ((sp20->unk_1E * sp20->unk_1C) / 32);
 
         if (sp34[0] == '\\' && sp34[1] == '\0') {

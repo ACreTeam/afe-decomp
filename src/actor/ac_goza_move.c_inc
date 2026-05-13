@@ -41,7 +41,11 @@ static void aGOZ_set_bgOffset(STRUCTURE_ACTOR* goza, int offs) {
             pos.x += mFI_UT_WORLDSIZE_X_F * j;
             pos.z += mFI_UT_WORLDSIZE_Z_F * i;
 
+#if VERSION == VER_GAEJ01_00
             mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 173);
+#else
+            mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 176);
+#endif
 
             offset++;
         }

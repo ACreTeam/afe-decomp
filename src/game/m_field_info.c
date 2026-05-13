@@ -686,30 +686,6 @@ extern u8 mFI_BkNum2BlockType(int bx, int bz) {
     return type;
 }
 
-// 25%
-
-#if VERSION != VER_GAFU01_00
-static int mFI_GetPuleTypeIdx(u8 type) {
-    u32 kind = mRF_Type2BlockInfo(type);
-    int idx = -1;
-
-    if ((kind & mRF_BLOCKKIND_POOL) == mRF_BLOCKKIND_POOL) {
-        idx = type - 69;
-    }
-
-    return idx;
-}
-
-extern int mFI_GetPuleIdx() {
-    int bx;
-    int bz;
-    u8 type;
-
-    mFI_BlockKind2BkNum(&bx, &bz, mRF_BLOCKKIND_POOL);
-    type = mFI_BkNum2BlockType(bx, bz);
-    return mFI_GetPuleTypeIdx(type);
-}
-#else
 static int mFI_GetPoolTypeIdx(u8 type) {
     u32 kind = mRF_Type2BlockInfo(type);
     int idx = -1;
@@ -730,7 +706,6 @@ extern int mFI_GetPoolIdx() {
     type = mFI_BkNum2BlockType(bx, bz);
     return mFI_GetPoolTypeIdx(type);
 }
-#endif
 
 extern u32 mFI_BkNum2BlockKind(int bx, int bz) {
     u32 kind = mRF_BLOCKKIND_NONE;

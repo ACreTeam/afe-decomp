@@ -2703,4 +2703,20 @@ extern int mSP_force_opend(void) {
     return Common_Get(shop_force_opend);
 }
 
+#if VERSION == VER_GAEJ01_01
+extern mActor_name_t mSP_get_directed_type_cloth_no(int type) {
+    int i;
+
+    for (i = CLOTH_NUM - 1; i >= 0; i--) {
+        mActor_name_t cloth_no = ITM_CLOTH_START + (mActor_name_t)i;
+
+        if (mNT_get_cloth_type(cloth_no, 0) == type) {
+            return cloth_no;
+        }
+    }
+
+    return ITM_CLOTH_START;
+}
+#endif
+
 #include "../src/game/m_item_debug.c"

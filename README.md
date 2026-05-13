@@ -19,6 +19,7 @@ This repository does **not** contain any game assets or assembly whatsoever. An 
 Supported versions:
 
 - `GAEJ01_00`: Rev 0 (JP)
+- `GAEJ01_01`: Rev 1 (JP)
 
 <!--
 Quick Guides

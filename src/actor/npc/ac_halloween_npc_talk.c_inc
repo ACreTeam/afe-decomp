@@ -4,11 +4,13 @@ static int aHWN_get_trick_type(void) {
     mActor_name_t* pockets_p = Now_Private->inventory.pockets;
     int i;
     int ret = aHWN_TRICK_TYPE_CHG_CLOTH;
+    int cond;
 
     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
         switch (ITEM_NAME_GET_TYPE(*pockets_p)) {
             case NAME_TYPE_FTR0:
             case NAME_TYPE_FTR1:
+#if VERSION == VER_GAEJ01_00
                 if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
                     int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pockets_p);
 
@@ -17,12 +19,33 @@ static int aHWN_get_trick_type(void) {
                         idx[count++] = i;
                     }
                 }
+#else
+                cond = NowPrivate_GetItemCond(i) & 0xF;
+                if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
+                    if ((cond & mPr_ITEM_COND_4) == 0) {
+                        int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pockets_p);
+                        // check furniture is not jack-o'-lantern nor jack-in-the-box
+                        if (ftr_idx != FTR_SUM_HAL_PKIN && ftr_idx != FTR_SUM_HAL_BOX01) {
+                            idx[count++] = i;
+                        }
+                    }
+                }
+#endif
                 break;
             case NAME_TYPE_ITEM1:
+#if VERSION == VER_GAEJ01_00
                 if (ITEM_NAME_GET_CAT(*pockets_p) != ITEM1_CAT_TOOL &&
                     (NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
                     idx[count++] = i;
                 }
+#else
+                if (ITEM_NAME_GET_CAT(*pockets_p) != ITEM1_CAT_TOOL) {
+                    cond = NowPrivate_GetItemCond(i) & 0xF;
+                    if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0 && !IS_ITEM_QUEST_ITEM(*pockets_p) && (cond & mPr_ITEM_COND_4) == 0) {
+                        idx[count++] = i;
+                    }
+                }
+#endif
                 break;
         }
 

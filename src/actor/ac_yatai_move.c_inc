@@ -45,13 +45,21 @@ static void aYAT_set_bgOffset(STRUCTURE_ACTOR* yatai, int idx){
             if (type == 0) {
                 if (j + i * 3 != 0 && j + i * 3 != 8) {
                     pos.x = (yatai->actor_class.home.position.x + addX[j]);
+#if VERSION == VER_GAEJ01_00
                     mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 126);
+#else
+                    mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 129);
+#endif
                 }
             }
             else {
                 if (j + i * 3 != 2 && j + i * 3 != 6) {
                     pos.x = (yatai->actor_class.home.position.x + addX[j]);
+#if VERSION == VER_GAEJ01_00
                     mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 132);
+#else
+                    mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 135);
+#endif
                 }
             }
 

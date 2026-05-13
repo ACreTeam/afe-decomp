@@ -127,3 +127,23 @@ u16 FS_DrvSel_Getinfo(SDInfos* arg0, int arg5) {
 
     return status;
 }
+
+#if VERSION == VER_GAEJ01_01
+u16 FS_DrvSel_SecureGetInfo(SDInfos* arg0, int arg5) {
+    u16 status = 0;
+    u16 value = arg5;
+
+    value &= 0xF00;
+    if (value == 0x100) {
+        status = FS_DrvSel_Select(arg5);
+
+        if (status == 0) {
+            status = CARD_SecureGetinfo(arg0);
+        }
+    } else {
+        status = 0xA00C;
+    }
+
+    return status;
+}
+#endif

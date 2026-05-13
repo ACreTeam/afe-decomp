@@ -39,4 +39,7 @@ compile_commands.json
 /*.txt
 *.exe
 
+# decomp-permuter compile scratch (PERMUTER_TEMP_DIR / --temp-dir)
+.perm-compile-tmp/
+
 tools/permuter/*

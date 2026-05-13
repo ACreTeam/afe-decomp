@@ -336,8 +336,13 @@ static int aSIGN_actor_set_target(SIGN_ACTOR* sign, GAME* game) {
                                     int abs_angle_y = ABS(angle_y);
 
                                     if (abs_angle_y < DEG2SHORT_ANGLE2(45.0f)) {
+#if VERSION == VER_GAEJ01_00
                                         s16 d_angle_y =
                                             (angle_y + DEG2SHORT_ANGLE2(180.0f)) - player_actor->shape_info.rotation.y;
+#else
+                                        s16 d_angle_y =
+                                            (s16)(angle_y + DEG2SHORT_ANGLE2(180.0f)) - player_actor->shape_info.rotation.y;
+#endif
                                         s16 diff_angle_y = ABS(d_angle_y);
 
                                         if (diff_angle_y <= DEG2SHORT_ANGLE2(68.83483f)) {

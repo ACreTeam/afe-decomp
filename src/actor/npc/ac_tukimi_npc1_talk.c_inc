@@ -102,7 +102,7 @@ static void aTM1_schedule_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
 
     actorx->actor_class.status_data.weight = MASSTYPE_HEAVY;
 
-    puleIdx = mFI_GetPuleIdx();
+    puleIdx = mFI_GetPoolIdx();
     event_idx = actorx->actor_class.npc_id - SP_NPC_EV_TUKIMI_0;
     ang = def_angle[event_idx][puleIdx];
     actorx->actor_class.shape_info.rotation.y = ang;
@@ -147,7 +147,7 @@ static void aTM1_set_talk_info(ACTOR* actorx) {
 
     TUKIMI_NPC1_ACTOR* tukimi_actor = (TUKIMI_NPC1_ACTOR*)actorx;
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-    u8 worldName[LAND_NAME_SIZE];
+    u8 worldName[ANIMAL_NAME_LEN];
     mNpc_EventNpc_c* eventNpc;
     ACTOR* actorRet;
     int event_idx;
@@ -159,13 +159,27 @@ static void aTM1_set_talk_info(ACTOR* actorx) {
     event_idx = tukimi_actor->event_idx;
     msg = msg_base;
 
+#if VERSION == VER_GAEJ01_01
+    bzero(worldName, ANIMAL_NAME_LEN);
+#endif
+
     for (i = 0; i < mNpc_EVENT_NPC_NUM; i++) {
         eventNpc = mNpc_GetSameEventNpc(i + SP_NPC_EV_TUKIMI_0);
+
+#if VERSION == VER_GAEJ01_00
         if (eventNpc != NULL) {
             actorRet = Actor_info_fgName_search(&((GAME_PLAY*)gamePT)->actor_info, eventNpc->event_id, ACTOR_PART_NPC);
             mNpc_GetNpcWorldName(worldName, actorRet);
-            mMsg_Set_free_str(msg_p, i + mMsg_FREE_STR1, worldName, LAND_NAME_SIZE);
+            mMsg_Set_free_str(msg_p, i + mMsg_FREE_STR1, worldName, ANIMAL_NAME_LEN);
         }
+#else
+        if (eventNpc != NULL) {
+            mNpc_GetNpcWorldNameTableNo(worldName, eventNpc->npc_id);
+        } else {
+            mNpc_GetNpcWorldNameTableNo(worldName, EMPTY_NO);
+        }
+        mMsg_Set_free_str(msg_p, i + mMsg_FREE_STR1, worldName, ANIMAL_NAME_LEN);
+#endif
     }
     if (mEv_check_status(mEv_EVENT_METEOR_SHOWER, mEv_STATUS_ACTIVE) == TRUE) {
         msg = msg_base2;

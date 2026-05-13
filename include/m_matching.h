@@ -71,7 +71,7 @@ typedef enum matching_tribe_type {
     mMG_TRIBE_NUM
 } mMG_tribe_type;
 
-extern int mMG_paramC_matching_point(u8* params0, u8* params1);
+extern int mMG_paramC_matching_point(const u8* params0, const u8* params1);
 
 #ifdef __cplusplus
 }

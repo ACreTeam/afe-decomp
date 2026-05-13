@@ -1,12 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "ver.h"
 #include "MSL_C/w_math.h"
 #include <dolphin/types.h>
 #include "macros.h"
-
-#define VER_GAEJ01_00 0 // rev 0
-#define VER_GAEJ01_01 1 // rev 1
 
 #define FRAMERATE_ADJ(n) (n)
 #define FRAMERATE_TIMER(n) (n)

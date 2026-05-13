@@ -169,7 +169,7 @@ static int mMG_param_matching_point(
     return 0;
 }
 
-extern int mMG_paramC_matching_point(u8* params0, u8* params1) {
+extern int mMG_paramC_matching_point(const u8* params0, const u8* params1) {
     return mMG_param_matching_point(params0[3], params0[4], params0[1], params0[2], params0[0],
         params1[3], params1[4], params1[1], params1[2], params1[0]);
 }

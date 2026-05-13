@@ -594,6 +594,7 @@ extern void mNT_present_new_music_live_version(int idx);
 #define ITEM_IS_DUMMY_MAILBOX(item) ((item) >= DUMMY_MAILBOX0 && (item) <= DUMMY_MAILBOX3)
 #define ITEM_IS_SIGN(item) ((item) == DUMMY_RESERVE || ITEM_IS_SIGNBOARD(item))
 
+#define IS_ITEM_QUEST_ITEM(item) ((item) >= ITM_QST_LETTER && (item) <= ITM_MONEY1000BELL)
 #define IS_ITEM_LOST_ITEM(item) ((item) >= ITM_QST_LOST_CLOTH && (item) <= ITM_QST_LOST_GYROID)
 #define IS_NPC_ADD_NPC(item) ((item) >= NPC_ADD_START && (item) <= NPC_ADD_END)
 #define IS_ITEM_MONUMENT(item) ((item) >= MONUMENT_PARK_CLOCK && (item) <= MONUMENT_FOUNTAIN)

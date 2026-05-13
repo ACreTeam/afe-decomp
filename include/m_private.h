@@ -51,7 +51,7 @@ enum {
     mPr_ITEM_COND_NORMAL,
     mPr_ITEM_COND_PRESENT,
     mPr_ITEM_COND_QUEST,
-
+    mPr_ITEM_COND_4 = 4,
     mPr_ITEM_COND_LOST_ITEM = 8,
 
     mPr_ITEM_COND_NUM

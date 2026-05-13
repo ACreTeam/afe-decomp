@@ -18,7 +18,18 @@ u16 GetNowData(NowData* pNowData) {
     return 0;
 }
 
+#if VERSION == VER_GAEJ01_00
 u16 GetRandomSeed(void) {
     u16 seed = 0x67CD;
     return seed;
 }
+#else
+u16 GetRandomSeed(void) {
+    u16 seed;
+    OSTick tick;
+    
+    tick = OSGetTick();
+    seed = (u16)tick;
+    return seed;
+}
+#endif

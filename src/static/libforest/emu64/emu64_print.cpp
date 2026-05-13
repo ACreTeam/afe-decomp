@@ -14,7 +14,7 @@ __declspec(weak) void emu64_print::Printf0(const char* fmt, ...) {
 }
 
 __declspec(weak) void emu64_print::Vprintf(const char* fmt,
-#ifdef __MWERKS__
+#if defined(__MWERKS__) && VERSION == VER_GAEJ01_00
                                            std::__tag_va_List* list
 #else
                                            va_list list

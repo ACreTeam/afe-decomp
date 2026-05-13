@@ -39,9 +39,9 @@ extern void fade_rgba8888_draw(Gfx** gfxp, u32 color);
 extern void fade_black_draw(Gfx** gfx, u32 color);
 extern Gfx* gfx_gDPFillRectangle1(Gfx* gfx, u32 ulx, u32 uly, u32 lrx, u32 lry);
 extern Gfx* gfx_gDPFillRectangleF(Gfx* gfx, u32 ulx, u32 uly, u32 lrx, u32 lry);
-extern Gfx* gfx_gSPTextureRectangle1(Gfx* gfx, int xl, int yl, int xh, int yh, int tile, int s, int t, int dsdx,
+extern Gfx* gfx_gSPTextureRectangle1(Gfx* gfx, u32 xl, u32 yl, u32 xh, u32 yh, int tile, int s, int t, int dsdx,
                                      int dtdy);
-extern Gfx* gfx_gSPScisTextureRectangle1(Gfx* gfx, int xl, int yl, int xh, int yh, int tile, int s, int t, int dsdx,
+extern Gfx* gfx_gSPScisTextureRectangle1(Gfx* gfx, u32 xl, u32 yl, u32 xh, u32 yh, int tile, int s, int t, int dsdx,
                                          int dtdy);
 
 extern Gfx RSP_RDP_clear_data[];

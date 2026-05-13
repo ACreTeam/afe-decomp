@@ -150,7 +150,11 @@ static void aPOFF_set_bgOffset(STRUCTURE_ACTOR* office, int idx) {
         for (j = 0; j < 4; j++) {
             if (j + i * 4 != 0 && j + i * 4 != 3 && j + i * 4 != 12 && j + i * 4 != 15) {
                 pos.x = office->actor_class.home.position.x + addX[j];
+#if VERSION == VER_GAEJ01_00
                 mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 340);
+#else
+                mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 343);
+#endif
             }
 
             offset++;

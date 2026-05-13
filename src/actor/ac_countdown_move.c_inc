@@ -24,15 +24,27 @@ static void aCOU_set_bgOffset(ACTOR* actorx, int idx) {
         pos.z = actorx->home.position.z + addZ[i];
 
         pos.x = actorx->home.position.x + addX[0];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 116);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 119);
+#endif
         table_p++;
 
         pos.x = actorx->home.position.x + addX[1];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 120);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 123);
+#endif
         table_p++;
 
         pos.x = actorx->home.position.x + addX[2];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 124);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *table_p, __FILE__, 127);
+#endif
         table_p++;
     }
 }

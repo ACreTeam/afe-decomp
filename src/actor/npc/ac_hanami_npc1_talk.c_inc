@@ -211,7 +211,7 @@ static void aHM1_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
     actorx->status_data.weight = MASSTYPE_HEAVY;
 
-    angle = def_angle[mFI_GetPuleIdx()];
+    angle = def_angle[mFI_GetPoolIdx()];
     actorx->shape_info.rotation.y = angle;
     actorx->world.angle.y = angle;
     nactorx->movement.mv_angl = angle;

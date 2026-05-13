@@ -2030,6 +2030,7 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
         *outSectorsPerCluster = size;
         *outCsdBlockMultiplier = blockMultiplier;
     } else {
+#if VERSION == VER_GAEJ01_00
         // Chose an optimal cluster size for a given card size.
         // Larger capacity cards perform better with a larger minimum cluster size for files.
         if (size <= 0x1F60) {
@@ -2053,6 +2054,18 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
         } else if (size <= 0x3F6000) {
             *outSectorsPerCluster = 0xA0 * 0x100; // 2GB card
         }
+#else
+        u16 status;
+
+        status = FS_DrvSel_SecureGetInfo(&csdInfo, pDrvCtl->unk_00[1]);
+        if (status != 0) {
+            *outSectorsPerCluster = 0;
+            *outCsdBlockMultiplier = 0;
+            return 0xA00E;
+        }
+
+        *outSectorsPerCluster = blockMultiplier * (((csdInfo.pad_unk_20[32] & 0xFF) << 24) | ((csdInfo.pad_unk_20[33] & 0xFF) << 16) | ((csdInfo.pad_unk_20[34] & 0xFF) << 8) | (csdInfo.pad_unk_20[35] & 0xFF));
+#endif
 
         *outCsdBlockMultiplier = blockMultiplier;
     }

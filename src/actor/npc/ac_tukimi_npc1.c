@@ -2,6 +2,7 @@
 
 #include "m_common_data.h"
 #include "m_msg.h"
+#include "libultra/libultra.h"
 
 static void aTM1_actor_ct(ACTOR* actorx, GAME* game);
 static void aTM1_actor_save(ACTOR* actorx, GAME* game);

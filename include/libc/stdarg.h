@@ -2,7 +2,7 @@
 #define _STDARG_H_
 
 #ifdef __MWERKS__
-#ifdef __cplusplus
+#if defined(__cplusplus) && VERSION == VER_GAEJ01_00
 namespace std {
 struct __tag_va_List {
     char gpr;
@@ -15,7 +15,7 @@ struct __tag_va_List {
 
 typedef std::__tag_va_List __va_list[1];
 #else
-typedef struct {
+typedef struct __va_list_struct {
   char gpr;
   char fpr;
   char reserved[2];

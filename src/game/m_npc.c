@@ -6310,113 +6310,6 @@ extern int mNpc_CheckFtrIsIslandNormalFtr(mActor_name_t ftr) {
     return res;
 }
 
-// TODO: The deviation here is likely fakematch
-#if VERSION != VER_GAFE01_00
-extern int mNpc_SetIslandFtr(PersonalID_c* pid, mActor_name_t ftr) {
-    int n;
-    Anmmem_c* memory;
-    mActor_name_t* island_room;
-    mActor_name_t rsv_item;
-    int variant;
-    int set;
-    int direct;
-    int i;
-    int j;
-    int slot;
-    int mem_idx;
-
-    memory = Save_Get(island).animal.memories;
-    island_room = mNpc_GetIslandRoomP(Save_Get(island).animal.id.npc_id);
-    n = 0;
-    rsv_item = EMPTY_NO;
-    set = FALSE;
-    slot = 0;
-    direct = 0;
-
-    if (ITEM_IS_FTR(ftr) && island_room != NULL && pid != NULL && mPr_NullCheckPersonalID(pid) == FALSE) {
-        mem_idx = mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM);
-
-        if (mem_idx == -1) {
-            memory = &memory[mNpc_ForceGetFreeAnimalMemoryIdx(&Save_Get(island).animal, memory, ANIMAL_MEMORY_NUM)];
-            mNpc_SetAnimalMemory(pid, &Save_Get(island).animal.id, memory);
-        } else {
-            memory = &memory[mem_idx];
-        }
-
-        /* Unnecessary NULL check, memory is guaranteed to exist */
-        if (memory != NULL) {
-            if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
-                int idx = mNpc_GetIslandFtrIdx(ftr);
-
-                if (idx != -1 && mNpc_CheckIslandNpcRoomFtrIdx(idx) == -1) {
-                    memory->memuni.island.have_bitfield |= (1 << idx);
-                    set = TRUE;
-                }
-            } else {
-                mActor_name_t ftr_variant0;
-                mActor_name_t ftr_variant1;
-                int ftr_unit = aMR_GetFurnitureUnit(ftr);
-
-                if (ftr_unit == mRmTp_FTRSIZE_1x1) {
-                    ftr_variant0 = RSV_ISLAND_FTR0;
-                    ftr_variant1 = RSV_ISLAND_FTR4;
-                } else {
-                    ftr_variant0 = RSV_ISLAND_FTR0 + (ftr_unit + 1) * 4;
-                    ftr_variant1 = EMPTY_NO;
-                }
-
-                for (i = 0; i < UT_TOTAL_NUM; i++) {
-                    if (ITEM_IS_FTR(*island_room)) {
-                        n++;
-                    } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
-                        variant = -1;
-
-                        for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
-                            if (*island_room == (mActor_name_t)(ftr_variant0 + j)) {
-                                direct = j;
-                                variant = 0;
-                                break;
-                            } else if (*island_room == (mActor_name_t)(ftr_variant1 + j)) {
-                                direct = j;
-                                variant = 1;
-                                break;
-                            }
-                        }
-
-                        if (variant != -1 && mNpc_CheckIslandNpcRoomFtrIdx(n) == -1) {
-                            memory->memuni.island.have_bitfield |= (1 << n);
-
-                            if (variant == 0) {
-                                slot = (ftr_variant0 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
-                            } else {
-                                slot = (ftr_variant1 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
-                            }
-
-                            if (slot < mNpc_ISLAND_FTR_SAVE_NUM) {
-                                Save_Get(island).animal.anmuni.island_ftr[slot] =
-                                    aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, direct);
-                                set = TRUE;
-                            }
-
-                            break;
-                        }
-
-                        n++;
-                    }
-
-                    if (n == mNpc_ISLAND_FTR_NUM) {
-                        break;
-                    }
-
-                    island_room++;
-                }
-            }
-        }
-    }
-
-    return set;
-}
-#else
 extern int mNpc_SetIslandFtr(PersonalID_c* pid, mActor_name_t ftr) {
     // int n;
     // Anmmem_c* memory;
@@ -6522,7 +6415,6 @@ extern int mNpc_SetIslandFtr(PersonalID_c* pid, mActor_name_t ftr) {
 
     // return set;
 }
-#endif
 
 extern int mNpc_EraseIslandFtr(mActor_name_t ftr) {
     // int n;

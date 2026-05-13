@@ -107,7 +107,7 @@ static int mEvMN_GetDataBaseIdx(u32 block_kind) {
     int res = 0;
 
     if (block_kind == mRF_BLOCKKIND_POOL) {
-        res = mFI_GetPuleIdx();
+        res = mFI_GetPoolIdx();
     }
 
     return res;

@@ -178,7 +178,7 @@ static void aHN1_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     actorx->status_data.weight = MASSTYPE_HEAVY;
 
     {
-        int pool_idx = mFI_GetPuleIdx();
+        int pool_idx = mFI_GetPoolIdx();
         int npc_idx = actorx->npc_id - SP_NPC_EV_HANABI_1;
         s16 angle = def_angle[npc_idx][pool_idx];
 

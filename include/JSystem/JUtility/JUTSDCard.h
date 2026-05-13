@@ -78,7 +78,7 @@ typedef struct SDInfos {
             /* 0x10 */ u8 csd[16];
         };
     };
-    /* 0x20 */ char pad_unk_20[32];
+    /* 0x20 */ u8 pad_unk_20[32];
 } SDInfos; // size = 0x40
 
 #ifdef __cplusplus

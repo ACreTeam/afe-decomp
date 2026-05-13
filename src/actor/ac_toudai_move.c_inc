@@ -74,10 +74,18 @@ static void aTOU_set_bgOffset(TOUDAI_ACTOR* light, int idx) {
     for (i = 0; i < 2; i++) {
         pos.z = light->actor_class.home.position.z + addZ[i];
         pos.x = light->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, *offset, "ac_toudai_move.c_inc", 187);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 187);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 190);
+#endif
         offset++;
         pos.x = light->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, *offset, "ac_toudai_move.c_inc", 191);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 191);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 194);
+#endif
         offset++;
     }
 }

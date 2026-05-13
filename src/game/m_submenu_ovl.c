@@ -439,7 +439,7 @@ static void mSM_set_dl_item(GRAPH* graph, f32 x, f32 y, f32 scale, mSM_inventory
         rect_xh = x + mod;
         rect_yh = y + mod;
 
-        POLY_OPA_DISP = gfx_gSPScisTextureRectangle1(POLY_OPA_DISP, x * 4.0f, y * 4.0f, rect_xh * 4.0f, rect_yh * 4.0f,
+        POLY_OPA_DISP = gfx_gSPScisTextureRectangle1(POLY_OPA_DISP, (int)(x * 4.0f), (int)(y * 4.0f), (int)(rect_xh * 4.0f), (int)(rect_yh * 4.0f),
                                                      G_TX_RENDERTILE, 0, 0, scale_factor, scale_factor);
     }
 
@@ -472,7 +472,7 @@ static void mSM_set_dl_item(GRAPH* graph, f32 x, f32 y, f32 scale, mSM_inventory
             rect_yh = y + mod;
 
             POLY_OPA_DISP =
-                gfx_gSPScisTextureRectangle1(POLY_OPA_DISP, x * 4.0f, y * 4.0f, rect_xh * 4.0f, rect_yh * 4.0f,
+                gfx_gSPScisTextureRectangle1(POLY_OPA_DISP, (int)(x * 4.0f), (int)(y * 4.0f), (int)(rect_xh * 4.0f), (int)(rect_yh * 4.0f),
                                              G_TX_RENDERTILE, 0, 0, scale_factor, scale_factor);
         }
     }

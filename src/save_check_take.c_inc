@@ -43,16 +43,11 @@ static int sChk_weather_save_check() {
 
 // TODO: fakematch
 static int sChk_snowman_save_check() {
-#if VERSION != VER_GAFE01_00
-    mSN_snowman_save_c* data = Save_GetPointer(snowmen);
-#endif
     u8 year;
     u8 month;
     u8 day;
     u8 hour;
-#if VERSION == VER_GAFE01_00
     mSN_snowman_save_c* data = Save_GetPointer(snowmen);
-#endif
 
     year = Save_Get(snowman_year);
     month = Save_Get(snowman_month);

@@ -1255,7 +1255,7 @@ static int mMpswd_check_strings(u8* str, int len) {
     int ret = TRUE;
     int i;
 
-    for (i = 0; i < len; i++) {
+    for (i = 0; i != len; i++) {
         // Don't allow control codes or msg tags
         if (*str == CHAR_PP_127 || *str == CHAR_PP_128) {
             ret = FALSE;

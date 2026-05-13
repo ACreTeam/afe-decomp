@@ -11,11 +11,13 @@ static int aEPK_get_trick_type(void) {
     mActor_name_t* pocket_p = Now_Private->inventory.pockets;
     int i;
     int ret = aEPK_TRICK_TYPE_CLOTH;
+    int cond;
 
     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
         switch (ITEM_NAME_GET_TYPE(*pocket_p)) {
             case NAME_TYPE_FTR0:
             case NAME_TYPE_FTR1:
+#if VERSION == VER_GAEJ01_00
                 if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
                     int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pocket_p);
 
@@ -25,12 +27,36 @@ static int aEPK_get_trick_type(void) {
                         count++;
                     }
                 }
+#else
+                cond = NowPrivate_GetItemCond(i) & 0xF;
+                if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
+                    if ((cond & mPr_ITEM_COND_4) == 0) {
+                        int ftr_idx = mNT_ftr_item_no_to_ftr_idx(*pocket_p);
+
+                        // skip jack-o'-lantern and jack-in-the-box
+                        if (ftr_idx != FTR_SUM_HAL_PKIN && ftr_idx != FTR_SUM_HAL_BOX01) {
+                            idx[count] = i;
+                            count++;
+                        }
+                    }
+                }
+#endif
                 break;
             case NAME_TYPE_ITEM1:
+#if VERSION == VER_GAEJ01_00
                 if (ITEM_NAME_GET_CAT(*pocket_p) != ITEM1_CAT_TOOL && (NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0) {
                     idx[count] = i;
                     count++;
                 }
+#else
+                if (ITEM_NAME_GET_CAT(*pocket_p) != ITEM1_CAT_TOOL) {
+                    cond = NowPrivate_GetItemCond(i) & 0xF;
+                    if ((NowPrivate_GetItemCond(i) & mPr_ITEM_COND_QUEST) == 0 && !IS_ITEM_QUEST_ITEM(*pocket_p) && (cond & mPr_ITEM_COND_4) == 0) {
+                        idx[count] = i;
+                        count++;
+                    }
+                }
+#endif
                 break;
         }
 

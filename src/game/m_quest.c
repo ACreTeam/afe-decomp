@@ -1735,16 +1735,22 @@ extern int mQst_SetLostCondition_menu(void) {
 
 #if VERSION == VER_GAEJ01_01
 extern void mQst_KeepLostQuest(mActor_name_t item) {
-    Private_c* priv = Now_Private;
     mQst_delivery_c* lost_item_quest;
 
     if (IS_ITEM_LOST_ITEM(item)) {
-        lost_item_quest = &priv->lost_item_quest;
+        // @BUG - devs accidentally took the address of Now_Private
+#ifndef BUGFIXES
+        if (&Now_Private != NULL) {
+#else
+        if (Now_Private != NULL) {
+#endif
+            lost_item_quest = &Now_Private->lost_item_quest;
 
-        if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
-            lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM) {
-            lost_item_quest->base.progress = 2;
-            lbRTC_Add_DD(&lost_item_quest->base.time_limit, 3);
+            if (lost_item_quest->base.quest_type == mQst_QUEST_TYPE_DELIVERY &&
+                lost_item_quest->base.quest_kind == mQst_DELIVERY_KIND_LOST_ITEM) {
+                lost_item_quest->base.progress = 2;
+                lbRTC_Add_DD(&lost_item_quest->base.time_limit, 3);
+            }
         }
     }
 }

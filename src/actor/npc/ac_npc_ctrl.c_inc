@@ -195,8 +195,10 @@ static int aNPC_check_dma_cloth_data(int idx) {
                 }
 #elif VERSION == VER_GAEJ01_01
                 if (ITEM_IS_NPC_CLOTH(cloth) == FALSE) {
-                    cloth = mSP_get_directed_type_cloth_no(mNpc_GetDefAnimalClothLAttr(animal));
-                    animal->cloth = cloth;
+                    mActor_name_t new_cloth = mSP_get_directed_type_cloth_no(mNpc_GetDefAnimalClothLAttr(animal));
+
+                    animal->cloth = new_cloth;
+                    cloth = new_cloth;
                 }
                 aNPC_dma_regist_cloth_data(cloth);
 #endif

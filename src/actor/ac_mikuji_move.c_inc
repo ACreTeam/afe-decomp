@@ -15,10 +15,18 @@ static void aMIK_set_bgOffset(MIKUJI_ACTOR* mikuji, int offs) {
     for (i = 0; i < 2; i++) {
         pos.z = mikuji->structure_class.actor_class.home.position.z + addZ[i];
         pos.x = mikuji->structure_class.actor_class.home.position.x + addX[0];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 100);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 103);
+#endif
         offset++;
         pos.x = mikuji->structure_class.actor_class.home.position.x + addX[1];
+#if VERSION == VER_GAEJ01_00
         mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 104);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 107);
+#endif
         offset++;
     }
 }

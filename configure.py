@@ -34,6 +34,7 @@ from tools.project import (
 DEFAULT_VERSION = 0
 VERSIONS = [
     "GAEJ01_00",  # 0
+    "GAEJ01_01",  # 1
 ]
 
 parser = argparse.ArgumentParser()
@@ -279,6 +280,14 @@ cflags_rel = [
 
 config.sdk_linker_version = "GC/1.3.2"
 config.linker_version = "GC/1.3.2"
+config.jsystem_linker_version = "GC/1.3.2"
+config.jaudio_linker_version = "GC/2.0p1"
+
+if config.version == "GAEJ01_01":
+    config.sdk_linker_version = "GC/2.5"
+    config.linker_version = "GC/2.5"
+    config.jsystem_linker_version = "GC/2.5"
+    config.jaudio_linker_version = "GC/2.5"
 
 
 # Helper function for Dolphin libraries
@@ -297,7 +306,7 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
 def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
-        "mw_version": "GC/1.3.2",
+        "mw_version": config.linker_version,
         "cflags": cflags_rel,
         "progress_category": "game",
         "objects": objects,
@@ -307,7 +316,7 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
 def JSystemLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
-        "mw_version": "GC/1.3.2",
+        "mw_version": config.jsystem_linker_version,
         "cflags": [*cflags_base, "-O4,p", "-inline auto", "-RTTI on", "-enum int", "-char signed", "-sym on"],
         "progress_category": "jsystem",
         "src_dir": "src/static",
@@ -403,9 +412,9 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/JUTXfb.cpp"),
             Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
             Object(Matching, "JSystem/JUtility/fs_vara.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(Matching, "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
+            Object(MatchingFor("GAEJ01_00"), "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
             Object(NonMatching, "JSystem/JUtility/fs_form.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(Matching, "JSystem/JUtility/fs_subd.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(MatchingFor("GAEJ01_00"), "JSystem/JUtility/fs_subd.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_drv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/time.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_init.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
@@ -418,7 +427,7 @@ config.libs = [
             Object(Matching, "JSystem/JUtility/fs_seek.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_dele.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_opdr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
-            Object(Matching, "JSystem/JUtility/fs_rddr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
+            Object(MatchingFor("GAEJ01_00"), "JSystem/JUtility/fs_rddr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_cldr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_mkdr.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(Matching, "JSystem/JUtility/fs_renm.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
@@ -436,7 +445,7 @@ config.libs = [
     ),
         {
         "lib": "jaudio_PP_game",
-        "mw_version": "GC/2.0p1",
+        "mw_version": config.jaudio_linker_version,
         "cflags": [*cflags_static, "-O0", "-inline off", "-lang=c++", "-sym on"],
         "progress_category": "library",
         "src_dir": "src/static",
@@ -455,7 +464,7 @@ config.libs = [
     },
     {
         "lib": "jaudio_PP_internal",
-        "mw_version": "GC/2.0p1",
+        "mw_version": config.jaudio_linker_version,
         "cflags": [
             *cflags_static,
             "-lang=c++",
@@ -544,8 +553,19 @@ config.libs = [
         ],
     },
     {
+        "lib": "MSL_C.PPCEABI.bare.H",
+        "mw_version": config.linker_version,
+        "cflags": [*cflags_runtime, "-inline auto,deferred", "-use_lmw_stmw on", "-char signed", "-fp_contract on", "-str pool,readonly"],
+        "progress_category": "sdk",
+        "src_dir": "src/static",
+        "objects": [
+            Object(Matching, "MSL_C.PPCEABI.bare.H/math_ppc.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/w_sqrt.c"),
+        ],
+    },
+    {
         "lib": "Famicom",
-        "mw_version": "GC/1.3.2",
+        "mw_version": config.linker_version,
         "cflags": [
             *cflags_static,
             "-inline off",
@@ -607,7 +627,7 @@ config.libs = [
     {
         "lib": "libultra",
         "mw_version": config.linker_version,
-        "cflags": [*cflags_static, "-O4,p", "-inline auto"],
+        "cflags": [*cflags_static, "-O4,p", "-inline auto", "-D__USE_INLINE=1"],
         "progress_category": "library",
         "src_dir": "src/static",
         "objects": [
@@ -847,7 +867,7 @@ config.libs = [
             Object(Matching, "actor/ac_tunahiki_control.c"),
             Object(Matching, "actor/ac_turi.c"),
             Object(Matching, "actor/ac_uki.c"),
-            Object(Matching, "actor/ac_weather.c"),
+            Object(MatchingFor("GAEJ01_00"), "actor/ac_weather.c"),
             Object(Matching, "actor/ac_weather_fine.c"),
             Object(Matching, "actor/ac_weather_leaf.c"),
             Object(Matching, "actor/ac_weather_rain.c"),
@@ -994,12 +1014,12 @@ config.libs = [
     Rel(
         "bg_item",
         [
-            Object(Matching, "bg_item/bg_cherry_item.c"),
-            Object(Matching, "bg_item/bg_item.c"),
+            Object(MatchingFor("GAEJ01_00"), "bg_item/bg_cherry_item.c"),
+            Object(MatchingFor("GAEJ01_00"), "bg_item/bg_item.c"),
             Object(Matching, "bg_item/bg_police_item.c"),
             Object(Matching, "bg_item/bg_post_item.c"),
-            Object(Matching, "bg_item/bg_winter_item.c"),
-            Object(Matching, "bg_item/bg_xmas_item.c"),
+            Object(MatchingFor("GAEJ01_00"), "bg_item/bg_winter_item.c"),
+            Object(MatchingFor("GAEJ01_00"), "bg_item/bg_xmas_item.c"),
         ],
     ),
     Rel(
@@ -1261,7 +1281,7 @@ config.libs = [
             Object(Matching, "game/m_player_lib.c"),
             Object(Matching, "game/m_police_box.c"),
             Object(NonMatching, "game/m_post_office.c"),
-            Object(Matching, "game/m_prenmi.c"),
+            Object(MatchingFor("GAEJ01_00"), "game/m_prenmi.c"),
             Object(Matching, "game/m_private.c"),
             Object(Matching, "game/m_quest.c"),
             Object(NonMatching, "game/m_random_field.c"),

@@ -284,7 +284,7 @@ class emu64_print {
     u8 print_flags;
 
   private:
-#ifdef __MWERKS__
+#if defined(__MWERKS__) && VERSION == VER_GAEJ01_00
     void Vprintf(const char* fmt, std::__tag_va_List* va_list); // this is only in e+??
 #else
     void Vprintf(const char* fmt, va_list va_list); // this is only in e+??

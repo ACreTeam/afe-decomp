@@ -70,7 +70,7 @@ static void aTM0_schedule_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     actorx->talk_info.default_animation = aNPC_ANIM_SANBASI1;
     actorx->actor_class.status_data.weight = MASSTYPE_HEAVY;
 
-    puleIdx = mFI_GetPuleIdx();
+    puleIdx = mFI_GetPoolIdx();
     ang = def_angle[puleIdx];
     actorx->actor_class.shape_info.rotation.y = ang;
     actorx->actor_class.world.angle.y = ang;

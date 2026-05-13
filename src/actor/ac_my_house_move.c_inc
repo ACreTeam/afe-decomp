@@ -348,7 +348,11 @@ static void aMHS_set_bgOffset(ACTOR* actorx, int flag) {
         for (x = 0; x < 4; x++) {
             pos.x = actorx->home.position.x + addX[addX_ofs + x];
 
+#if VERSION == VER_GAEJ01_00
             mCoBG_SetPluss5PointOffset_file(pos, *ofs_p, __FILE__, 654);
+#else
+            mCoBG_SetPluss5PointOffset_file(pos, *ofs_p, __FILE__, 657);
+#endif
             ofs_p++;
         }
     }

@@ -247,6 +247,10 @@ extern unsigned long __float_huge[];
 #define HUGE_VALF (*(float*)__float_huge)
 #endif
 
+#ifndef __INLINE
+#define __INLINE inline
+#endif
+
 #ifdef __cplusplus
 };
 #endif // ifdef __cplusplus

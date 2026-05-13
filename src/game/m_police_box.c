@@ -74,6 +74,12 @@ extern int mPB_get_keep_item_sum() {
  * @param item_no The item to add
  **/
 extern void mPB_keep_item(mActor_name_t item_no) {
+#if VERSION == VER_GAEJ01_01
+    if (IS_ITEM_LOST_ITEM(item_no)) {
+        mQst_KeepLostQuest(item_no);
+        return;
+    }
+#endif
     if (ITEM_IS_ITEM1(item_no) || ITEM_IS_FTR(item_no)) {
         int keep_item_sum = mPB_get_keep_item_sum();
         if (keep_item_sum >= mPB_POLICE_BOX_ITEM_STORAGE_COUNT) {
@@ -106,6 +112,7 @@ extern void mPB_keep_item(mActor_name_t item_no) {
  * @param blk_x The x acre (column)
  * @param blk_z The z acre (row)
  **/
+#if VERSION == VER_GAEJ01_00
 extern void mPB_keep_all_item_in_block(int blk_x, int blk_z) {
     int count;
     mActor_name_t new_items[mPB_POLICE_BOX_ITEM_STORAGE_COUNT];
@@ -125,6 +132,7 @@ extern void mPB_keep_all_item_in_block(int blk_x, int blk_z) {
         for (i = 0; i < UT_TOTAL_NUM; i++) {
             item = *block_items;
 
+            
             /* only accept items in the 0x1XXX, 2XXX, and 3XXX range */
             item_type = ITEM_NAME_GET_TYPE(item);
             if (item_type == NAME_TYPE_FTR0 || item_type == NAME_TYPE_ITEM1 || item_type == NAME_TYPE_FTR1) {
@@ -167,6 +175,72 @@ extern void mPB_keep_all_item_in_block(int blk_x, int blk_z) {
     /* clear buried item flags in the cleared acre */
     mFI_ClearDeposit(blk_x, blk_z);
 }
+#else
+extern void mPB_keep_all_item_in_block(int blk_x, int blk_z) {
+    int count;
+    mActor_name_t new_items[mPB_POLICE_BOX_ITEM_STORAGE_COUNT];
+    int keep_item_sum;
+    mActor_name_t item;
+    mActor_name_t* block_items;
+    int i;
+    int item_type;
+
+    keep_item_sum = mPB_get_keep_item_sum();
+    block_items = mFI_BkNumtoUtFGTop(blk_x, blk_z);
+    count = 0;
+
+    bzero(new_items, mPB_POLICE_BOX_ITEM_STORAGE_COUNT * sizeof(mActor_name_t));
+
+    if (block_items != NULL) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            item = *block_items;
+            
+            /* only accept items in the 0x1XXX, 2XXX, and 3XXX range */
+            item_type = ITEM_NAME_GET_TYPE(item);
+            if (IS_ITEM_LOST_ITEM(item)) {
+                mQst_KeepLostQuest(item);
+                *block_items = EMPTY_NO;
+            } else if (item_type == NAME_TYPE_FTR0 || item_type == NAME_TYPE_ITEM1 || item_type == NAME_TYPE_FTR1) {
+                if (count < mPB_POLICE_BOX_ITEM_STORAGE_COUNT) {
+                    /* space is still available, so directly add it */
+                    new_items[count] = item;
+                    count++;
+                } else {
+                    /* randomly overwrite one of the items in the lost and found */
+                    new_items[RANDOM(mPB_POLICE_BOX_ITEM_STORAGE_COUNT)] = item;
+                }
+
+                *block_items = EMPTY_NO;
+            }
+            block_items++;
+        }
+    }
+
+    if (count > 0) {
+        int total_sum = count + keep_item_sum;
+
+        if (total_sum <= mPB_POLICE_BOX_ITEM_STORAGE_COUNT) {
+            mem_copy((u8*)(Save_Get(police_box.keep_items) + keep_item_sum), (u8*)new_items,
+                     count * sizeof(mActor_name_t));
+        } else {
+            mActor_name_t* dst = Save_Get(police_box.keep_items);
+            int save_count = total_sum - mPB_POLICE_BOX_ITEM_STORAGE_COUNT;
+            int keep_sum = keep_item_sum - save_count;
+
+            /* move over saved items already in lost and found */
+            for (i = 0; i < keep_sum; i++) {
+                dst[i] = dst[i + save_count];
+            }
+
+            /* copy newly added items */
+            mem_copy((u8*)(Save_Get(police_box.keep_items) + keep_sum), (u8*)new_items, count * sizeof(mActor_name_t));
+        }
+    }
+
+    /* clear buried item flags in the cleared acre */
+    mFI_ClearDeposit(blk_x, blk_z);
+}
+#endif
 
 /* select random item function definition */
 typedef mActor_name_t (*mPB_get_force_set_proc)();

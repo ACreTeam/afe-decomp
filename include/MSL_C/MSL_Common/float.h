@@ -30,7 +30,19 @@ extern unsigned long __float_huge[];
 extern unsigned long __float_max[];
 extern unsigned long __float_epsilon[];
 
-inline int __fpclassifyf(float __value)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int __fpclassifyf(float __value);
+int __fpclassifyd(double __value);
+
+#ifdef __cplusplus
+}
+#endif
+
+#if __USE_INLINE
+__INLINE int __fpclassifyf(float __value)
 {
 	unsigned long integer = *(unsigned long*)&__value;
 
@@ -51,7 +63,7 @@ inline int __fpclassifyf(float __value)
 	return FP_NORMAL;
 }
 
-inline int __fpclassifyd(double __value)
+__INLINE int __fpclassifyd(double __value)
 {
 	switch (__HI(__value) & 0x7ff00000) {
 	case 0x7ff00000: {
@@ -71,6 +83,7 @@ inline int __fpclassifyd(double __value)
 	}
 	return FP_NORMAL;
 }
+#endif
 
 #define FLT_MANT_DIG   24
 #define FLT_DIG        6

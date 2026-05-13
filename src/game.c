@@ -163,7 +163,11 @@ static void game_init_hyral(GAME* this, size_t size) {
         THA_ct(&this->tha, (char*)hyral, size);
     } else {
         THA_ct(&this->tha, NULL, 0);
+#if VERSION == VER_GAEJ01_00
         _dbg_hungup(__FILE__, 563);
+#else
+        _dbg_hungup(__FILE__, 567);
+#endif
     }
 }
 
@@ -199,7 +203,11 @@ extern void game_resize_hyral(GAME* this, int size) {
         THA_ct(&this->tha, (char*)hyral, (u32)size);
     } else {
         THA_ct(&this->tha, NULL, 0);
+#if VERSION == VER_GAEJ01_00
         _dbg_hungup(__FILE__, 655);
+#else
+        _dbg_hungup(__FILE__, 659);
+#endif
     }
 }
 
@@ -229,7 +237,7 @@ extern void game_ct(GAME* this, void (*init)(GAME*), GRAPH* graph, int dlf_no) {
         mBGM_init();
     }
 
-#if VERSION == GAEJ01_00
+#if VERSION == VER_GAEJ01_00
     GBAInit();
 #endif
     mVibctl_init();
