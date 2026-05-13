@@ -1874,28 +1874,28 @@ TRK_MINNOW_DOLPHIN/target_options.c:
 TRK_MINNOW_DOLPHIN/mslsupp.c:
 	.text       start:0x800D024C end:0x800D03C4
 
-TRK_Minnow_Dolphin/UDP_Stubs.c:
+TRK_MINNOW_DOLPHIN/UDP_Stubs.c:
 	.text       start:0x800D03C4 end:0x800D040C
 
-TRK_Minnow_Dolphin/main_ddh.c:
+TRK_MINNOW_DOLPHIN/main_ddh.c:
 	.text       start:0x800D040C end:0x800D0750
 	.rodata     start:0x800D81D0 end:0x800D82B0
 	.bss        start:0x80286538 end:0x80286D58
 	.sbss       start:0x80292A28 end:0x80292A30
 
-TRK_Minnow_Dolphin/CircleBuffer.c:
+TRK_MINNOW_DOLPHIN/CircleBuffer.c:
 	.text       start:0x800D0750 end:0x800D09B8
 
-TRK_Minnow_Dolphin/main.c:
+TRK_MINNOW_DOLPHIN/main.c:
 	.text       start:0x800D09B8 end:0x800D0D04
 	.rodata     start:0x800D82B0 end:0x800D8390
 	.bss        start:0x80286D58 end:0x80287274
 	.sbss       start:0x80292A30 end:0x80292A38
 
-TRK_Minnow_Dolphin/MWTrace.c:
+TRK_MINNOW_DOLPHIN/MWTrace.c:
 	.text       start:0x800D0D04 end:0x800D0D54
 
-TRK_Minnow_Dolphin/MWCriticalSection_gc.cpp:
+TRK_MINNOW_DOLPHIN/MWCriticalSection_gc.cpp:
 	.text       start:0x800D0D54 end:0x800D0DAC
 
 amcstubs/AmcExi2Stubs.c:
