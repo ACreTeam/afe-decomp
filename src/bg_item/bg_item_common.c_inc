@@ -1,6 +1,10 @@
 #ifdef __INTELLISENSE__
 #include "bg_item.h"
 #include "m_common_data.h"
+#include "libultra/libultra.h"
+#include "m_player_lib.h"
+
+#define bIT_CLIP (CLIP(bg_item_clip))
 #endif
 
 static void bit_cmn_single_drawS(GAME* game, bg_item_common_info_c* common_info, mActor_name_t fg_item, xyz_t* pos,
@@ -726,15 +730,14 @@ static void func_calc_spec_drop_time(f32 distance_xz, f32 distance_y, f32 drop_t
     }
 }
 
-// Part 1
 static void bIT_actor_drop_draw_nrm(GAME* game, bg_item_common_info_c* common_info, bg_item_drop_c* drop);
 static void bIT_actor_drop_move_plant(bg_item_drop_c* drop);
 static void bIT_actor_drop_move_fly(bg_item_drop_c* drop);
 static void bIT_actor_drop_move_wait(bg_item_drop_c* drop);
 
-static int bIT_actor_drop_entry_main(bg_item_drop_table_c* drop_info, bg_item_drop_c* src_drop) {
+static int bIT_actor_drop_entry_main(const bg_item_drop_table_c* drop_info, bg_item_drop_c* src_drop) {
     mActor_name_t* fg_item_p;
-    bg_item_drop_c* drop = drop_info->drop_p;
+    bg_item_drop_c* drop = (bg_item_drop_c*)drop_info->drop_p;
     int res = FALSE;
     int i;
 
@@ -2242,7 +2245,11 @@ static void m_GetCItTable_TreeTblChk(bg_item_block_info_tbl_c* block_info_table,
         }
     }
 
+#if VERSION == VER_GAEJ01_00
     mFI_GetItemTable(item_table, wpos, __FILE__, 4909);
+#else
+    mFI_GetItemTable(item_table, wpos, __FILE__, 4912);
+#endif
     remove_cut_tree_info_bitfield = Common_Get(remove_cut_tree_info_bitfield);
     block_info[1].count = item_table->count;
 
@@ -2456,7 +2463,11 @@ static int bg_item_common_chg_BGDataR_b(bg_item_common_c* common, int bx, int bz
                         pos.z = block_pos_z + pos_table[ut_z];
 
                         if (ofs_tbl->type != 0) {
+#if VERSION == VER_GAEJ01_00
                             mCoBG_SetPluss5PointOffset_file(pos, ofs_tbl->table, __FILE__, 5297);
+#else
+                            mCoBG_SetPluss5PointOffset_file(pos, ofs_tbl->table, __FILE__, 5300);
+#endif
                         } else {
                             mCoBG_SetPlussOffset(pos, ofs_tbl->table.centerRight_offset, ofs_tbl->table.unit_attribute);
                         }

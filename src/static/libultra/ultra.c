@@ -6,11 +6,11 @@
 extern OSTime __osTimeOffset;
 s32 osAppNMIBuffer[16];
 
-void bcopy(void* __src, void* __dst, size_t __n) {
+void bcopy(const void* __src, void* __dst, size_t __n) {
     memmove(__dst, __src, __n);
 }
 
-int bcmp(void* __s1, void* __s2, size_t __n) {
+int bcmp(const void* __s1, const void* __s2, size_t __n) {
     return memcmp(__s1, __s2, __n);
 }
 
