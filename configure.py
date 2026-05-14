@@ -770,7 +770,7 @@ config.libs = [
             Object(Matching, "actor/ac_gyo_release.c"),
             Object(Matching, "actor/ac_gyo_test.c"),
             Object(NonMatching, "actor/ac_gyoei.c"),
-            Object(NonMatching, "actor/ac_handOverItem.c"),
+            Object(Matching, "actor/ac_handOverItem.c"),
             Object(NonMatching, "actor/ac_haniwa.c"),
             Object(Matching, "actor/ac_hatumode_control.c"),
             Object(Matching, "actor/ac_house.c"),
