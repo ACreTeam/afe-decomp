@@ -815,7 +815,7 @@ config.libs = [
             Object(Matching, "actor/ac_museum_picture.c"),
             Object(Matching, "actor/ac_my_house.c"),
             Object(Matching, "actor/ac_my_indoor.c"),
-            Object(NonMatching, "actor/ac_my_room.c"),
+            Object(Matching, "actor/ac_my_room.c"),
             Object(Matching, "actor/ac_nameplate.c"),
             Object(Matching, "actor/ac_needlework_indoor.c"),
             Object(Matching, "actor/ac_needlework_shop.c"),

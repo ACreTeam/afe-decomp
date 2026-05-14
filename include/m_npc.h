@@ -601,6 +601,7 @@ extern void mNpc_InitSickAnimal(mNpc_SickInfo_c* sick_info, AnmPersonalID_c* anm
 extern void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
     u8 paper_type, int mail_no);
 extern int mNpc_CheckCmpSickAnimalName(u8* name);
+extern mActor_name_t mNpc_GetNowMD(void);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];

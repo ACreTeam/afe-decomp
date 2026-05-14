@@ -24,6 +24,9 @@ extern void mMU_music_ovl_set_proc(Submenu* submenu);
 extern void mMU_music_ovl_construct(Submenu* submenu);
 extern void mMU_music_ovl_destruct(Submenu* submenu);
 
+extern u32* mMU_GetNowSceneMusicRackP(void);
+extern int mMU_md_rack_get(int idx);
+
 #ifdef __cplusplus
 }
 #endif

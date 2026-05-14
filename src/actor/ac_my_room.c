@@ -7,6 +7,7 @@
 #include "m_common_data.h"
 #include "libultra/libultra.h"
 #include "m_malloc.h"
+#include "m_font.h"
 #include "m_cockroach.h"
 #include "m_msg.h"
 #include "dolphin/card.h"
@@ -18,6 +19,7 @@
 #include "m_mark_room.h"
 #include "sys_matrix.h"
 #include "m_rcp.h"
+#include "m_music_ovl.h"
 
 enum {
     aMR_ICON_LEAF,
@@ -92,8 +94,8 @@ enum {
     aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2,
     aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2,
     aMR_MSG_STATE_NO_PACK_NO_DATA,
-    aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE,
-    aMR_MSG_STATE_NO_PACK_NO_DATA1,
+    // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE,
+    // aMR_MSG_STATE_NO_PACK_NO_DATA1,
     aMR_MSG_STATE_NO_PACK_NO_DATA2,
     aMR_MSG_STATE_HITOKOTO,
     aMR_MSG_STATE_HITOKOTO1,
@@ -131,8 +133,35 @@ ACTOR_PROFILE My_Room_Profile = {
 };
 // clang-format on
 
-#include "../src/actor/ac_furniture_data.c_inc"
+#include "../src/actor/ac_furniture_profile_data.c_inc"
 #include "../src/actor/ac_my_room_data.c_inc"
+#include "../src/actor/ac_furniture_data.c_inc"
+
+typedef struct {
+    Gfx* mat_gfx;
+    Gfx* vtx_gfx;
+} aMR_icon_display_data_c;
+
+extern Gfx leaf_DL_mode[];
+extern Gfx leaf_DL_vtx[];
+extern Gfx obj_haniwaT_mat_model[];
+extern Gfx obj_haniwaT_gfx_model[];
+extern Gfx obj_item_clothT_mat_model[];
+extern Gfx obj_item_umbrellaT_mat_model[];
+extern Gfx obj_item_umbrellaT_gfx_model[];
+extern Gfx obj_item_boneT_mat_model[];
+extern Gfx obj_item_boneT_gfx_model[];
+extern Gfx obj_item_diaryT_mat_model[];
+extern Gfx obj_item_diaryT_gfx_model[];
+
+static aMR_icon_display_data_c aMR_icon_display_data[] = {
+    { leaf_DL_mode, leaf_DL_vtx },
+    { obj_haniwaT_mat_model, obj_haniwaT_gfx_model },
+    { obj_item_clothT_mat_model, obj_item_umbrellaT_gfx_model },
+    { obj_item_umbrellaT_mat_model, obj_item_umbrellaT_gfx_model },
+    { obj_item_boneT_mat_model, obj_item_boneT_gfx_model },
+    { obj_item_diaryT_mat_model, obj_item_diaryT_gfx_model },
+};
 
 typedef struct my_room_work_s {
     FTR_ACTOR* ftr_actor_list;
@@ -326,7 +355,11 @@ static u64* aMR_GetBitSwitchTable(int layer, MY_ROOM_ACTOR* my_room) {
     mActor_name_t field_id = mFI_GetFieldId();
 
     if (my_room->scene == SCENE_COTTAGE_MY) {
-        // return &(&Save_Get(island).cottage.room.layer_main)[layer].ftr_switch;
+        if (Common_Get(cur_island_house_p) != NULL) {
+            return &(&Common_Get(cur_island_house_p)->island.cottage.room.layer_main)[layer].ftr_switch;
+        }
+
+        return NULL;
     }
 
     if ((mFI_GET_TYPE(field_id) == mFI_FIELD_PLAYER0_ROOM)) {
@@ -348,14 +381,18 @@ static u32* aMR_GetHaniwaStepSaveData(s16 layer, MY_ROOM_ACTOR* my_room) {
     mActor_name_t field_id = mFI_GetFieldId();
 
     if (my_room->scene == SCENE_COTTAGE_MY) {
-        // return (&Save_Get(island).cottage.room.layer_main)[layer].haniwa_step;
+        if (Common_Get(cur_island_house_p) != NULL) {
+            return (&Common_Get(cur_island_house_p)->island.cottage.room.layer_main)[layer].haniwa_step;
+        }
+
+        return NULL;
     }
 
     if ((mFI_GET_TYPE(field_id) == mFI_FIELD_PLAYER0_ROOM)) {
-        int idx = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
         int floor_no = mFI_GetPlayerHouseFloorNo(my_room->scene);
-
         if (floor_no != -1) {
+            int idx = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
+            
             return (&Save_Get(homes[idx]).floors[floor_no].layer_main)[layer].haniwa_step;
         }
     }
@@ -628,7 +665,7 @@ static int aMR_SearchFreeFurnitureBankIdx(void) {
         int count = 0;
 
         for (j = 0; j < FTR_NUM; j++) {
-            if (l_bank_index_table[j] == i) {
+            if (l_bank_index_table[j] == (u8)i) {
                 count++;
             }
         }
@@ -812,7 +849,7 @@ static void aMR_SetFurnitureType(FTR_ACTOR* ftr_actor, int angle) {
     aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_actor->name);
 
     if (profile->shape == aFTR_SHAPE_TYPEB_0) {
-        ftr_actor->shape_type = l_typeB0_table[angle];
+        ftr_actor->shape_type = l_typeB0_table[angle & 3];
         ftr_actor->original_shape_type = profile->shape;
     } else {
         ftr_actor->shape_type = profile->shape;
@@ -962,7 +999,7 @@ static void aMR_SetSwitchStepData(FTR_ACTOR* ftr_actor, s16 placed_flag, MY_ROOM
             } else {
                 aMR_GetSwitchBit(ftr_actor, placed_flag, l_my_room);
                 if (ftr_actor->switch_bit) {
-                    aMR_HaniwaSwitchOn(actorx, ftr_actor);
+                    aMR_HaniwaSwitchOn(aMR_CLIP->my_room_actor_p, ftr_actor);
                 }
 
                 aMR_GetHaniwaStep(ftr_actor, placed_flag, &l_my_room->haniwa_step_idx, l_my_room);
@@ -1040,8 +1077,10 @@ static int aMR_RegistMoveBg(FTR_ACTOR* ftr_actor, aFTR_PROFILE* profile) {
 
 static void aMR_MiniDiskCommonCt(FTR_ACTOR* ftr_actor, s16 placed_flag) {
     aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_actor->name);
-    int count;
+    ACTOR* actorx = aMR_CLIP->my_room_actor_p;
+    MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int i;
+    int count;
 
     if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
         if (placed_flag == FALSE) {
@@ -1050,40 +1089,40 @@ static void aMR_MiniDiskCommonCt(FTR_ACTOR* ftr_actor, s16 placed_flag) {
                 ftr_actor->switch_changed_flag = FALSE;
             }
         } else {
-            int home_idx = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
 
-            count = 0;
-            for (i = 0; i < MINIDISK_NUM; i++) {
-                // u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY ? Save_Get(island).cottage.music_box
-                //                                                         : Save_Get(homes[home_idx]).music_box;
-
-                // if (((music_box[(i / 32) & 1] >> (i & 31)) & 1) != 0) {
-                //     count++;
-                // }
-            }
-
-            /* Pick a random song to play when placed */
-            if (count > 0) {
-                int sel = RANDOM(count);
-
+            if (my_room != NULL && my_room->playing_md_item != EMPTY_NO) {
+                ftr_actor->items[0] = my_room->playing_md_item;
+                ftr_actor->switch_changed_flag = FALSE;
+                ftr_actor->switch_bit = FALSE;
+            } else {
                 count = 0;
                 for (i = 0; i < MINIDISK_NUM; i++) {
-                    // u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY ? Save_Get(island).cottage.music_box
-                    //                                                         : Save_Get(homes[home_idx]).music_box;
-
-                    // if (((music_box[(i / 32) & 1] >> (i & 31)) & 1) != 0) {
-                    //     if (sel == count) {
-                    //         ftr_actor->items[0] = ITM_MINIDISK_START + i;
-                    //         // @BUG - missing break;
-                    //     }
-
-                    //     count++;
-                    // }
+                    if (mMU_md_rack_get(i)) {
+                        count++;
+                    }
                 }
-            }
 
-            ftr_actor->switch_changed_flag = FALSE;
-            ftr_actor->switch_bit = FALSE;
+                /* Pick a random song in the music box when placed */
+                if (count > 0) {
+                    // @BUG - missing RANDOM(count); (picks first song)
+                    int sel = 0; //RANDOM(count);
+
+                    count = 0;
+                    for (i = 0; i < MINIDISK_NUM; i++) {
+                        if (mMU_md_rack_get(i)) {
+                            if (count == sel) {
+                                ftr_actor->items[0] = ITM_MINIDISK_START + i;
+                                // @BUG - missing break;
+                            }
+
+                            count++;
+                        }
+                    }
+                }
+
+                ftr_actor->switch_changed_flag = FALSE;
+                ftr_actor->switch_bit = FALSE;
+            }
         }
     }
 }
@@ -1095,7 +1134,7 @@ static void aMR_MiniDiskCommonDt(FTR_ACTOR* ftr_actor, ACTOR* actorx) {
     if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK) &&
         ftr_actor->switch_bit == TRUE) {
         mBGMPsComp_delete_ps_room(my_room->bgm_info.md_no, 0);
-        my_room->bgm_info.active_flag = FALSE;
+        // my_room->bgm_info.active_flag = FALSE;
         my_room->bgm_info.active_ftr_actor = NULL;
         my_room->bgm_info.last_md_no = -1;
 
@@ -1128,8 +1167,8 @@ static void aMR_RadioCommonDt(FTR_ACTOR* ftr_actor, ACTOR* actorx) {
 static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
-    if ((int)my_room->bgm_info.reserve_flag == TRUE) {
-        if (my_room->bgm_info.active_flag == FALSE) {
+    if (my_room->bgm_info.reserved_ftr_actor != NULL) {
+        if (my_room->bgm_info.active_ftr_actor == NULL) {
             if (my_room->bgm_info.md_no != -1) {
                 mBGMPsComp_make_ps_room(my_room->bgm_info.md_no, 0);
 
@@ -1137,14 +1176,12 @@ static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
                     mBGMPsComp_MDPlayerPos_make();
                 }
 
-                my_room->bgm_info.active_flag = TRUE;
                 my_room->bgm_info.active_ftr_actor = ftr_actor;
-                my_room->bgm_info.last_md_no = my_room->bgm_info.md_no;
             }
         } else if (my_room->bgm_info.md_no == -1) {
             mBGMPsComp_delete_ps_room(my_room->bgm_info.last_md_no, 0);
             mBGMPsComp_MDPlayerPos_delete();
-            my_room->bgm_info.active_flag = FALSE;
+            // my_room->bgm_info.active_flag = FALSE;
             my_room->bgm_info.active_ftr_actor = NULL;
             my_room->bgm_info.last_md_no = my_room->bgm_info.md_no;
         } else {
@@ -1158,12 +1195,11 @@ static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
                 mBGMPsComp_MDPlayerPos_make();
             }
 
-            my_room->bgm_info.active_flag = TRUE;
             my_room->bgm_info.active_ftr_actor = ftr_actor;
             my_room->bgm_info.last_md_no = my_room->bgm_info.md_no;
         }
 
-        my_room->bgm_info.reserve_flag = FALSE;
+        my_room->bgm_info.reserved_ftr_actor = NULL;
         my_room->bgm_info.last_md_no = my_room->bgm_info.md_no;
     }
 }
@@ -1171,7 +1207,7 @@ static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
 static void aMR_ReserveBgm(ACTOR* actorx, int bgm_no, FTR_ACTOR* ftr_actor, s16 timer) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
-    my_room->bgm_info.reserve_flag = TRUE;
+    // my_room->bgm_info.reserve_flag = TRUE;
     my_room->bgm_info.timer = timer;
     my_room->bgm_info.md_no = bgm_no;
     my_room->bgm_info.reserved_ftr_actor = ftr_actor;
@@ -1180,7 +1216,7 @@ static void aMR_ReserveBgm(ACTOR* actorx, int bgm_no, FTR_ACTOR* ftr_actor, s16 
 static void aMR_ReserveDefaultBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
-    my_room->bgm_info.reserve_flag = TRUE;
+    // my_room->bgm_info.reserve_flag = TRUE;
     my_room->bgm_info.timer = 0;
     my_room->bgm_info.md_no = -1;
     my_room->bgm_info.reserved_ftr_actor = ftr_actor;
@@ -1213,9 +1249,7 @@ static void aMR_OneMDSwitchOn_TheOtherSwitchOff(FTR_ACTOR* ftr_actor) {
     ftr_actor->switch_changed_flag = TRUE;
 }
 
-// Part 2
-
-static void aMR_Status2MoveBgCollisionScale(FTR_ACTOR* ftr_actor, s16 status) {
+static void aMR_SetCollisionScaleByStatus(FTR_ACTOR* ftr_actor, s16 status) {
     if (status == aFTR_STATE_BIRTH_WAIT) {
         ftr_actor->collision_scale = 0.6f;
     } else {
@@ -1231,13 +1265,14 @@ static void aMR_FurnitureCt(FTR_ACTOR* ftr_actor, GAME* game, int ut_x, int ut_z
     xyz_t pos;
 
     bzero(ftr_actor, sizeof(FTR_ACTOR));
+    ftr_actor->_04 = placed_flag;
     ftr_actor->ctr_type = aFTR_CTR_TYPE_GAME_PLAY;
     ftr_actor->base_position = xyz0;
     ftr_actor->layer = layer;
     ftr_actor->angle_y = aMR_angle_table[angle];
     ftr_actor->angle_y_target = ftr_actor->angle_y;
     ftr_actor->s_angle_y = RAD2SHORT_ANGLE2(DEG2RAD(ftr_actor->angle_y));
-    ftr_actor->name = mRmTp_FtrItemNo2FtrIdx(item);
+    ftr_actor->name = mNT_ftr_item_no_to_ftr_idx(item);
 
     profile = aMR_GetFurnitureProfile(ftr_actor->name);
     ftr_actor->state = status;
@@ -1249,18 +1284,17 @@ static void aMR_FurnitureCt(FTR_ACTOR* ftr_actor, GAME* game, int ut_x, int ut_z
     ftr_actor->last_position = pos;
     ftr_actor->id = ftr_idx;
     aMR_SetInfoFurnitureTable(ftr_actor->shape_type, ut_x + ut_z * UT_X_NUM, ftr_idx, ftr_actor->layer);
-    ftr_actor->collision_direction = 0;
 
     if (aMR_CLIP != NULL && aMR_CLIP->my_room_actor_p != NULL) {
         aMR_SetSwitchStepData(ftr_actor, placed_flag, (MY_ROOM_ACTOR*)aMR_CLIP->my_room_actor_p);
     }
 
-    aMR_MiniDiskCommonCt(ftr_actor, placed_flag);
-    aMR_RadioCommonCt(ftr_actor, placed_flag);
-    aMR_Status2MoveBgCollisionScale(ftr_actor, status);
+    aMR_SetCollisionScaleByStatus(ftr_actor, status);
     if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_HANIWA)) {
         ftr_actor->dynamic_work_s[3] = placed_flag;
     }
+    aMR_MiniDiskCommonCt(ftr_actor, placed_flag);
+    aMR_RadioCommonCt(ftr_actor, placed_flag);
 
     if (aMR_RegistMoveBg(ftr_actor, profile) && aMR_SystemAnimeCt_UniqueCt(ftr_actor, profile)) {
         aMR_SetFurniture2FG(ftr_actor, ftr_actor->position, TRUE);
@@ -1277,10 +1311,8 @@ static int aMR_DmaFurniture_Common(u16 ftr_id, mActor_name_t item, u8* bank_addr
 
         if (profile->vtable != NULL && profile->vtable->dma_proc != NULL) {
             profile->vtable->dma_proc(item, aMR_FtrNo2BankAddress(ftr_id));
-            return TRUE;
-        } else {
-            return TRUE;
         }
+        return TRUE;
     }
 
     return FALSE;
@@ -1293,7 +1325,7 @@ static int aMR_GetFurnitureBank(u16 ftr_id, GAME_PLAY* play, mActor_name_t item)
         if (bank_idx != -1) {
             u8* bank_addr = aMR_BankNo2BankAddress(bank_idx);
 
-            return aMR_DmaFurniture_Common(ftr_id, item, bank_addr, bank_idx);
+            return aMR_DmaFurniture_Common((u16)ftr_id, item, bank_addr, bank_idx);
         }
     }
 
@@ -1316,7 +1348,7 @@ static int aMR_GetFurnitureBank2(u16 ftr_id, GAME* game, mActor_name_t item) {
 
 static void aMR_MakeOneFurniture(ACTOR* actorx, mActor_name_t item, GAME* game, int ut_x, int ut_z, s16 layer) {
     if (ITEM_IS_FTR(item) && aMR_CountFurniture() < l_aMR_work.list_size) {
-        u16 ftr_idx = mRmTp_FtrItemNo2FtrIdx((mActor_name_t)item);
+        u16 ftr_idx = mNT_ftr_item_no_to_ftr_idx((mActor_name_t)item);
         int id = aMR_SearchFreeFurnitureActorNumber();
 
         if (id != -1) {
@@ -1613,7 +1645,11 @@ static TempoBeat_c* aMR_NowSceneWaltzTempo(MY_ROOM_ACTOR* my_room) {
     mActor_name_t field_id = mFI_GetFieldId();
 
     if (my_room->scene == SCENE_COTTAGE_MY) {
-        // return &Save_Get(island).cottage.room.tempo_beat;
+        if (Common_Get(cur_island_house_p) != NULL) {   
+            return &Common_Get(cur_island_house_p)->island.cottage.room.tempo_beat;
+        }
+
+        return NULL;
     } else if (mFI_GET_TYPE(field_id) == mFI_FIELD_PLAYER0_ROOM) {
         int idx = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
         int floor_no = mFI_GetPlayerHouseFloorNo(my_room->scene);
@@ -1653,7 +1689,7 @@ extern void aMR_SaveWaltzTempo2(void) {
 }
 
 static int aMR_CheckRoomOwner(u32 player_no, MY_ROOM_ACTOR* my_room) {
-    if (Common_Get(field_type) == mFI_FIELDTYPE2_PLAYER_ROOM || my_room->scene == SCENE_COTTAGE_MY) {
+    if (Common_Get(field_type) == mFI_FIELDTYPE2_PLAYER_ROOM) {
         return TRUE;
     }
 
@@ -1673,6 +1709,274 @@ static void aMR_MakeRoomInfo(MY_ROOM_ACTOR* my_room) {
     if (aMR_CheckRoomOwner(player_no, my_room)) {
         my_room->room_info.owner_flag = TRUE;
     }
+}
+
+extern void aMR_SetSurprise(ACTOR* actorx, s16 angle_y) {
+    if (actorx != NULL) {
+        MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
+
+        my_room->request_player_surprise = TRUE;
+        my_room->player_surprise_angle_y = angle_y;
+    }
+}
+
+static int aMR_MakeIndoorGoki(const xyz_t* pos, s16 arg, s16 angle_y, GAME* game) {
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    ACTOR* actor = Actor_info_make_actor(&play->actor_info, game, mAc_PROFILE_HOUSE_GOKI, pos->x, pos->y, pos->z, 0,
+                                         angle_y, 0, -1, -1, -1, EMPTY_NO, arg, -1, -1);
+
+    if (actor) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+typedef struct goki_info_s {
+    int scene;
+    int size;
+} aMR_goki_info_c;
+
+static int aMR_RandomMakeIndoorGoki(s16 arg, GAME* game) {
+    // clang-format off
+    static aMR_goki_info_c goki_random_make_data[] = {
+        { SCENE_COTTAGE_MY, 8 },
+        { SCENE_MY_ROOM_S, 4 },
+        { SCENE_MY_ROOM_M, 6 },
+        { SCENE_MY_ROOM_LL2, 6 },
+        { SCENE_MY_ROOM_L, 8 },
+        { SCENE_MY_ROOM_LL1, 8 },
+        { SCENE_MY_ROOM_BASEMENT_S, 8 },
+        { SCENE_MY_ROOM_BASEMENT_M, 8 },
+        { SCENE_MY_ROOM_BASEMENT_L, 8 },
+        { SCENE_MY_ROOM_BASEMENT_LL1, 8 },
+    };
+    // clang-format on
+
+    int scene = Save_Get(scene_no);
+    int free_count0 = 0;
+    int free_count1 = 0;
+    mActor_name_t* fg_p = aMR_GetLayerTopFg(mCoBG_LAYER0);
+
+    int i;
+    int sel_no;
+    int ut_x;
+    int ut_z;
+
+    if (fg_p != NULL) {
+        for (i = 0; i < ARRAY_COUNT(goki_random_make_data); i++) {
+            if (scene == goki_random_make_data[i].scene) {
+                for (ut_z = 1; ut_z <= goki_random_make_data[i].size; ut_z++) {
+                    for (ut_x = 1; ut_x <= goki_random_make_data[i].size; ut_x++) {
+                        mActor_name_t item = fg_p[ut_x + ut_z * UT_X_NUM];
+
+                        if (!ITEM_IS_FTR(item) && item != RSV_FE1F && item != RSV_NO && item != RSV_WALL_NO &&
+                            item != RSV_DOOR) {
+                            free_count0++;
+                        }
+                    }
+                }
+
+                if (free_count0 <= 0) {
+                    return FALSE;
+                }
+
+                sel_no = RANDOM(free_count0);
+                for (ut_z = 1; ut_z <= goki_random_make_data[i].size; ut_z++) {
+                    for (ut_x = 1; ut_x <= goki_random_make_data[i].size; ut_x++) {
+                        mActor_name_t item = fg_p[ut_x + ut_z * UT_X_NUM];
+
+                        if (!ITEM_IS_FTR(item) && item != RSV_FE1F && item != RSV_NO && item != RSV_WALL_NO &&
+                            item != RSV_DOOR) {
+                            if (sel_no == free_count1) {
+                                xyz_t pos;
+
+                                if (mFI_UtNum2CenterWpos(&pos, ut_x, ut_z)) {
+                                    pos.y = 0.0f;
+                                    pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos(pos, 0.0f);
+                                    return aMR_MakeIndoorGoki(&pos, arg, 0, game);
+                                }
+                            }
+
+                            free_count1++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+static void aMR_RequestPlayerBikkuri(ACTOR* actorx, GAME* game) {
+    MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
+
+    if (my_room->request_player_surprise) {
+        if (mPlib_get_player_actor_main_index(gamePT) != mPlayer_INDEX_SHOCK) {
+            mPlib_request_main_shock_type1(gamePT, 20.0f, my_room->player_surprise_angle_y, FALSE);
+        } else {
+            my_room->request_player_surprise = FALSE;
+        }
+    }
+}
+
+static void aMR_GokiInfoCt_Dummy(ACTOR* actorx, GAME* game) {
+    // nothing
+}
+
+static void aMR_GokiInfoCt(ACTOR* actorx, GAME* game) {
+    int field_type = Common_Get(field_type);
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
+    MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
+    int goki_count = mCkRh_NowSceneGokiFamilyCount();
+
+    mCkRh_InitCanLookGokiCount();
+    if (goki_count != 0) {
+        int max;
+        int i;
+
+        if (goki_count < aMR_GOKI_MAX) {
+            max = goki_count;
+        } else {
+            max = aMR_GOKI_MAX;
+        }
+
+        for (i = 0; i < max; i++) {
+            if (i == 0) {
+                if (Save_Get(scene_no) == SCENE_MY_ROOM_S || Save_Get(scene_no) == SCENE_MY_ROOM_M ||
+                    Save_Get(scene_no) == SCENE_MY_ROOM_L || Save_Get(scene_no) == SCENE_MY_ROOM_LL1 ||
+                    Save_Get(scene_no) == SCENE_COTTAGE_MY ||
+                    Save_Get(scene_no) == SCENE_MY_ROOM_BASEMENT_S || Save_Get(scene_no) == SCENE_MY_ROOM_BASEMENT_M ||
+                    Save_Get(scene_no) == SCENE_MY_ROOM_BASEMENT_L ||
+                    Save_Get(scene_no) == SCENE_MY_ROOM_BASEMENT_LL1) {
+                    static f32 off_x[] = { 10.0f, -10.0f, 15.0f, -15.0f };
+                    xyz_t pos = player->actor_class.world.position;
+                    mActor_name_t* fg_p;
+
+                    pos.x += off_x[play->game_frame % ARRAY_COUNT(off_x)];
+                    pos.y = 0.0f;
+                    pos.z += -10.0f;
+                    pos.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(pos, 0.0f);
+                    fg_p = mFI_GetUnitFG(pos);
+
+                    if (fg_p != NULL && !ITEM_IS_FTR(*fg_p) && *fg_p != RSV_FE1F && *fg_p != RSV_NO &&
+                        *fg_p != RSV_WALL_NO && *fg_p != RSV_DOOR) {
+                        int spawned = aMR_MakeIndoorGoki(&pos, 0, DEG2SHORT_ANGLE(0.0f), game);
+
+                        if (spawned) {
+                            mCkRh_CalcCanLookGokiCount(1);
+                            mCkRh_MinusGokiN_NowRoom(1, my_room->scene);
+                            if (Common_Get(goki_shocked_flag) == FALSE && field_type == mFI_FIELDTYPE2_PLAYER_ROOM) {
+                                aMR_SetSurprise(actorx, DEG2SHORT_ANGLE(-180.0f));
+                                Common_Set(goki_shocked_flag, TRUE);
+                            }
+                        }
+                    }
+                }
+            } else {
+                int spawned = aMR_RandomMakeIndoorGoki(0, game);
+
+                if (spawned) {
+                    mCkRh_CalcCanLookGokiCount(1);
+                    mCkRh_MinusGokiN_NowRoom(1, my_room->scene);
+                    if (Common_Get(goki_shocked_flag) == FALSE && field_type == mFI_FIELDTYPE2_PLAYER_ROOM) {
+                        aMR_SetSurprise(actorx, DEG2SHORT_ANGLE(-180.0f));
+                        Common_Set(goki_shocked_flag, TRUE);
+                    }
+                }
+            }
+        }
+    }
+
+    my_room->goki_ct_proc = &aMR_GokiInfoCt_Dummy;
+}
+
+static void aMR_MakeGokiburi(xyz_t* pos, GAME* game, s16 arg) {
+    if (mCkRh_NowSceneGokiFamilyCount() > 0 && mCkRh_GetCanLookGokiCount() < aMR_GOKI_MAX &&
+        aMR_MakeIndoorGoki(pos, arg, DEG2SHORT_ANGLE(0.0f), game)) {
+        mCkRh_CalcCanLookGokiCount(1);
+
+        if (aMR_CLIP != NULL) {
+            ACTOR* actorx = aMR_CLIP->my_room_actor_p;
+
+            if (actorx != NULL) {
+                MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
+
+                mCkRh_MinusGokiN_NowRoom(1, my_room->scene);
+            }
+        }
+    }
+}
+
+static void aMR_GokiInfoDt(void) {
+    if (aMR_CLIP != NULL) {
+        ACTOR* actorx = aMR_CLIP->my_room_actor_p;
+
+        if (actorx != NULL) {
+            MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
+
+            mCkRh_PlussGokiN_NowRoom(mCkRh_GetCanLookGokiCount(), my_room->scene);
+        }
+    }
+}
+
+static int aMR_CheckFtrAndGoki2(aFTR_collision_c* ftr_col, const xyz_t* goki_pos) {
+    f32 check_pos[2];
+    int i;
+
+    check_pos[0] = goki_pos->x;
+    check_pos[1] = goki_pos->z;
+
+    for (i = 0; i < aFTR_EDGE_COL_NUM; i++) {
+        aFTR_collision_c* col_p = &ftr_col[i];
+
+        if (mCoBG_GetPointInfoFrontLine(col_p->start, check_pos, col_p->normal)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static void aMR_CheckFtrAndGoki(ACTOR* actorx, FTR_ACTOR* ftr_actor, GAME* game) {
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    ACTOR* actor_p = play->actor_info.list[ACTOR_PART_BG].actor;
+    int count = 0;
+
+    while (actor_p != NULL) {
+        if (actor_p->id == mAc_PROFILE_HOUSE_GOKI) {
+            if (aMR_CheckFtrAndGoki2(ftr_actor->edge_collision, &actor_p->world.position)) {
+                actor_p->actor_specific = 2;
+            }
+
+            count++;
+            if (count >= aMR_GOKI_MAX) {
+                break;
+            }
+        }
+
+        actor_p = actor_p->next_actor;
+    }
+}
+
+static void aMR_SetMelodyData(u8* melody_data) {
+    mRmTp_MakeMelodyData();
+}
+
+static u8* aMR_GetMelodyData(ACTOR* actorx) {
+    return mRmTp_GetMelodyData();
+}
+
+static void aMR_SoundMelody(FTR_ACTOR* ftr_actor, ACTOR* actorx, int idx) {
+    if (ftr_actor->switch_changed_flag) {
+        u8* melody_data = aMR_GetMelodyData(actorx);
+
+        sAdo_FurnitureInst((u32)ftr_actor, idx, melody_data, &ftr_actor->position);
+    }
+
+    sAdo_FurnitureInstPos((u32)ftr_actor, &ftr_actor->position);
 }
 
 static void aMR_OneMDFurnitureSwitchOn(void) {
@@ -1728,19 +2032,16 @@ static void aMR_DeleteMusicWhichMusicBoxDontHave(void) {
                 if (profile != NULL &&
                     aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK) &&
                     (ftr_actor->items[0] >= ITM_MINIDISK_START && ftr_actor->items[0] < ITM_MINIDISK_END)) {
-                    int idx = (mFI_GetFieldId() - mFI_FIELD_PLAYER0_ROOM) & 3;
-                    int music_idx = (mActor_name_t)(ftr_actor->items[0] - ITM_MINIDISK_START);
-                    // u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY ? Save_Get(island).cottage.music_box
-                    //                                                         : Save_Get(homes[idx]).music_box;
+                    int music_idx = (ftr_actor->items[0] - ITM_MINIDISK_START);
 
-                    // if (((music_box[(music_idx / 32) & 1] >> (music_idx & 31)) & 1) == 0) {
-                    //     ftr_actor->items[0] = EMPTY_NO;
+                    if (mMU_md_rack_get(music_idx) == FALSE) {
+                        ftr_actor->items[0] = EMPTY_NO;
 
-                    //     if (ftr_actor->switch_bit == TRUE) {
-                    //         ftr_actor->switch_bit = FALSE;
-                    //         ftr_actor->haniwa_state = 0;
-                    //     }
-                    // }
+                        if (ftr_actor->switch_bit == TRUE) {
+                            ftr_actor->switch_bit = FALSE;
+                            ftr_actor->haniwa_state = 0;
+                        }
+                    }
                 }
             }
 
@@ -1755,8 +2056,9 @@ static void aMR_SetMDIslandNPC(void) {
     u8* used = l_aMR_work.used_list;
     int i;
     int md_set = FALSE;
+    mActor_name_t md_item_no = mNpc_GetNowMD();
 
-    if (Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
+    if (ITEM_IS_MINIDISK(md_item_no) && Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
         for (i = 0; i < l_aMR_work.list_size; i++) {
             if (*used) {
                 aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_actor->name);
@@ -1764,19 +2066,23 @@ static void aMR_SetMDIslandNPC(void) {
                 if (profile != NULL &&
                     aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
                     if (md_set == FALSE) {
-                        ftr_actor->items[0] = ITM_MINIDISK_START + mNpc_GetIslandMDIdx();
+                        ftr_actor->items[0] = md_item_no;
                         ftr_actor->switch_bit = TRUE;
                         ftr_actor->haniwa_state = 1;
                         md_set = TRUE;
-                    } else {
-                        ftr_actor->switch_bit = FALSE;
-                        ftr_actor->haniwa_state = 0;
                     }
+                } else {
+                    ftr_actor->switch_bit = FALSE;
+                    ftr_actor->haniwa_state = 0;
                 }
             }
 
+            // @BUG - devs forgot to increment the furniture actor and used list pointers.
+            // This means only the first furniture actor in the list will be checked.
+#ifdef BUGFIXES
             ftr_actor++;
             used++;
+#endif
         }
     }
 }
@@ -1801,6 +2107,9 @@ static void My_Room_Actor_ct(ACTOR* actorx, GAME* game) {
     aMR_InitHaniwaOnTable(actorx);
     my_room->state = 0;
     aMR_InitFurnitureBankTable();
+    my_room->bgm_info.reserved_ftr_actor = NULL;
+    my_room->bgm_info.md_no = -1;
+    my_room->bgm_info.last_md_no = -1;
     aMR_MakeFurnitureActor(actorx, play, mCoBG_LAYER0);
     aMR_MakeFurnitureActor(actorx, play, mCoBG_LAYER1);
     my_room->parent_ftr.ftrID = -1;
@@ -1813,9 +2122,6 @@ static void My_Room_Actor_ct(ACTOR* actorx, GAME* game) {
     my_room->bed_timer = 0;
     my_room->msg_type = 0;
     my_room->requested_msg_type = my_room->msg_type;
-    my_room->bgm_info.reserve_flag = FALSE;
-    my_room->bgm_info.md_no = -1;
-    my_room->bgm_info.last_md_no = -1;
     aMR_ClearSwitchSaveData(my_room);
     aMR_OneMDFurnitureSwitchOn();
     aMR_SetMDIslandNPC();
@@ -1861,6 +2167,7 @@ static void aMR_FreeHeapArea(ACTOR* actorx) {
 
 static void aMR_KeepItem2Fg(FTR_ACTOR* ftr_actor) {
     int idx = 0;
+    aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_actor->name); // @unused
     int i;
 
     for (i = ftr_actor->layer + 1; i < mCoBG_LAYER_NUM; i++) {
@@ -1882,7 +2189,7 @@ static void aMR_KeepItem2Fg(FTR_ACTOR* ftr_actor) {
     }
 }
 
-static void aMR_AllFurnitureDestruct(ACTOR* actorx, GAME* game) {
+static void aMR_AllFurnitureDestruct(ACTOR* actorx) {
     FTR_ACTOR* ftr_actor = l_aMR_work.ftr_actor_list;
     u8* used = l_aMR_work.used_list;
     int i;
@@ -1938,8 +2245,6 @@ static int aMR_PickupFtrLayer(void) {
     return mCoBG_LAYER0;
 }
 
-#include "../src/actor/ac_my_room_goki.c_inc"
-
 static void aMR_LeafStartPos(xyz_t* pos) {
     static xyz_t leaf_start0 = { 0.0f, 0.0f, 0.0f };
 
@@ -1982,8 +2287,6 @@ static int aMR_SetLeaf(const xyz_t* pos, f32 scale) {
                 my_room->leaf_info.exist_flag = TRUE;
                 return TRUE;
             }
-
-            return FALSE;
         }
     }
 
@@ -1993,8 +2296,8 @@ static int aMR_SetLeaf(const xyz_t* pos, f32 scale) {
 static void My_Room_Actor_dt(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
+    aMR_AllFurnitureDestruct(actorx);
     aMR_SaveSwitchData(my_room);
-    aMR_AllFurnitureDestruct(actorx, game);
     aMR_FreeHeapArea(actorx);
     aMR_GokiInfoDt();
     aMR_CLIP = NULL;
@@ -2020,7 +2323,6 @@ static void My_Room_Actor_dt(ACTOR* actorx, GAME* game) {
     }
 }
 
-#include "../src/actor/ac_my_room_melody.c_inc"
 #include "../src/actor/ac_my_room_move.c_inc"
 #include "../src/actor/ac_my_room_draw.c_inc"
 
@@ -2030,7 +2332,7 @@ static void aMR_RedmaFtrBank(void) {
     for (i = 0; i < FTR_NUM; i++) {
         if (l_bank_index_table[i] != 255) {
             u8* bank_addr = aMR_BankNo2BankAddress(l_bank_index_table[i]);
-            mActor_name_t item = mRmTp_FtrIdx2FtrItemNo(i, mRmTp_DIRECT_SOUTH);
+            mActor_name_t item = mNT_ftr_idx_to_ftr_item_no(i, mRmTp_DIRECT_SOUTH);
 
             aMR_DmaFurniture_Common(i, item, bank_addr, -1);
         }
@@ -2049,9 +2351,9 @@ static void aMR_RequestStartEmu(MY_ROOM_ACTOR* my_room, FTR_ACTOR* ftr_actor, in
     }
 }
 
-static void aMR_RequestStartEmu_MemoryC(MY_ROOM_ACTOR* my_room, FTR_ACTOR* ftr_actor, int game_idx) {
+static void aMR_RequestStartEmu_MemoryC(MY_ROOM_ACTOR* my_room, FTR_ACTOR* ftr_actor, int game_idx, GAME* game) {
     if (my_room->emu_info.request_flag == FALSE && mMsg_Check_MainHide(mMsg_Get_base_window_p())) {
-        int card_count = aMR_GetCardFamicomCount();
+        int card_count = aMR_GetCardFamicomCount((ACTOR*)my_room, game);
 
         my_room->emu_info.card_famicom_count = card_count;
         my_room->emu_info.memory_game_select = 0;
@@ -2109,7 +2411,7 @@ static void aMR_FamicomEmuCommonMove(FTR_ACTOR* ftr_actor, ACTOR* actorx, GAME* 
 
     if (ftr_actor->switch_changed_flag) {
         if (rom_no == 0) {
-            aMR_RequestStartEmu_MemoryC(my_room, ftr_actor, 0);
+            aMR_RequestStartEmu_MemoryC(my_room, ftr_actor, 0, game);
         } else {
             aMR_RequestStartEmu(my_room, ftr_actor, rom_no, agb_rom_no);
         }
@@ -2141,12 +2443,11 @@ static void aMR_CallSitDownOngenPosSE(const xyz_t* pos) {
 static int aMR_CheckDannaKill(xyz_t* pos) {
     mActor_name_t* fg_p = mFI_GetUnitFG(*pos);
 
-    /* @BUG - this doesn't check for newer furniture in the 0x3XXX range */
-    if (fg_p != NULL && ((*fg_p >= FTR0_START && *fg_p <= ITEM1_NO_START) || *fg_p == RSV_FE1F)) {
+    if (fg_p != NULL && aMR_CLIP != NULL && (ITEM_IS_FTR(*fg_p) || *fg_p == RSV_FE1F)) {
         int ut_x;
         int ut_z;
 
-        if (mFI_Wpos2UtNum(&ut_x, &ut_z, *pos) && aMR_CLIP != NULL) {
+        if (mFI_Wpos2UtNum(&ut_x, &ut_z, *pos)) {
             mActor_name_t item_no;
             int ftrID;
 
@@ -2168,7 +2469,7 @@ static int aMR_CheckDannaKill(xyz_t* pos) {
 
 extern int aMR_GetFurnitureUnit(mActor_name_t item) {
     if (ITEM_IS_FTR(item)) {
-        int ftr_idx = mRmTp_FtrItemNo2FtrIdx(item);
+        int ftr_idx = mNT_ftr_item_no_to_ftr_idx(item);
         aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_idx);
 
         if (profile != NULL) {
@@ -2188,8 +2489,8 @@ extern int aMR_GetFurnitureUnit(mActor_name_t item) {
 
 extern int aMR_CorrespondFurniture(mActor_name_t ftr0, mActor_name_t ftr1) {
     if (ITEM_IS_FTR(ftr0) && ITEM_IS_FTR(ftr1)) {
-        int ftr_idx0 = mRmTp_FtrItemNo2FtrIdx(ftr0);
-        int ftr_idx1 = mRmTp_FtrItemNo2FtrIdx(ftr1);
+        int ftr_idx0 = mNT_ftr_item_no_to_ftr_idx(ftr0);
+        int ftr_idx1 = mNT_ftr_item_no_to_ftr_idx(ftr1);
 
         if (ftr_idx0 == ftr_idx1) {
             return TRUE;
@@ -2201,7 +2502,7 @@ extern int aMR_CorrespondFurniture(mActor_name_t ftr0, mActor_name_t ftr1) {
 
 extern mActor_name_t aMR_FurnitureFg_to_FurnitureFgWithDirect(mActor_name_t item, int direct) {
     if (ITEM_IS_FTR(item)) {
-        return mRmTp_FtrIdx2FtrItemNo(mRmTp_FtrItemNo2FtrIdx(item), direct);
+        return mNT_ftr_idx_to_ftr_item_no(mNT_ftr_item_no_to_ftr_idx(item), direct);
     }
 
     return item;
@@ -2308,6 +2609,10 @@ extern u8 aMR_GetAlphaEdge(u16 ftr_name) {
             return 127; // tanabata palm
         case FTR_YOS_WHEEL:
             return 20; // wagon wheel
+        case FTR_MUT_PRINCESS_BED:
+            return 196;
+        case FTR_MUT_TOBIDASI:
+            return 164;
         default:
             return 127;
     }
@@ -2364,4 +2669,16 @@ extern void aMR_SameFurnitureSwitchOFF(u16 ftr_name) {
         ftr_actor++;
         used++;
     }
+}
+
+extern int aMR_check_valid_furniture(mActor_name_t item) {
+    if (ITEM_IS_FTR(item)) {
+        aFTR_PROFILE* profile = aMR_GetFurnitureProfile(mNT_ftr_item_no_to_ftr_idx(item));
+
+        if (profile != &iam_dummy) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }

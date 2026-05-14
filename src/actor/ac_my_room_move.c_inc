@@ -1,3 +1,165 @@
+#ifdef __INTELLISENSE__
+#include "ac_my_room.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+
+enum {
+    aMR_ICON_LEAF,
+    aMR_ICON_HANIWA,
+    aMR_ICON_CLOTH,
+    aMR_ICON_UMBRELLA,
+    aMR_ICON_BONE,
+    aMR_ICON_DIARY,
+
+    aMR_ICON_NUM
+};
+
+/* Inclusive bounds */
+#define aMR_MIN_BOUND 1
+#define aMR_MAX_BOUND 8
+
+#define aMR_FTR_BANK_NUM 100
+#define aMR_FTR_BANK_SIZE 0x800
+
+#define aMR_BOUNDS_OK(x, z) \
+    ((x) > (aMR_MIN_BOUND - 1) && (x) < (aMR_MAX_BOUND + 1) && (z) > (aMR_MIN_BOUND - 1) && (z) < (aMR_MAX_BOUND + 1))
+
+enum {
+    aMR_MSG_STATE_NONE,
+    aMR_MSG_STATE_WAIT_MSG,
+    aMR_MSG_STATE_OWNER_NO_ITEM,
+    aMR_MSG_STATE_OWNER_EXIST_ITEM,
+    aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3,
+    aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT,
+    aMR_MSG_STATE_OTHER_NO_ITEM,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM1,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM2,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM3,
+    aMR_MSG_STATE_FULL_PLAYER_ITEM,
+    aMR_MSG_STATE_OPEN_SUBMENU,
+    aMR_MSG_STATE_ITEM_PUT_IN,
+    aMR_MSG_STATE_WAIT_CLOSE_FTR,
+    aMR_MSG_STATE_REQUEST_CLOSE_FTR,
+    aMR_MSG_STATE_REQUEST_FULL_BAG,
+    aMR_MSG_STATE_CAN_NOT_CLEAN,
+    aMR_MSG_STATE_CAN_NOT_CLEAN_MD,
+    aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU,
+    aMR_MSG_STATE_ITEM_SET_SUBMENU,
+    aMR_MSG_STATE_WAIT_MD,
+    aMR_MSG_STATE_OWNER_NO_MD,
+    aMR_MSG_STATE_OWNER_EXIST_MD,
+    aMR_MSG_STATE_OWNER_EXIST_MD2,
+    aMR_MSG_STATE_OTHER_NO_MD,
+    aMR_MSG_STATE_OTHER_EXIST_MD,
+    aMR_MSG_STATE_FULL_PLAYER_MD,
+    aMR_MSG_STATE_OPENMD_SUBMENU,
+    aMR_MSG_STATE_MD_PUT_IN,
+    aMR_MSG_STATE_OPEN_MUSIC_BOX,
+    aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN,
+    aMR_MSG_STATE_WAIT_CLOSE_MD,
+    aMR_MSG_STATE_REQUEST_CLOSE_MD,
+    aMR_MSG_STATE_REQUEST_FULL_BAG_MD,
+    aMR_MSG_STATE_CAN_NOT_MD_CLEAN,
+    aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU,
+    aMR_MSG_STATE_MD_EXCHANGE_SUBMENU,
+    aMR_MSG_STATE_QQQ_EMULATOR,
+    aMR_MSG_STATE_EXPLAIN_EMULATOR,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1,
+    aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2,
+    aMR_MSG_STATE_NO_PACK_NO_DATA,
+    aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE,
+    aMR_MSG_STATE_NO_PACK_NO_DATA1,
+    aMR_MSG_STATE_NO_PACK_NO_DATA2,
+    aMR_MSG_STATE_HITOKOTO,
+    aMR_MSG_STATE_HITOKOTO1,
+    aMR_MSG_STATE_HITOKOTO2,
+    aMR_MSG_STATE_SAVE_FAMICOM,
+    aMR_MSG_STATE_WAIT_FAMICOM_BATU,
+    aMR_MSG_STATE_PREPARE_COMMUNICATION,
+    aMR_MSG_STATE_NOT_CONNECT_AGB,
+    aMR_MSG_STATE_CHECK_AGB_PROGRAM,
+    aMR_MSG_STATE_DELETE_AGB_PROGRAMQ,
+    aMR_MSG_STATE_START_EMU_DOWN_LOAD,
+    aMR_MSG_STATE_RECHECK_AGB_CONNECT,
+
+    aMR_MSG_STATE_NUM
+};
+
+#include "../src/actor/ac_furniture_data.c_inc"
+#include "../src/actor/ac_my_room_data.c_inc"
+
+typedef struct my_room_work_s {
+    FTR_ACTOR* ftr_actor_list;
+    u8* used_list;
+    int list_size;
+} aMR_work_c;
+
+static aMR_work_c l_aMR_work;
+static u8 l_bank_index_table[FTR_NUM];
+static u8* l_bank_address_table[aMR_FTR_BANK_NUM];
+
+static aFTR_PROFILE* aMR_GetFurnitureProfile(mActor_name_t ftr_name);
+static mActor_name_t* aMR_GetLayerTopFg(s16 layer);
+static int aMR_UnitNum2FtrItemNoFtrID(mActor_name_t* item_no, int* ftr_id, int ut_x, int ut_z, int layer);
+static void aMR_ReserveDefaultBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static int aMR_SetFurniture2FG(FTR_ACTOR* ftr_actor, xyz_t pos, int on_flag);
+static int aMR_FtrIdx2ChangeFtrSwitch(ACTOR* actorx, int ftr_id);
+static aFTR_PROFILE* aMR_GetFurnitureProfile(u16 ftr_no);
+static void aMR_TidyItemInFurniture(FTR_ACTOR* ftr_actor);
+static int aMR_GetItemCountInFurniture(FTR_ACTOR* ftr_actor);
+static int aMR_ItemPutInFurniture(FTR_ACTOR* ftr_actor, mActor_name_t item);
+static void aMR_AllMDSwitchOff(void);
+static void aMR_OneMDSwitchOn_TheOtherSwitchOff(FTR_ACTOR* ftr_actor);
+static void aMR_ReserveBgm(ACTOR* actorx, int bgm_no, FTR_ACTOR* ftr_actor, s16 timer);
+static void aMR_SetMDFtrDemoData(MY_ROOM_ACTOR* my_room, FTR_ACTOR* ftr_actor, aMR_contact_info_c* contact_info);
+static int aMR_CheckHikidashi(FTR_ACTOR* ftr_actor, PLAYER_ACTOR* player, aMR_contact_info_c* contact_info);
+static int aMR_JudgeDemoStart(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, GAME* game,
+                              PLAYER_ACTOR* player);
+static void aMR_PlacePushFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, f32* point,
+                                   PLAYER_ACTOR* player, GAME* game);
+static void aMR_PlacePullFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                   GAME* game);
+static void aMR_PlaceKurukuruFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                       GAME* game);
+static void aMR_SitDownFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                 GAME* game);
+static void aMR_JudgeGoToBed(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                             GAME* game);
+static void aMR_SetMelodyData(u8* melody_data);
+static void aMR_GokiInfoCt(ACTOR* actorx, GAME* game);
+static void aMR_GokiInfoDt(void);
+static void aMR_CheckFtrAndGoki(ACTOR* actorx, FTR_ACTOR* ftr_actor, GAME* game);
+static void aMR_MakeGokiburi(xyz_t* pos, GAME* game, s16 arg);
+static void aMR_RequestPlayerBikkuri(ACTOR* actorx, GAME* game);
+static void aMR_GetFtrShape4Position(xyz_t* p0, xyz_t* p1, xyz_t* p2, xyz_t* p3, FTR_ACTOR* ftr_actor);
+static u8 aMR_JudgeStickFull(int direct, GAME* game);
+static int aMR_JudgeFurnitureMove(u8 type, int ut);
+static int aMR_RequestItemToFitFurniture(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static void aMR_SetPullMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
+                                 aMR_contact_info_c* contact_info);
+static int aMR_PullDirect2PushDirect(int pull_direct);
+static void aMR_SetPushMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
+                                 aMR_contact_info_c* contact_info);
+static void aMR_MoveShapeCenter(FTR_ACTOR* ftr_actor);
+static void aMR_RotateY(f32* xz, f32 amount);
+static int aMR_3DStickNuetral(void);
+static void aMR_SetNicePos(xyz_t* nice_pos, xyz_t player_pos, f32* col_start_xz, f32* col_end_xz,
+                           aMR_contact_info_c* contact_info, int type);
+static int aMR_GetPlayerDirect(const f32* normal_xz);
+static int aMR_Get3dDirectStatus(int direct);
+static void aMR_OperateSwitchBit(FTR_ACTOR* ftr_actor);
+#endif
+
 #define aMR_IS_SHOP() (mFI_CheckShop() == TRUE || mFI_GetFieldId() == mFI_FIELD_ROOM_BROKER_SHOP)
 
 typedef struct process_info_s {
@@ -153,7 +315,7 @@ static int aMR_RequestItemToFitFurniture(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
                                     on_top_ftr_actor->position.y - (ftr_actor->position.y + ftr_actor->base_position.y);
                                 pos.z =
                                     on_top_ftr_actor->position.z - (ftr_actor->position.z + ftr_actor->base_position.z);
-                                Common_Get(clip).shop_goods_clip->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1,
+                                CLIP(shop_goods_clip)->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1,
                                                                                           DEG2SHORT_ANGLE(0.0f));
                                 aMR_RegistItemToFitFurniture(actorx, &pos, on_top_ftrID, NULL, 0);
                                 aMR_SetFurniture2FG(on_top_ftr_actor, on_top_ftr_actor->position, FALSE);
@@ -163,9 +325,9 @@ static int aMR_RequestItemToFitFurniture(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
                         } else {
                             s16 angle_y = DEG2SHORT_ANGLE(0.0f);
 
-                            if (Common_Get(clip).shop_goods_clip != NULL) {
+                            if (CLIP(shop_goods_clip) != NULL) {
                                 angle_y =
-                                    Common_Get(clip).shop_goods_clip->single_get_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1);
+                                    CLIP(shop_goods_clip)->single_get_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1);
                             }
 
                             pos.x = (ut_x * mFI_UT_WORLDSIZE_X_F + mFI_UT_WORLDSIZE_HALF_X_F) -
@@ -174,8 +336,8 @@ static int aMR_RequestItemToFitFurniture(ACTOR* actorx, FTR_ACTOR* ftr_actor) {
                             pos.z = (ut_z * mFI_UT_WORLDSIZE_Z_F + mFI_UT_WORLDSIZE_HALF_Z_F) -
                                     (ftr_actor->position.z + ftr_actor->base_position.z);
 
-                            if (Common_Get(clip).shop_goods_clip != NULL) {
-                                Common_Get(clip).shop_goods_clip->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1, 0);
+                            if (CLIP(shop_goods_clip) != NULL) {
+                                CLIP(shop_goods_clip)->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1, 0);
                             }
 
                             aMR_RegistItemToFitFurniture(actorx, &pos, -1, &fg_layer1_p[ut_pos], angle_y);
@@ -230,7 +392,7 @@ static void aMR_RequestItemToUnFitFurniture(MY_ROOM_ACTOR* my_room, FTR_ACTOR* f
                     s16 ftr_angle = fit_ftr_p->angle_y + (ftr_actor->s_angle_y - my_room->parent_ftr.angle_y);
 
                     fg_layer1_p[ut] = fit_ftr_p->item_no;
-                    Common_Get(clip).shop_goods_clip->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1, ftr_angle);
+                    CLIP(shop_goods_clip)->single_set_angle_y_proc(ut_z, ut_x, mCoBG_LAYER1, ftr_angle);
                 }
             }
         }
@@ -726,7 +888,6 @@ static void aMR_AllContactCheck(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* cont
 
 extern cKF_Animation_R_c cKF_ba_r_furniture_pull;
 
-// Aus plays move animation at half speed
 static void aMR_SetPullMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
                                  aMR_contact_info_c* contact_info) {
     cKF_SkeletonInfo_R_c* keyframe = &my_room->keyframe;
@@ -744,17 +905,11 @@ static void aMR_SetPullMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR
     cKF_SkeletonInfo_R_Animation_Set_base_shape_trs(keyframe, 0.0f, 0.0f, 0.0f, 0, 0, 0);
     cKF_SkeletonInfo_R_AnimationMove_ct_base(pos, pos, 0, 0, 0.0f, keyframe, TRUE);
     cKF_SkeletonInfo_R_init_standard_stop_morph(keyframe, &cKF_ba_r_furniture_pull, NULL, -3.0f);
-
-#if VERSION >= VER_GAFU01_00
-    keyframe->frame_control.speed = 0.5f;
-#endif
-
     cKF_SkeletonInfo_R_play(keyframe);
 }
 
 extern cKF_Animation_R_c cKF_ba_r_furniture_push;
 
-// Aus plays move animation at half speed
 static void aMR_SetPushMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
                                  aMR_contact_info_c* contact_info) {
     cKF_SkeletonInfo_R_c* keyframe = &my_room->keyframe;
@@ -772,11 +927,6 @@ static void aMR_SetPushMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR
     cKF_SkeletonInfo_R_Animation_Set_base_shape_trs(keyframe, 0.0f, 0.0f, 0.0f, 0, 0, 0);
     cKF_SkeletonInfo_R_AnimationMove_ct_base(pos, pos, 0, 0, 0.0f, keyframe, TRUE);
     cKF_SkeletonInfo_R_init_standard_stop(keyframe, &cKF_ba_r_furniture_push, NULL);
-
-#if VERSION >= VER_GAFU01_00
-    keyframe->frame_control.speed = 0.5f;
-#endif
-
     cKF_SkeletonInfo_R_play(keyframe);
 }
 
@@ -884,12 +1034,20 @@ static int aMR_FtrIdx2ChangeFtrSwitch(ACTOR* actorx, int ftrID) {
             }
         } else if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
             if (ftr_actor->items[0] != EMPTY_NO &&
-                (ftr_actor->items[0] >= ITM_MINIDISK_START && ftr_actor->items[0] <= ITM_MINIDISK_END)) {
+                (ftr_actor->items[0] >= ITM_MINIDISK_START && ftr_actor->items[0] < ITM_MINIDISK_END)) {
                 if (ftr_actor->switch_bit == FALSE) {
+                    mActor_name_t md = mNpc_GetNowMD();
+                    int idx;
+
+                    if (md != EMPTY_NO) {
+                        ftr_actor->items[0] = md;
+                    }
+
                     ftr_actor->switch_changed_flag = TRUE;
                     ftr_actor->switch_bit = TRUE;
                     aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
-                    aMR_ReserveBgm(actorx, BGM_MD0 + (ftr_actor->items[0] - ITM_MINIDISK_START), ftr_actor, 30);
+                    idx = aMR_MD2IDX(ftr_actor->items[0]);
+                    aMR_ReserveBgm(actorx, idx, ftr_actor, 30);
                     sAdo_OngenTrgStart(NA_SE_LIGHT_ON, &ftr_actor->position);
                     return TRUE;
                 } else {
@@ -979,7 +1137,8 @@ static int aMR_CheckDiaryOnMe(FTR_ACTOR* ftr_actor, GAME* game) {
 static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_info_c* contact_info0,
                                 aMR_contact_info_c* contact_info1) {
     aMR_contact_info_c* contact;
-    u8* field_type;
+    mHm_hs_c** cur_island_house_p;
+    u8* field_type_p;
     ACTOR* actorx = (ACTOR*)my_room;
     GAME_PLAY* play = (GAME_PLAY*)game;
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
@@ -987,11 +1146,13 @@ static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_
     int i;
     FTR_ACTOR* ftr_actor;
     aFTR_PROFILE* profile;
-    FTR_ACTOR* md_ftr_actor;
     FTR_ACTOR* ftr_actor2;
     int state;
     u16 ftr_idx;
+    int house_idx;
     int player_no;
+    FTR_ACTOR* md_ftr_actor;
+    mActor_name_t md;
     Submenu* submenu;
 
     if (my_room->room_msg_flag == TRUE) {
@@ -1034,7 +1195,9 @@ static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_
     } else if (!chkButton(BUTTON_A) && my_room->demo_flag == FALSE && my_room->msg_type == aMR_MSG_STATE_NONE) {
         if (my_room->state == 1 || my_room->state == 6) {
             if (my_room->switch_timer < 14) {
-                field_type = Common_GetPointer(field_type);
+                // Loading these pointers feels like a hack
+                cur_island_house_p = Common_GetPointer(cur_island_house_p);
+                field_type_p = Common_GetPointer(field_type);
                 for (i = 1; i >= 0; i--) {
                     if (i == 1) {
                         contact = contact_info1;
@@ -1049,15 +1212,24 @@ static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_
                         ftr_idx = ftr_actor->name;
 
                         if (aMR_CheckDiaryOnMe(ftr_actor, game)) {
-                            if (mSc_IS_SCENE_PLAYER_HOUSE_ROOM(Save_Get(scene_no))) {
-                                player_no = mHS_get_pl_no_detail(aMR_GetPlayerRoomIdx());
+                            house_idx = -1;
+                            player_no = -1;
 
-                                if (player_no != -1) {
-                                    submenu = &play->submenu;
-                                    my_room->state = 0;
-                                    mSM_open_submenu(submenu, mSM_OVL_CALENDAR, 0, player_no);
-                                    return TRUE;
+                            if (mSc_IS_SCENE_PLAYER_HOUSE_ROOM(Save_Get(scene_no))) {
+                                house_idx = aMR_GetPlayerRoomIdx();
+                                player_no = mHS_get_pl_no_detail(house_idx);
+                            } else if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+                                if (*cur_island_house_p != NULL) {
+                                    house_idx = (*cur_island_house_p)->island.house_idx;
+                                    player_no = mHS_get_pl_no_detail(house_idx);
                                 }
+                            }
+
+                            if (house_idx != -1 &&player_no != -1) {
+                                submenu = &play->submenu;
+                                my_room->state = 0;
+                                mSM_open_submenu(submenu, mSM_OVL_CALENDAR, 0, player_no);
+                                return TRUE;
                             }
                         } else if (ftr_idx == FTR_TAK_NES01) { /* Super Tortimer */
                             if (aMR_FtrIdx2ChangeFtrSwitch(actorx, contact->ftrID)) {
@@ -1085,7 +1257,7 @@ static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_
                             }
                         } else if (aFTR_CHECK_INTERACTION(profile->interaction_type,
                                                           aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
-                            if (*field_type == mFI_FIELDTYPE2_PLAYER_ROOM) {
+                            if (*field_type_p == mFI_FIELDTYPE2_PLAYER_ROOM) {
                                 /* Only active the music player if interacted with from its 'down' (front) side */
                                 if (contact->contact_direction == aMR_CONTACT_DIR_FRONT &&
                                     ftr_actor->demo_status == 0) {
@@ -1097,6 +1269,7 @@ static int aMR_ManageMoveBottun(MY_ROOM_ACTOR* my_room, GAME* game, aMR_contact_
                                 if (ftr_actor->demo_status == 0 &&
                                     contact->contact_direction == aMR_CONTACT_DIR_FRONT) {
                                     md_ftr_actor = &l_aMR_work.ftr_actor_list[contact->ftrID];
+                                    md = mNpc_GetNowMD(); // @unused
 
                                     if (md_ftr_actor->switch_bit == TRUE) {
                                         aMR_SetMDFtrDemoData(my_room, md_ftr_actor, contact);
@@ -1318,7 +1491,7 @@ static void aMR_MngFtrContactAction(ACTOR* actorx, GAME* game) {
 
     aMR_AllContactCheck(my_room, contact_info0, contact_info1, player);
     if (my_room->demo_flag == FALSE && !aMR_IS_MUSEUM_ROOM(Save_Get(scene_no)) && aMR_IS_SHOP() == FALSE &&
-        my_room->emu_info.request_flag == FALSE && my_room->msg_type == aMR_MSG_STATE_NONE) {
+        my_room->emu_info.request_flag == FALSE && my_room->msg_type == aMR_MSG_STATE_NONE && !mDemo_Check(mDemo_TYPE_SPEAK, actorx) && !mDemo_Check(mDemo_TYPE_REPORT, actorx)) {
         aMR_ManageMoveBottun(my_room, game, contact_info0, contact_info1);
 
         /* Process furniture movement timers if not in a storage item demo sequence */
@@ -1476,7 +1649,7 @@ static void aMR_RewriteFactorInfo(GAME* game) {
 
 static mActor_name_t aMR_GetBirthFurniture(u16 ftr_no, int angle_idx) {
     if (ftr_no < FTR_NUM) {
-        return mRmTp_FtrIdx2FtrItemNo(ftr_no, angle_idx & 3);
+        return mNT_ftr_idx_to_ftr_item_no(ftr_no, angle_idx & 3);
     }
 
     return FTR_START(FTR_NOG_FAN01);
@@ -1566,10 +1739,10 @@ static void aMR_PreparePickingUpFurniture(int ftrID, MY_ROOM_ACTOR* my_room) {
     my_room->pickup_info.layer = ftr_actor->layer;
     my_room->pickup_info.dust_effect_timer = 2;
     aMR_GetFtrShapeCenter(&my_room->pickup_info.leaf_pos, ftr_actor);
-    my_room->pickup_info.icon = aMR_ItemNo2IconNo(mRmTp_FtrIdx2FtrItemNo(ftr_actor->name, mRmTp_DIRECT_SOUTH));
+    my_room->pickup_info.icon = aMR_ItemNo2IconNo(mNT_ftr_idx_to_ftr_item_no(ftr_actor->name, mRmTp_DIRECT_SOUTH));
 }
 
-static int aMR_JudgePickUpCommon(mActor_name_t* pickup_item_p, ACTOR* actorx, int ftrID, mActor_name_t item) {
+static int aMR_JudgePickUpCommon(mActor_name_t* pickup_item_p, ACTOR* actorx, int ftrID, mActor_name_t item, mActor_name_t req_item) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     FTR_ACTOR* ftr_actor = &l_aMR_work.ftr_actor_list[ftrID];
     int item_count = aMR_GetItemCountInFurniture(ftr_actor);
@@ -1605,7 +1778,12 @@ static int aMR_JudgePickUpCommon(mActor_name_t* pickup_item_p, ACTOR* actorx, in
                            ? aMR_MSG_STATE_CAN_NOT_CLEAN_MD
                            : aMR_MSG_STATE_CAN_NOT_CLEAN;
 
-        if (free_space < need_space) {
+        if (free_space == 0) {
+            if (ITEM_NAME_GET_TYPE(req_item) != NAME_TYPE_ITEM1) {
+                *pickup_item_p = item;
+                return TRUE;
+            }
+        } else if (free_space < need_space) {
             int current_msg_state = my_room->msg_type;
             int demo_type;
 
@@ -1638,7 +1816,7 @@ static int aMR_JudgePickUpCommon(mActor_name_t* pickup_item_p, ACTOR* actorx, in
 
 static int square_offset_data[] = { 0, -1, -UT_X_NUM, -(UT_X_NUM + 1) };
 
-static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game) {
+static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t req_item, GAME* game) {
     ACTOR* actorx = aMR_CLIP->my_room_actor_p;
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     u32 player_no = Common_Get(player_no);
@@ -1650,7 +1828,7 @@ static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game) {
     }
 
     if (my_room->pickup_info.pickup_flag == TRUE || aMR_CheckReserveFlag(my_room, 1) == TRUE ||
-        my_room->emu_info.request_flag == TRUE || (int)my_room->bgm_info.reserve_flag == TRUE) {
+        my_room->emu_info.request_flag == TRUE || my_room->bgm_info.reserved_ftr_actor != NULL) {
         return EMPTY_NO;
     }
 
@@ -1704,7 +1882,7 @@ static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game) {
                     mActor_name_t pickup_item;
                     if (ftr_actor->state != aFTR_STATE_BYE && ftr_actor->state != aFTR_STATE_BIRTH_WAIT &&
                         ftr_actor->state != aFTR_STATE_BIRTH && ftr_actor->state != aFTR_STATE_DEATH &&
-                        aMR_JudgePickUpCommon(&pickup_item, actorx, ftrID, item)) {
+                        aMR_JudgePickUpCommon(&pickup_item, actorx, ftrID, item, req_item)) {
                         return pickup_item;
                     } else {
                         return EMPTY_NO;
@@ -1749,7 +1927,7 @@ static mActor_name_t aMR_SearchPickupFurniture(mActor_name_t item, GAME* game) {
                             }
                         }
 
-                        if (aMR_JudgePickUpCommon(&pickup_item, actorx, ftrID2, item2)) {
+                        if (aMR_JudgePickUpCommon(&pickup_item, actorx, ftrID2, item2, req_item)) {
                             return pickup_item;
                         } else {
                             return EMPTY_NO;
@@ -1811,6 +1989,9 @@ static void aMR_Furniture2ItemBag(GAME* game) {
 
                 if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
                     int unused_sum = mPr_GetPossessionItemSumWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL);
+                    if (ITEM_IS_MINIDISK(ftr_actor->items[0])) {
+                        my_room->playing_md_item = ftr_actor->items[0];
+                    }
                     ftr_actor->items[0] = EMPTY_NO;
                 } else if (my_room->demo_flag == FALSE && my_room->msg_type == aMR_MSG_STATE_NONE) {
                     int free_sum = mPr_GetPossessionItemSumWithCond(priv, EMPTY_NO, mPr_ITEM_COND_NORMAL);
@@ -1873,6 +2054,10 @@ static int aMR_JudgeBreedNewFurniture(GAME* game, u16 ftr_no, int* ut_x, int* ut
         int j;
         int angle_idx;
         u16 angle;
+
+        if (aMR_check_valid_furniture(mNT_ftr_idx_to_ftr_item_no(ftr_no, mRmTp_DIRECT_SOUTH)) == FALSE) {
+            return aMR_JUDGE_INVALID_PLACEMENT;
+        }
 
         if (mCoBG_CheckUtFlat(&player_pos) == FALSE) {
             return aMR_JUDGE_CANT_PLACE_FTR;
@@ -2105,7 +2290,28 @@ static int aMR_JudgeBreedNewFurniture(GAME* game, u16 ftr_no, int* ut_x, int* ut
         *rotation = 0;
         *square_offset = 0;
         *layer = 0;
-        return aMR_JUDGE_OTHER_ROOM;
+        return aMR_JUDGE_INVALID_PLACEMENT;
+    }
+}
+
+static void aMR_ExtinguishFurniture_Debug(ACTOR* actorx, GAME* game) {
+    if (chkTrigger(BUTTON_DDOWN)) {
+        mActor_name_t item = aMR_CLIP->search_pickup_ftr_proc(EMPTY_NO, game);
+
+        if (item != EMPTY_NO) {
+            aMR_CLIP->ftr2itemBag_proc(game);
+            aMR_LeafPickuped();
+        }
+    }
+}
+
+extern void aMR_DeleteFurniture_MarioClub(GAME* game) {
+    if (aMR_CLIP != NULL) {
+        ACTOR* actorx = aMR_CLIP->my_room_actor_p;
+
+        if (actorx != NULL && game != NULL) {
+            aMR_ExtinguishFurniture_Debug(actorx, game);
+        }
     }
 }
 
@@ -2150,7 +2356,7 @@ static int aMR_SetFurniture2FG(FTR_ACTOR* ftr_actor, xyz_t pos, int on_flag) {
     if (fg_layer_p != NULL && ftr_actor->state != aFTR_STATE_BYE) {
         f32 target_angle = ftr_actor->angle_y_target;
         f32 target_angle_rad = DEG2RAD(target_angle);
-        mActor_name_t item = mRmTp_FtrIdx2FtrItemNo(ftr_actor->name, mRmTp_DIRECT_SOUTH);
+        mActor_name_t item = mNT_ftr_idx_to_ftr_item_no(ftr_actor->name, mRmTp_DIRECT_SOUTH);
         xyz_t base_pos = { 0.0f, 0.0f, 0.0f };
         xyz_t tmp_pos = { mFI_UT_WORLDSIZE_X_F, 0.0f, 0.0f };
         int shape;
@@ -2525,7 +2731,8 @@ static void aMR_FtrDeath(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_roo
         u16 ftr_no = ftr_actor->name;
         aFTR_PROFILE* profile = aMR_GetFurnitureProfile(ftr_no);
 
-        if (l_aMR_work.used_list[ftrID]) {
+        if (l_aMR_work.used_list[ftrID] && profile != NULL) {
+            // @BUG - devs forgot to remove the now secondary check for profile
             if (profile != NULL) {
                 aMR_KeepItem2Fg(ftr_actor);
                 aMR_MiniDiskCommonDt(ftr_actor, actorx);
@@ -2688,7 +2895,7 @@ static void aMR_SetReserveFurniture(MY_ROOM_ACTOR* my_room, GAME* game) {
                     my_room->rsv_ftr[i].exist_flag = FALSE;
                 } else if (my_room->rsv_ftr[i].frames + 1 == my_room->rsv_ftr[i].initial_frames_num) {
                     int ftrID = my_room->rsv_ftr[i].free_no;
-                    mActor_name_t item = mRmTp_FtrIdx2FtrItemNo(my_room->rsv_ftr[i].ftr_name, mRmTp_DIRECT_SOUTH);
+                    mActor_name_t item = mNT_ftr_idx_to_ftr_item_no(my_room->rsv_ftr[i].ftr_name, mRmTp_DIRECT_SOUTH);
                     s16 icon_no = aMR_ItemNo2IconNo(item);
 
                     if (ftrID != -1) {
@@ -2733,12 +2940,8 @@ static void aMR_SetFtrDemoMsg(MY_ROOM_ACTOR* my_room) {
             u32 player_no = Common_Get(player_no);
 
             if (my_room->msg_timer > 0) {
-                if (aMR_GetItemCountInFurniture(ftr_actor) <= 0) {
-                    if (aMR_CheckRoomOwner(player_no, my_room)) {
-                        my_room->requested_msg_type = aMR_MSG_STATE_OWNER_NO_ITEM;
-                    } else {
-                        my_room->requested_msg_type = aMR_MSG_STATE_OTHER_NO_ITEM;
-                    }
+                if (aMR_GetItemCountInFurniture(ftr_actor) == 0) {
+                    my_room->requested_msg_type = aMR_CheckRoomOwner(player_no, my_room) ? aMR_MSG_STATE_OWNER_NO_ITEM : aMR_MSG_STATE_OTHER_NO_ITEM;
                 } else {
                     int count = aMR_GetItemCountInFurniture(ftr_actor);
 
@@ -2784,18 +2987,10 @@ static void aMR_SetFtrDemoMsg(MY_ROOM_ACTOR* my_room) {
 
             if (my_room->msg_timer > 0) {
                 if (ftr_actor->items[0] == EMPTY_NO) {
-                    if (aMR_CheckRoomOwner(player_no, my_room)) {
-                        my_room->requested_msg_type = aMR_MSG_STATE_OWNER_NO_MD;
-                    } else {
-                        my_room->requested_msg_type = aMR_MSG_STATE_OTHER_NO_MD;
-                    }
+                    my_room->requested_msg_type = aMR_CheckRoomOwner(player_no, my_room) ? aMR_MSG_STATE_OWNER_NO_MD : aMR_MSG_STATE_OTHER_NO_MD;
                 } else {
                     if (aMR_CheckRoomOwner(player_no, my_room)) {
-                        if (ftr_actor->switch_bit) {
-                            my_room->requested_msg_type = aMR_MSG_STATE_OWNER_EXIST_MD;
-                        } else {
-                            my_room->requested_msg_type = aMR_MSG_STATE_OWNER_EXIST_MD2;
-                        }
+                        my_room->requested_msg_type = ftr_actor->switch_bit ? aMR_MSG_STATE_OWNER_EXIST_MD : aMR_MSG_STATE_OWNER_EXIST_MD2;
                     } else {
                         my_room->requested_msg_type = aMR_MSG_STATE_OTHER_EXIST_MD;
                     }
@@ -2833,10 +3028,10 @@ static void aMR_MakeClockInfo(MY_ROOM_ACTOR* my_room, GAME* game) {
         case 0:
             my_room->clock_info.tick_stop = TRUE;
             break;
-        case 15:
+        case 30:
             my_room->clock_info.tick0 = TRUE;
             break;
-        case 45:
+        case 90:
             my_room->clock_info.tick1 = TRUE;
             break;
     }
@@ -2891,7 +3086,7 @@ static void My_Room_Actor_move(ACTOR* actorx, GAME* game) {
         aMR_RequestPlayerBikkuri(actorx, game);
     }
 
-    if (!aMR_IS_SHOP() && my_room->bgm_info.active_flag) {
+    if (!aMR_IS_SHOP()) {
         FTR_ACTOR* md_ftr_actor = my_room->bgm_info.active_ftr_actor;
 
         if (md_ftr_actor != NULL) {
@@ -2911,7 +3106,7 @@ static void My_Room_Actor_move(ACTOR* actorx, GAME* game) {
         my_room->bgm_info.timer = 0;
     }
 
-    if (!aMR_IS_SHOP() && my_room->bgm_info.timer == 0 && (int)my_room->bgm_info.reserve_flag == TRUE) {
+    if (!aMR_IS_SHOP() && my_room->bgm_info.timer == 0 && my_room->bgm_info.reserved_ftr_actor != NULL) {
         if (mMsg_CHECK_MAINHIDE()) {
             aMR_ChangeMDBgm(actorx, my_room->bgm_info.reserved_ftr_actor);
         }
@@ -2952,30 +3147,37 @@ static int aMR_JudgePlayerAction(xyz_t* out_pos0, xyz_t* out_pos1, int ftrID) {
             s16 ftr_state = ftr_actor->state;
 
             if (my_room->demo_flag == TRUE) {
-                if (my_room->state == 8) {
-                    FTR_ACTOR* demo_ftr_actor = &l_aMR_work.ftr_actor_list[my_room->demo_ftrID];
-                    aFTR_PROFILE* demo_profile = aMR_GetFurnitureProfile(demo_ftr_actor->name);
-
-                    if (demo_profile != NULL) {
+                FTR_ACTOR* demo_ftr_actor = &l_aMR_work.ftr_actor_list[my_room->demo_ftrID];
+                aFTR_PROFILE* demo_profile = aMR_GetFurnitureProfile(demo_ftr_actor->name);
+                
+                if (demo_profile != NULL) {
+                    if (my_room->state == 8) {
                         if (aFTR_CHECK_INTERACTION(demo_profile->interaction_type, aFTR_INTERACTION_TYPE_DRAWERS)) {
                             aMR_SetNowPosition(out_pos0, my_room->nice_pos);
                             aMR_SetNowPosition(out_pos1, my_room->nice_pos);
                             return 8;
                         } else if (aFTR_CHECK_INTERACTION(demo_profile->interaction_type,
-                                                          aFTR_INTERACTION_TYPE_WARDROBE)) {
+                                                        aFTR_INTERACTION_TYPE_WARDROBE)) {
                             aMR_SetNowPosition(out_pos0, my_room->nice_pos);
                             aMR_SetNowPosition(out_pos1, my_room->nice_pos);
                             return 6;
                         } else if (aFTR_CHECK_INTERACTION(demo_profile->interaction_type,
-                                                          aFTR_INTERACTION_TYPE_CLOSET)) {
+                                                        aFTR_INTERACTION_TYPE_CLOSET)) {
                             aMR_SetNowPosition(out_pos0, my_room->nice_pos);
                             aMR_SetNowPosition(out_pos1, my_room->nice_pos);
                             return 7;
                         } else if (aFTR_CHECK_INTERACTION(demo_profile->interaction_type,
-                                                          aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
+                                                        aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
                             aMR_SetNowPosition(out_pos0, my_room->nice_pos);
                             aMR_SetNowPosition(out_pos1, my_room->nice_pos);
-                            return 1;
+                            return 11;
+                        }
+                    } else {
+                        if (aFTR_CHECK_INTERACTION(demo_profile->interaction_type,
+                            aFTR_INTERACTION_TYPE_MUSIC_DISK)) {
+                        aMR_SetNowPosition(out_pos0, my_room->nice_pos);
+                        aMR_SetNowPosition(out_pos1, my_room->nice_pos);
+                        return 11;
                         }
                     }
                 }
@@ -3075,7 +3277,7 @@ static int aMR_UnitNum2FtrItemNoFtrID(mActor_name_t* item_no, int* ftrID, int ut
         if (targetFtrID != aMR_NO_FTR_ID && targetFtrID != aMR_NO_FTR_ID2 && l_aMR_work.ftr_actor_list != NULL &&
             l_aMR_work.used_list != NULL) {
             FTR_ACTOR* ftr_actor = &l_aMR_work.ftr_actor_list[targetFtrID];
-            mActor_name_t item = mRmTp_FtrIdx2FtrItemNo(ftr_actor->name, mRmTp_DIRECT_SOUTH);
+            mActor_name_t item = mNT_ftr_idx_to_ftr_item_no(ftr_actor->name, mRmTp_DIRECT_SOUTH);
 
             if (item_no != NULL) {
                 *item_no = item;
@@ -3142,7 +3344,7 @@ static int aMR_JudgePlace2ndLayer(int ut_x, int ut_z) {
             int local_ut_x = ut_x & 0xF;
             int local_ut_z = ut_z & 0xF;
 
-            if (local_ut_x < UT_X_NUM && local_ut_z < UT_Z_NUM && fg_layer0_p != NULL && fg_layer1_p != NULL) {
+            if (fg_layer0_p != NULL && fg_layer1_p != NULL) {
                 int ut = local_ut_x + local_ut_z * UT_X_NUM;
                 mActor_name_t item;
                 int ftrID;
@@ -3240,9 +3442,14 @@ static void aMR_OpenCloseCommonMove(FTR_ACTOR* ftr_actor, ACTOR* actorx, GAME* g
 }
 
 static void aMR_MiniDiskCommonMove(FTR_ACTOR* ftr_actor, ACTOR* actorx, GAME* game, f32 start, f32 end) {
-
     if (ftr_actor->haniwa_state == 1) {
-        aMR_ReserveBgm(actorx, BGM_MD0 + (ftr_actor->items[0] - ITM_MINIDISK_START), ftr_actor, 0);
+        mActor_name_t md = mNpc_GetNowMD();
+
+        if (md != EMPTY_NO) {
+            ftr_actor->items[0] = md;
+        }
+
+        aMR_ReserveBgm(actorx, aMR_MD2IDX(ftr_actor->items[0]), ftr_actor, 0);
         ftr_actor->haniwa_state = 0;
     }
 

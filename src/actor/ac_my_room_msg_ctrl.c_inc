@@ -1,10 +1,199 @@
 #ifdef __INTELLISENSE__
 #include "ac_my_room.h"
 #include "m_common_data.h"
+#include "m_player_lib.h"
 #include "m_string.h"
+#include "m_choice.h"
 #include "m_msg.h"
-#include "m_house.h"
+#include "m_font.h"
+#include "GBA2/gba2.h"
+#include "m_bgm.h"
+#include "m_music_ovl.h"
+
+enum {
+    aMR_ICON_LEAF,
+    aMR_ICON_HANIWA,
+    aMR_ICON_CLOTH,
+    aMR_ICON_UMBRELLA,
+    aMR_ICON_BONE,
+    aMR_ICON_DIARY,
+
+    aMR_ICON_NUM
+};
+
+/* Inclusive bounds */
+#define aMR_MIN_BOUND 1
+#define aMR_MAX_BOUND 8
+
+#define aMR_FTR_BANK_NUM 100
+#define aMR_FTR_BANK_SIZE 0x800
+
+#define aMR_BOUNDS_OK(x, z) \
+    ((x) > (aMR_MIN_BOUND - 1) && (x) < (aMR_MAX_BOUND + 1) && (z) > (aMR_MIN_BOUND - 1) && (z) < (aMR_MAX_BOUND + 1))
+
+enum {
+    aMR_MSG_STATE_NONE,
+    aMR_MSG_STATE_WAIT_MSG,
+    aMR_MSG_STATE_OWNER_NO_ITEM,
+    aMR_MSG_STATE_OWNER_EXIST_ITEM,
+    aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2,
+    aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3,
+    aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT,
+    aMR_MSG_STATE_OTHER_NO_ITEM,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM1,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM2,
+    aMR_MSG_STATE_OTHER_EXIST_ITEM3,
+    aMR_MSG_STATE_FULL_PLAYER_ITEM,
+    aMR_MSG_STATE_OPEN_SUBMENU,
+    aMR_MSG_STATE_ITEM_PUT_IN,
+    aMR_MSG_STATE_WAIT_CLOSE_FTR,
+    aMR_MSG_STATE_REQUEST_CLOSE_FTR,
+    aMR_MSG_STATE_REQUEST_FULL_BAG,
+    aMR_MSG_STATE_CAN_NOT_CLEAN,
+    aMR_MSG_STATE_CAN_NOT_CLEAN_MD,
+    aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU,
+    aMR_MSG_STATE_ITEM_SET_SUBMENU,
+    aMR_MSG_STATE_WAIT_MD,
+    aMR_MSG_STATE_OWNER_NO_MD,
+    aMR_MSG_STATE_OWNER_EXIST_MD,
+    aMR_MSG_STATE_OWNER_EXIST_MD2,
+    aMR_MSG_STATE_OTHER_NO_MD,
+    aMR_MSG_STATE_OTHER_EXIST_MD,
+    aMR_MSG_STATE_FULL_PLAYER_MD,
+    aMR_MSG_STATE_OPENMD_SUBMENU,
+    aMR_MSG_STATE_MD_PUT_IN,
+    aMR_MSG_STATE_OPEN_MUSIC_BOX,
+    aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN,
+    aMR_MSG_STATE_WAIT_CLOSE_MD,
+    aMR_MSG_STATE_REQUEST_CLOSE_MD,
+    aMR_MSG_STATE_REQUEST_FULL_BAG_MD,
+    aMR_MSG_STATE_CAN_NOT_MD_CLEAN,
+    aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU,
+    aMR_MSG_STATE_MD_EXCHANGE_SUBMENU,
+    aMR_MSG_STATE_QQQ_EMULATOR,
+    aMR_MSG_STATE_EXPLAIN_EMULATOR,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1,
+    aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2,
+    aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2,
+    aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2,
+    aMR_MSG_STATE_NO_PACK_NO_DATA,
+    // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE,
+    // aMR_MSG_STATE_NO_PACK_NO_DATA1,
+    aMR_MSG_STATE_NO_PACK_NO_DATA2,
+    aMR_MSG_STATE_HITOKOTO,
+    aMR_MSG_STATE_HITOKOTO1,
+    aMR_MSG_STATE_HITOKOTO2,
+    aMR_MSG_STATE_SAVE_FAMICOM,
+    aMR_MSG_STATE_WAIT_FAMICOM_BATU,
+    aMR_MSG_STATE_PREPARE_COMMUNICATION,
+    aMR_MSG_STATE_NOT_CONNECT_AGB,
+    aMR_MSG_STATE_CHECK_AGB_PROGRAM,
+    aMR_MSG_STATE_DELETE_AGB_PROGRAMQ,
+    aMR_MSG_STATE_START_EMU_DOWN_LOAD,
+    aMR_MSG_STATE_RECHECK_AGB_CONNECT,
+
+    aMR_MSG_STATE_NUM
+};
+
+#include "../src/actor/ac_furniture_data.c_inc"
+#include "../src/actor/ac_my_room_data.c_inc"
+
+typedef struct my_room_work_s {
+    FTR_ACTOR* ftr_actor_list;
+    u8* used_list;
+    int list_size;
+} aMR_work_c;
+
+static aMR_work_c l_aMR_work;
+static u8 l_bank_index_table[FTR_NUM];
+static u8* l_bank_address_table[aMR_FTR_BANK_NUM];
+
+static aFTR_PROFILE* aMR_GetFurnitureProfile(mActor_name_t ftr_name);
+static mActor_name_t* aMR_GetLayerTopFg(s16 layer);
+static int aMR_UnitNum2FtrItemNoFtrID(mActor_name_t* item_no, int* ftr_id, int ut_x, int ut_z, int layer);
+static void aMR_ReserveDefaultBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static void aMR_ChangeMDBgm(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static int aMR_SetFurniture2FG(FTR_ACTOR* ftr_actor, xyz_t pos, int on_flag);
+static int aMR_FtrIdx2ChangeFtrSwitch(ACTOR* actorx, int ftr_id);
+static aFTR_PROFILE* aMR_GetFurnitureProfile(u16 ftr_no);
+static void aMR_TidyItemInFurniture(FTR_ACTOR* ftr_actor);
+static int aMR_GetItemCountInFurniture(FTR_ACTOR* ftr_actor);
+static int aMR_ItemPutInFurniture(FTR_ACTOR* ftr_actor, mActor_name_t item);
+static void aMR_AllMDSwitchOff(void);
+static void aMR_OneMDSwitchOn_TheOtherSwitchOff(FTR_ACTOR* ftr_actor);
+static void aMR_ReserveBgm(ACTOR* actorx, int bgm_no, FTR_ACTOR* ftr_actor, s16 timer);
+static void aMR_SetMDFtrDemoData(MY_ROOM_ACTOR* my_room, FTR_ACTOR* ftr_actor, aMR_contact_info_c* contact_info);
+static int aMR_CheckHikidashi(FTR_ACTOR* ftr_actor, PLAYER_ACTOR* player, aMR_contact_info_c* contact_info);
+static int aMR_JudgeDemoStart(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, GAME* game,
+                              PLAYER_ACTOR* player);
+static void aMR_PlacePushFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, f32* point,
+                                   PLAYER_ACTOR* player, GAME* game);
+static void aMR_PlacePullFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                   GAME* game);
+static void aMR_PlaceKurukuruFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                       GAME* game);
+static void aMR_SitDownFurniture(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                                 GAME* game);
+static void aMR_JudgeGoToBed(MY_ROOM_ACTOR* my_room, aMR_contact_info_c* contact_info, PLAYER_ACTOR* player,
+                             GAME* game);
+static void aMR_SetMelodyData(u8* melody_data);
+static void aMR_GokiInfoCt(ACTOR* actorx, GAME* game);
+static void aMR_GokiInfoDt(void);
+static void aMR_CheckFtrAndGoki(ACTOR* actorx, FTR_ACTOR* ftr_actor, GAME* game);
+static void aMR_MakeGokiburi(xyz_t* pos, GAME* game, s16 arg);
+static void aMR_RequestPlayerBikkuri(ACTOR* actorx, GAME* game);
+static void aMR_GetFtrShape4Position(xyz_t* p0, xyz_t* p1, xyz_t* p2, xyz_t* p3, FTR_ACTOR* ftr_actor);
+static u8 aMR_JudgeStickFull(int direct, GAME* game);
+static int aMR_JudgeFurnitureMove(u8 type, int ut);
+static int aMR_RequestItemToFitFurniture(ACTOR* actorx, FTR_ACTOR* ftr_actor);
+static void aMR_SetPullMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
+                                 aMR_contact_info_c* contact_info);
+static int aMR_PullDirect2PushDirect(int pull_direct);
+static void aMR_SetPushMoveAnime(FTR_ACTOR* ftr_actor, GAME* game, MY_ROOM_ACTOR* my_room,
+                                 aMR_contact_info_c* contact_info);
+static void aMR_MoveShapeCenter(FTR_ACTOR* ftr_actor);
+static void aMR_RotateY(f32* xz, f32 amount);
+static int aMR_3DStickNuetral(void);
+static void aMR_SetNicePos(xyz_t* nice_pos, xyz_t player_pos, f32* col_start_xz, f32* col_end_xz,
+                           aMR_contact_info_c* contact_info, int type);
+static int aMR_GetPlayerDirect(const f32* normal_xz);
+static int aMR_Get3dDirectStatus(int direct);
+static void aMR_OperateSwitchBit(FTR_ACTOR* ftr_actor);
 #endif
+
+static int aMR_lock_camera_shutter(ACTOR* actorx, GAME* game) {
+    if (mSM_CheckAbleChange_unable_shutter_label((GAME_PLAY*)game, (u32)actorx)) {
+        mSM_Set_unable_shutter_label((GAME_PLAY*)game, (u32)actorx);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void aMR_InitVar(ACTOR* actorx, GAME* game) {
+    aMR_lock_camera_shutter(actorx, game);
+    mGcgba_InitVar();
+}
+
+static int aMR_unlock_camera_shutter(ACTOR* actorx, GAME* game) {
+    if (mSM_CheckOwner_unable_shutter_label((GAME_PLAY*)game, (u32)actorx)) {
+        mSM_Set_unable_shutter_label((GAME_PLAY*)game, 0);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void aMR_EndComm(ACTOR* actorx, GAME* game) {
+    aMR_unlock_camera_shutter(actorx, game);
+    mGcgba_EndComm();
+}
 
 static void aMR_SetSlotString(void) {
     u8 str[mMsg_FREE_STRING_LEN];
@@ -14,19 +203,22 @@ static void aMR_SetSlotString(void) {
     mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR4, str, mMsg_FREE_STRING_LEN);
 }
 
-static int aMR_GetCardFamicomCount(void) {
+static int aMR_GetCardFamicomCount(ACTOR* actorx, GAME* game) {
     int count = 0;
 
+    aMR_lock_camera_shutter(actorx, game);
     if (famicom_get_disksystem_titles(&count, NULL, 0) != FALSE) {
+        aMR_unlock_camera_shutter(actorx, game);
         return count;
     }
 
+    aMR_unlock_camera_shutter(actorx, game);
     return 0;
 }
 
 static u8* aMR_GetNameString(MY_ROOM_ACTOR* my_room, int rom_no) {
-    static u8 dummy[FAMICOM_MORI_NAME_LEN] = { 'n', 'o', ' ', 'g', 'a', 'm', 'e', ' ',
-                                               ' ', ' ', };
+    static u8 dummy[FAMICOM_MORI_NAME_LEN] = { CHAR_PP_020, CHAR_PP_011, CHAR_PP_096, CHAR_PP_032, CHAR_PP_032,
+                                               CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032 };
 
     if (my_room->emu_info.famicom_names_p != NULL && rom_no < my_room->emu_info.card_famicom_count) {
         return (u8*)my_room->emu_info.famicom_names_p + rom_no * FAMICOM_MORI_NAME_LEN;
@@ -63,28 +255,22 @@ static int aMR_GetMusicCountInMusicBox(void) {
     int i;
     int count = 0;
 
-    // for (i = 0; i < MINIDISK_NUM; i++) {
-    //     u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY
-    //                          ? Save_Get(island).cottage.music_box
-    //                          : Save_Get(homes[mHS_get_arrange_idx(Common_Get(player_no))]).music_box;
-
-    //     if (((music_box[(i / 32) & 1] >> (i & 31)) & 1) == 1) {
-    //         count++;
-    //     }
-    // }
+    for (i = 0; i < MINIDISK_NUM; i++) {
+        if (mMU_md_rack_get(i) == TRUE) {
+            count++;
+        }
+    }
 
     return count;
 }
 
 static void aMR_MemoryMusicBoxStatus(MY_ROOM_ACTOR* my_room) {
-    // u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY
-    //                      ? Save_Get(island).cottage.music_box
-    //                      : Save_Get(homes[mHS_get_arrange_idx(Common_Get(player_no))]).music_box;
-    // int i;
+    u32* music_box = mMU_GetNowSceneMusicRackP();
+    int i;
 
-    // for (i = 0; i < 2; i++) {
-    //     my_room->music_box[i] = music_box[i];
-    // }
+    for (i = 0; i < ARRAY_COUNT(my_room->music_box); i++) {
+        my_room->music_box[i] = music_box[i];
+    }
 }
 
 static void aMR_SetEmulatorMessage_CanSave(ACTOR* actorx) {
@@ -93,14 +279,16 @@ static void aMR_SetEmulatorMessage_CanSave(ACTOR* actorx) {
     mMsg_Set_ForceNext(mMsg_Get_base_window_p());
 }
 
-static void aMR_SetEmulatorStartMessage(ACTOR* actorx, int internal_rom) {
+static void aMR_SetEmulatorStartMessage(ACTOR* actorx, int internal_rom, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int res;
 
     Common_Get(my_room_message_control_flags) |= (1 << 2);
 
     if (internal_rom == TRUE) {
+        aMR_lock_camera_shutter(actorx, game);
         res = famicom_internal_data_load();
+        aMR_unlock_camera_shutter(actorx, game);
     } else {
         if (Common_Get(player_no) < PLAYER_NUM) {
             aMR_SetEmulatorMessage_CanSave(actorx);
@@ -108,10 +296,13 @@ static void aMR_SetEmulatorStartMessage(ACTOR* actorx, int internal_rom) {
             return;
         }
 
+        aMR_lock_camera_shutter(actorx, game);
         res = famicom_external_data_save_check();
+        aMR_unlock_camera_shutter(actorx, game);
     }
 
     aMR_SetSlotString();
+    mMsg_SET_FREE_STR(mMsg_FREE_STR0, Save_Get(land_info).name, LAND_NAME_SIZE);
 
     switch (res) {
         case FAMICOM_RESULT_OK:
@@ -150,7 +341,6 @@ static void aMR_SetEmulatorStartMessage(ACTOR* actorx, int internal_rom) {
             break;
         case FAMICOM_RESULT_NOCARD:
             my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR;
-            mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(land_info).name, LAND_NAME_SIZE);
             mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x3B55);
             mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
             mMsg_Set_ForceNext(mMsg_Get_base_window_p());
@@ -165,7 +355,7 @@ static void aMR_SetEmulatorStartMessage(ACTOR* actorx, int internal_rom) {
     }
 }
 
-static void aMR_NoMsgInit(ACTOR* actorx) {
+static void aMR_NoMsgInit(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -203,13 +393,13 @@ static void aMR_MsgControlOwnerNoItem(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitOwnerWhichPutOut(ACTOR* actorx) {
+static void aMR_MsgInitOwnerWhichPutOut(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     static u8 item_name1[mIN_ITEM_NAME_LEN];
     static u8 item_name2[mIN_ITEM_NAME_LEN];
     static u8 item_name3[mIN_ITEM_NAME_LEN];
     static u8* item_name_table[] = { item_name1, item_name2, item_name3 };
-    u8 cancel_str[mChoice_CHOICE_STRING_LEN];
+    u8 cancel_str[mMsg_FREE_STRING_LEN];
     FTR_ACTOR* ftr_actor = l_aMR_work.ftr_actor_list + my_room->demo_ftrID;
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     int count;
@@ -237,16 +427,16 @@ static void aMR_MsgInitOwnerWhichPutOut(ACTOR* actorx) {
     mChoice_Load_ChoseStringFromRom(choice_win, cancel_str, 0x29, NULL);
     if (count == 1) {
         mChoice_Set_choice_data(choice_win, item_name_table[0], mIN_ITEM_NAME_LEN, cancel_str,
-                                mChoice_CHOICE_STRING_LEN, NULL, mIN_ITEM_NAME_LEN, NULL, mIN_ITEM_NAME_LEN, NULL,
-                                mIN_ITEM_NAME_LEN, NULL, mIN_ITEM_NAME_LEN);
+            mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN, NULL,
+            mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN);
     } else if (count == 2) {
         mChoice_Set_choice_data(choice_win, item_name_table[0], mIN_ITEM_NAME_LEN, item_name_table[1],
-                                mIN_ITEM_NAME_LEN, cancel_str, mChoice_CHOICE_STRING_LEN, NULL, mIN_ITEM_NAME_LEN, NULL,
-                                mIN_ITEM_NAME_LEN, NULL, mIN_ITEM_NAME_LEN);
+            mIN_ITEM_NAME_LEN, cancel_str, mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN, NULL,
+            mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN);
     } else if (count == 3) {
         mChoice_Set_choice_data(choice_win, item_name_table[0], mIN_ITEM_NAME_LEN, item_name_table[1],
-                                mIN_ITEM_NAME_LEN, item_name_table[2], mIN_ITEM_NAME_LEN, cancel_str,
-                                mChoice_CHOICE_STRING_LEN, NULL, mIN_ITEM_NAME_LEN, NULL, mIN_ITEM_NAME_LEN);
+            mIN_ITEM_NAME_LEN, item_name_table[2], mIN_ITEM_NAME_LEN, cancel_str,
+            mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN, NULL, mMsg_FREE_STRING_LEN);
     }
 }
 
@@ -285,7 +475,7 @@ static void aMR_MsgControlOwnerWhichPutOut(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitOwnerWaitWhichPutOut(ACTOR* actorx) {
+static void aMR_MsgInitOwnerWaitWhichPutOut(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
     if (mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p())) {
@@ -295,10 +485,10 @@ static void aMR_MsgInitOwnerWaitWhichPutOut(ACTOR* actorx) {
 }
 
 static void aMR_MsgControlOwnerWaitWhichPutOut(ACTOR* actorx, GAME* game) {
-    aMR_MsgInitOwnerWaitWhichPutOut(actorx);
+    aMR_MsgInitOwnerWaitWhichPutOut(actorx, game);
 }
 
-static void aMR_MsgInitOwnerExistItem(ACTOR* actorx) {
+static void aMR_MsgInitOwnerExistItem(ACTOR* actorx, GAME* game) {
     u8 item_str[mIN_ITEM_NAME_LEN];
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int demo_ftrID = my_room->demo_ftrID;
@@ -411,7 +601,7 @@ static void aMR_MsgControlOtherExistItem(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitFullPlayerItem(ACTOR* actorx) {
+static void aMR_MsgInitFullPlayerItem(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -478,7 +668,7 @@ static void aMR_MsgControlWaitCloseFtr(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitRequestCloseFtr(ACTOR* actorx) {
+static void aMR_MsgInitRequestCloseFtr(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -569,7 +759,7 @@ static void aMR_MsgControlOwnerNoMD(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitOwnerExistMD(ACTOR* actorx) {
+static void aMR_MsgInitOwnerExistMD(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int demo_ftrID = my_room->demo_ftrID;
     FTR_ACTOR* ftr_actor = &l_aMR_work.ftr_actor_list[demo_ftrID];
@@ -650,7 +840,7 @@ static void aMR_MsgControlOpenMusicBox(ACTOR* actorx, GAME* game) {
 
     if (mDemo_CheckDemo() == FALSE) {
         int md_idx = (ftr_actor->items[0] >= ITM_MINIDISK_START && ftr_actor->items[0] < ITM_MINIDISK_END)
-                         ? (mActor_name_t)(ftr_actor->items[0] - ITM_MINIDISK_START)
+                         ? (ftr_actor->items[0] - ITM_MINIDISK_START)
                          : -1;
 
         aMR_MemoryMusicBoxStatus(my_room);
@@ -672,27 +862,24 @@ static void aMR_DeleteDirectedMD(ACTOR* actorx) {
 
             if (aFTR_CHECK_INTERACTION(profile->interaction_type, aFTR_INTERACTION_TYPE_MUSIC_DISK) &&
                 (ftr_actor->items[0] >= ITM_MINIDISK_START && ftr_actor->items[0] < ITM_MINIDISK_END)) {
-                int md_idx = (mActor_name_t)(ftr_actor->items[0] - ITM_MINIDISK_START);
-                // u32* music_box = Save_Get(scene_no) == SCENE_COTTAGE_MY
-                //                      ? Save_Get(island).cottage.music_box
-                //                      : Save_Get(homes[mHS_get_arrange_idx(Common_Get(player_no))]).music_box;
+                int md_idx = (ftr_actor->items[0] - ITM_MINIDISK_START);
 
-                // if (((music_box[(md_idx / 32) & 1] >> (md_idx & 31)) & 1) == 0) {
-                //     if (ftr_actor->switch_bit == TRUE) {
-                //         aMR_AllMDSwitchOff();
-                //         ftr_actor->items[0] = EMPTY_NO;
-                //         aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
-                //         aMR_ReserveDefaultBgm(actorx, ftr_actor);
-                //         aMR_ChangeMDBgm(actorx, ftr_actor);
-                //         sAdo_OngenTrgStart(0x17, &ftr_actor->position);
-                //     } else {
-                //         ftr_actor->items[0] = EMPTY_NO;
-                //         sAdo_OngenTrgStart(0x17, &ftr_actor->position);
-                //     }
+                if (mMU_md_rack_get(md_idx) == 0) {
+                    if (ftr_actor->switch_bit == TRUE) {
+                        aMR_AllMDSwitchOff();
+                        ftr_actor->items[0] = EMPTY_NO;
+                        aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
+                        aMR_ReserveDefaultBgm(actorx, ftr_actor);
+                        aMR_ChangeMDBgm(actorx, ftr_actor);
+                        sAdo_OngenTrgStart(0x17, &ftr_actor->position);
+                    } else {
+                        ftr_actor->items[0] = EMPTY_NO;
+                        sAdo_OngenTrgStart(0x17, &ftr_actor->position);
+                    }
 
-                //     ftr_actor->switch_changed_flag = TRUE;
-                //     ftr_actor->switch_bit = FALSE;
-                // }
+                    ftr_actor->switch_changed_flag = TRUE;
+                    ftr_actor->switch_bit = FALSE;
+                }
             }
         }
 
@@ -712,7 +899,7 @@ static void aMR_MsgControlMusicBoxMDPutIn(ACTOR* actorx, GAME* game) {
         if (submenu->item_p != NULL && submenu->item_p->item != EMPTY_NO) {
             ftr_actor->items[0] = submenu->item_p->item;
             aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
-            aMR_ReserveBgm(actorx, BGM_MD0 + (ftr_actor->items[0] - ITM_MINIDISK_START), ftr_actor, 0);
+            aMR_ReserveBgm(actorx, aMR_MD2IDX(ftr_actor->items[0]), ftr_actor, 0);
             aMR_ChangeMDBgm(actorx, ftr_actor);
         } else {
             aMR_DeleteDirectedMD(actorx);
@@ -759,7 +946,7 @@ static void aMR_MsgControlMDPutIn(ACTOR* actorx, GAME* game) {
         if (submenu->item_p != NULL && submenu->item_p->item != EMPTY_NO) {
             ftr_actor->items[0] = submenu->item_p->item;
             aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
-            aMR_ReserveBgm(actorx, BGM_MD0 + (ftr_actor->items[0] - ITM_MINIDISK_START), ftr_actor, 0);
+            aMR_ReserveBgm(actorx, aMR_MD2IDX(ftr_actor->items[0]), ftr_actor, 0);
             aMR_ChangeMDBgm(actorx, ftr_actor);
         }
 
@@ -782,7 +969,7 @@ static void aMR_MsgControlMDExchangeSubmenu(ACTOR* actorx, GAME* game) {
             mPr_SetFreePossessionItem(Now_Private, ftr_actor->items[0], mPr_ITEM_COND_NORMAL);
             ftr_actor->items[0] = submenu_item->item;
             aMR_OneMDSwitchOn_TheOtherSwitchOff(ftr_actor);
-            aMR_ReserveBgm(actorx, BGM_MD0 + (ftr_actor->items[0] - ITM_MINIDISK_START), ftr_actor, 0);
+            aMR_ReserveBgm(actorx, aMR_MD2IDX(ftr_actor->items[0]), ftr_actor, 0);
             aMR_ChangeMDBgm(actorx, ftr_actor);
         }
 
@@ -808,7 +995,7 @@ static void aMR_MsgControlWaitCloseMD(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitRequestCloseMD(ACTOR* actorx) {
+static void aMR_MsgInitRequestCloseMD(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -827,11 +1014,11 @@ static void aMR_MsgControlCanNotMDClean(ACTOR* actorx, GAME* game) {
     my_room->requested_msg_type = aMR_MSG_STATE_NONE;
 }
 
-static void aMR_MsgInitPrepareCommunication(ACTOR* actorx) {
+static void aMR_MsgInitPrepareCommunication(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
     my_room->agb_connect_tries = 0;
-    mGcgba_InitVar();
+    aMR_InitVar(actorx, game);
 }
 
 static void aMR_MsgControlPrepareCommunication(ACTOR* actorx, GAME* game) {
@@ -844,7 +1031,7 @@ static void aMR_MsgControlPrepareCommunication(ACTOR* actorx, GAME* game) {
 
             switch (mGcgba_ConnectEnabled()) {
                 case GBA2_GBA_STATE_SUCCESS:
-                    mGcgba_InitVar();
+                    aMR_InitVar(actorx, game);
                     my_room->requested_msg_type = aMR_MSG_STATE_START_EMU_DOWN_LOAD;
                     break;
 
@@ -856,7 +1043,7 @@ static void aMR_MsgControlPrepareCommunication(ACTOR* actorx, GAME* game) {
                         my_room->requested_msg_type = aMR_MSG_STATE_NOT_CONNECT_AGB;
                         mMsg_SET_CONTINUE_MSG_NUM(0x3DCF); /* GBA is not properly connected */
                         mMsg_UNSET_LOCKCONTINUE();
-                        mGcgba_EndComm();
+                        aMR_EndComm(actorx, game);
                     }
 
                     break;
@@ -867,7 +1054,7 @@ static void aMR_MsgControlPrepareCommunication(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitNotConnectAgb(ACTOR* actorx) {
+static void aMR_MsgInitNotConnectAgb(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -880,7 +1067,7 @@ static void aMR_MsgControlNotConnectAgb(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitCheckAgbProgram(ACTOR* actorx) {
+static void aMR_MsgInitCheckAgbProgram(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -901,7 +1088,7 @@ static void aMR_MsgControlCheckAgbProgram(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitDeleteAgbProgramQ(ACTOR* actorx) {
+static void aMR_MsgInitDeleteAgbProgramQ(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -925,11 +1112,11 @@ static void aMR_MsgControlDeleteAgbProgramQ(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitStartEmuDownLoad(ACTOR* actorx) {
+static void aMR_MsgInitStartEmuDownLoad(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
     my_room->famicom_agb_image_p = famicom_gba_getImage(my_room->emu_info.agb_rom_no, &my_room->agb_game_size);
-    mGcgba_InitVar();
+    aMR_InitVar(actorx, game);
     mMsg_SET_LOCKCONTINUE();
     sAdo_SysLevStart(0x47);
 }
@@ -941,12 +1128,13 @@ static void aMR_MsgControlStartEmuDownLoad(ACTOR* actorx, GAME* game) {
         case GBA2_GBA_STATE_SUCCESS:
             sAdo_SysLevStop(0x47);
             famicom_gba_removeImage(my_room->famicom_agb_image_p);
-            mGcgba_InitVar();
-            mGcgba_EndComm();
+            aMR_EndComm(actorx, game);
+            aMR_InitVar(actorx, game);
             my_room->requested_msg_type = aMR_MSG_STATE_NOT_CONNECT_AGB;
             mMsg_SET_CONTINUE_MSG_NUM(0x3DD3); /* Data transmission complete */
             mMsg_UNSET_LOCKCONTINUE();
             mMsg_SET_FORCENEXT();
+            aMR_EndComm(actorx, game);
             break;
 
         case GBA2_GBA_STATE_TRANSMITTING:
@@ -955,8 +1143,8 @@ static void aMR_MsgControlStartEmuDownLoad(ACTOR* actorx, GAME* game) {
         default:
             sAdo_SysLevStop(0x47);
             famicom_gba_removeImage(my_room->famicom_agb_image_p);
-            mGcgba_InitVar();
-            mGcgba_EndComm();
+            aMR_InitVar(actorx, game);
+            aMR_EndComm(actorx, game);
             my_room->requested_msg_type = aMR_MSG_STATE_NOT_CONNECT_AGB;
             mMsg_SET_CONTINUE_MSG_NUM(0x3DD4); /* Data transmission failed */
             mMsg_UNSET_LOCKCONTINUE();
@@ -965,10 +1153,10 @@ static void aMR_MsgControlStartEmuDownLoad(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitRecheckAgbConnect(ACTOR* actorx) {
+static void aMR_MsgInitRecheckAgbConnect(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
-    mGcgba_EndComm();
+    aMR_EndComm(actorx, game);
     my_room->agb_connect_tries = 0;
 }
 
@@ -982,7 +1170,7 @@ static void aMR_MsgControlRecheckAgbConnect(ACTOR* actorx, GAME* game) {
 
             switch (mGcgba_ConnectEnabled()) {
                 case GBA2_GBA_STATE_SUCCESS:
-                    mGcgba_InitVar();
+                    aMR_InitVar(actorx, game);
                     my_room->requested_msg_type = aMR_MSG_STATE_START_EMU_DOWN_LOAD;
                     break;
 
@@ -1004,13 +1192,13 @@ static void aMR_MsgControlRecheckAgbConnect(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqEmulator(ACTOR* actorx) {
+static void aMR_MsgInitQqqEmulator(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     FTR_ACTOR* ftr_actor = &l_aMR_work.ftr_actor_list[my_room->emu_ftrID];
 
     if (ftr_actor != NULL) {
         static u8 ftr_name[mIN_ITEM_NAME_LEN];
-        mActor_name_t emu_item = mRmTp_FtrIdx2FtrItemNo(ftr_actor->name, mRmTp_DIRECT_SOUTH);
+        mActor_name_t emu_item = mNT_ftr_idx_to_ftr_item_no(ftr_actor->name, mRmTp_DIRECT_SOUTH);
 
         mIN_copy_name_str(ftr_name, emu_item);
         mMsg_SET_FREE_STR_CL_ART(mMsg_FREE_STR1, ftr_name, sizeof(ftr_name), 5, emu_item);
@@ -1026,7 +1214,7 @@ static void aMR_MsgControlQqqEmulator(ACTOR* actorx, GAME* game) {
 
         switch (choice_no) {
             case mChoice_CHOICE0:
-                aMR_SetEmulatorStartMessage(actorx, TRUE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, TRUE, game);
                 break;
             case mChoice_CHOICE1:
                 if (my_room->emu_info.agb_rom_no != 255) {
@@ -1051,22 +1239,7 @@ static void aMR_MsgControlQqqEmulator(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitWarningCannotMakeSaveFile(ACTOR* actorx) {
-    // nothing
-}
-
-static void aMR_MsgControlWarningCannotMakeSaveFile(ACTOR* actorx, GAME* game) {
-    MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
-
-    /* Check message is 'cannot create a new file' */
-    if (mMsg_GET_MSG_NUM() == 0x306A) {
-        my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR;
-        mMsg_SET_CONTINUE_MSG_NUM(0x17B5); /* Press L+R+Z to quit playing */
-        mMsg_UNSET_LOCKCONTINUE();
-    }
-}
-
-static void aMR_MsgInitExplainEmulator(ACTOR* actorx) {
+static void aMR_MsgInitExplainEmulator(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -1080,7 +1253,7 @@ static void aMR_MsgControlExplainEmulator(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqEmulatorMemory1(ACTOR* actorx) {
+static void aMR_MsgInitQqqEmulatorMemory1(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
     mMsg_SET_FREE_STR_CL(mMsg_FREE_STR1, aMR_GetNameString(my_room, 0), mIN_ITEM_NAME_LEN, 5);
@@ -1096,7 +1269,7 @@ static void aMR_MsgControlQqqEmulatorMemory1(ACTOR* actorx, GAME* game) {
             case mChoice_CHOICE0:
                 my_room->emu_info.rom_no = 0;
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE1:
                 my_room->requested_msg_type = aMR_MSG_STATE_NOT_CONNECT_AGB;
@@ -1114,10 +1287,10 @@ static void aMR_MsgControlQqqEmulatorMemory1(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqEmulatorMemory2(ACTOR* actorx) {
+static void aMR_MsgInitQqqEmulatorMemory2(ACTOR* actorx, GAME* game) {
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
-    u8 cancel_string[mChoice_CHOICE_STRING_LEN];
+    u8 cancel_string[mMsg_FREE_STRING_LEN];
 
     mChoice_Load_ChoseStringFromRom(choice_win, cancel_string, 0x1AB, NULL); /* No thanks. */
 
@@ -1125,10 +1298,10 @@ static void aMR_MsgInitQqqEmulatorMemory2(ACTOR* actorx) {
     mChoice_Set_choice_data(choice_win,
         aMR_GetNameString(my_room, 0), mChoice_CHOICE_STRING_LEN,
         aMR_GetNameString(my_room, 1), mChoice_CHOICE_STRING_LEN,
-        cancel_string, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN);
+        cancel_string, mMsg_FREE_STRING_LEN,
+        NULL, mMsg_FREE_STRING_LEN,
+        NULL, mMsg_FREE_STRING_LEN,
+        NULL, mMsg_FREE_STRING_LEN);
     // clang-format on
 }
 
@@ -1142,12 +1315,12 @@ static void aMR_MsgControlQqqEmulatorMemory2(ACTOR* actorx, GAME* game) {
             case mChoice_CHOICE0:
                 my_room->emu_info.rom_no = 0;
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE1:
                 my_room->emu_info.rom_no = -1;
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             default:
                 my_room->requested_msg_type = aMR_MSG_STATE_NONE;
@@ -1160,11 +1333,11 @@ static void aMR_MsgControlQqqEmulatorMemory2(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqEmulatorMemoryOver3(ACTOR* actorx) {
+static void aMR_MsgInitQqqEmulatorMemoryOver3(ACTOR* actorx, GAME* game) {
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
-    static u8 cancel_string[mChoice_CHOICE_STRING_LEN];
-    static u8 else_string[mChoice_CHOICE_STRING_LEN];
+    static u8 cancel_string[mMsg_FREE_STRING_LEN];
+    static u8 else_string[mMsg_FREE_STRING_LEN];
 
     mChoice_Load_ChoseStringFromRom(choice_win, cancel_string, 0x1AB, NULL); /* No thanks. */
     mChoice_Load_ChoseStringFromRom(choice_win, else_string, 0x235, NULL);   /* Something else... */
@@ -1173,10 +1346,10 @@ static void aMR_MsgInitQqqEmulatorMemoryOver3(ACTOR* actorx) {
     mChoice_Set_choice_data(choice_win,
         aMR_GetNameString(my_room, 0), mChoice_CHOICE_STRING_LEN,
         aMR_GetNameString(my_room, 1), mChoice_CHOICE_STRING_LEN,
-        else_string, mChoice_CHOICE_STRING_LEN,
-        cancel_string, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN);
+        else_string, mMsg_FREE_STRING_LEN,
+        cancel_string, mMsg_FREE_STRING_LEN,
+        NULL, mMsg_FREE_STRING_LEN,
+        NULL, mMsg_FREE_STRING_LEN);
     // clang-format on
 }
 
@@ -1190,12 +1363,12 @@ static void aMR_MsgControlQqqEmulatorMemoryOver3(ACTOR* actorx, GAME* game) {
             case mChoice_CHOICE0:
                 my_room->emu_info.rom_no = 0;
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE1:
                 my_room->emu_info.rom_no = -1;
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE2:
                 aMR_ReportDisplayMemoryGameSelectCount(my_room, 2);
@@ -1220,11 +1393,11 @@ static void aMR_MsgControlQqqEmulatorMemoryOver3(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqRepeatDisplay1(ACTOR* actorx) {
+static void aMR_MsgInitQqqRepeatDisplay1(ACTOR* actorx, GAME* game) {
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
-    static u8 cancel_string[mChoice_CHOICE_STRING_LEN];
-    static u8 else_string[mChoice_CHOICE_STRING_LEN];
+    static u8 cancel_string[mMsg_FREE_STRING_LEN];
+    static u8 else_string[mMsg_FREE_STRING_LEN];
 
     switch (mChoice_check_main_index(choice_win)) {
         case mChoice_MAIN_HIDE:
@@ -1234,11 +1407,11 @@ static void aMR_MsgInitQqqRepeatDisplay1(ACTOR* actorx) {
             // clang-format off
             mChoice_Set_choice_data(choice_win,
                 aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_STRING_LEN,
-                else_string, mChoice_CHOICE_STRING_LEN,
-                cancel_string, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN);
+                else_string, mMsg_FREE_STRING_LEN,
+                cancel_string, mMsg_FREE_STRING_LEN,
+                NULL, mMsg_FREE_STRING_LEN,
+                NULL, mMsg_FREE_STRING_LEN,
+                NULL, mMsg_FREE_STRING_LEN);
             // clang-format on
             break;
     }
@@ -1248,15 +1421,15 @@ static void aMR_MsgControlQqqRepeatDisplay1(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int choice_no;
 
-    aMR_MsgInitQqqRepeatDisplay1(actorx);
     choice_no = mChoice_GET_CHOSENUM();
+    aMR_MsgInitQqqRepeatDisplay1(actorx, game);
     mChoice_NO_B_CLOSE_SET();
     if (choice_no != -1) {
         switch (choice_no) {
             case mChoice_CHOICE0:
                 aMR_SetMemoryCardGameIndex(my_room, 0);
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage(actorx, FALSE, game);
                 aMR_ReportDisplayMemoryGameSelectCount(my_room, 1);
                 break;
             case mChoice_CHOICE1:
@@ -1284,11 +1457,11 @@ static void aMR_MsgControlQqqRepeatDisplay1(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitQqqRepeatDisplay2(ACTOR* actorx) {
+static void aMR_MsgInitQqqRepeatDisplay2(ACTOR* actorx, GAME* game) {
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
-    static u8 cancel_string[mChoice_CHOICE_STRING_LEN];
-    static u8 else_string[mChoice_CHOICE_STRING_LEN];
+    static u8 cancel_string[mMsg_FREE_STRING_LEN];
+    static u8 else_string[mMsg_FREE_STRING_LEN];
 
     switch (mChoice_check_main_index(choice_win)) {
         case mChoice_MAIN_HIDE:
@@ -1299,10 +1472,10 @@ static void aMR_MsgInitQqqRepeatDisplay2(ACTOR* actorx) {
             mChoice_Set_choice_data(choice_win,
                 aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_STRING_LEN,
                 aMR_GetNameString(my_room, my_room->emu_info.memory_game_select + 1), mChoice_CHOICE_STRING_LEN,
-                else_string, mChoice_CHOICE_STRING_LEN,
-                cancel_string, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN);
+                else_string, mMsg_FREE_STRING_LEN,
+                cancel_string, mMsg_FREE_STRING_LEN,
+                NULL, mMsg_FREE_STRING_LEN,
+                NULL, mMsg_FREE_STRING_LEN);
             // clang-format on
             break;
     }
@@ -1312,7 +1485,7 @@ static void aMR_MsgControlQqqRepeatDisplay2(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
     int choice_no;
 
-    aMR_MsgInitQqqRepeatDisplay2(actorx);
+    aMR_MsgInitQqqRepeatDisplay2(actorx, game);
     choice_no = mChoice_GET_CHOSENUM();
     mChoice_NO_B_CLOSE_SET();
     if (choice_no != -1) {
@@ -1320,12 +1493,12 @@ static void aMR_MsgControlQqqRepeatDisplay2(ACTOR* actorx, GAME* game) {
             case mChoice_CHOICE0:
                 aMR_SetMemoryCardGameIndex(my_room, 0);
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE1:
                 aMR_SetMemoryCardGameIndex(my_room, 1);
                 my_room->requested_msg_type = aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY;
-                aMR_SetEmulatorStartMessage(actorx, FALSE);
+                aMR_SetEmulatorStartMessage((ACTOR*)my_room, FALSE, game);
                 break;
             case mChoice_CHOICE2:
                 aMR_ReportDisplayMemoryGameSelectCount(my_room, 2);
@@ -1354,7 +1527,7 @@ static void aMR_MsgControlQqqRepeatDisplay2(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitExplainEmulatorMemory(ACTOR* actorx) {
+static void aMR_MsgInitExplainEmulatorMemory(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -1367,7 +1540,7 @@ static void aMR_MsgControlExplainEmulatorMemory(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitNoPackNoData(ACTOR* actorx) {
+static void aMR_MsgInitNoPackNoData(ACTOR* actorx, GAME* game) {
     aMR_SetSlotString();
 }
 
@@ -1382,7 +1555,7 @@ static void aMR_MsgControlNoPackNoData(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitWaitFamicomBatu(ACTOR* actorx) {
+static void aMR_MsgInitWaitFamicomBatu(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -1395,15 +1568,16 @@ static void aMR_MsgControlWaitFamicomBatu(ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aMR_MsgInitSaveFamicom(ACTOR* actorx) {
+static void aMR_MsgInitSaveFamicom(ACTOR* actorx, GAME* game) {
     MY_ROOM_ACTOR* my_room = (MY_ROOM_ACTOR*)actorx;
 
-    my_room->emu_info.save_msg_timer = 240;
+    my_room->emu_info.save_msg_timer = 130;
     my_room->emu_info.external_rom = (Common_Get(my_room_message_control_flags >> 3) & 1) ^ 1;
     Common_Get(my_room_message_control_flags) &= ~(1 << 3);
     Common_Get(my_room_message_control_flags) &= ~(1 << 4);
     mMsg_SET_LOCKCONTINUE();
     aMR_SetSlotString();
+    aMR_lock_camera_shutter(actorx, game);
 }
 
 static void aMR_MsgControlSaveFamicom(ACTOR* actorx, GAME* game) {
@@ -1418,13 +1592,15 @@ static void aMR_MsgControlSaveFamicom(ACTOR* actorx, GAME* game) {
     if (my_room->emu_info.save_msg_timer == 0 && mMsg_CHECK_MAINNORMALCONTINUE()) {
         int save_res;
 
+        aMR_lock_camera_shutter(actorx, game);
         if (my_room->emu_info.external_rom == FALSE) {
             save_res = famicom_internal_data_save();
         } else {
             save_res = famicom_external_data_save();
         }
-
+        aMR_unlock_camera_shutter(actorx, game);
         aMR_SetSlotString();
+        mMsg_SET_FREE_STR(mMsg_FREE_STR0, Save_Get(land_info).name, LAND_NAME_SIZE);
         switch (save_res) {
             case FAMICOM_RESULT_OK:
                 my_room->requested_msg_type = aMR_MSG_STATE_NONE;
@@ -1464,7 +1640,6 @@ static void aMR_MsgControlSaveFamicom(ACTOR* actorx, GAME* game) {
                 break;
             case FAMICOM_RESULT_NOCARD:
                 my_room->requested_msg_type = aMR_MSG_STATE_NONE;
-                mMsg_SET_FREE_STR(mMsg_FREE_STR0, Save_Get(land_info).name, LAND_NAME_SIZE);
                 mMsg_SET_CONTINUE_MSG_NUM(0x2B71);
                 mMsg_UNSET_LOCKCONTINUE();
                 mMsg_SET_FORCENEXT();
@@ -1491,10 +1666,11 @@ static void aMR_MsgControlSaveFamicom(ACTOR* actorx, GAME* game) {
 
         my_room->requested_msg_type = aMR_MSG_STATE_NONE;
         my_room->room_msg_flag = FALSE;
+        aMR_unlock_camera_shutter(actorx, game);
     }
 }
 
-static void aMR_MsgInitHitokoto(ACTOR* actorx) {
+static void aMR_MsgInitHitokoto(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
@@ -1507,146 +1683,146 @@ static void aMR_MsgControlHitokoto(ACTOR* actorx, GAME* game) {
     }
 }
 
-typedef void (*aMR_MSG_INIT_PROC)(ACTOR*);
+typedef void (*aMR_MSG_INIT_PROC)(ACTOR*, GAME*);
 typedef void (*aMR_MSG_CTRL_PROC)(ACTOR*, GAME*);
 
 // clang-format off
 static aMR_MSG_INIT_PROC msg_init_table[aMR_MSG_STATE_NUM] = {
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerWhichPutOut,
-    &aMR_MsgInitOwnerWhichPutOut,
-    &aMR_MsgInitOwnerWhichPutOut,
-    &aMR_MsgInitOwnerWaitWhichPutOut,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitFullPlayerItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitRequestCloseFtr,
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistMD,
-    &aMR_MsgInitOwnerExistMD,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitRequestCloseMD,
-    &aMR_NoMsgInit,
-    &aMR_NoMsgInit,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitOwnerExistItem,
-    &aMR_MsgInitQqqEmulator,
-    &aMR_MsgInitExplainEmulator,
-    &aMR_MsgInitQqqEmulatorMemory1,
-    &aMR_MsgInitExplainEmulatorMemory,
-    &aMR_MsgInitQqqEmulatorMemory2,
-    &aMR_MsgInitQqqEmulatorMemoryOver3,
-    &aMR_MsgInitQqqRepeatDisplay1,
-    &aMR_MsgInitQqqRepeatDisplay1,
-    &aMR_MsgInitQqqRepeatDisplay2,
-    &aMR_MsgInitQqqRepeatDisplay2,
-    &aMR_MsgInitNoPackNoData,
-    &aMR_MsgInitWarningCannotMakeSaveFile,
-    &aMR_MsgInitNoPackNoData,
-    &aMR_MsgInitNoPackNoData,
-    &aMR_MsgInitHitokoto,
-    &aMR_MsgInitHitokoto,
-    &aMR_MsgInitHitokoto,
-    &aMR_MsgInitSaveFamicom,
-    &aMR_MsgInitWaitFamicomBatu,
-    &aMR_MsgInitPrepareCommunication,
-    &aMR_MsgInitNotConnectAgb,
-    &aMR_MsgInitCheckAgbProgram,
-    &aMR_MsgInitDeleteAgbProgramQ,
-    &aMR_MsgInitStartEmuDownLoad,
-    &aMR_MsgInitRecheckAgbConnect,
+    &aMR_NoMsgInit, // aMR_MSG_STATE_NONE
+    &aMR_NoMsgInit, // aMR_MSG_STATE_WAIT_MSG
+    &aMR_NoMsgInit, // aMR_MSG_STATE_OWNER_NO_ITEM
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    &aMR_MsgInitOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    &aMR_MsgInitOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    &aMR_MsgInitOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    &aMR_MsgInitOwnerWaitWhichPutOut, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    &aMR_NoMsgInit, // aMR_MSG_STATE_OTHER_NO_ITEM
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    &aMR_MsgInitFullPlayerItem, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OPEN_SUBMENU
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_ITEM_PUT_IN
+    &aMR_NoMsgInit, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    &aMR_MsgInitRequestCloseFtr, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    &aMR_NoMsgInit, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    &aMR_NoMsgInit, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    &aMR_NoMsgInit, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    &aMR_NoMsgInit, // aMR_MSG_STATE_WAIT_MD
+    &aMR_NoMsgInit, // aMR_MSG_STATE_OWNER_NO_MD
+    &aMR_MsgInitOwnerExistMD, // aMR_MSG_STATE_OWNER_EXIST_MD
+    &aMR_MsgInitOwnerExistMD, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    &aMR_NoMsgInit, // aMR_MSG_STATE_OTHER_NO_MD
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OTHER_EXIST_MD
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_FULL_PLAYER_MD
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OPENMD_SUBMENU
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_MD_PUT_IN
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    &aMR_NoMsgInit, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    &aMR_MsgInitRequestCloseMD, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    &aMR_NoMsgInit, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    &aMR_NoMsgInit, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    &aMR_MsgInitOwnerExistItem, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    &aMR_MsgInitQqqEmulator, // aMR_MSG_STATE_QQQ_EMULATOR
+    &aMR_MsgInitExplainEmulator, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    &aMR_MsgInitQqqEmulatorMemory1, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    &aMR_MsgInitExplainEmulatorMemory, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    &aMR_MsgInitQqqEmulatorMemory2, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    &aMR_MsgInitQqqEmulatorMemoryOver3, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    &aMR_MsgInitQqqRepeatDisplay1, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    &aMR_MsgInitQqqRepeatDisplay1, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    &aMR_MsgInitQqqRepeatDisplay2, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    &aMR_MsgInitQqqRepeatDisplay2, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    &aMR_MsgInitNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // &aMR_MsgInitWarningCannotMakeSaveFile, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // &aMR_MsgInitNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    &aMR_MsgInitNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    &aMR_MsgInitHitokoto, // aMR_MSG_STATE_HITOKOTO
+    &aMR_MsgInitHitokoto, // aMR_MSG_STATE_HITOKOTO1
+    &aMR_MsgInitHitokoto, // aMR_MSG_STATE_HITOKOTO2
+    &aMR_MsgInitSaveFamicom, // aMR_MSG_STATE_SAVE_FAMICOM
+    &aMR_MsgInitWaitFamicomBatu, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    &aMR_MsgInitPrepareCommunication, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    &aMR_MsgInitNotConnectAgb, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    &aMR_MsgInitCheckAgbProgram, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    &aMR_MsgInitDeleteAgbProgramQ, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    &aMR_MsgInitStartEmuDownLoad, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    &aMR_MsgInitRecheckAgbConnect, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
 // clang-format off
 static aMR_MSG_CTRL_PROC msg_ctrl_table[aMR_MSG_STATE_NUM] = {
-    &aMR_NoMsgControl,
-    &aMR_NoMsgControl,
-    &aMR_MsgControlOwnerNoItem,
-    &aMR_MsgControlOwnerExistItem,
-    &aMR_MsgControlOwnerExistItem_ItemCount2,
-    &aMR_MsgControlOwnerWhichPutOut,
-    &aMR_MsgControlOwnerWhichPutOut,
-    &aMR_MsgControlOwnerWhichPutOut,
-    &aMR_MsgControlOwnerWaitWhichPutOut,
-    &aMR_MsgControlOtherNoItem,
-    &aMR_MsgControlOtherExistItem,
-    &aMR_MsgControlOtherExistItem,
-    &aMR_MsgControlOtherExistItem,
-    &aMR_MsgControlFullPlayerItem,
-    &aMR_MsgControlOpenSubmenu,
-    &aMR_MsgControlItemPutIn,
-    &aMR_MsgControlWaitCloseFtr,
-    &aMR_MsgControlRequestCloseFtr,
-    &aMR_NoMsgControl,
-    &aMR_MsgControlCanNotClean,
-    &aMR_MsgControlCanNotClean,
-    &aMR_MsgControlOpenSetItemSubmenu,
-    &aMR_MsgControlItemSetSubmenu,
-    &aMR_NoMsgControl,
-    &aMR_MsgControlOwnerNoMD,
-    &aMR_MsgControlOwnerExistMD,
-    &aMR_MsgControlOwnerExistMD,
-    &aMR_MsgControlOtherNoMD,
-    &aMR_MsgControlOtherExistMD,
-    &aMR_MsgControlFullPlayerMD,
-    &aMR_MsgControlOpenMDSubmenu,
-    &aMR_MsgControlMDPutIn,
-    &aMR_MsgControlOpenMusicBox,
-    &aMR_MsgControlMusicBoxMDPutIn,
-    &aMR_MsgControlWaitCloseMD,
-    &aMR_MsgControlRequestCloseMD,
-    &aMR_NoMsgControl,
-    &aMR_MsgControlCanNotMDClean,
-    &aMR_MsgControlOpenExchangeMDSubmenu,
-    &aMR_MsgControlMDExchangeSubmenu,
-    &aMR_MsgControlQqqEmulator,
-    &aMR_MsgControlExplainEmulator,
-    &aMR_MsgControlQqqEmulatorMemory1,
-    &aMR_MsgControlExplainEmulatorMemory,
-    &aMR_MsgControlQqqEmulatorMemory2,
-    &aMR_MsgControlQqqEmulatorMemoryOver3,
-    &aMR_MsgControlQqqRepeatDisplay1,
-    &aMR_MsgControlQqqRepeatDisplay1,
-    &aMR_MsgControlQqqRepeatDisplay2,
-    &aMR_MsgControlQqqRepeatDisplay2,
-    &aMR_MsgControlNoPackNoData,
-    &aMR_MsgControlWarningCannotMakeSaveFile,
-    &aMR_MsgControlNoPackNoData,
-    &aMR_MsgControlNoPackNoData,
-    &aMR_MsgControlHitokoto,
-    &aMR_MsgControlHitokoto,
-    &aMR_MsgControlHitokoto,
-    &aMR_MsgControlSaveFamicom,
-    &aMR_MsgControlWaitFamicomBatu,
-    &aMR_MsgControlPrepareCommunication,
-    &aMR_MsgControlNotConnectAgb,
-    &aMR_MsgControlCheckAgbProgram,
-    &aMR_MsgControlDeleteAgbProgramQ,
-    &aMR_MsgControlStartEmuDownLoad,
-    &aMR_MsgControlRecheckAgbConnect,
+    &aMR_NoMsgControl, // aMR_MSG_STATE_NONE
+    &aMR_NoMsgControl, // aMR_MSG_STATE_WAIT_MSG
+    &aMR_MsgControlOwnerNoItem, // aMR_MSG_STATE_OWNER_NO_ITEM
+    &aMR_MsgControlOwnerExistItem, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    &aMR_MsgControlOwnerExistItem_ItemCount2, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    &aMR_MsgControlOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    &aMR_MsgControlOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    &aMR_MsgControlOwnerWhichPutOut, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    &aMR_MsgControlOwnerWaitWhichPutOut, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    &aMR_MsgControlOtherNoItem, // aMR_MSG_STATE_OTHER_NO_ITEM
+    &aMR_MsgControlOtherExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    &aMR_MsgControlOtherExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    &aMR_MsgControlOtherExistItem, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    &aMR_MsgControlFullPlayerItem, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    &aMR_MsgControlOpenSubmenu, // aMR_MSG_STATE_OPEN_SUBMENU
+    &aMR_MsgControlItemPutIn, // aMR_MSG_STATE_ITEM_PUT_IN
+    &aMR_MsgControlWaitCloseFtr, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    &aMR_MsgControlRequestCloseFtr, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    &aMR_NoMsgControl, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    &aMR_MsgControlCanNotClean, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    &aMR_MsgControlCanNotClean, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    &aMR_MsgControlOpenSetItemSubmenu, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    &aMR_MsgControlItemSetSubmenu, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    &aMR_NoMsgControl, // aMR_MSG_STATE_WAIT_MD
+    &aMR_MsgControlOwnerNoMD, // aMR_MSG_STATE_OWNER_NO_MD
+    &aMR_MsgControlOwnerExistMD, // aMR_MSG_STATE_OWNER_EXIST_MD
+    &aMR_MsgControlOwnerExistMD, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    &aMR_MsgControlOtherNoMD, // aMR_MSG_STATE_OTHER_NO_MD
+    &aMR_MsgControlOtherExistMD, // aMR_MSG_STATE_OTHER_EXIST_MD
+    &aMR_MsgControlFullPlayerMD, // aMR_MSG_STATE_FULL_PLAYER_MD
+    &aMR_MsgControlOpenMDSubmenu, // aMR_MSG_STATE_OPENMD_SUBMENU
+    &aMR_MsgControlMDPutIn, // aMR_MSG_STATE_MD_PUT_IN
+    &aMR_MsgControlOpenMusicBox, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    &aMR_MsgControlMusicBoxMDPutIn, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    &aMR_MsgControlWaitCloseMD, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    &aMR_MsgControlRequestCloseMD, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    &aMR_NoMsgControl, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    &aMR_MsgControlCanNotMDClean, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    &aMR_MsgControlOpenExchangeMDSubmenu, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    &aMR_MsgControlMDExchangeSubmenu, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    &aMR_MsgControlQqqEmulator, // aMR_MSG_STATE_QQQ_EMULATOR
+    &aMR_MsgControlExplainEmulator, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    &aMR_MsgControlQqqEmulatorMemory1, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    &aMR_MsgControlExplainEmulatorMemory, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    &aMR_MsgControlQqqEmulatorMemory2, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    &aMR_MsgControlQqqEmulatorMemoryOver3, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    &aMR_MsgControlQqqRepeatDisplay1, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    &aMR_MsgControlQqqRepeatDisplay1, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    &aMR_MsgControlQqqRepeatDisplay2, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    &aMR_MsgControlQqqRepeatDisplay2, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    &aMR_MsgControlNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // &aMR_MsgControlWarningCannotMakeSaveFile, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // &aMR_MsgControlNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    &aMR_MsgControlNoPackNoData, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    &aMR_MsgControlHitokoto, // aMR_MSG_STATE_HITOKOTO
+    &aMR_MsgControlHitokoto, // aMR_MSG_STATE_HITOKOTO1
+    &aMR_MsgControlHitokoto, // aMR_MSG_STATE_HITOKOTO2
+    &aMR_MsgControlSaveFamicom, // aMR_MSG_STATE_SAVE_FAMICOM
+    &aMR_MsgControlWaitFamicomBatu, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    &aMR_MsgControlPrepareCommunication, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    &aMR_MsgControlNotConnectAgb, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    &aMR_MsgControlCheckAgbProgram, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    &aMR_MsgControlDeleteAgbProgramQ, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    &aMR_MsgControlStartEmuDownLoad, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    &aMR_MsgControlRecheckAgbConnect, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
@@ -1654,281 +1830,281 @@ static aMR_MSG_CTRL_PROC msg_ctrl_table[aMR_MSG_STATE_NUM] = {
 
 // clang-format off
 static int aMR_msg_no_table[aMR_MSG_STATE_NUM] = {
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_2570,
-    MSG_2571,
-    MSG_12058,
-    MSG_12059,
-    MSG_12062,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_2572,
-    MSG_2573,
-    MSG_12060,
-    MSG_12061,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_12063,
-    MSG_12063,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_4279,
-    MSG_4286,
-    MSG_4280,
-    MSG_4281,
-    MSG_4282,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_4284,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_11122,
-    aMR_NO_MSG,
-    MSG_11122,
-    aMR_NO_MSG,
-    MSG_12392,
-    MSG_12392,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    MSG_11113,
-    aMR_NO_MSG,
-    MSG_12396,
-    MSG_12395,
-    MSG_14986,
-    MSG_15089,
-    MSG_15192,
-    MSG_11115,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
-    aMR_NO_MSG,
+    aMR_NO_MSG, // aMR_MSG_STATE_NONE
+    aMR_NO_MSG, // aMR_MSG_STATE_WAIT_MSG
+    MSG_2570, // aMR_MSG_STATE_OWNER_NO_ITEM
+    MSG_2571, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    MSG_12058, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    MSG_12059, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    MSG_12062, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    aMR_NO_MSG, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    aMR_NO_MSG, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    MSG_2572, // aMR_MSG_STATE_OTHER_NO_ITEM
+    MSG_2573, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    MSG_12060, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    MSG_12061, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    aMR_NO_MSG, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    aMR_NO_MSG, // aMR_MSG_STATE_OPEN_SUBMENU
+    aMR_NO_MSG, // aMR_MSG_STATE_ITEM_PUT_IN
+    aMR_NO_MSG, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    aMR_NO_MSG, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    aMR_NO_MSG, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    MSG_12063, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    MSG_12063, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    aMR_NO_MSG, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    aMR_NO_MSG, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    aMR_NO_MSG, // aMR_MSG_STATE_WAIT_MD
+    MSG_4279, // aMR_MSG_STATE_OWNER_NO_MD
+    MSG_4286, // aMR_MSG_STATE_OWNER_EXIST_MD
+    MSG_4280, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    MSG_4281, // aMR_MSG_STATE_OTHER_NO_MD
+    MSG_4282, // aMR_MSG_STATE_OTHER_EXIST_MD
+    aMR_NO_MSG, // aMR_MSG_STATE_FULL_PLAYER_MD
+    aMR_NO_MSG, // aMR_MSG_STATE_OPENMD_SUBMENU
+    aMR_NO_MSG, // aMR_MSG_STATE_MD_PUT_IN
+    aMR_NO_MSG, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    aMR_NO_MSG, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    aMR_NO_MSG, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    aMR_NO_MSG, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    aMR_NO_MSG, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    MSG_4284, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    aMR_NO_MSG, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    aMR_NO_MSG, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    MSG_11122, // aMR_MSG_STATE_QQQ_EMULATOR
+    aMR_NO_MSG, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    MSG_11122, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    aMR_NO_MSG, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    MSG_12392, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    MSG_12392, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    aMR_NO_MSG, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    aMR_NO_MSG, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    aMR_NO_MSG, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    aMR_NO_MSG, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    MSG_11113, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // aMR_NO_MSG, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // MSG_12396, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    MSG_12395, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    MSG_14986, // aMR_MSG_STATE_HITOKOTO
+    MSG_15089, // aMR_MSG_STATE_HITOKOTO1
+    MSG_15192, // aMR_MSG_STATE_HITOKOTO2
+    MSG_11115, // aMR_MSG_STATE_SAVE_FAMICOM
+    aMR_NO_MSG, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    aMR_NO_MSG, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    aMR_NO_MSG, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    aMR_NO_MSG, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    aMR_NO_MSG, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    aMR_NO_MSG, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    aMR_NO_MSG, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
 // clang-format off
 static int aMR_none_talk_proc[aMR_MSG_STATE_NUM] = {
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    FALSE,
-    TRUE,
-    TRUE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
+    FALSE, // aMR_MSG_STATE_NONE
+    FALSE, // aMR_MSG_STATE_WAIT_MSG
+    FALSE, // aMR_MSG_STATE_OWNER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    FALSE, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    FALSE, // aMR_MSG_STATE_OTHER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    FALSE, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    TRUE, // aMR_MSG_STATE_OPEN_SUBMENU
+    TRUE, // aMR_MSG_STATE_ITEM_PUT_IN
+    TRUE, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    TRUE, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    FALSE, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    FALSE, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    FALSE, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    TRUE, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    TRUE, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    FALSE, // aMR_MSG_STATE_WAIT_MD
+    FALSE, // aMR_MSG_STATE_OWNER_NO_MD
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_MD
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    FALSE, // aMR_MSG_STATE_OTHER_NO_MD
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_MD
+    FALSE, // aMR_MSG_STATE_FULL_PLAYER_MD
+    TRUE, // aMR_MSG_STATE_OPENMD_SUBMENU
+    TRUE, // aMR_MSG_STATE_MD_PUT_IN
+    TRUE, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    TRUE, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    TRUE, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    TRUE, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    FALSE, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    TRUE, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    TRUE, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    TRUE, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR
+    FALSE, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    FALSE, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    FALSE, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // FALSE, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // FALSE, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    FALSE, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    FALSE, // aMR_MSG_STATE_HITOKOTO
+    FALSE, // aMR_MSG_STATE_HITOKOTO1
+    FALSE, // aMR_MSG_STATE_HITOKOTO2
+    FALSE, // aMR_MSG_STATE_SAVE_FAMICOM
+    FALSE, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    FALSE, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    FALSE, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    FALSE, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    FALSE, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    FALSE, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    FALSE, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
 // clang-format off
 static int aMR_force_talk_flag[aMR_MSG_STATE_NUM] = {
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
+    FALSE, // aMR_MSG_STATE_NONE
+    FALSE, // aMR_MSG_STATE_WAIT_MSG
+    FALSE, // aMR_MSG_STATE_OWNER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    FALSE, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    FALSE, // aMR_MSG_STATE_OTHER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    TRUE, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    FALSE, // aMR_MSG_STATE_OPEN_SUBMENU
+    FALSE, // aMR_MSG_STATE_ITEM_PUT_IN
+    FALSE, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    FALSE, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    FALSE, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    TRUE, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    TRUE, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    FALSE, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    FALSE, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    FALSE, // aMR_MSG_STATE_WAIT_MD
+    FALSE, // aMR_MSG_STATE_OWNER_NO_MD
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_MD
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    FALSE, // aMR_MSG_STATE_OTHER_NO_MD
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_MD
+    TRUE, // aMR_MSG_STATE_FULL_PLAYER_MD
+    FALSE, // aMR_MSG_STATE_OPENMD_SUBMENU
+    FALSE, // aMR_MSG_STATE_MD_PUT_IN
+    FALSE, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    FALSE, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    FALSE, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    FALSE, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    FALSE, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    TRUE, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    FALSE, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    FALSE, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR
+    FALSE, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    FALSE, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    FALSE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    FALSE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    FALSE, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // FALSE, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // TRUE, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    TRUE, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    FALSE, // aMR_MSG_STATE_HITOKOTO
+    FALSE, // aMR_MSG_STATE_HITOKOTO1
+    FALSE, // aMR_MSG_STATE_HITOKOTO2
+    TRUE, // aMR_MSG_STATE_SAVE_FAMICOM
+    FALSE, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    FALSE, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    FALSE, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    FALSE, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    FALSE, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    FALSE, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    FALSE, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
 // clang-format off
 static int aMR_window_se_flag[aMR_MSG_STATE_NUM] = {
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    FALSE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
-    TRUE,
+    FALSE, // aMR_MSG_STATE_NONE
+    FALSE, // aMR_MSG_STATE_WAIT_MSG
+    FALSE, // aMR_MSG_STATE_OWNER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM
+    FALSE, // aMR_MSG_STATE_OWNER_EXIST_ITEM_ITEM_COUNT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT1
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT2
+    FALSE, // aMR_MSG_STATE_OWNER_WHICH_PUT_OUT3
+    FALSE, // aMR_MSG_STATE_OWNER_WAIT_WHICH_PUT_OUT
+    FALSE, // aMR_MSG_STATE_OTHER_NO_ITEM
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM1
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM2
+    FALSE, // aMR_MSG_STATE_OTHER_EXIST_ITEM3
+    FALSE, // aMR_MSG_STATE_FULL_PLAYER_ITEM
+    FALSE, // aMR_MSG_STATE_OPEN_SUBMENU
+    FALSE, // aMR_MSG_STATE_ITEM_PUT_IN
+    FALSE, // aMR_MSG_STATE_WAIT_CLOSE_FTR
+    FALSE, // aMR_MSG_STATE_REQUEST_CLOSE_FTR
+    FALSE, // aMR_MSG_STATE_REQUEST_FULL_BAG
+    FALSE, // aMR_MSG_STATE_CAN_NOT_CLEAN
+    FALSE, // aMR_MSG_STATE_CAN_NOT_CLEAN_MD
+    FALSE, // aMR_MSG_STATE_OPEN_SET_ITEM_SUBMENU
+    FALSE, // aMR_MSG_STATE_ITEM_SET_SUBMENU
+    TRUE, // aMR_MSG_STATE_WAIT_MD
+    TRUE, // aMR_MSG_STATE_OWNER_NO_MD
+    TRUE, // aMR_MSG_STATE_OWNER_EXIST_MD
+    TRUE, // aMR_MSG_STATE_OWNER_EXIST_MD2
+    TRUE, // aMR_MSG_STATE_OTHER_NO_MD
+    TRUE, // aMR_MSG_STATE_OTHER_EXIST_MD
+    TRUE, // aMR_MSG_STATE_FULL_PLAYER_MD
+    TRUE, // aMR_MSG_STATE_OPENMD_SUBMENU
+    TRUE, // aMR_MSG_STATE_MD_PUT_IN
+    TRUE, // aMR_MSG_STATE_OPEN_MUSIC_BOX
+    TRUE, // aMR_MSG_STATE_MUSIC_BOX_MD_PUT_IN
+    TRUE, // aMR_MSG_STATE_WAIT_CLOSE_MD
+    TRUE, // aMR_MSG_STATE_REQUEST_CLOSE_MD
+    TRUE, // aMR_MSG_STATE_REQUEST_FULL_BAG_MD
+    TRUE, // aMR_MSG_STATE_CAN_NOT_MD_CLEAN
+    TRUE, // aMR_MSG_STATE_OPEN_EXCHANGE_MD_SUBMENU
+    TRUE, // aMR_MSG_STATE_MD_EXCHANGE_SUBMENU
+    TRUE, // aMR_MSG_STATE_QQQ_EMULATOR
+    TRUE, // aMR_MSG_STATE_EXPLAIN_EMULATOR
+    TRUE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY1
+    TRUE, // aMR_MSG_STATE_EXPLAIN_EMULATOR_MEMORY
+    TRUE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY2
+    TRUE, // aMR_MSG_STATE_QQQ_EMULATOR_MEMORY_OVER3
+    TRUE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1
+    TRUE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY1_2
+    TRUE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2
+    TRUE, // aMR_MSG_STATE_QQQ_REPEAT_DISPLAY2_2
+    TRUE, // aMR_MSG_STATE_NO_PACK_NO_DATA
+    // TRUE, // aMR_MSG_STATE_WARNING_CANNOT_MAKE_SAVE_FILE
+    // TRUE, // aMR_MSG_STATE_NO_PACK_NO_DATA1
+    TRUE, // aMR_MSG_STATE_NO_PACK_NO_DATA2
+    TRUE, // aMR_MSG_STATE_HITOKOTO
+    TRUE, // aMR_MSG_STATE_HITOKOTO1
+    TRUE, // aMR_MSG_STATE_HITOKOTO2
+    TRUE, // aMR_MSG_STATE_SAVE_FAMICOM
+    TRUE, // aMR_MSG_STATE_WAIT_FAMICOM_BATU
+    TRUE, // aMR_MSG_STATE_PREPARE_COMMUNICATION
+    TRUE, // aMR_MSG_STATE_NOT_CONNECT_AGB
+    TRUE, // aMR_MSG_STATE_CHECK_AGB_PROGRAM
+    TRUE, // aMR_MSG_STATE_DELETE_AGB_PROGRAMQ
+    TRUE, // aMR_MSG_STATE_START_EMU_DOWN_LOAD
+    TRUE, // aMR_MSG_STATE_RECHECK_AGB_CONNECT
 };
 // clang-format on
 
@@ -1982,13 +2158,13 @@ static void aMR_MessageControl(ACTOR* actorx, GAME* game) {
                 mDemo_Request(demo_type, actorx, demo_type == mDemo_TYPE_SPEAK ? &aMR_speak_set : &aMR_report_set)) {
                 my_room->msg_type = my_room->requested_msg_type;
                 mChoice_NO_B_CLOSE_SET();
-                (*msg_init_table[my_room->msg_type])(actorx);
+                (*msg_init_table[my_room->msg_type])(actorx, game);
                 mChoice_CLEAR_CHOSENUM();
             }
         } else {
             my_room->msg_type = my_room->requested_msg_type;
             mChoice_NO_B_CLOSE_SET();
-            (*msg_init_table[my_room->msg_type])(actorx);
+            (*msg_init_table[my_room->msg_type])(actorx, game);
             mChoice_CLEAR_CHOSENUM();
         }
     }

@@ -21,7 +21,7 @@ extern "C" {
 
 #define aMR_JUDGE_MAX_FTR -1
 #define aMR_JUDGE_CANT_PLACE_FTR -2
-#define aMR_JUDGE_OTHER_ROOM -3
+#define aMR_JUDGE_INVALID_PLACEMENT -3
 
 typedef struct my_room_actor_s MY_ROOM_ACTOR;
 
@@ -172,11 +172,9 @@ typedef struct room_rsv_ftr_s {
 typedef struct room_bgm_s {
     int md_no;
     int last_md_no;
-    u8 reserve_flag;
     s16 timer;
     FTR_ACTOR* reserved_ftr_actor;
     FTR_ACTOR* active_ftr_actor;
-    int active_flag;
 } aMR_bgm_info_c;
 
 typedef struct room_info_s {
@@ -273,7 +271,7 @@ struct my_room_actor_s {
     int room_msg_flag;
     int haniwa_step_idx;
     aMR_parent_ftr_c parent_ftr;
-    u32 music_box[2];
+    u32 music_box[6];
     int scene;
     int _5A4;
     int throw_item_lock_flag;
@@ -281,7 +279,7 @@ struct my_room_actor_s {
     u32 agb_game_size;
     void* famicom_agb_image_p;
     s16 agb_connect_tries;
-    int _5BC;
+    mActor_name_t playing_md_item;
 };
 
 extern ACTOR_PROFILE My_Room_Profile;
@@ -305,6 +303,8 @@ extern void aMR_ThrowItem_FurnitureLock(void);
 extern void aMR_ThrowItem_FurnitureUnlock(void);
 extern int aMR_check_valid_furniture(mActor_name_t item);
 extern void aMR_DeleteFurniture_MarioClub(GAME* game);
+
+#define aMR_MD2IDX(md) ((ITEM_IS_MINIDISK_AIRCHECK(md) != FALSE) ? (BGM_MD0 + ((md) - ITM_MINIDISK_START)) : (BGM_MD_LIVE0 + ((md) - ITM_MINIDISK_LIVE_START)))
 
 #ifdef __cplusplus
 }

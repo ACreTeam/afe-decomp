@@ -242,7 +242,23 @@ static xyz_t* pattarn_table[] = {
 // clang-format off
 
 /* List of items which are a diary (are a calendar) */
-static u8 aMR_calender_info_table[] = {
+static u8 aMR_calender_info_table[FTR_NUM] = {
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
     FALSE,
     FALSE,
     FALSE,
@@ -1346,6 +1362,28 @@ static u8 aMR_calender_info_table[] = {
     TRUE,
     TRUE,
     TRUE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
+    FALSE,
     FALSE,
     FALSE,
     FALSE,
@@ -1510,31 +1548,4 @@ static u8 aMR_calender_info_table[] = {
     FALSE,
     FALSE,
 };
-
 // clang-format on
-
-typedef struct {
-    Gfx* mat_gfx;
-    Gfx* vtx_gfx;
-} aMR_icon_display_data_c;
-
-extern Gfx leaf_DL_mode[];
-extern Gfx leaf_DL_vtx[];
-extern Gfx obj_haniwaT_mat_model[];
-extern Gfx obj_haniwaT_gfx_model[];
-extern Gfx obj_item_clothT_mat_model[];
-extern Gfx obj_item_umbrellaT_mat_model[];
-extern Gfx obj_item_umbrellaT_gfx_model[];
-extern Gfx obj_item_boneT_mat_model[];
-extern Gfx obj_item_boneT_gfx_model[];
-extern Gfx obj_item_diaryT_mat_model[];
-extern Gfx obj_item_diaryT_gfx_model[];
-
-static aMR_icon_display_data_c aMR_icon_display_data[] = {
-    { leaf_DL_mode, leaf_DL_vtx },
-    { obj_haniwaT_mat_model, obj_haniwaT_gfx_model },
-    { obj_item_clothT_mat_model, obj_item_umbrellaT_gfx_model },
-    { obj_item_umbrellaT_mat_model, obj_item_umbrellaT_gfx_model },
-    { obj_item_boneT_mat_model, obj_item_boneT_gfx_model },
-    { obj_item_diaryT_mat_model, obj_item_diaryT_gfx_model },
-};
