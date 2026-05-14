@@ -42,7 +42,7 @@ static void aBT_anime_proc(BOAT_ACTOR* boat_actor) {
         NPC_SENDO_ACTOR* sendo_actor = ((BOAT_DEMO_ACTOR*)boat_actor->actor_class.parent_actor)->npc_sendo_actor;
 
         /* Attempt to sync boat animation with Kapp'n's animation */
-        if (sendo_actor != NULL && sendo_actor->npc_class.draw.animation_id == 123) {
+        if (sendo_actor != NULL && sendo_actor->npc_class.draw.animation_id == aNPC_ANIM_WIPKOGU1) {
             cKF_SkeletonInfo_R_c* keyframe = &sendo_actor->npc_class.draw.main_animation.keyframe;
 
             boat_actor->keyframe.frame_control.current_frame = keyframe->frame_control.current_frame;
@@ -435,6 +435,10 @@ static void aBT_anchor(BOAT_ACTOR* boat_actor, GAME_PLAY* play) {
     }
 }
 
+static void aBT_none_proc1(BOAT_ACTOR* boat_actor, GAME_PLAY* play) {
+    // do nothing
+}
+
 typedef void (*aBT_INIT_PROC)(BOAT_ACTOR*, GAME_PLAY*);
 
 static void aBT_wait_init(BOAT_ACTOR* boat_actor, GAME_PLAY* play) {
@@ -496,12 +500,12 @@ static void aBT_anchor_init(BOAT_ACTOR* boat_actor, GAME_PLAY* play) {
 
 static void aBT_setupAction(BOAT_ACTOR* boat_actor, GAME_PLAY* play, int action) {
     static aBT_INIT_PROC init_proc[aBT_ACTION_NUM] = {
-        (aBT_INIT_PROC)&none_proc1,
+        &aBT_none_proc1,
         &aBT_wait_init,
-        (aBT_INIT_PROC)&none_proc1,
-        (aBT_INIT_PROC)&none_proc1,
-        (aBT_INIT_PROC)&none_proc1,
-        (aBT_INIT_PROC)&none_proc1,
+        &aBT_none_proc1,
+        &aBT_none_proc1,
+        &aBT_none_proc1,
+        aBT_none_proc1,
         &aBT_sitdown_end_wait_init,
         &aBT_move_wait_init,
         &aBT_move_init,

@@ -93,11 +93,7 @@ static void aBT_actor_ct(ACTOR* actorx, GAME* game) {
             direction = aBT_DIRECTION_FROM_ISLAND;
         }
 
-#if VERSION >= VER_GAFU01_00
-        actorx->world.position.y = 1.0f + mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 333);
-#else
         actorx->world.position.y = 1.0f + mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 326);
-#endif
         actorx->shape_info.rotation.y = aBT_init_angleY[direction];
         actorx->world.angle.y = aBT_init_angleY[direction];
         xyz_t_move(&actorx->home.position, &actorx->world.position);

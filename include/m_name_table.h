@@ -4210,7 +4210,7 @@ enum ftr1_e {
 #define DUMMY_GHOG 0xF138
 #define DUMMY_HTABLE 0xF139
 #define DUMMY_TENT 0xF13A
-#define DUMMY_BOAT 0xF13B // Figure this one out for real
+#define DUMMY_BOAT 0xF14A // Figure this one out for real
 #define DUMMY_MONUMENT_PARK_CLOCK 0xF13B
 #define DUMMY_MONUMENT_GAS_LAMP 0xF13C
 #define DUMMY_MONUMENT_WINDMILL 0xF13D
