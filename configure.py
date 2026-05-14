@@ -781,7 +781,7 @@ config.libs = [
             Object(Matching, "actor/ac_ins_batta.c"),
             Object(NonMatching, "actor/ac_ins_chou.c"),
             Object(NonMatching, "actor/ac_ins_dango.c"),
-            Object(NonMatching, "actor/ac_ins_goki.c"),
+            Object(Matching, "actor/ac_ins_goki.c"),
             Object(Matching, "actor/ac_ins_hitodama.c"),
             Object(Matching, "actor/ac_ins_hotaru.c"),
             Object(Matching, "actor/ac_ins_ka.c"),

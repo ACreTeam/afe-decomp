@@ -53,9 +53,10 @@ enum insect_spawn_category {
     aSOI_SPAWN_CATEGORY_NUM
 };
 
-#define aSOI_SPAWN_NORMAL 0
-#define aSOI_SPAWN_TREE 4
-#define aSOI_SPAWN_ITEM 6
+#define aSOI_SPAWN_FLOWER 2
+#define aSOI_SPAWN_TREE 3
+#define aSOI_SPAWN_ITEM 4
+#define aSOI_SPAWN_UNDER_A_TREE 5
 
 /**
  * Insect term periods:

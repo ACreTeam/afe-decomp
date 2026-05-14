@@ -22,13 +22,17 @@ enum {
     aIGK_ACTION_MOVE_ON_TREE,
     aIGK_ACTION_WAIT_ON_ITEM,
     aIGK_ACTION_MOVE_ON_ITEM,
+    aIGK_ACTION_WAIT_UNDER_A_TREE,
+    aIGK_ACTION_MOVE_UNDER_A_TREE,
+    aIGK_ACTION_TURN_UNDER_A_TREE,
 
     aIGK_ACTION_NUM
 };
 
-#define aIGK_PLACE_TREE 4
-#define aIGK_PLACE_FLOWER 5
-#define aIGK_PLACE_ITEM 6
+#define aIGK_PLACE_FLOWER 2
+#define aIGK_PLACE_TREE 3
+#define aIGK_PLACE_ITEM 4
+#define aIGK_PLACE_UNDER_A_TREE 5
 
 #define aIGK_BALL_SCARE_DIST (60.0f)
 #define aIGK_NET_SCARE_DIST (70.0f)
@@ -57,13 +61,13 @@ extern void aIGK_actor_init(ACTOR* actorx, GAME* game) {
     insect->bg_range = 6.0f;
 
     switch (actorx->actor_specific) {
-        case aSOI_SPAWN_NORMAL: {
+        case aSOI_SPAWN_FLOWER: {
             /* Spawn on flower */
-            insect->bg_type = 2;
+            insect->bg_type = aINS_BG_CHECK_TYPE_REG_NO_ATTR;
             actorx->world.position.y = 6.0f + mCoBG_GetBgY_OnlyCenter_FromWpos(actorx->world.position, -19.0f);
             xyz_t_move(&actorx->home.position, &actorx->world.position);
             actorx->shape_info.draw_shadow = FALSE;
-            insect->flag = aIGK_PLACE_FLOWER;
+            insect->flag = actorx->actor_specific;
             actorx->actor_specific = 0;
             act = aIGK_ACTION_WAIT_ON_FLOWER;
             break;
@@ -73,19 +77,24 @@ extern void aIGK_actor_init(ACTOR* actorx, GAME* game) {
             static f32 init_posY[aIGK_INIT_NUM] = { 35.0f, 30.0f };
             static f32 init_posZ[aIGK_INIT_NUM] = { -2.0f, 8.0f };
             mActor_name_t* fg_p = mFI_GetUnitFG(actorx->world.position);
-            int type;
+            int type = aIGK_INIT_TREE;
 
-            if (fg_p != NULL && *fg_p == CEDAR_TREE) {
-                type = aIGK_INIT_CEDAR;
-            } else {
-                type = aIGK_INIT_TREE;
+            if (fg_p != NULL) {
+                switch (*fg_p) {
+                    case CEDAR_TREE:
+                    case CEDAR_TREE_BELLS:
+                    case CEDAR_TREE_FTR:
+                    case CEDAR_TREE_LIGHTS:
+                        type = aIGK_INIT_CEDAR;
+                        break;
+                }
             }
 
             actorx->world.position.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, -init_posY[type]);
             actorx->world.position.z += init_posZ[type];
             xyz_t_move(&actorx->home.position, &actorx->world.position);
             actorx->shape_info.draw_shadow = FALSE;
-            insect->flag = aIGK_PLACE_TREE;
+            insect->flag = actorx->actor_specific;
             actorx->actor_specific = 0;
             actorx->shape_info.rotation.y = DEG2SHORT_ANGLE2(-180.0f);
             actorx->shape_info.rotation.x = DEG2SHORT_ANGLE2(90.0f);
@@ -97,7 +106,7 @@ extern void aIGK_actor_init(ACTOR* actorx, GAME* game) {
             actorx->world.position.y = 5.0f + mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, -2.0f);
             xyz_t_move(&actorx->home.position, &actorx->world.position);
             actorx->shape_info.draw_shadow = FALSE;
-            insect->flag = aIGK_PLACE_ITEM;
+            insect->flag = actorx->actor_specific;
             actorx->actor_specific = 0;
 
             aIGK_SET_ITEM_P(insect, mFI_GetUnitFG(actorx->world.position));
@@ -106,9 +115,31 @@ extern void aIGK_actor_init(ACTOR* actorx, GAME* game) {
                 return;
             }
 
-            actorx->shape_info.rotation.y = DEG2SHORT_ANGLE2(-180.0f);
-            actorx->shape_info.rotation.x = DEG2SHORT_ANGLE2(45.0f);
+            actorx->shape_info.rotation.y = RANDOM(DEG2SHORT_ANGLE2(360.0f));
+
+            if (mFI_Wpos2DepositGet(actorx->home.position) == FALSE) {
+                actorx->shape_info.rotation.x = DEG2SHORT_ANGLE2(45.0f);
+            }
             act = aIGK_ACTION_WAIT_ON_ITEM;
+            break;
+        }
+        case aIGK_PLACE_UNDER_A_TREE: {
+            xyz_t pos;
+
+            insect->bg_type = aINS_BG_CHECK_TYPE_REG_NO_ATTR;
+            actorx->world.position.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, 0.0f);
+            xyz_t_move(&actorx->home.position, &actorx->world.position);
+            insect->flag = actorx->actor_specific;
+            actorx->actor_specific = 0;
+            if (mFI_Wpos2UtCenterWpos(&pos, actorx->world.position) == TRUE) {
+                insect->f32_work0 = pos.x;
+                insect->f32_work1 = pos.z;
+            } else {
+                insect->f32_work0 = actorx->world.position.x;
+                insect->f32_work1 = actorx->world.position.z;
+            }
+
+            act = aIGK_ACTION_WAIT_UNDER_A_TREE;
             break;
         }
         default: {
@@ -130,13 +161,15 @@ static void aIGK_anime_proc(aINS_INSECT_ACTOR* insect) {
 static int aIGK_check_tree_shaken(aINS_INSECT_ACTOR* insect) {
     int res = FALSE;
 
-    if (insect->flag == aIGK_PLACE_TREE) {
-        if (mPlib_Check_tree_shaken(&insect->tools_actor.actor_class.world.position) == TRUE) {
-            res = TRUE;
-        } else if (mPlib_Check_VibUnit_OneFrame(&insect->tools_actor.actor_class.world.position) == TRUE &&
-                   insect->tools_actor.actor_class.player_distance_xz < aIGK_VIB_SCARE_DIST) {
-            res = TRUE;
-        }
+    switch (insect->flag) {
+        case aIGK_PLACE_TREE: 
+            if (mPlib_Check_tree_shaken(&insect->tools_actor.actor_class.world.position) == TRUE) {
+                res = TRUE;
+            } else if (mPlib_Check_VibUnit_OneFrame(&insect->tools_actor.actor_class.world.position) == TRUE &&
+                    insect->tools_actor.actor_class.player_distance_xz < aIGK_VIB_SCARE_DIST) {
+                res = TRUE;
+            }
+            break;
     }
 
     return res;
@@ -190,6 +223,17 @@ static int aIGK_check_player_scoop(aINS_INSECT_ACTOR* insect) {
     return res;
 }
 
+static int aIGK_check_flower(aINS_INSECT_ACTOR* insect) {
+    mActor_name_t* fg_p = mFI_GetUnitFG(insect->tools_actor.actor_class.world.position);
+    int ret = TRUE;
+
+    if (fg_p != NULL && !IS_ITEM_FLOWER(*fg_p)) {
+        ret = FALSE;
+    }
+
+    return ret;
+}
+
 static int aIGK_check_patience(aINS_INSECT_ACTOR* insect) {
     int res = FALSE;
 
@@ -202,7 +246,11 @@ static int aIGK_check_patience(aINS_INSECT_ACTOR* insect) {
         insect->patience = 100.0f;
     } else if (aIGK_check_player_scoop(insect) == TRUE) {
         insect->patience = 100.0f;
-    } else if (insect->flag == aIGK_PLACE_ITEM && *(mActor_name_t*)aIGK_GET_ITEM_P(insect) != ITM_KABU_SPOILED) {
+    } else if (insect->flag == aIGK_PLACE_ITEM && !ITEM_IS_DUST(*(mActor_name_t*)aIGK_GET_ITEM_P(insect)) && *(mActor_name_t*)aIGK_GET_ITEM_P(insect) != ITM_KABU_SPOILED) {
+        insect->patience = 100.0f;
+    } else if (insect->flag == aIGK_PLACE_UNDER_A_TREE && insect->tools_actor.actor_class.player_distance_xz < 100.0f) {
+        insect->patience = 100.0f;
+    } else if (insect->flag == aIGK_PLACE_FLOWER && aIGK_check_flower(insect) == FALSE) {
         insect->patience = 100.0f;
     }
 
@@ -227,7 +275,7 @@ static void aIGK_avoid(ACTOR* actorx, GAME* game) {
     sAdo_OngenPos((u32)actorx, NA_SE_26, &actorx->world.position);
     aIGK_anime_proc(insect);
 
-    if (insect->bg_type == 0) {
+    if (insect->bg_type == aINS_BG_CHECK_TYPE_NONE) {
         int h_ut_x;
         int h_ut_z;
         int now_ut_x;
@@ -237,7 +285,7 @@ static void aIGK_avoid(ACTOR* actorx, GAME* game) {
         mFI_Wpos2UtNum(&now_ut_x, &now_ut_z, actorx->world.position);
 
         if (h_ut_x != now_ut_x || h_ut_z != now_ut_z) {
-            insect->bg_type = 1;
+            insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
         }
     }
 }
@@ -246,6 +294,7 @@ static void aIGK_wait_on_flower(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
     if (aIGK_check_patience(insect) == TRUE) {
+        insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
         aIGK_setupAction(insect, aIGK_ACTION_AVOID, game);
     } else {
         insect->timer--;
@@ -263,6 +312,7 @@ static void aIGK_move_on_flower(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
     if (aIGK_check_patience(insect) == TRUE) {
+        insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
         aIGK_setupAction(insect, aIGK_ACTION_AVOID, game);
     } else {
         aIGK_MOVE_TIMER(insect)--;
@@ -356,10 +406,62 @@ static void aIGK_move_on_tree(ACTOR* actorx, GAME* game) {
     }
 }
 
+static void aIGK_wait_under_a_tree(ACTOR* actorx, GAME* game) {
+    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+
+    if (aIGK_check_patience(insect) == TRUE) {
+        insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
+        aIGK_setupAction(insect, aIGK_ACTION_AVOID, game);
+    } else {
+        aIGK_MOVE_TIMER(insect)--;
+        if (aIGK_MOVE_TIMER(insect) <= 0) {
+            aIGK_setupAction(insect, aIGK_ACTION_TURN_UNDER_A_TREE, game);
+        }
+    }
+}
+
+static void aIGK_move_under_a_tree(ACTOR* actorx, GAME* game) {
+    static s16 add_angl[] = { DEG2SHORT_ANGLE2(11.25f), DEG2SHORT_ANGLE2(-11.25f) };
+    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+
+    sAdo_OngenPos((u32)actorx, POS_SE_ECHO(NA_ONGEN_POS_SE_GOKI_MOVE), &actorx->world.position);
+    if (aIGK_check_patience(insect) == TRUE) {
+        insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
+        aIGK_setupAction(insect, aIGK_ACTION_AVOID, game);
+    } else {
+        f32 dx = actorx->world.position.x - insect->f32_work0;
+        f32 dz = actorx->world.position.z - insect->f32_work1;
+
+        if (SQ(dx) + SQ(dz) >= SQ(15.0f)) {
+            xyz_t_move(&actorx->world.position, &actorx->last_world_position);
+            aIGK_setupAction(insect, aIGK_ACTION_WAIT_UNDER_A_TREE, game);
+        } else {
+            actorx->shape_info.rotation.y = actorx->world.angle.y + add_angl[(game->frame_counter >> 2) & 1];
+        }
+    }
+}
+
+static void aIGK_turn_under_a_tree(ACTOR* actorx, GAME* game) {
+    static s16 add_angl[] = { DEG2SHORT_ANGLE2(11.25f), DEG2SHORT_ANGLE2(-11.25f) };
+    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+
+    sAdo_OngenPos((u32)actorx, POS_SE_ECHO(NA_ONGEN_POS_SE_GOKI_MOVE), &actorx->world.position);
+    if (aIGK_check_patience(insect) == TRUE) {
+        insect->bg_type = aINS_BG_CHECK_TYPE_REG_ATTR;
+        aIGK_setupAction(insect, aIGK_ACTION_AVOID, game);
+    } else {
+        if (chase_angle(&actorx->world.angle.y, insect->s32_work0, 0x600) == TRUE) {
+            aIGK_setupAction(insect, aIGK_ACTION_MOVE_UNDER_A_TREE, game);
+        }
+
+        actorx->shape_info.rotation.y = actorx->world.angle.y + add_angl[(game->frame_counter >> 3) & 1];
+    }
+}
+
 static void aIGK_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     static f32 base_angl[2] = { DEG2SHORT_ANGLE2(-22.5f), DEG2SHORT_ANGLE2(22.5f) };
     f32 rnd;
-    s16 angl;
+    s16 angl = 0;
 
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
     insect->tools_actor.actor_class.speed = 4.0f;
@@ -367,10 +469,27 @@ static void aIGK_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.gravity = 0.06f;
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
     insect->tools_actor.actor_class.position_speed.y = 0.0f;
-    rnd = fqrand();
-    insect->life_time = 0;
-    insect->alpha_time = 80;
-    angl = (int)(rnd * DEG2SHORT_ANGLE2(90.0f) - (f32)DEG2SHORT_ANGLE2(45.0f) + base_angl[rnd >= 0.5f]);
+
+    if (insect->flag == aIGK_PLACE_UNDER_A_TREE) {
+        ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+
+        if (playerx != NULL) {
+            xyz_t pos;
+
+            xyz_t_move(&pos, &playerx->world.position);
+            pos.x += mFI_UT_WORLDSIZE_X_F;
+            angl = search_position_angleY(&insect->tools_actor.actor_class.world.position, &pos);
+        }
+
+        insect->life_time = 0;
+        insect->alpha_time = 80;
+        insect->insect_flags.bit_2 = TRUE;
+    } else {
+        rnd = fqrand();
+        insect->life_time = 0;
+        insect->alpha_time = 80;
+        angl = (rnd * DEG2SHORT_ANGLE2(90.0f) - (f32)DEG2SHORT_ANGLE2(45.0f) + base_angl[rnd >= 0.5f]);
+    }
 
     insect->tools_actor.actor_class.world.angle.y = angl;
     insect->tools_actor.actor_class.shape_info.rotation.y = angl;
@@ -426,6 +545,24 @@ static void aIGK_move_on_tree_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     aIGK_MOVE_TIMER(insect) = 30;
 }
 
+static void aIGK_wait_under_a_tree_init(aINS_INSECT_ACTOR* insect, GAME* game) {
+    insect->tools_actor.actor_class.speed = 0.0f;
+    aIGK_MOVE_TIMER(insect) = 120.0f + RANDOM_F(120.0f);
+}
+
+static void aIGK_move_under_a_tree_init(aINS_INSECT_ACTOR* insect, GAME* game) {
+    insect->tools_actor.actor_class.speed = 2.0f;
+}
+
+static void aIGK_turn_under_a_tree_init(aINS_INSECT_ACTOR* insect, GAME* game) {
+    f32 dx = insect->tools_actor.actor_class.world.position.x - insect->f32_work0;
+    f32 dz = insect->tools_actor.actor_class.world.position.z - insect->f32_work1;
+    s16 angle = atans_table(dz, dx);
+    s16 new_angle = (angle + DEG2SHORT_ANGLE2(180.0f) + RANDOM(DEG2SHORT_ANGLE2(22.5f)));
+
+    aIGK_TARGET_ANGLE(insect) = (s16)new_angle;
+}
+
 typedef void (*aIGK_INIT_PROC)(aINS_INSECT_ACTOR* insect, GAME* game);
 
 static void aIGK_setupAction(aINS_INSECT_ACTOR* insect, int action, GAME* game) {
@@ -439,6 +576,9 @@ static void aIGK_setupAction(aINS_INSECT_ACTOR* insect, int action, GAME* game) 
         &aIGK_move_on_tree_init,
         &aIGK_wait_on_tree_init,
         &aIGK_move_on_tree_init,
+        &aIGK_wait_under_a_tree_init,
+        &aIGK_move_under_a_tree_init,
+        &aIGK_turn_under_a_tree_init,
     };
     // clang-format on
 
@@ -452,6 +592,9 @@ static void aIGK_setupAction(aINS_INSECT_ACTOR* insect, int action, GAME* game) 
         &aIGK_move_on_tree,
         &aIGK_wait_on_tree,
         &aIGK_move_on_tree,
+        &aIGK_wait_under_a_tree,
+        &aIGK_move_under_a_tree,
+        &aIGK_turn_under_a_tree,
     };
     // clang-format on
 
