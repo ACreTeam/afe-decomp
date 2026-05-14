@@ -39,6 +39,9 @@ extern u32 __float_max[];
 /* Macro to generate a random integer in the range of [0, n) */
 #define RANDOM(n) ((int)RANDOM_F(n))
 
+/* Macro to generate a random integer in range of [-n/2, n/2) */
+#define RANDOM_CENTER(n) ((int)RANDOM_CENTER_F(n))
+
 /* Macro to generate a random float in the range of [0, n) */
 #define RANDOM2_F(n) (fqrand2() * (f32)(n))
 

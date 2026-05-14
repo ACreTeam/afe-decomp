@@ -88,13 +88,54 @@ extern void aIMN_actor_init(ACTOR* actorx, GAME* game) {
     aIMN_setupAction(insect, action, game);
 }
 
+static void aIMN_set_avoid_player_angl(ACTOR* actorx, GAME* game) {
+    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+
+    if (playerx != NULL) {
+        float dx = actorx->world.position.x - playerx->world.position.x;
+        float dz = actorx->world.position.z - playerx->world.position.z;
+        s16 angle = atans_table(dz, dx);
+
+        actorx->world.angle.y = angle + RANDOM_CENTER(DEG2SHORT_ANGLE2(120.0f));
+    }
+}
+
+static void aIMN_set_start_pos(ACTOR* actorx, GAME* game) {
+    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
+
+    if (playerx != NULL) {
+        float x;
+        float z;
+        int flag;
+
+        if (playerx->world.position.x < actorx->home.position.x) {
+            x = actorx->home.position.x + 30.0f;
+            z = actorx->home.position.z + -18.0f;
+            aIMN_ANIM_TIME(insect) = 0.0f;
+            flag = FALSE;
+        } else {
+            x = actorx->home.position.x - 30.0f;
+            z = actorx->home.position.z + -25.0f;
+            aIMN_ANIM_TIME(insect) = -6.0f;
+            flag = TRUE;
+        }
+
+        actorx->world.position.x = x;
+        // @BUG - They don't update the Z position first before using the xz position to get the Y position
+        actorx->world.position.y = 5.0f + mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, -60.0f);
+        actorx->world.position.z = z;
+        insect->flag = flag;
+    }
+}
+
 /**
  * Checks if the tree the insect is on is being shaken.
  *
  * @param actorx Actor to check
  * @return TRUE if tree is being shaken
  */
-static int aIMN_check_shake_tree(ACTOR* actorx) {
+static int aIMN_chk_shake_tree(ACTOR* actorx) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     int ret = FALSE;
 
@@ -180,7 +221,7 @@ static void aIMN_calc_twist_angl(ACTOR* actorx) {
  * @param actorx Actor to check
  * @return TRUE if tree is cut
  */
-static int aIMN_check_cut_tree(ACTOR* actorx) {
+static int aIMN_chk_cut_tree(ACTOR* actorx) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     int ret = FALSE;
     mActor_name_t* fg_p = mFI_GetUnitFG(actorx->home.position);
@@ -270,18 +311,23 @@ static void aIMN_calc_direction_angl(ACTOR* actorx) {
 static void aIMN_let_escape(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
-    if (aIMN_chk_water_attr(insect, game) == FALSE) {
+    if (insect->patience < 10.0f && aIMN_chk_water_attr(insect, game) == FALSE) {
         aIMN_calc_direction_angl(actorx);
     }
 }
 
 static void aIMN_hide(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+    int action = -1;
+    
+    if (aIMN_chk_cut_tree(actorx) == TRUE) {
+        action = aIMN_ACT_FALL;
+    } else if (aIMN_chk_shake_tree(actorx) == TRUE) {
+        action = aIMN_ACT_APPEAR;
+    }
 
-    if (aIMN_check_cut_tree(actorx) == TRUE) {
-        aIMN_setupAction(insect, aIMN_ACT_FALL, game);
-    } else if (aIMN_check_shake_tree(actorx) == TRUE) {
-        aIMN_setupAction(insect, aIMN_ACT_APPEAR, game);
+    if (action != -1) {
+        aIMN_setupAction(insect, action, game);
     }
 }
 
@@ -290,7 +336,7 @@ static void aIMN_appear(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     f32 move_range = move_range_table[insect->flag];
 
-    if (aIMN_check_cut_tree(actorx) == TRUE) {
+    if (aIMN_chk_cut_tree(actorx) == TRUE) {
         aIMN_setupAction(insect, aIMN_ACT_FALL, game);
     } else {
         if (aIMN_ANIM_TIME(insect) < move_range) {
@@ -314,7 +360,7 @@ static void aIMN_appear(ACTOR* actorx, GAME* game) {
 static void aIMN_appear_stop(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
-    if (aIMN_check_cut_tree(actorx) == TRUE) {
+    if (aIMN_chk_cut_tree(actorx) == TRUE) {
         aIMN_setupAction(insect, aIMN_ACT_FALL, game);
     } else {
         if (F32_IS_ZERO(actorx->speed)) {
@@ -328,12 +374,12 @@ static void aIMN_appear_stop(ACTOR* actorx, GAME* game) {
 static void aIMN_wait(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
-    if (aIMN_check_cut_tree(actorx) == TRUE) {
+    if (aIMN_chk_cut_tree(actorx) == TRUE) {
         actorx->scale.x = 0.01f;
         actorx->scale.y = 0.01f;
         aIMN_setupAction(insect, aIMN_ACT_FALL, game);
     } else {
-        if (aIMN_check_shake_tree(actorx) == TRUE) {
+        if (aIMN_chk_shake_tree(actorx) == TRUE) {
             aIMN_CURRENT_SHAKE(insect) = 0x80;
             aIMN_TARGET_SHAKE(insect) = -0x80;
         }
@@ -393,7 +439,7 @@ static void aIMN_wait(ACTOR* actorx, GAME* game) {
 static void aIMN_disappear(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
 
-    if (aIMN_check_cut_tree(actorx) == TRUE) {
+    if (aIMN_chk_cut_tree(actorx) == TRUE) {
         aIMN_setupAction(insect, aIMN_ACT_FALL, game);
     } else {
         if (actorx->world.position.y > actorx->home.position.y) {
@@ -405,7 +451,7 @@ static void aIMN_disappear(ACTOR* actorx, GAME* game) {
 }
 
 static void aIMN_dive(ACTOR* actorx, GAME* game) {
-    f32 water_y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 685);
+    f32 water_y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 765);
 
     if (actorx->world.position.y <= water_y) {
         aIMN_setupAction((aINS_INSECT_ACTOR*)actorx, aIMN_ACT_DROWN, game);
@@ -423,8 +469,6 @@ static void aIMN_fall(ACTOR* actorx, GAME* game) {
 
 // Action init functions
 static void aIMN_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
-    ACTOR* playerx;
-
     insect->life_time = 0.0f;
     insect->alpha_time = 80;
     insect->bg_type = aINS_BG_CHECK_TYPE_REG_NO_ATTR;
@@ -433,10 +477,7 @@ static void aIMN_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
     insect->tools_actor.actor_class.shape_info.rotation.z = 0;
 
-    playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
-    if (playerx != NULL) {
-        insect->tools_actor.actor_class.world.angle.y = playerx->shape_info.rotation.y + (s16)RANDOM_CENTER_F(DEG2SHORT_ANGLE2(120.0f));
-    }
+    aIMN_set_avoid_player_angl((ACTOR*)insect, game);
 
     switch (insect->type) {
         case aINS_INSECT_TYPE_BAGWORM:
@@ -453,6 +494,7 @@ static void aIMN_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
             break;
     }
 
+    insect->patience = 25.0f;
     insect->insect_flags.bit_1 = TRUE;
     insect->insect_flags.bit_2 = TRUE;
 }
@@ -468,31 +510,7 @@ static void aIMN_hide_init(aINS_INSECT_ACTOR* insect, GAME* game) {
 }
 
 static void aIMN_appear_init(aINS_INSECT_ACTOR* insect, GAME* game) {
-    ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
-
-    if (playerx != NULL) {
-        int flag;
-        f32 pos_x;
-        f32 pos_z;
-
-        if (playerx->world.position.x < insect->tools_actor.actor_class.home.position.x) {
-            pos_x = insect->tools_actor.actor_class.home.position.x + 30.0f;
-            pos_z = insect->tools_actor.actor_class.home.position.z + -18.0f;
-            aIMN_ANIM_TIME(insect) = 0.0f;
-            flag = FALSE;
-        } else {
-            pos_x = insect->tools_actor.actor_class.home.position.x - 30.0f;
-            pos_z = insect->tools_actor.actor_class.home.position.z + -25.0f;
-            insect->tools_actor.actor_class.world.position.y = (-47.0f + insect->tools_actor.actor_class.home.position.y) - -41.0f;
-            aIMN_ANIM_TIME(insect) = -6.0f;
-            flag = TRUE;
-        }
-
-        insect->tools_actor.actor_class.world.position.x = pos_x;
-        insect->tools_actor.actor_class.world.position.z = pos_z;
-        insect->flag = flag;
-    }
-
+    aIMN_set_start_pos((ACTOR*)insect, game);
     aIMN_BASE_POS_Z(insect) = insect->tools_actor.actor_class.world.position.z;
     insect->tools_actor.actor_class.speed = 0.0f;
     insect->target_speed = -20.0f;
@@ -543,7 +561,7 @@ static void aIMN_dive_init(aINS_INSECT_ACTOR* insect, GAME* game) {
 static void aIMN_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     xyz_t pos = insect->tools_actor.actor_class.world.position;
     
-    pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 936);
+    pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 982);
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_MIZU, pos, 1, insect->tools_actor.actor_class.world.angle.y, game, EMPTY_NO, 4, 0);
     sAdo_OngenTrgStart(NA_SE_438, &insect->tools_actor.actor_class.world.position);
     insect->insect_flags.bit_1 = TRUE;
