@@ -77,5 +77,19 @@ static void aINS_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aINS_actor_dt(ACTOR* actorx, GAME* game) {
+    aINS_CTRL_ACTOR* ctrl_actor = (aINS_CTRL_ACTOR*)actorx;
+    aINS_INSECT_ACTOR* insect_actor = ctrl_actor->insect_actor;
+    int i;
+
+    for (i = 0; i < aINS_ACTOR_NUM; i++) {
+        if (insect_actor->exist_flag == TRUE) {
+            aINS_destruct((ACTOR*)insect_actor, game);
+        }
+
+        // @BUG - devs forgot to increment the actor pointer
+#ifdef BUGFIXES
+        insect_actor++;
+#endif
+    }
     aINS_free_clip_area();
 }

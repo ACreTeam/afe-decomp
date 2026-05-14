@@ -793,7 +793,7 @@ config.libs = [
             Object(Matching, "actor/ac_ins_semi.c"),
             Object(Matching, "actor/ac_ins_tentou.c"),
             Object(Matching, "actor/ac_ins_tonbo.c"),
-            Object(NonMatching, "actor/ac_insect.c"),
+            Object(Matching, "actor/ac_insect.c"),
             Object(Matching, "actor/ac_intro_demo.c"),
             Object(Matching, "actor/ac_kago.c"),
             Object(Matching, "actor/ac_kamakura.c"),

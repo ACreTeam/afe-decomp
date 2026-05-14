@@ -1,8 +1,20 @@
-static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* game, int draw_type, int alpha) {
+#ifdef __INTELLISENSE__
+#include "ac_insect_h.h"
+#include "ac_insect.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "m_rcp.h"
+#endif
+
+static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* game, int draw_type, u32 alpha) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     s16 angleX = insect->tools_actor.actor_class.shape_info.rotation.x;
     s16 angleY = insect->tools_actor.actor_class.shape_info.rotation.y;
+    int draw_frame = (draw_type & 1);
     Gfx* gfx;
+    int xlu_disp;
 
     if (insect->tools_actor.init_matrix == TRUE) {
         Matrix_put(&insect->tools_actor.matrix_work);
@@ -11,19 +23,21 @@ static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* g
         angleY = angleX;
 
         switch (insect->type) {
+            case aINS_INSECT_TYPE_FIREFLY:
+            case aINS_INSECT_TYPE_SPIRIT:
+                angleX = DEG2SHORT_ANGLE2(-16.4794921875f);
+                break;
             case aINS_INSECT_TYPE_LONG_LOCUST:
             case aINS_INSECT_TYPE_MIGRATORY_LOCUST:
             case aINS_INSECT_TYPE_GRASSHOPPER:
+                angleX = DEG2SHORT_ANGLE2(-10.986328125f);
                 angleY = DEG2SHORT_ANGLE2(-90.0f);
                 break;
             case aINS_INSECT_TYPE_SPIDER:
-                angleX = DEG2SHORT_ANGLE2(90.0f);
-                break;
-            case aINS_INSECT_TYPE_FIREFLY:
-            case aINS_INSECT_TYPE_SPIRIT:
+                angleX = DEG2SHORT_ANGLE2(51.5478515625f);
                 break;
             default:
-                angleX = DEG2SHORT_ANGLE2(90.0f);
+                angleX = DEG2SHORT_ANGLE2(51.5478515625f);
                 angleY = DEG2SHORT_ANGLE2(-180.0f);
                 break;
         }
@@ -40,6 +54,10 @@ static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* g
 
         switch (insect->type) {
             case aINS_INSECT_TYPE_MOLE_CRICKET:
+            case aINS_INSECT_TYPE_DUNG_BEETLE:
+            case aINS_INSECT_TYPE_CRAB:
+            case aINS_INSECT_TYPE_HERMIT_CRAB:
+            case aINS_INSECT_TYPE_COCONUT_CRAB:
                 Matrix_RotateY(angleY, MTX_MULT);
                 Matrix_RotateX(angleX, MTX_MULT);
                 Matrix_RotateZ(insect->tools_actor.actor_class.shape_info.rotation.z, MTX_MULT);
@@ -65,13 +83,57 @@ static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* g
         }
     }
 
-    Matrix_scale(insect->tools_actor.actor_class.scale.x, insect->tools_actor.actor_class.scale.y,
-                 insect->tools_actor.actor_class.scale.z, MTX_MULT);
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_HERMIT_CRAB:
+            if (draw_frame == 1) {
+                f32 scale = insect->continue_timer * 0.01f;
+
+                Matrix_scale(
+                    insect->tools_actor.actor_class.scale.x * scale,
+                    insect->tools_actor.actor_class.scale.y * scale,
+                    insect->tools_actor.actor_class.scale.z * scale,
+                    MTX_MULT
+                );
+            } else {
+                Matrix_scale(
+                    insect->tools_actor.actor_class.scale.x,
+                    insect->tools_actor.actor_class.scale.y,
+                    insect->tools_actor.actor_class.scale.z,
+                    MTX_MULT
+                );
+            }
+            break;
+        default:
+            Matrix_scale(insect->tools_actor.actor_class.scale.x, insect->tools_actor.actor_class.scale.y,
+                     insect->tools_actor.actor_class.scale.z, MTX_MULT);
+            break;
+    }
 
     OPEN_DISP(graph);
-    gfx = NOW_POLY_XLU_DISP;
 
-    gDPPipeSync(gfx++);
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_CRAB:
+        case aINS_INSECT_TYPE_HERMIT_CRAB:
+        case aINS_INSECT_TYPE_COCONUT_CRAB:
+            if (alpha >= 255) {
+                gfx = NOW_POLY_OPA_DISP;
+                xlu_disp = FALSE;
+
+                gDPSetRenderMode(gfx++, G_RM_FOG_SHADE_A, G_RM_AA_ZB_TEX_EDGE2);
+            } else {
+                gfx = NOW_POLY_XLU_DISP;
+                xlu_disp = TRUE;
+
+                gDPSetRenderMode(gfx++, G_RM_FOG_SHADE_A, G_RM_ZB_XLU_SURF2);
+            }
+        
+            break;
+        default:
+            gfx = NOW_POLY_XLU_DISP;
+            xlu_disp = TRUE;
+            break;
+    }
+
     gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
     /* initialize settings for env and billboard mtx */
@@ -84,6 +146,15 @@ static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* g
             gSPMatrix(gfx++, play->billboard_mtx_p, G_MTX_NOPUSH | G_MTX_MUL | G_MTX_MODELVIEW);
             gDPSetEnvColor(gfx++, 255, 255, 255, alpha);
             break;
+        case aINS_INSECT_TYPE_DIVING_BEETLE:
+            if (insect->tools_actor.init_matrix == TRUE || insect->life_time == 0) {
+                gDPSetEnvColor(gfx++, 255, 255, 255, 255);
+            } else if (draw_frame == 0) {
+                gDPSetEnvColor(gfx++, 255, 255, 255, (u32)(((float)(u32)insect->alpha0 * 165.0f) * 0.01f));
+            } else {
+                gDPSetEnvColor(gfx++, 255, 255, 255, (u32)((1.0f - (float)(u32)insect->alpha0 * 0.01f) * 245.0f));
+            }
+            break;
         default:
             gDPSetEnvColor(gfx++, 255, 255, 255, alpha);
             break;
@@ -92,7 +163,12 @@ static void aINS_actor_draw_sub(GRAPH* graph, aINS_INSECT_ACTOR* insect, GAME* g
     /* draw insect model */
     gSPDisplayList(gfx++, aINS_displayList[insect->type][draw_type]);
 
-    SET_POLY_XLU_DISP(gfx);
+    if (xlu_disp == TRUE) {
+        SET_POLY_XLU_DISP(gfx);
+    } else {
+        SET_POLY_OPA_DISP(gfx);
+    }
+
     CLOSE_DISP(graph);
 }
 
@@ -105,6 +181,7 @@ static void aINS_actor_draw(ACTOR* actorx, GAME* game) {
     int draw_type;
 
     Matrix_push();
+    _texture_z_light_fog_prim(graph);
     _texture_z_light_fog_prim_xlu(graph);
 
     for (i = 0; i < aINS_ACTOR_NUM; i++) {

@@ -1,4 +1,22 @@
+#ifdef __INTELLISENSE__
+#include "ac_insect_h.h"
+#include "ac_insect.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 static void aINS_position_move(ACTOR* actorx) {
+    static int yspd_calc_flg[aINS_INSECT_TYPE_EXTENDED_NUM - 1] = {
+        FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE,
+        TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+        TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+        TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE,
+        TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,
+        FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+        FALSE,
+    };
+
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     s16 angleY = actorx->world.angle.y;
 
@@ -7,19 +25,8 @@ static void aINS_position_move(ACTOR* actorx) {
     actorx->position_speed.x = actorx->speed * sin_s(angleY);
     actorx->position_speed.z = actorx->speed * cos_s(angleY);
 
-    switch (insect->type) {
-        case aINS_INSECT_TYPE_COMMON_BUTTERFLY:
-        case aINS_INSECT_TYPE_YELLOW_BUTTERFLY:
-        case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
-        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
-        case aINS_INSECT_TYPE_FIREFLY:
-        case aINS_INSECT_TYPE_MOSQUITO:
-        case aINS_INSECT_TYPE_SPIRIT:
-            break;
-
-        default:
-            chase_f(&actorx->position_speed.y, actorx->max_velocity_y, actorx->gravity * 0.5f);
-            break;
+    if (yspd_calc_flg[insect->type] == TRUE) {
+        chase_f(&actorx->position_speed.y, actorx->max_velocity_y, actorx->gravity * 0.5f);
     }
 
     Actor_position_move(actorx);
@@ -71,58 +78,25 @@ static void aINS_BGcheck(ACTOR* actorx) {
     }
 }
 
-// clang-format off
-static f32 catch_ME_data[] = {
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    10.0,
-    10.0,
-    10.0,
-    0.0,
-    10.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    20.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    0.0,
-    0.0,
-    -20.0,
-    -20.0,
-    -20.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0f,
-};
-// clang-format on
-
 static void aINS_get_stress_sub(f32* stress, Actor_list* actor_list, xyz_t* pos, aINS_INSECT_ACTOR* insect) {
     static f32 calc_table[] = { 0.3f, 1.0f, 2.0f, 5.0f, 10.0f };
-    f32 min_dist = aINS_MAX_STRESS_DIST;
+    static float catch_ME_data[] = {
+        140.0f, 130.0f, 120.0f, 100.0f
+    };
+    
+    static int catch_lv_data[aINS_INSECT_TYPE_EXTENDED_NUM - 1] = {
+        3, 3, 2, 2, 1, 1, 1, 2,
+        1, 3, 3, 2, 0, 1, 0, 2,
+        2, 2, 2, 3, 3, 3, 2, 2,
+        3, 3, 3, 3, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2,
+        2, 3, 2, 1, 2, 2, 3, 3,
+        2,
+    };
+    f32 min_dist;
     ACTOR* actor;
 
-    min_dist += catch_ME_data[insect->type];
+    min_dist = catch_ME_data[catch_lv_data[insect->type]];
     /* Calculate the greatest stress caused by any nearby actors */
     for (actor = actor_list->actor; actor != NULL; actor = actor->next_actor) {
         f32 dist = search_position_distance(pos, &actor->world.position);
@@ -295,34 +269,38 @@ static f32 aINS_get_catch_range_sub(ACTOR* actorx) {
 }
 
 static f32 aINS_get_catch_range(ACTOR* actorx) {
-    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
-    f32 range = 8.0f;
+    static int catch_range_type[aINS_INSECT_TYPE_EXTENDED_NUM - 1] = {
+        0, 0, 3, 3, 1, 1, 1, 1,
+        1, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 1, 1, 1, 1, 1,
+        3, 3, 3, 3, 2, 1, 1, 1,
+        3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 4, 1, 3, 3, 3, 3,
+        3,
+    };
 
-    switch (insect->type) {
-        case aINS_INSECT_TYPE_COMMON_BUTTERFLY:
-        case aINS_INSECT_TYPE_YELLOW_BUTTERFLY:
+    aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
+    f32 range = 0.0f;
+
+    switch (catch_range_type[insect->type]) {
+        case 0:
             range = 24.0f;
             break;
-        case aINS_INSECT_TYPE_ROBUST_CICADA:
-        case aINS_INSECT_TYPE_WALKER_CICADA:
-        case aINS_INSECT_TYPE_EVENING_CICADA:
-        case aINS_INSECT_TYPE_BROWN_CICADA:
-        case aINS_INSECT_TYPE_BEE:
-        case aINS_INSECT_TYPE_DRONE_BEETLE:
-        case aINS_INSECT_TYPE_DYNASTID_BEETLE:
-        case aINS_INSECT_TYPE_FLAT_STAG_BEETLE:
-        case aINS_INSECT_TYPE_JEWEL_BEETLE:
-        case aINS_INSECT_TYPE_LONGHORN_BEETLE:
-        case aINS_INSECT_TYPE_SAW_STAG_BEETLE:
-        case aINS_INSECT_TYPE_MOUNTAIN_BEETLE:
-        case aINS_INSECT_TYPE_GIANT_BEETLE:
+        case 1:
             range = aINS_get_catch_range_sub(actorx);
             break;
-
-        case aINS_INSECT_TYPE_COCKROACH:
+        case 2:
             if (insect->flag == 4) {
                 range = aINS_get_catch_range_sub(actorx);
+            } else {
+                range = 8.0f;
             }
+            break;
+        case 3:
+            range = 8.0f;
+            break;
+        case 4:
+            range = 14.0f;
             break;
     }
 
@@ -384,7 +362,8 @@ static void aINS_actor_move(ACTOR* actorx, GAME* game) {
                 Actor_world_to_eye(actorx, 0.0f);
                 aINS_set_catch_range(actorx);
             }
-
+            
+            CollisionCheck_Status_Clear(&actorx->status_data);
             aINS_cull_check(actorx, game);
         }
 

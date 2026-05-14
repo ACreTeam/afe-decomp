@@ -158,6 +158,24 @@ extern Gfx act_m_mino1_1T_model[];
 extern Gfx act_m_mino2T_model[];
 extern Gfx act_m_mino1_2T_model[];
 extern Gfx act_m_mino1_2T_model[];
+extern Gfx act_m_areku1T_model[];
+extern Gfx act_m_areku2T_model[];
+extern Gfx act_m_fun1T_model[];
+extern Gfx act_m_fun2T_model[];
+extern Gfx act_m_fun3T_model[];
+extern Gfx act_m_gengoro1T_model[];
+extern Gfx act_m_gengoro2T_model[];
+extern Gfx act_m_gengoro3T_model[];
+extern Gfx act_m_hera1T_model[];
+extern Gfx act_m_hera2T_model[];
+extern Gfx act_m_kani1T_model[];
+extern Gfx act_m_kani2T_model[];
+extern Gfx act_m_nomi1T_model[];
+extern Gfx act_m_yado1T_model[];
+extern Gfx act_m_yado2_1T_model[];
+extern Gfx act_m_yado2_2T_model[];
+extern Gfx act_m_yasigani1T_model[];
+extern Gfx act_m_yasigani2T_model[];
 extern Gfx act_m_hitodama_a_model[];
 extern Gfx act_m_hitodama_a_model[];
 extern Gfx act_m_hitodama_b_model[];
@@ -445,6 +463,66 @@ static Gfx* aINS_mino_dl[] = {
     act_m_mino1_2T_model,
 };
 
+static Gfx* aINS_areku_dl[4] = {
+    act_m_areku1T_model,
+    act_m_areku1T_model,
+    act_m_areku2T_model,
+    act_m_areku2T_model,
+};
+
+static Gfx* aINS_fun_dl[6] = {
+    act_m_fun2T_model,
+    act_m_fun2T_model,
+    act_m_fun1T_model,
+    act_m_fun1T_model,
+    act_m_fun3T_model,
+    act_m_fun3T_model,
+};
+
+static Gfx* aINS_gengoro_dl[6] = {
+    act_m_gengoro1T_model,
+    act_m_gengoro1T_model,
+    act_m_gengoro2T_model,
+    act_m_gengoro2T_model,
+    act_m_gengoro1T_model,
+    act_m_gengoro3T_model,
+};
+
+static Gfx* aINS_hera_dl[4] = {
+    act_m_hera1T_model,
+    act_m_hera1T_model,
+    act_m_hera2T_model,
+    act_m_hera2T_model,
+};
+
+static Gfx* aINS_kani_dl[4] = {
+    act_m_kani1T_model,
+    act_m_kani1T_model,
+    act_m_kani2T_model,
+    act_m_kani2T_model,
+};
+
+static Gfx* aINS_nomi_dl[2] = {
+    act_m_nomi1T_model,
+    act_m_nomi1T_model,
+};
+
+static Gfx* aINS_yado_dl[6] = {
+    act_m_yado1T_model,
+    act_m_yado2_1T_model,
+    act_m_yado1T_model,
+    act_m_yado2_2T_model,
+    act_m_yado1T_model,
+    act_m_yado1T_model,
+};
+
+static Gfx* aINS_yasigani_dl[4] = {
+    act_m_yasigani1T_model,
+    act_m_yasigani1T_model,
+    act_m_yasigani2T_model,
+    act_m_yasigani2T_model,
+};
+
 static Gfx* aINS_hitodama_dl[] = {
     act_m_hitodama_a_model,
     act_m_hitodama_a_model,
@@ -496,6 +574,14 @@ static Gfx** aINS_displayList[] = {
     aINS_kumo_dl,
     aINS_ari_dl,
     aINS_ka_dl,
+    aINS_areku_dl,
+    aINS_fun_dl,
+    aINS_gengoro_dl,
+    aINS_hera_dl,
+    aINS_kani_dl,
+    aINS_nomi_dl,
+    aINS_yado_dl,
+    aINS_yasigani_dl,
     aINS_hitodama_dl,
 };
 // clang-format on
@@ -514,6 +600,8 @@ extern void aIKA_actor_init(ACTOR* actorx, GAME* game);
 extern void aIDG_actor_init(ACTOR* actorx, GAME* game);
 extern void aIKR_actor_init(ACTOR* actorx, GAME* game);
 extern void aIMN_actor_init(ACTOR* actorx, GAME* game);
+extern void aIKN_actor_init(ACTOR* actorx, GAME* game);
+extern void aINM_actor_init(ACTOR* actorx, GAME* game);
 
 // clang-format off
 static mActor_proc aINS_program_dlftbl[] = {
@@ -531,51 +619,61 @@ static mActor_proc aINS_program_dlftbl[] = {
     &aIDG_actor_init,
     &aIKR_actor_init,
     &aIMN_actor_init,
+    &aIKN_actor_init,
+    &aINM_actor_init,
 };
 // clang-format on
 
 // clang-format off
 static int aINS_program_type[] = {
-    aINS_PROGRAM_CHOU,
-    aINS_PROGRAM_CHOU,
-    aINS_PROGRAM_CHOU,
-    aINS_PROGRAM_CHOU,
-    aINS_PROGRAM_SEMI,
-    aINS_PROGRAM_SEMI,
-    aINS_PROGRAM_SEMI,
-    aINS_PROGRAM_SEMI,
-    aINS_PROGRAM_SEMI,
-    aINS_PROGRAM_TONBO,
-    aINS_PROGRAM_TONBO,
-    aINS_PROGRAM_TONBO,
-    aINS_PROGRAM_TONBO,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_BATTA,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_TENTOU,
-    aINS_PROGRAM_TENTOU,
-    aINS_PROGRAM_TENTOU,
-    aINS_PROGRAM_HOTARU,
-    aINS_PROGRAM_GOKI,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_KABUTO,
-    aINS_PROGRAM_TENTOU,
-    aINS_PROGRAM_KERA,
-    aINS_PROGRAM_AMENBO,
-    aINS_PROGRAM_MINO,
-    aINS_PROGRAM_DANGO,
-    aINS_PROGRAM_MINO,
-    aINS_PROGRAM_DANGO,
-    aINS_PROGRAM_KA,
-    aINS_PROGRAM_HITODAMA,
+    aINS_PROGRAM_CHOU, // aINS_INSECT_TYPE_COMMON_BUTTERFLY
+    aINS_PROGRAM_CHOU, // aINS_INSECT_TYPE_YELLOW_BUTTERFLY
+    aINS_PROGRAM_CHOU, // aINS_INSECT_TYPE_TIGER_BUTTERFLY
+    aINS_PROGRAM_CHOU, // aINS_INSECT_TYPE_PURPLE_BUTTERFLY
+    aINS_PROGRAM_SEMI, // aINS_INSECT_TYPE_ROBUST_CICADA
+    aINS_PROGRAM_SEMI, // aINS_INSECT_TYPE_WALKER_CICADA
+    aINS_PROGRAM_SEMI, // aINS_INSECT_TYPE_EVENING_CICADA
+    aINS_PROGRAM_SEMI, // aINS_INSECT_TYPE_BROWN_CICADA
+    aINS_PROGRAM_SEMI, // aINS_INSECT_TYPE_BEE
+    aINS_PROGRAM_TONBO, // aINS_INSECT_TYPE_COMMON_DRAGONFLY
+    aINS_PROGRAM_TONBO, // aINS_INSECT_TYPE_RED_DRAGONFLY
+    aINS_PROGRAM_TONBO, // aINS_INSECT_TYPE_DARNER_DRAGONFLY
+    aINS_PROGRAM_TONBO, // aINS_INSECT_TYPE_BANDED_DRAGONFLY
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_LONG_LOCUST
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_MIGRATORY_LOCUST
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_CRICKET
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_GRASSHOPPER
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_BELL_CRICKET
+    aINS_PROGRAM_BATTA, // aINS_INSECT_TYPE_PINE_CRICKET
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_DRONE_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_DYNASTID_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_FLAT_STAG_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_JEWEL_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_LONGHORN_BEETLE
+    aINS_PROGRAM_TENTOU, // aINS_INSECT_TYPE_LADYBUG
+    aINS_PROGRAM_TENTOU, // aINS_INSECT_TYPE_SPOTTED_LADYBUG
+    aINS_PROGRAM_TENTOU, // aINS_INSECT_TYPE_MANTIS
+    aINS_PROGRAM_HOTARU, // aINS_INSECT_TYPE_FIREFLY
+    aINS_PROGRAM_GOKI, // aINS_INSECT_TYPE_COCKROACH
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_SAW_STAG_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_MOUNTAIN_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_GIANT_BEETLE
+    aINS_PROGRAM_TENTOU, // aINS_INSECT_TYPE_SNAIL
+    aINS_PROGRAM_KERA, // aINS_INSECT_TYPE_MOLE_CRICKET
+    aINS_PROGRAM_AMENBO, // aINS_INSECT_TYPE_POND_SKATER
+    aINS_PROGRAM_MINO, // aINS_INSECT_TYPE_BAGWORM
+    aINS_PROGRAM_DANGO, // aINS_INSECT_TYPE_PILL_BUG
+    aINS_PROGRAM_MINO, // aINS_INSECT_TYPE_SPIDER
+    aINS_PROGRAM_DANGO, // aINS_INSECT_TYPE_ANT
+    aINS_PROGRAM_KA, // aINS_INSECT_TYPE_MOSQUITO
+    aINS_PROGRAM_CHOU, // aINS_INSECT_TYPE_BIRDWING_BUTTERFLY
+    aINS_PROGRAM_DANGO, // aINS_INSECT_TYPE_DUNG_BEETLE
+    aINS_PROGRAM_AMENBO, // aINS_INSECT_TYPE_DIVING_BEETLE
+    aINS_PROGRAM_KABUTO, // aINS_INSECT_TYPE_HERCULES_BEETLE
+    aINS_PROGRAM_KANI, // aINS_INSECT_TYPE_CRAB
+    aINS_PROGRAM_NOMI, // aINS_INSECT_TYPE_FLEA
+    aINS_PROGRAM_KANI, // aINS_INSECT_TYPE_HERMIT_CRAB
+    aINS_PROGRAM_KANI, // aINS_INSECT_TYPE_COCONUT_CRAB
+    aINS_PROGRAM_HITODAMA, // aINS_INSECT_TYPE_SPIRIT
 };
 // clang-format on

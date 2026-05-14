@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_insect_h.h"
+#include "ac_insect.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#endif
+
 static ACTOR* aINS_make_actor(GAME* game, int type, xyz_t* pos) {
     aINS_Init_c init_data;
 
@@ -67,7 +75,9 @@ static void aINS_destruct(ACTOR* actorx, GAME* game) {
     switch (insect->type) {
         case aINS_INSECT_TYPE_SPIRIT:
             /* If we didn't catch the spirit, update it's location */
-            if ((ACTOR*)mPlib_Get_item_net_catch_label() != actorx) {
+            if (GET_PLAYER_ACTOR_GAME(game) == NULL) {
+                aINS_regist_set_block_table(actorx);
+            } else if ((ACTOR*)mPlib_Get_item_net_catch_label() != actorx) {
                 aINS_regist_set_block_table(actorx);
             }
         /* fallthrough spirit -> firefly */
@@ -81,6 +91,7 @@ static void aINS_destruct(ACTOR* actorx, GAME* game) {
 
     insect->exist_flag = FALSE;
     ClObjPipe_dt(game, &insect->col_pipe);
+    actorx->parent_actor = NULL;
 }
 
 static int aINS_chk_live_ant(int bx, int bz, GAME* game) {
@@ -159,7 +170,7 @@ static ACTOR* aINS_search_near_insect(f32 pos_x, f32 pos_z, GAME* game) {
     int i;
 
     for (i = 0; i < aINS_ACTOR_NUM - 1; i++) {
-        if (insect->exist_flag == TRUE) {
+        if (insect->exist_flag == TRUE && insect->type != aINS_INSECT_TYPE_FLEA) {
             f32 dX = insect->tools_actor.actor_class.world.position.x - pos_x;
             f32 dZ = insect->tools_actor.actor_class.world.position.z - pos_z;
             f32 d = SQ(dX) + SQ(dZ);
@@ -199,6 +210,13 @@ static int aINS_searchRegistSpace(int make_type) {
 }
 
 static void aINS_setupActor(ACTOR* actorx, aINS_Init_c* init) {
+    static int shadow_type[aINS_INSECT_TYPE_EXTENDED_NUM - 1] = {
+        3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 3, 3, 3,
+        3, 3, 3, 0, 0, 0, 0, 1, 3, 3, 1, 1, 1, 2, 1, 0, 2, 3, 0, 3, 2, 1, 3, 3,
+    };
+
+    static float shadow_scale_table[] = { 8.0f, 4.0f, 2.0f, 6.0f };
+
     // clang-format off
     static ACTOR_PROFILE Dummy_Profile = {
         mAc_PROFILE_INSECT,
@@ -244,37 +262,7 @@ static void aINS_setupActor(ACTOR* actorx, aINS_Init_c* init) {
     actorx->cull_distance = 1000.0f;
     actorx->cull_radius = 350.0f;
 
-    switch (insect->type) {
-        case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
-        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
-        case aINS_INSECT_TYPE_ROBUST_CICADA:
-        case aINS_INSECT_TYPE_WALKER_CICADA:
-        case aINS_INSECT_TYPE_EVENING_CICADA:
-        case aINS_INSECT_TYPE_BROWN_CICADA:
-        case aINS_INSECT_TYPE_BEE:
-        case aINS_INSECT_TYPE_COMMON_DRAGONFLY:
-        case aINS_INSECT_TYPE_RED_DRAGONFLY:
-        case aINS_INSECT_TYPE_DARNER_DRAGONFLY:
-        case aINS_INSECT_TYPE_BANDED_DRAGONFLY:
-            shadow_size = 8.0f;
-            break;
-
-        case aINS_INSECT_TYPE_BAGWORM:
-        case aINS_INSECT_TYPE_PILL_BUG:
-        case aINS_INSECT_TYPE_SPIDER:
-        case aINS_INSECT_TYPE_MOSQUITO:
-            shadow_size = 4.0f;
-            break;
-
-        case aINS_INSECT_TYPE_ANT:
-            shadow_size = 2.0f;
-            break;
-
-        default:
-            shadow_size = 6.0f;
-            break;
-    }
-
+    shadow_size = shadow_scale_table[shadow_type[insect->type]];
     Shape_Info_init(actorx, 0.0f, &mAc_ActorShadowCircle, shadow_size, shadow_size);
     actorx->shape_info.shadow_alpha_change_rate = 0.4f;
     actorx->mv_proc = aINS_program_dlftbl[aINS_program_type[insect->type]];
