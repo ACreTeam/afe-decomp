@@ -42,7 +42,7 @@ static s16 aGYO_KAGE_Get_flow_angle(ACTOR* actorx) {
 
 static void aGYO_KAGE_effect_hamon(ACTOR* actorx, GAME* game, s16 arg) {
     xyz_t pos = actorx->world.position;
-    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 139);
+    f32 water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 142);
     s16 angle = aGYO_KAGE_Get_flow_angle(actorx);
 
     pos.y = water_height;
@@ -106,7 +106,7 @@ static void aGYO_KAGE_actor_ct(ACTOR* actorx, GAME* game) {
     
     atr = mCoBG_Wpos2BgAttribute_Original(actorx->world.position);
     if (mCoBG_CheckWaterAttribute(atr)) {
-        actorx->world.position.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 244) - 8.0f;
+        actorx->world.position.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 247) - 8.0f;
     }
 
     gyo_kage->gyoei_actor = Actor_info_name_search(&play->actor_info, mAc_PROFILE_GYOEI, ACTOR_PART_CONTROL);
@@ -142,7 +142,7 @@ static void aGYO_KAGE_position_move(ACTOR* actorx) {
     }
 
     Actor_position_moveF(actorx);
-    actorx->world.position.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 339) - 8.0f;
+    actorx->world.position.y = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 342) - 8.0f;
 }
 
 static void aGYO_KAGE_actor_move(ACTOR* actorx, GAME* game) {
@@ -207,7 +207,8 @@ static void aGYO_KAGE_actor_draw(ACTOR* actorx, GAME* game) {
     GRAPH* graph = game->graph;
     int tex_idx0;
     int tex_idx1;
-    int alpha = ((int)(gyo_kage->delete_timer * 0.5f) - 10) * 6;
+    float alpha = ((int)(gyo_kage->delete_timer * 0.5f) - 10) * 6.0f;
+    int a;
     s16 angle_x = actorx->shape_info.rotation.x;
     s16 angle_y = actorx->shape_info.rotation.y + DEG2SHORT_ANGLE2(180.0f);
     int frame = (int)(gyo_kage->draw_frame * 0.5f);
@@ -216,10 +217,11 @@ static void aGYO_KAGE_actor_draw(ACTOR* actorx, GAME* game) {
     _texture_z_light_fog_prim_xlu(graph);
     tex_idx0 = aGYO_2tile_texture_idx[frame][0];
     tex_idx1 = aGYO_2tile_texture_idx[frame][1];
-    if (alpha <= 0) {
-        alpha = 0;
+    a = (alpha / 240.0f) * 120.0f;
+    if (a <= 0) {
+        a = 0;
     }
-    gyo_kage->alpha = alpha;
+    gyo_kage->alpha = a;
 
     Matrix_translate(actorx->world.position.x, actorx->world.position.y, actorx->world.position.z, MTX_LOAD);
     Matrix_RotateX(angle_x, MTX_MULT);
