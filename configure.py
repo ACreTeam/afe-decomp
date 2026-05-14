@@ -779,7 +779,7 @@ config.libs = [
             Object(Matching, "actor/ac_htable.c"),
             Object(NonMatching, "actor/ac_ins_amenbo.c"),
             Object(Matching, "actor/ac_ins_batta.c"),
-            Object(NonMatching, "actor/ac_ins_chou.c"),
+            Object(Matching, "actor/ac_ins_chou.c"),
             Object(NonMatching, "actor/ac_ins_dango.c"),
             Object(Matching, "actor/ac_ins_goki.c"),
             Object(Matching, "actor/ac_ins_hitodama.c"),

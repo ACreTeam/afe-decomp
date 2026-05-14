@@ -39,7 +39,7 @@ extern void aICH_actor_init(ACTOR* actor, GAME* game) {
     } else {
         action = aICH_ACTION_LET_ESCAPE;
     }
-    insect->bg_type = 2;
+    insect->bg_type = aINS_BG_CHECK_TYPE_REG_NO_ATTR;
     switch (insect->type) {
         case aINS_INSECT_TYPE_COMMON_BUTTERFLY:
             insect->item = ITM_INSECT00;
@@ -53,6 +53,9 @@ extern void aICH_actor_init(ACTOR* actor, GAME* game) {
         case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
             insect->item = ITM_INSECT03;
             break;
+        case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
+            insect->item = ITM_INSECT40;
+            break;
     }
     actor->mv_proc = aICH_actor_move;
     aICH_setupAction(insect, action, game);
@@ -60,14 +63,20 @@ extern void aICH_actor_init(ACTOR* actor, GAME* game) {
 
 static int aICH_check_live_condition(aINS_INSECT_ACTOR* insect, mActor_name_t* name) {
     int ret = TRUE;
-    if (insect->type != aINS_INSECT_TYPE_PURPLE_BUTTERFLY) {
-        if (mCoBG_ExistHeightGap_KeepAndNow(insect->tools_actor.actor_class.world.position) == TRUE) {
-            ret = FALSE;
-        } else if ((name == NULL) || (*name == RSV_NO)) {
-            ret = FALSE;
-        } else if (((*name >> 12) & 0xF) == 5) {
-            ret = FALSE;
-        }
+
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+        case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
+            break;
+        default:
+            if (mCoBG_ExistHeightGap_KeepAndNow(insect->tools_actor.actor_class.world.position) == TRUE) {
+                ret = FALSE;
+            } else if ((name == NULL) || (*name == RSV_NO)) {
+                ret = FALSE;
+            } else if (((*name >> 12) & 0xF) == 5) {
+                ret = FALSE;
+            }
+            break;
     }
     return ret;
 }
@@ -79,16 +88,51 @@ static void aICH_anime_proc(aINS_INSECT_ACTOR* insect) {
     }
 }
 
-static void aICH_jump_ctrl(aINS_INSECT_ACTOR* insect, f32 base) {
-    f32 angle;
+static void aICH_jump_ctrl(aINS_INSECT_ACTOR* insect) {
+    static float areku_fly_base_tim[] = { 270.0f, 600.0f };
+    static float areku_fly_rnd_tim[] = { 60.0f, 300.0f };
+    f32 base_height;
+    f32 y_adj;
 
-    angle = mCoBG_GetWaterHeight_File(insect->tools_actor.actor_class.world.position, "ac_ins_chou.c", 265);
-    if (angle == -100.0f) {
-        angle = mCoBG_GetBgY_AngleS_FromWpos(NULL, insect->tools_actor.actor_class.world.position, 0.0f);
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
+            y_adj = 40.0f;
+            break;
+        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+            y_adj = 50.0f;
+            break;
+        case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
+            y_adj = 50.0f;
+            break;
+        default:
+            y_adj = 30.0f;
+            break;
     }
-    angle -= base;
-    if (insect->tools_actor.actor_class.world.position.y < angle) {
-        insect->tools_actor.actor_class.position_speed.y = 2.0f + fqrand();
+
+    if (insect->action == aICH_ACTION_AVOID) {
+        y_adj *= 2.0f;
+    } else if (insect->type == aINS_INSECT_TYPE_BIRDWING_BUTTERFLY) {
+        insect->f32_work3 -= 1.0f;
+        if (insect->f32_work3 < 0.0f) {
+            int idx = insect->continue_timer ^ 1;
+
+            insect->f32_work3 = areku_fly_base_tim[idx] + RANDOM_F(areku_fly_rnd_tim[idx]);
+            insect->continue_timer = idx;
+        }
+
+        if (insect->continue_timer == 1) {
+            y_adj *= 2.0f;
+        }
+    }
+
+    base_height = mCoBG_GetWaterHeight_File(insect->tools_actor.actor_class.world.position, "ac_ins_chou.c", 336);
+    if (base_height == -100.0f) {
+        base_height = mCoBG_GetBgY_AngleS_FromWpos(NULL, insect->tools_actor.actor_class.world.position, 0.0f);
+    }
+
+    base_height += y_adj;
+    if (insect->tools_actor.actor_class.world.position.y < base_height) {
+        insect->tools_actor.actor_class.position_speed.y = 2.0f + RANDOM_F(1.0f);
     }
     chase_f(&insect->tools_actor.actor_class.position_speed.y, insect->tools_actor.actor_class.max_velocity_y,
             0.5f * insect->tools_actor.actor_class.gravity);
@@ -106,37 +150,37 @@ static int aICH_flower_search_sub(aINS_INSECT_ACTOR* insect, int type) {
         2,
     };
 
-    int bx;
-    int bz;
+    int ux;
+    int uz;
 
     mActor_name_t* fg;
     int ret;
     xyz_t pos;
 
     ret = FALSE;
-    bx = insect->s32_work1;
-    bz = insect->s32_work2;
+    ux = insect->s32_work1;
+    uz = insect->s32_work2;
     fg = mFI_BkNumtoUtFGTop(insect->tools_actor.actor_class.block_x, insect->tools_actor.actor_class.block_z);
     if (type == 2) {
-        bx += add_table2[RANDOM(3)];
-        bz += add_table2[RANDOM(3)];
+        ux += add_table2[RANDOM(3)];
+        uz += add_table2[RANDOM(3)];
     } else {
-        bx += add_table[RANDOM(3)];
-        bz += add_table[RANDOM(3)];
+        ux += add_table[RANDOM(3)];
+        uz += add_table[RANDOM(3)];
     }
-    if ((bx < 1) || (bx > 14)) {
-        bx = insect->s32_work1;
+    if ((ux < 1) || (ux > 14)) {
+        ux = insect->s32_work1;
     }
-    if ((bz < 1) || (bz > 14)) {
-        bz = insect->s32_work2;
+    if ((uz < 1) || (uz > 14)) {
+        uz = insect->s32_work2;
     }
-    if ((type == 0) || (mFI_CheckFGNpcOn(*(fg + bx + (bz * 16))) == TRUE)) {
+    if ((type == 0) || (fg != NULL && (mFI_CheckFGNpcOn(*(fg + ux + (uz * 16))) == TRUE))) {
         mFI_BkandUtNum2CenterWpos(&pos, insect->tools_actor.actor_class.block_x,
-                                  insect->tools_actor.actor_class.block_z, bx, bz);
+                                  insect->tools_actor.actor_class.block_z, ux, uz);
         if ((mCoBG_GetBgY_OnlyCenter_FromWpos(pos, 0.0f) - insect->tools_actor.actor_class.world.position.y) < 20.0f) {
-            insect->s32_work1 = bx;
+            insect->s32_work1 = ux;
             ret = TRUE;
-            insect->s32_work2 = bz;
+            insect->s32_work2 = uz;
             insect->f32_work0 = pos.x;
             insect->f32_work1 = pos.z;
         } else if (type != 2) {
@@ -153,9 +197,15 @@ static void aICH_flower_search(aINS_INSECT_ACTOR* insect) {
     mFI_Wpos2UtNum(&bx, &bz, insect->tools_actor.actor_class.world.position);
     unit = mFI_UtNum2UtFG(bx, bz);
 
-    if ((!(fqrand() < 0.5f) || (unit == NULL) || (((*unit < FLOWER_PANSIES0))) || (*unit > FLOWER_TULIP2)) &&
-        (insect->type != aINS_INSECT_TYPE_PURPLE_BUTTERFLY)) {
-        aICH_flower_search_sub(insect, 1);
+    if ((!(fqrand() < 0.5f) || (unit == NULL) || (((*unit < FLOWER_PANSIES0))) || (*unit > FLOWER_TULIP2))) {
+        switch (insect->type) {
+            case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+            case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
+                break;
+            default:
+                aICH_flower_search_sub(insect, 1);
+                break;
+        }
     }
 }
 
@@ -344,6 +394,7 @@ static void aICH_BGcheck(ACTOR* actor) {
             switch (insect->type) {
                 case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
                 case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+                case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
                     if (aICH_flower_search_sub(insect, 0) == TRUE) {
                         insect->f32_work2 = 10.0f;
                     }
@@ -377,21 +428,9 @@ static void aICH_check_block_edge(ACTOR* actor, GAME* game) {
 
 static void aICH_avoid(ACTOR* actor, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actor;
-    f32 base;
 
     aICH_anime_proc(insect);
-    switch (insect->type) {
-        case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
-            base = -80.0f;
-            break;
-        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
-            base = -100.0f;
-            break;
-        default:
-            base = -60.0f;
-            break;
-    }
-    aICH_jump_ctrl(insect, base);
+    aICH_jump_ctrl(insect);
     aICH_avoid_move_ctrl(insect, game);
     if (insect->patience < 70.0f) {
         mFI_Wpos2UtNum_inBlock(&insect->s32_work1, &insect->s32_work2, actor->world.position);
@@ -409,24 +448,10 @@ static void aICH_let_escape(ACTOR* actor, GAME* game) {
 
 static void aICH_fly(ACTOR* actor, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actor;
-    f32 base;
 
     aICH_anime_proc(insect);
     aICH_BGcheck(actor);
-
-    switch (insect->type) {
-        case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
-            base = -40.0f;
-            break;
-        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
-            base = -50.0f;
-            break;
-        default:
-            base = -30.0f;
-            break;
-    }
-
-    aICH_jump_ctrl(insect, base);
+    aICH_jump_ctrl(insect);
     aICH_loop_move_ctrl(insect);
 
     switch (insect->type) {
@@ -438,6 +463,7 @@ static void aICH_fly(ACTOR* actor, GAME* game) {
             aICH_rest_check(insect, game);
             break;
         case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+        case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
             if (insect->patience > 90.0f) {
                 aICH_setupAction(insect, aICH_ACTION_AVOID, game);
                 break;
@@ -463,6 +489,7 @@ static void aICH_landing(ACTOR* actor, GAME* game) {
         switch (insect->type) {
             case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
             case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+            case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
                 action = aICH_ACTION_AVOID;
                 break;
             default:
@@ -505,6 +532,7 @@ static void aICH_hover(ACTOR* actor, GAME* game) {
         switch (insect->type) {
             case aINS_INSECT_TYPE_TIGER_BUTTERFLY:
             case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+            case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
                 action = aICH_ACTION_AVOID;
                 break;
             default:
@@ -568,7 +596,15 @@ static void aICH_fly_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->f32_work0 = insect->tools_actor.actor_class.world.position.x;
     insect->f32_work1 = insect->tools_actor.actor_class.world.position.z;
     insect->f32_work2 = 0.0f;
-    insect->f32_work3 = 120.0f;
+
+    switch (insect->type) {
+        case aINS_INSECT_TYPE_PURPLE_BUTTERFLY:
+        case aINS_INSECT_TYPE_BIRDWING_BUTTERFLY:
+            break;
+        default:
+            insect->f32_work3 = 120.0f;
+            break;
+    }
     
     aICH_flower_search(insect);
 }
