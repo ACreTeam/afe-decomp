@@ -48,7 +48,7 @@ extern void aIKR_actor_init(ACTOR* actorx, GAME* game) {
     insect->bg_range = 5.0f;
     insect->item = ITM_INSECT33;
     actorx->mv_proc = aIKR_actor_move;
-    insect->insect_flags.bit_4 = FALSE;
+    insect->insect_flags.unique_wall_check = FALSE;
 
     if (actorx->actor_specific == aINS_INIT_NORMAL) {
         int ux;
@@ -367,8 +367,8 @@ static void aIKR_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     aIKR_avoid_init(insect, game);
     insect->bg_type = aINS_BG_CHECK_TYPE_REG_NO_ATTR;
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 /**
@@ -410,7 +410,7 @@ static void aIKR_dive_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->speed_step = 0.3f;
     insect->tools_actor.actor_class.speed = insect->target_speed;
     insect->tools_actor.actor_class.position_speed.y = 8.0f;
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
 }
 
 /**
@@ -425,7 +425,7 @@ static void aIKR_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 712);
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_MIZU, pos, 1, insect->tools_actor.actor_class.world.angle.y, game, EMPTY_NO, 4, 0);
     sAdo_OngenTrgStart(NA_SE_438, &insect->tools_actor.actor_class.world.position);
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     insect->insect_flags.destruct = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = FALSE;
 }
@@ -450,8 +450,8 @@ static void aIKR_dug_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->target_speed = 0.0f;
     insect->speed_step = 0.0f;
     insect->f32_work0 = 1.0f;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = FALSE;
 }
 

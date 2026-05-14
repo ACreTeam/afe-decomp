@@ -483,7 +483,7 @@ static void aIGK_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
 
         insect->life_time = 0;
         insect->alpha_time = 80;
-        insect->insect_flags.bit_2 = TRUE;
+        insect->insect_flags.ignore_escape_pending = TRUE;
     } else {
         rnd = fqrand();
         insect->life_time = 0;
@@ -493,7 +493,7 @@ static void aIGK_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
 
     insect->tools_actor.actor_class.world.angle.y = angl;
     insect->tools_actor.actor_class.shape_info.rotation.y = angl;
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
 }
 
 static void aIGK_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -516,8 +516,8 @@ static void aIGK_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         insect->tools_actor.actor_class.shape_info.rotation.y = angl;
     }
 
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIGK_wait_on_flower_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -609,7 +609,7 @@ static void aIGK_actor_move(ACTOR* actorx, GAME* game) {
 
     if (label == (u32)actorx) {
         aIGK_setupAction(insect, aIGK_ACTION_LET_ESCAPE, game);
-    } else if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+    } else if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
         aIGK_setupAction(insect, aIGK_ACTION_LET_ESCAPE, game);
     } else {
         (*insect->action_proc)(actorx, game);

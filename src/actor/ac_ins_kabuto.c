@@ -271,8 +271,8 @@ static void aIKB_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         insect->tools_actor.actor_class.shape_info.rotation.y = angle;
     }
 
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
 }
 
@@ -306,7 +306,7 @@ static void aIKB_actor_move(ACTOR* actorx, GAME* game) {
 
     if (label == (u32)actorx) {
         aIKB_setupAction(insect, aIKB_ACTION_LET_ESCAPE, game);
-    } else if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+    } else if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
         aIKB_setupAction(insect, aIKB_ACTION_LET_ESCAPE, game);
     } else {
         (*insect->action_proc)(actorx, game);

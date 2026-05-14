@@ -40,7 +40,7 @@ extern void aIDG_actor_init(ACTOR* actor, GAME* game) {
         action = aIDG_ACTION_LET_ESCAPE;
         insect->tools_actor.actor_class.drawn = TRUE;
     }
-    insect->insect_flags.bit_4 = FALSE;
+    insect->insect_flags.unique_wall_check = FALSE;
     insect->bg_range = 2.0f;
 
     switch (insect->type) {
@@ -307,8 +307,8 @@ static void aIDG_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.gravity = 2.0f;
     insect->tools_actor.actor_class.max_velocity_y = -20.0f;
     aIDG_avoid_init(insect, game);
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIDG_stop_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -337,7 +337,7 @@ static void aIDG_dive_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->target_speed = 1.5f;
     insect->tools_actor.actor_class.position_speed.y = 8.0f;
     insect->_1E0 = 0.0f;
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
 }
 
 static void aIDG_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -349,7 +349,7 @@ static void aIDG_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     eEC_CLIP->effect_make_proc(0x46, pos, 1, insect->tools_actor.actor_class.world.angle.y, game, 0, 4, 0);
     sAdo_OngenTrgStart(0x438, &insect->tools_actor.actor_class.world.position);
 
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     insect->insect_flags.destruct = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = FALSE;
 }
@@ -359,8 +359,8 @@ static void aIDG_retire_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->alpha_time = 0x50;
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
     insect->bg_type = 2;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 typedef void (*aIBT_INIT_PROC)(aINS_INSECT_ACTOR*, GAME*);

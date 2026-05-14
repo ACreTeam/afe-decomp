@@ -216,8 +216,8 @@ static void aIKA_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         actorx->shape_info.rotation.y = rnd_angle;
     }
 
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIKA_fly_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -286,7 +286,7 @@ static void aIKA_actor_move(ACTOR* actorx, GAME* game) {
             sAdo_OngenPos((u32)actorx, NA_SE_KA_BUZZ, &actorx->world.position);
         }
 
-        if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE &&
+        if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE &&
             insect->action != aIKA_ACTION_LET_ESCAPE) {
             aIKA_setupAction(insect, aIKA_ACTION_LET_ESCAPE, game);
         } else {

@@ -51,7 +51,7 @@ extern void aIBT_actor_init(ACTOR* actor, GAME* game) {
             insect->item = ITM_INSECT18;
             break;
     }
-    insect->insect_flags.bit_4 = FALSE;
+    insect->insect_flags.unique_wall_check = FALSE;
 
     if (actor->actor_specific == 0) {
         if (aIBT_check_live_condition(insect) == TRUE) {
@@ -495,8 +495,8 @@ static void aIBT_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         insect->tools_actor.actor_class.world.angle.y = chkAngle;
         insect->tools_actor.actor_class.shape_info.rotation.y = chkAngle;
     }
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIBT_chg_direction_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -532,7 +532,7 @@ static void aIBT_drown_init(aINS_INSECT_ACTOR* insect, GAME* game)  {
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_MIZU, pos, 1,insect->tools_actor.actor_class.world.angle.y, game, 0, 4, 0);
     sAdo_OngenTrgStart(0x438,&insect->tools_actor.actor_class.world.position);
     
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     insect->insect_flags.destruct = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = FALSE;
 }
@@ -572,7 +572,7 @@ void aIBT_actor_move(ACTOR* actor, GAME* game) {
     if (label == (u32)actor) {
         aIBT_setupAction(insect, aIBT_ACTION_LET_ESCAPE, game);
     } else {
-        if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+        if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
             aIBT_setupAction(insect, aIBT_ACTION_LET_ESCAPE, game);
         }
         else

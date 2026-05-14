@@ -315,7 +315,7 @@ static void aISM_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         }
     }
 
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
 }
 
@@ -327,7 +327,7 @@ static void aISM_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
  */
 static void aISM_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     aISM_avoid_init(insect, game);
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 /**
@@ -380,7 +380,7 @@ static void aISM_actor_move(ACTOR* actorx, GAME* game) {
 
     if (catch_label == (u32)ins) {
         aISM_setupAction(ins, aISM_ACT_LET_ESCAPE, game);
-    } else if (ins->insect_flags.bit_3 == TRUE && ins->insect_flags.bit_2 == FALSE) {
+    } else if (ins->insect_flags.timeup_escape_pending == TRUE && ins->insect_flags.ignore_escape_pending == FALSE) {
         aISM_setupAction(ins, aISM_ACT_LET_ESCAPE, game);
     } else {
         ins->action_proc(actorx, game);

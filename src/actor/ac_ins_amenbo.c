@@ -89,11 +89,11 @@ static void aIAB_gengoro_anime_proc(aINS_INSECT_ACTOR* insect, GAME* game) {
         if (insect->s32_work0 == 0) {
             insect->s32_work2 = 360.0f + RANDOM_F(120.0f);
             insect->_1E0 = 2.0f;
-            insect->insect_flags.bit_1 = TRUE;
+            insect->insect_flags.catch_disabled = TRUE;
             insect->s32_work0 = 1;
         } else {
             insect->s32_work2 = 120.0f + RANDOM_F(120.0f);
-            insect->insect_flags.bit_1 = FALSE;
+            insect->insect_flags.catch_disabled = FALSE;
             insect->s32_work0 = 0;
             aIAB_make_hamon((ACTOR*)insect, game);
             sAdo_OngenTrgStart(0x47A, &insect->tools_actor.actor_class.world.position);
@@ -216,8 +216,8 @@ static void aIAB_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         insect->tools_actor.actor_class.shape_info.rotation.y = angleY;
     }
 
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIAB_move_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -315,7 +315,7 @@ static void aIAB_actor_move(ACTOR* actorx, GAME* game) {
                 break;
         }
         aIAB_setupAction(insect, aIAB_ACTION_LET_ESCAPE, game);
-    } else if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+    } else if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
         aIAB_setupAction(insect, aIAB_ACTION_LET_ESCAPE, game);
     } else {
         (*insect->action_proc)(actorx, game);

@@ -101,7 +101,7 @@ extern void aITB_actor_init(ACTOR* actorx, GAME* game) {
             break;
     }
 
-    ins->insect_flags.bit_4 = FALSE;
+    ins->insect_flags.unique_wall_check = FALSE;
 
     // Check if the dragonfly was released
     if (actorx->actor_specific == 0) {
@@ -645,8 +645,8 @@ static void aITB_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.gravity = 0.06f;
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
     insect->tools_actor.actor_class.position_speed.y = 0.0f;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 /**
@@ -836,7 +836,7 @@ static void aITB_actor_move(ACTOR* actorx, GAME* game) {
     if (catch_label == (u32)ins) {
         ins->alpha0 = 255;
         aITB_setupAction(ins, aITB_ACT_LET_ESCAPE, game);
-    } else if (ins->insect_flags.bit_3 == TRUE && ins->insect_flags.bit_2 == FALSE) {
+    } else if (ins->insect_flags.timeup_escape_pending == TRUE && ins->insect_flags.ignore_escape_pending == FALSE) {
         aITB_setupAction(ins, aITB_ACT_LET_ESCAPE, game);
     } else {
         ins->action_proc(actorx, game);

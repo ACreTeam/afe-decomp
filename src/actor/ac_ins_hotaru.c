@@ -245,7 +245,7 @@ FORCESTRIP static float order_floats() {
 static void aIHT_light_proc(aINS_INSECT_ACTOR* insect, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
 
-    if (insect->tools_actor.init_matrix == TRUE || insect->insect_flags.bit_1 == TRUE) {
+    if (insect->tools_actor.init_matrix == TRUE || insect->insect_flags.catch_disabled == TRUE) {
         s16 radius;
 
         if (mPlib_get_player_actor_main_index(game) == mPlayer_INDEX_PUTAWAY_NET) {
@@ -380,7 +380,7 @@ static void aIHT_avoid_init_sub(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->alpha_time = 80;
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
 
-    if (insect->insect_flags.bit_1 == FALSE) {
+    if (insect->insect_flags.catch_disabled == FALSE) {
         ACTOR* playerx = GET_PLAYER_ACTOR_GAME_ACTOR(game);
 
         if (playerx != NULL) {
@@ -388,7 +388,7 @@ static void aIHT_avoid_init_sub(aINS_INSECT_ACTOR* insect, GAME* game) {
         }
     }
 
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     aIHT_FLOAT_ANGLE(insect) = 0;
     aIHT_TARGET_ANGLE(insect) = 0;
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
@@ -417,7 +417,7 @@ static void aIHT_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
  */
 static void aIHT_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     aIHT_avoid_init_sub(insect, game);
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 /**
@@ -475,7 +475,7 @@ static void aIHT_actor_move(ACTOR* actorx, GAME* game) {
 
     if ((ACTOR*)mPlib_Get_item_net_catch_label() == actorx) {
         aIHT_setupAction(insect, aIHT_ACT_LET_ESCAPE, game);
-    } else if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+    } else if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
         aIHT_setupAction(insect, aIHT_ACT_LET_ESCAPE, game);
     } else {
         insect->action_proc(actorx, game);

@@ -174,7 +174,7 @@ static void aIHD_light_proc(ACTOR* actorx, GAME* game) {
     aINS_INSECT_ACTOR* insect = (aINS_INSECT_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
 
-    if (insect->tools_actor.init_matrix == TRUE || insect->insect_flags.bit_1 == TRUE) {
+    if (insect->tools_actor.init_matrix == TRUE || insect->insect_flags.catch_disabled == TRUE) {
         if (mPlib_get_player_actor_main_index(game) == mPlayer_INDEX_PUTAWAY_NET) {
             if ((play->game_frame & 1) == 0 && ((int)insect->_1E0) > 0) {
                 insect->_1E0--;
@@ -239,7 +239,7 @@ static void aIHD_avoid_init_sub(aINS_INSECT_ACTOR* insect, GAME_PLAY* play) {
     insect->tools_actor.actor_class.shape_info.rotation.x = 0;
     insect->tools_actor.actor_class.speed = 1.5f;
 
-    if (insect->insect_flags.bit_1 == FALSE) {
+    if (insect->insect_flags.catch_disabled == FALSE) {
         PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
 
         if (player != NULL) {
@@ -250,7 +250,7 @@ static void aIHD_avoid_init_sub(aINS_INSECT_ACTOR* insect, GAME_PLAY* play) {
         }
     }
 
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     aIHD_ANGLE(insect) = 0;
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
 }
@@ -268,7 +268,7 @@ static void aIHD_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     aIHD_avoid_init_sub(insect, play);
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIHD_fly_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -310,10 +310,10 @@ static void aIHD_actor_move(ACTOR* actorx, GAME* game) {
         aIHD_setupAction(insect, aIHD_ACTION_LET_ESCAPE, game);
     } else {
         if (mEv_check_status(mEv_EVENT_GHOST, mEv_STATUS_RUN) == FALSE) {
-            insect->insect_flags.bit_3 = TRUE;
+            insect->insect_flags.timeup_escape_pending = TRUE;
         }
 
-        if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+        if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
             aIHD_setupAction(insect, aIHD_ACTION_LET_ESCAPE, game);
         } else {
             (*insect->action_proc)(actorx, game);

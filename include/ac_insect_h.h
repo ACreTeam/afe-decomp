@@ -144,10 +144,10 @@ typedef struct insect_actor_s {
     mActor_name_t item;
     struct {
         u8 destruct : 1;
-        u8 bit_1 : 1;
-        u8 bit_2 : 1;
-        u8 bit_3 : 1;
-        u8 bit_4 : 1;
+        u8 catch_disabled : 1;
+        u8 ignore_escape_pending : 1;
+        u8 timeup_escape_pending : 1;
+        u8 unique_wall_check : 1;
         u8 bit_5 : 1;
         u8 bit_6 : 1;
         u8 bit_7 : 1;

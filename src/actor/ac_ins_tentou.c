@@ -411,8 +411,8 @@ static void aITT_avoid_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     }
 
     insect->tools_actor.actor_class.shape_info.draw_shadow = TRUE;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 /**
@@ -425,7 +425,7 @@ static void aITT_avoid_maimai_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.speed = 0.2f;
     insect->target_speed = 0.2f;
     insect->speed_step = 0.05f;
-    insect->insect_flags.bit_4 = FALSE;
+    insect->insect_flags.unique_wall_check = FALSE;
 }
 
 /**
@@ -520,7 +520,7 @@ static void aITT_actor_move(ACTOR* actorx, GAME* game) {
 
         aITT_setupAction(insect, action, game);
 #endif
-    } else if (insect->insect_flags.bit_3 == TRUE && insect->insect_flags.bit_2 == FALSE) {
+    } else if (insect->insect_flags.timeup_escape_pending == TRUE && insect->insect_flags.ignore_escape_pending == FALSE) {
         aITT_setupAction(insect, aITT_ACT_LET_ESCAPE, game);
     } else {
         insect->action_proc(actorx, game);

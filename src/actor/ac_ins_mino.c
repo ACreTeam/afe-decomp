@@ -67,7 +67,7 @@ extern void aIMN_actor_init(ACTOR* actorx, GAME* game) {
     }
 
     actorx->mv_proc = &aIMN_actor_move;
-    insect->insect_flags.bit_4 = FALSE;
+    insect->insect_flags.unique_wall_check = FALSE;
 
     if (actorx->actor_specific == 0) {
         actorx->world.position.y = 5.0f + mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, -60.0f);
@@ -495,8 +495,8 @@ static void aIMN_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     }
 
     insect->patience = 25.0f;
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aIMN_hide_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -506,7 +506,7 @@ static void aIMN_hide_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->tools_actor.actor_class.world.position.y = insect->tools_actor.actor_class.home.position.y;
     insect->_1E0 = 1.0f;
     insect->tools_actor.actor_class.drawn = FALSE;
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
 }
 
 static void aIMN_appear_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -516,7 +516,7 @@ static void aIMN_appear_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     insect->target_speed = -20.0f;
     insect->speed_step = 2.0f;
     insect->tools_actor.actor_class.drawn = TRUE;
-    insect->insect_flags.bit_1 = FALSE;
+    insect->insect_flags.catch_disabled = FALSE;
 }
 
 static void aIMN_appear_stop_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -555,7 +555,7 @@ static void aIMN_dive_init(aINS_INSECT_ACTOR* insect, GAME* game) {
             break;
     }
 
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
 }
 
 static void aIMN_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -564,7 +564,7 @@ static void aIMN_drown_init(aINS_INSECT_ACTOR* insect, GAME* game) {
     pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 982);
     eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_MIZU, pos, 1, insect->tools_actor.actor_class.world.angle.y, game, EMPTY_NO, 4, 0);
     sAdo_OngenTrgStart(NA_SE_438, &insect->tools_actor.actor_class.world.position);
-    insect->insect_flags.bit_1 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
     insect->insect_flags.destruct = TRUE;
     insect->tools_actor.actor_class.shape_info.draw_shadow = FALSE;
 }

@@ -579,8 +579,8 @@ static void aICH_let_escape_init(aINS_INSECT_ACTOR* insect, GAME* game) {
         insect->tools_actor.actor_class.shape_info.rotation.y = angle;
     }
     
-    insect->insect_flags.bit_1 = TRUE;
-    insect->insect_flags.bit_2 = TRUE;
+    insect->insect_flags.catch_disabled = TRUE;
+    insect->insect_flags.ignore_escape_pending = TRUE;
 }
 
 static void aICH_fly_init(aINS_INSECT_ACTOR* insect, GAME* game) {
@@ -661,7 +661,7 @@ static void aICH_actor_move(ACTOR* actor, GAME* game) {
         aICH_anime_proc(insect);
         aICH_setupAction(insect, aICH_ACTION_LET_ESCAPE, game);
     }
-    else if((insect->insect_flags.bit_3 == TRUE) && (insect->insect_flags.bit_2 == FALSE)){
+    else if((insect->insect_flags.timeup_escape_pending == TRUE) && (insect->insect_flags.ignore_escape_pending == FALSE)){
         aICH_setupAction(insect, aICH_ACTION_LET_ESCAPE, game);
     } else {
         aICH_check_block_edge(actor, game);
