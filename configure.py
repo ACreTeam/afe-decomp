@@ -786,6 +786,7 @@ config.libs = [
             Object(Matching, "actor/ac_ins_hotaru.c"),
             Object(Matching, "actor/ac_ins_ka.c"),
             Object(Matching, "actor/ac_ins_kabuto.c"),
+            Object(Matching, "actor/ac_ins_kani.c"),
             Object(Matching, "actor/ac_ins_kera.c"),
             Object(Matching, "actor/ac_ins_mino.c"),
             Object(Matching, "actor/ac_ins_semi.c"),
