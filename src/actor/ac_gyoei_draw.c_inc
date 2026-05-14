@@ -183,8 +183,8 @@ static void aGYO_actor_draw_fish(GRAPH* graph, aGYO_CTRL_ACTOR* ctrl, GAME* game
         }
 
         if (cnt == 0) {
-            ctrl->swork2 = RANDOM(3) + 1;
-            ctrl->swork3 = RANDOM2(10) + 15;
+            ctrl->swork2 = (RANDOM_F(3) + 1) * 2;
+            ctrl->swork3 = (RANDOM2_F(10) + 15) * 2;
         }
 
         frame = 0;
@@ -195,7 +195,7 @@ static void aGYO_actor_draw_fish(GRAPH* graph, aGYO_CTRL_ACTOR* ctrl, GAME* game
     OPEN_POLY_OPA_DISP(graph);
 
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_LOAD | G_MTX_NOPUSH);
-    gSPDisplayList(POLY_OPA_DISP++, ((Gfx**)aGYO_displayList[ctrl->gyo_type])[(int)(frame * 0.5f)]);
+    gSPDisplayList(POLY_OPA_DISP++, ((Gfx**)aGYO_displayList[ctrl->gyo_type])[frame]);
 
     CLOSE_POLY_OPA_DISP(graph);
 

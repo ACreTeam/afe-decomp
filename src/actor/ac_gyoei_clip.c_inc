@@ -1,20 +1,35 @@
+#ifdef __INTELLISENSE__
+#include "ac_gyoei.h"
+
+#include "m_common_data.h"
+#include "m_actor_shadow.h"
+#include "libultra/libultra.h"
+#include "m_malloc.h"
+#include "sys_matrix.h"
+#include "m_skin_matrix.h"
+#include "m_rcp.h"
+#include "m_player_lib.h"
+#endif
+
 static int aGYO_searchCastFishNum(void) {
     GYOEI_ACTOR* gyoei = (GYOEI_ACTOR*)aGYO_ctrlActor;
     aGYO_CTRL_ACTOR* ctrl = gyoei->ctrl;
     int i;
+    int ret = -1;
 
     for (i = 0; i < aGYO_MAX_GYOEI; i++) {
         if ((ctrl[i].gyo_flags & 4) != 0) {
-            return i;
+            ret = i;
+            break;
         }
     }
 
-    return -1;
+    return ret;
 }
 
-static void aGYO_change_data_area(Object_Exchange_c* exc) {
-    int idx = aGYO_searchCastFishNum();
+static void aGYO_change_data_area() {
     GYOEI_ACTOR* gyoei = (GYOEI_ACTOR*)aGYO_ctrlActor;
+    int idx = aGYO_searchCastFishNum();
     // @BUG - idx can be -1... why isn't this bounds checked?
     aGYO_CTRL_ACTOR* ctrl = &gyoei->ctrl[idx];
 
@@ -60,6 +75,62 @@ static void aGYO_setupActor(aGYO_Init_c* init_data, int idx) {
     };
     // clang-format on
 
+    static int prog_type[aGYO_TYPE_EXTENDED_NUM] = {
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_CRUCIAN_CARP
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BROOK_TROUT
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_CARP
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_KOI
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_CATFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_SMALL_BASS
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BASS
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_LARGE_BASS
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BLUEGILL
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_GIANT_CATFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_GIANT_SNAKEHEAD
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BARBEL_STEED
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_DACE
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_PALE_CHUB
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BITTERLING
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_LOACH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_POND_SMELT
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_SWEETFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_CHERRY_SALMON
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_LARGE_CHAR
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_RAINBOW_TROUT
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_STRINGFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_SALMON
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_GOLDFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_PIRANHA
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_AROWANA
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_EEL
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_FRESHWATER_GOBY
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_ANGELFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_GUPPY
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_POPEYED_GOLDFISH
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_COELACANTH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_CRAWFISH
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_FROG
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_KILLIFISH
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_JELLYFISH
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_SEA_BASS
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_RED_SNAPPER
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_BARRED_KNIFEJAW
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_ARAPAIMA
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_PUFFER_FISH
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_FLOUNDER
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_SQUID
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_SWORDFISH
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_DAB
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_OCTOPUS
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_SEAHORSE
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_HORSE_MACKEREL
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_WHALE
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_EMPTY_CAN
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_BOOT
+        aGYO_GYO_TYPE_TEST, // aGYO_TYPE_OLD_TIRE
+        aGYO_GYO_TYPE_KASEKI, // aGYO_TYPE_SALMON2
+    };
+
     GYOEI_ACTOR* gyoei = (GYOEI_ACTOR*)aGYO_ctrlActor;
     aGYO_CTRL_ACTOR* ctrl = &gyoei->ctrl[idx];
     GAME_PLAY* play = (GAME_PLAY*)init_data->game;
@@ -75,7 +146,7 @@ static void aGYO_setupActor(aGYO_Init_c* init_data, int idx) {
     ctrl->col_flags |= 1;
 
     Actor_init_actor_class((ACTOR*)ctrl, &Dummy_Profile, NULL, play, -1, init_data->position.x, init_data->position.y,
-                           init_data->position.z, 0, 0, 0, play->block_table.block_x, play->block_table.block_z, -1,
+                           init_data->position.z, 0, 0, 0, init_data->bx, init_data->bz, -1,
                            EMPTY_NO, 0);
     Shape_Info_init((ACTOR*)ctrl, 0.0f, &mAc_ActorShadowCircle, 5.0f, 5.0f);
     ctrl->tools_class.actor_class.shape_info.shadow_alpha_change_rate = 0.6f;
@@ -102,41 +173,15 @@ static void aGYO_setupActor(aGYO_Init_c* init_data, int idx) {
     }
 
     {
-        mActor_proc* init_proc;
-
-        switch (ctrl->gyo_type) {
-            case aGYO_TYPE_SALMON2:
-                ctrl->gyo_type = aGYO_TYPE_SALMON;
-            // fallthrough
-            case aGYO_TYPE_COELACANTH:
-            case aGYO_TYPE_JELLYFISH:
-            case aGYO_TYPE_SEA_BASS:
-            case aGYO_TYPE_RED_SNAPPER:
-            case aGYO_TYPE_BARRED_KNIFEJAW:
-            case aGYO_TYPE_WHALE:
-                init_proc = &aGYO_program_dlftbl[aGYO_GYO_TYPE_KASEKI];
-                break;
-            default:
-                init_proc = &aGYO_program_dlftbl[aGYO_GYO_TYPE_TEST];
-                break;
+        mActor_proc* init_proc = &aGYO_program_dlftbl[prog_type[ctrl->gyo_type]];
+        if (ctrl->gyo_type == aGYO_TYPE_SALMON2) {
+            ctrl->gyo_type = aGYO_TYPE_SALMON;
         }
-
+        
         ctrl->tools_class.actor_class.mv_proc = *init_proc;
     }
 
     ctrl->tools_class.actor_class.drawn = TRUE;
-}
-
-static int aGYO_make_gyoei(aGYO_Init_c* init_data) {
-    int idx = aGYO_searchRegistSpace();
-    int ret = FALSE;
-
-    if (idx >= 0) {
-        aGYO_setupActor(init_data, idx);
-        ret = TRUE;
-    }
-
-    return ret;
 }
 
 static f32 aGYO_escape_distance(s16 type) {
@@ -212,13 +257,31 @@ static int aGYO_chk_live_gyoei(int bx, int bz, GAME* game) {
     int ret = FALSE;
 
     for (i = 0; i < aGYO_MAX_GYOEI; i++) {
-        if (ctrl->exist == TRUE && ctrl->tools_class.actor_class.block_x == bx &&
-            ctrl->tools_class.actor_class.block_z == bz) {
-            ret = TRUE;
-            break;
+        if (ctrl->exist == TRUE) {
+            int cur_bx;
+            int cur_bz;
+
+            if (mFI_Wpos2BlockNum(&cur_bx, &cur_bz, ctrl->tools_class.actor_class.world.position) == TRUE && cur_bx == bx && cur_bz == bz) {
+                ret = TRUE;
+            }
         }
 
         ctrl++;
+    }
+
+    return ret;
+}
+
+static int aGYO_make_gyoei(aGYO_Init_c* init_data) {
+    int ret = FALSE;
+    
+    if (mFI_Wpos2BlockNum(&init_data->bx, &init_data->bz, init_data->position) == TRUE && !aGYO_chk_live_gyoei(init_data->bx, init_data->bz, init_data->game)) {
+        int idx = aGYO_searchRegistSpace();
+        
+        if (idx >= 0 && idx < aGYO_MAX_GYOEI) {
+            aGYO_setupActor(init_data, idx);
+            ret = TRUE;
+        }
     }
 
     return ret;

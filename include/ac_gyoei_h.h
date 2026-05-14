@@ -16,12 +16,14 @@ enum {
     aGYO_BALLCHECK_TYPE_NUM
 };
 
-/* sizeof(aGYO_Init_c) == 0x18 */
+/* sizeof(aGYO_Init_c) == 0x20 */
 typedef struct gyoei_init_s {
   /* 0x00 */ int fish_type;
   /* 0x04 */ xyz_t position;
-  /* 0x10 */ int extra_data;
-  /* 0x14 */ GAME* game;
+  /* 0x10 */ int bx;
+  /* 0x14 */ int bz;
+  /* 0x18 */ int extra_data;
+  /* 0x1C */ GAME* game;
 } aGYO_Init_c;
 
 typedef int (*aGYO_make_proc)(aGYO_Init_c*);

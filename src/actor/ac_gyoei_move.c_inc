@@ -28,7 +28,9 @@ static void aGYO_BGcheck(aGYO_CTRL_ACTOR* ctrl) {
     }
 }
 
-static void aGYO_cull_check(ACTOR* actorx, GAME_PLAY* play) {
+static int aGYO_cull_check(ACTOR* actorx, GAME_PLAY* play) {
+    int ret = FALSE;
+    
     Skin_Matrix_PrjMulVector(&play->projection_matrix, &actorx->world.position, &actorx->camera_position, &actorx->camera_w);
     if (!Actor_draw_actor_no_culling_check(actorx)) {
         f32 dist;
@@ -38,10 +40,13 @@ static void aGYO_cull_check(ACTOR* actorx, GAME_PLAY* play) {
         dist = search_position_distance(&actorx->world.position, &playerx->world.position);
         if (dist > 600.0f && (actorx->block_x != play->block_table.block_x || actorx->block_z != play->block_table.block_z)) {
             aGYO_destruct(actorx, (GAME*)play);
+            ret = TRUE;
         }
     } else {
         actorx->state_bitfield |= ACTOR_STATE_NO_CULL;
     }
+
+    return ret;
 }
 
 static u8 bite_check(void) {
@@ -85,15 +90,14 @@ static void aGYO_actor_move(ACTOR* actorx, GAME* game) {
                 if ((ctrl->gyo_flags & 8) != 0) {
                     ctrl->gyo_flags &= ~8;
                     ctrl->gyo_flags |= 4;
-                    aGYO_change_data_area(&play->object_exchange);
+                    aGYO_change_data_area();
                 }
 
                 (*((ACTOR*)ctrl)->mv_proc)((ACTOR*)ctrl, game);
                 Actor_world_to_eye((ACTOR*)ctrl, 0.0f);
             }
 
-            aGYO_cull_check((ACTOR*)ctrl, play);
-            if ((ctrl->gyo_flags & 0x20) != 0) {
+            if (!aGYO_cull_check((ACTOR*)ctrl, play) && (ctrl->gyo_flags & 0x20) != 0) {
                 ctrl->gyo_flags &= ~0x20;
                 aGYO_destruct((ACTOR*)ctrl, game);
             }
