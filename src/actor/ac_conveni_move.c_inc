@@ -214,7 +214,11 @@ static void aCNV_set_bgOffset(CONVENI_ACTOR* conveni, int offs) {
     for (i = 0; i < ARRAY_COUNT(height_table_ct); i++) {
         pos.z = conveni->struct_class.actor_class.home.position.z + addZ[i];
         pos.x = conveni->struct_class.actor_class.home.position.x + addX[i];
-        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 404);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 425);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 428);
+#endif
 
         offset++;
     }
@@ -231,7 +235,11 @@ static void aCNV_close_wait(CONVENI_ACTOR* conveni, GAME_PLAY* play) {
 
     if ((mSP_ShopOpen() == mSP_SHOP_STATUS_OPEN) || (mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT)) {
         if (aCNV_check_player(actorx, play) != 0) {
-            aCNV_setup_action(conveni, aCNV_ACTION_OPEN_DOOR);
+            if (Common_Get(shop_force_open_door_flag) == TRUE) {
+                aCNV_setup_action(conveni, aCNV_ACTION_FORCE_OPEN_DOOR);
+            } else {
+                aCNV_setup_action(conveni, aCNV_ACTION_OPEN_DOOR);
+            }
         }
         return;
     }
@@ -241,6 +249,15 @@ static void aCNV_close_wait(CONVENI_ACTOR* conveni, GAME_PLAY* play) {
     }
 }
 
+static void aCNV_request_close_door(CONVENI_ACTOR* conveni) {
+    if (Common_Get(prev_shop_force_open_door_flag) == TRUE || Common_Get(shop_force_open_door_flag) == TRUE) {
+        aCNV_setup_action(conveni, aCNV_ACTION_FORCE_CLOSE_DOOR);
+    } else {
+        aCNV_setup_action(conveni, aCNV_ACTION_CLOSE_DOOR);
+    }
+}
+
+
 static void aCNV_open_wait(CONVENI_ACTOR* conveni, GAME_PLAY* play) {
     ACTOR* actorx;
     xyz_t pos;
@@ -248,10 +265,10 @@ static void aCNV_open_wait(CONVENI_ACTOR* conveni, GAME_PLAY* play) {
     actorx = (ACTOR*)conveni;
     if (!mPlib_check_player_actor_main_index_OutDoorMove((GAME*)play)) {
         if (mSP_ShopOpen() != mSP_SHOP_STATUS_OPEN && mSP_ShopOpen() != mSP_SHOP_STATUS_OPENEVENT) {
-            aCNV_setup_action(conveni, aCNV_ACTION_CLOSE_DOOR);
+            aCNV_request_close_door(conveni);
         } else if (aCNV_check_player(actorx, play) != 2) {
             if (aCNV_check_player(actorx, play) == 0) {
-                aCNV_setup_action(conveni, aCNV_ACTION_CLOSE_DOOR);
+                aCNV_request_close_door(conveni);
             }
         } else if (aCNV_check_player2(play)) {
             pos.y = GET_PLAYER_ACTOR_ACTOR(play)->world.position.y;
@@ -289,17 +306,19 @@ static void aCNV_pl_into_wait(CONVENI_ACTOR* conveni, GAME_PLAY* play) {
 
 static void aCNV_setup_action(CONVENI_ACTOR* conveni, int action) {
     static cKF_Animation_R_c* ani[] = { &cKF_ba_r_obj_s_shop2, &cKF_ba_r_obj_w_shop2 };
-    static f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f };
-    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f };
-    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f };
+    f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.2125f, 0.2125f };
+    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f, 1.0f, 16.0f };
+    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f, 16.0f, 1.0f };
 
     // clang-format off
-    static void* process[] = {
-        &aCNV_close_wait,
-        &aCNV_open_wait,
-        &aCNV_close_door,
-        &aCNV_open_door,
-        &aCNV_pl_into_wait,
+    static aSTR_MOVE_PROC process[] = {
+        (aSTR_MOVE_PROC)&aCNV_close_wait,
+        (aSTR_MOVE_PROC)&aCNV_open_wait,
+        (aSTR_MOVE_PROC)&aCNV_close_door,
+        (aSTR_MOVE_PROC)&aCNV_open_door,
+        (aSTR_MOVE_PROC)&aCNV_pl_into_wait,
+        (aSTR_MOVE_PROC)&aCNV_open_door,
+        (aSTR_MOVE_PROC)&aCNV_close_door,
     };
     // clang-format on
 
@@ -317,6 +336,13 @@ static void aCNV_setup_action(CONVENI_ACTOR* conveni, int action) {
         case aCNV_ACTION_OPEN_DOOR:
             aCNV_set_door_SE(conveni, NA_SE_44B);
             break;
+        case aCNV_ACTION_FORCE_OPEN_DOOR:
+            aCNV_set_door_SE(conveni, 0x46E);
+            break;
+        case aCNV_ACTION_FORCE_CLOSE_DOOR:
+            aCNV_set_door_SE(conveni, 0x470);
+            break;
+            
     }
 
     conveni->struct_class.action_proc = process[action];
@@ -337,6 +363,7 @@ static void aCNV_actor_move(ACTOR* actor, GAME* game) {
 
     (*conveni->struct_class.action_proc)((STRUCTURE_ACTOR*)conveni, play);
     chase_f(&conveni->struct_class.arg0_f, aCNV_ctrl_light(conveni), 0.019532442f); // approx sqrt(0.000385f)
+    mSP_checking_door(game, actor);
 }
 
 static void aCNV_actor_init(ACTOR* actor, GAME* game) {

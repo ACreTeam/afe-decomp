@@ -19,6 +19,8 @@ enum {
     aSPR_ACTION_CLOSE_DOOR,
     aSPR_ACTION_OPEN_DOOR,
     aSPR_ACTION_PL_INTO_WAIT,
+    aSPR_ACTION_FORCE_OPEN_DOOR,
+    aSPR_ACTION_FORCE_CLOSE_DOOR,
 
     aSPR_ACTION_NUM
 };
@@ -82,6 +84,7 @@ static void aSPR_actor_ct(ACTOR* actorx, GAME* game) {
     int action;
     int x;
     int z;
+    xyz_t door_pos;
 
     super = (SUPER_ACTOR*)actorx;
     play = (GAME_PLAY*)game;
@@ -108,6 +111,12 @@ static void aSPR_actor_ct(ACTOR* actorx, GAME* game) {
     }
 
     aSPR_setup_action(super, action);
+
+    door_pos = actorx->world.position;
+    door_pos.x -= 40.0f;
+    door_pos.z += 80.0f;
+    mSP_start_check_door(actorx, &door_pos);
+
     super->struct_class.keyframe_state = cKF_SkeletonInfo_R_play(&super->struct_class.keyframe);
     super->struct_class.keyframe_saved_keyframe = cKF_STATE_STOPPED;
     super->struct_class.arg0_f = aSPR_ctrl_light(super);
@@ -117,6 +126,7 @@ static void aSPR_actor_dt(ACTOR* actorx, GAME* game) {
     SUPER_ACTOR* super;
     super = (SUPER_ACTOR*)actorx;
 
+    mSP_end_check_door();
     cKF_SkeletonInfo_R_dt(&super->struct_class.keyframe);
     actorx->world.position.x -= -mFI_UT_WORLDSIZE_HALF_X_F;
 }

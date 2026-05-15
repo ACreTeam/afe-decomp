@@ -53,7 +53,11 @@ static void aSHOP_set_bgOffset(STRUCTURE_ACTOR* shop, int offs) {
         for (j = 0; j < 4; j++) {
             if (j + i * 4 != 0 && j + i * 4 != 3 && j + i * 4 != 12 && j + i * 4 != 15) {
                 pos.x = shop->actor_class.home.position.x + addX[j];
-                mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 221);
+#if VERSION == VER_GAEJ01_00
+                mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 251);
+#else
+                mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 254);
+#endif
             }
 
             offset++;
@@ -215,7 +219,12 @@ static void aSHOP_close_wait(STRUCTURE_ACTOR* shop, GAME_PLAY* play) {
     }
 
     if ((mSP_ShopOpen() == mSP_SHOP_STATUS_OPEN) || (mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT)) {
-        aSHOP_setup_action(shop, aSHOP_ACTION_OPEN_DOOR);
+        if (Common_Get(shop_force_open_door_flag) == TRUE) {
+            sAdo_OngenTrgStart(0x46D, &actor->world.position);
+            aSHOP_setup_action(shop, aSHOP_ACTION_FORCE_OPEN_DOOR);
+        } else {
+            aSHOP_setup_action(shop, aSHOP_ACTION_OPEN_DOOR);
+        }
         return;
     }
 
@@ -239,8 +248,13 @@ static void aSHOP_open_wait(STRUCTURE_ACTOR* shop, GAME_PLAY* play) {
     }
 
     if (mSP_ShopOpen() != mSP_SHOP_STATUS_OPEN && mSP_ShopOpen() != mSP_SHOP_STATUS_OPENEVENT) {
-        sAdo_OngenTrgStart(8, &actor->world.position);
-        aSHOP_setup_action(shop, aSHOP_ACTION_CLOSE_DOOR);
+        if (Common_Get(prev_shop_force_open_door_flag) == TRUE || Common_Get(shop_force_open_door_flag) == TRUE) {
+            sAdo_OngenTrgStart(0x46F, &actor->world.position);
+            aSHOP_setup_action(shop, aSHOP_ACTION_FORCE_CLOSE_DOOR);
+        } else {
+            sAdo_OngenTrgStart(8, &actor->world.position);
+            aSHOP_setup_action(shop, aSHOP_ACTION_CLOSE_DOOR);
+        }
         return;
     }
 
@@ -286,12 +300,21 @@ static void aSHOP_pl_into_wait(STRUCTURE_ACTOR* shop, GAME_PLAY* play) {
 
 static void aSHOP_setup_action(STRUCTURE_ACTOR* shop, int action) {
     static cKF_Animation_R_c* ani[] = { &cKF_ba_r_obj_s_shop1, &cKF_ba_r_obj_w_shop1 };
-    static f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f };
-    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f };
-    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f };
+    static f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0875f, 0.125f };
+    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f, 1.0f, 16.0f };
+    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f, 16.0f, 1.0f };
 
-    static aSTR_MOVE_PROC process[] = { &aSHOP_close_wait, &aSHOP_open_wait, &aSHOP_close_door, &aSHOP_open_door,
-                                        &aSHOP_pl_into_wait };
+    static aSTR_MOVE_PROC process[] = {
+        // clang-format off
+        &aSHOP_close_wait,
+        &aSHOP_open_wait,
+        &aSHOP_close_door,
+        &aSHOP_open_door,
+        &aSHOP_pl_into_wait,
+        &aSHOP_open_door,
+        &aSHOP_close_door,
+        // clang-format on
+    };
 
     int winter;
 
@@ -320,12 +343,17 @@ static void aSHOP_actor_move(ACTOR* actor, GAME* game) {
 
     target = (s16)shop->arg0;
     if (aSHOP_ctrl_light(shop)) {
-        chase_s(&target, DEG2SHORT_ANGLE(90.0f) - 1, 320); // 0x3FFF
+        if (Common_Get(shop_force_open_door_flag) == TRUE) {
+            chase_s(&target, DEG2SHORT_ANGLE(90.0f) - 1, 160); // 0x3FFF
+        } else {
+            chase_s(&target, DEG2SHORT_ANGLE(90.0f) - 1, 320); // 0x3FFF
+        }
     } else {
         chase_s(&target, DEG2SHORT_ANGLE(0.0f), 320);
     }
 
     shop->arg0 = target;
+    mSP_checking_door(game, actor);
 }
 
 static void aSHOP_actor_init(ACTOR* actor, GAME* game) {

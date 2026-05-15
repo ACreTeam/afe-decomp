@@ -19,6 +19,8 @@ enum {
     aCNV_ACTION_CLOSE_DOOR,
     aCNV_ACTION_OPEN_DOOR,
     aCNV_ACTION_PL_INTO_WAIT,
+    aCNV_ACTION_FORCE_OPEN_DOOR,
+    aCNV_ACTION_FORCE_CLOSE_DOOR,
 
     aCNV_ACTION_NUM
 };
@@ -83,6 +85,7 @@ static void aCNV_actor_ct(ACTOR* actorx, GAME* game) {
     int action;
     int x;
     int z;
+    xyz_t door_pos;
 
     conveni = (CONVENI_ACTOR*)actorx;
     play = (GAME_PLAY*)game;
@@ -108,6 +111,12 @@ static void aCNV_actor_ct(ACTOR* actorx, GAME* game) {
     }
 
     aCNV_setup_action(conveni, action);
+
+    door_pos = actorx->world.position;
+    door_pos.x -= 20.0f;
+    door_pos.z += 60.0f;
+    mSP_start_check_door(actorx, &door_pos);
+
     conveni->struct_class.keyframe_state = cKF_SkeletonInfo_R_play(&conveni->struct_class.keyframe);
     conveni->struct_class.keyframe_saved_keyframe = cKF_STATE_STOPPED;
     conveni->struct_class.arg0_f = aCNV_ctrl_light(conveni);
@@ -117,6 +126,7 @@ static void aCNV_actor_dt(ACTOR* actorx, GAME* game) {
     CONVENI_ACTOR* conveni;
     conveni = (CONVENI_ACTOR*)actorx;
 
+    mSP_end_check_door();
     cKF_SkeletonInfo_R_dt(&conveni->struct_class.keyframe);
     actorx->world.position.x -= -mFI_UT_WORLDSIZE_X_F;
 }

@@ -19,6 +19,8 @@ enum {
     aDPT_ACTION_CLOSE_DOOR,
     aDPT_ACTION_OPEN_DOOR,
     aDPT_ACTION_PL_INTO_WAIT,
+    aDPT_ACTION_FORCE_OPEN_DOOR,
+    aDPT_ACTION_FORCE_CLOSE_DOOR,
 
     aDPT_ACTION_NUM
 };
@@ -83,6 +85,7 @@ static void aDPT_actor_ct(ACTOR* actorx, GAME* game) {
     int action;
     int x;
     int z;
+    xyz_t door_pos;
 
     depart = (DEPART_ACTOR*)actorx;
     play = (GAME_PLAY*)game;
@@ -109,6 +112,12 @@ static void aDPT_actor_ct(ACTOR* actorx, GAME* game) {
     }
 
     aDPT_setup_action(depart, action);
+
+    door_pos = actorx->world.position;
+    door_pos.x -= 40.0f;
+    door_pos.z += 80.0f;
+    mSP_start_check_door(actorx, &door_pos);
+
     depart->struct_class.keyframe_state = cKF_SkeletonInfo_R_play(&depart->struct_class.keyframe);
     depart->struct_class.keyframe_saved_keyframe = cKF_STATE_STOPPED;
     depart->struct_class.arg0_f = aDPT_ctrl_light(depart);
@@ -118,6 +127,7 @@ static void aDPT_actor_dt(ACTOR* actorx, GAME* game) {
     DEPART_ACTOR* depart;
     depart = (DEPART_ACTOR*)actorx;
 
+    mSP_end_check_door();
     cKF_SkeletonInfo_R_dt(&depart->struct_class.keyframe);
     actorx->world.position.x -= -mFI_UT_WORLDSIZE_HALF_X_F;
 }

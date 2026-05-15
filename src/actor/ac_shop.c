@@ -19,6 +19,8 @@ enum {
     aSHOP_ACTION_CLOSE_DOOR,
     aSHOP_ACTION_OPEN_DOOR,
     aSHOP_ACTION_PL_INTO_WAIT,
+    aSHOP_ACTION_FORCE_OPEN_DOOR,
+    aSHOP_ACTION_FORCE_CLOSE_DOOR,
 
     aSHOP_ACTION_NUM
 };
@@ -82,6 +84,7 @@ static void aSHOP_actor_ct(ACTOR* actor, GAME* game) {
     int action;
     int x;
     int z;
+    xyz_t door_pos;
 
     shop = (STRUCTURE_ACTOR*)actor;
     play = (GAME_PLAY*)game;
@@ -100,6 +103,11 @@ static void aSHOP_actor_ct(ACTOR* actor, GAME* game) {
     actor->talk_distance = 80.0f;
     actor->cull_width = 550.0f;
     actor->cull_radius = 550.0f;
+
+    door_pos = actor->world.position;
+    door_pos.x -= mFI_UT_WORLDSIZE_X_F;
+    door_pos.z += mFI_UT_WORLDSIZE_Z_F;
+    mSP_start_check_door(actor, &door_pos);
 
     if (mSP_ShopOpen() != 2) {
         action = aSHOP_ACTION_CLOSE_WAIT;
@@ -127,6 +135,7 @@ static void aSHOP_actor_dt(ACTOR* actor, GAME* game) {
     STRUCTURE_ACTOR* shop;
     shop = (STRUCTURE_ACTOR*)actor;
 
+    mSP_end_check_door();
     cKF_SkeletonInfo_R_dt(&shop->keyframe);
     actor->world.position.x = actor->world.position.x - -20.0f;
     actor->world.position.z = actor->world.position.z - 20.0f;

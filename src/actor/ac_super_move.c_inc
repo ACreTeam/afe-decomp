@@ -236,7 +236,11 @@ static void aSPR_set_bgOffset(SUPER_ACTOR* super, int offs) {
     for (i = 0; i < ARRAY_COUNT(height_table_ct); i++) {
         pos.z = super->struct_class.actor_class.home.position.z + addZ[i];
         pos.x = super->struct_class.actor_class.home.position.x + addX[i];
-        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 430);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 451);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, *offset, __FILE__, 454);
+#endif
 
         offset++;
     }
@@ -253,13 +257,25 @@ static void aSPR_close_wait(SUPER_ACTOR* super, GAME_PLAY* play) {
 
     if ((mSP_ShopOpen() == mSP_SHOP_STATUS_OPEN) || (mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT)) {
         if (aSPR_check_player(actorx, play) != 0) {
-            aSPR_setup_action(super, aSPR_ACTION_OPEN_DOOR);
+            if (Common_Get(shop_force_open_door_flag) == TRUE) {
+                aSPR_setup_action(super, aSPR_ACTION_FORCE_OPEN_DOOR);
+            } else {
+                aSPR_setup_action(super, aSPR_ACTION_OPEN_DOOR);
+            }
         }
         return;
     }
 
     if (aSPR_check_player(actorx, play) == 2) {
         mDemo_Request(mDemo_TYPE_TALK, actorx, &aSPR_set_talk_info_close_wait);
+    }
+}
+
+static void aSPR_request_close_door(SUPER_ACTOR* super) {
+    if (Common_Get(prev_shop_force_open_door_flag) == TRUE || Common_Get(shop_force_open_door_flag) == TRUE) {
+        aSPR_setup_action(super, aSPR_ACTION_FORCE_CLOSE_DOOR);
+    } else {
+        aSPR_setup_action(super, aSPR_ACTION_CLOSE_DOOR);
     }
 }
 
@@ -270,10 +286,10 @@ static void aSPR_open_wait(SUPER_ACTOR* super, GAME_PLAY* play) {
     actorx = (ACTOR*)super;
     if (!mPlib_check_player_actor_main_index_OutDoorMove((GAME*)play)) {
         if (mSP_ShopOpen() != mSP_SHOP_STATUS_OPEN && mSP_ShopOpen() != mSP_SHOP_STATUS_OPENEVENT) {
-            aSPR_setup_action(super, aSPR_ACTION_CLOSE_DOOR);
+            aSPR_request_close_door(super);
         } else if (aSPR_check_player(actorx, play) != 2) {
             if (aSPR_check_player(actorx, play) == 0) {
-                aSPR_setup_action(super, aSPR_ACTION_CLOSE_DOOR);
+                aSPR_request_close_door(super);
             }
         } else if (aSPR_check_player2(play)) {
             pos.y = GET_PLAYER_ACTOR_ACTOR(play)->world.position.y;
@@ -311,17 +327,19 @@ static void aSPR_pl_into_wait(SUPER_ACTOR* super, GAME_PLAY* play) {
 
 static void aSPR_setup_action(SUPER_ACTOR* super, int action) {
     static cKF_Animation_R_c* ani[] = { &cKF_ba_r_obj_s_shop3, &cKF_ba_r_obj_w_shop3 };
-    static f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f };
-    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f };
-    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f };
+    static f32 anime_spd[] = { 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.2125f, 0.2125f };
+    static f32 set[] = { 1.0f, 16.0f, 16.0f, 1.0f, 16.0f, 1.0f, 16.0f };
+    static f32 end[] = { 1.0f, 16.0f, 1.0f, 16.0f, 16.0f, 16.0f, 1.0f };
 
     // clang-format off
-    static void* process[] = {
-        &aSPR_close_wait,
-        &aSPR_open_wait,
-        &aSPR_close_door,
-        &aSPR_open_door,
-        &aSPR_pl_into_wait,
+    static aSTR_MOVE_PROC process[] = {
+        (aSTR_MOVE_PROC)&aSPR_close_wait,
+        (aSTR_MOVE_PROC)&aSPR_open_wait,
+        (aSTR_MOVE_PROC)&aSPR_close_door,
+        (aSTR_MOVE_PROC)&aSPR_open_door,
+        (aSTR_MOVE_PROC)&aSPR_pl_into_wait,
+        (aSTR_MOVE_PROC)&aSPR_open_door,
+        (aSTR_MOVE_PROC)&aSPR_close_door,
     };
     // clang-format on
 
@@ -338,6 +356,12 @@ static void aSPR_setup_action(SUPER_ACTOR* super, int action) {
             break;
         case aSPR_ACTION_OPEN_DOOR:
             aSPR_set_door_SE(super, NA_SE_44B);
+            break;
+        case aSPR_ACTION_FORCE_CLOSE_DOOR:
+            aSPR_set_door_SE(super, 0x470);
+            break;
+        case aSPR_ACTION_FORCE_OPEN_DOOR:
+            aSPR_set_door_SE(super, 0x46E);
             break;
     }
 
@@ -359,6 +383,7 @@ static void aSPR_actor_move(ACTOR* actor, GAME* game) {
 
     (*super->struct_class.action_proc)((STRUCTURE_ACTOR*)super, play);
     chase_f(&super->struct_class.arg0_f, aSPR_ctrl_light(super), 0.019532442f); // approx sqrt(0.000385f)
+    mSP_checking_door(game, actor);
 }
 
 static void aSPR_actor_init(ACTOR* actor, GAME* game) {
