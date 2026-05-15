@@ -630,7 +630,7 @@ static int set_emsg_default() {
     s16 flags = Common_Get(event_title_flags);
     s16 title_no;
 
-    memcpy(&demo->data.emsg.door_data, Common_GetPointer(event_door_data), sizeof(Door_data_c));
+    memcpy(&demo->data.emsg.door_data, Common_GetPointer(event_door_data), sizeof(*Common_GetPointer(event_door_data)));
     title_no = get_title_no_for_event(event_id);
 
     if (title_no >= 0) {
@@ -702,7 +702,7 @@ static int wait_emsg_end() {
 }
 
 static int set_emsg2_default() {
-    memcpy(&demo->data.emsg.door_data, Common_GetPointer(event_door_data), sizeof(Door_data_c));
+    memcpy(&demo->data.emsg.door_data, Common_GetPointer(event_door_data), sizeof(*Common_GetPointer(event_door_data)));
     demo->camera_type = CAMERA2_PROCESS_LOCK;
     demo->data.emsg.msg_delay_timer = 0;
     demo->data.emsg.scene_delay_timer = 30;
@@ -840,7 +840,7 @@ static int mDemo_alarm_next_msg(void) {
 }
 
 static int set_alarm_default() {
-    memcpy(&demo->data.alarm.door_data, Common_GetPointer(event_door_data), sizeof(Door_data_c));
+    memcpy(&demo->data.alarm.door_data, Common_GetPointer(event_door_data), sizeof(*Common_GetPointer(event_door_data)));
     demo->data.alarm.msg_no = 0x0939;
     demo->data.alarm.window_color.r = 235;
     demo->data.alarm.window_color.g = 255;
