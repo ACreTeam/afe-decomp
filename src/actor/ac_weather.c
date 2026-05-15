@@ -699,17 +699,16 @@ static void Weather_Actor_move(ACTOR* actor, GAME* game) {
     aWeather_ChangeWeatherTime0(actor);
 
     if (Common_Get(weather) == mEnv_WEATHER_RAIN) {
-        s16 umbrella;
-        mActor_name_t field_id;
-
-        umbrella = mPlib_check_player_open_umbrella(game);
-
+        s16 umbrella = mPlib_check_player_open_umbrella(game);
+        
+        
 #if VERSION == VER_GAEJ01_00
         if (umbrella != weather->umbrella_flag) {
             aWeather_ChangeEnvSE(actor, game, weather->current_status, weather->current_level);
         }
 #else
-        field_id = mFI_GetFieldId();
+        // @hack - Pretty sure we aren't or'ing by a u64 value here but regswaps occur otherwise
+        mActor_name_t field_id = mFI_GetFieldId() | (u64)mFI_GET_TYPE(mFI_FIELDTYPE2_FG);
         if (mFI_GET_TYPE(field_id) == mFI_FIELDTYPE2_FG && umbrella != weather->umbrella_flag) {
             aWeather_ChangeEnvSE(actor, game, weather->current_status, weather->current_level);
         }
