@@ -264,6 +264,12 @@ struct message_window_s {
     /* 0x460 */ mMsg_Request_Data_c request_data;
 };
 
+typedef struct msg_bmc_info_s {
+    u32 start_addr;
+    int entry_idx;
+    rgba_t color;
+} mMsg_bmc_info_c;
+
 extern void mMsg_aram_init();
 extern void mMsg_aram_init2();
 extern void mMsg_ct(GAME* game);
@@ -343,6 +349,8 @@ extern void mMsg_sound_set_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 extern void mMsg_sound_unset_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 
 extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, int str_len);
+extern void mMsgLoad_bmc_init(mMsg_bmc_info_c* bmc_info, u32 start_addr, int idx);
+extern void mMsgLoad_bmc_load(mMsg_bmc_info_c* bmc_info);
 
 /* Macros */
 
@@ -377,6 +385,8 @@ extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, 
 #define mMsg_REQUEST_MAIN_APPEAR() mMsg_request_main_appear(mMsg_Get_base_window_p())
 #define mMsg_REQUEST_MAIN_APPEAR_WAIT_TYPE1() mMsg_request_main_appear_wait_type1(mMsg_Get_base_window_p());
 #define mMsg_REQUEST_MAIN_APPEAR_WAIT_TYPE2() mMsg_request_main_appear_wait_type2(mMsg_Get_base_window_p());
+
+extern u32 Msg_color_start;
 
 #ifdef __cplusplus
 }

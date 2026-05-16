@@ -15,7 +15,7 @@ static int sChk_board_save_check() {
         }
 
         for (j = 0; j < MAIL_BODY_LEN; j++) {
-            if (mFont_char_save_data_check(msg[0])) {
+            if (mFont_char_save_data_check_unshort(msg[0])) {
                 mFRm_ERRORLINE(73);
                 return TRUE;
             }

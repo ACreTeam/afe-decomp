@@ -13,24 +13,27 @@
 #include "m_rcp.h"
 #include "libc64/math64.h"
 #include "libultra/libultra.h"
+#include "m_common_data.h"
+#include "m_msg.h"
+#include "padmgr.h"
 
 #define mFont_CC_FONT 0, 0, 0, PRIMITIVE, PRIMITIVE, 0, TEXEL0, 0
 #define mFont_CC_NOFONT 0, 0, 0, PRIMITIVE, 0, PRIMITIVE, TEXEL0, PRIMITIVE
 
 #include "../src/game/m_font_offset.c_inc"
 #include "../src/game/m_font_main.c_inc"
+#include "../src/game/m_font_wide.c_inc"
 #include "../src/game/m_font_mark.c_inc"
 #include "../src/game/m_font_rect.c_inc"
 
 /* @unused static u8* mFont_Get_end_load_texture() */
 
 extern void mFont_ct() {
-    // code removed probably
+    mFont_CurrentScale_init();
+    mFont_CurrentColor_init();
 }
 
-static int mMsg_CutLeftSpace(u8* str, int str_len) {
-    // This should've been renamed or moved to m_message.h
-
+static int mFont_CutLeftSpace(u8* str, int str_len) {
     u8* dst;
     u8* src;
     int i, j;
@@ -126,18 +129,18 @@ extern int mFont_UnintToString(u8* str, int figure, u32 num, int figure_start, i
     }
 
     if (left_cut) {
-        return mMsg_CutLeftSpace(str, figure);
+        return mFont_CutLeftSpace(str, figure);
     }
 
     return figure;
 }
 
-extern int mFont_char_save_data_check(u8 c) {
+extern int mFont_char_save_data_check_unshort(u16 c) {
     return c == CHAR_CONTROL_CODE || c == CHAR_MESSAGE_TAG;
 }
 
 extern u8 mFont_small_to_capital(u8 small) {
-    static const u8 tbl[56][2] = {
+    static const u8 tbl[][2] = {
         { CHAR_a, CHAR_A },
         { CHAR_b, CHAR_B },
         { CHAR_c, CHAR_C },
@@ -164,43 +167,13 @@ extern u8 mFont_small_to_capital(u8 small) {
         { CHAR_x, CHAR_X },
         { CHAR_y, CHAR_Y },
         { CHAR_z, CHAR_Z },
-        { CHAR_DIARESIS_a, CHAR_DIAERESIS_A },
-        { CHAR_GRAVE_a, CHAR_GRAVE_A },
-        { CHAR_ACUTE_a, CHAR_ACUTE_A },
-        { CHAR_CIRCUMFLEX_a, CHAR_CIRCUMFLEX_A },
-        { CHAR_TILDE_a, CHAR_TILDE_A },
-        { CHAR_ANGSTROM_a, CHAR_ANGSTROM_A },
-        { CHAR_LOWER_CEDILLA, CHAR_CEDILLA },
-        { CHAR_GRAVE_e, CHAR_GRAVE_E },
-        { CHAR_ACUTE_e, CHAR_ACUTE_E },
-        { CHAR_CIRCUMFLEX_e, CHAR_CIRCUMFLEX_E },
-        { CHAR_DIARESIS_e, CHAR_DIARESIS_E },
-        { CHAR_GRAVE_i, CHAR_GRAVE_I },
-        { CHAR_ACUTE_i, CHAR_ACUTE_I },
-        { CHAR_CIRCUMFLEX_i, CHAR_CIRCUMFLEX_I },
-        { CHAR_DIARESIS_i, CHAR_DIARESIS_I },
-        { CHAR_LOWER_ETH, CHAR_ETH },
-        { CHAR_TILDE_n, CHAR_TILDE_N },
-        { CHAR_GRAVE_o, CHAR_GRAVE_O },
-        { CHAR_ACUTE_o, CHAR_ACUTE_O },
-        { CHAR_CIRCUMFLEX_o, CHAR_CIRCUMFLEX_O },
-        { CHAR_TILDE_o, CHAR_TILDE_O },
-        { CHAR_DIARESIS_o, CHAR_DIARESIS_O },
-        { CHAR_oe, CHAR_OE },
-        { CHAR_GRAVE_u, CHAR_GRAVE_U },
-        { CHAR_ACUTE_u, CHAR_ACUTE_U },
-        { CHAR_CIRCUMFLEX_u, CHAR_CIRCUMFLEX_U },
-        { CHAR_DIARESIS_u, CHAR_DIARESIS_U },
-        { CHAR_ACUTE_y, CHAR_ACUTE_Y },
-        { CHAR_LOWER_THORN, CHAR_THORN },
-        { CHAR_LOWER_ASH, CHAR_ASH },
     };
 
     u8 res = small;
     u8* t = (u8*)tbl;
     int i;
 
-    for (i = 0; i < 56; i++, t += 2) {
+    for (i = 0; i < ARRAY_COUNT(tbl); i++, t += 2) {
         if (t[0] == small) {
             res = t[1];
             break;
@@ -208,4 +181,177 @@ extern u8 mFont_small_to_capital(u8 small) {
     }
 
     return res;
+}
+
+extern int mFont_Check_Cont(u8 c) {
+    return c == CHAR_CONTROL_CODE;
+}
+
+extern int mFont_Check_ContId(const u8* str, int cont_id) {
+    int ret = FALSE;
+
+    if (mFont_Check_Cont(str[0]) && str[1] == cont_id) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+extern u8 mFont_Get_ContPrmU8(const u8* str) {
+    return str[2];
+}
+
+extern int mFont_Check_Tag(u8 c) {
+    return c == CHAR_MESSAGE_TAG;
+}
+
+extern u8 mFont_Get_TagSize(const u8* str) {
+    return str[1];
+}
+
+extern int mFont_Get_TagGroup(const u8* str) {
+    return str[2];
+}
+
+extern int mFont_Get_TagId(const u8* str) {
+    return (str[3] << 8) | str[4];
+}
+
+extern int mFont_Check_TagId(const u8* str, int args, int group, int id) {
+    int ret = FALSE;
+
+    if (mFont_Check_Tag(str[0])) {
+        int chk_grp = str[2];
+        int chk_id = mFont_Get_TagId(str);
+
+        if (chk_grp == group && chk_id == id) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+extern u8 mFont_Get_TagPrmU8(const u8* str) {
+    return str[5];
+}
+
+extern u16 mFont_Get_TagPrmU16(const u8* str) {
+    return (str[5] << 8) | str[6];
+}
+
+extern void mFont_Get_TagPrmU16U16(const u8* str, u16* prm0, u16* prm1) {
+    *prm0 = (str[5] << 8) | str[6];
+    *prm1 = (str[7] << 8) | str[8];
+}
+
+extern void mFont_Get_TagPrmU16U16U16(const u8* str, u16* prm0, u16* prm1, u16* prm2) {
+    *prm0 = (str[5] << 8) | str[6];
+    *prm1 = (str[7] << 8) | str[8];
+    *prm2 = (str[9] << 8) | str[10];
+}
+
+extern void mFont_Get_TagPrmU16U16U16U16(const u8* str, u16* prm0, u16* prm1, u16* prm2, u16* prm3) {
+    *prm0 = (str[5] << 8) | str[6];
+    *prm1 = (str[7] << 8) | str[8];
+    *prm2 = (str[9] << 8) | str[10];
+    *prm3 = (str[11] << 8) | str[12];
+}
+
+extern void mFont_Get_TagPrmU8U16(const u8* str, u8* prm0, u16* prm1) {
+    *prm0 = str[5];
+    *prm1 = (str[6] << 8) | str[7];
+}
+
+extern void mFont_Get_TagPrmU8U16U16(const u8* str, u8* prm0, u16* prm1, u16* prm2) {
+    *prm0 = str[5];
+    *prm1 = (str[6] << 8) | str[7];
+    *prm2 = (str[8] << 8) | str[9];
+}
+
+extern void mFontTag_get_KanjiCom(const u8* str, int* lvl, int* bank) {
+    u8 prm = mFont_Get_TagPrmU8(str);
+
+    if (prm < 10) {
+        *bank = 0;
+    } else {
+        *bank = 10;
+        prm -= 10;
+    }
+
+    *lvl = prm;
+}
+
+extern void mFontTag_Get_Ruby(const u8* str, mFontRuby_c* ruby_info) {
+    u8 group = mFont_Get_TagGroup(str); // @unused
+    u16 id = mFont_Get_TagId(str); // @unused
+    u8 size = mFont_Get_TagSize(str);
+
+    ruby_info->cmd_size = (u8)size;
+    ruby_info->kana_count = mFont_Get_TagPrmU8(str);
+    ruby_info->ruby_start = 6;
+    ruby_info->ruby_count = size - ruby_info->ruby_start;
+}
+
+extern int mFont_GetPlayerKanjiLv(void) {
+    if (Common_Get(kanji_level_unset)) {
+        return Common_Get(cur_kanji_lv);
+    } else {
+        int lv = Now_Private->kanji_pl_lv;
+
+        if (mFont_GetKanjiLevel_debug() > 0 && mFont_GetKanjiLevel_debug() <= 6) {
+            lv = mFont_GetKanjiLevel_debug() - 1;
+        }
+
+        return lv;
+    }
+}
+
+extern void mFont_Change_RubyToKana(u8* str, int len) {
+    int i;
+    mFontRuby_c ruby;
+
+    i = 0;
+    do {
+        u8* pb = str + i;
+
+        if (mFont_Check_Tag(*pb)) {
+            int tag_group = mFont_Get_TagGroup(pb);
+            int tag_id = mFont_Get_TagId(pb);
+
+            if (tag_group == mFont_TAG_GROUP_SYS && tag_id == mFont_TAG_SYS_RUBY) {
+                mFontTag_Get_Ruby(pb, &ruby);
+                mMsg_MoveDataCut(str, i + ruby.cmd_size, i + ruby.cmd_size + ruby.kana_count, len, TRUE);
+                mMsg_MoveDataCut(str, i, i + ruby.ruby_start, len, TRUE);
+                i += ruby.ruby_count;
+            } else if (tag_group == mFont_TAG_GROUP_BASE && tag_id == mFont_TAG_BASE_KANJI_COM) {
+                mMsg_MoveDataCut(str, i, i + mFont_Get_TagSize(pb), len, TRUE);
+            } else {
+                i += mFont_CodeSize_get(pb);
+            }
+        } else {
+            i += mFont_CodeSize_get(pb);
+        }
+    } while (i < len);
+}
+
+static int l_mfont_kanji_level = 0;
+
+extern int mFont_GetKanjiLevel_debug(void) {
+    return l_mfont_kanji_level;
+}
+
+extern void mFont_KanjiLevel_debug(gfxprint_t* gfxprint) {
+    if ((gamePT->pads[PAD2].on.button & BUTTON_Y) == BUTTON_Y) {
+        l_mfont_kanji_level++;
+
+        if (l_mfont_kanji_level > 6) {
+            l_mfont_kanji_level = 0;
+        }
+    }
+
+    if (l_mfont_kanji_level > 0) {
+        gfxprint_color(gfxprint, 235, 255, 235, 255);
+        gfxprint_locate8x8(gfxprint, 26, 4);
+        gfxprint_printf(gfxprint, "kanji : %d", l_mfont_kanji_level - 1);
+    }
 }

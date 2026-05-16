@@ -338,6 +338,7 @@ typedef struct common_data_s {
     /* 0x2DBE0 */ u8 rhythym_updated;
     /* 0x2DBE1 */ u8 _2dbe1;
     /* 0x2DBE2 */ u8 hem_visible;             /* controls farley's visiblilty during cutscene? */
+    /* 0x2F81F */ u8 kanji_level_unset;
     /* 0x2DBE4 */ u8* carde_program_p;        /* pointer to current e-Reader program data */
     /* 0x2DBE8 */ size_t carde_program_size;  /* size of current e-Reader program data */
     /* 0x2DBF0 */ u8 pad[24]; // padded to add_npc_info's 32 byte alignment

@@ -1,0 +1,367 @@
+#ifdef __INTELLISENSE__
+#include "m_font.h"
+#include "libultra/libultra.h"
+#include "sys_matrix.h"
+#include "audio.h"
+#include "m_msg.h"
+#include "dataobject.h"
+#endif
+
+static u8 mFontW_Upper(u16 c) {
+    return (c >> 8) & 0xFF;
+}
+
+static u8 mFontW_Lower(u16 c) {
+    return c & 0xFF;
+}
+
+static int mFontW_Check_Kigou(u16 c) {
+    return mFontW_Upper(c) != 0;
+}
+
+static int mFontW_Check_Cont(u16 c) {
+    if (mFontW_Check_Kigou(c)) {
+        return FALSE;
+    }
+
+    return mFont_Check_Cont((u8)mFontW_Lower(c));
+}
+
+static int mFontW_Check_Tag(u16 c) {
+    if (mFontW_Check_Kigou(c)) {
+        return FALSE;
+    }
+
+    return mFont_Check_Tag((u8)mFontW_Lower(c));
+}
+
+extern int mFontW_CodeSize_get(const u16* code_p) {
+    int c = (int)(*code_p);
+    int c2;
+    u8 upper = mFontW_Upper(c & 0xFFFF); // dunno what's going on here
+    u8 lower = mFontW_Lower(c);
+    int is_kigou = mFontW_Check_Kigou(c);
+    int is_cont = mFontW_Check_Cont(c);
+    int is_tag = mFontW_Check_Tag(c);
+    int ret = 1;
+
+    if (!is_kigou && is_cont) {
+        c2 = (int)(*(code_p + 1));
+        upper = mFontW_Upper(c2);
+        lower = mFontW_Lower(c2);
+
+        ret = (int)(mFont_cont_info_tbl[lower].size);
+    }
+
+    return ret;
+}
+
+extern int mFont_GetCodeWidthW(u16 c, int cut) {
+    int bank = mFontW_Check_Kigou(c) ? mFont_TEX_TYPE_FONT3 : mFont_TEX_TYPE_FONT1;
+    u8 lower = mFontW_Lower(c);
+
+    return mFont_GetCodeWidthB((u8)lower, cut, bank);
+}
+
+extern float mFont_GetCodeWidthWF(u16 c, int cut) {
+    int bank = mFontW_Check_Kigou(c) ? mFont_TEX_TYPE_FONT3 : mFont_TEX_TYPE_FONT1;
+    u8 lower = mFontW_Lower(c);
+
+    return mFont_GetCodeWidthFB((u8)lower, cut, bank);
+}
+
+extern int mFont_GetStringWidthW(const u16* str, int len, int cut) {
+    int width = 0;
+    int i;
+
+    for (i = 0; i < len; i++) {
+        width += mFont_GetCodeWidthW(str[i], cut);
+    }
+
+    return width;
+}
+
+extern void mFont_CopyStringsW(u16* dst, const u16* src, int len) {
+    int i;
+
+    for (i = 0; i < len; i++) {
+        *dst++ = *src++;
+    }
+}
+
+extern void mFont_ClearStringsW(u16* str, int len, u16 c) {
+    int i;
+
+    for (i = 0; i < len; i++) {
+        *str++ = c;
+    }
+}
+
+static void mFontCharW_gppDraw_sentence_restore(mFontCharW* this, mFontSentenceW* sentence, Gfx** gfx_pp) {
+    if (this->color_ctr > 0) {
+        this->color_ctr--;
+        if (this->color_ctr == 0) {
+            rgba_t_move(&this->color, &sentence->color);
+            mFont_gppSetPrimColor(gfx_pp, &this->color);
+        }
+    }
+
+    if ((this->flags & mFont_CHAR_FLAG_SCALE)) {
+        this->scale.x = 1.0f;
+        this->scale.y = 1.0f;
+        this->inv_scale.x = 1.0f;
+        this->inv_scale.y = 1.0f;
+
+        this->flags &= ~mFont_CHAR_FLAG_SCALE;
+        this->flags |= mFont_CHAR_FLAG_SCALE_RESET;
+    }
+}
+
+static void mFontCharW_total_scale_reset(mFontCharW* this, mFontSentenceW* sentence) {
+    if ((this->flags & mFont_CHAR_FLAG_SCALE_RESET)) {
+        this->scaled_size.x = this->scale.x * sentence->scale.x * sentence->line_scale;
+        this->scaled_size.y = this->scale.y * sentence->scale.y * sentence->line_scale;
+        this->inv_scaled_size.x = this->inv_scale.x * sentence->inv_scale.x * sentence->inv_line_scale;
+        this->inv_scaled_size.y = this->inv_scale.y * sentence->inv_scale.y * sentence->inv_line_scale;
+
+        this->flags &= ~mFont_CHAR_FLAG_SCALE_RESET;
+    }
+}
+
+static void mFontCharW_set(mFontCharW* this, u16* char_p, int len, u8 flags, const xy_t* pos, const xy_t* scale,
+                           const xy_t* inv_scale, f32 ofs_y, const rgba_t* color) {
+    bzero(this, sizeof(mFontCharW));
+
+    this->char_p = char_p;
+    this->len = len;
+    this->flags = flags;
+    this->position = *pos;
+    this->scale = *scale;
+    this->inv_scale = *inv_scale;
+    this->ofs_y = ofs_y;
+
+    rgba_t_move(&this->color, color);
+    this->tex_bank = mFont_TEX_TYPE_FONT1;
+}
+
+static void mFontCharW_gppDrawPoly(mFontCharW* this, GRAPH* graph, Gfx** gfx_pp) {
+    xy_t top_left;
+    xy_t bottom_right;
+
+    u8 c = mFontW_Lower((u16)this->char_p[this->_04]);
+    f32 t;
+    f32 width;
+    float s;
+
+    t = -this->ofs_y;
+    top_left.y = (t * this->scaled_size.y) - t + this->position.y;
+
+    t = mFont_TEX_CHAR_HEIGHT_F32 - this->ofs_y;
+    bottom_right.y = (t * this->scaled_size.y) - t + this->position.y + mFont_TEX_CHAR_HEIGHT_F32;
+
+    if ((this->flags & mFont_CHAR_FLAG_CUT) == 0) {
+        float s_nocut = mFont_GetCodeWidthFB((u8)c, FALSE, this->tex_bank);
+        float s2 = mFont_GetCodeWidthFB((u8)c, TRUE, this->tex_bank);
+
+        top_left.x = this->position.x + this->scaled_size.x * ((s_nocut - s2) * 0.5f);
+        bottom_right.x = this->position.x + this->scaled_size.x * ((s_nocut + s2) * 0.5f);
+        this->width = s_nocut * this->scaled_size.x;
+        s = s2;
+    } else {
+        top_left.x = this->position.x;
+        s = mFont_GetCodeWidthFB((u8)c, TRUE, this->tex_bank);
+        width = s * this->scaled_size.x;
+        bottom_right.x = width + this->position.x;
+        this->width = width;
+    }
+
+    mFont_gppDrawCharPoly(graph, gfx_pp, c, &top_left, &bottom_right, s * 2.0f, mFont_TEX_CHAR_HEIGHT_F32_HIRES,
+                          this->tex_bank);
+}
+
+static void mFontCharW_gppDraw(mFontCharW* this, GRAPH* graph, Gfx** gfx_pp) {
+    mFontCharW_gppDrawPoly(this, graph, gfx_pp);
+}
+
+static float mFontSentenceW_line_offset_calc(int line_type) {
+    static float offset_value[mFont_LineType_End] = { mFont_TEX_CHAR_HEIGHT_F32 * 0.0f,
+                                                      mFont_TEX_CHAR_HEIGHT_F32 * 0.5f,
+                                                      mFont_TEX_CHAR_HEIGHT_F32 * 1.0f };
+
+    return offset_value[line_type];
+}
+
+static void mFontSentenceW_set(mFontSentenceW* this, u16* sentence_p, int len, u32 flags, const xy_t* pos,
+                               int line_type, const xy_t* scale, const rgba_t* color) {
+    static const xy_t unit_vec_xy = { 1.0f, 1.0f };
+    u8 character_flags = 0;
+
+    bzero(this, sizeof(mFontSentenceW));
+
+    this->sentence_p = sentence_p;
+    this->len = len;
+
+    this->flags = flags;
+
+    this->position = *pos;
+    this->line_type = line_type;
+    this->scale = *scale;
+    this->inv_scale.x = 1.0f / scale->x;
+    this->inv_scale.y = 1.0f / scale->y;
+    this->line_scale = 1.0f;
+    this->inv_line_scale = 1.0f;
+
+    rgba_t_move(&this->color, color);
+
+    // this->se_pos = se_voice_pos;
+    // this->voice_idx = voice_idx;
+    // this->voice2_idx = voice2_idx;
+    // this->voice3_idx = voice3_idx;
+    // this->se_character_id = voice_se_character_idx;
+
+    if (this->flags & mFont_SENTENCE_FLAG_CUT) {
+        character_flags |= mFont_CHAR_FLAG_CUT;
+    }
+
+    if (this->flags & mFont_SENTENCE_FLAG_USE_POLY) {
+        character_flags |= mFont_CHAR_FLAG_USE_POLY;
+    }
+
+    character_flags |= mFont_CHAR_FLAG_SCALE_RESET;
+
+    mFontCharW_set(&this->character, this->sentence_p, 1, character_flags, &this->position, &unit_vec_xy, &unit_vec_xy,
+                   mFontSentenceW_line_offset_calc(this->line_type), &this->color);
+}
+
+static void mFontSentenceW_gppDraw_before(mFontSentenceW* this, Gfx** gfx_pp) {
+    if (!(this->flags & mFont_SENTENCE_FLAG_3)) {
+        mFont_gppSetMode(gfx_pp);
+    }
+
+    if (!(this->flags & mFont_SENTENCE_FLAG_NO_COMBINE)) {
+        mFont_gppSetCombineMode(gfx_pp, this->flags & mFont_SENTENCE_FLAG_REVERT, FALSE);
+    }
+
+    if (!(this->flags & mFont_SENTENCE_FLAG_NO_COLOR)) {
+        mFont_gppSetPrimColor(gfx_pp, &this->color);
+    }
+}
+
+static void mFontSentenceW_gppDraw_main(mFontSentenceW* this, GAME* game, Gfx** gfx_pp) {
+    u16* char_p;
+    GRAPH* graph = game->graph;
+    u16 c;
+    u8 lower;
+    u8 upper;
+    int is_kigou;
+    int is_control_code;
+    int is_message_tag;
+    int char_size;
+
+    char_p = this->sentence_p + this->now_idx;
+    c = *char_p;
+    lower = mFontW_Lower(c & 0xFFFF); // still no idea what's happening here
+    upper = mFontW_Upper(c);
+    is_kigou = mFontW_Check_Kigou(c);
+    is_control_code = mFontW_Check_Cont(c);
+    is_message_tag = mFontW_Check_Tag(c);
+    char_size = mFontW_CodeSize_get(char_p);
+
+    this->character.char_p = char_p;
+    this->character.len = char_size;
+    this->character._04 = this->glyph_byte_ofs;
+
+    if (is_kigou) {
+        this->character.tex_bank = mFont_TEX_TYPE_FONT3;
+    } else {
+        this->character.tex_bank = mFont_TEX_TYPE_FONT1;
+    }
+
+    if (((!is_control_code && !is_message_tag) || this->glyph_byte_ofs != 0)) {
+        if (((this->flags & mFont_SENTENCE_SKIP_DRAW_NEW_LINE) == 0) || (lower != CHAR_NEW_LINE)) {
+            this->character.position.x = this->position.x + this->width;
+            mFontCharW_total_scale_reset(&this->character, this);
+            mFontCharW_gppDraw(&this->character, graph, gfx_pp);
+
+            this->width += this->character.width;
+            mFontCharW_gppDraw_sentence_restore(&this->character, this, gfx_pp);
+        }
+    }
+
+    if (this->glyph_byte_ofs == 0) {
+        this->now_idx += char_size;
+    }
+}
+
+static void mFontSentenceW_gppDraw_after(mFontSentenceW* this, Gfx** gfx_pp) {
+}
+
+static void mFontSentenceW_gppDraw(mFontSentenceW* this, GAME* game, Gfx** gfx_pp) {
+    mFontSentenceW_gppDraw_before(this, gfx_pp);
+
+    while (this->now_idx + this->glyph_byte_ofs < this->len) {
+        mFontSentenceW_gppDraw_main(this, game, gfx_pp);
+    }
+
+    mFontSentenceW_gppDraw_after(this, gfx_pp);
+}
+
+extern f32 mFont_SetLineStringsW(GAME* game, u16* str, int len, f32 x, f32 y, int r, int g, int b, int a,
+                                 int flag_revert, int flag_cut, f32 scale_x, f32 scale_y, int mode) {
+    Gfx* gfx;
+    mFontSentenceW sentence;
+    int use_polygon_opaque = mode == 0;
+    u32 flag;
+    xy_t pos;
+    xy_t scale;
+    rgba_t color;
+
+    if (fabsf(scale_x) < 0.001f || fabsf(scale_y) < 0.001f) {
+        return 0.0f;
+    }
+
+    if (len <= 0) {
+        return 0.0f;
+    }
+
+    OPEN_DISP(game->graph);
+
+    if (use_polygon_opaque) {
+        gfx = NOW_POLY_OPA_DISP;
+    } else {
+        gfx = NOW_FONT_DISP;
+    }
+
+    flag = mFont_SENTENCE_FLAG_USE_POLY;
+    if (flag_revert) {
+        flag |= mFont_SENTENCE_FLAG_REVERT;
+    }
+
+    if (flag_cut) {
+        flag |= mFont_SENTENCE_FLAG_CUT;
+    }
+
+    pos.x = x;
+    pos.y = y;
+
+    scale.x = scale_x;
+    scale.y = scale_y;
+
+    color.r = r;
+    color.g = g;
+    color.b = b;
+    color.a = a;
+
+    mFontSentenceW_set(&sentence, str, len, flag, &pos, mFont_LineType_Top, &scale, &color);
+    mFontSentenceW_gppDraw(&sentence, game, &gfx);
+
+    if (use_polygon_opaque) {
+        SET_POLY_OPA_DISP(gfx);
+    } else {
+        SET_FONT_DISP(gfx);
+    }
+
+    CLOSE_DISP(game->graph);
+
+    return sentence.width;
+}
