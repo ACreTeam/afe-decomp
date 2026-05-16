@@ -39,12 +39,13 @@ static void prenmi_draw(GAME_PRENMI* prenmi) {
     timer = prenmi->timer;
 
     // set opacity
-    y_pos = (1.0f - (timer / PRENMI_TIMER)) * -240.0f + 250.0f;
-    a = (int)y_pos;
+    y_pos = (1.0f - (timer / (f32)PRENMI_TIMER)) * -240.0f + 250.0f;
+    a = (u8)y_pos;
+    y_pos = (1.0f - (timer / (f32)PRENMI_TIMER)) * -15.0f + 127.0f;
+
     gDPSetPrimColor(gfx++, 0, 0, 0xFF, 0xFF, 0xFF, (u8)a);
 
     // adjust size
-    y_pos = (1.0f - (timer / PRENMI_TIMER)) * -15.0f + 127.0f;
     gfx = gfx_gSPTextureRectangle1(gfx, 0, (y_pos * 4.0f), 0x500, ((y_pos + 1.0f) * 4.0f), 0, 0, 0, 0, 0);
 
     gDPPipeSync(gfx++);

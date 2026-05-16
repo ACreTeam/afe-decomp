@@ -1283,7 +1283,7 @@ config.libs = [
             Object(Matching, "game/m_player_lib.c"),
             Object(Matching, "game/m_police_box.c"),
             Object(Matching, "game/m_post_office.c"),
-            Object(MatchingFor("GAEJ01_00"), "game/m_prenmi.c"),
+            Object(Matching, "game/m_prenmi.c"),
             Object(Matching, "game/m_private.c"),
             Object(Matching, "game/m_quest.c"),
             Object(NonMatching, "game/m_random_field.c"),
