@@ -122,7 +122,7 @@ extern void famicom_emu_init(GAME* game) {
     const GXRenderModeObj* render;
     u32 fbWidth;
     u32 efbHeight;
-    u32 xfbHeight;
+    u64 xfbHeight;
     u16 numXfbLines;
 
     famicom_done = FALSE;

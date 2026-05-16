@@ -701,7 +701,7 @@ config.libs = [
             Object(Matching, "evw_anime.c"),
             Object(Matching, "executor.c"),
             Object(Matching, "f_furniture.c"),
-            Object(NonMatching, "famicom_emu.c"),
+            Object(Matching, "famicom_emu.c"),
             Object(Matching, "first_game.c"),
             Object(Matching, "game.c"),
             Object(Matching, "gamealloc.c"),
