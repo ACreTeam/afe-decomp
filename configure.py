@@ -1199,7 +1199,7 @@ config.libs = [
             Object(Matching, "game/m_common_data.c"),
             Object(Matching, "game/m_controller.c"),
             Object(Matching, "game/m_cpak.c"),
-            Object(NonMatching, "game/m_cpedit_ovl.c"),
+            Object(Matching, "game/m_cpedit_ovl.c"),
             Object(NonMatching, "game/m_cpmail_ovl.c"),
             Object(NonMatching, "game/m_cporiginal_ovl.c"),
             Object(NonMatching, "game/m_cpwarning_ovl.c"),
