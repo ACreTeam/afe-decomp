@@ -15,6 +15,8 @@
 #include "libultra/libultra.h"
 #include "m_common_data.h"
 #include "m_scene_table.h"
+#include "m_font.h"
+#include "m_mail_password_check.h"
 
 static int mPO_keep_contents(Mail_c* mail) {
     int res = FALSE;
@@ -93,7 +95,7 @@ static int mPO_receipt_check_mail(Mail_c* mail) {
         }
 
         case mMl_NAME_TYPE_NPC: {
-            if (mNpc_ReceiveHPMail(mail) == FALSE) {
+            if (mMpswd_ReceiveHPMail(mail) == FALSE) {
                 mNpc_SendMailtoNpc(mail);
             }
 
@@ -205,15 +207,11 @@ static void mPO_delivery_mail_with_order_ftr(int house_no, int player_no) {
     }
 }
 
-static void mPO_delivery_mail_with_ticket_set_free_str(lbRTC_month_t month) {
-    u8 month_str[9];
-    u8 day_str[4];
+static void mPO_delivery_mail_with_ticket_set_free_str(int free_str_idx, int month) {
+    u8 month_str[2];
 
-    int days = lbRTC_GetDaysByMonth(Common_Get(time.rtc_time.year), month);
-    mString_Load_MonthStringFromRom(month_str, month);
-    mString_Load_DayStringFromRom(day_str, days);
-    mHandbill_Set_free_str(4, month_str, 9);
-    mHandbill_Set_free_str(5, day_str, 4);
+    mFont_UnintToString(month_str, 2, month, 2, TRUE, FALSE, FALSE);
+    mHandbill_Set_free_str(free_str_idx, month_str, sizeof(month_str));
 }
 
 static int mPO_delivery_mail_with_ticket_sub(int house_no, PersonalID_c* pid, mActor_name_t present) {
@@ -236,7 +234,7 @@ static void mPO_delivery_mail_with_ticket(int house_no, int player_no) {
             mActor_name_t ticket_id;
             lbRTC_month_t ticket_month = priv->inventory.lotto_ticket_expiry_month;
 
-            mPO_delivery_mail_with_ticket_set_free_str(ticket_month);
+            mPO_delivery_mail_with_ticket_set_free_str(mHandbill_FREE_STR4, ticket_month);
             ticket = ITM_TICKET_START + (ticket_month - 1) * 8;
 
             for (; ticket_num != 0; ticket_num -= minus_ticket) {
