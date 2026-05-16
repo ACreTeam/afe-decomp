@@ -319,6 +319,8 @@ enum __fg_type__ {
     FG_TYPE_GRD_S_M_WF_2 = 0x0197,
     FG_TYPE_GRD_S_M_WF_3 = 0x0198,
     FG_TYPE_ROM_TENT = 0x0199,
+
+    FG_TYPE_NUM = 0x1A0
 };
 
 #ifdef __cplusplus

@@ -9,6 +9,8 @@
 #include "evw_anime.h"
 #include "m_collision_bg.h"
 #include "m_combi_type.h"
+#include "m_bg_type.h"
+#include "m_fg_type.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,10 +44,10 @@ extern "C" {
 #define mFM_MOVE_ACTOR_NUM 16
 #define mFM_HANIWA_STEP_NUM 4
 
-#define mFM_BG_ID_MAX 293
+#define mFM_BG_ID_MAX BG_TYPE_NUM
 
 #define mFM_FG_START 0
-#define mFM_FG_NUM 416
+#define mFM_FG_NUM FG_TYPE_NUM
 #define mFM_FG_NPC_START mFM_FG_NUM
 #define mFM_FG_NPC_NUM 536
 #define mFM_FG_ID_MAX (mFM_FG_NUM + mFM_FG_NPC_NUM)
@@ -167,6 +169,32 @@ enum {
     mFM_BLOCK_TYPE_NUM,
 
     mFM_BLOCK_TYPE_NONE = 255
+};
+
+enum {
+    mFM_PAL_EARTH,
+    mFM_PAL_CLIFF,
+    mFM_PAL_BUSH,
+    mFM_PAL_FLOWER0,
+    mFM_PAL_FLOWER1,
+    mFM_PAL_FLOWER2,
+    mFM_PAL_FLOWER3,
+    mFM_PAL_GRASS,
+    mFM_PAL_TREE,
+    mFM_PAL_CEDAR_TREE,
+    mFM_PAL_PALM_TREE,
+    mFM_PAL_GOLDEN_TREE,
+
+    mFM_PAL_NUM
+};
+
+enum {
+    mFM_CLEAR_TYPE_PLANT_0,
+    mFM_CLEAR_TYPE_BOARD,
+    mFM_CLEAR_TYPE_SNOWMAN,
+    mFM_CLEAR_TYPE_PLANT_1,
+
+    mFM_CLEAR_TYPE_NUM,
 };
 
 /* sizeof(mFM_combination_c) == 2 */

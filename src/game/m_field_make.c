@@ -57,9 +57,10 @@ typedef struct police_pos_s {
 
 static mFM_police_pos_c l_mfm_police_pos = { 0, 0, 0, 0 };
 
+int l_mfm_bg_pal_idx = 0;
 int l_bg_disp_num = 0;
 int l_bg_disp_size = 0;
-static u16 mFM_pal_area[11][16] ATTRIBUTE_ALIGN(32);
+static u16 mFM_pal_area[mFM_PAL_NUM][16] ATTRIBUTE_ALIGN(32);
 mFM_fdinfo_c* g_fdinfo;
 static u8 l_block_type[BLOCK_TOTAL_NUM];
 static int l_block_kind[BLOCK_TOTAL_NUM];
@@ -123,17 +124,6 @@ static void mFM_FgUtDataSet(mActor_name_t* fg, mActor_name_t* data) {
     int ut_x;
     int ut_z;
 
-// Aus version added NULL checks
-#if VERSION >= VER_GAFU01_00
-    if (fg == NULL) {
-        return;
-    }
-
-    if (data == NULL) {
-        return;
-    }
-#endif
-
     for (ut_z = 0; ut_z < UT_Z_NUM; ut_z++) {
         for (ut_x = 0; ut_x < UT_X_NUM; ut_x++) {
             fg[0] = data[0];
@@ -151,9 +141,13 @@ static void mFM_SetFgUtPtoSaveData(mFM_block_info_c* block_info, u8 bx_max, u8 b
         for (bx = 0; bx < bx_max; bx++) {
             if (bz > 0 && bz < (bz_max - 1) && bx > 0 && bx < (bx_max - 1)) {
                 if (bx == island_block_x[0] && bz == mISL_BLOCK_Z) {
-                    // block_info->fg_info.items_p = Save_Get(island.fgblock[0][0]).items[0];
+                    if (Common_Get(cur_island_house_p) != NULL) {
+                        block_info->fg_info.items_p = Common_Get(cur_island_house_p)->island.fgblock[0][0].items[0];
+                    }
                 } else if (bx == island_block_x[1] && bz == mISL_BLOCK_Z) {
-                    // block_info->fg_info.items_p = Save_Get(island.fgblock[0][1]).items[0];
+                    if (Common_Get(cur_island_house_p) != NULL) {
+                        block_info->fg_info.items_p = Common_Get(cur_island_house_p)->island.fgblock[0][1].items[0];
+                    }
                 } else if (bz >= (bz_max - 3)) {
                     block_info->fg_info.items_p = l_fg_outer_fill;
                 } else {
@@ -185,24 +179,47 @@ static void mFM_SetFgUtPtoCottageInfo(mFM_block_info_c* block_info, u8 bx_max, u
     int bz;
     int bx;
 
-    for (bz = 0; bz < bz_max; bz++) {
-        for (bx = 0; bx < bx_max; bx++) {
-            // block_info->fg_info.items_p = Save_Get(island).cottage.room.layer_main.items[0];
-            block_info++;
+    if (Common_Get(cur_island_house_p) != NULL) {
+        for (bz = 0; bz < bz_max; bz++) {
+            for (bx = 0; bx < bx_max; bx++) {
+                block_info->fg_info.items_p = Common_Get(cur_island_house_p)->island.cottage.room.layer_main.items[0];
+                block_info++;
+            }
         }
     }
 }
 
 static void mFM_ChangeFGName(mActor_name_t* fg_name_p, mActor_name_t fg_name, mActor_name_t field_name, int block) {
     mActor_name_t house_owner_name = Common_Get(house_owner_name);
+    mActor_name_t md;
 
     if (Save_Get(scene_no) == SCENE_COTTAGE_NPC) {
         fg_name_p[0] = Common_Get(island_npclist[0]).house_data.main_layer_id;
+
+        if (ITEM_NAME_GET_TYPE(house_owner_name) == NAME_TYPE_NPC) {
+            md = mNpc_GetMD(house_owner_name);
+            if (md == EMPTY_NO) {
+                md = ITM_MINIDISK00;
+            }
+
+            Common_Set(now_md, md);
+        }
     } else if (field_name == mFI_FIELD_NPCROOM0 && ITEM_NAME_GET_TYPE(house_owner_name) == NAME_TYPE_NPC) {
         int npc_idx = mNpc_SearchAnimalinfo(Save_Get(animals), house_owner_name, ANIMAL_NUM_MAX);
-        mNpc_NpcList_c* list = Common_GetPointer(npclist[npc_idx]);
 
-        fg_name_p[0] = list->house_data.main_layer_id;
+        if (npc_idx != -1) {
+            mNpc_NpcList_c* list = Common_GetPointer(npclist[npc_idx]);
+
+            fg_name_p[0] = list->house_data.main_layer_id;
+        } else {
+            fg_name_p[0] = mFM_FG_NPC_START;
+        }
+
+        md = mNpc_GetMD(house_owner_name);
+        if (md == EMPTY_NO) {
+            md = ITM_MINIDISK00;
+        }
+        Common_Set(now_md, md);
     } else if (mFI_CheckShopFieldName(field_name)) {
         fg_name_p[0] = mSP_GetNowShopFgNum();
     } else if (Save_Get(scene_no) == SCENE_FIELD_TOOL || Save_Get(scene_no) == SCENE_TITLE_DEMO) {
@@ -271,10 +288,21 @@ static void mFM_SetFG(mFM_fg_info_c* fg_info, mFM_fg_data_c* data, mActor_name_t
         scene != SCENE_COTTAGE_MY) {
         if (scene == SCENE_COTTAGE_NPC) {
             if (mNpc_GetIslandRoomFtrNum() > 0) {
-                // mFM_FgUtDataSet(fg_info->items_p, mNpc_GetIslandRoomP(Save_Get(island).animal.id.npc_id));
+                if (Common_Get(cur_island_house_p) != NULL) {
+                    if (fg_info->items_p != NULL) {
+                        mFM_FgUtDataSet(fg_info->items_p, mNpc_GetIslandRoomP(Common_Get(cur_island_house_p)->island.animal.id.npc_id));
+                    }
+                } else {
+                    if (fg_info->items_p != NULL) {
+                        mFM_FgUtDataSet(fg_info->items_p, mNpc_GetIslandRoomP(Common_Get(now_home)->island.animal.id.npc_id));
+                    }
+                }
+
                 mNpc_ChangeIslandRoom(fg_info->items_p);
             } else {
-                mFM_FgUtDataSet(fg_info->items_p, data->items[0]);
+                if (fg_info->items_p != NULL) {
+                    mFM_FgUtDataSet(fg_info->items_p, data->items[0]);
+                }
             }
 
             if (fg_info != NULL && fg_info->items_p != NULL) {
@@ -284,7 +312,9 @@ static void mFM_SetFG(mFM_fg_info_c* fg_info, mFM_fg_data_c* data, mActor_name_t
                 items_p[(8 << 4) | 4] = EXIT_DOOR;
             }
         } else {
-            mFM_FgUtDataSet(fg_info->items_p, data->items[0]);
+            if (fg_info->items_p != NULL) {
+                mFM_FgUtDataSet(fg_info->items_p, data->items[0]);
+            }
         }
     }
 
@@ -304,21 +334,30 @@ static void mFM_SetFG2(mActor_name_t* items_p, mFM_fg_data_c** data, mActor_name
             idx = 0;
         }
 
-        if (data[idx] != NULL) {
+        if (data[idx] != NULL && items_p != NULL) {
             mFM_FgUtDataSet(items_p, data[idx]->items[0]);
         }
     } else {
         if (items_p != NULL && field_name == mFI_FIELD_NPCROOM0 &&
             ITEM_NAME_GET_TYPE(house_owner_name) == NAME_TYPE_NPC) {
             int anm_idx = mNpc_SearchAnimalinfo(Save_Get(animals), house_owner_name, ANIMAL_NUM_MAX);
-            mNpc_NpcList_c* npc_list = Common_GetPointer(npclist[anm_idx]);
-            int secondary_idx = npc_list->house_data.secondary_layer_id - name_start;
+            int secondary_idx;
+
+            if (anm_idx != -1) {
+                mNpc_NpcList_c* npc_list = Common_GetPointer(npclist[anm_idx]);
+
+                secondary_idx = npc_list->house_data.secondary_layer_id;
+            } else {
+                secondary_idx = mFM_FG_NPC_START + 1;
+            }
+
+            secondary_idx -= name_start;
 
             if (secondary_idx < 0) {
                 secondary_idx = 0;
             }
 
-            if (data[secondary_idx] != NULL) {
+            if (data[secondary_idx] != NULL && items_p != NULL) {
                 mFM_FgUtDataSet(items_p, data[secondary_idx]->items[0]);
             }
         }
@@ -338,6 +377,7 @@ static void mFM_BlockDataSet(mActor_name_t field_name, mFM_block_info_c* block_i
     int bz = 0;
     int max = bz_max * bx_max;
 
+    Common_Set(now_md, EMPTY_NO);
     for (i = 0; i < max; i++) {
         combi = &data_combi_table[save_combi_table[0].combination_type];
 
@@ -394,7 +434,7 @@ static void mFM_SetMoveActorInfo(mFM_block_info_c* block_info, int bx_max, int b
     mFM_move_actor_data_c* move_ac_data_p = move_actor_data;
 
     if (block_info != NULL) {
-        for (move_ac_data_p; move_ac_data_p != NULL && move_ac_data_p->name_id != RSV_NO; move_ac_data_p++) {
+        for (; move_ac_data_p != NULL && move_ac_data_p->name_id != RSV_NO; move_ac_data_p++) {
             int block = -1;
             int ut_x;
             int ut_z;
@@ -416,17 +456,19 @@ static void mFM_SetMoveActorInfo(mFM_block_info_c* block_info, int bx_max, int b
                             mActor_name_t* items = block_info[block].fg_info.items_p;
                             int i;
 
-                            for (i = 0; i < UT_TOTAL_NUM; i++) {
-                                if (items[0] == POLICE_STATION) {
-                                    ut_x = i % UT_X_NUM;
-                                    ut_z = i / UT_Z_NUM;
-                                    ut_x += 2;
-                                    mFM_KeepPolicePos(bx, bz, ut_x, ut_z);
+                            if (items != NULL) {
+                                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                                    if (items[0] == POLICE_STATION) {
+                                        ut_x = i % UT_X_NUM;
+                                        ut_z = i / UT_Z_NUM;
+                                        ut_x += 2;
+                                        mFM_KeepPolicePos(bx, bz, ut_x, ut_z);
 
-                                    break;
+                                        break;
+                                    }
+
+                                    items++;
                                 }
-
-                                items++;
                             }
 
                             break;
@@ -535,8 +577,6 @@ static int mFM_SetBlockInfo(mFM_fdinfo_c* field_info, mFM_combination_c* combi_t
                                        name_start); // select a random furniture item from NPC base furniture layer
         }
 
-// Aus version added NULL checks
-#if VERSION >= VER_GAFU01_00
         if (sorted_bg_data != NULL) {
             zelda_free(sorted_bg_data);
         }
@@ -548,56 +588,90 @@ static int mFM_SetBlockInfo(mFM_fdinfo_c* field_info, mFM_combination_c* combi_t
         if (fg_data != NULL) {
             zelda_free(fg_data);
         }
-#else
-        zelda_free(sorted_bg_data);
-        zelda_free(sorted_fg_data);
-        zelda_free(fg_data);
-#endif
     }
 
     return 0;
+}
+
+static u16* mFM_get_pal_p(int idx) {
+    return mFM_pal_area[idx];
 }
 
 static void mFM_set_pal_p(mFM_field_pal_c* pal) {
     if (pal != NULL) {
         bzero(mFM_pal_area, sizeof(mFM_pal_area));
 
-        pal->earth_pal = mFM_pal_area[0];
-        pal->cliff_pal = mFM_pal_area[1];
-        pal->bush_pal = mFM_pal_area[2];
-        pal->flower0_pal = mFM_pal_area[3];
-        pal->flower1_pal = mFM_pal_area[4];
-        pal->flower2_pal = mFM_pal_area[5];
-        pal->grass_pal = mFM_pal_area[6];
-        pal->tree_pal = mFM_pal_area[7];
-        pal->cedar_tree_pal = mFM_pal_area[8];
-        pal->palm_tree_pal = mFM_pal_area[9];
-        pal->golden_tree_pal = mFM_pal_area[10];
+        pal->earth_pal = mFM_get_pal_p(mFM_PAL_EARTH);
+        pal->cliff_pal = mFM_get_pal_p(mFM_PAL_CLIFF);
+        pal->bush_pal = mFM_get_pal_p(mFM_PAL_BUSH);
+        pal->flower0_pal = mFM_get_pal_p(mFM_PAL_FLOWER0);
+        pal->flower1_pal = mFM_get_pal_p(mFM_PAL_FLOWER1);
+        pal->flower2_pal = mFM_get_pal_p(mFM_PAL_FLOWER2);
+        pal->flower3_pal = mFM_get_pal_p(mFM_PAL_FLOWER3);
+        pal->grass_pal = mFM_get_pal_p(mFM_PAL_GRASS);
+        pal->tree_pal = mFM_get_pal_p(mFM_PAL_TREE);
+        pal->cedar_tree_pal = mFM_get_pal_p(mFM_PAL_CEDAR_TREE);
+        pal->palm_tree_pal = mFM_get_pal_p(mFM_PAL_PALM_TREE);
+        pal->golden_tree_pal = mFM_get_pal_p(mFM_PAL_GOLDEN_TREE);
     }
 }
 
-extern u16 mFM_obj_a_01_flower_pal[3 * 9][16];
+extern u16 mFM_obj_a_01_flower_pal[4 * 9][16];
 extern u16 mFM_obj_01_zassou_pal[9][16];
 extern u16 mFM_obj_tree_01_pal[14][16];
 extern u16 mFM_obj_tree_01_pal_dol[14][16];
 extern u16 mFM_obj_palm_01_pal[14][16];
 extern u16 mFM_obj_gold_01_pal_dol[14][16];
 
+extern u16 mFM_obj_a_01_flower_nuke_pal[4][16];
+extern u16 mFM_obj_01_zassou_nuke_pal[1][16];
+extern u16 mFM_obj_tree_nuke_s_pal[1][16];
+extern u16 mFM_obj_tree_nuke_w_pal[1][16];
+
 static void mFM_SetFGPal(mFM_field_pal_c* pal, int term) {
     static int tree_pal_idx_table[mTM_TERM_NUM] = { 10, 12, 13, 0, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 10 };
-
     static int flower_pal_idx_table[mTM_TERM_NUM] = { 8, 8, 8, 0, 1, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8 };
-
     int idx = flower_pal_idx_table[term];
+    int casting_off = mCD_castingoff_mura_chk();
+    u32 season = Common_Get(time.season);
 
-    bcopy(mFM_obj_a_01_flower_pal[0 * 9 + idx], pal->flower0_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_a_01_flower_pal[1 * 9 + idx], pal->flower1_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_a_01_flower_pal[2 * 9 + idx], pal->flower2_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_01_zassou_pal[idx], pal->grass_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_tree_01_pal[tree_pal_idx_table[term]], pal->tree_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_tree_01_pal_dol[tree_pal_idx_table[term]], pal->cedar_tree_pal, 16 * sizeof(u16));
-    bcopy(mFM_obj_palm_01_pal[tree_pal_idx_table[term]], pal->palm_tree_pal, 16 * sizeof(u16));
+    if (casting_off == TRUE) {
+        bcopy(mFM_obj_a_01_flower_nuke_pal[0], pal->flower0_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_nuke_pal[1], pal->flower1_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_nuke_pal[2], pal->flower2_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_nuke_pal[3], pal->flower3_pal, 16 * sizeof(u16));
+
+        bcopy(mFM_obj_01_zassou_nuke_pal[0], pal->grass_pal, 16 * sizeof(u16));
+    } else {
+        bcopy(mFM_obj_a_01_flower_pal[0 * 9 + idx], pal->flower0_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_pal[1 * 9 + idx], pal->flower1_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_pal[2 * 9 + idx], pal->flower2_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_a_01_flower_pal[3 * 9 + idx], pal->flower3_pal, 16 * sizeof(u16));
+
+        bcopy(mFM_obj_01_zassou_pal[idx], pal->grass_pal, 16 * sizeof(u16));
+    }
+
+    if (casting_off == TRUE && season == mTM_SEASON_WINTER) {
+        bcopy(mFM_obj_tree_nuke_w_pal[0], pal->tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_tree_nuke_w_pal[0], pal->cedar_tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_tree_nuke_w_pal[0], pal->palm_tree_pal, 16 * sizeof(u16));
+    } else if (casting_off == TRUE) {
+        bcopy(mFM_obj_tree_nuke_s_pal[0], pal->tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_tree_nuke_s_pal[0], pal->cedar_tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_tree_nuke_s_pal[0], pal->palm_tree_pal, 16 * sizeof(u16));
+    } else {
+        bcopy(mFM_obj_tree_01_pal[tree_pal_idx_table[term]], pal->tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_tree_01_pal_dol[tree_pal_idx_table[term]], pal->cedar_tree_pal, 16 * sizeof(u16));
+        bcopy(mFM_obj_palm_01_pal[tree_pal_idx_table[term]], pal->palm_tree_pal, 16 * sizeof(u16));
+    }
+    
     bcopy(mFM_obj_gold_01_pal_dol[tree_pal_idx_table[term]], pal->golden_tree_pal, 16 * sizeof(u16));
+}
+
+static int mFM_GetFieldPalIdx(int term) {
+    static int field_pal_idx_table[mTM_TERM_NUM] = { 9, 10, 11, 0, 1, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9 };
+
+    return field_pal_idx_table[term];
 }
 
 extern u16 mFM_earth_pal[mFM_FIELD_PAL_NUM][16];
@@ -606,13 +680,24 @@ extern u16 mFM_bush_pal[mFM_FIELD_PAL_NUM][16];
 extern u16 mFM_rail_pal[mFM_FIELD_PAL_NUM][16];
 extern u16 mFM_beach_pal[mFM_FIELD_PAL_NUM][16];
 
-static void mFM_SetFieldPal(mFM_field_pal_c* pal) {
-    static int field_pal_idx_table[mTM_TERM_NUM] = { 9, 10, 11, 0, 1, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9 };
+extern u16 mFM_earth_nuke_s_pal[16];
+extern u16 mFM_earth_nuke_w_pal[16];
+extern u16 mFM_cliff_nuke_s_pal[16];
+extern u16 mFM_cliff_nuke_w_pal[16];
+extern u16 mFM_bush_nuke_s_pal[16];
+extern u16 mFM_bush_nuke_w_pal[16];
+extern u16 mFM_rail_nuke_s_pal[16];
+extern u16 mFM_rail_nuke_w_pal[16];
+extern u16 mFM_beach_nuke_s_pal[16];
+extern u16 mFM_beach_nuke_w_pal[16];
 
+static void mFM_SetFieldPal(mFM_field_pal_c* pal) {
     u32 term = Common_Get(time.term_idx);
     int field_pal_idx;
     int i;
     u16* pal_src;
+    u32 season = Common_Get(time.season);
+    int casting_off = mCD_castingoff_mura_chk();
 
     if (term >= mTM_TERM_NUM) {
         term = mTM_TERM_0;
@@ -622,19 +707,39 @@ static void mFM_SetFieldPal(mFM_field_pal_c* pal) {
         term = mTM_TERM_4;
     }
 
-    field_pal_idx = field_pal_idx_table[term];
+    field_pal_idx = mFM_GetFieldPalIdx(term);
+    if (casting_off == TRUE && season == mTM_SEASON_WINTER) {
+        pal_src = mFM_earth_nuke_w_pal;
+    } else if (casting_off == TRUE) {
+        pal_src = mFM_earth_nuke_s_pal;
+    } else {
+        pal_src = mFM_earth_pal[field_pal_idx];
+    }
 
-    pal_src = mFM_earth_pal[field_pal_idx];
     for (i = 0; i < 16; i++) {
         pal->earth_pal[i] = pal_src[i];
     }
 
-    pal_src = mFM_cliff_pal[field_pal_idx];
+    if (casting_off == TRUE && season == mTM_SEASON_WINTER) {
+        pal_src = mFM_cliff_nuke_w_pal;
+    } else if (casting_off == TRUE) {
+        pal_src = mFM_cliff_nuke_s_pal;
+    } else {
+        pal_src = mFM_cliff_pal[field_pal_idx];
+    }
+
     for (i = 0; i < 16; i++) {
         pal->cliff_pal[i] = pal_src[i];
     }
 
-    pal_src = mFM_bush_pal[field_pal_idx];
+    if (casting_off == TRUE && season == mTM_SEASON_WINTER) {
+        pal_src = mFM_bush_nuke_w_pal;
+    } else if (casting_off == TRUE) {
+        pal_src = mFM_bush_nuke_s_pal;
+    } else {
+        pal_src = mFM_bush_pal[field_pal_idx];
+    }
+
     for (i = 0; i < 16; i++) {
         pal->bush_pal[i] = pal_src[i];
     }
@@ -686,7 +791,9 @@ static void mFM_SetFgDepositP(mFM_block_info_c* block_info, mActor_name_t field_
 #else
             for (bz = 0; bz < mISL_FG_BLOCK_X_NUM; bz++) {
 #endif
-                // block_info->fg_info.deposit_p = Save_Get(island).deposit[bz];
+                if (Common_Get(cur_island_house_p) != NULL) {
+                    block_info->fg_info.deposit_p = Common_Get(cur_island_house_p)->island.deposit[bz];
+                }
                 block_info++;
             }
         } else {
@@ -814,7 +921,11 @@ static mFM_fdinfo_c* mFM_MakeField(u16 scene, u16 bg_max, u8 bg_num) {
         mHm_lyr_c* layer;
 
         if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
-            // layer = &Save_Get(island).cottage.room.layer_main;
+            if (Common_Get(cur_island_house_p) != NULL) {
+                layer = &Common_Get(cur_island_house_p)->island.cottage.room.layer_main;
+            } else {
+                layer = &Common_Get(now_home)->island.cottage.room.layer_main;
+            }
         } else {
             mActor_name_t house_owner_id = Common_Get(house_owner_name);
             floor_no = mFI_GetNowPlayerHouseFloorNo();
@@ -1047,14 +1158,22 @@ static void** l_bg_w_tex_segment_table[mFM_BG_TEX_NUM] = { l_bg_tex_segment_rom_
 static u8* l_bg_pal_segment_rom_start[5] = { (u8*)mFM_earth_pal, (u8*)mFM_cliff_pal, (u8*)mFM_bush_pal,
                                              (u8*)mFM_rail_pal, (u8*)mFM_beach_pal };
 
+static u8* l_bg_nuke_s_pal_segment_rom_start[5] = {
+    (u8*)mFM_earth_nuke_s_pal, (u8*)mFM_cliff_nuke_s_pal, (u8*)mFM_bush_nuke_s_pal, (u8*)mFM_rail_nuke_s_pal, (u8*)mFM_beach_nuke_s_pal
+};
+
+static u8* l_bg_nuke_w_pal_segment_rom_start[5] = {
+    (u8*)mFM_earth_nuke_w_pal, (u8*)mFM_cliff_nuke_w_pal, (u8*)mFM_bush_nuke_w_pal, (u8*)mFM_rail_nuke_w_pal, (u8*)mFM_beach_nuke_w_pal
+};
+
 static u8 l_water_permission[mFM_FIELD_TEX_NUM] = { TRUE,  TRUE,  TRUE, TRUE, TRUE,  TRUE,  TRUE,  TRUE, FALSE,
                                                     FALSE, FALSE, TRUE, TRUE, TRUE,  TRUE,  TRUE,  TRUE, TRUE,
-                                                    TRUE,  TRUE,  TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE };
+                                                    TRUE,  TRUE,  TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, };
 
 static void mFM_LoadBGCommonMonthlyPal() {
-    static int field_pal_idx_table[mTM_TERM_NUM] = { 9, 10, 11, 0, 1, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9 };
-
     u32 term = Common_Get(time.term_idx);
+    u32 season = Common_Get(time.season);
+    int casting_off = mCD_castingoff_mura_chk();
     int idx;
     int i;
 
@@ -1066,12 +1185,27 @@ static void mFM_LoadBGCommonMonthlyPal() {
         term = mTM_TERM_4;
     }
 
-    idx = field_pal_idx_table[term];
+    idx = mFM_GetFieldPalIdx(term);
+    l_mfm_bg_pal_idx = idx;
 
-    for (i = 0; i < 5; i++) {
-        bcopy(l_bg_pal_segment_rom_start[i] + ((l_bg_pal_common_dummy[i].size * idx) & ~1),
-              l_bg_pal_common_dummy[i].data, l_bg_pal_common_dummy[i].size);
+    if (casting_off == TRUE && season == mTM_SEASON_WINTER) {
+        for (i = 0; i < 5; i++) {
+            bcopy(l_bg_nuke_w_pal_segment_rom_start[i], l_bg_pal_common_dummy[i].data, l_bg_pal_common_dummy[i].size);
+        }
+    } else if (casting_off == TRUE) {
+        for (i = 0; i < 5; i++) {
+            bcopy(l_bg_nuke_s_pal_segment_rom_start[i], l_bg_pal_common_dummy[i].data, l_bg_pal_common_dummy[i].size);
+        }
+    } else {
+        for (i = 0; i < 5; i++) {
+            bcopy(l_bg_pal_segment_rom_start[i] + ((l_bg_pal_common_dummy[i].size * idx) & ~1),
+                  l_bg_pal_common_dummy[i].data, l_bg_pal_common_dummy[i].size);
+        }
     }
+}
+
+extern int mFM_GetBgPalIdx(void) {
+    return l_mfm_bg_pal_idx;
 }
 
 extern void mFM_DecideBgTexIdx(u8* bg_tex_idx) {
@@ -1115,9 +1249,9 @@ static void mFM_LoadBGCommonTex(int update_tex, u8 tex_idx) {
 static void set_field_type() {
     int field_id = mFI_GetFieldId();
     int house_owner_id;
-    u8 field_type;
+    u8 field_type = mFI_FIELDTYPE2_ROOM;
 
-    if (mLd_PlayerManKindCheck() == FALSE) {
+    if (mLd_PlayerManKindCheck() == NATIVE) {
         house_owner_id = mFI_FIELD_PLAYER0_ROOM + mHS_get_arrange_idx(Common_Get(player_no));
     } else {
         house_owner_id = RSV_NO;
@@ -1125,13 +1259,14 @@ static void set_field_type() {
 
     if (field_id == mFI_FIELD_FG) {
         field_type = mFI_FIELDTYPE2_FG;
-    } else if ((field_id == house_owner_id && mEv_CheckFirstIntro() == FALSE) ||
-               Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+    } else if (Save_Get(scene_no) != SCENE_COTTAGE_MY && (field_id == house_owner_id && mEv_CheckFirstIntro() == FALSE)) {
         field_type = mFI_FIELDTYPE2_PLAYER_ROOM;
+    } else if (Save_Get(scene_no) == SCENE_COTTAGE_MY) {
+        if (Common_Get(cur_island_house_p) != NULL && mPr_CheckCmpPersonalID(&Common_Get(cur_island_house_p)->ownerID, &Now_Private->player_ID)) {
+            field_type = mFI_FIELDTYPE2_PLAYER_ROOM;
+        }
     } else if (field_id == mFI_FIELD_NPCROOM0) {
         field_type = mFI_FIELDTYPE2_NPC_ROOM;
-    } else {
-        field_type = mFI_FIELDTYPE2_ROOM;
     }
 
     Common_Set(field_type, field_type);
@@ -1193,6 +1328,313 @@ extern void mFM_SetFieldInitData(int bg_disp_num, int bg_disp_size) {
     l_bg_disp_size = bg_disp_size;
 }
 
+/**
+ * Clears an item from a unit if it is an obstructing object.
+ * @param item FG item at the unit
+ * @param bx Block X
+ * @param bz Block Z
+ * @param ux Unit X within block
+ * @param uz Unit Z within block
+ * @return TRUE if an item was cleared or replaced
+ */
+ static int mFM_clear_under_item(mActor_name_t item, int bx, int bz, int ux, int uz) {
+    int ret = FALSE;
+
+    if (IS_ITEM_COLLIDEABLE_TREE(item)) {
+        if (mAGrw_KillTree(&item) == TRUE) {
+            mFI_BlockUtNumtoFGSet(item, bx, bz, ux, uz);
+            ret = TRUE;
+        }
+    } else if (ITEM_IS_SIGNBOARD(item) || IS_ITEM_TREE_STUMP(item)) {
+        mFI_BlockUtNumtoFGSet(EMPTY_NO, bx, bz, ux, uz);
+        ret = TRUE;
+    } else if (item >= SNOWMAN0 && item <= SNOWMAN8) {
+        mSN_ClearSnowman(&item);
+        mFI_BlockUtNumtoFGSet(EMPTY_NO, bx, bz, ux, uz);
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+/**
+ * Checks whether an item counts as a structure for placement rules.
+ * @param item FG item to test
+ * @return TRUE if the item should be treated as a structure
+ */
+static int mFM_check_structure(mActor_name_t item) {
+    // const mBI_data_c* data = mBI_GetBGItemData(item);
+    // const int type = data != NULL ? data->type : -1;
+    int ret = FALSE;
+    
+    if (
+        // clang-format off
+        (IS_ITEM_COLLIDEABLE_TREE(item)) ||
+        (IS_ITEM_TREE_STUMP(item)) ||
+        (item == RSV_NO) ||
+        (IS_ITEM_ROCK(item)) ||
+        (IS_ITEM_RST_STONE(item)) ||
+        (IS_ITEM_CRACKED_STONE(item)) ||
+        (ITEM_IS_SIGNBOARD(item)) ||
+        (ITEM_NAME_GET_TYPE(item) == NAME_TYPE_STRUCT) ||
+        ((item >= FENCE0 && item <= WOOD_FENCE)) ||
+        (item == MESSAGE_BOARD0) ||
+        (item >= MAP_BOARD0 && item <= MAP_BOARD1) ||
+        (item >= MUSIC_BOARD0 && item <= MUSIC_BOARD1) ||
+        (item >= SNOWMAN0 && item <= SNOWMAN8)
+        // clang-format on
+    ) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+/**
+ * Checks whether an item is a small tree or stump to be cleared first.
+ * @param item FG item to test
+ * @return TRUE if the item is in the clear-plant-0 category
+ */
+static int mFM_clear_plant_0(mActor_name_t item) {
+    int ret = FALSE;
+
+    if (IS_ITEM_SMALL_TREE(item) || IS_ITEM_TREE_STUMP(item)) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+#define IS_ITEM_MED_TREE_OR_ABOVE(item) \
+  (((item) == TREE_S1) || \
+   ((item) == TREE_APPLE_S1) || \
+   ((item) == TREE_ORANGE_S1) || \
+   ((item) == TREE_PEACH_S1) || \
+   ((item) == TREE_PEAR_S1) || \
+   ((item) == TREE_CHERRY_S1) || \
+   ((item) == TREE_1000BELLS_S1) || \
+   ((item) == TREE_10000BELLS_S1) || \
+   ((item) == TREE_30000BELLS_S1) || \
+   ((item) == TREE_1000BELLS_S1) || \
+   ((item) == TREE_10000BELLS_S1) || \
+   ((item) == TREE_30000BELLS_S1) || \
+   ((item) == TREE_100BELLS_S1) || \
+   ((item) == TREE_PALM_S1) || \
+   ((item) == CEDAR_TREE_S1) || \
+   ((item) == GOLD_TREE_S1) || \
+   ((item) == TREE_S2) || \
+   ((item) == TREE_APPLE_S2) || \
+   ((item) == TREE_ORANGE_S2) || \
+   ((item) == TREE_PEACH_S2) || \
+   ((item) == TREE_PEAR_S2) || \
+   ((item) == TREE_CHERRY_S2) || \
+   ((item) == TREE_1000BELLS_S2) || \
+   ((item) == TREE_10000BELLS_S2) || \
+   ((item) == TREE_30000BELLS_S2) || \
+   ((item) == TREE_1000BELLS_S2) || \
+   ((item) == TREE_10000BELLS_S2) || \
+   ((item) == TREE_30000BELLS_S2) || \
+   ((item) == TREE_100BELLS_S2) || \
+   ((item) == TREE_PALM_S2) || \
+   ((item) == CEDAR_TREE_S2) || \
+   ((item) == GOLD_TREE_S2) || \
+   ((item) == TREE) || \
+   ((item) == TREE_APPLE_FRUIT) || \
+   ((item) == TREE_ORANGE_FRUIT) || \
+   ((item) == TREE_PEACH_FRUIT) || \
+   ((item) == TREE_PEAR_FRUIT) || \
+   ((item) == TREE_CHERRY_FRUIT) || \
+   ((item) == TREE_1000BELLS) || \
+   ((item) == TREE_10000BELLS) || \
+   ((item) == TREE_30000BELLS) || \
+   ((item) == TREE_100BELLS) || \
+   ((item) == TREE_PALM_FRUIT) || \
+   ((item) == CEDAR_TREE) || \
+   ((item) == GOLD_TREE) || \
+   ((item) == GOLD_TREE_SHOVEL) || \
+   ((item) == TREE_APPLE_NOFRUIT_0) || \
+   ((item) == TREE_ORANGE_NOFRUIT_0) || \
+   ((item) == TREE_PEACH_NOFRUIT_0) || \
+   ((item) == TREE_PEAR_NOFRUIT_0) || \
+   ((item) == TREE_CHERRY_NOFRUIT_0) || \
+   ((item) == TREE_PALM_NOFRUIT_0) || \
+   ((item) == TREE_APPLE_NOFRUIT_1) || \
+   ((item) == TREE_ORANGE_NOFRUIT_1) || \
+   ((item) == TREE_PEACH_NOFRUIT_1) || \
+   ((item) == TREE_PEAR_NOFRUIT_1) || \
+   ((item) == TREE_CHERRY_NOFRUIT_1) || \
+   ((item) == TREE_PALM_NOFRUIT_1) || \
+   ((item) == TREE_APPLE_NOFRUIT_2) || \
+   ((item) == TREE_ORANGE_NOFRUIT_2) || \
+   ((item) == TREE_PEACH_NOFRUIT_2) || \
+   ((item) == TREE_PEAR_NOFRUIT_2) || \
+   ((item) == TREE_CHERRY_NOFRUIT_2) || \
+   ((item) == TREE_PALM_NOFRUIT_2) || \
+   ((item) == TREE_BEES) || \
+   ((item) == TREE_FTR) || \
+   ((item) == TREE_LIGHTS) || \
+   ((item) == TREE_PRESENT) || \
+   ((item) == TREE_BELLS) || \
+   ((item) == CEDAR_TREE_BELLS) || \
+   ((item) == CEDAR_TREE_FTR) || \
+   ((item) == CEDAR_TREE_BEES) || \
+   ((item) == CEDAR_TREE_LIGHTS) || \
+   ((item) == GOLD_TREE_BELLS) || \
+   ((item) == GOLD_TREE_FTR) || \
+   ((item) == GOLD_TREE_BEES) \
+  )
+
+/**
+ * Checks whether an item is a medium-or-larger tree to be cleared last.
+ * @param item FG item to test
+ * @return TRUE if the item is in the clear-plant-1 category
+ */
+static int mFM_clear_plant_1(mActor_name_t item) {
+    int ret = FALSE;
+
+    if (IS_ITEM_MED_TREE_OR_ABOVE(item)) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+/**
+ * Checks whether an item is a signboard for clearing.
+ * @param item FG item to test
+ * @return TRUE if the item is a player signboard
+ */
+static int mFM_clear_board(mActor_name_t item) {
+    int ret = FALSE;
+
+    if (ITEM_IS_SIGNBOARD(item)) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+/**
+ * Checks whether an item is a snowman for clearing.
+ * @param item FG item to test
+ * @return TRUE if the item is a snowman
+ */
+static int mFM_clear_snowman(mActor_name_t item) {
+    int ret = FALSE;
+
+    if (item >= SNOWMAN0 && item <= SNOWMAN8) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+typedef int (*mFM_CLEAR_PROC)(mActor_name_t item);
+
+/**
+ * Tests whether an item matches the requested clear type.
+ * @param item FG item to test
+ * @param chk_type Clear type index
+ * @return TRUE if the item matches the clear type
+ */
+extern int mFM_check_player_clear_item(mActor_name_t item, int chk_type) {
+    int ret = FALSE;
+
+    if (chk_type >= 0 && chk_type < mFM_CLEAR_TYPE_NUM) {
+        static mFM_CLEAR_PROC check_proc[mFM_CLEAR_TYPE_NUM] = {
+            mFM_clear_plant_0,
+            mFM_clear_board,
+            mFM_clear_snowman,
+            mFM_clear_plant_1,
+        };
+
+        ret = check_proc[chk_type](item);
+    }
+
+    return ret;
+}
+
+/**
+ * Attempts to clear a neighboring unit if all four neighbors are structures.
+ * @param bx Block X
+ * @param bz Block Z
+ * @param ux Unit X within block
+ * @param uz Unit Z within block
+ */
+static void mFM_clear_around_structure(int bx, int bz, int ux, int uz) {
+    static int ut_tbl[][2] = { {-1, 0}, {1, 0}, {0, -1}, {0, 1} };
+    int count = 0;
+    int i;
+    BOOL cleared = FALSE;
+    mActor_name_t item;
+    int z;
+    int x;
+    int j;
+
+    for (i = 0; i < ARRAY_COUNT(ut_tbl); i++) {
+        item = EMPTY_NO;
+        if (mFI_GetBlockUtNum2FG(&item, bx, bz, ux + ut_tbl[i][0], uz + ut_tbl[i][1]) == TRUE) {
+            if (mFM_check_structure(item) == TRUE) {
+                count++;
+            }
+        }
+    }
+
+    if (count == ARRAY_COUNT(ut_tbl)) {
+        for (i = 0; i < mFM_CLEAR_TYPE_NUM; i++) {
+            for (j = 0; j < ARRAY_COUNT(ut_tbl); j++) {
+                x = ux + ut_tbl[j][0];
+                z = uz + ut_tbl[j][1];
+
+                if (mFI_GetBlockUtNum2FG(&item, bx, bz, x, z) == TRUE) {
+                    if (mFM_check_player_clear_item(item, i) == TRUE) {
+                        cleared = mFM_clear_under_item(item, bx, bz, x, z);
+                        if (cleared == TRUE) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (cleared == TRUE) {
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Runs the "god hand" cleanup at the player's current unit.
+ * @param play Game play context
+ */
+static void mFM_god_hand(GAME_PLAY* play) {
+    mActor_name_t item = EMPTY_NO;
+    int bx = 0;
+    int bz = 0;
+    int ux = 0;
+    int uz = 0;
+
+    if (Save_Get(scene_no) == SCENE_FG && play != NULL) {
+        Actor_data* player_data = play->player_data;
+
+        if (player_data != NULL) {
+            xyz_t pos;
+
+            pos.x = (float)(int)player_data->position.x;
+            pos.y = (float)(int)player_data->position.y;
+            pos.z = (float)(int)player_data->position.z;
+
+            if (mFI_Wpos2BkandUtNuminBlock(&bx, &bz, &ux, &uz, pos) == TRUE) {
+                if (mFI_GetBlockUtNum2FG(&item, bx, bz, ux, uz) == TRUE) {
+                    mFM_clear_under_item(item, bx, bz, ux, uz);
+                }
+
+                mFM_clear_around_structure(bx, bz, ux, uz);
+            }
+        }
+    }
+}
+
 extern void mFM_FieldInit(GAME_PLAY* play) {
     int bg_disp_num = l_bg_disp_num;
     int bg_disp_size = l_bg_disp_size;
@@ -1218,6 +1660,8 @@ extern void mFM_FieldInit(GAME_PLAY* play) {
     mFM_PoorTreeUnderPlayerBlock();
     mAGrw_ChangeCedar2Tree();
     mAGrw_RenewalFgItem(Common_GetPointer(time.rtc_time));
+    mFM_god_hand(play);
+    mAGrw_RepairErrorDeposit();
     mAGrw_SetXmasTree();
     mFM_SetFruit_title_demo(Save_Get(scene_no));
 
@@ -1226,7 +1670,7 @@ extern void mFM_FieldInit(GAME_PLAY* play) {
     }
 
     mNpc_SendRegisteredGoodbyMail();
-    Common_Set(floor_idx, mRmTp_GetFloorIdx());
+    Common_Set(floor_idx, mRmTp_GetCarpetSEIdx());
     Common_Set(make_npc2_actor, FALSE);
 
     if (play->fb_wipe_type == WIPE_TYPE_EVENT) {
@@ -1311,38 +1755,12 @@ extern void mFM_Field_dt() {
             max = field_info->block_x_max * field_info->block_z_max;
 
             for (i = max; i != 0; i--) {
-// Aus version added NULL check
-#if VERSION >= VER_GAFU01_00
-                if (block_info->fg_info.items_p != NULL) {
-                    zelda_free(block_info->fg_info.items_p);
-                }
-#else
                 zelda_free(block_info->fg_info.items_p);
-#endif
                 block_info++;
             }
         }
     }
 
-    // Aus version added NULL checks
-#if VERSION >= VER_GAFU01_00
-    if (field_info->fg2_p != NULL) {
-        zelda_free(field_info->fg2_p);
-    }
-    if (field_info->block_info != NULL) {
-        zelda_free(field_info->block_info);
-    }
-
-    for (i = 0; i < mFM_VISIBLE_BLOCK_NUM; i++) {
-        if (field_info->bg_display_list_p[i] != NULL) {
-            zelda_free(field_info->bg_display_list_p[i]);
-        }
-    }
-
-    if (field_info != NULL) {
-        zelda_free(field_info);
-    }
-#else
     zelda_free(field_info->fg2_p);
     zelda_free(field_info->block_info);
 
@@ -1351,8 +1769,6 @@ extern void mFM_Field_dt() {
     }
 
     zelda_free(field_info);
-#endif
-
 
     g_fdinfo = NULL;
     mFI_InitRegisterBgInfo();
@@ -1360,7 +1776,7 @@ extern void mFM_Field_dt() {
 
 static void mFM_SetBlockKind(u8* type_p, int* kind_p, mFM_combination_c* combi_p, mFM_combo_info_c* combi_info_p,
                              int count) {
-    for (count; count != 0; count--) {
+    for (; count != 0; count--) {
         int combi_type = combi_p[0].combination_type;
 
         type_p[0] = combi_info_p[combi_type].type;
@@ -1369,27 +1785,6 @@ static void mFM_SetBlockKind(u8* type_p, int* kind_p, mFM_combination_c* combi_p
         type_p++;
         kind_p++;
         combi_p++;
-    }
-}
-
-extern void mFM_SetBlockKindLoadCombi(GAME* game) {
-    mFM_SetBlockKind(g_block_type_p, g_block_kind_p, Save_Get(combi_table[0]), data_combi_table, BLOCK_TOTAL_NUM);
-}
-
-static void mFM_SetIslandFg(mFM_combo_info_c* combi_info_p, mFM_fg_data_c** sorted_fg_data, int* island_x_blocks) {
-    int i;
-
-    for (i = 0; i < mISL_FG_BLOCK_X_NUM; i++) {
-        int fg_id = combi_info_p[Save_Get(combi_table[mISL_BLOCK_Z][island_x_blocks[0]]).combination_type].fg_id;
-        if (sorted_fg_data[fg_id] == NULL) {
-            break;
-        }
-
-        if (fg_id >= 0 && fg_id < mFM_FG_NUM) {
-            // mFM_FgUtDataSet(Save_Get(island).fgblock[0][i].items[0], sorted_fg_data[fg_id]->items[0]);
-        }
-
-        island_x_blocks++;
     }
 }
 
@@ -1411,9 +1806,102 @@ static mFM_combination_c l_combiID[BLOCK_TOTAL_NUM] = {
 u8* g_block_type_p = l_block_type;
 int* g_block_kind_p = l_block_kind;
 
+extern void mFM_SetBlockKindLoadCombi(GAME* game) {
+    mFM_SetBlockKind(g_block_type_p, g_block_kind_p, Save_Get(combi_table[0]), data_combi_table, BLOCK_TOTAL_NUM);
+}
+
+static mActor_name_t mFM_GetFgSearchBg(mFM_combo_info_c* combi_info_p, mActor_name_t bg_name) {
+    mActor_name_t fg_id = 0;
+    int i;
+
+    for (i = 0; i < data_combi_table_number; i++) {
+        if (combi_info_p->bg_id == bg_name) {
+            fg_id = combi_info_p->fg_id;
+            break;
+        }
+
+        combi_info_p++;
+    }
+    
+    return fg_id;
+}
+
+static void mFM_SetIslandFg(mFM_combo_info_c* combi_info_p, mFM_fg_data_c** sorted_fg_data) {
+    mHm_hs_c* home = Save_Get(homes);
+    int i;
+    int j;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (home->island.house_idx == -1) {
+            for (j = 0; j < mISL_FG_BLOCK_X_NUM; j++) {
+                static mActor_name_t base_bg_name[] = { BG_TYPE_GRD_S_IL_1, BG_TYPE_GRD_S_IR_1 };
+                mActor_name_t fg_id = mFM_GetFgSearchBg(combi_info_p, base_bg_name[j] + (home->island.bg_data[j] & 3));
+
+                if (fg_id > 0 && fg_id < mFM_FG_NUM && sorted_fg_data[fg_id] != NULL) {
+                    mFM_FgUtDataSet(home->island.fgblock[0][j].items[0], sorted_fg_data[fg_id]->items[0]);
+                }
+            }
+        }
+
+        home++;
+    }
+}
+
+extern void mFM_RenewalIslandFg(GAME* game) {
+    GameAlloc* game_alloc_p = NULL;
+    void* gamealloc_data_p = NULL;
+    mFM_fg_data_c* fg_data_p;
+    mFM_fg_data_c** sorted_fg_data_list;
+    int fg_data_num;
+    size_t fg_datasize;
+    size_t fg_datasize_align;
+
+    if (game != NULL) {
+        game_alloc_p = &game->gamealloc;
+    }
+
+    fg_datasize = JW_GetResSizeFileNo(RESOURCE_FGDATA);
+    fg_datasize_align = ALIGN_NEXT(fg_datasize, 32);
+
+    if (game != NULL) {
+        gamealloc_data_p = gamealloc_malloc(game_alloc_p, fg_datasize_align + 32);
+        fg_data_p = (mFM_fg_data_c*)ALIGN_NEXT((u32)gamealloc_data_p, 32);
+    } else {
+        fg_data_p = (mFM_fg_data_c*)zelda_malloc_align(fg_datasize_align, 32);
+    }
+
+    fg_data_num = fg_datasize / sizeof(mFM_fg_data_c);
+    _JW_GetResourceAram(JW_GetAramAddress(RESOURCE_FGDATA), (u8*)fg_data_p, fg_datasize_align);
+    
+    if (game != NULL) {
+        sorted_fg_data_list = (mFM_fg_data_c**)gamealloc_malloc(game_alloc_p, mFM_FG_NUM * sizeof(mFM_fg_data_c*));
+    } else {
+        sorted_fg_data_list = (mFM_fg_data_c**)zelda_malloc(mFM_FG_NUM * sizeof(mFM_fg_data_c*));
+    }
+
+    mFM_SortFGData(sorted_fg_data_list, fg_data_p, mFM_FG_NUM, fg_data_num, 0);
+    mFM_SetIslandFg(data_combi_table, sorted_fg_data_list);
+
+    if (sorted_fg_data_list != NULL) {
+        if (game != NULL) {
+            gamealloc_free(game_alloc_p, sorted_fg_data_list);
+        } else {
+            zelda_free(sorted_fg_data_list);
+        }
+    }
+
+    if (gamealloc_data_p != NULL) {
+        gamealloc_free(game_alloc_p, gamealloc_data_p);
+    }
+
+    if (game == NULL && fg_data_p != NULL) {
+        zelda_free(fg_data_p);
+    }
+}
+
 extern void mFM_InitFgCombiSaveData(GAME* game) {
     GameAlloc* game_alloc_p = NULL;
-    void* gamealloc_data_p;
+    void* gamealloc_data_p = NULL;
     mFM_fg_data_c* fg_data_p;
     mFM_combo_info_c* combo_info_p;
     mFM_combination_c* combi_table;
@@ -1431,15 +1919,7 @@ extern void mFM_InitFgCombiSaveData(GAME* game) {
 
     combi_table = Save_Get(combi_table[0]);
     fg_block = Save_Get(fg[0]);
-    
-// Aus version initializes pointers to NULL for NULL checks
-#if VERSION >= VER_GAFU01_00
-    gamealloc_data_p = NULL;
-    fg_data_p = NULL;
     total_fg_block = 0;
-#else
-    total_fg_block = 0;
-#endif
 
     if (game != NULL) {
         game_alloc_p = &game->gamealloc;
@@ -1454,14 +1934,7 @@ extern void mFM_InitFgCombiSaveData(GAME* game) {
 
     if (game != NULL) {
         gamealloc_data_p = gamealloc_malloc(game_alloc_p, fg_datasize_align + 32);
-// Aus version added NULL check
-#if VERSION >= VER_GAFU01_00
-        if (gamealloc_data_p != NULL) {
-            fg_data_p = (mFM_fg_data_c*)(ALIGN_NEXT((u32)gamealloc_data_p, 32));
-        }
-#else
         fg_data_p = (mFM_fg_data_c*)(ALIGN_NEXT((u32)gamealloc_data_p, 32));
-#endif
     } else {
         fg_data_p = (mFM_fg_data_c*)zelda_malloc_align(fg_datasize_align, 32);
     }
@@ -1513,11 +1986,9 @@ extern void mFM_InitFgCombiSaveData(GAME* game) {
         int island_x_blocks[2];
 
         mFI_GetIslandBlockNumX(island_x_blocks);
-        mFM_SetIslandFg(combo_info_p, sorted_fg_data_list, island_x_blocks);
+        mFM_SetIslandFg(combo_info_p, sorted_fg_data_list);
     }
 
-// Aus version added NULL checks
-#if VERSION >= VER_GAFU01_00
     if (game != NULL) {
         if (sorted_fg_data_list != NULL) {
             gamealloc_free(game_alloc_p, sorted_fg_data_list);
@@ -1535,15 +2006,6 @@ extern void mFM_InitFgCombiSaveData(GAME* game) {
             zelda_free(fg_data_p);
         }
     }
-#else
-    if (game != NULL) {
-        gamealloc_free(game_alloc_p, sorted_fg_data_list);
-        gamealloc_free(game_alloc_p, gamealloc_data_p);
-    } else {
-        zelda_free(sorted_fg_data_list);
-        zelda_free(fg_data_p);
-    }
-#endif
 }
 
 static int mFM_AddIdx(int* idx, int min, int max) {
@@ -1610,18 +2072,16 @@ extern void mFM_RenewalReserve() {
     for (bz = 1; bz < FG_BLOCK_Z_NUM; bz++) {
         for (bx = 0; bx < FG_BLOCK_X_NUM; bx++, fg_block++) {
             block_kind = g_block_kind_p[(bz + 1) * BLOCK_X_NUM + (bx + 1)];
-// Aus adds NULL check on fg_block
-#if VERSION >= VER_GAFU01_00
             if (fg_block == NULL) {
                 continue;
             }
-#endif
+
             mFM_RenewalReserveBlock(fg_block->items[0], &set, &set_idx, &river_idx, block_kind);
         }
     }
 }
 
-extern mActor_name_t mFM_GetReseveName(int bx, int bz) {
+extern mActor_name_t mFM_GetReseveName_com(int bx, int bz, mFM_fg_c* fg) {
     mActor_name_t* items;
     mActor_name_t reserve_name = SIGN03;
     u32 block_kind;
@@ -1635,7 +2095,7 @@ extern mActor_name_t mFM_GetReseveName(int bx, int bz) {
 
     if (bx > 0 && bx < (BLOCK_X_NUM - 1) && bz > 0 && bz < (BLOCK_Z_NUM - 3)) {
         block_kind = g_block_kind_p[(bz * BLOCK_X_NUM) + bx];
-        items = Save_Get(fg[bz - 1][bx - 1]).items[0];
+        items = fg[(bz - 1) * FG_BLOCK_X_NUM + (bx - 1)].items[0];
 
         for (i = 0; i < UT_TOTAL_NUM; i++) {
             if (mNT_IS_RESERVE(items[0])) {
@@ -1714,11 +2174,15 @@ extern mActor_name_t mFM_GetReseveName(int bx, int bz) {
     return reserve_name;
 }
 
-extern void mFM_toSummer() {
-    mTM_set_season_com(7);
+extern mActor_name_t mFM_GetReseveName(int bx, int bz) {
+    return mFM_GetReseveName_com(bx, bz, Save_Get(fg[0]));
+}
 
-    if (g_fdinfo != NULL) {
-        // mFM_LoadBGCommonTex(FALSE, Save_Get(island).grass_tex_type);
+extern void mFM_toSummer() {
+    mTM_set_season_com(mTM_TERM_7);
+
+    if (g_fdinfo != NULL && Common_Get(cur_island_house_p) != NULL) {
+        mFM_LoadBGCommonTex(FALSE, Common_Get(cur_island_house_p)->island.grass_tex_type);
         mFM_SetFieldPal(&g_fdinfo->field_palette);
     }
 }
@@ -1730,6 +2194,48 @@ extern void mFM_returnSeason() {
         mFM_LoadBGCommonTex(FALSE, Save_Get(bg_tex_idx));
         mFM_SetFieldPal(&g_fdinfo->field_palette);
     }
+}
+
+static mCoBG_Collision_u* mFM_GetBgName2Col_com(mActor_name_t bg_name) {
+    mFM_bg_data_c* bg_data_p = data_bgd;
+    mCoBG_Collision_u* collision_p = NULL;
+    int i;
+
+    for (i = 0; i < data_bgd_number; i++) {
+        if (bg_data_p->bg_id == bg_name) {
+            collision_p = (mCoBG_Collision_u*)bg_data_p->collision;
+            // @BUG - missing break
+        }
+
+        bg_data_p++;
+    }
+
+    return collision_p;
+}
+
+extern mCoBG_Collision_u* mFM_GetBgName2Col(mActor_name_t bg_name) {
+    mCoBG_Collision_u* col_p = NULL;
+
+    if (mFI_CheckFieldData()) {
+        col_p = mFM_GetBgName2Col_com(bg_name);
+    }
+
+    return col_p;
+}
+
+extern mCoBG_Collision_u* mFM_GetBkNum2Col(int bx, int bz) {
+    mFM_combo_info_c* combo_info_p = data_combi_table;
+    mCoBG_Collision_u* col_p = NULL;
+
+    if (bx > 0 && bx < (BLOCK_X_NUM - 1) && bz > 0 && bz < (BLOCK_Z_NUM - 3)) {
+        mActor_name_t combi_type = Save_Get(combi_table[bz][bx]).combination_type;
+
+        if (combi_type < data_combi_table_number) {
+            col_p = mFM_GetBgName2Col_com(combo_info_p[combi_type].bg_id);
+        }
+    }
+
+    return col_p;
 }
 
 extern void mFM_RestoreIslandBG(int* island_x_blocks, int bx_num) {
@@ -1772,15 +2278,30 @@ extern void mFM_RestoreIslandBG(int* island_x_blocks, int bx_num) {
     }
 }
 
+extern void mFM_RestoreIslandFG(mFM_fg_c* fg, u16* deposit, int* island_bx, int island_bx_cnt) {
+    if (mFI_CheckFieldData() && Save_Get(scene_no) == SCENE_FG) {
+        mFM_block_info_c* block_info = mFI_GetBlockTopP();
+        int i;
+
+        if (block_info != NULL) {
+            block_info += mFI_GetBlockNum(island_bx[0], mISL_BLOCK_Z);
+            
+            for (i = 0; i < island_bx_cnt; i++) {
+                block_info->fg_info.items_p = fg->items[0];
+                block_info->fg_info.deposit_p = deposit;
+
+                block_info++;
+                fg++;
+                deposit += UT_Z_NUM;
+            }
+        }
+    }
+}
+
 extern void mFM_SetIslandNpcRoomData(GAME* game, int malloc_flag) {
     GameAlloc* gamealloc = NULL;
     mFM_fg_data_c** sorted_fgnpc_data_list;
-
-#if VERSION >= VER_GAFU01_00
     void* gamealloc_data_p = NULL;
-#else
-    void* gamealloc_data_p;
-#endif
     mFM_fg_data_c* fgnpc_data_p;
     size_t fgnpc_size = JW_GetResSizeFileNo(RESOURCE_FGNPCDATA);
     size_t fgnpc_size_align = ALIGN_NEXT(fgnpc_size, 32);
@@ -1827,9 +2348,10 @@ extern void mFM_SetIslandNpcRoomData(GAME* game, int malloc_flag) {
             }
         }
 
-#if VERSION >= VER_GAFU01_00
         if (fgnpc_data_p != NULL) {
-            if (malloc_flag == TRUE || game == NULL) {
+            if (malloc_flag == TRUE) {
+                zelda_free(fgnpc_data_p);
+            } else if (game == NULL) {
                 zelda_free(fgnpc_data_p);
             }
         }
@@ -1837,21 +2359,5 @@ extern void mFM_SetIslandNpcRoomData(GAME* game, int malloc_flag) {
         if (gamealloc_data_p != NULL) {
             gamealloc_free(gamealloc, gamealloc_data_p);
         }
-#else
-        /* @BUG - memory leak if gamealloc malloc path is not taken above */
-#ifndef BUGFIXES
-        if (gamealloc_data_p != NULL) {
-#else
-        if (fgnpc_data_p != NULL) { // this is guaranteed to exist in all malloc paths
-#endif
-            if (malloc_flag == TRUE) {
-                zelda_free(fgnpc_data_p);
-            } else if (game != NULL) {
-                gamealloc_free(gamealloc, gamealloc_data_p);
-            } else {
-                zelda_free(fgnpc_data_p);
-            }
-        }
-#endif
     }
 }

@@ -150,7 +150,7 @@ extern int mRmTp_GetFurnitureData(mActor_name_t ftr, int ut_x, int ut_z, mRmTp_F
 extern void mRmTp_MakeFtrNoTable(mActor_name_t* dst, mActor_name_t* src);
 extern int mRmTp_GetFtrActionSE(int ftr_idx, int mode);
 extern u8* mRmTp_CheckFtrBirthInfoTop();
-extern int mRmTp_GetFloorIdx();
+extern int mRmTp_GetCarpetSEIdx();
 extern int mRmTp_GetWallIdx();
 extern mActor_name_t mRmTp_Item1ItemNo2FtrItemNo_AtPlayerRoom(mActor_name_t item1_no, int no_convert_tools);
 extern mActor_name_t mRmTp_FtrItemNo2Item1ItemNo(mActor_name_t ftr_no, int no_convert_tools);

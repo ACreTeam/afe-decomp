@@ -1791,7 +1791,7 @@ static void mRmTp_PrintFloorIndex(const char* name) {
     // STUBBED (probably only emitted for debug builds)
 }
 
-extern int mRmTp_GetFloorIdx() {
+extern int mRmTp_GetCarpetSEIdx() {
     int scene_no = Save_Get(scene_no);
 
     if (mSc_IS_SCENE_BASEMENT(scene_no)) {
