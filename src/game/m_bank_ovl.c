@@ -31,7 +31,7 @@ static int mBN_total_item_bell() {
     int total_item_bell = 0;
 
     for (i = 0; i < MONEY_NUM; i++) {
-        int possess = mPr_GetPossessionItemSumWithCond(Common_Get(now_private), aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
+        int possess = mPr_GetPossessionItemSumWithCond(Now_Private, aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
 
         total_item_bell += possess * aNSM_sack_amount[i];
     }
@@ -53,7 +53,7 @@ static void mBN_bank_ok(Submenu* submenu, mSM_MenuInfo_c* menu, mBN_Ovl_c* bank_
         bank_ovl->bank_bell = mBN_DEPOSIT_MAX;
     }
 
-    Common_Get(now_private)->bank_account = bank_ovl->bank_bell;
+    Now_Private->bank_account = bank_ovl->bank_bell;
 
     total_item_bell = mBN_total_item_bell();
     i = 0;
@@ -61,11 +61,11 @@ static void mBN_bank_ok(Submenu* submenu, mSM_MenuInfo_c* menu, mBN_Ovl_c* bank_
     /* Replace all money sack items with EMPTY_NO */
     while (bank_ovl->now_bell < total_item_bell && i < MONEY_NUM) {
         sack_idx =
-            mPr_GetPossessionItemIdxWithCond(Common_Get(now_private), aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
+            mPr_GetPossessionItemIdxWithCond(Now_Private, aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
         if (sack_idx == -1) {
             i++; /* move onto next sack amount */
         } else {
-            mPr_SetPossessionItem(Common_Get(now_private), sack_idx, EMPTY_NO, mPr_ITEM_COND_NORMAL);
+            mPr_SetPossessionItem(Now_Private, sack_idx, EMPTY_NO, mPr_ITEM_COND_NORMAL);
         }
 
         total_item_bell = mBN_total_item_bell(); /* update total bell count in sacks */
@@ -77,12 +77,12 @@ static void mBN_bank_ok(Submenu* submenu, mSM_MenuInfo_c* menu, mBN_Ovl_c* bank_
 
     while (remain_item_bell > mPr_WALLET_MAX && i < MONEY_NUM - 1) {
         sack_idx =
-            mPr_GetPossessionItemIdxWithCond(Common_Get(now_private), aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
+            mPr_GetPossessionItemIdxWithCond(Now_Private, aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
 
         if (sack_idx == -1) {
             i++;
         } else {
-            mPr_SetPossessionItem(Common_Get(now_private), sack_idx, ITM_MONEY_30000, mPr_ITEM_COND_NORMAL);
+            mPr_SetPossessionItem(Now_Private, sack_idx, ITM_MONEY_30000, mPr_ITEM_COND_NORMAL);
             remain_item_bell -= 30000 - aNSM_sack_amount[i];
         }
     }
@@ -90,25 +90,26 @@ static void mBN_bank_ok(Submenu* submenu, mSM_MenuInfo_c* menu, mBN_Ovl_c* bank_
     /* Add 30k bell bags to the inventory where empty spaces are */
     i = 0;
     while (remain_item_bell > mPr_WALLET_MAX && i < 1) {
-        int sack_idx = mPr_GetPossessionItemIdxWithCond(Common_Get(now_private), EMPTY_NO, mPr_ITEM_COND_NORMAL);
+        int sack_idx = mPr_GetPossessionItemIdxWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL);
 
         if (sack_idx == -1) {
             i++;
         } else {
-            mPr_SetPossessionItem(Common_Get(now_private), sack_idx, ITM_MONEY_30000, mPr_ITEM_COND_NORMAL);
+            mPr_SetPossessionItem(Now_Private, sack_idx, ITM_MONEY_30000, mPr_ITEM_COND_NORMAL);
             remain_item_bell -= 30000;
         }
     }
 
-    bank_ovl->now_bell -= mBN_total_item_bell();
+    total_item_bell = bank_ovl->now_bell;
+    total_item_bell -= mBN_total_item_bell();
 
-    if (bank_ovl->now_bell < 0) {
-        bank_ovl->now_bell = 0;
-    } else if (bank_ovl->now_bell > mPr_WALLET_MAX) {
-        bank_ovl->now_bell = mPr_WALLET_MAX;
+    if (total_item_bell < 0) {
+        total_item_bell = 0;
+    } else if (total_item_bell > mPr_WALLET_MAX) {
+        total_item_bell = mPr_WALLET_MAX;
     }
 
-    Common_Get(now_private)->inventory.wallet = bank_ovl->now_bell;
+    Now_Private->inventory.wallet = total_item_bell;
     (*submenu->overlay->move_chg_base_proc)(menu, mSM_MOVE_OUT_TOP);
     sAdo_SysTrgStart(NA_SE_MENU_EXIT);
 }
@@ -214,67 +215,93 @@ extern Gfx tyo_win_mode[];
 extern Gfx tyo_win_model[];
 extern Gfx tyo_win_moji2T_model[];
 extern Gfx tyo_win_moji3T_model[];
+extern Gfx bank_model_before[];
+extern Gfx tyo_win_w1T_model[];
+extern Gfx tyo_win_w2T_model[];
+extern Gfx tyo_win_w3T_model[];
+extern Gfx tyo_win_w4T_model[];
+extern Gfx tyo_win_w5T_model[];
+extern Gfx tyo_win_w6T_model[];
+extern Gfx tyo_win_w7T_model[];
+extern Gfx tyo_win_w8T_model[];
+extern Gfx tyo_win_w9T_model[];
+extern Gfx tyo_win_w10T_model[];
+extern Gfx tyo_win_wakuT_model[];
+extern Gfx tyo_win_fukiT_model[];
+extern Gfx tyo_win_iconT_model[];
+extern Gfx tyo_win_moji1_model[];
 
 static void mBN_set_frame_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
     GRAPH* g = game->graph;
     mBN_Ovl_c* bank_ovl = submenu->overlay->bank_ovl;
-    Gfx* gfx;
     u8 s;
     u8 t;
 
-    Matrix_translate(menu->position[0] * 16.0f, menu->position[1] * 16.0f, 140.0f, MTX_LOAD);
-    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_MULT);
+    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+    Matrix_translate(menu->position[0], menu->position[1], 140.0f, MTX_MULT);
 
-    OPEN_DISP(g);
-    gfx = NOW_POLY_OPA_DISP;
+    OPEN_POLY_OPA_DISP(g);
 
-    gSPDisplayList(gfx++, tyo_win_mode);
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(g), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(g), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, bank_model_before);
     s = -submenu->overlay->menu_control.texture_pos[0] * 4.0f;
     t = -submenu->overlay->menu_control.texture_pos[1] * 4.0f;
-    gDPSetTileSize_Dolphin(gfx++, 0, s, t, 32, 32);
-    gSPDisplayList(gfx++, tyo_win_model);
+    gDPSetTileSize_Dolphin(POLY_OPA_DISP++, 0, s, t, 32, 32);
+
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w1T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w2T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w3T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w4T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w5T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w6T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w7T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w8T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w9T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_w10T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_wakuT_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_fukiT_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_iconT_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_moji1_model);
 
     if (bank_ovl->now_bell <= bank_ovl->player_bell) {
-        gDPSetPrimColor(gfx++, 0, 255, 165, 50, 50, 255);
-        gDPSetEnvColor(gfx++, 255, 255, 255, 255);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 165, 50, 50, 255);
+        gDPSetEnvColor(POLY_OPA_DISP++, 255, 255, 255, 255);
     } else {
-        gDPSetPrimColor(gfx++, 0, 255, 100, 80, 80, 255);
-        gDPSetEnvColor(gfx++, 165, 155, 155, 255);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 100, 80, 80, 255);
+        gDPSetEnvColor(POLY_OPA_DISP++, 165, 155, 155, 255);
     }
 
-    gSPDisplayList(gfx++, tyo_win_moji2T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_moji2T_model);
 
     if (bank_ovl->now_bell >= bank_ovl->player_bell) {
-        gDPSetPrimColor(gfx++, 0, 255, 20, 205, 20, 255);
-        gDPSetEnvColor(gfx++, 255, 255, 255, 255);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 20, 205, 20, 255);
+        gDPSetEnvColor(POLY_OPA_DISP++, 255, 255, 255, 255);
     } else {
-        gDPSetPrimColor(gfx++, 0, 255, 70, 95, 70, 255);
-        gDPSetEnvColor(gfx++, 155, 165, 155, 255);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 70, 95, 70, 255);
+        gDPSetEnvColor(POLY_OPA_DISP++, 155, 165, 155, 255);
     }
 
-    gSPDisplayList(gfx++, tyo_win_moji3T_model);
+    gSPDisplayList(POLY_OPA_DISP++, tyo_win_moji3T_model);
 
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(g);
+    CLOSE_POLY_OPA_DISP(g);
 }
 
 static void mBN_set_num_str(f32 x, f32 y, GAME* game, u32 num, f32 scale, rgba_t* color) {
-    u8 str[11];
+    u8 str[9];
     f32 width;
 
-    mFont_UnintToString(str, 11, num, 9, FALSE, FALSE, TRUE);
-    width = mFont_GetStringWidth(str, 11, TRUE);
+    mFont_UnintToString(str, 9, num, 9, FALSE, FALSE, FALSE);
+    width = mFont_GetStringWidth(str, 9, TRUE);
     x -= scale * width;
 
-    mFont_SetLineStrings(game, str, 11, x, y, color->r, color->g, color->b, 255, FALSE, TRUE, scale, scale,
+    mFont_SetLineStrings(game, str, 9, x, y, color->r, color->g, color->b, 255, FALSE, FALSE, scale, scale,
                          mFont_MODE_POLY);
 }
 
 static void mBN_set_character_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
-    static u8 kingaku_str[] = { CHAR_Y, CHAR_o, CHAR_u, CHAR_r, CHAR_SPACE, CHAR_A,
-                                CHAR_c, CHAR_c, CHAR_o, CHAR_u, CHAR_n,     CHAR_t };
-    static u8 end_str[] = { CHAR_O, CHAR_K };
+    static u8 kingaku_str[] = { CHAR_PP_006, CHAR_PP_195, CHAR_PP_231, CHAR_PP_007, CHAR_PP_194, CHAR_PP_001,
+                                CHAR_PP_126, CHAR_PP_018, CHAR_PP_023 };
+    static u8 end_str[] = { CHAR_PP_004, CHAR_PP_193, CHAR_PP_124 };
     static rgba_t normal_col = { 0, 50, 255, 255 };
     static rgba_t select_col = { 195, 20, 20, 255 };
     static rgba_t bank_bell_col = { 170, 60, 145, 255 };
@@ -285,34 +312,29 @@ static void mBN_set_character_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* m
     f32 width;
     f32 digit_x;
     int i;
-    u8 str[7];
+    u8 str[6];
     f32 pos_x = menu->position[0];
     f32 pos_y = menu->position[1];
 
     bank_ovl = submenu->overlay->bank_ovl;
 
     (*submenu->overlay->set_char_matrix_proc)(game->graph);
-    mFont_SetLineStrings(game, kingaku_str, sizeof(kingaku_str), 145.0f + pos_x, 65.0f - pos_y, 255, 255, 255, 255,
-                         FALSE, TRUE, 0.875f, 0.875f, mFont_MODE_POLY);
+    mFont_SetLineStrings(game, kingaku_str, sizeof(kingaku_str), 134.0f + pos_x, 66.0f - pos_y, 255, 255, 255, 255,
+                         FALSE, FALSE, 0.9375f, 0.9375f, mFont_MODE_POLY);
 
-    mBN_set_num_str(211.0f + pos_x, 157.0f - pos_y, game, bank_ovl->bank_bell, 0.875f, &bank_bell_col);
-    mBN_set_num_str(211.0f + pos_x, 98.0f - pos_y, game, bank_ovl->now_bell, 0.875f, &now_bell_col);
+    mBN_set_num_str(227.5f + pos_x, 157.0f - pos_y, game, bank_ovl->bank_bell, 0.875f, &bank_bell_col);
+    mBN_set_num_str(229.0f + pos_x, 98.0f - pos_y, game, bank_ovl->now_bell, 0.875f, &now_bell_col);
 
     cursol = bank_ovl->cursol;
-
-    if (cursol >= 3) {
-        cursol++;
-    }
-
-    mFont_UnintToString(str, 7, bank_ovl->bell, 6, FALSE, TRUE, TRUE);
-    width = mFont_GetStringWidth(str, 7, TRUE);
+    mFont_UnintToString(str, 6, bank_ovl->bell, 6, FALSE, TRUE, FALSE);
+    width = mFont_GetStringWidth(str, 6, TRUE);
 
     /* Draw each digit one by one */
-    digit_x = 211.0f + (pos_x - width);
-    for (i = 0; i < 7; i++) {
+    digit_x = 229.0f + (pos_x - width);
+    for (i = 0; i < 6; i++) {
         rgba_t* color = cursol == i ? &select_col : &normal_col;
 
-        mFont_SetLineStrings(game, str + i, 1, digit_x, 124.0f - pos_y, color->r, color->g, color->b, 255, FALSE, TRUE,
+        mFont_SetLineStrings(game, str + i, 1, digit_x, 124.0f - pos_y, color->r, color->g, color->b, 255, FALSE, FALSE,
                              1.0f, 1.0f, mFont_MODE_POLY);
 
         width = mFont_GetStringWidth(str + i, 1, TRUE);
@@ -322,8 +344,8 @@ static void mBN_set_character_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* m
     {
         rgba_t* color = bank_ovl->cursol < mBN_CUSROL_OK ? &normal_col : &select_col;
 
-        mFont_SetLineStrings(game, end_str, sizeof(end_str), 208.0f + pos_x, 140.0f - pos_y, color->r, color->g,
-                             color->b, 255, FALSE, TRUE, 0.875f, 0.875f, mFont_MODE_POLY);
+        mFont_SetLineStrings(game, end_str, sizeof(end_str), 221.5f + pos_x, 139.0f - pos_y, color->r, color->g,
+                             color->b, 255, FALSE, FALSE, 0.875f, 0.875f, mFont_MODE_POLY);
     }
 }
 
@@ -352,7 +374,7 @@ static void mBN_bank_ovl_init(Submenu* submenu) {
     overlay->menu_info[mSM_OVL_BANK].next_proc_status = 1;
     overlay->menu_info[mSM_OVL_BANK].move_drt = 5;
 
-    bank_ovl->now_bell = Common_Get(now_private)->inventory.wallet;
+    bank_ovl->now_bell = Now_Private->inventory.wallet;
     bank_ovl->now_bell += mBN_total_item_bell();
     bank_ovl->player_bell = bank_ovl->now_bell;
 
@@ -360,17 +382,17 @@ static void mBN_bank_ovl_init(Submenu* submenu) {
     bank_ovl->player_max_bell = mPr_WALLET_MAX;
 
     for (i = 0; i < MONEY_NUM; i++) {
-        int sack_sum = mPr_GetPossessionItemSumWithCond(Common_Get(now_private), aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
+        int sack_sum = mPr_GetPossessionItemSumWithCond(Now_Private, aNSM_itemNo[i], mPr_ITEM_COND_NORMAL);
 
         bank_ovl->player_max_bell += sack_sum * aNSM_sack_amount[3];
     }
 
     {
-        int sack_sum = mPr_GetPossessionItemSumWithCond(Common_Get(now_private), EMPTY_NO, mPr_ITEM_COND_NORMAL);
+        int sack_sum = mPr_GetPossessionItemSumWithCond(Now_Private, EMPTY_NO, mPr_ITEM_COND_NORMAL);
 
         bank_ovl->player_max_bell += sack_sum * aNSM_sack_amount[3];
     }
-    bank_ovl->bank_bell = Common_Get(now_private)->bank_account;
+    bank_ovl->bank_bell = Now_Private->bank_account;
     bank_ovl->cursol = 0;
 }
 

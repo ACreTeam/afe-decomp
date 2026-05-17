@@ -89,9 +89,23 @@ def convert_row(values: list[int], char_pp_map: dict[int, str]) -> str:
     return "{ " + ", ".join(symbols) + " }"
 
 
+def convert_1d_initializer(initializer_text: str, char_pp_map: dict[int, str]) -> str:
+    inner = initializer_text.strip()
+    if not (inner.startswith("{") and inner.endswith("}")):
+        raise ValueError("Expected brace-wrapped initializer")
+
+    values = parse_byte_tokens(inner[1:-1])
+    return convert_row(values, char_pp_map)
+
+
 def convert_array(source_text: str, array_name: str, char_pp_map: dict[int, str]) -> str:
     initializer = extract_initializer_block(source_text, array_name)
-    rows = extract_rows(initializer)
+
+    try:
+        rows = extract_rows(initializer)
+    except ValueError:
+        return convert_1d_initializer(initializer, char_pp_map) + ";"
+
     converted_rows = [convert_row(parse_byte_tokens(row), char_pp_map) for row in rows]
     return "{\n    " + ",\n    ".join(converted_rows) + "\n};"
 
