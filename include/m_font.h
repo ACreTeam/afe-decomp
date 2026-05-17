@@ -281,6 +281,12 @@ enum {
 };
 
 enum {
+    mFont_TAG_STR_0,
+
+    mFont_TAG_STR_NUM = 52 // TODO
+};
+
+enum {
     mFont_TEX_TYPE_FONT1,
     mFont_TEX_TYPE_FONT2,
     mFont_TEX_TYPE_FONT3,

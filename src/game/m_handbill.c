@@ -18,16 +18,9 @@ static u32 Handbillz_start;
 static void mHandbillz_aram_init();
 
 extern void mHandbill_aram_init() {
-    Ps_table_rom_start = JW_GetAramAddress(RESOURCE_PS_TABLE);
     Ps_rom_start = JW_GetAramAddress(RESOURCE_PS);
-
-    Handbill_table_rom_start = JW_GetAramAddress(RESOURCE_MAIL_TABLE);
     Handbill_rom_start = JW_GetAramAddress(RESOURCE_MAIL);
-
-    Super_table_rom_start = JW_GetAramAddress(RESOURCE_SUPER_TABLE);
     Super_rom_start = JW_GetAramAddress(RESOURCE_SUPER);
-
-    Handbillz_rom_start = JW_GetAramAddress(RESOURCE_MAILA);
     Handbillz_start = 0;
 
     mHandbillz_aram_init();
@@ -58,34 +51,25 @@ extern void mHandbill_Set_free_str(int str_num, u8* str, int str_len) {
     u8* free_str;
     mHandbill_Data_c* handbill_data;
 
-    if (str_num < 0) {
-        return;
+    if (str_num >= 0 && str_num < mHandbill_FREE_STR_NUM && str != NULL) {
+        handbill_data = &mHandbill_data;
+        free_str = handbill_data->free_str[str_num];
+
+        if (str_len > mHandbill_FREE_STR_LEN) {
+            str_len = mHandbill_FREE_STR_LEN;
+        }
+
+        for (i = 0; i < str_len; i++) {
+            free_str[i] = str[i];
+        }
+
+        for (j = i; j < mHandbill_FREE_STR_LEN; j++) {
+            free_str[j] = CHAR_SPACE;
+        }
+
+        mFont_Change_RubyToKana(free_str, mHandbill_FREE_STR_LEN);
+        handbill_data->free_str_art[str_num] = mIN_ARTICLE_NONE;
     }
-
-    if (str_num >= mHandbill_FREE_STR_NUM) {
-        return;
-    }
-
-    if (str == NULL) {
-        return;
-    }
-
-    handbill_data = &mHandbill_data;
-    free_str = handbill_data->free_str[str_num];
-
-    if (str_len > mHandbill_FREE_STR_LEN) {
-        str_len = mHandbill_FREE_STR_LEN;
-    }
-
-    for (i = 0; i < str_len; i++) {
-        free_str[i] = str[i];
-    }
-
-    for (j = i; j < mHandbill_FREE_STR_LEN; j++) {
-        free_str[j] = CHAR_SPACE;
-    }
-
-    handbill_data->free_str_art[str_num] = mIN_ARTICLE_NONE;
 }
 
 extern void mHandbill_Set_free_str_art(int str_num, u8* str, int str_len, int article) {
@@ -105,7 +89,7 @@ extern int mHandbill_MoveDataCut(u8* data, int buf_size, int dst_idx, int src_id
     int new_len = data_len;
 
     if (dst_idx < src_idx) {
-        for (src_idx; src_idx < data_len; src_idx++) {
+        for (; src_idx < data_len; src_idx++) {
             data[dst_idx] = data[src_idx];
             dst_idx++;
         }
@@ -149,25 +133,26 @@ extern int mHandbill_MoveDataCut(u8* data, int buf_size, int dst_idx, int src_id
 }
 
 static int mHandbill_Put_String_FREE(u8* str, int buf_size, int start_idx, int str_len, int str_no, int fill_type) {
-    int code_size;
-    int free_str_len;
     int cut_len;
+    int code_size;
+    u8* free_str;
+    int free_str_len;
     int article;
-    int temp;
 
     if (str_no < mHandbill_FREE_STR0 || str_no >= mHandbill_FREE_STR_NUM) {
         str_no = mHandbill_FREE_STR0;
     }
 
     code_size = mFont_CodeSize_idx_get(str, start_idx);
-    free_str_len = mMsg_Get_Length_String(mHandbill_data.free_str[str_no], mHandbill_FREE_STR_LEN);
+    free_str = mHandbill_data.free_str[str_no];
+    free_str_len = mMsg_Get_Length_String(free_str, mHandbill_FREE_STR_LEN);
     cut_len = mHandbill_MoveDataCut(str, buf_size, start_idx + free_str_len, start_idx + code_size, str_len, fill_type);
 
     if (cut_len >= buf_size && free_str_len > buf_size - start_idx) {
         free_str_len = buf_size - start_idx;
     }
 
-    mHandbill_CopyString(&str[start_idx], mHandbill_data.free_str[str_no], free_str_len);
+    mHandbill_CopyString(&str[start_idx], free_str, free_str_len);
 
     switch (mHandbill_data.force_art) {
         default:
@@ -179,16 +164,16 @@ static int mHandbill_Put_String_FREE(u8* str, int buf_size, int start_idx, int s
             break;
     }
 
-    if (article != mIN_ARTICLE_NONE) {
-        u8 article_buf[32];
+    // if (article != mIN_ARTICLE_NONE) {
+    //     u8 article_buf[32];
 
-        mString_Load_ArticleFromRom(article_buf, 16, article);  // Load string from string file into buffer
-        free_str_len = mMsg_Get_Length_String(article_buf, 16); // Get length of article
-        article_buf[free_str_len] = CHAR_SPACE;                 // Add a space to the end of the article
-        cut_len = mHandbill_MoveDataCut(str, buf_size, start_idx + free_str_len + 1, start_idx, cut_len,
-                                        mHandbill_FILL_NONE);                 // Create free space for the article
-        mHandbill_CopyString(&str[start_idx], article_buf, free_str_len + 1); // Copy article to allocated space
-    }
+    //     mString_Load_ArticleFromRom(article_buf, 16, article);  // Load string from string file into buffer
+    //     free_str_len = mMsg_Get_Length_String(article_buf, 16); // Get length of article
+    //     article_buf[free_str_len] = CHAR_SPACE;                 // Add a space to the end of the article
+    //     cut_len = mHandbill_MoveDataCut(str, buf_size, start_idx + free_str_len + 1, start_idx, cut_len,
+    //                                     mHandbill_FILL_NONE);                 // Create free space for the article
+    //     mHandbill_CopyString(&str[start_idx], article_buf, free_str_len + 1); // Copy article to allocated space
+    // }
 
     if (mHandbill_data.capital_flag) {
         str[start_idx] = mFont_small_to_capital(str[start_idx]);
@@ -298,7 +283,7 @@ static int mHandbill_Capital_Letter(u8* buf, int buf_size, int start_idx, int st
 
 typedef int (*mHandbill_PUT_STRING_PROC)(u8*, int, int, int, int);
 
-static int mHandbill_Put_String(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+static int mHandbill_ContPut_String(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
     static const mHandbill_PUT_STRING_PROC proc[mFont_CONT_CODE_NUM] = {
         NULL,
         NULL,
@@ -423,6 +408,8 @@ static int mHandbill_Put_String(u8* buf, int buf_size, int start_idx, int str_le
         NULL,
         NULL,
         NULL,
+        NULL,
+        NULL,
     };
 
     int type = buf[start_idx + 1];
@@ -437,17 +424,186 @@ static int mHandbill_Put_String(u8* buf, int buf_size, int start_idx, int str_le
     return str_len;
 }
 
-static void mHandbill_Change_ControlCode(u8* buf, int buf_size, int str_len, int fill_type) {
+static int mHandbill_Str_Capital(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Capital_Letter(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_ArticleCut(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Cut_Article(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free0(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE0(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free1(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE1(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free2(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE2(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free3(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE3(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free4(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE4(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free5(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE5(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free6(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE6(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free7(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE7(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free8(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE8(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free9(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE9(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free10(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE10(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free11(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE11(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free12(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE12(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free13(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE13(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free14(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE14(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free15(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE15(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free16(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE16(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free17(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE17(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free18(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE18(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_Str_Free19(u8* buf, int buf_size, int start_idx, int str_len, int fill_type) {
+    return mHandbill_Put_String_FREE19(buf, buf_size, start_idx, str_len, fill_type);
+}
+
+static int mHandbill_TagPut_String(u8* buf, int buf_size, int* start_idx, int str_len, int fill_type) {
+    static const mHandbill_PUT_STRING_PROC proc[mFont_TAG_STR_NUM] = {
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        &mHandbill_Str_Capital,
+        &mHandbill_Str_ArticleCut,
+        &mHandbill_Str_Free0,
+        &mHandbill_Str_Free1,
+        &mHandbill_Str_Free2,
+        &mHandbill_Str_Free3,
+        &mHandbill_Str_Free4,
+        &mHandbill_Str_Free5,
+        &mHandbill_Str_Free6,
+        &mHandbill_Str_Free7,
+        &mHandbill_Str_Free8,
+        &mHandbill_Str_Free9,
+        &mHandbill_Str_Free10,
+        &mHandbill_Str_Free11,
+        &mHandbill_Str_Free12,
+        &mHandbill_Str_Free13,
+        &mHandbill_Str_Free14,
+        &mHandbill_Str_Free15,
+        &mHandbill_Str_Free16,
+        &mHandbill_Str_Free17,
+        &mHandbill_Str_Free18,
+        &mHandbill_Str_Free19,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+    };
+
+    u8* src = buf + *start_idx;
+    int group = mFont_Get_TagGroup(src);
+    int id = mFont_Get_TagId(src);
+    mHandbill_PUT_STRING_PROC p = NULL;
+
+    if (group == mFont_TAG_GROUP_STR) {
+        int size = mFont_Get_TagSize(src); // @unused
+        p = proc[id];
+    }
+
+    if (p != NULL) {
+        return (*p)(buf, buf_size, *start_idx, str_len, fill_type);
+    } else {
+        int size = mFont_Get_TagSize(src);
+
+        *start_idx += size;
+    }
+
+    return str_len;
+}
+
+static int mHandbill_Change_ControlCode(u8* buf, int buf_size, int str_len, int fill_type) {
     int pos = 0;
     int len = str_len;
 
     while (pos < len && pos < buf_size) {
         if (buf[pos] == CHAR_CONTROL_CODE) {
-            len = mHandbill_Put_String(buf, buf_size, pos, len, fill_type);
+            len = mHandbill_ContPut_String(buf, buf_size, pos, len, fill_type);
+        } else if (buf[pos] == CHAR_MESSAGE_TAG) {
+            len = mHandbill_TagPut_String(buf, buf_size, &pos, len, fill_type);
         } else {
             pos++;
         }
     }
+
+    return len;
 }
 
 static void mHandbill_Change_ControlCode2(u8* buf, int buf_size, int str_len, int* header_back_start, int fill_type) {
@@ -459,7 +615,14 @@ static void mHandbill_Change_ControlCode2(u8* buf, int buf_size, int str_len, in
     while (pos < len && pos < buf_size) {
         if (buf[pos] == CHAR_CONTROL_CODE) {
             now_str_len = len;
-            len = mHandbill_Put_String(buf, buf_size, pos, len, fill_type);
+            len = mHandbill_ContPut_String(buf, buf_size, pos, len, fill_type);
+
+            if (pos < *header_back_start) {
+                *header_back_start += len - now_str_len;
+            }
+        } else if (buf[pos] == CHAR_MESSAGE_TAG) {
+            now_str_len = len;
+            len = mHandbill_TagPut_String(buf, buf_size, &pos, len, fill_type);
 
             if (pos < *header_back_start) {
                 *header_back_start += len - now_str_len;
@@ -470,183 +633,86 @@ static void mHandbill_Change_ControlCode2(u8* buf, int buf_size, int str_len, in
     }
 }
 
-static void mHandbill_Get_SuperStringDataAddressAndSize(int super_no, u32* addr, u32* size) {
-    mMsg_Get_BodyParam(Super_table_rom_start, Super_rom_start, super_no, addr, size);
-}
-
-static void mHandbill_Get_PsStringDataAddressAndSize(int ps_no, u32* addr, u32* size) {
-    mMsg_Get_BodyParam(Ps_table_rom_start, Ps_rom_start, ps_no, addr, size);
-}
-
-static void mHandbill_Get_MailStringDataAddressAndSize(int mail_no, u32* addr, u32* size) {
-    mMsg_Get_BodyParam(Handbill_table_rom_start, Handbill_rom_start, mail_no, addr, size);
-}
-
 static void mHandbill_CheckSuperStringBorderAndCopy(u8* dst, int dst_size, int* header_back_start, u8* src,
                                                     int src_size) {
-    int src_pos;
+    int i;
     int lines;
     int dst_pos;
-    u8* src_p = src;
-    u8* dst_p = dst;
-    int i;
+    int char_size;
+    int newline;
 
     lines = 0;
     dst_pos = 0;
-    src_pos = 0;
 
-    for (i = 0; i < src_size; i++) {
-        if (*src_p == CHAR_NEW_LINE) {
-            *header_back_start = src_pos;
-            lines++;
-        } else if (dst_pos < dst_size) {
-            *dst_p = *src_p;
-            dst_p++;
+    for (i = 0, char_size = 0; i < src_size; i++) {
+        newline = FALSE;
+        if (char_size > 0) {
+            char_size--;
+        } else {
+            newline = *src == CHAR_NEW_LINE;
+            if (newline) {
+                *header_back_start = i;
+                lines++;
+            } else if (*src == CHAR_CONTROL_CODE || *src == CHAR_MESSAGE_TAG) {
+                char_size = mFont_CodeSize_get(src) - 1;
+            }
+        }
+
+        if (newline == FALSE && dst_pos < dst_size) {
+            *dst = *src;
+            dst++;
             dst_pos++;
         }
 
-        src_p++;
-        src_pos++;
+        src++;
     }
 
-    if (lines != 1) {
+    if (lines == 0) {
+        *header_back_start = 0;
+    } else if (lines != 1) {
         *header_back_start = src_size;
     }
 }
 
-static void mHandbill_Load_SuperStringFromRom(u8* buf, int buf_size, int* header_back_start, int super_no) {
-    static u8 buff[90] ATTRIBUTE_ALIGN(32);
-    u8 super_buf[43];
+static void mHandbill_Load_SuperStringFromRom(u8* buf, u32 buf_size, int* header_back_start, int super_no) {
+    u8 tmp_buf[16];
+    mMsg_bmg_info_c bmg_info;
+    int tmp_header_back_start;
 
-    u32 super_address;
-    u32 super_size;
-    int temp_header_back_start;
-    s32 tmp_size;
-
-    if (super_no >= 0 && super_no < mHandbill_MAIL_NUM) {
-        tmp_size = buf_size;
-        mHandbill_Get_SuperStringDataAddressAndSize(super_no, &super_address, &super_size);
-        mem_clear(buf, tmp_size, CHAR_SPACE);
-
-        if (super_address != 0 && super_size != 0) {
-            u32 aligned_addr = ALIGN_PREV(super_address, 32); // align to 32 bytes for ARAM DMA
-            u32 data_ofs = super_address - aligned_addr;      // calculate offset for desired data
-            u32 size = ALIGN_NEXT(data_ofs + super_size, 32);
-            int i;
-            int move_size;
-            u8* dst;
-            u8* src;
-
-            bzero(buff, 90);
-            _JW_GetResourceAram(aligned_addr, buff, size);
-
-            src = buff + data_ofs;
-            dst = buff;
-            move_size = super_size;
-            /* Move desired data to begining of buffer */
-            for (i = 0; i < move_size; i++) {
-                *dst++ = *src++;
-            }
-
-            mem_clear(super_buf, 43, CHAR_SPACE);
-            mHandbill_CheckSuperStringBorderAndCopy(super_buf, 43, &temp_header_back_start, buff, super_size);
-            mHandbill_Change_ControlCode2(super_buf, 43, super_size - 1, &temp_header_back_start, mHandbill_FILL_SPACE);
-
-            bcopy(super_buf, buf, tmp_size < 43 ? buf_size : 43);
-            *header_back_start = temp_header_back_start;
-        }
-    }
+    mem_clear(buf, buf_size, CHAR_SPACE);
+    bzero(tmp_buf, sizeof(tmp_buf));
+    mMsgLoad_bmg_init(&bmg_info, Super_rom_start, super_no, tmp_buf, sizeof(tmp_buf));
+    mMsgLoad_bmg_load(&bmg_info);
+    mMsgLoad_clr_buff(CHAR_SPACE);
+    mHandbill_CheckSuperStringBorderAndCopy(mMsgLoad_get_buff(), mMsgLoad_get_buffSize(), &tmp_header_back_start,
+                                            tmp_buf, bmg_info.load_size);
+    mHandbill_Change_ControlCode2(mMsgLoad_get_buff(), mMsgLoad_get_buffSize(), bmg_info.load_size - 1,
+                                  &tmp_header_back_start, mHandbill_FILL_SPACE);
+    bcopy(mMsgLoad_get_buff(), buf, buf_size);
+    *header_back_start = tmp_header_back_start;
 }
 
-static void mHandbill_Load_PsStringFromRom(u8* buf, int buf_size, int ps_no) {
-    static u8 buff[120] ATTRIBUTE_ALIGN(32);
-
-    if (ps_no >= 0 && ps_no < mHandbill_MAIL_NUM) {
-        u32 ps_address;
-        u32 ps_size;
-
-        mHandbill_Get_PsStringDataAddressAndSize(ps_no, &ps_address, &ps_size);
-
-        if (ps_size == 0) {
-            mem_clear(buf, buf_size, CHAR_SPACE);
-        } else if (ps_address != 0) {
-            u32 aligned_addr = ALIGN_PREV(ps_address, 32); // align to 32 bytes for ARAM DMA
-            u32 data_ofs = ps_address - aligned_addr;      // calculate offset for desired data
-            u32 size = ALIGN_NEXT(data_ofs + ps_size, 32);
-            int i;
-            int sz;
-            u8* dst;
-            u8* src;
-
-            _JW_GetResourceAram(aligned_addr, buff, size);
-
-            /* Move desired data to output buffer */
-            sz = (int)ps_size < buf_size ? ps_size : buf_size;
-            dst = buf;
-            src = buff + data_ofs;
-            for (i = 0; i < sz; i++) {
-                // *dst = src[data_ofs + i];
-                *dst++ = *src++;
-            }
-
-            /* Initialize remaining buffer to spaces */
-            for (i; i < buf_size; i++) {
-                *dst = CHAR_SPACE;
-                dst++;
-            }
-
-            /* Do any control code processing */
-            mHandbill_Change_ControlCode(buf, buf_size, ps_size, mHandbill_FILL_SPACE);
-        }
+static void mHandbill_Load_PsStringFromRom(u8* buf, u32 buf_size, int ps_no) {
+    mMsg_bmg_info_c bmg_info;
+    
+    mem_clear(buf, (u32)buf_size, CHAR_SPACE);
+    mMsgLoad_bmg_init(&bmg_info, Ps_rom_start, ps_no, buf, (u32)buf_size);
+    if (mMsgLoad_bmg_load(&bmg_info)) {
+        mem_clear(buf + bmg_info.load_size, (u32)buf_size - bmg_info.load_size, CHAR_SPACE);
     }
+
+    mHandbill_Change_ControlCode(buf, buf_size, bmg_info.load_size, mHandbill_FILL_SPACE);
 }
-
-static u8 mHandbill_mail_buff[263] ATTRIBUTE_ALIGN(32);
-
-static u8 mHandbill_mail_buff[263] ATTRIBUTE_ALIGN(32);
 
 static void mHandbill_Load_MailFromRom(u8* buf, int mail_no) {
-    if (mail_no >= 0 && mail_no < mHandbill_MAIL_NUM) {
-        u32 mail_address;
-        u32 mail_size;
+    u8 tmp_buf[146];
+    mMsg_bmg_info_c bmg_info;
 
-        mHandbill_Get_MailStringDataAddressAndSize(mail_no, &mail_address, &mail_size);
-
-        if (mail_size == 0) {
-            mem_clear(buf, mHandbill_BODY_LEN, CHAR_NEW_LINE);
-        } else if (mail_address != 0) {
-            u32 aligned_addr = ALIGN_PREV(mail_address, 32); // align to 32 bytes for ARAM DMA
-            u32 data_ofs = mail_address - aligned_addr;      // calculate offset for desired data
-            u32 size = ALIGN_NEXT(data_ofs + mail_size, 32);
-
-            _JW_GetResourceAram(aligned_addr, mHandbill_mail_buff, size);
-
-            /* Move desired data to output buffer */
-            {
-                int i;
-                int j;
-                u8* dst = buf;
-                u8* src = &mHandbill_mail_buff[data_ofs];
-                int sz = mHandbill_BODY_LEN;
-
-                if (mail_size < mHandbill_BODY_LEN) {
-                    sz = mail_size;
-                }
-
-                for (i = 0; i < sz; i++) {
-                    *dst++ = *src++;
-                }
-
-                /* Initialize remaining buffer to spaces */
-                for (i; i < mHandbill_BODY_LEN; i++) {
-                    *dst++ = CHAR_NEW_LINE;
-                }
-
-                /* Do any control code processing */
-                mHandbill_Change_ControlCode(buf, mHandbill_BODY_LEN, sz, mHandbill_FILL_RETURN);
-            }
-        }
-    }
+    mem_clear(tmp_buf, sizeof(tmp_buf), CHAR_NEW_LINE);
+    mMsgLoad_bmg_init(&bmg_info, Handbill_rom_start, mail_no, tmp_buf, sizeof(tmp_buf));
+    mMsgLoad_bmg_load(&bmg_info);
+    mHandbill_Change_ControlCode(tmp_buf, sizeof(tmp_buf), bmg_info.load_size, mHandbill_FILL_RETURN);
+    mFont_CopyStrings(buf, tmp_buf, mHandbill_BODY_LEN);
 }
 
 extern void mHandbill_Load_HandbillFromRom(u8* header, int* header_back_start, u8* footer, u8* body, int mail_no) {
@@ -667,186 +733,102 @@ extern void mHandbill_Load_HandbillFromRom2(u8* header, int header_size, int* he
 static u32 mHandbillz_table_pos[mHandbillz_TYPE_NUM];
 static u32 mHandbillz_data_pos[mHandbillz_TYPE_NUM];
 
-static u32 mHandbillz_dummy_size_tbl[mHandbillz_TYPE_NUM] = {
-    27,  /* SUPER */
-    200, /* MAILA */
-    200, /* MAILB*/
-    200, /* MAILC */
-    34   /* PS */
-};
-
 static void mHandbillz_aram_init() {
-    mHandbillz_table_pos[mHandbillz_TYPE_SUPER] = JW_GetAramAddress(RESOURCE_SUPERZ_TABLE);
     mHandbillz_data_pos[mHandbillz_TYPE_SUPER] = JW_GetAramAddress(RESOURCE_SUPERZ);
-
-    mHandbillz_table_pos[mHandbillz_TYPE_MAILA] = JW_GetAramAddress(RESOURCE_MAILA_TABLE);
     mHandbillz_data_pos[mHandbillz_TYPE_MAILA] = JW_GetAramAddress(RESOURCE_MAILA);
-
-    mHandbillz_table_pos[mHandbillz_TYPE_MAILB] = JW_GetAramAddress(RESOURCE_MAILB_TABLE);
     mHandbillz_data_pos[mHandbillz_TYPE_MAILB] = JW_GetAramAddress(RESOURCE_MAILB);
-
-    mHandbillz_table_pos[mHandbillz_TYPE_MAILC] = JW_GetAramAddress(RESOURCE_MAILC_TABLE);
     mHandbillz_data_pos[mHandbillz_TYPE_MAILC] = JW_GetAramAddress(RESOURCE_MAILC);
-
-    mHandbillz_table_pos[mHandbillz_TYPE_PS] = JW_GetAramAddress(RESOURCE_PSZ_TABLE);
     mHandbillz_data_pos[mHandbillz_TYPE_PS] = JW_GetAramAddress(RESOURCE_PSZ);
 }
 
-typedef struct {
-    int type;
-    int num;
+static int mHandbillz_super_load(mHandbillz_Info_c* info) {
+    u8 tmp_buf[16];
+    mMsg_bmg_info_c bmg_info;
+    int tmp_header_back_start;
 
-    u8* ram_buf;
-    size_t ram_buf_size;
-
-    u32 dma_addr;
-    u32 dma_size;
-} mHandbillzDMA_c;
-
-static int mHandbillzDMA_body_addr_set(mHandbillzDMA_c* dma_info) {
-    int type = dma_info->type;
-    int num = dma_info->num;
-
-    mMsg_Get_BodyParam(mHandbillz_table_pos[type], mHandbillz_data_pos[type], num, &dma_info->dma_addr,
-                       &dma_info->dma_size);
-
-    if (dma_info->dma_size > mHandbillz_dummy_size_tbl[dma_info->type]) {
-        return FALSE;
-    }
+    bzero(tmp_buf, sizeof(tmp_buf));
+    mMsgLoad_bmg_init(&bmg_info, mHandbillz_data_pos[mHandbillz_TYPE_SUPER], info->super_no, tmp_buf, sizeof(tmp_buf));
+    mMsgLoad_bmg_load(&bmg_info);
+    mMsgLoad_clr_buff(CHAR_SPACE);
+    mHandbill_CheckSuperStringBorderAndCopy(mMsgLoad_get_buff(), mMsgLoad_get_buffSize(), &tmp_header_back_start,
+                                            tmp_buf, bmg_info.load_size);
+    mHandbill_Change_ControlCode2(mMsgLoad_get_buff(), mMsgLoad_get_buffSize(), bmg_info.load_size - 1,
+                                  &tmp_header_back_start, mHandbill_FILL_SPACE);
+    mem_clear(info->super_buf_p, info->super_buf_size, CHAR_SPACE);
+    bcopy(mMsgLoad_get_buff(), info->super_buf_p, info->super_buf_size);
+    info->header_back_start = tmp_header_back_start;
     return TRUE;
 }
 
-static int mHandbillzDMA_body_load(mHandbillzDMA_c* dma_info) {
-    if (mHandbillzDMA_body_addr_set(dma_info)) {
-        mem_clear(dma_info->ram_buf, dma_info->ram_buf_size, CHAR_SPACE);
+static int mHandbillz_mail_load(mHandbillz_Info_c* info) {
+    mMsg_bmg_info_c bmg_info;
+    int dma_info[3];
+    u8 tmp_buf[104];
+    u8 mail_buf[154];
+    int success = TRUE;
+    u32 total_size;
+    u32 current_size;
+    int i;
 
-        if (dma_info->dma_size != 0) {
-            u32 dma_size = dma_info->dma_size;
-            u32 aligned_addr = ALIGN_PREV(dma_info->dma_addr, 32);
-            u32 data_ofs = dma_info->dma_addr & (32 - 1);
-            u32 size = ALIGN_NEXT(dma_size + data_ofs, 32);
+    dma_info[mHandbillz_TYPE_MAILA - 1] = info->maila_no;
+    dma_info[mHandbillz_TYPE_MAILB - 1] = info->mailb_no;
+    dma_info[mHandbillz_TYPE_MAILC - 1] = info->mailc_no;
+    mem_clear(info->mail_buf_p, info->mail_buf_size, CHAR_NEW_LINE);
+    mem_clear(mail_buf, sizeof(mail_buf), CHAR_NEW_LINE);
 
-            _JW_GetResourceAram(aligned_addr, dma_info->ram_buf, size);
+    for (i = 0, total_size = 0; i < ARRAY_COUNT(dma_info); i++) {
+        u32 load_size;
 
-            if (data_ofs != 0) {
-                int i;
-                const int size = dma_info->dma_size;
-                u8* src;
-                u8* dst;
+        mMsgLoad_bmg_init(&bmg_info, mHandbillz_data_pos[mHandbillz_TYPE_MAILA + i], dma_info[i], tmp_buf, sizeof(tmp_buf));
+        mMsgLoad_bmg_load(&bmg_info);
+        current_size = total_size + bmg_info.load_size;
+        
+        if (current_size < sizeof(mail_buf)) {
+            load_size = bmg_info.load_size;
+        } else {
+            load_size = info->mail_buf_size - total_size;
+            success = FALSE;
+        }
+        
+        bcopy(tmp_buf, mail_buf + total_size, load_size);
+        total_size = current_size;
+    }
 
-                dst = dma_info->ram_buf;
-                src = dst + data_ofs;
-                for (i = 0; i < size; i++, dst++, src++) {
-                    *dst = *src;
+    if (success) {
+        u32 size;
+        u32 processed_size;
+
+        processed_size = mHandbill_Change_ControlCode(mail_buf, sizeof(mail_buf), total_size, mHandbill_FILL_RETURN);
+
+        if (processed_size < info->mail_buf_size) {
+            size = processed_size;
+        } else {
+            size = info->mail_buf_size;
+            for (i = info->mail_buf_size; i < (int)sizeof(mail_buf); i++) {
+                if (mail_buf[i] != CHAR_NEW_LINE) {
+                    success = FALSE;
+                    break;
                 }
             }
         }
 
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-static int mHandbillz_super_load(mHandbillz_Info_c* info) {
-    static u8 ram[90] ATTRIBUTE_ALIGN(32);
-    mHandbillzDMA_c dma_info;
-
-    bzero(ram, 90);
-
-    dma_info.type = mHandbillz_TYPE_SUPER;
-    dma_info.num = info->super_no;
-    dma_info.ram_buf = ram;
-    dma_info.ram_buf_size = 90;
-
-    if (mHandbillzDMA_body_load(&dma_info)) {
-        u8 super_buf[43];
-        int header_back_start;
-
-        mem_clear(super_buf, 43, CHAR_SPACE);
-        mHandbill_CheckSuperStringBorderAndCopy(super_buf, 43, &header_back_start, ram, dma_info.dma_size);
-        mHandbill_Change_ControlCode2(super_buf, 43, dma_info.dma_size - 1, &header_back_start, mHandbill_FILL_SPACE);
-        mem_clear(info->super_buf_p, info->super_buf_size, CHAR_SPACE);
-        bcopy(super_buf, info->super_buf_p, info->super_buf_size < 43 ? info->super_buf_size : 43);
-
-        info->header_back_start = header_back_start;
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-static int mHandbillz_mail_load(mHandbillz_Info_c* info) {
-    mHandbillzDMA_c dma_info[3];
-    mHandbillzDMA_c* dma_p;
-    int i;
-    int success = TRUE;
-    u32 total_size = 0;
-    u8* dst = info->mail_buf_p;
-
-    dma_info[0].type = mHandbillz_TYPE_MAILA;
-    dma_info[0].num = info->maila_no;
-    dma_info[1].type = mHandbillz_TYPE_MAILB;
-    dma_info[1].num = info->mailb_no;
-    dma_info[2].type = mHandbillz_TYPE_MAILC;
-    dma_info[2].num = info->mailc_no;
-
-    dma_p = dma_info;
-    for (i = 0; i < 3 && success; i++, dma_p++) {
-        bzero(mHandbill_mail_buff, 263);
-        dma_p->ram_buf = mHandbill_mail_buff;
-        dma_p->ram_buf_size = 263;
-
-        if (mHandbillzDMA_body_load(dma_p)) {
-            total_size += dma_p->dma_size;
-
-            if (total_size <= info->mail_buf_size) {
-                bcopy(mHandbill_mail_buff, dst, dma_p->dma_size);
-                dst += dma_p->dma_size;
-            } else {
-                success = FALSE;
-            }
-        } else {
-            success = FALSE;
-        }
-    }
-
-    if (success) {
-        if (info->mail_buf_size > total_size) {
-            mem_clear(dst, info->mail_buf_size - total_size, CHAR_NEW_LINE);
-        }
-
-        mHandbill_Change_ControlCode(info->mail_buf_p, info->mail_buf_size, total_size, mHandbill_FILL_RETURN);
+        bcopy(mail_buf, info->mail_buf_p, size);
     }
 
     return success;
 }
 
 static int mHandbillz_ps_load(mHandbillz_Info_c* info) {
-    static u8 ram[97] ATTRIBUTE_ALIGN(32);
-    mHandbillzDMA_c dma_info;
+    mMsg_bmg_info_c bmg_info;
+    u8 tmp_buf[21];
+    int ret;
 
-    bzero(ram, 97);
-
-    dma_info.type = mHandbillz_TYPE_PS;
-    dma_info.num = info->ps_no;
-    dma_info.ram_buf = ram;
-    dma_info.ram_buf_size = 97;
-
-    if (mHandbillzDMA_body_load(&dma_info)) {
-        u8 ps_buf[43];
-
-        bcopy(ram, info->ps_buf_p, dma_info.dma_size);
-
-        if (info->ps_buf_size > dma_info.dma_size) {
-            mem_clear(info->ps_buf_p + dma_info.dma_size, info->ps_buf_size - dma_info.dma_size, CHAR_SPACE);
-        }
-
-        mHandbill_Change_ControlCode(info->ps_buf_p, info->ps_buf_size, dma_info.dma_size, mHandbill_FILL_SPACE);
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    mMsgLoad_bmg_init(&bmg_info, mHandbillz_data_pos[mHandbillz_TYPE_PS], info->ps_no, tmp_buf, sizeof(tmp_buf));
+    ret = mMsgLoad_bmg_load(&bmg_info);
+    mem_clear(info->ps_buf_p, info->ps_buf_size, CHAR_SPACE);
+    bcopy(tmp_buf, info->ps_buf_p, bmg_info.load_size);
+    mHandbill_Change_ControlCode(info->ps_buf_p, info->ps_buf_size, bmg_info.load_size, mHandbill_FILL_SPACE);
+    return ret;
 }
 
 extern int mHandbillz_load(mHandbillz_Info_c* info) {

@@ -14,7 +14,7 @@ extern "C" {
 #define mHandbill_FOOTER_LEN MAIL_FOOTER_LEN
 #define mHandbill_BODY_LEN MAIL_BODY_LEN
 
-#define mHandbill_FREE_STR_LEN mIN_ITEM_NAME_LEN
+#define mHandbill_FREE_STR_LEN 66
 
 #define mHandbill_MAIL_NUM 982
 

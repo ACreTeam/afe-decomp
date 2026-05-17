@@ -11,7 +11,6 @@ static u32 String_rom_start;
 static u32 String_table_rom_start;
 
 extern void mString_aram_init() {
-    String_table_rom_start = JW_GetAramAddress(RESOURCE_STRING_TABLE);
     String_rom_start = JW_GetAramAddress(RESOURCE_STRING);
 }
 

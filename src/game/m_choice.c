@@ -85,7 +85,6 @@ extern void mChoice_Draw(mChoice_c* choice, GAME* game, int mode) {
 }
 
 extern void mChoice_aram_init() {
-    Choice_table_rom_start = JW_GetAramAddress(RESOURCE_SELECT_TABLE);
     Choice_rom_start = JW_GetAramAddress(RESOURCE_SELECT);
 }
 

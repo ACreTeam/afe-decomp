@@ -32,10 +32,10 @@ extern u8 ftrName2_table[];
 
 enum item_article {
     mIN_ARTICLE_NONE,
-    mIN_ARTICLE_A,
-    mIN_ARTICLE_AN,
-    mIN_ARTICLE_THE,
-    mIN_ARTICLE_SOME,
+    // mIN_ARTICLE_A,
+    // mIN_ARTICLE_AN,
+    // mIN_ARTICLE_THE,
+    // mIN_ARTICLE_SOME,
 
     mIN_ARTICLE_NUM
 };

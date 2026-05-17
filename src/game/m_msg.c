@@ -99,7 +99,6 @@ extern void mMsg_aram_init() {
 }
 
 extern void mMsg_aram_init2() {
-    Msg_table_rom_start = JW_GetAramAddress(RESOURCE_MESSAGE_TABLE);
     Msg_rom_start = JW_GetAramAddress(RESOURCE_MESSAGE);
 }
 

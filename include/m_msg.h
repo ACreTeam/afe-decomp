@@ -264,6 +264,22 @@ struct message_window_s {
     /* 0x460 */ mMsg_Request_Data_c request_data;
 };
 
+typedef struct msg_bmg_info_s {
+    u32 address;
+    int index;
+    u8* buf;
+    u32 buf_size;
+    u32 load_size;
+} mMsg_bmg_info_c;
+
+typedef struct msg_bmg_info_section_s {
+    u32 magic; // 'INF1'
+    u32 size;
+    u16 entry_cnt;
+    u16 entry_size;
+    u32 pad;
+} mMsg_bmg_info_section_c;
+
 typedef struct msg_bmc_info_s {
     u32 start_addr;
     int entry_idx;
@@ -349,6 +365,11 @@ extern void mMsg_sound_set_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 extern void mMsg_sound_unset_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 
 extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, int str_len);
+extern u8* mMsgLoad_get_buff(void);
+extern u32 mMsgLoad_get_buffSize(void);
+extern void mMsgLoad_clr_buff(u8 c);
+extern void mMsgLoad_bmg_init(mMsg_bmg_info_c* bmg_info, u32 base_addr, int idx, u8* buf, u32 buf_size);
+extern int mMsgLoad_bmg_load(mMsg_bmg_info_c* bmg_info);
 extern void mMsgLoad_bmc_init(mMsg_bmc_info_c* bmc_info, u32 start_addr, int idx);
 extern void mMsgLoad_bmc_load(mMsg_bmc_info_c* bmc_info);
 
