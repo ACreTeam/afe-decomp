@@ -42,16 +42,16 @@ static void eResetbreak_Parts_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg)
         rnd = 0.0f;
     }
 
-    scale = rnd * 0.0076f + 0.0024f;
+    scale = rnd * (0.76f * 0.01f) + 0.0024f;
     base = 5.1f + GETREG(MYKREG, 57) * 0.1f;
     angle_base = DEG2SHORT_ANGLE2(45.0f) + GETREG(MYKREG, 58);
     vel = base + rnd * ((9.0f + GETREG(MYKREG, 55) * 0.1f) - base);
     angle0 = effect->arg0;
-    angle1 = (int)((f32)angle_base + rnd * ((f32)(DEG2SHORT_ANGLE2(87.1875f) + GETREG(MYKREG, 56)) - (f32)angle_base));
+    angle1 = (s16)((f32)angle_base + rnd * ((f32)(DEG2SHORT_ANGLE2(87.1875f) + GETREG(MYKREG, 56)) - (f32)angle_base));
 
-    effect->velocity.y = vel * sin_s((s16)angle1);
-    effect->velocity.x = (vel * cos_s((s16)angle1)) * sin_s((s16)angle0);
-    effect->velocity.z = (vel * cos_s((s16)angle1)) * cos_s((s16)angle0);
+    effect->velocity.y = vel * sin_s(angle1);
+    effect->velocity.x = (vel * cos_s(angle1)) * sin_s(angle0);
+    effect->velocity.z = (vel * cos_s(angle1)) * cos_s(angle0);
     effect->scale.x = scale;
     effect->scale.y = scale;
     effect->scale.z = scale;
