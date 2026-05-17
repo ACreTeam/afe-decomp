@@ -19,6 +19,7 @@ extern "C" {
 #define mEv_SCHEDULE_EVERY_WEEK 7            /* scheduled for the desired day this week (e.g. this saturday) */
 
 /* Month flags */
+#define mEv_SCHEDULE_LUNAR_DATE 0x80
 #define mEv_SCHEDULE_HARVEST_MOON_DATE 0x40 /* Use this year's lunisolar harvest moon date */
 #define mEv_SCHEDULE_NOW_MONTH 0x20
 #define mEv_SCHEDULE_USE_SAVE_MONTH 0x10
@@ -589,6 +590,7 @@ typedef struct event_area_s {
 #define mEv_AREA_NUM 5
 #define mEv_PLACE_NUM 10
 
+#define mEv_HOUSE_ALARM_STATE_NONE 0
 #define mEv_HOUSE_ALARM_STATE_FINISHED 1
 #define mEv_HOUSE_ALARM_STATE_READY 2
 #define mEv_HOUSE_ALARM_STATE_ACTIVE 3
@@ -616,6 +618,7 @@ typedef struct event_common_s {
     u16 exist_flags1;
     s16 mikanbox_light_radius;
     u16 resetcenter_flags;
+    int _224;
 } mEv_common_data_c;
 
 typedef struct event_save_event_info_s {

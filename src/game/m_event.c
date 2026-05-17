@@ -174,10 +174,18 @@ extern int mEv_CheckFirstJob() {
 
 extern void mEv_UnSetFirstJob() {
     u32 player_no = Common_Get(player_no);
+    int event_on = TRUE;
 
     if (player_no < PLAYER_NUM) {
         mEv_EventOFF(mEv_SAVED_FIRSTJOB_PLR0 + player_no);
-        mEv_EventON(mEv_SAVED_HRAWAIT_PLR0 + player_no);
+
+        if (Now_Private != NULL && Now_Private->moved_from_plus == TRUE) {
+            event_on = FALSE;
+        }
+
+        if (event_on == TRUE) {
+            mEv_EventON(mEv_SAVED_HRAWAIT_PLR0 + player_no);
+        }
     }
 }
 
@@ -282,20 +290,6 @@ extern void mEv_RenewalDataEveryDay() {
     }
 }
 
-extern void mEv_GetEventWeather(s16* weather, s16* intensity) {
-    intensity[0] = mEnv_WEATHER_INTENSITY_HEAVY;
-
-    if (mEv_check_schedule(mEv_EVENT_WEATHER_CLEAR)) {
-        weather[0] = mEnv_WEATHER_CLEAR;
-    } else if (mEv_check_schedule(mEv_EVENT_WEATHER_SNOW)) {
-        weather[0] = mEnv_WEATHER_SNOW;
-    } else if (mEv_check_schedule(mEv_EVENT_WEATHER_SPORTS_FAIR)) {
-        weather[0] = mEnv_WEATHER_CLEAR;
-    } else {
-        weather[0] = -1; // no event weather
-    }
-}
-
 static mEv_event_today_c event_today[mEv_TODAY_EVENT_NUM];
 static int n_today_events = 0;
 
@@ -316,6 +310,16 @@ static int event_rumor_table[] = {
 };
 
 static int n_event_rumors = ARRAY_COUNT(event_rumor_table);
+
+static int calendar_event_table[] = {
+    mEv_EVENT_NEW_YEARS_DAY, mEv_EVENT_GROUNDHOG_DAY, mEv_EVENT_VALENTINES_DAY, mEv_EVENT_SPRING_EQUINOX, mEv_EVENT_APRILFOOLS_DAY, mEv_EVENT_CHERRY_BLOSSOM_FESTIVAL, mEv_EVENT_NATURE_DAY, mEv_EVENT_SPRING_CLEANING,
+    mEv_EVENT_MOTHERS_DAY, mEv_EVENT_SUMMER_CAMPER, mEv_EVENT_GRADUATION_DAY, mEv_EVENT_FATHERS_DAY, mEv_EVENT_FISHING_TOURNEY_1, mEv_EVENT_TOWN_DAY, mEv_EVENT_FIREWORKS_SHOW, mEv_EVENT_MORNING_AEROBICS,
+    mEv_EVENT_METEOR_SHOWER, mEv_EVENT_FOUNDERS_DAY, mEv_EVENT_LABOR_DAY, mEv_EVENT_AUTUMN_EQUINOX, mEv_EVENT_HARVEST_MOON_FESTIVAL, mEv_EVENT_EXPLORERS_DAY, mEv_EVENT_HALLOWEEN, mEv_EVENT_MAYORS_DAY,
+    mEv_EVENT_OFFICERS_DAY, mEv_EVENT_FISHING_TOURNEY_2, mEv_EVENT_HARVEST_FESTIVAL, mEv_EVENT_SALE_DAY, mEv_EVENT_SNOW_DAY, mEv_EVENT_TOY_DAY_SONCHO, mEv_EVENT_TOY_DAY_JINGLE, mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN,
+    mEv_EVENT_PLAYER_BIRTHDAY,
+};
+
+static int n_calendar_events = ARRAY_COUNT(calendar_event_table);
 
 static u8 index_today[mEv_EVENT_NUM];
 static s16 special_event_types[] = {
@@ -770,6 +774,19 @@ static int delete_too_short_event(Event_c* event, int type, u32 date) {
     return TRUE;
 }
 
+extern int mEv_too_short_check(int type) {
+    if (type != 0 && type == Common_Get(event_common).too_short) {
+        return TRUE;
+    }
+
+    if (type == mEv_EVENT_HARVEST_FESTIVAL_FRANKLIN &&
+        Common_Get(event_common).too_short == mEv_EVENT_HARVEST_FESTIVAL) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void init_today_event() {
     int i;
 
@@ -851,9 +868,10 @@ static int init_special_event(int new_event) {
     mEv_ymdh_u rtc_ymdh;
     mEv_ymdh_u special_end_ymdh;
     mEv_save_common_data_c* ev_save_common;
+    u16 d0;
+    u16 d1;
     u16* dates_p;
     s16 event_year;
-    int t;
 
     switch (Common_Get(last_scene_no)) {
         case SCENE_BUGGY:
@@ -884,43 +902,30 @@ static int init_special_event(int new_event) {
     }
 
     ev_save_common = Save_GetPointer(event_save_common);
-    dates_p = ev_save_common->dates;
-    event_year = Save_Get(event_year);
+    // dates_p = ev_save_common->dates;
     type = ev_save_common->special_event.type;
+    event_year = Save_Get(event_year);
+    d0 = ev_save_common->dates[mEv_SAVE_DATE_SPECIAL0];
+    d1 = ev_save_common->dates[mEv_SAVE_DATE_SPECIAL2];
 
     rtc_sched.raw = 0;
     rtc_sched.d.month = rtc_time->month;
     rtc_sched.d.day = rtc_time->day;
 
-    special_monthday[0].raw = dates_p[mEv_SAVE_DATE_SPECIAL1];
+    special_monthday[0].raw = ev_save_common->dates[mEv_SAVE_DATE_SPECIAL1];
 
-    special_ymdh.raw = (dates_p[mEv_SAVE_DATE_SPECIAL0] << 8) & 0x000FFFF00;
-    special_ymdh.year = event_year % 100;
+    special_ymdh.raw = (d0 << 8) & 0x000FFFF00;
+    special_ymdh.year = (u8)(event_year % 100);
 
-    
-    
-#if VERSION >= VER_GAFU01_00
     rtc_ymdh.raw = (rtc_sched.md) << 8;
     rtc_ymdh.year = rtc_time->year % 100;
     rtc_ymdh.hour = rtc_time->hour;
-    special_end_ymdh.raw = (dates_p[mEv_SAVE_DATE_SPECIAL2] << 8) & 0x000FFFF00;
-    t = event_year % 100;
-    if (dates_p[mEv_SAVE_DATE_SPECIAL0] > dates_p[mEv_SAVE_DATE_SPECIAL2]) {
-        t++;
+
+    special_end_ymdh.raw = (d1 << 8) & 0x000FFFF00;
+    special_end_ymdh.year = (u8)(event_year % 100);
+    if (d0 > d1) {
+        special_end_ymdh.year++;
     }
-
-    special_end_ymdh.year = t;
-#else
-    rtc_ymdh.raw = (rtc_sched.md) << 8;
-    rtc_ymdh.year = rtc_time->year % 100;
-    rtc_ymdh.hour = rtc_time->hour;
-    special_end_ymdh.raw = (dates_p[mEv_SAVE_DATE_SPECIAL2] << 8) & 0x000FFFF00;
-    special_end_ymdh.year = (event_year % 100) + ((dates_p[mEv_SAVE_DATE_SPECIAL0] > dates_p[mEv_SAVE_DATE_SPECIAL2] &&
-                                                   dates_p[mEv_SAVE_DATE_SPECIAL0] > rtc_sched.md)
-                                                      ? 1
-                                                      : 0);
-#endif
-
     special_end_ymdh.hour = get_special_event_end_time(type);
 
     if (check_ymdh_range(rtc_ymdh.raw, special_ymdh.raw, special_end_ymdh.raw) == FALSE || new_event) {
@@ -958,12 +963,10 @@ static int init_special_event(int new_event) {
             }
 
             special_monthday[0].raw = after_n_day(rtc_sched.md, next_event_day_gap);
-// Aus version prevents special events from happening on the last day of the year
-#if VERSION >= VER_GAFU01_00
             if (special_monthday[0].raw == mEv_MonthDay(lbRTC_DECEMBER, 31)) {
                 special_monthday[0].raw = after_n_day(special_monthday[0].raw, 1);
             }
-#endif
+
             if (rtc_sched.md <= sale_day && sale_day <= special_monthday[0].raw) {
                 /* Force the next special event to be Crazy Redd since Sale Day falls between now and the rolled
                  * event date */
@@ -983,7 +986,9 @@ static int init_special_event(int new_event) {
                          special_monthday[0].raw > mEv_MonthDay(lbRTC_JANUARY, 3)) &&
                         mEv_CheckEvent(mEv_SAVED_RENEWSHOP) != TRUE) {
                         /* Set shop sale starting hour randomly between 12PM and 7PM */
-                        Save_Get(event_save_common).dates[mEv_SAVE_DATE_SPECIAL3] = 12 + RANDOM(8);
+                        special_monthday[1].day = Save_Get(event_save_common).dates[mEv_SAVE_DATE_SPECIAL3] =
+                            12 + RANDOM(8);
+
                         break;
                     }
                     continue;
@@ -1013,9 +1018,9 @@ static int init_special_event(int new_event) {
 
         special_end_monthday.raw = after_n_day(special_monthday[0].raw, type != mEv_EVENT_SHOP_SALE); // ??
         Save_Get(event_save_common).special_event.type = type;
-        dates_p[mEv_SAVE_DATE_SPECIAL0] = rtc_sched.md;             // current date
-        dates_p[mEv_SAVE_DATE_SPECIAL1] = special_monthday[0].raw;  // start date
-        dates_p[mEv_SAVE_DATE_SPECIAL2] = special_end_monthday.raw; // end date
+        ev_save_common->dates[mEv_SAVE_DATE_SPECIAL0] = rtc_sched.md;             // current date
+        ev_save_common->dates[mEv_SAVE_DATE_SPECIAL1] = special_monthday[0].raw;  // start date
+        ev_save_common->dates[mEv_SAVE_DATE_SPECIAL2] = special_end_monthday.raw; // end date
         Save_Set(event_year, rtc_time->year);
         Save_Get(post_office).leaflet_recipient_flags.event_flags =
             0b1111; // deliver leaflet to all players if necessary for event
@@ -1135,16 +1140,18 @@ extern int mEv_bridge_time_check() {
 
 static void init_weekly_event() {
     u16 sched_date;
-    lbRTC_time_c* rtc_time = &Common_Get(time.rtc_time);
     mEv_kabu_peddler_c* kabu_peddler_data = &Save_Get(event_save_data).weekly.kabu_peddler;
+    u16* event_dates;
+    lbRTC_time_c* rtc_time;
     mEv_MonthDay_u today_date;
-    u8 flag = 0;
     u16 ghost_date;
     u16 ghost_date2;
     u16 monday_date;
     u16 friday_date;
-    u16* event_dates = Save_Get(event_save_common).dates;
+    u8 flag = 0;
 
+    rtc_time = Common_GetPointer(time.rtc_time);
+    event_dates = Save_Get(event_save_common).dates;
     today_date.month = rtc_time->month;
     today_date.day = rtc_time->day;
     sched_date = event_dates[mEv_SAVE_DATE_WEEKLY];
@@ -1199,7 +1206,7 @@ static void init_weekly_event() {
     /* Check if we should schedule Tortimer's 3rd bridge event */
     if (rtc_time->weekday == lbRTC_SATURDAY || (rtc_time->weekday != lbRTC_SUNDAY && sched_date != today_date.raw)) {
         /* Gulliver wasn't scheduled today, so check the criteria is met */
-        if (Common_Get(player_no) != mPr_FOREIGNER && Save_Get(now_npc_max) >= ANIMAL_NUM_MAX &&
+        if (Common_Get(player_no) != mPr_FOREIGNER && mNpc_GetAnimalNum() >= ANIMAL_NUM_MAX &&
             Save_Get(bridge).exists != TRUE && mSC_LightHouse_travel_check() == FALSE) {
             flag = mEv_EVENT_SONCHO_BRIDGE_MAKE;
         }
@@ -1556,7 +1563,7 @@ static void update_active(Event_c* event) {
 
                     continue;
                 }
-                if (today_event->type != 0 && today_event->type == Common_Get(event_common).too_short) {
+                if (mEv_too_short_check(today_event->type)) {
                     today_event->active_hours |= mEv_EVENT_HOUR_TOO_SHORT_EVENT;
                 } else if (set_active(today_event->type)) {
                     event->changed_num++;
@@ -1564,8 +1571,10 @@ static void update_active(Event_c* event) {
             } else {
                 place_data = mEv_get_common_place(today_event->type, 81);
 
-                if (today_event->type != 0 && today_event->type == Common_Get(event_common).too_short) {
-                    Common_Get(event_common).too_short = 0;
+                if (mEv_too_short_check(today_event->type)) {
+                    if (today_event->type != mEv_EVENT_HARVEST_FESTIVAL) {
+                        Common_Get(event_common).too_short = 0;
+                    }
                 } else if (place_data != NULL) {
                     if (place_data->block.x != event->block_x || place_data->block.z != event->block_z) {
                         if (clear_active(today_event->type)) {
@@ -1617,6 +1626,16 @@ static u32 decode_date(u32 d) {
         lbRk_HarvestMoonDay(&harvest_moon_ymd, rtc_time->year);
         date.d.month = harvest_moon_ymd.month;
         date.d.day = harvest_moon_ymd.day;
+    } else if (month & mEv_SCHEDULE_LUNAR_DATE) {
+        lbRTC_ymd_c seiyo_ymd;
+        lbRTC_ymd_c kyuu_ymd;
+
+        kyuu_ymd.year = rtc_time->year;
+        kyuu_ymd.month = month & 0xF;
+        kyuu_ymd.day = date.d.day;
+        lbRk_ToSeiyouReki(&seiyo_ymd, &kyuu_ymd);
+        date.d.month = seiyo_ymd.month;
+        date.d.day = seiyo_ymd.day;
     }
 
     /* Process day */
@@ -1934,7 +1953,7 @@ extern void mEv_init_force(Event_c* event) {
 // Aus checks if the save weather is set to rain, not the current weather.
 // This would prevent a bug where Morning Aerobics could be scheduled
 // in the rain because the previous weather was clear.
-#if VERSION >= VER_GAFU01_00
+#ifdef BUGFIXES
 extern void mEv_2nd_init(Event_c* event) {
     /* Disable morning aerobics if it is scheduled and the weather is rain */
     u8 index = index_today[mEv_EVENT_MORNING_AEROBICS];
@@ -2249,7 +2268,7 @@ extern u8* mEv_reserve_save_area(int type, u8 id) {
         if (((1 << i) & ev_save_common->area_use_bitfield) == 0) {
             free_slot_idx = i;
             continue;
-        } else if (id != mEv_EVENT_NUM && ev_save_common->area[i].info.id == mEv_EVENT_NUM) {
+        } else if (id != mEv_EVENT_NONE && ev_save_common->area[i].info.id == mEv_EVENT_NONE) {
             exist_slot = i;
         }
 
@@ -2487,12 +2506,13 @@ extern int mEv_clear_common_place(int type, u8 id) {
 
 extern int mEv_use_block_by_other_event(int type, BlockOrUnit_c block) {
     mEv_common_data_c* ev_common = Common_GetPointer(event_common);
+    BlockOrUnit_c* place_block;
     int i;
 
     for (i = 0; i < mEv_PLACE_NUM; i++) {
         if (((1 << i) & ev_common->place_use_bitfield) != 0) {
-            if (ev_common->place[i].data.block.x == block.x && ev_common->place[i].data.block.z == block.z &&
-                ev_common->place[i].info.type != type) {
+            place_block = &ev_common->place[i].data.block;
+            if (place_block->x == block.x && place_block->z == block.z && ev_common->place[i].info.type != type) {
                 return TRUE;
             }
         }
@@ -2697,10 +2717,10 @@ extern void mEv_sp_debug_print4f(gfxprint_t* gfxprint) {
     );
 
     gfxprint_locate8x8(gfxprint, 30, 11);
-    gfxprint_printf(gfxprint, "%c%c%c%c%c%c%c%c", mEv_CheckTitleDemo() != mEv_TITLEDEMO_NONE ? 'T' : '.', mEv_CheckFirstIntro() ? 'F' : '.',
-                    mEv_CheckGateway() ? 'G' : '.', mEv_CheckRealArbeit() ? 'R' : '.', mEv_CheckArbeit() ? 'A' : '.',
-                    mDemo_CheckDemo() ? 'D' : '.', !mEv_PlayerOK() ? 'P' : '.',
-                    !mEv_LivePlayer(Common_Get(player_no)) ? 'L' : '.');
+    gfxprint_printf(gfxprint, "%c%c%c%c%c%c%c%c", mEv_CheckTitleDemo() != mEv_TITLEDEMO_NONE ? 'T' : '.',
+                    mEv_CheckFirstIntro() ? 'F' : '.', mEv_CheckGateway() ? 'G' : '.',
+                    mEv_CheckRealArbeit() ? 'R' : '.', mEv_CheckArbeit() ? 'A' : '.', mDemo_CheckDemo() ? 'D' : '.',
+                    !mEv_PlayerOK() ? 'P' : '.', !mEv_LivePlayer(Common_Get(player_no)) ? 'L' : '.');
 }
 
 extern int mEv_change(Event_c* event) {
@@ -2708,9 +2728,13 @@ extern int mEv_change(Event_c* event) {
 }
 
 extern int mEv_get_special_event_state() {
-    int special_events[] = { mEv_EVENT_SHOP_SALE, mEv_EVENT_DESIGNER,       mEv_EVENT_BROKER_SALE,
-                             mEv_EVENT_ARTIST,    mEv_EVENT_CARPET_PEDDLER, mEv_EVENT_GYPSY };
+    int special_events[] = {
+        mEv_EVENT_SHOP_SALE, mEv_EVENT_DESIGNER,       mEv_EVENT_BROKER_SALE,
+        mEv_EVENT_ARTIST,    mEv_EVENT_CARPET_PEDDLER, mEv_EVENT_GYPSY,
+    };
 
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    mEv_special_c* special_event = &Save_Get(event_save_data).special;
     int active = FALSE;
     int res = mEv_SPECIAL_STATE_UNSCHEDULED;
     mEv_ymdh_u event_date_start;
@@ -2726,14 +2750,14 @@ extern int mEv_get_special_event_state() {
     }
 
     today_date.year = 0;
-    today_date.month = Common_Get(time.rtc_time.month);
-    today_date.day = Common_Get(time.rtc_time.day);
-    today_date.hour = Common_Get(time.rtc_time.hour);
+    today_date.month = rtc_time->month;
+    today_date.day = rtc_time->day;
+    today_date.hour = rtc_time->hour;
 
     event_date.year = 0;
-    event_date.month = Save_Get(event_save_data).special.scheduled.month;
-    event_date.day = Save_Get(event_save_data).special.scheduled.day;
-    event_date.hour = Save_Get(event_save_data).special.scheduled.hour;
+    event_date.month = special_event->scheduled.month;
+    event_date.day = special_event->scheduled.day;
+    event_date.hour = special_event->scheduled.hour;
 
     event_date_start.raw = event_date.raw;
     today_date_start.raw = today_date.raw;
@@ -2871,10 +2895,14 @@ extern int mGH_check_birth() {
 }
 
 extern void mGH_check_delete() {
-    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
-    Anmret_c* return_animal = Save_GetPointer(return_animal);
-    Private_c* priv = Save_Get(private_data);
+    Anmret_c* return_animal;
+    Private_c* priv;
+    int i;
+    lbRTC_time_c* rtc_time;
 
+    return_animal = Save_GetPointer(return_animal);
+    priv = Save_Get(private_data);
+    rtc_time = Common_GetPointer(time.rtc_time);
     if (return_animal->npc_id != EMPTY_NO) {
         if (Save_Get(npc_force_go_home) == TRUE) {
             mGH_animal_return_init();
@@ -2891,7 +2919,6 @@ extern void mGH_check_delete() {
                 lbRTC_OVER) {
                 mGH_animal_return_init();
             } else {
-                int i;
 
                 if (mNpc_SearchAnimalinfo(Save_Get(animals), return_animal->npc_id, ANIMAL_NUM_MAX) != -1) {
                     mGH_animal_return_init(); // don't allow this animal to visit if a "version" of it lives in town
@@ -2949,9 +2976,11 @@ extern int mMC_check_birth_day() {
 }
 
 extern void mMC_check_delete() {
-    MaskCat_c* mask_cat = Save_GetPointer(mask_cat);
-    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    lbRTC_time_c* rtc_time;
+    MaskCat_c* mask_cat;
 
+    mask_cat = Save_GetPointer(mask_cat);
+    rtc_time = Common_GetPointer(time.rtc_time);
     if (mask_cat->design.creator_pid.player_id != 0xFFFF) {
         lbRTC_time_c max_time;
         lbRTC_time_c min_time;
@@ -2977,4 +3006,231 @@ extern void mMC_set_time() {
     lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
 
     lbRTC_TimeCopy(&mask_cat->time, rtc_time);
+}
+
+extern void mEv_alarm_init(void) {
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+
+    alarm->house_alarm_state[mHS_HOUSE0] = mEv_HOUSE_ALARM_STATE_NONE;
+    alarm->house_alarm_state[mHS_HOUSE1] = mEv_HOUSE_ALARM_STATE_NONE;
+    alarm->house_alarm_state[mHS_HOUSE2] = mEv_HOUSE_ALARM_STATE_NONE;
+    alarm->house_alarm_state[mHS_HOUSE3] = mEv_HOUSE_ALARM_STATE_NONE;
+}
+
+extern int mEv_extract_calendar_event(mEv_schedule_c* sched) {
+    int i;
+
+    for (i = 0; i < n_calendar_events; i++) {
+        if (sched->type == calendar_event_table[i]) {
+            return TRUE;
+        }
+    }
+
+    sched->date[0].raw = sched->date[1].raw = 0;
+    return FALSE;
+}
+
+extern int mEv_check_interval(lbRTC_ymd_c* begin_ymd, lbRTC_ymd_c* end_ymd, mEv_schedule_c* sched, int add_days) {
+    lbRTC_ymd_c event_start;
+    lbRTC_ymd_c event_end;
+    int event_days;
+    int ret = FALSE;
+
+    event_start.year = begin_ymd->year;
+    event_start.month = sched->date[0].d.month;
+    event_start.day = sched->date[0].d.day;
+    event_end.year = begin_ymd->year;
+    event_end.month = sched->date[1].d.month;
+    event_end.day = sched->date[1].d.day;
+
+    event_days = lbRTC_GetIntervalDays2(&event_start, &event_end);
+    if (event_days < 0) {
+        event_end.year++;
+        event_days = lbRTC_GetIntervalDays2(&event_start, &event_end);
+    }
+
+    if (event_days >= add_days) {
+        if ((lbRTC_GetIntervalDays2(&event_start, begin_ymd) >= 0 && lbRTC_GetIntervalDays2(begin_ymd, &event_end) >= 0) ||
+            (lbRTC_GetIntervalDays2(&event_start, end_ymd) >= 0 && lbRTC_GetIntervalDays2(end_ymd, &event_end) >= 0)) {
+            ret = TRUE;
+        }
+    } else {
+        if ((lbRTC_GetIntervalDays2(begin_ymd, &event_start) >= 0 && lbRTC_GetIntervalDays2(&event_start, end_ymd) >= 0) ||
+            (lbRTC_GetIntervalDays2(begin_ymd, &event_end) >= 0 && lbRTC_GetIntervalDays2(&event_end, end_ymd) >= 0)) {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+extern int mEv_check_calendar_event(lbRTC_ymd_c* ymd, int add_day) {
+    lbRTC_time_c end_time;
+    lbRTC_ymd_c end_ymd;
+    mEv_schedule_c sched;
+    Private_c* priv = &Save_Get(private_data[Common_Get(player_no)]);
+    int event_id = mEv_EVENT_NONE;
+    int weekday;
+    int i;
+
+    end_time.year = ymd->year;
+    end_time.month = ymd->month;
+    end_time.day = ymd->day;
+    lbRTC_Add_DD(&end_time, add_day);
+    end_ymd.year = end_time.year;
+    end_ymd.month = end_time.month;
+    end_ymd.day = end_time.day;
+    weekday = lbRTC_Week(ymd->year, ymd->month, ymd->day); // @unused
+
+    if (mEv_ArbeitPlayer_kari(Common_Get(player_no)) == FALSE) {
+        for (i = 0; i < ARRAY_COUNT(event_schedule_data); i++) {
+            memcpy(&sched, &event_schedule_data[i], sizeof(mEv_schedule_c));
+
+            if (mEv_extract_calendar_event(&sched) == TRUE) {
+                switch (sched.type) {
+                    case mEv_EVENT_SUMMER_CAMPER: {
+                        mEv_MonthDay_u end_md;
+                        lbRTC_month_t month = ymd->month;
+
+                        switch (month) {
+                            case lbRTC_JUNE:
+                            case lbRTC_JULY:
+                            case lbRTC_AUGUST:
+                                sched.date[0].d.month = month;
+                                break;
+                        }
+
+                        sched.date[0].raw = decode_date(sched.date[0].raw);
+                        end_md.raw = after_n_day(sched.date[0].md, 1);
+                        sched.date[1].md = end_md.raw;
+                        break;
+                    }
+
+                    case mEv_EVENT_PLAYER_BIRTHDAY: {
+                        mPr_birthday_c* birthday = &priv->birthday;
+
+                        sched.date[0].d.month = birthday->month;
+                        sched.date[0].d.day = birthday->day;
+                        sched.date[1].d.month = birthday->month;
+                        sched.date[1].d.day = birthday->day;
+                        break;
+                    }
+
+                    case mEv_EVENT_SPRING_EQUINOX:
+                        sched.date[0].d.month = lbRTC_MARCH;
+                        sched.date[0].d.day = lbRk_VernalEquinoxDay(ymd->year);
+                        sched.date[1].md = sched.date[0].md;
+                        break;
+
+                    case mEv_EVENT_AUTUMN_EQUINOX:
+                        sched.date[0].d.month = lbRTC_SEPTEMBER;
+                        sched.date[0].d.day = lbRk_AutumnalEquinoxDay(ymd->year);
+                        sched.date[1].md = sched.date[0].md;
+                        break;
+
+                    default:
+                        sched.date[0].raw = decode_date(sched.date[0].raw);
+                        sched.date[1].raw = decode_date(sched.date[1].raw);
+                        break;
+                }
+
+                if (mEv_check_interval(ymd, &end_ymd, &sched, add_day) == TRUE) {
+                    event_id = sched.type;
+                    break;
+                }
+            }
+        }
+    }
+
+    return event_id;
+}
+
+extern s16 mEv_GetEventWeather_local(void) {
+    mEv_schedule_c sched;
+    mEv_schedule_c* sched_p = &sched;
+    int i;
+    Private_c* priv;
+    mEv_schedule_date_c today_md;
+    mEv_MonthDay_u birthday_md;
+    lbRTC_time_c* rtc_time;
+
+    rtc_time = Common_GetPointer(time.rtc_time);
+    priv = &Save_Get(private_data[Common_Get(player_no)]);
+
+    today_md.month = rtc_time->month;
+    today_md.day = rtc_time->day;
+    today_md._2 = 0;
+    today_md.hour = rtc_time->hour;
+    Save_Get(event_save_common).dates[mEv_SAVE_DATE_TODAY] = *(u16*)&today_md;
+
+    birthday_md.month = priv->birthday.month;
+    birthday_md.day = priv->birthday.day;
+    Save_Get(event_save_common).dates[mEv_SAVE_DATE_BIRTHDAY] = birthday_md.raw;
+
+    for (i = 0; i < ARRAY_COUNT(event_schedule_data); i++) {
+        memcpy(sched_p, &event_schedule_data[i], sizeof(mEv_schedule_c));
+
+        switch (sched.type) {
+            case mEv_EVENT_WEATHER_CLEAR:
+            case mEv_EVENT_WEATHER_SNOW:
+                sched.date[0].raw = decode_date(sched.date[0].raw);
+                sched.date[1].raw = decode_date(sched.date[1].raw);
+
+                if (check_date_range(*(u16*)&today_md, sched.date[0].md, sched.date[1].md)) {
+                    return sched.type;
+                }
+                break;
+            case mEv_EVENT_WEATHER_SPORTS_FAIR:
+                if (check_date_range(*(u16*)&today_md, sched.date[0].md, sched.date[1].md)) {
+                    if (rtc_time->month == lbRTC_MARCH) {
+                        if (rtc_time->day == lbRk_VernalEquinoxDay(rtc_time->year)) {
+                            return mEv_EVENT_WEATHER_SPORTS_FAIR;
+                        }
+                    } else if (rtc_time->day == lbRk_AutumnalEquinoxDay(rtc_time->year)) {
+                        return mEv_EVENT_WEATHER_SPORTS_FAIR;
+                    }
+                }
+                break;
+        }
+    }
+
+    return mEv_EVENT_NONE;
+}
+
+extern void mEv_GetEventWeather(s16* weather, s16* intensity) {
+    intensity[0] = mEnv_WEATHER_INTENSITY_HEAVY;
+
+    switch (mEv_GetEventWeather_local()) {
+        case mEv_EVENT_WEATHER_CLEAR:
+            weather[0] = mEnv_WEATHER_CLEAR;
+            break;
+        case mEv_EVENT_WEATHER_SNOW:
+            weather[0] = mEnv_WEATHER_SNOW;
+            break;
+        case mEv_EVENT_WEATHER_SPORTS_FAIR:
+            weather[0] = mEnv_WEATHER_CLEAR;
+            break;
+        default:
+            weather[0] = -1; // no event weather
+            break;
+    }
+}
+
+extern int mEv_check_run_calendar_event(void) {
+    mEv_schedule_c sched;
+    int ret = FALSE;
+    int i;
+
+    if (mEv_ArbeitPlayer_kari(Common_Get(player_no)) == FALSE) {
+        for (i = 0; i < ARRAY_COUNT(event_schedule_data); i++) {
+            memcpy(&sched, &event_schedule_data[i], sizeof(mEv_schedule_c));
+
+            if (mEv_extract_calendar_event(&sched) == TRUE && mEv_check_status(sched.type, mEv_STATUS_RUN) == TRUE) {
+                ret = TRUE;
+                break;
+            }
+        }
+    }
+
+    return ret;
 }
