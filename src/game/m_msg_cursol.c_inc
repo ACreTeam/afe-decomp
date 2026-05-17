@@ -556,7 +556,7 @@ static int mMsg_Main_Cursol_PutString_CountryName_ControlCursol(mMsg_Window_c* m
   int capitalize = msg_p->status_flags & mMsg_STATUS_FLAG_CAPITALIZE;
 
   msg_p->status_flags &= ~mMsg_STATUS_FLAG_CAPITALIZE;
-  msg_p->msg_data->msg_len = mMsg_CopyCountryName(data, *idx_p, len, capitalize);
+  msg_p->msg_data->msg_len = mMsg_CopyCountryName(data, *idx_p, len, capitalize, FALSE);
   return mMsg_RESULT_VOID;
 }
 

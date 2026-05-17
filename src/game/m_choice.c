@@ -12,7 +12,6 @@ typedef void (*mChoice_MAIN_PROC)(mChoice_c*, GAME*);
 
 static void mChoice_MainSetup(mChoice_c* choice, GAME* game);
 
-static u32 Choice_table_rom_start = 0;
 static u32 Choice_rom_start = 0;
 
 static void mChoice_MainSetup_Hide(mChoice_c*, GAME*);

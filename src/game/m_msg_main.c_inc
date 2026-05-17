@@ -812,7 +812,7 @@ extern int mMsg_CopyDetermination(mMsg_Window_c* msg_p, u8* data, int start_idx,
     return new_len;
 }
 
-extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize) {
+extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize, int not_kanji) {
     int new_len;
     int new_start_idx;
     int command_len = mFont_CodeSize_idx_get(data, start_idx);

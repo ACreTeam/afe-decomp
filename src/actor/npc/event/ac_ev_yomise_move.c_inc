@@ -65,12 +65,12 @@ static void yomise_save_area_ct(void) {
 static int aEYMS_set_choise_data(int start_idx, int max) {
     aEv_yomise_save_c* save_p = get_yomise_save_area();
     mChoice_c* choice_p = mChoice_Get_base_window_p();
-    u8 buf[mChoice_CHOICE_STRING_LEN * mChoice_CHOICE_NUM];
+    u8 buf[mChoice_CHOICE_DISP_STRING_LEN * mChoice_CHOICE_NUM];
     u8* str_p[mChoice_CHOICE_NUM];
     int i;
     int j;
-    static u8 new_player_str[mChoice_CHOICE_STRING_LEN] = { CHAR_PP_005, CHAR_PP_193, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032 };
-    static u8 new_player_str2[mChoice_CHOICE_STRING_LEN] = { CHAR_PP_009, CHAR_PP_126, CHAR_PP_025, CHAR_PP_029, CHAR_PP_011, CHAR_PP_007, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032 };
+    static u8 new_player_str[mChoice_CHOICE_DISP_STRING_LEN] = { CHAR_PP_005, CHAR_PP_193, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032, CHAR_PP_032 };
+    static u8 new_player_str2[mChoice_CHOICE_DISP_STRING_LEN] = { CHAR_PP_009, CHAR_PP_126, CHAR_PP_025, CHAR_PP_029, CHAR_PP_011, CHAR_PP_007, CHAR_PP_020, CHAR_PP_001, CHAR_PP_032, CHAR_PP_032 };
 
     mem_clear(buf, sizeof(buf), CHAR_SPACE);
     for (i = 0; i < mChoice_CHOICE_NUM; i++) {
@@ -80,7 +80,7 @@ static int aEYMS_set_choise_data(int start_idx, int max) {
     i = 0;
     for (j = start_idx; i < max && j < aEYMS_GOODS_COUNT; j++) {
         if (save_p->goods[j] != EMPTY_NO) {
-            str_p[i] = &buf[i * mChoice_CHOICE_STRING_LEN];
+            str_p[i] = &buf[i * mChoice_CHOICE_DISP_STRING_LEN];
             mIN_copy_name_str(str_p[i], save_p->goods[j]);
             i++;
         }
@@ -90,24 +90,24 @@ static int aEYMS_set_choise_data(int start_idx, int max) {
         for (i = 0; i < mChoice_CHOICE_NUM; i++) {
             if (str_p[i] == NULL) {
                 if (j == aEYMS_GOODS_COUNT) {
-                    mem_copy(&buf[i * mChoice_CHOICE_STRING_LEN], new_player_str, mChoice_CHOICE_STRING_LEN);
+                    mem_copy(&buf[i * mChoice_CHOICE_DISP_STRING_LEN], new_player_str, mChoice_CHOICE_DISP_STRING_LEN);
                 } else {
-                    mem_copy(&buf[i * mChoice_CHOICE_STRING_LEN], new_player_str2, mChoice_CHOICE_STRING_LEN);
+                    mem_copy(&buf[i * mChoice_CHOICE_DISP_STRING_LEN], new_player_str2, mChoice_CHOICE_DISP_STRING_LEN);
                 }
 
-                str_p[i] = &buf[i * mChoice_CHOICE_STRING_LEN];
+                str_p[i] = &buf[i * mChoice_CHOICE_DISP_STRING_LEN];
                 i = mChoice_CHOICE_NUM;
             }
         }
     }
 
     mChoice_Set_choice_data(choice_p,
-        str_p[0], mChoice_CHOICE_STRING_LEN,
-        str_p[1], mChoice_CHOICE_STRING_LEN,
-        str_p[2], mChoice_CHOICE_STRING_LEN,
-        str_p[3], mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN,
-        NULL, mChoice_CHOICE_STRING_LEN
+        str_p[0], mChoice_CHOICE_DISP_STRING_LEN,
+        str_p[1], mChoice_CHOICE_DISP_STRING_LEN,
+        str_p[2], mChoice_CHOICE_DISP_STRING_LEN,
+        str_p[3], mChoice_CHOICE_DISP_STRING_LEN,
+        NULL, mChoice_CHOICE_DISP_STRING_LEN,
+        NULL, mChoice_CHOICE_DISP_STRING_LEN
     );
 
     return j;

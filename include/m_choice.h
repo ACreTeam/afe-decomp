@@ -8,7 +8,8 @@
 extern "C" {
 #endif
 
-#define mChoice_CHOICE_STRING_LEN 10
+#define mChoice_CHOICE_STRING_LEN 66
+#define mChoice_CHOICE_DISP_STRING_LEN 10
 #define mChoice_SELECT_STR_NUM 607
 
 typedef struct choice_s mChoice_c;
@@ -130,6 +131,9 @@ extern void mChoice_no_b_close_set(mChoice_c* choice);
 #define mChoice_CLEAR_CHOSENUM() mChoice_Clear_ChoseNum(mChoice_Get_base_window_p())
 #define mChoice_NO_B_SET() mChoice_no_b_set(mChoice_Get_base_window_p())
 #define mChoice_NO_B_CLOSE_SET() mChoice_no_b_close_set(mChoice_Get_base_window_p())
+
+extern Gfx con_sentaku2_modelT[];
+extern Gfx mChoice_init_disp[];
 
 #ifdef __cplusplus
 }

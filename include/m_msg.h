@@ -15,7 +15,7 @@ extern "C" {
 #define mMsg_MSG_BUF_MAX 1536
 #define mMsg_MSG_BUF_SIZE 1600
 #define mMsg_FREE_STRING_LEN 66
-#define mMsg_MAIL_STRING_LEN 132
+#define mMsg_MAIL_STRING_LEN 204
 #define mMsg_MAX_LINE 4
 
 #define mMsg_BUTTON_TURN_TIME 60.0f
@@ -199,10 +199,11 @@ struct message_window_s {
     /* 0x038 */ u8 free_str[mMsg_FREE_STR_NUM][mMsg_FREE_STRING_LEN];
     /* 0x178 */ int free_str_article[mMsg_FREE_STR_NUM];
 
-    /* 0x1C8 */ u8 item_str[mMsg_ITEM_STR_NUM][mIN_ITEM_NAME_LEN];
+    /* 0x1C8 */ u8 item_str[mMsg_ITEM_STR_NUM][mMsg_FREE_STRING_LEN];
     /* 0x218 */ int item_str_article[mMsg_ITEM_STR_NUM];
 
     /* 0x22C */ u8 mail_str[mMsg_MAIL_STR_NUM][mMsg_MAIL_STRING_LEN];
+    u8 _7DC[68]; // TODO: figure out what goes here
 
     /* 0x2B0 */ rgba_t name_text_color;
     /* 0x2B4 */ rgba_t name_background_color;
@@ -235,6 +236,7 @@ struct message_window_s {
     /* 0x3F8 */ u8 force_voice_enable_flag;
     /* 0x3FC */ int spec;
     /* 0x400 */ u8 free_str_color_idx[4];
+    int font_bank;
     /* 0x408 */ u8 _404[8]; // unused?
     /* 0x40C */ u32 status_flags;
 
@@ -339,6 +341,7 @@ extern int mMsg_MoveDataCut(u8* data, int dst_idx, int src_idx, int len, int spa
 extern int mMsg_CopyPlayerName(u8* data, int start_idx, int len, u32 capitalize);
 extern int mMsg_CopyTalkName(ACTOR* actor_p, u8* data, int start_idx, int len, u32 capitalize);
 extern int mMsg_CopyTail(ACTOR* actor_p, u8* data, int start_idx, int len, u32 capitalize);
+extern int mMsg_CopyTruthTail(ACTOR* actor_p, u8* data, int start_idx, int len, u32 capitalize);
 extern int mMsg_CopyYear(u8* data, int start_idx, int len);
 extern int mMsg_CopyMonth(u8* data, int start_idx, int len);
 extern int mMsg_CopyWeek(u8* data, int start_idx, int len);
@@ -349,8 +352,10 @@ extern int mMsg_CopySec(u8* data, int start_idx, int len);
 extern int mMsg_CopyFree(mMsg_Window_c* msg_p, int str_no, u8* data, int start_idx, int len, int article,
                          u32 capitalize);
 extern int mMsg_CopyDetermination(mMsg_Window_c* msg_p, u8* data, int start_idx, int len);
-extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize);
+extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize, int not_kanji);
 extern int mMsg_CopyIslandName(u8* data, int start_idx, int len, u32 capitalize);
+extern int mMsg_CopyOwnIslandName(u8* data, int start_idx, int len, u32 capitalize);
+extern int mMsg_CopyPlClothType(u8* data, int start_idx, int len, u32 capitalize);
 extern int mMsg_CopyAmPm(mMsg_Window_c* msg_p, u8* data, int start_idx, int len);
 extern int mMsg_CopyRamdomNumber2(u8* data, int start_idx, int len);
 extern int mMsg_CopyItem(mMsg_Window_c* msg_p, int str_no, u8* data, int start_idx, int len, int article,

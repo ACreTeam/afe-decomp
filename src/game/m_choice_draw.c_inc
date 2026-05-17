@@ -1,3 +1,7 @@
+#ifdef __INTELLISENSE__
+#include "m_choice.c"
+#endif
+
 static void mChoice_SetMatrix(mChoice_c* choice, GAME* game, int type) {
     GRAPH* graph = game->graph;
     f32 scale = choice->scale;
@@ -70,7 +74,7 @@ static Vtx con_sentaku2_v[] = {
 #endif
 };
 
-static Gfx con_sentaku2_modelT[] = {
+Gfx con_sentaku2_modelT[] = {
     gsSPTexture(0, 0, 0, 0, G_ON),
     gsDPSetPrimColor(0, 255, 255, 255, 155, 255),
     gsDPLoadTextureBlock_4b_Dolphin(con_waku_swaku3_tex, G_IM_FMT_I, 128, 64, 15, GX_MIRROR, GX_MIRROR, 0, 0),
@@ -83,7 +87,7 @@ static Gfx con_sentaku2_modelT[] = {
     gsSPEndDisplayList(),
 };
 
-static Gfx mChoice_init_disp[] = {
+Gfx mChoice_init_disp[] = {
     gsDPPipeSync(),
     gsSPClearGeometryMode(G_ZBUFFER | G_SHADE | G_CULL_BOTH | G_FOG | G_LIGHTING | G_TEXTURE_GEN |
                           G_TEXTURE_GEN_LINEAR | G_LOD | G_SHADING_SMOOTH),
@@ -140,7 +144,7 @@ static void mChoice_DrawFont(mChoice_c* choice, GAME* game, int type) {
         }
 
         mFont_SetLineStrings_AndSpace(game, choice->data.strings[i], choice->data.string_lens[i], x, y, r, g, b, 255,
-                                      FALSE, TRUE, 0, 1.0f, 1.0f, type);
+                                      FALSE, FALSE, 0, 1.0f, 1.0f, type);
 
         y += 16.0f;
     }

@@ -1296,8 +1296,8 @@ static void aMR_MsgInitQqqEmulatorMemory2(ACTOR* actorx, GAME* game) {
 
     // clang-format off
     mChoice_Set_choice_data(choice_win,
-        aMR_GetNameString(my_room, 0), mChoice_CHOICE_STRING_LEN,
-        aMR_GetNameString(my_room, 1), mChoice_CHOICE_STRING_LEN,
+        aMR_GetNameString(my_room, 0), mChoice_CHOICE_DISP_STRING_LEN,
+        aMR_GetNameString(my_room, 1), mChoice_CHOICE_DISP_STRING_LEN,
         cancel_string, mMsg_FREE_STRING_LEN,
         NULL, mMsg_FREE_STRING_LEN,
         NULL, mMsg_FREE_STRING_LEN,
@@ -1344,8 +1344,8 @@ static void aMR_MsgInitQqqEmulatorMemoryOver3(ACTOR* actorx, GAME* game) {
 
     // clang-format off
     mChoice_Set_choice_data(choice_win,
-        aMR_GetNameString(my_room, 0), mChoice_CHOICE_STRING_LEN,
-        aMR_GetNameString(my_room, 1), mChoice_CHOICE_STRING_LEN,
+        aMR_GetNameString(my_room, 0), mChoice_CHOICE_DISP_STRING_LEN,
+        aMR_GetNameString(my_room, 1), mChoice_CHOICE_DISP_STRING_LEN,
         else_string, mMsg_FREE_STRING_LEN,
         cancel_string, mMsg_FREE_STRING_LEN,
         NULL, mMsg_FREE_STRING_LEN,
@@ -1406,7 +1406,7 @@ static void aMR_MsgInitQqqRepeatDisplay1(ACTOR* actorx, GAME* game) {
 
             // clang-format off
             mChoice_Set_choice_data(choice_win,
-                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_STRING_LEN,
+                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_DISP_STRING_LEN,
                 else_string, mMsg_FREE_STRING_LEN,
                 cancel_string, mMsg_FREE_STRING_LEN,
                 NULL, mMsg_FREE_STRING_LEN,
@@ -1470,8 +1470,8 @@ static void aMR_MsgInitQqqRepeatDisplay2(ACTOR* actorx, GAME* game) {
 
             // clang-format off
             mChoice_Set_choice_data(choice_win,
-                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_STRING_LEN,
-                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select + 1), mChoice_CHOICE_STRING_LEN,
+                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select), mChoice_CHOICE_DISP_STRING_LEN,
+                aMR_GetNameString(my_room, my_room->emu_info.memory_game_select + 1), mChoice_CHOICE_DISP_STRING_LEN,
                 else_string, mMsg_FREE_STRING_LEN,
                 cancel_string, mMsg_FREE_STRING_LEN,
                 NULL, mMsg_FREE_STRING_LEN,
