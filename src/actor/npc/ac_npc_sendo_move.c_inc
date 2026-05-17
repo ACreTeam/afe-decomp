@@ -84,7 +84,7 @@ static void aSEN_pl_ride_on_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 
     if (boat_demo->action == aBTD_ACTION_START_CALL_END_WAIT) {
         if (boat_demo->at_island == FALSE) {
-            mISL_ClearNowPlayerAction();
+            mISL_ClearNowPlayerAction_island();
 
             if (sendo->use_island_data_in_ram == TRUE) {
                 act = 5;

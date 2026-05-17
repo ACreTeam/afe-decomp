@@ -109,7 +109,7 @@ static void aBTD_change_season(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
         mISL_ChangeBG();
         mRmTp_DecideCottageDefaultLightSwitch();
         mSP_SelectRandomItemToAGB();
-        mISL_ClearNowPlayerAction();
+        mISL_ClearNowPlayerAction_island();
         mNpc_SetIslandPresentFtr();
         // mNpc_SetIslandRoomFtr(&Save_Get(island).animal);
         mNpc_SetIslandGetLetter(FALSE);

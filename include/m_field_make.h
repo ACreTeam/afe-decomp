@@ -374,6 +374,7 @@ extern mActor_name_t mFM_GetReseveName_com(int bx, int bz, mFM_fg_c* fg);
 extern void mFM_toSummer();
 extern void mFM_returnSeason();
 extern void mFM_RestoreIslandBG(int* island_x_blocks, int bx_num);
+extern void mFM_RestoreIslandFG(mFM_fg_c* fg, u16* deposit, int* island_bx, int island_bx_cnt);
 extern void mFM_SetIslandNpcRoomData(GAME* game, int malloc_flag);
 extern mCoBG_Collision_u* mFM_GetBgName2Col(mActor_name_t bg_name);
 extern int mFM_GetBgPalIdx(void);
