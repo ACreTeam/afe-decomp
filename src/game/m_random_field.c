@@ -716,10 +716,10 @@ static u8 mRF_gate_info2[mFM_BLOCK_TYPE_NUM][mRF_DIRECT_NUM] = {
         mRF_GATE_NONE  // east
     },
     {
-        mRF_GATE_NONE, // north
-        mRF_GATE_NONE, // west
-        mRF_GATE_NONE, // south
-        mRF_GATE_NONE  // east
+        mRF_GATE1_TYPE0, // north
+        mRF_GATE1_TYPE0, // west
+        mRF_GATE1_TYPE0, // south
+        mRF_GATE1_TYPE0  // east
     },
     {
         mRF_GATE1_TYPE0, // north
@@ -991,23 +991,101 @@ static int mRF_FindBgNameTypeCombiNum(mActor_name_t bg_id, u8 type) {
 }
 
 extern void mRF_IslandBgData_To_VillageData() {
-    // int left_bg_idx = Save_Get(island.bg_data[0]) & 3;
-    // int right_bg_idx = Save_Get(island.bg_data[1]) & 3;
-    // int island_left_bx;
-    // int island_left_bz;
-    // /* TODO: enums for these */
-    // mActor_name_t left_t = left_bg_idx + 0x74;
-    // mActor_name_t right_t = right_bg_idx + 0x70;
+    int left_bg_idx = Common_Get(cur_island_house_p)->island.bg_data[0] & 3;
+    int right_bg_idx = Common_Get(cur_island_house_p)->island.bg_data[1] & 3;
+    int island_left_bx;
+    int island_left_bz;
+    mActor_name_t left_t = left_bg_idx + BG_TYPE_GRD_S_IL_1;
+    mActor_name_t right_t = right_bg_idx + BG_TYPE_GRD_S_IR_1;
 
-    // if (mFI_BlockKind2BkNum(&island_left_bx, &island_left_bz, mRF_BLOCKKIND_ISLAND_LEFT)) {
-    //     mActor_name_t left_bg_name = mRF_FindBgNameTypeCombiNum(left_t, mFM_BLOCK_TYPE_ISLAND_LEFT);
-    //     mActor_name_t right_bg_name = mRF_FindBgNameTypeCombiNum(right_t, mFM_BLOCK_TYPE_ISLAND_RIGHT);
+    if (mFI_BlockKind2BkNum(&island_left_bx, &island_left_bz, mRF_BLOCKKIND_ISLAND_LEFT)) {
+        mActor_name_t left_bg_name = mRF_FindBgNameTypeCombiNum(left_t, mFM_BLOCK_TYPE_ISLAND_LEFT);
+        mActor_name_t right_bg_name = mRF_FindBgNameTypeCombiNum(right_t, mFM_BLOCK_TYPE_ISLAND_RIGHT);
 
-    //     Save_Set(combi_table[island_left_bz][island_left_bx].combination_type, left_bg_name);
-    //     Save_Set(combi_table[island_left_bz][island_left_bx + 1].combination_type, right_bg_name);
-    // }
+        Save_Set(combi_table[island_left_bz][island_left_bx].combination_type, left_bg_name);
+        Save_Set(combi_table[island_left_bz][island_left_bx + 1].combination_type, right_bg_name);
+    }
 }
 
 extern int mRF_CheckFieldStep3() {
     return Save_Get(combi_table[0][0]).height == mRF_FIELD_STEP3;
+}
+
+static int mRF_index_to_used_island(int bx, int house_idx) {
+    int index = Save_Get(homes[house_idx & 3]).island.bg_data[bx & 1];
+
+    return index != 0xFF;
+}
+
+static int mRF_unused_island_count(int bx) {
+    int i;
+    int count = 0;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (mRF_index_to_used_island(bx, i) == FALSE) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+static u32 mRF_make_island_useID_info(int bx) {
+    u32 useID_info = 0;
+    int i;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (mRF_index_to_used_island(bx, i) == TRUE) {
+            useID_info |= 1 << Save_Get(homes[i & 3]).island.bg_data[bx & 1];
+        }
+    }
+
+    return useID_info;
+}
+
+static void mRF_decide_island_side(int bx, int house_idx) {
+    if (mRF_index_to_used_island(bx, house_idx) == FALSE) {
+        int count = mRF_unused_island_count(bx);
+
+        if (count > 0) {
+            int selected = RANDOM(count);
+            u32 useID_info = mRF_make_island_useID_info(bx);
+            u8* bg_data = &Save_Get(homes[house_idx & 3]).island.bg_data[bx & 1];
+            int now_count = 0;
+            int i;
+            for (i = 0; i < mHS_HOUSE_NUM; i++) {
+                if (((useID_info >> (i & 3)) & 1) == 0) {
+                    if (selected == now_count) {
+                        *bg_data = i;
+                        // Missing 'break' statement here
+#ifdef BUGFIXES
+                        break;
+#endif
+                    }
+
+                    now_count++;
+                }
+            }
+        }
+    }
+}
+
+static void mRF_decide_one_island_pattern(int house_idx) {
+    mRF_decide_island_side(mISL_ISLAND_BLOCK_LEFT, house_idx);
+    mRF_decide_island_side(mISL_ISLAND_BLOCK_RIGHT, house_idx);
+}
+
+extern void mRF_RenewIslandPattern(void) {
+    int i;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (Save_Get(homes[i]).island.house_idx == -1) {
+            Save_Get(homes[i]).island.bg_data[mISL_ISLAND_BLOCK_LEFT] = 0xFF;
+            Save_Get(homes[i]).island.bg_data[mISL_ISLAND_BLOCK_RIGHT] = 0xFF;
+        }
+    }
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        mRF_decide_one_island_pattern(i);
+    }
 }

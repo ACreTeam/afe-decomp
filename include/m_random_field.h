@@ -67,6 +67,7 @@ extern int mRF_RiverIdx2NextDirect(int river_idx);
 extern int mRF_BlockType2RiverNextDirect(u8 type);
 extern void mRF_IslandBgData_To_VillageData();
 extern int mRF_CheckFieldStep3();
+extern void mRF_RenewIslandPattern(void);
 
 extern mFM_combo_info_c data_combi_table[];
 extern int data_combi_table_number;

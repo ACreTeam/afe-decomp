@@ -1286,7 +1286,7 @@ config.libs = [
             Object(Matching, "game/m_prenmi.c"),
             Object(Matching, "game/m_private.c"),
             Object(Matching, "game/m_quest.c"),
-            Object(NonMatching, "game/m_random_field.c"),
+            Object(Matching, "game/m_random_field.c"),
             Object(Matching, "game/m_random_field_ovl.c"),
             Object(Matching, "game/m_rcp.c"),
             Object(Matching, "game/m_remove_collect.c"),
