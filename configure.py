@@ -1302,7 +1302,7 @@ config.libs = [
             Object(Matching, "game/m_snowman.c"),
             Object(Matching, "game/m_soncho.c"),
             Object(NonMatching, "game/m_start_data_init.c"),
-            Object(NonMatching, "game/m_string.c"),
+            Object(Matching, "game/m_string.c"),
             Object(Matching, "game/m_submenu.c"),
             Object(Matching, "game/m_submenu_ovl.c"),
             Object(NonMatching, "game/m_tag_ovl.c"),
