@@ -1292,7 +1292,7 @@ config.libs = [
             Object(Matching, "game/m_remove_collect.c"),
             Object(NonMatching, "game/m_repay_ovl.c"),
             Object(Matching, "game/m_roll_lib.c"),
-            Object(NonMatching, "game/m_room_type.c"),
+            Object(Matching, "game/m_room_type.c"),
             Object(Matching, "game/m_scene.c"),
             Object(Matching, "game/m_scene_ftr.c"),
             Object(Matching, "game/m_scene_table.c"),

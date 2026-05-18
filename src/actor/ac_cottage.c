@@ -262,7 +262,7 @@ static const COTTAGE_DATA* Cottage_data_get(STRUCTURE_ACTOR* cottage) {
 }
 
 static f32 Cottage_my_light_aim(STRUCTURE_ACTOR* cottage) {
-    return mRmTp_Index2LightSwitchStatus(mRmTp_LIGHT_SWITCH_COTTAGE_MY) ? 1.0f : 0.0f;
+    // return mRmTp_Index2LightSwitchStatus(mRmTp_LIGHT_SWITCH_COTTAGE_MY) ? 1.0f : 0.0f;
 }
 
 static f32 Cottage_npc_light_aim(STRUCTURE_ACTOR* cottage) {

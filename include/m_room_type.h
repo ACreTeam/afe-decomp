@@ -136,10 +136,13 @@ enum {
     mRmTp_LIGHT_SWITCH_HOUSE2_BASEMENT,
     mRmTp_LIGHT_SWITCH_HOUSE3_MAIN_UPPER,
     mRmTp_LIGHT_SWITCH_HOUSE3_BASEMENT,
-    mRmTp_LIGHT_SWITCH_COTTAGE_MY,
-    mRmTp_LIGHT_SWITCH_9 = 12,
-    mRmTp_LIGHT_SWITCH_NPC = 13,
-    mRmTp_LIGHT_SWITCH_LIGHTHOUSE = 14,
+    mRmTp_LIGHT_SWITCH_HOUSE0_COTTAGE,
+    mRmTp_LIGHT_SWITCH_HOUSE1_COTTAGE,
+    mRmTp_LIGHT_SWITCH_HOUSE2_COTTAGE,
+    mRmTp_LIGHT_SWITCH_HOUSE3_COTTAGE,
+    mRmTp_LIGHT_SWITCH_9,
+    mRmTp_LIGHT_SWITCH_NPC,
+    mRmTp_LIGHT_SWITCH_LIGHTHOUSE,
     mRmTp_LIGHT_SWITCH_TENT,
 
     mRmTp_LIGHT_SWITCH_NUM
@@ -182,5 +185,6 @@ extern void mRmTp_SetNowSceneOriginalFloorStatus(int enabled);
 extern int mRmTp_FtrItemNo2FtrIdx(mActor_name_t ftr_item_no);
 extern mActor_name_t mRmTp_FtrIdx2FtrItemNo(int ftr_idx, int direct);
 extern int mRmTp_SoundStepWalkSE(xyz_t* wpos);
+extern int mRmTp_GetPlayerRoomIdx();
 
 #endif
