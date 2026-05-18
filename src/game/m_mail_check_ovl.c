@@ -4,1450 +4,2475 @@
 #include "m_font.h"
 #include "m_msg.h"
 
-static int mMck_strlen(u8* str, int len) {
-  u8* end_p = str + len;
-  
-  while (len != 0) {
+static int mMck_strlen2(u16* str, int len) {
+    u16* end_p = str + len;
+
+    while (len != 0) {
+        len--;
+
+        if (*end_p != CHAR_SPACE) {
+            goto end; /* Don't like this */
+        }
+
+        end_p--;
+    }
+
     len--;
 
-    if (*end_p != CHAR_SPACE) {
-      goto end; /* Don't like this */
-    }
-
-    end_p--;
-  }
-
-  len--;
-
 end:
-  return len + 1;
+    return len + 1;
 }
 
-static int mMck_cmp_sep(u8 c) {
-  switch (c) {
-    case CHAR_SPACE:
-    case CHAR_COMMA:
-    case CHAR_QUESTIONMARK:
-    case CHAR_EXCLAMATION:
-    case CHAR_PERIOD:
-    case CHAR_INTERPUNCT:
-    case CHAR_NEW_LINE:
-      return TRUE;
+static int mMck_cmp_sep(u16 c) {
+    switch (c) {
+        case CHAR_PP_032:
+        case CHAR_PP_033:
+        case CHAR_PP_044:
+        case CHAR_PP_046:
+        case CHAR_PP_063:
+        case CHAR_PP_129:
+        case CHAR_PP_132:
+        case CHAR_PP_133:
+        case CHAR_PP_194:
+        case CHAR_PP_205:
+            return TRUE;
 
-    default:
-      return FALSE;
-  }
+        default:
+            return FALSE;
+    }
 }
 
-static u8* mMck_search_sep(u8* str, u8 len) {
-  while (len-- != 0) {
+static u16* mMck_search_sep(u16* str, u8 len) {
+    while (len-- != 0) {
 
-    /* Only accept the separator if the next character is also not a separator */
-    if (mMck_cmp_sep(str[0]) == TRUE && mMck_cmp_sep(str[1]) == FALSE) {
-      break;
+        /* Only accept the separator if the next character is also not a separator */
+        if (mMck_cmp_sep(str[0]) == TRUE && mMck_cmp_sep(str[1]) == FALSE) {
+            break;
+        }
+
+        str++;
     }
 
-    str++;
-  }
-
-  return str;
+    return str;
 }
 
 static u8* mMck_next_key(u8* str) {
-  return str + 2;
+    return str + 2;
 }
 
 typedef struct string_table_s {
-  u8 trigger_lower;
-  u8 trigger_upper;
-
-  u8* str_table;
+    u8 trigger;
+    u8* str_table;
 } mMck_cmp_str_table_c;
 
-static u8 str_a_table[] = {
-  CHAR_b, CHAR_l,
-  CHAR_b, CHAR_o,
-  CHAR_b, CHAR_r,
-  CHAR_b, CHAR_s,
-  CHAR_c, CHAR_c,
-  CHAR_c, CHAR_h,
-  CHAR_c, CHAR_r,
-  CHAR_c, CHAR_t,
-  CHAR_d, CHAR_d,
-  CHAR_d, CHAR_m,
-  CHAR_d, CHAR_v,
-  CHAR_e, CHAR_r,
-  CHAR_f, CHAR_f,
-  CHAR_f, CHAR_r,
-  CHAR_f, CHAR_t,
-  CHAR_g, CHAR_a,
-  CHAR_g, CHAR_e,
-  CHAR_g, CHAR_o,
-  CHAR_h, CHAR_e,
-  CHAR_i, CHAR_r,
-  CHAR_l, CHAR_i,
-  CHAR_l, CHAR_l,
-  CHAR_l, CHAR_m,
-  CHAR_l, CHAR_o,
-  CHAR_l, CHAR_r,
-  CHAR_l, CHAR_s,
-  CHAR_l, CHAR_t,
-  CHAR_l, CHAR_w,
-  CHAR_m, CHAR_SPACE,
-  CHAR_m, CHAR_e,
-  CHAR_m, CHAR_o,
-  CHAR_n, CHAR_d,
-  CHAR_n, CHAR_g,
-  CHAR_n, CHAR_i,
-  CHAR_n, CHAR_o,
-  CHAR_n, CHAR_s,
-  CHAR_n, CHAR_y,
-  CHAR_p, CHAR_a,
-  CHAR_p, CHAR_p,
-  CHAR_p, CHAR_r,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_g,
-  CHAR_r, CHAR_m,
-  CHAR_r, CHAR_r,
-  CHAR_r, CHAR_t,
-  CHAR_s, CHAR_i,
-  CHAR_s, CHAR_k,
-  CHAR_s, CHAR_l,
-  CHAR_t, CHAR_e,
-  CHAR_t, CHAR_m,
-  CHAR_t, CHAR_t,
-  CHAR_u, CHAR_d,
-  CHAR_u, CHAR_g,
-  CHAR_u, CHAR_t,
-  CHAR_v, CHAR_e,
-  CHAR_v, CHAR_o,
-  CHAR_w, CHAR_a,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+// clang-format off
+static u8 str_aa_table[122] = {
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_021,
+    CHAR_PP_001, CHAR_PP_030,
+    CHAR_PP_004, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_011,
+    CHAR_PP_005, CHAR_PP_012,
+    CHAR_PP_005, CHAR_PP_125,
+    CHAR_PP_006, CHAR_PP_015,
+    CHAR_PP_007, CHAR_PP_030,
+    CHAR_PP_234, CHAR_PP_015,
+    CHAR_PP_234, CHAR_PP_125,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_015,
+    CHAR_PP_238, CHAR_PP_005,
+    CHAR_PP_013, CHAR_PP_125,
+    CHAR_PP_014, CHAR_PP_247,
+    CHAR_PP_014, CHAR_PP_248,
+    CHAR_PP_015, CHAR_PP_015,
+    CHAR_PP_241, CHAR_PP_020,
+    CHAR_PP_015, CHAR_PP_030,
+    CHAR_PP_015, CHAR_PP_123,
+    CHAR_PP_015, CHAR_PP_124,
+    CHAR_PP_017, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_251,
+    CHAR_PP_020, CHAR_PP_015,
+    CHAR_PP_248, CHAR_PP_123,
+    CHAR_PP_030, CHAR_PP_001,
+    CHAR_PP_030, CHAR_PP_024,
+    CHAR_PP_031, CHAR_PP_241,
+    CHAR_PP_031, CHAR_PP_091,
+    CHAR_PP_093, CHAR_PP_017,
+    CHAR_PP_093, CHAR_PP_030,
+    CHAR_PP_093, CHAR_PP_036,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_002,
+    CHAR_PP_123, CHAR_PP_011,
+    CHAR_PP_123, CHAR_PP_012,
+    CHAR_PP_123, CHAR_PP_015,
+    CHAR_PP_123, CHAR_PP_030,
+    CHAR_PP_123, CHAR_PP_126,
+    CHAR_PP_123, CHAR_PP_193,
+    CHAR_PP_124, CHAR_PP_231,
+    CHAR_PP_193, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_246,
+    CHAR_PP_010, CHAR_PP_005,
+    CHAR_PP_126, CHAR_PP_231,
+    CHAR_PP_036, CHAR_PP_241,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_b_table[] = {
-  CHAR_a, CHAR_b,
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_g,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_e, CHAR_SPACE,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_c,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_f,
-  CHAR_e, CHAR_g,
-  CHAR_e, CHAR_h,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_e, CHAR_y,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_k,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_t,
-  CHAR_l, CHAR_a,
-  CHAR_l, CHAR_e,
-  CHAR_l, CHAR_o,
-  CHAR_l, CHAR_u,
-  CHAR_o, CHAR_a,
-  CHAR_o, CHAR_d,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_x,
-  CHAR_o, CHAR_y,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_u, CHAR_i,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_s,
-  CHAR_u, CHAR_t,
-  CHAR_u, CHAR_y,
-  CHAR_y, CHAR_SPACE,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ii_table[128] = {
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_024,
+    CHAR_PP_003, CHAR_PP_024,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_006, CHAR_PP_015,
+    CHAR_PP_006, CHAR_PP_030,
+    CHAR_PP_008, CHAR_PP_030,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_195,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_237, CHAR_PP_203,
+    CHAR_PP_238, CHAR_PP_091,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_014, CHAR_PP_231,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_241,
+    CHAR_PP_015, CHAR_PP_036,
+    CHAR_PP_016, CHAR_PP_001,
+    CHAR_PP_016, CHAR_PP_231,
+    CHAR_PP_016, CHAR_PP_235,
+    CHAR_PP_016, CHAR_PP_237,
+    CHAR_PP_016, CHAR_PP_241,
+    CHAR_PP_016, CHAR_PP_245,
+    CHAR_PP_016, CHAR_PP_021,
+    CHAR_PP_016, CHAR_PP_023,
+    CHAR_PP_016, CHAR_PP_246,
+    CHAR_PP_016, CHAR_PP_248,
+    CHAR_PP_016, CHAR_PP_030,
+    CHAR_PP_016, CHAR_PP_091,
+    CHAR_PP_016, CHAR_PP_093,
+    CHAR_PP_016, CHAR_PP_203,
+    CHAR_PP_016, CHAR_PP_124,
+    CHAR_PP_016, CHAR_PP_126,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_010,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_013,
+    CHAR_PP_204, CHAR_PP_014,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_204, CHAR_PP_016,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_017, CHAR_PP_091,
+    CHAR_PP_204, CHAR_PP_251,
+    CHAR_PP_204, CHAR_PP_255,
+    CHAR_PP_245, CHAR_PP_002,
+    CHAR_PP_024, CHAR_PP_016,
+    CHAR_PP_024, CHAR_PP_124,
+    CHAR_PP_024, CHAR_PP_125,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_093, CHAR_PP_007,
+    CHAR_PP_093, CHAR_PP_244,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_193, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_192, CHAR_PP_195,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_c_table[] = {
-  CHAR_a, CHAR_k,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_p,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_u,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_r,
-  CHAR_h, CHAR_a,
-  CHAR_h, CHAR_e,
-  CHAR_h, CHAR_i,
-  CHAR_h, CHAR_o,
-  CHAR_h, CHAR_i,
-  CHAR_h, CHAR_u,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_t,
-  CHAR_l, CHAR_a,
-  CHAR_l, CHAR_e,
-  CHAR_l, CHAR_i,
-  CHAR_l, CHAR_o,
-  CHAR_o, CHAR_a,
-  CHAR_o, CHAR_f,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_p,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_v,
-  CHAR_o, CHAR_w,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_r, CHAR_y,
-  CHAR_u, CHAR_p,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_s,
-  CHAR_u, CHAR_t,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_uu_table[112] = {
+    CHAR_PP_001, CHAR_PP_195,
+    CHAR_PP_003, CHAR_PP_006,
+    CHAR_PP_003, CHAR_PP_009,
+    CHAR_PP_003, CHAR_PP_012,
+    CHAR_PP_003, CHAR_PP_125,
+    CHAR_PP_004, CHAR_PP_235,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_231,
+    CHAR_PP_006, CHAR_PP_096,
+    CHAR_PP_233, CHAR_PP_001,
+    CHAR_PP_008, CHAR_PP_001,
+    CHAR_PP_008, CHAR_PP_004,
+    CHAR_PP_008, CHAR_PP_017,
+    CHAR_PP_008, CHAR_PP_019,
+    CHAR_PP_008, CHAR_PP_125,
+    CHAR_PP_008, CHAR_PP_193,
+    CHAR_PP_235, CHAR_PP_007,
+    CHAR_PP_010, CHAR_PP_232,
+    CHAR_PP_010, CHAR_PP_195,
+    CHAR_PP_011, CHAR_PP_020,
+    CHAR_PP_011, CHAR_PP_192,
+    CHAR_PP_012, CHAR_PP_001,
+    CHAR_PP_012, CHAR_PP_024,
+    CHAR_PP_014, CHAR_PP_096,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_002,
+    CHAR_PP_015, CHAR_PP_005,
+    CHAR_PP_016, CHAR_PP_000,
+    CHAR_PP_016, CHAR_PP_001,
+    CHAR_PP_016, CHAR_PP_006,
+    CHAR_PP_016, CHAR_PP_008,
+    CHAR_PP_016, CHAR_PP_009,
+    CHAR_PP_016, CHAR_PP_031,
+    CHAR_PP_016, CHAR_PP_202,
+    CHAR_PP_016, CHAR_PP_193,
+    CHAR_PP_017, CHAR_PP_007,
+    CHAR_PP_017, CHAR_PP_012,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_017, CHAR_PP_125,
+    CHAR_PP_017, CHAR_PP_192,
+    CHAR_PP_244, CHAR_PP_030,
+    CHAR_PP_020, CHAR_PP_232,
+    CHAR_PP_020, CHAR_PP_125,
+    CHAR_PP_031, CHAR_PP_249,
+    CHAR_PP_036, CHAR_PP_007,
+    CHAR_PP_036, CHAR_PP_250,
+    CHAR_PP_123, CHAR_PP_235,
+    CHAR_PP_123, CHAR_PP_020,
+    CHAR_PP_123, CHAR_PP_035,
+    CHAR_PP_123, CHAR_PP_093,
+    CHAR_PP_124, CHAR_PP_009,
+    CHAR_PP_124, CHAR_PP_019,
+    CHAR_PP_126, CHAR_PP_011,
+    CHAR_PP_193, CHAR_PP_238,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_d_table[] = {
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_u,
-  CHAR_a, CHAR_y,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_c,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_f,
-  CHAR_e, CHAR_g,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_m,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_p,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_e, CHAR_v,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_f,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_v,
-  CHAR_o, CHAR_SPACE,
-  CHAR_o, CHAR_c,
-  CHAR_o, CHAR_e,
-  CHAR_o, CHAR_g,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_w,
-  CHAR_o, CHAR_z,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_r, CHAR_u,
-  CHAR_r, CHAR_y,
-  CHAR_u, CHAR_e,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_s,
-  CHAR_u, CHAR_t,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ee_table[102] = {
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_231,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_240,
+    CHAR_PP_001, CHAR_PP_241,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_094,
+    CHAR_PP_001, CHAR_PP_096,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_006, CHAR_PP_012,
+    CHAR_PP_006, CHAR_PP_244,
+    CHAR_PP_007, CHAR_PP_012,
+    CHAR_PP_007, CHAR_PP_250,
+    CHAR_PP_012, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_013,
+    CHAR_PP_023, CHAR_PP_125,
+    CHAR_PP_247, CHAR_PP_012,
+    CHAR_PP_029, CHAR_PP_195,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_126, CHAR_PP_007,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_232,
+    CHAR_PP_195, CHAR_PP_234,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_012,
+    CHAR_PP_195, CHAR_PP_238,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_024,
+    CHAR_PP_195, CHAR_PP_246,
+    CHAR_PP_195, CHAR_PP_247,
+    CHAR_PP_195, CHAR_PP_248,
+    CHAR_PP_195, CHAR_PP_030,
+    CHAR_PP_195, CHAR_PP_094,
+    CHAR_PP_195, CHAR_PP_096,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_e_table[] = {
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_d, CHAR_u,
-  CHAR_f, CHAR_f,
-  CHAR_g, CHAR_g,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_t,
-  CHAR_l, CHAR_e,
-  CHAR_l, CHAR_s,
-  CHAR_m, CHAR_p,
-  CHAR_n, CHAR_d,
-  CHAR_n, CHAR_e,
-  CHAR_n, CHAR_g,
-  CHAR_n, CHAR_j,
-  CHAR_n, CHAR_o,
-  CHAR_n, CHAR_t,
-  CHAR_q, CHAR_u,
-  CHAR_r, CHAR_r,
-  CHAR_s, CHAR_p,
-  CHAR_u, CHAR_r,
-  CHAR_v, CHAR_e,
-  CHAR_x, CHAR_a,
-  CHAR_x, CHAR_c,
-  CHAR_x, CHAR_e,
-  CHAR_x, CHAR_p,
-  CHAR_y, CHAR_e,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_oo_table[132] = {
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_232,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_019,
+    CHAR_PP_004, CHAR_PP_000,
+    CHAR_PP_004, CHAR_PP_001,
+    CHAR_PP_004, CHAR_PP_006,
+    CHAR_PP_004, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_011,
+    CHAR_PP_005, CHAR_PP_012,
+    CHAR_PP_007, CHAR_PP_018,
+    CHAR_PP_007, CHAR_PP_124,
+    CHAR_PP_007, CHAR_PP_126,
+    CHAR_PP_234, CHAR_PP_195,
+    CHAR_PP_009, CHAR_PP_012,
+    CHAR_PP_009, CHAR_PP_125,
+    CHAR_PP_010, CHAR_PP_036,
+    CHAR_PP_011, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_003,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_237, CHAR_PP_203,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_019, CHAR_PP_009,
+    CHAR_PP_019, CHAR_PP_011,
+    CHAR_PP_019, CHAR_PP_020,
+    CHAR_PP_019, CHAR_PP_091,
+    CHAR_PP_245, CHAR_PP_125,
+    CHAR_PP_020, CHAR_PP_237,
+    CHAR_PP_021, CHAR_PP_001,
+    CHAR_PP_023, CHAR_PP_003,
+    CHAR_PP_023, CHAR_PP_231,
+    CHAR_PP_025, CHAR_PP_020,
+    CHAR_PP_028, CHAR_PP_195,
+    CHAR_PP_250, CHAR_PP_003,
+    CHAR_PP_030, CHAR_PP_003,
+    CHAR_PP_030, CHAR_PP_016,
+    CHAR_PP_036, CHAR_PP_244,
+    CHAR_PP_091, CHAR_PP_001,
+    CHAR_PP_091, CHAR_PP_002,
+    CHAR_PP_091, CHAR_PP_011,
+    CHAR_PP_091, CHAR_PP_204,
+    CHAR_PP_091, CHAR_PP_018,
+    CHAR_PP_126, CHAR_PP_001,
+    CHAR_PP_192, CHAR_PP_011,
+    CHAR_PP_193, CHAR_PP_124,
+    CHAR_PP_193, CHAR_PP_125,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_020,
+    CHAR_PP_195, CHAR_PP_193,
+    CHAR_PP_028, CHAR_PP_093,
+    CHAR_PP_005, CHAR_PP_023,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_f_table[] = {
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_b,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_w,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_f,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_v,
-  CHAR_i, CHAR_x,
-  CHAR_l, CHAR_a,
-  CHAR_l, CHAR_e,
-  CHAR_l, CHAR_i,
-  CHAR_l, CHAR_o,
-  CHAR_l, CHAR_y,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_u,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_r, CHAR_u,
-  CHAR_u, CHAR_l,
-  CHAR_u, CHAR_n,
-  CHAR_u, CHAR_t,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ka_table[142] = {
+    CHAR_PP_001, CHAR_PP_001,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_231,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_232,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_235,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_015,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_245,
+    CHAR_PP_001, CHAR_PP_036,
+    CHAR_PP_003, CHAR_PP_011,
+    CHAR_PP_003, CHAR_PP_125,
+    CHAR_PP_231, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_124,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_012,
+    CHAR_PP_233, CHAR_PP_024,
+    CHAR_PP_233, CHAR_PP_194,
+    CHAR_PP_008, CHAR_PP_125,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_236, CHAR_PP_001,
+    CHAR_PP_236, CHAR_PP_124,
+    CHAR_PP_236, CHAR_PP_125,
+    CHAR_PP_011, CHAR_PP_009,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_012, CHAR_PP_125,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_013, CHAR_PP_017,
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_240, CHAR_PP_007,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_020, CHAR_PP_123,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_123, CHAR_PP_018,
+    CHAR_PP_124, CHAR_PP_015,
+    CHAR_PP_126, CHAR_PP_125,
+    CHAR_PP_193, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_012,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_195, CHAR_PP_253,
+    CHAR_PP_195, CHAR_PP_254,
+    CHAR_PP_195, CHAR_PP_094,
+    CHAR_PP_195, CHAR_PP_096,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_195, CHAR_PP_126,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_g_table[] = {
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_v,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_r,
-  CHAR_e, CHAR_t,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_v,
-  CHAR_l, CHAR_a,
-  CHAR_o, CHAR_SPACE,
-  CHAR_o, CHAR_d,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_v,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_o,
-  CHAR_u, CHAR_a,
-  CHAR_u, CHAR_e,
-  CHAR_u, CHAR_i,
-  CHAR_u, CHAR_n,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ga_table[6] = {
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_h_table[] = {
-  CHAR_a, CHAR_b,
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_p,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_v,
-  CHAR_e, CHAR_SPACE,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_i,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_r,
-  CHAR_i, CHAR_SPACE,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_m,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_t,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_p,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_w,
-  CHAR_u, CHAR_m,
-  CHAR_u, CHAR_n,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_s,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ki_table[106] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_000, CHAR_PP_017,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_004, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_013,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_006, CHAR_PP_015,
+    CHAR_PP_006, CHAR_PP_203,
+    CHAR_PP_008, CHAR_PP_195,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_235, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_030,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_013, CHAR_PP_006,
+    CHAR_PP_013, CHAR_PP_017,
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_014, CHAR_PP_007,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_020,
+    CHAR_PP_017, CHAR_PP_023,
+    CHAR_PP_018, CHAR_PP_007,
+    CHAR_PP_019, CHAR_PP_007,
+    CHAR_PP_021, CHAR_PP_001,
+    CHAR_PP_023, CHAR_PP_195,
+    CHAR_PP_024, CHAR_PP_002,
+    CHAR_PP_247, CHAR_PP_011,
+    CHAR_PP_026, CHAR_PP_195,
+    CHAR_PP_248, CHAR_PP_195,
+    CHAR_PP_030, CHAR_PP_124,
+    CHAR_PP_031, CHAR_PP_032,
+    CHAR_PP_031, CHAR_PP_132,
+    CHAR_PP_031, CHAR_PP_005,
+    CHAR_PP_031, CHAR_PP_231,
+    CHAR_PP_201, CHAR_PP_204,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_007,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_124, CHAR_PP_030,
+    CHAR_PP_126, CHAR_PP_001,
+    CHAR_PP_193, CHAR_PP_036,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_i_table[] = {
-  CHAR_SPACE, CHAR_SPACE,
-  CHAR_c, CHAR_e,
-  CHAR_d, CHAR_e,
-  CHAR_f, CHAR_SPACE,
-  CHAR_m, CHAR_a,
-  CHAR_m, CHAR_m,
-  CHAR_m, CHAR_p,
-  CHAR_n, CHAR_SPACE,
-  CHAR_n, CHAR_c,
-  CHAR_n, CHAR_d,
-  CHAR_n, CHAR_f,
-  CHAR_n, CHAR_s,
-  CHAR_n, CHAR_t,
-  CHAR_n, CHAR_v,
-  CHAR_r, CHAR_o,
-  CHAR_s, CHAR_SPACE,
-  CHAR_s, CHAR_l,
-  CHAR_t, CHAR_SPACE,
-  CHAR_t, CHAR_s,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_gi_table[8] = {
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_091, CHAR_PP_195,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_j_table[] = {
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_p,
-  CHAR_o, CHAR_b,
-  CHAR_o, CHAR_i,
-  CHAR_u, CHAR_d,
-  CHAR_u, CHAR_l,
-  CHAR_u, CHAR_m,
-  CHAR_u, CHAR_n,
-  CHAR_u, CHAR_s,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ku_table[66] = {
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_017,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_246,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_010, CHAR_PP_006,
+    CHAR_PP_010, CHAR_PP_246,
+    CHAR_PP_237, CHAR_PP_203,
+    CHAR_PP_237, CHAR_PP_123,
+    CHAR_PP_241, CHAR_PP_010,
+    CHAR_PP_241, CHAR_PP_091,
+    CHAR_PP_241, CHAR_PP_123,
+    CHAR_PP_016, CHAR_PP_002,
+    CHAR_PP_016, CHAR_PP_233,
+    CHAR_PP_016, CHAR_PP_247,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_019, CHAR_PP_002,
+    CHAR_PP_247, CHAR_PP_005,
+    CHAR_PP_247, CHAR_PP_204,
+    CHAR_PP_027, CHAR_PP_002,
+    CHAR_PP_031, CHAR_PP_000,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_249,
+    CHAR_PP_124, CHAR_PP_005,
+    CHAR_PP_125, CHAR_PP_030,
+    CHAR_PP_126, CHAR_PP_015,
+    CHAR_PP_126, CHAR_PP_125,
+    CHAR_PP_192, CHAR_PP_002,
+    CHAR_PP_192, CHAR_PP_030,
+    CHAR_PP_193, CHAR_PP_003,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_k_table[] = {
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_p,
-  CHAR_e, CHAR_y,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_t,
-  CHAR_n, CHAR_e,
-  CHAR_n, CHAR_i,
-  CHAR_n, CHAR_o,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_gu_table[8] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_l_table[] = {
-  CHAR_a, CHAR_b,
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_k,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_u,
-  CHAR_a, CHAR_w,
-  CHAR_a, CHAR_y,
-  CHAR_a, CHAR_z,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_f,
-  CHAR_e, CHAR_g,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_e, CHAR_v,
-  CHAR_i, CHAR_b,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_f,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_k,
-  CHAR_i, CHAR_m,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_t,
-  CHAR_i, CHAR_v,
-  CHAR_o, CHAR_c,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_v,
-  CHAR_o, CHAR_w,
-  CHAR_u, CHAR_n,
-  CHAR_y, CHAR_i,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ke_table[66] = {
+    CHAR_PP_001, CHAR_PP_001,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_015,
+    CHAR_PP_001, CHAR_PP_019,
+    CHAR_PP_001, CHAR_PP_096,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_017, CHAR_PP_003,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_000,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_003,
+    CHAR_PP_195, CHAR_PP_004,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_248,
+    CHAR_PP_195, CHAR_PP_255,
+    CHAR_PP_195, CHAR_PP_036,
+    CHAR_PP_195, CHAR_PP_091,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_m_table[] = {
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_g,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_j,
-  CHAR_a, CHAR_k,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_p,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_y,
-  CHAR_e, CHAR_SPACE,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_m,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_s,
-  CHAR_o, CHAR_d,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_v,
-  CHAR_u, CHAR_c,
-  CHAR_u, CHAR_m,
-  CHAR_u, CHAR_s,
-  CHAR_y, CHAR_SPACE,
-  CHAR_y, CHAR_s,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ge_table[16] = {
+    CHAR_PP_006, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_246,
+    CHAR_PP_195, CHAR_PP_030,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_195, CHAR_PP_192,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_n_table[] = {
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_t,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_c,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_i,
-  CHAR_e, CHAR_v,
-  CHAR_e, CHAR_w,
-  CHAR_e, CHAR_x,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_n,
-  CHAR_o, CHAR_SPACE,
-  CHAR_o, CHAR_b,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_v,
-  CHAR_o, CHAR_w,
-  CHAR_u, CHAR_m,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ko_table[112] = {
+    CHAR_PP_001, CHAR_PP_247,
+    CHAR_PP_002, CHAR_PP_000,
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_004,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_234,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_010,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_002, CHAR_PP_238,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_014,
+    CHAR_PP_002, CHAR_PP_240,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_018,
+    CHAR_PP_002, CHAR_PP_019,
+    CHAR_PP_002, CHAR_PP_245,
+    CHAR_PP_002, CHAR_PP_025,
+    CHAR_PP_002, CHAR_PP_026,
+    CHAR_PP_002, CHAR_PP_027,
+    CHAR_PP_002, CHAR_PP_029,
+    CHAR_PP_002, CHAR_PP_031,
+    CHAR_PP_002, CHAR_PP_091,
+    CHAR_PP_002, CHAR_PP_093,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_007, CHAR_PP_010,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_009, CHAR_PP_192,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_015, CHAR_PP_003,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_014,
+    CHAR_PP_019, CHAR_PP_011,
+    CHAR_PP_019, CHAR_PP_246,
+    CHAR_PP_245, CHAR_PP_091,
+    CHAR_PP_019, CHAR_PP_193,
+    CHAR_PP_024, CHAR_PP_235,
+    CHAR_PP_024, CHAR_PP_035,
+    CHAR_PP_126, CHAR_PP_005,
+    CHAR_PP_126, CHAR_PP_025,
+    CHAR_PP_193, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_020,
+    CHAR_PP_195, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_246,
+    CHAR_PP_195, CHAR_PP_093,
+    CHAR_PP_195, CHAR_PP_193,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_o_table[] = {
-  CHAR_b, CHAR_j,
-  CHAR_APOSTROPHE, CHAR_c,
-  CHAR_c, CHAR_t,
-  CHAR_f, CHAR_SPACE,
-  CHAR_f, CHAR_f,
-  CHAR_f, CHAR_t,
-  CHAR_h, CHAR_SPACE,
-  CHAR_i, CHAR_l,
-  CHAR_k, CHAR_a,
-  CHAR_l, CHAR_d,
-  CHAR_n, CHAR_SPACE,
-  CHAR_n, CHAR_c,
-  CHAR_n, CHAR_e,
-  CHAR_n, CHAR_l,
-  CHAR_p, CHAR_e,
-  CHAR_p, CHAR_i,
-  CHAR_p, CHAR_p,
-  CHAR_r, CHAR_SPACE,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_d,
-  CHAR_t, CHAR_h,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_t,
-  CHAR_v, CHAR_e,
-  CHAR_w, CHAR_n,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_go_table[10] = {
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_025, CHAR_PP_195,
+    CHAR_PP_248, CHAR_PP_010,
+    CHAR_PP_036, CHAR_PP_195,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_p_table[] = {
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_g,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_p,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_y,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_o,
-  CHAR_e, CHAR_r,
-  CHAR_h, CHAR_o,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_p,
-  CHAR_l, CHAR_a,
-  CHAR_l, CHAR_e,
-  CHAR_o, CHAR_c,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_p,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_w,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_u, CHAR_b,
-  CHAR_u, CHAR_l,
-  CHAR_u, CHAR_p,
-  CHAR_u, CHAR_r,
-  CHAR_u, CHAR_s,
-  CHAR_u, CHAR_t,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_sa_table[98] = {
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_001, CHAR_PP_000,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_007,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_241,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_020,
+    CHAR_PP_005, CHAR_PP_020,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_013,
+    CHAR_PP_007, CHAR_PP_123,
+    CHAR_PP_010, CHAR_PP_093,
+    CHAR_PP_011, CHAR_PP_231,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_241, CHAR_PP_036,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_014,
+    CHAR_PP_247, CHAR_PP_011,
+    CHAR_PP_031, CHAR_PP_011,
+    CHAR_PP_035, CHAR_PP_001,
+    CHAR_PP_035, CHAR_PP_007,
+    CHAR_PP_035, CHAR_PP_008,
+    CHAR_PP_036, CHAR_PP_125,
+    CHAR_PP_091, CHAR_PP_020,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_232,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_012,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_195, CHAR_PP_255,
+    CHAR_PP_195, CHAR_PP_030,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_q_table[] = {
-  CHAR_u, CHAR_a,
-  CHAR_u, CHAR_e,
-  CHAR_u, CHAR_i,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_za_table[8] = {
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_195, CHAR_PP_232,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_r_table[] = {
-  CHAR_a, CHAR_c,
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_p,
-  CHAR_a, CHAR_t,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_c,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_f,
-  CHAR_e, CHAR_g,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_m,
-  CHAR_e, CHAR_p,
-  CHAR_e, CHAR_q,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_v,
-  CHAR_o, CHAR_a,
-  CHAR_o, CHAR_c,
-  CHAR_o, CHAR_d,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_s,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_w,
-  CHAR_u, CHAR_l,
-  CHAR_u, CHAR_n,
-  CHAR_u, CHAR_s,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_si_table[100] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_000, CHAR_PP_193,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_007,
+    CHAR_PP_006, CHAR_PP_202,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_235, CHAR_PP_019,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_238, CHAR_PP_005,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_239, CHAR_PP_195,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_014,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_018, CHAR_PP_001,
+    CHAR_PP_018, CHAR_PP_006,
+    CHAR_PP_248, CHAR_PP_001,
+    CHAR_PP_036, CHAR_PP_125,
+    CHAR_PP_201, CHAR_PP_005,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_201, CHAR_PP_009,
+    CHAR_PP_201, CHAR_PP_011,
+    CHAR_PP_201, CHAR_PP_013,
+    CHAR_PP_201, CHAR_PP_018,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_202, CHAR_PP_007,
+    CHAR_PP_202, CHAR_PP_008,
+    CHAR_PP_202, CHAR_PP_011,
+    CHAR_PP_202, CHAR_PP_017,
+    CHAR_PP_202, CHAR_PP_204,
+    CHAR_PP_202, CHAR_PP_031,
+    CHAR_PP_202, CHAR_PP_124,
+    CHAR_PP_202, CHAR_PP_195,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_007,
+    CHAR_PP_203, CHAR_PP_011,
+    CHAR_PP_125, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_s_table[] = {
-  CHAR_a, CHAR_d,
-  CHAR_a, CHAR_f,
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_m,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_v,
-  CHAR_a, CHAR_w,
-  CHAR_a, CHAR_y,
-  CHAR_c, CHAR_e,
-  CHAR_c, CHAR_h,
-  CHAR_c, CHAR_i,
-  CHAR_c, CHAR_o,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_c,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_p,
-  CHAR_e, CHAR_r,
-  CHAR_e, CHAR_t,
-  CHAR_e, CHAR_v,
-  CHAR_e, CHAR_x,
-  CHAR_h, CHAR_a,
-  CHAR_h, CHAR_e,
-  CHAR_h, CHAR_i,
-  CHAR_h, CHAR_o,
-  CHAR_h, CHAR_u,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_g,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_m,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_t,
-  CHAR_i, CHAR_x,
-  CHAR_i, CHAR_z,
-  CHAR_k, CHAR_i,
-  CHAR_k, CHAR_y,
-  CHAR_l, CHAR_e,
-  CHAR_l, CHAR_i,
-  CHAR_l, CHAR_o,
-  CHAR_m, CHAR_a,
-  CHAR_m, CHAR_e,
-  CHAR_m, CHAR_i,
-  CHAR_m, CHAR_o,
-  CHAR_n, CHAR_o,
-  CHAR_o, CHAR_SPACE,
-  CHAR_o, CHAR_a,
-  CHAR_o, CHAR_c,
-  CHAR_o, CHAR_f,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_u,
-  CHAR_p, CHAR_a,
-  CHAR_p, CHAR_e,
-  CHAR_p, CHAR_i,
-  CHAR_p, CHAR_o,
-  CHAR_p, CHAR_r,
-  CHAR_q, CHAR_u,
-  CHAR_t, CHAR_a,
-  CHAR_t, CHAR_e,
-  CHAR_t, CHAR_i,
-  CHAR_t, CHAR_o,
-  CHAR_t, CHAR_r,
-  CHAR_t, CHAR_u,
-  CHAR_t, CHAR_y,
-  CHAR_u, CHAR_b,
-  CHAR_u, CHAR_c,
-  CHAR_u, CHAR_d,
-  CHAR_u, CHAR_f,
-  CHAR_u, CHAR_g,
-  CHAR_u, CHAR_m,
-  CHAR_u, CHAR_n,
-  CHAR_u, CHAR_p,
-  CHAR_u, CHAR_r,
-  CHAR_w, CHAR_a,
-  CHAR_w, CHAR_e,
-  CHAR_w, CHAR_i,
-  CHAR_w, CHAR_u,
-  CHAR_y, CHAR_s,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_zi_table[26] = {
+    CHAR_PP_237, CHAR_PP_017,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_018, CHAR_PP_195,
+    CHAR_PP_245, CHAR_PP_002,
+    CHAR_PP_248, CHAR_PP_195,
+    CHAR_PP_030, CHAR_PP_195,
+    CHAR_PP_201, CHAR_PP_000,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_201, CHAR_PP_204,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_202, CHAR_PP_195,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_t_table[] = {
-  CHAR_a, CHAR_b,
-  CHAR_a, CHAR_k,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_u,
-  CHAR_a, CHAR_x,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_m,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_r,
-  CHAR_e, CHAR_s,
-  CHAR_h, CHAR_a,
-  CHAR_h, CHAR_e,
-  CHAR_h, CHAR_i,
-  CHAR_h, CHAR_o,
-  CHAR_h, CHAR_r,
-  CHAR_h, CHAR_u,
-  CHAR_i, CHAR_c,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_m,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_t,
-  CHAR_o, CHAR_SPACE,
-  CHAR_o, CHAR_d,
-  CHAR_o, CHAR_g,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_p,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_t,
-  CHAR_o, CHAR_u,
-  CHAR_o, CHAR_w,
-  CHAR_r, CHAR_a,
-  CHAR_r, CHAR_e,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-  CHAR_r, CHAR_u,
-  CHAR_r, CHAR_y,
-  CHAR_u, CHAR_e,
-  CHAR_u, CHAR_r,
-  CHAR_v, CHAR_SPACE,
-  CHAR_w, CHAR_e,
-  CHAR_w, CHAR_i,
-  CHAR_w, CHAR_o,
-  CHAR_y, CHAR_i,
-  CHAR_y, CHAR_p,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_su_table[58] = {
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_015,
+    CHAR_PP_001, CHAR_PP_030,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_001, CHAR_PP_126,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_231, CHAR_PP_015,
+    CHAR_PP_006, CHAR_PP_244,
+    CHAR_PP_006, CHAR_PP_020,
+    CHAR_PP_006, CHAR_PP_021,
+    CHAR_PP_006, CHAR_PP_093,
+    CHAR_PP_007, CHAR_PP_020,
+    CHAR_PP_008, CHAR_PP_249,
+    CHAR_PP_235, CHAR_PP_001,
+    CHAR_PP_235, CHAR_PP_007,
+    CHAR_PP_009, CHAR_PP_011,
+    CHAR_PP_012, CHAR_PP_036,
+    CHAR_PP_018, CHAR_PP_006,
+    CHAR_PP_020, CHAR_PP_025,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_244,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_u_table[] = {
-  CHAR_n, CHAR_a,
-  CHAR_n, CHAR_c,
-  CHAR_n, CHAR_d,
-  CHAR_n, CHAR_i,
-  CHAR_n, CHAR_l,
-  CHAR_n, CHAR_t,
-  CHAR_p, CHAR_SPACE,
-  CHAR_p, CHAR_o,
-  CHAR_s, CHAR_SPACE,
-  CHAR_s, CHAR_e,
-  CHAR_s, CHAR_u,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_se_table[92] = {
+    CHAR_PP_001, CHAR_PP_001,
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_232,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_019,
+    CHAR_PP_001, CHAR_PP_027,
+    CHAR_PP_001, CHAR_PP_036,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_001, CHAR_PP_126,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_012,
+    CHAR_PP_204, CHAR_PP_013,
+    CHAR_PP_204, CHAR_PP_016,
+    CHAR_PP_036, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_236,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_195, CHAR_PP_036,
+    CHAR_PP_195, CHAR_PP_096,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_195, CHAR_PP_126,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_v_table[] = {
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_r,
-  CHAR_e, CHAR_g,
-  CHAR_e, CHAR_r,
-  CHAR_i, CHAR_e,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_s,
-  CHAR_o, CHAR_i,
-  CHAR_o, CHAR_l,
-  CHAR_o, CHAR_t,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ze_table[16] = {
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_017, CHAR_PP_031,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_248,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_w_table[] = {
-  CHAR_a, CHAR_i,
-  CHAR_a, CHAR_k,
-  CHAR_a, CHAR_l,
-  CHAR_a, CHAR_n,
-  CHAR_a, CHAR_r,
-  CHAR_a, CHAR_s,
-  CHAR_a, CHAR_t,
-  CHAR_a, CHAR_v,
-  CHAR_a, CHAR_y,
-  CHAR_e, CHAR_SPACE,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_d,
-  CHAR_e, CHAR_e,
-  CHAR_e, CHAR_i,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_r,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_h, CHAR_a,
-  CHAR_h, CHAR_e,
-  CHAR_h, CHAR_i,
-  CHAR_h, CHAR_o,
-  CHAR_h, CHAR_y,
-  CHAR_i, CHAR_d,
-  CHAR_i, CHAR_f,
-  CHAR_i, CHAR_l,
-  CHAR_i, CHAR_n,
-  CHAR_i, CHAR_r,
-  CHAR_i, CHAR_s,
-  CHAR_i, CHAR_t,
-  CHAR_i, CHAR_v,
-  CHAR_o, CHAR_k,
-  CHAR_o, CHAR_m,
-  CHAR_o, CHAR_n,
-  CHAR_o, CHAR_o,
-  CHAR_o, CHAR_r,
-  CHAR_o, CHAR_u,
-  CHAR_r, CHAR_i,
-  CHAR_r, CHAR_o,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_so_table[88] = {
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_132,
+    CHAR_PP_002, CHAR_PP_004,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_008,
+    CHAR_PP_002, CHAR_PP_234,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_235,
+    CHAR_PP_002, CHAR_PP_010,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_240,
+    CHAR_PP_002, CHAR_PP_015,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_029,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_002, CHAR_PP_192,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_237,
+    CHAR_PP_007, CHAR_PP_012,
+    CHAR_PP_007, CHAR_PP_013,
+    CHAR_PP_009, CHAR_PP_244,
+    CHAR_PP_009, CHAR_PP_021,
+    CHAR_PP_009, CHAR_PP_025,
+    CHAR_PP_009, CHAR_PP_194,
+    CHAR_PP_011, CHAR_PP_015,
+    CHAR_PP_011, CHAR_PP_017,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_019, CHAR_PP_244,
+    CHAR_PP_246, CHAR_PP_005,
+    CHAR_PP_126, CHAR_PP_231,
+    CHAR_PP_126, CHAR_PP_244,
+    CHAR_PP_126, CHAR_PP_019,
+    CHAR_PP_126, CHAR_PP_021,
+    CHAR_PP_126, CHAR_PP_194,
+    CHAR_PP_192, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_240,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_020,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_x_table[] = {
-  CHAR_m, CHAR_a,
+static u8 str_ta_table[88] = {
+    CHAR_PP_001, CHAR_PP_000,
+    CHAR_PP_001, CHAR_PP_001,
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_004,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_007,
+    CHAR_PP_001, CHAR_PP_233,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_012,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_019,
+    CHAR_PP_001, CHAR_PP_245,
+    CHAR_PP_001, CHAR_PP_028,
+    CHAR_PP_001, CHAR_PP_096,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_005,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_012, CHAR_PP_008,
+    CHAR_PP_241, CHAR_PP_132,
+    CHAR_PP_241, CHAR_PP_032,
+    CHAR_PP_015, CHAR_PP_003,
+    CHAR_PP_241, CHAR_PP_011,
+    CHAR_PP_018, CHAR_PP_125,
+    CHAR_PP_019, CHAR_PP_003,
+    CHAR_PP_020, CHAR_PP_246,
+    CHAR_PP_022, CHAR_PP_006,
+    CHAR_PP_024, CHAR_PP_011,
+    CHAR_PP_024, CHAR_PP_030,
+    CHAR_PP_248, CHAR_PP_195,
+    CHAR_PP_249, CHAR_PP_010,
+    CHAR_PP_249, CHAR_PP_021,
+    CHAR_PP_030, CHAR_PP_021,
+    CHAR_PP_030, CHAR_PP_125,
+    CHAR_PP_036, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_y_table[] = {
-  CHAR_a, CHAR_r,
-  CHAR_e, CHAR_a,
-  CHAR_e, CHAR_l,
-  CHAR_e, CHAR_n,
-  CHAR_e, CHAR_s,
-  CHAR_e, CHAR_t,
-  CHAR_o, CHAR_u,
-
-  #ifndef BUGFIXES
-  0, 0
-  #else
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_da_table[32] = {
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_235,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_241,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_012,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_126, CHAR_PP_005,
+    CHAR_PP_126, CHAR_PP_231,
+    CHAR_PP_126, CHAR_PP_091,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_239,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static u8 str_z_table[] = {
-  CHAR_e, CHAR_r,
-
-  #ifdef BUGFIXES
-  CHAR_CONTROL_CODE, 0
-  #endif
+static u8 str_ti_table[60] = {
+    CHAR_PP_000, CHAR_PP_195,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_231, CHAR_PP_002,
+    CHAR_PP_005, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_123,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_011, CHAR_PP_006,
+    CHAR_PP_237, CHAR_PP_203,
+    CHAR_PP_018, CHAR_PP_006,
+    CHAR_PP_024, CHAR_PP_002,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_036, CHAR_PP_001,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_201, CHAR_PP_195,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_144,
+    CHAR_PP_203, CHAR_PP_007,
+    CHAR_PP_203, CHAR_PP_204,
+    CHAR_PP_124, CHAR_PP_203,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_250,
+    CHAR_PP_195, CHAR_PP_031,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static mMck_cmp_str_table_c cmp_str_table_c[26] = {
-  { CHAR_a, CHAR_A, str_a_table },
-  { CHAR_b, CHAR_B, str_b_table },
-  { CHAR_c, CHAR_C, str_c_table },
-  { CHAR_d, CHAR_D, str_d_table },
-  { CHAR_e, CHAR_E, str_e_table },
-  { CHAR_f, CHAR_F, str_f_table },
-  { CHAR_g, CHAR_G, str_g_table },
-  { CHAR_h, CHAR_H, str_h_table },
-  { CHAR_i, CHAR_I, str_i_table },
-  { CHAR_j, CHAR_J, str_j_table },
-  { CHAR_k, CHAR_K, str_k_table },
-  { CHAR_l, CHAR_L, str_l_table },
-  { CHAR_m, CHAR_M, str_m_table },
-  { CHAR_n, CHAR_N, str_n_table },
-  { CHAR_o, CHAR_O, str_o_table },
-  { CHAR_p, CHAR_P, str_p_table },
-  { CHAR_q, CHAR_Q, str_q_table },
-  { CHAR_r, CHAR_R, str_r_table },
-  { CHAR_s, CHAR_S, str_s_table },
-  { CHAR_t, CHAR_T, str_t_table },
-  { CHAR_u, CHAR_U, str_u_table },
-  { CHAR_v, CHAR_V, str_v_table },
-  { CHAR_w, CHAR_W, str_w_table },
-  { CHAR_x, CHAR_X, str_x_table },
-  { CHAR_y, CHAR_Y, str_y_table },
-  { CHAR_z, CHAR_Z, str_z_table }
+static u8 str_tu_table[88] = {
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_244,
+    CHAR_PP_001, CHAR_PP_021,
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_192,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_003,
+    CHAR_PP_005, CHAR_PP_204,
+    CHAR_PP_005, CHAR_PP_030,
+    CHAR_PP_005, CHAR_PP_126,
+    CHAR_PP_006, CHAR_PP_000,
+    CHAR_PP_006, CHAR_PP_014,
+    CHAR_PP_007, CHAR_PP_003,
+    CHAR_PP_008, CHAR_PP_018,
+    CHAR_PP_008, CHAR_PP_125,
+    CHAR_PP_017, CHAR_PP_031,
+    CHAR_PP_019, CHAR_PP_036,
+    CHAR_PP_020, CHAR_PP_233,
+    CHAR_PP_246, CHAR_PP_010,
+    CHAR_PP_248, CHAR_PP_012,
+    CHAR_PP_248, CHAR_PP_011,
+    CHAR_PP_248, CHAR_PP_126,
+    CHAR_PP_250, CHAR_PP_031,
+    CHAR_PP_030, CHAR_PP_010,
+    CHAR_PP_030, CHAR_PP_238,
+    CHAR_PP_030, CHAR_PP_195,
+    CHAR_PP_031, CHAR_PP_006,
+    CHAR_PP_036, CHAR_PP_015,
+    CHAR_PP_096, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_124, CHAR_PP_000,
+    CHAR_PP_124, CHAR_PP_231,
+    CHAR_PP_124, CHAR_PP_019,
+    CHAR_PP_124, CHAR_PP_024,
+    CHAR_PP_124, CHAR_PP_194,
+    CHAR_PP_126, CHAR_PP_015,
+    CHAR_PP_127, CHAR_PP_127,
 };
 
-static int mMck_cmp_key(u8* str) {
-  u8 char0 = str[0];
-  u8 char1 = str[1];
-  u8 char2 = str[2];
-  int i;
+static u8 str_te_table[72] = {
+    CHAR_PP_000, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_244,
+    CHAR_PP_001, CHAR_PP_023,
+    CHAR_PP_001, CHAR_PP_024,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_231, CHAR_PP_031,
+    CHAR_PP_006, CHAR_PP_011,
+    CHAR_PP_006, CHAR_PP_013,
+    CHAR_PP_006, CHAR_PP_019,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_021, CHAR_PP_025,
+    CHAR_PP_248, CHAR_PP_007,
+    CHAR_PP_030, CHAR_PP_003,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_023,
+    CHAR_PP_195, CHAR_PP_024,
+    CHAR_PP_195, CHAR_PP_036,
+    CHAR_PP_127, CHAR_PP_127,
+};
 
-  for (i = 0; i < 26; i++) {
-    u8* str_table = cmp_str_table_c[i].str_table;
+static u8 str_de_table[22] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_000, CHAR_PP_002,
+    CHAR_PP_006, CHAR_PP_235,
+    CHAR_PP_091, CHAR_PP_032,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_023,
+    CHAR_PP_127, CHAR_PP_127,
+};
 
-    if (char0 == cmp_str_table_c[i].trigger_lower || char0 == cmp_str_table_c[i].trigger_upper) {
+static u8 str_to_table[70] = {
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_234,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_002, CHAR_PP_012,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_239,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_018,
+    CHAR_PP_002, CHAR_PP_246,
+    CHAR_PP_002, CHAR_PP_026,
+    CHAR_PP_002, CHAR_PP_247,
+    CHAR_PP_002, CHAR_PP_031,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_004, CHAR_PP_001,
+    CHAR_PP_004, CHAR_PP_007,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_007, CHAR_PP_232,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_013,
+    CHAR_PP_007, CHAR_PP_018,
+    CHAR_PP_007, CHAR_PP_246,
+    CHAR_PP_008, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_024,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_017, CHAR_PP_239,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_018, CHAR_PP_091,
+    CHAR_PP_020, CHAR_PP_124,
+    CHAR_PP_091, CHAR_PP_241,
+    CHAR_PP_091, CHAR_PP_021,
+    CHAR_PP_124, CHAR_PP_005,
+    CHAR_PP_127, CHAR_PP_127,
+};
 
-      /* 
-      BUG: in the NTSC-U (US version) of AC, the string tables are missing the control code character (0x7F).
-      The game will continue processing data as syllable values until it either reaches an unrelated 0x7F byte,
-      or it finds two consecutive bytes which satisfies the current syllable pair.
-      */
-     
-      for (str_table; str_table[0] != CHAR_CONTROL_CODE; str_table = mMck_next_key(str_table)) {
-        if (char1 == str_table[0] && char2 == str_table[1]) {
-          return TRUE; /* Valid 3-letter (syllable?) match found */
+static u8 str_do_table[34] = {
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_233,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_240,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_245,
+    CHAR_PP_002, CHAR_PP_248,
+    CHAR_PP_002, CHAR_PP_091,
+    CHAR_PP_002, CHAR_PP_096,
+    CHAR_PP_007, CHAR_PP_014,
+    CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_009, CHAR_PP_005,
+    CHAR_PP_009, CHAR_PP_244,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_na_table[82] = {
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_024,
+    CHAR_PP_004, CHAR_PP_011,
+    CHAR_PP_004, CHAR_PP_012,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_020,
+    CHAR_PP_005, CHAR_PP_030,
+    CHAR_PP_231, CHAR_PP_036,
+    CHAR_PP_005, CHAR_PP_096,
+    CHAR_PP_232, CHAR_PP_010,
+    CHAR_PP_233, CHAR_PP_010,
+    CHAR_PP_233, CHAR_PP_125,
+    CHAR_PP_010, CHAR_PP_008,
+    CHAR_PP_017, CHAR_PP_005,
+    CHAR_PP_021, CHAR_PP_005,
+    CHAR_PP_021, CHAR_PP_231,
+    CHAR_PP_021, CHAR_PP_234,
+    CHAR_PP_021, CHAR_PP_248,
+    CHAR_PP_021, CHAR_PP_194,
+    CHAR_PP_030, CHAR_PP_008,
+    CHAR_PP_031, CHAR_PP_241,
+    CHAR_PP_031, CHAR_PP_024,
+    CHAR_PP_123, CHAR_PP_002,
+    CHAR_PP_124, CHAR_PP_015,
+    CHAR_PP_126, CHAR_PP_125,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_007,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_244,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_024,
+    CHAR_PP_195, CHAR_PP_248,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ni_table[58] = {
+    CHAR_PP_000, CHAR_PP_002,
+    CHAR_PP_004, CHAR_PP_001,
+    CHAR_PP_004, CHAR_PP_002,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_231, CHAR_PP_011,
+    CHAR_PP_231, CHAR_PP_018,
+    CHAR_PP_232, CHAR_PP_093,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_015,
+    CHAR_PP_234, CHAR_PP_030,
+    CHAR_PP_234, CHAR_PP_123,
+    CHAR_PP_234, CHAR_PP_125,
+    CHAR_PP_234, CHAR_PP_192,
+    CHAR_PP_237, CHAR_PP_202,
+    CHAR_PP_013, CHAR_PP_091,
+    CHAR_PP_016, CHAR_PP_237,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_029, CHAR_PP_195,
+    CHAR_PP_030, CHAR_PP_001,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_193, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_234,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_nu_table[12] = {
+    CHAR_PP_001, CHAR_PP_233,
+    CHAR_PP_005, CHAR_PP_031,
+    CHAR_PP_008, CHAR_PP_231,
+    CHAR_PP_126, CHAR_PP_232,
+    CHAR_PP_126, CHAR_PP_125,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ne_table[62] = {
+    CHAR_PP_000, CHAR_PP_234,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_199, CHAR_PP_132,
+    CHAR_PP_199, CHAR_PP_032,
+    CHAR_PP_199, CHAR_PP_023,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_238, CHAR_PP_031,
+    CHAR_PP_017, CHAR_PP_000,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_035, CHAR_PP_001,
+    CHAR_PP_035, CHAR_PP_008,
+    CHAR_PP_035, CHAR_PP_015,
+    CHAR_PP_035, CHAR_PP_124,
+    CHAR_PP_091, CHAR_PP_019,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_002,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_234,
+    CHAR_PP_195, CHAR_PP_235,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_016,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_195, CHAR_PP_030,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_144, CHAR_PP_023,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_no_table[48] = {
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_010,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_031,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_236, CHAR_PP_123,
+    CHAR_PP_240, CHAR_PP_006,
+    CHAR_PP_240, CHAR_PP_007,
+    CHAR_PP_240, CHAR_PP_031,
+    CHAR_PP_240, CHAR_PP_035,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_245, CHAR_PP_005,
+    CHAR_PP_025, CHAR_PP_123,
+    CHAR_PP_246, CHAR_PP_020,
+    CHAR_PP_247, CHAR_PP_125,
+    CHAR_PP_036, CHAR_PP_125,
+    CHAR_PP_126, CHAR_PP_195,
+    CHAR_PP_192, CHAR_PP_001,
+    CHAR_PP_192, CHAR_PP_030,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ha_table[88] = {
+    CHAR_PP_000, CHAR_PP_007,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_007,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_012,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_015,
+    CHAR_PP_005, CHAR_PP_124,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_123,
+    CHAR_PP_008, CHAR_PP_195,
+    CHAR_PP_010, CHAR_PP_031,
+    CHAR_PP_237, CHAR_PP_036,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_238, CHAR_PP_005,
+    CHAR_PP_015, CHAR_PP_123,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_016,
+    CHAR_PP_020, CHAR_PP_011,
+    CHAR_PP_093, CHAR_PP_001,
+    CHAR_PP_093, CHAR_PP_007,
+    CHAR_PP_093, CHAR_PP_204,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_125, CHAR_PP_024,
+    CHAR_PP_192, CHAR_PP_002,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_248,
+    CHAR_PP_195, CHAR_PP_091,
+    CHAR_PP_195, CHAR_PP_123,
+    CHAR_PP_195, CHAR_PP_126,
+    CHAR_PP_195, CHAR_PP_192,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ba_table[6] = {
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_016,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_hi_table[90] = {
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_003,
+    CHAR_PP_005, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_006, CHAR_PP_002,
+    CHAR_PP_006, CHAR_PP_005,
+    CHAR_PP_006, CHAR_PP_203,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_008, CHAR_PP_017,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_010, CHAR_PP_011,
+    CHAR_PP_010, CHAR_PP_195,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_014, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_013,
+    CHAR_PP_019, CHAR_PP_005,
+    CHAR_PP_019, CHAR_PP_017,
+    CHAR_PP_019, CHAR_PP_019,
+    CHAR_PP_019, CHAR_PP_020,
+    CHAR_PP_019, CHAR_PP_031,
+    CHAR_PP_019, CHAR_PP_124,
+    CHAR_PP_020, CHAR_PP_015,
+    CHAR_PP_021, CHAR_PP_007,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_030, CHAR_PP_017,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_201, CHAR_PP_204,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_123, CHAR_PP_005,
+    CHAR_PP_123, CHAR_PP_007,
+    CHAR_PP_124, CHAR_PP_203,
+    CHAR_PP_126, CHAR_PP_001,
+    CHAR_PP_192, CHAR_PP_002,
+    CHAR_PP_192, CHAR_PP_204,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_251,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_bi_table[8] = {
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_193, CHAR_PP_009,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_hu_table[92] = {
+    CHAR_PP_000, CHAR_PP_195,
+    CHAR_PP_002, CHAR_PP_000,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_027,
+    CHAR_PP_002, CHAR_PP_195,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_006, CHAR_PP_005,
+    CHAR_PP_006, CHAR_PP_234,
+    CHAR_PP_006, CHAR_PP_202,
+    CHAR_PP_006, CHAR_PP_203,
+    CHAR_PP_007, CHAR_PP_236,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_014,
+    CHAR_PP_007, CHAR_PP_192,
+    CHAR_PP_007, CHAR_PP_194,
+    CHAR_PP_234, CHAR_PP_195,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_235, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_237, CHAR_PP_202,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_011, CHAR_PP_195,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_014, CHAR_PP_007,
+    CHAR_PP_016, CHAR_PP_201,
+    CHAR_PP_017, CHAR_PP_002,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_018, CHAR_PP_001,
+    CHAR_PP_019, CHAR_PP_001,
+    CHAR_PP_019, CHAR_PP_002,
+    CHAR_PP_245, CHAR_PP_002,
+    CHAR_PP_031, CHAR_PP_195,
+    CHAR_PP_096, CHAR_PP_002,
+    CHAR_PP_124, CHAR_PP_005,
+    CHAR_PP_124, CHAR_PP_203,
+    CHAR_PP_125, CHAR_PP_001,
+    CHAR_PP_192, CHAR_PP_002,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_bu_table[22] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_010, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_001,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_017, CHAR_PP_124,
+    CHAR_PP_245, CHAR_PP_002,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_036,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_he_table[56] = {
+    CHAR_PP_001, CHAR_PP_000,
+    CHAR_PP_001, CHAR_PP_004,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_015,
+    CHAR_PP_001, CHAR_PP_018,
+    CHAR_PP_093, CHAR_PP_021,
+    CHAR_PP_093, CHAR_PP_024,
+    CHAR_PP_093, CHAR_PP_025,
+    CHAR_PP_093, CHAR_PP_194,
+    CHAR_PP_124, CHAR_PP_007,
+    CHAR_PP_195, CHAR_PP_000,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_009,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_018,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_be_table[6] = {
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ho_table[82] = {
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_004,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_010,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_014,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_018,
+    CHAR_PP_002, CHAR_PP_245,
+    CHAR_PP_002, CHAR_PP_029,
+    CHAR_PP_002, CHAR_PP_030,
+    CHAR_PP_002, CHAR_PP_126,
+    CHAR_PP_011, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_008,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_237, CHAR_PP_202,
+    CHAR_PP_014, CHAR_PP_001,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_019, CHAR_PP_246,
+    CHAR_PP_021, CHAR_PP_202,
+    CHAR_PP_029, CHAR_PP_003,
+    CHAR_PP_124, CHAR_PP_202,
+    CHAR_PP_192, CHAR_PP_247,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_024,
+    CHAR_PP_195, CHAR_PP_246,
+    CHAR_PP_195, CHAR_PP_036,
+    CHAR_PP_195, CHAR_PP_091,
+    CHAR_PP_195, CHAR_PP_093,
+    CHAR_PP_195, CHAR_PP_192,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_bo_table[24] = {
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_239,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_245,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_007, CHAR_PP_132,
+    CHAR_PP_007, CHAR_PP_231,
+    CHAR_PP_007, CHAR_PP_025,
+    CHAR_PP_007, CHAR_PP_021,
+    CHAR_PP_007, CHAR_PP_024,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ma_table[82] = {
+    CHAR_PP_000, CHAR_PP_001,
+    CHAR_PP_003, CHAR_PP_231,
+    CHAR_PP_004, CHAR_PP_002,
+    CHAR_PP_005, CHAR_PP_013,
+    CHAR_PP_007, CHAR_PP_123,
+    CHAR_PP_233, CHAR_PP_126,
+    CHAR_PP_235, CHAR_PP_009,
+    CHAR_PP_010, CHAR_PP_005,
+    CHAR_PP_010, CHAR_PP_017,
+    CHAR_PP_010, CHAR_PP_021,
+    CHAR_PP_237, CHAR_PP_036,
+    CHAR_PP_238, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_032,
+    CHAR_PP_015, CHAR_PP_132,
+    CHAR_PP_015, CHAR_PP_005,
+    CHAR_PP_015, CHAR_PP_231,
+    CHAR_PP_015, CHAR_PP_023,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_010,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_204, CHAR_PP_018,
+    CHAR_PP_017, CHAR_PP_124,
+    CHAR_PP_019, CHAR_PP_036,
+    CHAR_PP_022, CHAR_PP_008,
+    CHAR_PP_248, CHAR_PP_011,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_091, CHAR_PP_124,
+    CHAR_PP_096, CHAR_PP_204,
+    CHAR_PP_125, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_001,
+    CHAR_PP_195, CHAR_PP_003,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_234,
+    CHAR_PP_195, CHAR_PP_236,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_195, CHAR_PP_125,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_mi_table[92] = {
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_231, CHAR_PP_007,
+    CHAR_PP_005, CHAR_PP_008,
+    CHAR_PP_005, CHAR_PP_015,
+    CHAR_PP_231, CHAR_PP_123,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_237, CHAR_PP_202,
+    CHAR_PP_237, CHAR_PP_195,
+    CHAR_PP_238, CHAR_PP_002,
+    CHAR_PP_238, CHAR_PP_011,
+    CHAR_PP_238, CHAR_PP_250,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_013, CHAR_PP_018,
+    CHAR_PP_013, CHAR_PP_021,
+    CHAR_PP_013, CHAR_PP_125,
+    CHAR_PP_240, CHAR_PP_126,
+    CHAR_PP_241, CHAR_PP_011,
+    CHAR_PP_241, CHAR_PP_123,
+    CHAR_PP_241, CHAR_PP_126,
+    CHAR_PP_016, CHAR_PP_011,
+    CHAR_PP_016, CHAR_PP_012,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_008,
+    CHAR_PP_017, CHAR_PP_008,
+    CHAR_PP_204, CHAR_PP_009,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_013,
+    CHAR_PP_204, CHAR_PP_017,
+    CHAR_PP_017, CHAR_PP_245,
+    CHAR_PP_019, CHAR_PP_036,
+    CHAR_PP_020, CHAR_PP_031,
+    CHAR_PP_020, CHAR_PP_123,
+    CHAR_PP_021, CHAR_PP_007,
+    CHAR_PP_031, CHAR_PP_096,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_093, CHAR_PP_030,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_096, CHAR_PP_124,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_124, CHAR_PP_203,
+    CHAR_PP_126, CHAR_PP_195,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_240,
+    CHAR_PP_195, CHAR_PP_020,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_mu_table[68] = {
+    CHAR_PP_005, CHAR_PP_003,
+    CHAR_PP_005, CHAR_PP_002,
+    CHAR_PP_005, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_016,
+    CHAR_PP_234, CHAR_PP_195,
+    CHAR_PP_235, CHAR_PP_001,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_007,
+    CHAR_PP_236, CHAR_PP_195,
+    CHAR_PP_011, CHAR_PP_008,
+    CHAR_PP_011, CHAR_PP_024,
+    CHAR_PP_011, CHAR_PP_246,
+    CHAR_PP_011, CHAR_PP_201,
+    CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_237, CHAR_PP_203,
+    CHAR_PP_011, CHAR_PP_192,
+    CHAR_PP_011, CHAR_PP_195,
+    CHAR_PP_237, CHAR_PP_195,
+    CHAR_PP_238, CHAR_PP_005,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_241, CHAR_PP_195,
+    CHAR_PP_016, CHAR_PP_201,
+    CHAR_PP_016, CHAR_PP_202,
+    CHAR_PP_018, CHAR_PP_001,
+    CHAR_PP_019, CHAR_PP_195,
+    CHAR_PP_020, CHAR_PP_011,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_096, CHAR_PP_002,
+    CHAR_PP_123, CHAR_PP_231,
+    CHAR_PP_123, CHAR_PP_021,
+    CHAR_PP_123, CHAR_PP_025,
+    CHAR_PP_124, CHAR_PP_203,
+    CHAR_PP_192, CHAR_PP_195,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_me_table[54] = {
+    CHAR_PP_000, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_000,
+    CHAR_PP_001, CHAR_PP_001,
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_234,
+    CHAR_PP_001, CHAR_PP_010,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_001, CHAR_PP_014,
+    CHAR_PP_001, CHAR_PP_016,
+    CHAR_PP_001, CHAR_PP_248,
+    CHAR_PP_001, CHAR_PP_096,
+    CHAR_PP_001, CHAR_PP_124,
+    CHAR_PP_001, CHAR_PP_126,
+    CHAR_PP_233, CHAR_PP_031,
+    CHAR_PP_233, CHAR_PP_035,
+    CHAR_PP_238, CHAR_PP_123,
+    CHAR_PP_016, CHAR_PP_201,
+    CHAR_PP_204, CHAR_PP_016,
+    CHAR_PP_250, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_003,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_031,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_mo_table[80] = {
+    CHAR_PP_002, CHAR_PP_032,
+    CHAR_PP_002, CHAR_PP_132,
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_008,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_012,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_245,
+    CHAR_PP_002, CHAR_PP_192,
+    CHAR_PP_003, CHAR_PP_125,
+    CHAR_PP_007, CHAR_PP_234,
+    CHAR_PP_007, CHAR_PP_014,
+    CHAR_PP_007, CHAR_PP_018,
+    CHAR_PP_007, CHAR_PP_019,
+    CHAR_PP_007, CHAR_PP_026,
+    CHAR_PP_007, CHAR_PP_192,
+    CHAR_PP_008, CHAR_PP_001,
+    CHAR_PP_011, CHAR_PP_132,
+    CHAR_PP_011, CHAR_PP_005,
+    CHAR_PP_011, CHAR_PP_091,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_015,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_018, CHAR_PP_125,
+    CHAR_PP_019, CHAR_PP_244,
+    CHAR_PP_024, CHAR_PP_231,
+    CHAR_PP_024, CHAR_PP_235,
+    CHAR_PP_024, CHAR_PP_012,
+    CHAR_PP_031, CHAR_PP_000,
+    CHAR_PP_031, CHAR_PP_237,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_204,
+    CHAR_PP_195, CHAR_PP_007,
+    CHAR_PP_195, CHAR_PP_234,
+    CHAR_PP_195, CHAR_PP_237,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ya_table[80] = {
+    CHAR_PP_001, CHAR_PP_246,
+    CHAR_PP_004, CHAR_PP_016,
+    CHAR_PP_231, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_030,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_006, CHAR_PP_001,
+    CHAR_PP_006, CHAR_PP_202,
+    CHAR_PP_006, CHAR_PP_194,
+    CHAR_PP_006, CHAR_PP_195,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_012,
+    CHAR_PP_007, CHAR_PP_014,
+    CHAR_PP_007, CHAR_PP_247,
+    CHAR_PP_007, CHAR_PP_193,
+    CHAR_PP_009, CHAR_PP_002,
+    CHAR_PP_010, CHAR_PP_011,
+    CHAR_PP_011, CHAR_PP_006,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_011, CHAR_PP_192,
+    CHAR_PP_012, CHAR_PP_001,
+    CHAR_PP_012, CHAR_PP_031,
+    CHAR_PP_012, CHAR_PP_035,
+    CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_006,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_204, CHAR_PP_251,
+    CHAR_PP_204, CHAR_PP_029,
+    CHAR_PP_025, CHAR_PP_124,
+    CHAR_PP_248, CHAR_PP_125,
+    CHAR_PP_030, CHAR_PP_001,
+    CHAR_PP_036, CHAR_PP_192,
+    CHAR_PP_036, CHAR_PP_125,
+    CHAR_PP_036, CHAR_PP_096,
+    CHAR_PP_124, CHAR_PP_007,
+    CHAR_PP_125, CHAR_PP_024,
+    CHAR_PP_193, CHAR_PP_123,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_yu_table[80] = {
+    CHAR_PP_001, CHAR_PP_235,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_024,
+    CHAR_PP_002, CHAR_PP_000,
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_234,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_239,
+    CHAR_PP_002, CHAR_PP_014,
+    CHAR_PP_002, CHAR_PP_015,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_019,
+    CHAR_PP_002, CHAR_PP_026,
+    CHAR_PP_002, CHAR_PP_247,
+    CHAR_PP_002, CHAR_PP_029,
+    CHAR_PP_002, CHAR_PP_036,
+    CHAR_PP_002, CHAR_PP_096,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_002, CHAR_PP_126,
+    CHAR_PP_002, CHAR_PP_193,
+    CHAR_PP_003, CHAR_PP_195,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_006, CHAR_PP_004,
+    CHAR_PP_006, CHAR_PP_006,
+    CHAR_PP_007, CHAR_PP_003,
+    CHAR_PP_007, CHAR_PP_012,
+    CHAR_PP_007, CHAR_PP_018,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_021, CHAR_PP_202,
+    CHAR_PP_124, CHAR_PP_005,
+    CHAR_PP_125, CHAR_PP_001,
+    CHAR_PP_125, CHAR_PP_011,
+    CHAR_PP_125, CHAR_PP_012,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_yo_table[98] = {
+    CHAR_PP_001, CHAR_PP_235,
+    CHAR_PP_001, CHAR_PP_195,
+    CHAR_PP_002, CHAR_PP_001,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_232,
+    CHAR_PP_002, CHAR_PP_008,
+    CHAR_PP_002, CHAR_PP_235,
+    CHAR_PP_002, CHAR_PP_009,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_237,
+    CHAR_PP_002, CHAR_PP_012,
+    CHAR_PP_002, CHAR_PP_013,
+    CHAR_PP_002, CHAR_PP_014,
+    CHAR_PP_002, CHAR_PP_241,
+    CHAR_PP_002, CHAR_PP_016,
+    CHAR_PP_002, CHAR_PP_027,
+    CHAR_PP_002, CHAR_PP_029,
+    CHAR_PP_002, CHAR_PP_035,
+    CHAR_PP_002, CHAR_PP_093,
+    CHAR_PP_002, CHAR_PP_124,
+    CHAR_PP_005, CHAR_PP_204,
+    CHAR_PP_005, CHAR_PP_195,
+    CHAR_PP_007, CHAR_PP_000,
+    CHAR_PP_007, CHAR_PP_237,
+    CHAR_PP_007, CHAR_PP_020,
+    CHAR_PP_007, CHAR_PP_250,
+    CHAR_PP_008, CHAR_PP_001,
+    CHAR_PP_234, CHAR_PP_195,
+    CHAR_PP_009, CHAR_PP_012,
+    CHAR_PP_011, CHAR_PP_000,
+    CHAR_PP_011, CHAR_PP_202,
+    CHAR_PP_013, CHAR_PP_195,
+    CHAR_PP_014, CHAR_PP_002,
+    CHAR_PP_014, CHAR_PP_007,
+    CHAR_PP_241, CHAR_PP_195,
+    CHAR_PP_018, CHAR_PP_001,
+    CHAR_PP_245, CHAR_PP_031,
+    CHAR_PP_247, CHAR_PP_009,
+    CHAR_PP_029, CHAR_PP_002,
+    CHAR_PP_125, CHAR_PP_021,
+    CHAR_PP_192, CHAR_PP_009,
+    CHAR_PP_192, CHAR_PP_011,
+    CHAR_PP_193, CHAR_PP_001,
+    CHAR_PP_193, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_195, CHAR_PP_244,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ra_table[40] = {
+    CHAR_PP_001, CHAR_PP_002,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_021,
+    CHAR_PP_007, CHAR_PP_001,
+    CHAR_PP_007, CHAR_PP_003,
+    CHAR_PP_007, CHAR_PP_235,
+    CHAR_PP_007, CHAR_PP_010,
+    CHAR_PP_007, CHAR_PP_011,
+    CHAR_PP_007, CHAR_PP_013,
+    CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_013, CHAR_PP_195,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_236,
+    CHAR_PP_195, CHAR_PP_011,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_241,
+    CHAR_PP_195, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_245,
+    CHAR_PP_195, CHAR_PP_250,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ri_table[32] = {
+    CHAR_PP_003, CHAR_PP_006,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_006, CHAR_PP_010,
+    CHAR_PP_006, CHAR_PP_014,
+    CHAR_PP_006, CHAR_PP_019,
+    CHAR_PP_006, CHAR_PP_195,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_012,
+    CHAR_PP_201, CHAR_PP_007,
+    CHAR_PP_202, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_002,
+    CHAR_PP_203, CHAR_PP_007,
+    CHAR_PP_195, CHAR_PP_005,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ru_table[14] = {
+    CHAR_PP_001, CHAR_PP_003,
+    CHAR_PP_001, CHAR_PP_008,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_237,
+    CHAR_PP_001, CHAR_PP_012,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_re_table[36] = {
+    CHAR_PP_001, CHAR_PP_005,
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_001, CHAR_PP_234,
+    CHAR_PP_001, CHAR_PP_009,
+    CHAR_PP_001, CHAR_PP_011,
+    CHAR_PP_001, CHAR_PP_013,
+    CHAR_PP_006, CHAR_PP_011,
+    CHAR_PP_006, CHAR_PP_241,
+    CHAR_PP_017, CHAR_PP_000,
+    CHAR_PP_204, CHAR_PP_005,
+    CHAR_PP_204, CHAR_PP_011,
+    CHAR_PP_204, CHAR_PP_019,
+    CHAR_PP_195, CHAR_PP_000,
+    CHAR_PP_195, CHAR_PP_008,
+    CHAR_PP_195, CHAR_PP_010,
+    CHAR_PP_195, CHAR_PP_015,
+    CHAR_PP_195, CHAR_PP_123,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ro_table[30] = {
+    CHAR_PP_002, CHAR_PP_003,
+    CHAR_PP_002, CHAR_PP_005,
+    CHAR_PP_002, CHAR_PP_006,
+    CHAR_PP_002, CHAR_PP_011,
+    CHAR_PP_002, CHAR_PP_012,
+    CHAR_PP_002, CHAR_PP_015,
+    CHAR_PP_007, CHAR_PP_004,
+    CHAR_PP_007, CHAR_PP_231,
+    CHAR_PP_018, CHAR_PP_195,
+    CHAR_PP_195, CHAR_PP_231,
+    CHAR_PP_195, CHAR_PP_006,
+    CHAR_PP_195, CHAR_PP_013,
+    CHAR_PP_195, CHAR_PP_014,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_wa_table[56] = {
+    CHAR_PP_001, CHAR_PP_006,
+    CHAR_PP_005, CHAR_PP_001,
+    CHAR_PP_005, CHAR_PP_010,
+    CHAR_PP_005, CHAR_PP_204,
+    CHAR_PP_231, CHAR_PP_025,
+    CHAR_PP_231, CHAR_PP_030,
+    CHAR_PP_008, CHAR_PP_018,
+    CHAR_PP_238, CHAR_PP_123,
+    CHAR_PP_012, CHAR_PP_126,
+    CHAR_PP_241, CHAR_PP_001,
+    CHAR_PP_015, CHAR_PP_007,
+    CHAR_PP_015, CHAR_PP_011,
+    CHAR_PP_015, CHAR_PP_012,
+    CHAR_PP_015, CHAR_PP_124,
+    CHAR_PP_015, CHAR_PP_125,
+    CHAR_PP_123, CHAR_PP_002,
+    CHAR_PP_123, CHAR_PP_001,
+    CHAR_PP_123, CHAR_PP_204,
+    CHAR_PP_124, CHAR_PP_000,
+    CHAR_PP_124, CHAR_PP_001,
+    CHAR_PP_124, CHAR_PP_005,
+    CHAR_PP_124, CHAR_PP_006,
+    CHAR_PP_124, CHAR_PP_009,
+    CHAR_PP_124, CHAR_PP_247,
+    CHAR_PP_125, CHAR_PP_001,
+    CHAR_PP_125, CHAR_PP_091,
+    CHAR_PP_195, CHAR_PP_124,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_nn_table[4] = {
+    CHAR_PP_237, CHAR_PP_201,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_KI_table[4] = {
+    CHAR_PP_140, CHAR_PP_189,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_KU_table[8] = {
+    CHAR_PP_146, CHAR_PP_213,
+    CHAR_PP_184, CHAR_PP_157,
+    CHAR_PP_187, CHAR_PP_144,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_KE_table[6] = {
+    CHAR_PP_144, CHAR_PP_160,
+    CHAR_PP_144, CHAR_PP_157,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_GE_table[4] = {
+    CHAR_PP_144, CHAR_PP_177,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_KO_table[4] = {
+    CHAR_PP_189, CHAR_PP_155,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_SA_table[4] = {
+    CHAR_PP_146, CHAR_PP_163,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ZI_table[4] = {
+    CHAR_PP_140, CHAR_PP_189,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_SU_table[12] = {
+    CHAR_PP_146, CHAR_PP_144,
+    CHAR_PP_144, CHAR_PP_226,
+    CHAR_PP_153, CHAR_PP_144,
+    CHAR_PP_210, CHAR_PP_146,
+    CHAR_PP_163, CHAR_PP_151,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_SE_table[4] = {
+    CHAR_PP_189, CHAR_PP_161,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_SO_table[4] = {
+    CHAR_PP_172, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_TA_table[6] = {
+    CHAR_PP_144, CHAR_PP_225,
+    CHAR_PP_146, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_DA_table[6] = {
+    CHAR_PP_144, CHAR_PP_152,
+    CHAR_PP_143, CHAR_PP_156,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_TI_table[8] = {
+    CHAR_PP_140, CHAR_PP_144,
+    CHAR_PP_142, CHAR_PP_144,
+    CHAR_PP_189, CHAR_PP_230,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_DE_table[4] = {
+    CHAR_PP_136, CHAR_PP_157,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_DO_table[4] = {
+    CHAR_PP_183, CHAR_PP_146,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_NE_table[6] = {
+    CHAR_PP_143, CHAR_PP_152,
+    CHAR_PP_143, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_NO_table[8] = {
+    CHAR_PP_144, CHAR_PP_154,
+    CHAR_PP_157, CHAR_PP_160,
+    CHAR_PP_143, CHAR_PP_152,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_HA_table[6] = {
+    CHAR_PP_143, CHAR_PP_227,
+    CHAR_PP_187, CHAR_PP_144,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_PA_table[6] = {
+    CHAR_PP_144, CHAR_PP_163,
+    CHAR_PP_144, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_BI_table[4] = {
+    CHAR_PP_144, CHAR_PP_161,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_PI_table[8] = {
+    CHAR_PP_148, CHAR_PP_187,
+    CHAR_PP_189, CHAR_PP_152,
+    CHAR_PP_189, CHAR_PP_161,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_HU_table[4] = {
+    CHAR_PP_135, CHAR_PP_146,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_PU_table[6] = {
+    CHAR_PP_183, CHAR_PP_146,
+    CHAR_PP_184, CHAR_PP_189,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_BE_table[4] = {
+    CHAR_PP_143, CHAR_PP_220,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_PE_table[4] = {
+    CHAR_PP_143, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_HO_table[4] = {
+    CHAR_PP_189, CHAR_PP_164,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_BO_table[12] = {
+    CHAR_PP_152, CHAR_PP_132,
+    CHAR_PP_152, CHAR_PP_231,
+    CHAR_PP_152, CHAR_PP_025,
+    CHAR_PP_152, CHAR_PP_021,
+    CHAR_PP_152, CHAR_PP_024,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_MA_table[18] = {
+    CHAR_PP_144, CHAR_PP_153,
+    CHAR_PP_146, CHAR_PP_152,
+    CHAR_PP_212, CHAR_PP_143,
+    CHAR_PP_212, CHAR_PP_244,
+    CHAR_PP_143, CHAR_PP_161,
+    CHAR_PP_168, CHAR_PP_144,
+    CHAR_PP_189, CHAR_PP_206,
+    CHAR_PP_189, CHAR_PP_156,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_MI_table[4] = {
+    CHAR_PP_157, CHAR_PP_163,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_ME_table[12] = {
+    CHAR_PP_144, CHAR_PP_150,
+    CHAR_PP_144, CHAR_PP_160,
+    CHAR_PP_206, CHAR_PP_164,
+    CHAR_PP_143, CHAR_PP_158,
+    CHAR_PP_161, CHAR_PP_140,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_MO_table[6] = {
+    CHAR_PP_211, CHAR_PP_146,
+    CHAR_PP_189, CHAR_PP_160,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_YA_table[4] = {
+    CHAR_PP_143, CHAR_PP_174,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_RA_table[12] = {
+    CHAR_PP_146, CHAR_PP_160,
+    CHAR_PP_146, CHAR_PP_172,
+    CHAR_PP_146, CHAR_PP_189,
+    CHAR_PP_143, CHAR_PP_151,
+    CHAR_PP_223, CHAR_PP_183,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_RI_table[12] = {
+    CHAR_PP_144, CHAR_PP_208,
+    CHAR_PP_152, CHAR_PP_148,
+    CHAR_PP_157, CHAR_PP_164,
+    CHAR_PP_170, CHAR_PP_144,
+    CHAR_PP_189, CHAR_PP_210,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_RU_table[6] = {
+    CHAR_PP_144, CHAR_PP_213,
+    CHAR_PP_144, CHAR_PP_177,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_RE_table[6] = {
+    CHAR_PP_154, CHAR_PP_144,
+    CHAR_PP_189, CHAR_PP_160,
+    CHAR_PP_127, CHAR_PP_127,
+};
+
+static u8 str_RO_table[12] = {
+    CHAR_PP_144, CHAR_PP_150,
+    CHAR_PP_144, CHAR_PP_220,
+    CHAR_PP_144, CHAR_PP_189,
+    CHAR_PP_153, CHAR_PP_144,
+    CHAR_PP_153, CHAR_PP_143,
+    CHAR_PP_127, CHAR_PP_127,
+};
+// clang-format on
+
+// clang-format off
+static mMck_cmp_str_table_c cmp_str_table_c[98] = {
+    { CHAR_PP_000, str_aa_table },
+    { CHAR_PP_001, str_ii_table },
+    { CHAR_PP_002, str_uu_table },
+    { CHAR_PP_003, str_ee_table },
+    { CHAR_PP_004, str_oo_table },
+    { CHAR_PP_005, str_ka_table },
+    { CHAR_PP_231, str_ga_table },
+    { CHAR_PP_006, str_ki_table },
+    { CHAR_PP_232, str_gi_table },
+    { CHAR_PP_007, str_ku_table },
+    { CHAR_PP_233, str_gu_table },
+    { CHAR_PP_008, str_ke_table },
+    { CHAR_PP_234, str_ge_table },
+    { CHAR_PP_009, str_ko_table },
+    { CHAR_PP_235, str_go_table },
+    { CHAR_PP_010, str_sa_table },
+    { CHAR_PP_236, str_za_table },
+    { CHAR_PP_011, str_si_table },
+    { CHAR_PP_237, str_zi_table },
+    { CHAR_PP_012, str_su_table },
+    { CHAR_PP_013, str_se_table },
+    { CHAR_PP_239, str_ze_table },
+    { CHAR_PP_014, str_so_table },
+    { CHAR_PP_015, str_ta_table },
+    { CHAR_PP_241, str_da_table },
+    { CHAR_PP_016, str_ti_table },
+    { CHAR_PP_017, str_tu_table },
+    { CHAR_PP_018, str_te_table },
+    { CHAR_PP_244, str_de_table },
+    { CHAR_PP_019, str_to_table },
+    { CHAR_PP_245, str_do_table },
+    { CHAR_PP_020, str_na_table },
+    { CHAR_PP_021, str_ni_table },
+    { CHAR_PP_022, str_nu_table },
+    { CHAR_PP_023, str_ne_table },
+    { CHAR_PP_024, str_no_table },
+    { CHAR_PP_025, str_ha_table },
+    { CHAR_PP_246, str_ba_table },
+    { CHAR_PP_026, str_hi_table },
+    { CHAR_PP_247, str_bi_table },
+    { CHAR_PP_027, str_hu_table },
+    { CHAR_PP_248, str_bu_table },
+    { CHAR_PP_028, str_he_table },
+    { CHAR_PP_249, str_be_table },
+    { CHAR_PP_029, str_ho_table },
+    { CHAR_PP_250, str_bo_table },
+    { CHAR_PP_030, str_ma_table },
+    { CHAR_PP_031, str_mi_table },
+    { CHAR_PP_035, str_mu_table },
+    { CHAR_PP_036, str_me_table },
+    { CHAR_PP_091, str_mo_table },
+    { CHAR_PP_093, str_ya_table },
+    { CHAR_PP_094, str_yu_table },
+    { CHAR_PP_096, str_yo_table },
+    { CHAR_PP_123, str_ra_table },
+    { CHAR_PP_124, str_ri_table },
+    { CHAR_PP_125, str_ru_table },
+    { CHAR_PP_126, str_re_table },
+    { CHAR_PP_192, str_ro_table },
+    { CHAR_PP_193, str_wa_table },
+    { CHAR_PP_195, str_nn_table },
+    { CHAR_PP_151, str_KI_table },
+    { CHAR_PP_152, str_KU_table },
+    { CHAR_PP_153, str_KE_table },
+    { CHAR_PP_209, str_GE_table },
+    { CHAR_PP_154, str_KO_table },
+    { CHAR_PP_155, str_SA_table },
+    { CHAR_PP_212, str_ZI_table },
+    { CHAR_PP_157, str_SU_table },
+    { CHAR_PP_158, str_SE_table },
+    { CHAR_PP_159, str_SO_table },
+    { CHAR_PP_160, str_TA_table },
+    { CHAR_PP_216, str_DA_table },
+    { CHAR_PP_161, str_TI_table },
+    { CHAR_PP_219, str_DE_table },
+    { CHAR_PP_220, str_DO_table },
+    { CHAR_PP_168, str_NE_table },
+    { CHAR_PP_169, str_NO_table },
+    { CHAR_PP_170, str_HA_table },
+    { CHAR_PP_226, str_PA_table },
+    { CHAR_PP_222, str_BI_table },
+    { CHAR_PP_227, str_PI_table },
+    { CHAR_PP_172, str_HU_table },
+    { CHAR_PP_228, str_PU_table },
+    { CHAR_PP_224, str_BE_table },
+    { CHAR_PP_229, str_PE_table },
+    { CHAR_PP_174, str_HO_table },
+    { CHAR_PP_225, str_BO_table },
+    { CHAR_PP_175, str_MA_table },
+    { CHAR_PP_176, str_MI_table },
+    { CHAR_PP_178, str_ME_table },
+    { CHAR_PP_179, str_MO_table },
+    { CHAR_PP_180, str_YA_table },
+    { CHAR_PP_183, str_RA_table },
+    { CHAR_PP_184, str_RI_table },
+    { CHAR_PP_185, str_RU_table },
+    { CHAR_PP_186, str_RE_table },
+    { CHAR_PP_187, str_RO_table },
+};
+// clang-format on
+
+static int mMck_cmp_key(u16* str) {
+    u16 char0 = str[0];
+    u16 char1 = str[1];
+    u16 char2 = str[2];
+    int i;
+
+    for (i = 0; i < ARRAY_COUNT(cmp_str_table_c); i++) {
+        u8* str_table = cmp_str_table_c[i].str_table;
+
+        if (char0 == (u32)cmp_str_table_c[i].trigger) {
+            for (; str_table[0] != CHAR_CONTROL_CODE; str_table = mMck_next_key(str_table)) {
+                if (char1 == (u32)str_table[0] && char2 == (u32)str_table[1]) {
+                    return TRUE; /* Valid 3-letter (syllable?) match found */
+                }
+            }
         }
-      }
-    }
-  }
-
-  return FALSE; /* No match found */
-}
-
-extern int mMck_check_key_hit(int* len, u8* str) {
-  u8* sep = str;
-  int i;
-  int str_len;
-  int matches;
-  int chars;
-
-  *len = 0;
-  i = 0;
-  matches = 0;
-  chars = 0;
-  str_len = mMck_strlen(str, MAIL_BODY_LEN - 3);
-
-  if (str_len == 0) {
-    return 0;
-  }
-  else {
-    /* There might be a goto here? */
-
-    while (i <= str_len) {
-      sep = str;
-      chars++;
-      if (mMck_cmp_key(sep)) {
-        matches++;
-      }
-
-      str = mMck_search_sep(sep, str_len - i) + 1;
-      i += (int)(str - sep); /* track current position */
     }
 
-    *len = chars;
-    return (matches * 10000) / (chars * 100);
-  }
+    return FALSE; /* No match found */
 }
 
-static int mMck_cmp_sep_nes(u8 c) {
-  switch (c) {
-    case CHAR_PERIOD:
-    case CHAR_QUESTIONMARK:
-    case CHAR_EXCLAMATION:
-      return TRUE;
+extern int mMck_check_key_hit(int* len, u16* str) {
+    u16* sep = str;
+    int i;
+    int str_len;
+    int matches;
+    int chars;
 
-    default:
-    return FALSE;
-  }
-}
+    *len = 0;
+    i = 0;
+    matches = 0;
+    chars = 0;
+    str_len = mMck_strlen2(str, MAIL_BODY_LEN - 3);
 
-static int mMck_strlen_new(u8* str, int len) {
-  if (len > 0) {
-    u8* end_p = (u8*)(len + (int)str);
-    end_p--;
+    if (str_len == 0) {
+        return 0;
+    } else {
+        /* There might be a goto here? */
 
-    for (len; len != 0; len--) {
-      if (*end_p != CHAR_SPACE) {
-        break;
-      }
-      end_p--;
-    }
-  }
+        while (i <= str_len) {
+            sep = str;
+            chars++;
+            if (mMck_cmp_key(sep)) {
+                matches++;
+            }
 
-  return len;
-}
-
-static int mMck_check_alpha(u8 c, int alpha_case) {
-  static u8 offset[mMck_CASE_NUM] = { CHAR_a, CHAR_A };
-
-  int res = FALSE;
-
-  if (alpha_case < mMck_CASE_NUM) {
-    u8 ofs = offset[alpha_case];
-    if (c >= ofs && c <= ofs + 25) {
-      res = TRUE;
-    }
-  }
-
-  return res;
-}
-
-static int mMck_check_eof(u8* str, int pos) {
-  int points = 0;
-
-  if (pos < MAIL_BODY_LEN && mMck_cmp_sep_nes(str[pos - 1]) == TRUE) {
-    points = 20;
-  }
-
-  return points;
-}
-
-static int mMck_check_key_get_hit_count(u8* str) {
-  u8* sep;
-  int i;
-  int hit_count;
-  int str_len;
-
-  i = 0;
-  hit_count = 0;
-  str_len = mMck_strlen_new(str, MAIL_BODY_LEN - 3);
-
-  if (str_len <= 0) {
-    return 0;
-  }
-  else {
-    /* There might be a goto here? */
-
-    while (i <= str_len) {
-      sep = str;
-      if (mMck_cmp_key(sep)) {
-        hit_count++;
-      }
-
-      str = mMck_search_sep(sep, str_len - i) + 1;
-      i += (int)(str - sep); /* track current position */
-    }
-
-    return hit_count;
-  }
-}
-
-/* Scores each "sentence" for correct capitalization.
-   An uppercase character must appear within 3 characters after separators.
-*/
-static int mMck_check_key_type_A(u8* str, int pos) {
-  int sz;
-  int points = mMck_check_eof(str, pos);
-
-  while (str != NULL && pos > 3) {
-    /* Find the next separator (.?!) */
-    while (mMck_cmp_sep_nes(*str) == FALSE && pos > 3) {
-      str++;
-      pos--;
-    }
-
-    /* Must be three characters or more remaining */
-    if (pos > 3) {
-      sz = 3;
-      str++;
-      pos--;
-
-      /* Check that at least one of the characters after the separator is uppercase */
-      while (TRUE) {
-        if (mMck_check_alpha(*str, mMck_CASE_UPPER) == TRUE) {
-          break;
+            str = mMck_search_sep(sep, str_len - i) + 1;
+            i += (int)(str - sep); /* track current position */
         }
-        
-        sz--;
-        str++;
-        pos--;
 
-        if (sz <= 0) {
-          break;
-        }
-      }
-
-      /* Add or subtract 10 points depending on whether uppercase letters were found */
-      if (sz == 0) {
-        points -= 10;
-      }
-      else {
-        points += 10;
-      }
+        *len = chars;
+        return (matches * 10000) / (chars * 100);
     }
-  }
-
-  return points;
-}
-
-/* Add three points for each "valid" three-character groupings */
-static int mMck_check_key_type_B(u8* str, int len) {
-  return mMck_check_key_get_hit_count(str) * 3;
-}
-
-/* 
-  Add 20 points if the non-space character following a separator is correctly
-  capitalized. If it is not, subtract 10 points. 0 points if no non-space
-  characters are left following the separator.
-*/
-static int mMck_check_key_type_C(u8* str, int len) {
-  int points = 0;
-
-  for (len; len != 0; len--) {
-    if (*str != CHAR_SPACE) {
-      if (mMck_check_alpha(*str, mMck_CASE_UPPER) == TRUE) {
-        points = 20;
-      }
-      else {
-        points = -10;
-      }
-
-      break;
-    }
-
-    str++;
-  }
-
-  return points;
-}
-
-/*
-  If three characters in a row are the same alpha (a-z/A-Z) character,
-  subtract 50 points.
-*/
-static int mMck_check_key_type_D(u8* str, int len) {
-  int points = 0;
-
-  while (len > 2) {
-    /* Check if the next character is alpha range (A-Za-z) */
-    if (mMck_check_alpha(*str, mMck_CASE_LOWER) == TRUE || mMck_check_alpha(*str, mMck_CASE_UPPER) == TRUE) {
-      if (str[0] == str[1] && str[0] == str[2]) {
-        points = -50;
-        break;
-      }
-    }
-
-    len--;
-    str++;
-  }
-
-  return points;
-}
-
-/*
-  If the string is 20% or more spaces, add 20 points.
-  Otherwise, subtract 20 points.
-*/
-static int mMck_check_key_type_E(u8* str, int len) {
-  int spaces = 0;
-  int non_spaces;
-  int i;
-  int points;
-
-  for (i = len; i != 0; i--) {
-    if (*str == CHAR_SPACE) {
-      spaces++;
-    }
-
-    str++;
-  }
-
-  len = len - spaces;
-  if (len > 0) {
-    if ((spaces * 100) / len >= 20) {
-      points = 20;
-    }
-    else {
-      points = -20;
-    }
-  } else {
-      points = -20;
-  }
-
-  return points;
-}
-
-/*
-  Search for any run-on sentences. Run-on sentences are
-  75 or more characters in a row without a separator (.?!).
-  If a run-on sentence is found, subtract 150 points.
-*/
-static int mMck_check_key_type_F(u8* str, int len) {
-  int sentence_len;
-  int points = 0;
-
-  while (len > 76) {
-    if (mMck_cmp_sep_nes(*str) == TRUE) {
-      sentence_len = 0;
-      
-      len--;
-      str++;
-
-      while (mMck_cmp_sep_nes(*str) == FALSE) {
-        sentence_len++;
-
-        if (sentence_len >= 75) {
-          break;
-        }
-        
-        str++;
-        len--;
-      }
-
-      if (sentence_len >= 75) {
-        points = -150;
-        break;
-      }
-    }
-
-    len--;
-    str++;
-  }
-
-  return points;
-}
-
-/*
-  Subtract 20 points for every 32 characters in a row
-  for which a space is not present.
-*/
-static int mMck_check_key_type_G(u8* str, int len) {
-  int r_len = 32;
-  u8 no_space = TRUE;
-  int points = 0;
-
-  for (len; len > 0; len--) {
-    r_len--;
-
-    if (no_space == TRUE) {
-      if (*str == CHAR_SPACE) {
-        no_space = FALSE;
-      }
-      else if (r_len == 0) {
-        points += -20;
-      }
-    }
-
-    if (r_len == 0) {
-      r_len = 32;
-      no_space = TRUE;
-    }
-
-    str++;
-  }
-
-  return points;
-}
-
-typedef int (*mMck_CHECK_PROC)(u8*, int);
-
-extern int mMck_check_key_hit_nes(u8* str) {
-  static mMck_CHECK_PROC check_proc[mMck_CHECK_KEY_TYPE_NUM] = {
-    &mMck_check_key_type_A,
-    &mMck_check_key_type_B,
-    &mMck_check_key_type_C,
-    &mMck_check_key_type_D,
-    &mMck_check_key_type_E,
-    &mMck_check_key_type_F,
-    &mMck_check_key_type_G
-  };
-
-  int len;
-  int points = 0;
-  int i;
-
-  if (str != NULL) {
-    len = mMck_strlen_new(str, MAIL_BODY_LEN);
-
-    for (i = 0; i < mMck_CHECK_KEY_TYPE_NUM; i++) {
-      points += (*check_proc[i])(str, len);
-    }
-  }
-
-  return points;
 }
