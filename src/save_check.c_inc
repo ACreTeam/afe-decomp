@@ -1,5 +1,6 @@
 #include "m_mushroom.h"
 #include "m_house.h"
+#include "m_flashrom.h"
 
 static int sChk_block_num_sub(u32 block_x, u32 block_z) {
     int res = FALSE;
@@ -49,12 +50,9 @@ static int sChk_ItemFG_sub(mActor_name_t item) {
 }
 
 static int sChk_cloth_sub(mActor_name_t item) {
-    int valid_cloth;
     int res = FALSE;
 
-    valid_cloth = item == RSV_CLOTH || (item >= ITM_CLOTH_START && item < ITM_CLOTH_END);
-
-    if (valid_cloth == FALSE && item != EMPTY_NO) {
+    if ((item == RSV_CLOTH || (item >= ITM_CLOTH_START && item < ITM_CLOTH_END) || item == RSV_CLOTH1) == FALSE && item != EMPTY_NO) {
         mFRm_ERRORLINE(247);
         res = TRUE;
     }

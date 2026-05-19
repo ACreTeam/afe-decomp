@@ -1,3 +1,7 @@
+#ifdef __INTELLISENSE__
+#include "m_flashrom.h"
+#endif
+
 static int sChk_lbRTC_ymd_c_NSW(lbRTC_ymd_c* ymd) {
     int res = FALSE;
 
@@ -22,7 +26,7 @@ static int sChk_lbRTC_ymd_c_NSW(lbRTC_ymd_c* ymd) {
         }
 
         if (res == TRUE) {
-            mFRm_set_errInfo(l_mfrm_err_info, 91, l_mfrm_now_color);
+            mFRm_set_errInfo(l_mfrm_err_info, mFRm_LINE(94, 97), l_mfrm_now_color);
         }
     }
 
@@ -34,10 +38,10 @@ static int sCck_CheckSaveData_radiocard_NSW(Private_c* priv) {
     int res;
 
     if (sChk_lbRTC_ymd_c_NSW(&radiocard_p->last_date)) {
-        mFRm_ERRORLINE(112);
+        mFRm_ERRORLINE(mFRm_LINE(115, 118));
         res = TRUE;
     } else if (radiocard_p->days > mPr_RADIOCARD_MAX_DAYS) {
-        mFRm_ERRORLINE(121);
+        mFRm_ERRORLINE(mFRm_LINE(124, 127));
         res = TRUE;
     } else {
         res = FALSE;
@@ -50,15 +54,15 @@ static int sCck_CheckSaveData_calendar_NSW(Private_c* priv) {
     int res;
 
     if (priv->calendar.edit > 1) {
-        mFRm_ERRORLINE(143);
+        mFRm_ERRORLINE(mFRm_LINE(146, 149));
         res = TRUE;
     } else if (priv->calendar.pad_63 != 0) {
-        mFRm_ERRORLINE(151);
+        mFRm_ERRORLINE(mFRm_LINE(154, 157));
         res = TRUE;
     } else if ((priv->calendar.year < GAME_YEAR_MIN + 1 || priv->calendar.year > GAME_YEAR_MAX - 1 ||
                 priv->calendar.month == 0 || priv->calendar.month > lbRTC_DECEMBER) &&
                (priv->calendar.year != 0 || priv->calendar.month != 0)) {
-        mFRm_ERRORLINE(164);
+        mFRm_ERRORLINE(mFRm_LINE(167, 170));
         res = TRUE;
     } else {
         res = FALSE;
@@ -72,7 +76,7 @@ static int sCck_CheckSaveData_deposit_NSW(Private_c* priv) {
     int deposit = priv->bank_account;
 
     if (deposit < 0 || deposit > mPr_DEPOSIT_MAX) {
-        mFRm_ERRORLINE(184);
+        mFRm_ERRORLINE(mFRm_LINE(187, 190));
         res = TRUE;
     } else {
         res = FALSE;
@@ -86,7 +90,7 @@ static int sCck_CheckSaveData_nw_visitor_NSW(Private_c* priv) {
     int res;
 
     if (sChk_lbRTC_ymd_c_NSW(&nw_visitor_p->last_date) != FALSE && nw_visitor_p->last_date.year != 0) {
-        mFRm_ERRORLINE(204);
+        mFRm_ERRORLINE(mFRm_LINE(207, 210));
         res = TRUE;
     } else {
         res = FALSE;
@@ -115,7 +119,7 @@ static int sCck_CheckSaveData_my_org_no_table_NSW(Private_c* priv) {
     }
 
     if ((u16)field != (u16)((1 << mPr_ORIGINAL_DESIGN_COUNT) - 1) && total != 0) {
-        mFRm_ERRORLINE(239);
+        mFRm_ERRORLINE(mFRm_LINE(242, 245));
         res = TRUE;
     } else {
         res = FALSE;
@@ -128,16 +132,16 @@ static int sCck_CheckSaveData_bridge_NSW() {
     PlusBridge_c* bridge = Save_GetPointer(bridge);
 
     if (sChk_lbRTC_ymd_c_NSW(&bridge->build_date)) {
-        mFRm_ERRORLINE(259);
+        mFRm_ERRORLINE(mFRm_LINE(262, 265));
         return TRUE;
     } else if (bridge->exists || bridge->pending) {
         if (bridge->block_x == 0 || bridge->block_x > FG_BLOCK_X_NUM || bridge->block_z == 0 ||
             bridge->block_z > FG_BLOCK_Z_NUM) {
-            mFRm_ERRORLINE(271);
+            mFRm_ERRORLINE(mFRm_LINE(274, 277));
             return TRUE;
         }
     } else if (bridge->block_x != 0 || bridge->block_z != 0) {
-        mFRm_ERRORLINE(280);
+        mFRm_ERRORLINE(mFRm_LINE(283, 286));
         return TRUE;
     }
 
@@ -154,12 +158,12 @@ static int sCck_CheckSaveData_fishRecord_NSW() {
         mTM_set_renew_time(&ymd, &record->time);
 
         if (record->size < 0) {
-            mFRm_ERRORLINE(307);
+            mFRm_ERRORLINE(mFRm_LINE(310, 313));
             return TRUE;
         }
 
         if (record->size != 0 && sChk_lbRTC_ymd_c_NSW(&ymd) == TRUE) {
-            mFRm_ERRORLINE(316);
+            mFRm_ERRORLINE(mFRm_LINE(319, 322));
             return TRUE;
         }
     }
@@ -173,13 +177,13 @@ static int sCck_CheckSaveData_Anmret_NSW() {
     lbRTC_ymd_c ymd;
 
     if (anmret->npc_id != EMPTY_NO && ITEM_NAME_GET_TYPE(anmret->npc_id) != NAME_TYPE_NPC) {
-        mFRm_ERRORLINE(339);
+        mFRm_ERRORLINE(mFRm_LINE(342, 345));
         res = TRUE;
     } else {
         mTM_set_renew_time(&ymd, &anmret->renew_time);
 
         if (sChk_lbRTC_ymd_c_NSW(&ymd) == TRUE) {
-            mFRm_ERRORLINE(349);
+            mFRm_ERRORLINE(mFRm_LINE(352, 355));
             res = TRUE;
         } else {
             res = FALSE;
@@ -193,7 +197,7 @@ static int sCck_CheckSaveData_LightHouse_NSW() {
     int res;
 
     if (sChk_lbRTC_ymd_c_NSW(&Save_Get(LightHouse).renew_time) == TRUE) {
-        mFRm_ERRORLINE(368);
+        mFRm_ERRORLINE(mFRm_LINE(371, 374));
         res = TRUE;
     } else {
         res = FALSE;

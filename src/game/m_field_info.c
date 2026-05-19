@@ -1,5 +1,6 @@
 #include "m_field_info.h"
 
+#include "m_flashrom.h"
 #include "m_scene_table.h"
 #include "m_random_field.h"
 #include "m_common_data.h"

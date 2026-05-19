@@ -30,9 +30,7 @@ static int sChk_CheckSaveData_komatu() {
 
             item = cloth->item;
             if (item != EMPTY_NO) {
-                int valid_cloth = item == RSV_CLOTH || (item >= ITM_CLOTH000 && item < ITM_CLOTH_END);
-
-                if (valid_cloth == FALSE) {
+                if ((item == RSV_CLOTH || (item >= ITM_CLOTH000 && item < ITM_CLOTH_END) || item == RSV_CLOTH1) == FALSE) {
                     return TRUE;
                 }
             }

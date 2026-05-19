@@ -1,26 +1,34 @@
+#ifdef __INTELLISENSE__
+#include "m_flashrom.h"
+#endif
+#include "m_text.h"
 #include "m_notice.h"
 #include "m_font.h"
 
 static int sChk_board_save_check() {
+    static u16 body2[MAIL_BODY_LEN];
     mNtc_board_post_c* board = Save_Get(noticeboard);
     int max = mNtc_notice_write_num();
+    u16* msg2;
     int i;
     int j;
 
     for (i = 0; i < max; i++) {
         u8* msg = board->message;
         if (lbRTC_time_c_save_data_check(&board->post_time)) {
-            mFRm_ERRORLINE(65);
+            mFRm_ERRORLINE(mFRm_LINE(76, 79));
             return TRUE;
         }
 
+        msg2 = body2;
+        mTxt_conv_16bit(msg, body2, MAIL_BODY_LEN);
         for (j = 0; j < MAIL_BODY_LEN; j++) {
-            if (mFont_char_save_data_check_unshort(msg[0])) {
-                mFRm_ERRORLINE(73);
+            if (mFont_char_save_data_check_unshort(*msg2)) {
+                mFRm_ERRORLINE(mFRm_LINE(89, 92));
                 return TRUE;
             }
 
-            msg++;
+            msg2++;
         }
 
         board++;
@@ -34,7 +42,7 @@ static int sChk_weather_save_check() {
     u32 intensity = mEnv_SAVE_GET_WEATHER_INTENSITY(Save_Get(weather));
 
     if (intensity >= mEnv_WEATHER_INTENSITY_NUM || weather >= mEnv_WEATHER_LEAVES) {
-        mFRm_ERRORLINE(141);
+        mFRm_ERRORLINE(mFRm_LINE(127, 130));
         return TRUE;
     } else {
         return FALSE;
@@ -55,7 +63,7 @@ static int sChk_snowman_save_check() {
     hour = Save_Get(snowman_hour);
 
     if (year > GAME_YEAR_MAX - 1 || month > lbRTC_DECEMBER || day > 31 || hour >= 24) {
-        mFRm_ERRORLINE(168);
+        mFRm_ERRORLINE(mFRm_LINE(154, 157));
         return TRUE;
     } else {
         int i;
@@ -64,7 +72,7 @@ static int sChk_snowman_save_check() {
             mSN_snowman_data_c* data2 = data->snowmen_data + i;
 
             if (data2->score >= 4 || data2->exists > 1) {
-                mFRm_ERRORLINE(179);
+                mFRm_ERRORLINE(mFRm_LINE(165, 168));
                 return TRUE;
             }
         }

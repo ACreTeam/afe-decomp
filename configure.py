@@ -1224,7 +1224,7 @@ config.libs = [
             Object(Matching, "game/m_field_info.c"),
             Object(Matching, "game/m_field_make.c"),
             Object(Matching, "game/m_fishrecord.c"),
-            Object(NonMatching, "game/m_flashrom.c"),
+            Object(Matching, "game/m_flashrom.c"),
             Object(Matching, "game/m_font.c"),
             Object(Matching, "game/m_fuusen.c"),
             Object(Matching, "game/m_game_dlftbls.c"),

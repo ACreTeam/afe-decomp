@@ -12,6 +12,7 @@
 #include "m_scene_table.h"
 #include "libultra/libultra.h"
 #include "m_cpak.h"
+#include "m_flashrom.h"
 
 extern void flash_rom_and_player_info_clear() {
     Save* save = Common_GetPointer(save);

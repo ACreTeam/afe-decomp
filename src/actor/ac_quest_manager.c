@@ -14,6 +14,7 @@
 #include "libultra/libultra.h"
 #include "m_malloc.h"
 #include "zurumode.h"
+#include "m_flashrom.h"
 
 enum {
     aQMgr_MODE_NORMAL,

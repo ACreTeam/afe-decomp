@@ -1,6 +1,7 @@
 #include "m_common_data.h"
 
 #include "libultra/libultra.h"
+#include "m_flashrom.h"
 
 common_data_t common_data;
 

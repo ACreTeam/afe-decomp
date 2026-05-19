@@ -6,7 +6,7 @@
 #include "m_actor_type.h"
 #include "m_land_h.h"
 #include "lb_rtc.h"
-#include "m_flashrom.h"
+#include "m_flashrom_h.h"
 #include "m_home_h.h"
 #include "m_private.h"
 #include "m_npc.h"

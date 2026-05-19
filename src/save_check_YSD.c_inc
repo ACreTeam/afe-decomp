@@ -1,10 +1,31 @@
+#ifdef __INTELLISENSE__
+#include "m_flashrom.h"
+#endif
+
 static int sCck_CheckSaveData_diary_body_YSD(Private_c* priv) {
     return FALSE;
 }
 
 static int sCCk_Check_ItemName(mActor_name_t item) {
     /* TODO: do not hardcode this */
-    static s16 item1_kinds[ITEM1_CAT_NUM] = { 255, 3, 91, 39, 254, 48, 66, 66, 7, 10, 54, 15, 95, 44, 1, 3 };
+    static s16 item1_kinds[ITEM1_CAT_NUM] = {
+        PAPER_NUM - 1,
+        MONEY_NUM - 1,
+        TOOL_NUM - 1,
+        FISH_NUM - 1,
+        CLOTH_NUM - 1,
+        ETC_NUM - 1,
+        CARPET_NUM - 1,
+        WALL_NUM - 1,
+        FRUIT_NUM - 1,
+        PLANT_NUM - 1,
+        MINIDISK_NUM - 1,
+        DIARY_NUM - 1,
+        TICKET_NUM - 1,
+        INSECT_NUM - 1,
+        HUKUBUKURO_NUM - 1,
+        KABU_NUM - 1,
+    };
 
     mActor_name_t item_name = (mActor_name_t)item;
     int item_type = ITEM_NAME_GET_TYPE(item_name);
@@ -20,7 +41,7 @@ static int sCCk_Check_ItemName(mActor_name_t item) {
             res = TRUE;
         }
     } else if (item_name != EMPTY_NO && item_type != NAME_TYPE_FTR0 && item_type != NAME_TYPE_FTR1) {
-        mFRm_ERRORLINE(110);
+        mFRm_ERRORLINE(mFRm_LINE(113, 116));
         res = TRUE;
     }
 
@@ -34,7 +55,7 @@ static int sCCk_Check_ItemName_Possession(mActor_name_t item) {
         (item >= ITM_RED_PAINT && item <= ITM_BROWN_PAINT) || item == ITM_PRESENT || item == ITM_TOWN_MAP ||
         item == ITM_GOLDEN_NET_PRESENT || item == ITM_GOLDEN_AXE_PRESENT || item == ITM_GOLDEN_SHOVEL_PRESENT ||
         item == ITM_GOLDEN_ROD_PRESENT) {
-        mFRm_ERRORLINE(141);
+        mFRm_ERRORLINE(mFRm_LINE(144, 147));
         res = TRUE;
     }
 

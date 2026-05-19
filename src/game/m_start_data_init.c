@@ -24,6 +24,7 @@
 #include "m_event.h"
 #include "m_common_data.h"
 #include "m_design_ovl.h"
+#include "m_flashrom.h"
 
 static void famicom_emu_initial_common_data() {
     // stubbed
