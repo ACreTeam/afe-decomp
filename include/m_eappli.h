@@ -2,6 +2,7 @@
 #define M_EAPPLI_H
 
 #include "types.h"
+#include "m_eappli_h.h"
 
 #ifdef __cplusplus
 extern "C" {

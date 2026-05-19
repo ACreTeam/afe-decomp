@@ -10,6 +10,7 @@
 #include "m_mail.h"
 #include "m_needlework.h"
 #include "m_calendar.h"
+#include "m_eappli_h.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +79,7 @@ enum {
     mPr_FACE_TYPE_NUM
 };
 
+// @BUG - this does not account for the proper number of e-Cards when including e+ character cards
 #define mPr_ECARD_NUM 367
 #define mPr_ECARD_LETTER_NUM ((mPr_ECARD_NUM + 7) / 8) // 46
 
@@ -179,8 +181,8 @@ typedef struct player_sunburn_s {
 /* sizeof(mPr_carde_data_c) == 0x32 */
 typedef struct player_ecard_data_s {
     /* 0x00 */ lbRTC_ymd_c letter_send_date;               /* date the latest eCard letter was sent */
-    /* 0x04 */ u8 card_letters_sent[mPr_ECARD_LETTER_NUM]; /* bitfield keeping track of which eCard letters have been
-                                                              sent to the player [0, 366] */
+    /* 0x04 */ u8 card_letters_sent[mEA_ECARD_LETTER_NUM]; /* bitfield keeping track of which eCard letters have been
+                                                              sent to the player [0, 446] */
 } mPr_carde_data_c;
 
 #define mPr_MOTHER_MAIL_NORMAL_NUM 7
@@ -290,7 +292,6 @@ struct private_s {
     /* 0x235C */ u8 reset_center_flags;
     /* 0x2360 */ u32 soncho_trophy_field1;           /* remaining tortimer event flags */
     /* 0x2364 */ mPr_carde_data_c ecard_letter_data; /* info relating to scanned e-Card letters */
-    /* 0x2396 */ u8 _2396[10];
     /* 0x23A0 */ mPr_birthday_msg_info_c birthday_msg_info;
     /* 0x264A */ u8 _264A[2];
     /* 0x264C */ mPr_pwdInfo_c pwdInfo[ANIMAL_NUM_MAX];
