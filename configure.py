@@ -1180,7 +1180,7 @@ config.libs = [
             Object(Matching, "game/m_bank_ovl.c"),
             Object(Matching, "game/m_banti.c"),
             Object(Matching, "game/m_bg_item.c"),
-            Object(NonMatching, "game/m_bg_tex.c"),
+            Object(Matching, "game/m_bg_tex.c"),
             Object(Matching, "game/m_bgm.c"),
             Object(Matching, "game/m_birthday_msg.c"),
             Object(NonMatching, "game/m_birthday_ovl.c"),
