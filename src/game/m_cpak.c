@@ -2,8 +2,8 @@
 
 #include "s_cpak.h"
 
+static u8 l_pak_ctrl[0x2420] ATTRIBUTE_ALIGN(32); // @HACK - needed to align the TU's .bss section
 mCPk_c l_paks_info;
-static u8 unused[32] ATTRIBUTE_ALIGN(32); // @HACK - needed to align the TU's .bss section
 
 mCPk_c* g_paks_info_p = { &l_paks_info };
 
