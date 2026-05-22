@@ -302,10 +302,10 @@ static int mAN_set_island_reserve_pos(mActor_name_t* fg_p, Anmhome_c* home) {
     mFI_GetIslandBlockNumX(island_bx_tbl);
     for (i = 0; i < UT_TOTAL_NUM; i++) {
         if (*fg_p == RESERVE_ISLANDER_COTTAGE) {
-            home->block_x = island_bx_tbl[0];
-            home->block_z = mISL_BLOCK_Z;
-            home->ut_x = i & 0xF;
-            home->ut_z = (i >> 4) + 1;
+            home->bx = island_bx_tbl[0];
+            home->bz = mISL_BLOCK_Z;
+            home->ux = i & 0xF;
+            home->uz = (i >> 4) + 1;
             ret = TRUE;
             break;
         }

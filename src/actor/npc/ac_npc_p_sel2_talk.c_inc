@@ -1249,7 +1249,7 @@ static void aNPS2_clr_pl_data_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     mEv_ClearPersonalEventFlag(pl_no);
     mGH_animal_return_init();
     mSC_LightHouse_Delete_Player(pl_no);
-    mNpc_AllClearHPMailPlayerIdx(pl_no);
+    mMpswd_AllClearHPMailPlayerIdx(pl_no);
     mNW_InitPrivateOriginalData(pl_no);
 }
 

@@ -344,8 +344,8 @@ static void mNpcW_GetBlockXZNumExceptHome(int* goal_block_x, int* goal_block_z, 
 
     for (i = 0; i < ANIMAL_NUM_MAX; i++) {
         if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
-            u8 home_block_x = animal->home_info.block_x - 1;
-            u8 home_block_z = animal->home_info.block_z - 1;
+            u8 home_block_x = animal->home_info.bx - 1;
+            u8 home_block_z = animal->home_info.bz - 1;
 
             if (((possible_x >> home_block_x) & 1) == 1) {
                 x_num++;
@@ -404,7 +404,7 @@ static int mNpcW_CheckDiffBlockWalkNpcHome(int block_x, int block_z, mNpcW_info_
         if (info->idx != -1) {
             home = Save_GetPointer(animals[info->idx].home_info);
 
-            if (home->block_x == block_x && home->block_z == block_z) {
+            if (home->bx == block_x && home->bz == block_z) {
                 break;
             }
         }
@@ -436,8 +436,8 @@ static void mNpcW_SetHomeBlockSource(mNpc_walk_c* walk, Animal_c* animal) {
         if (mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
             Anmhome_c* home = &animal->home_info;
 
-            if (home->block_x != 0xFF && home->block_z != 0xFF) {
-                if (mNpcW_CheckDiffBlockWalkNpcHome(home->block_x, home->block_z, walk->info) == TRUE) {
+            if (home->bx != 0xFF && home->bz != 0xFF) {
+                if (mNpcW_CheckDiffBlockWalkNpcHome(home->bx, home->bz, walk->info) == TRUE) {
                     diff_animal_num++;
                     diff_animal_field |= (1 << i);
                 }
@@ -455,8 +455,8 @@ static void mNpcW_SetHomeBlockSource(mNpc_walk_c* walk, Animal_c* animal) {
         for (i = 0; i < ANIMAL_NUM_MAX; i++) {
             if (((diff_animal_field >> i) & 1) == 1) {
                 if (selected == 0) {
-                    l_goal_block[mNpcW_GOAL_BLOCK_HOME][0] = animal->home_info.block_x;
-                    l_goal_block[mNpcW_GOAL_BLOCK_HOME][1] = animal->home_info.block_z;
+                    l_goal_block[mNpcW_GOAL_BLOCK_HOME][0] = animal->home_info.bx;
+                    l_goal_block[mNpcW_GOAL_BLOCK_HOME][1] = animal->home_info.bz;
                     break;
                 } else {
                     selected--;
@@ -520,8 +520,8 @@ extern void mNpcW_SetGoalBlock(mNpcW_info_c* info) {
                 idx = 0;
             }
 
-            info->goal_block_x = Save_Get(animals[idx]).home_info.block_x;
-            info->goal_block_z = Save_Get(animals[idx]).home_info.block_z;
+            info->goal_block_x = Save_Get(animals[idx]).home_info.bx;
+            info->goal_block_z = Save_Get(animals[idx]).home_info.bz;
             break;
         }
 

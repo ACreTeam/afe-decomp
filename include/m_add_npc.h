@@ -2,6 +2,7 @@
 #define M_ADD_NPC_H
 
 #include "types.h"
+#include "m_add_npc_h.h"
 #include "m_npc_personal_id.h"
 #include "m_npc.h"
 #include "ac_npc.h"
@@ -11,7 +12,6 @@ extern "C" {
 #endif
 
 #define mAN_ANIMAL_NUM (ANIMAL_NUM_MAX + ANIMAL_ISLAND_NUM)
-#define mAN_COMPRESS_INFO_TABLE_MAX_SIZE 0x749
 
 typedef struct add_npc_data_s {
     /* 0x00 */ u8 id;

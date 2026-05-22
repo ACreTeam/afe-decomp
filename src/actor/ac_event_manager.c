@@ -927,16 +927,16 @@ static int get_unit_lot4sale(EVENT_MANAGER_ACTOR* evmgr, BlockOrUnit_c* block, B
         nseed %= lot_count;
         
         animal_home = field_info->reserve_buf;
-        lot_block.x = animal_home[nseed].block_x;
-        lot_block.z = animal_home[nseed].block_z;
+        lot_block.x = animal_home[nseed].bx;
+        lot_block.z = animal_home[nseed].bz;
 
         if (mFI_CheckBgDma(lot_block.x, lot_block.z)) {
             ret = nseed;
             continue;
         }
 
-        lot_unit.x = animal_home[nseed].ut_x;
-        lot_unit.z = animal_home[nseed].ut_z;
+        lot_unit.x = animal_home[nseed].ux;
+        lot_unit.z = animal_home[nseed].uz;
 
         mFI_GetBlockUtNum2FG(&item, lot_block.x, lot_block.z, lot_unit.x, lot_unit.z);
         if (mNT_IS_RESERVE(item)) {
@@ -948,10 +948,10 @@ static int get_unit_lot4sale(EVENT_MANAGER_ACTOR* evmgr, BlockOrUnit_c* block, B
 
     if (i == 0 && ret != 0) {
         animal_home = &field_info->reserve_buf[ret];
-        lot_block.x = animal_home->block_x;
-        lot_block.z = animal_home->block_z;
-        lot_unit.x = animal_home->ut_x;
-        lot_unit.z = animal_home->ut_z;
+        lot_block.x = animal_home->bx;
+        lot_block.z = animal_home->bz;
+        lot_unit.x = animal_home->ux;
+        lot_unit.z = animal_home->uz;
         mFI_GetBlockUtNum2FG(&item, lot_block.x, lot_block.z, lot_unit.x, lot_unit.z);
         if (mNT_IS_RESERVE(item)) {
             *block = lot_block;

@@ -486,8 +486,8 @@ static int aQMgr_actor_decide_quest(QUEST_MANAGER_ACTOR* manager) {
         int kind;
 
         aQMgr_actor_decide_quest_type_kind(&type, &kind);
-        occur = aQMgr_actor_check_occur(type, kind, client_animal, client_animal->home_info.block_x,
-                                        client_animal->home_info.block_z);
+        occur = aQMgr_actor_check_occur(type, kind, client_animal, client_animal->home_info.bx,
+                                        client_animal->home_info.bz);
 
         if (occur == TRUE) {
             target->quest_info.quest_type = type;
@@ -516,7 +516,7 @@ static void aQMgr_actor_decide_cloth(mActor_name_t* item, mActor_name_t exclude_
 static void aQMgr_actor_set_contest_work_data(int kind, aQMgr_work_data_c* work, Animal_c* animal) {
     switch (kind) {
         case mQst_CONTEST_KIND_FLOWER: {
-            work->flower.exist_num = mQst_GetFlowerSeedNum(animal->home_info.block_x, animal->home_info.block_z);
+            work->flower.exist_num = mQst_GetFlowerSeedNum(animal->home_info.bx, animal->home_info.bz);
             work->flower.goal_num = work->flower.exist_num + aQMgr_FLOWER_GOAL_NUM;
             work->flower.remain_num = aQMgr_FLOWER_GOAL_NUM;
 
@@ -559,8 +559,8 @@ static int aQMgr_actor_set_quest_data(QUEST_MANAGER_ACTOR* manager, aQMgr_quest_
     // Set the recipient
     switch (set_data_p->to_type) {
         case aQMgr_QUEST_TARGET_RANDOM: {
-            target->to_id = mNpc_GetOtherAnimalPersonalIDOtherBlock(from_id, 1, animal->home_info.block_x,
-                                                                    animal->home_info.block_z, TRUE);
+            target->to_id = mNpc_GetOtherAnimalPersonalIDOtherBlock(from_id, 1, animal->home_info.bx,
+                                                                    animal->home_info.bz, TRUE);
 
             if (target->to_id == NULL) {
                 return aQMgr_NEW_QUEST_ERROR;
@@ -583,7 +583,7 @@ static int aQMgr_actor_set_quest_data(QUEST_MANAGER_ACTOR* manager, aQMgr_quest_
             // copy the quest giver into the exclusion table
             mNpc_CopyAnimalPersonalID(&exclude_ids[mQst_ERRAND_CHAIN_ANIMAL_NUM], &animal->id);
             target->to_id = mNpc_GetOtherAnimalPersonalIDOtherBlock(
-                exclude_ids, ARRAY_COUNT(exclude_ids), animal->home_info.block_x, animal->home_info.block_z, TRUE);
+                exclude_ids, ARRAY_COUNT(exclude_ids), animal->home_info.bx, animal->home_info.bz, TRUE);
 
             if (target->to_id == NULL) {
                 return aQMgr_NEW_QUEST_ERROR;
@@ -780,7 +780,7 @@ static void aQMgr_actor_new_quest(QUEST_MANAGER_ACTOR* manager, int animal_idx, 
             (*manager->talk_common_proc)(manager, aQMgr_TALK_COMMON_GET_SET_DATA);
         } else {
             manager->talk_step = aQMgr_TALK_STEP_NO_OR_NORMAL;
-            mNpc_SetQuestRequestOFF(animal_idx, looks);
+            // mNpc_SetQuestRequestOFF(animal_idx, looks);
         }
 
         mQst_ClearQuestInfo(&manager->target.quest_info);
@@ -1347,7 +1347,7 @@ static int aQMgr_talk_quest_get_contest_hoka_msg_no(mQst_contest_c* contest, Ani
 
     if (kind == mQst_CONTEST_KIND_FLOWER &&
         contest->info.flower_data.flowers_requested >
-            mQst_GetFlowerSeedNum(animal->home_info.block_x, animal->home_info.block_z)) {
+            mQst_GetFlowerSeedNum(animal->home_info.bx, animal->home_info.bz)) {
         hoka_msg_no = 0x1069; // flower quest complete but less flowers than originally requested (some were destroyed)
     }
 
@@ -1530,9 +1530,9 @@ static void aQMgr_actor_talk_select_talk(QUEST_MANAGER_ACTOR* manager) {
                             target_flag = FALSE;
                         }
                     }
-                } else if (mNpc_CheckQuestRequest(animal_idx) == TRUE) {
-                    manager->talk_step = aQMgr_TALK_STEP_NEW_QUEST_OR_NORMAL;
-                    manager->category_msg_no_start = 0x2A6;
+                // } else if (mNpc_CheckQuestRequest(animal_idx) == TRUE) {
+                //     manager->talk_step = aQMgr_TALK_STEP_NEW_QUEST_OR_NORMAL;
+                //     manager->category_msg_no_start = 0x2A6;
                 } else {
                     manager->talk_step = aQMgr_TALK_STEP_NO_OR_NORMAL;
                     manager->category_msg_no_start = 0x2A6;

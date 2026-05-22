@@ -102,7 +102,7 @@ extern void title_action_data_init_start_select(GAME_PLAY* play) {
 
     mTD_rtc_reserve();
     mTM_clear_renew_is();
-    mNpc_ClearAnimalInfo(mNpc_GetInAnimalP());
+    mNpc_ClearAnimalInfo(&mNpc_GetInAnimalP()->animal);
     play->next_scene_no = decide_next_scene_no();
 
     {

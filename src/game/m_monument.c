@@ -265,7 +265,7 @@ extern mActor_name_t mMM_check_monument_in_npc_house_block(ACTOR* actorx) {
         Animal_c* animal = mNpc_GetAnimalInfoP(actorx->npc_id);
 
         if (animal != NULL) {
-            ret = mMM_check_monument_in_block(animal->home_info.block_x, animal->home_info.block_z);
+            ret = mMM_check_monument_in_block(animal->home_info.bx, animal->home_info.bz);
         }
     }
 

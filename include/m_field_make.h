@@ -364,6 +364,7 @@ extern int data_bgd_number;
 extern void mFM_GetPolicePos(int* bx, int* bz, int* ut_x, int* ut_z);
 extern void mFM_DecideBgTexIdx(u8* bg_tex_idx);
 extern void mFM_SetFieldInitData(int bg_disp_num, int bg_disp_size);
+extern int mFM_check_player_clear_item(mActor_name_t item, int chk_type);
 extern void mFM_FieldInit(GAME_PLAY* play);
 extern void mFM_Field_dt();
 extern void mFM_SetBlockKindLoadCombi(GAME* game);

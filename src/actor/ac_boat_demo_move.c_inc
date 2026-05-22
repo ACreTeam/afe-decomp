@@ -33,8 +33,8 @@ static int aBTD_regist_island_npc_info() {
 
     // mNpc_SetNpcList(npclist, animal, mISL_ISLANDER_NUM, TRUE);
 
-    // res = mFI_RegistMoveActorList(npclist->name, animal->home_info.block_x, animal->home_info.block_z,
-    //                               animal->home_info.ut_x, animal->home_info.ut_z, -ANIMAL_NUM_MAX, 0);
+    // res = mFI_RegistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz,
+    //                               animal->home_info.ux, animal->home_info.uz, -ANIMAL_NUM_MAX, 0);
 
     // if (res == TRUE) {
     //     mNPS_set_island_schedule_area(&animal->id);
@@ -47,7 +47,7 @@ static int aBTD_unregist_island_npc_info() {
     // mNpc_NpcList_c* npclist = Common_Get(island_npclist);
     // Island_c* island = Save_GetPointer(island);
     // Animal_c* animal = &island->animal;
-    // int res = mFI_UnregistMoveActorList(npclist->name, animal->home_info.block_x, animal->home_info.block_z);
+    // int res = mFI_UnregistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz);
 
     // if (res == TRUE) {
     //     mNPS_reset_schedule_area(&Save_Get(island).animal.id);

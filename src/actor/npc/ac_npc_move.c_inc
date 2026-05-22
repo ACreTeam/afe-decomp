@@ -301,8 +301,8 @@ static int aNPC_check_entrance_npc(GAME_PLAY* play, NPC_ACTOR* owner, int home_u
 
 static int aNPC_check_entrance_humanoid(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     Anmhome_c* home_p = &nactorx->npc_info.animal->home_info;
-    int home_ux = home_p->block_x * UT_X_NUM + home_p->ut_x;
-    int home_uz = home_p->block_z * UT_Z_NUM + home_p->ut_z;
+    int home_ux = home_p->bx * UT_X_NUM + home_p->ux;
+    int home_uz = home_p->bz * UT_Z_NUM + home_p->uz;
     int ret = aNPC_check_entrance_pl(play, home_ux, home_uz);
 
     if (!ret) {

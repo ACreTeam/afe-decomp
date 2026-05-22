@@ -1004,8 +1004,8 @@ static int aSNMgr_set_go_home_status(SET_NPC_MANAGER_ACTOR* manager, int anm_idx
     };
     // clang-format on
     Animal_c* animal_p = &manager->npc_info.animal_p[anm_idx];
-    int home_bx = animal_p->home_info.block_x;
-    int home_bz = animal_p->home_info.block_z;
+    int home_bx = animal_p->home_info.bx;
+    int home_bz = animal_p->home_info.bz;
     int chk_bx;
     int chk_bz;
     int i;
@@ -1070,7 +1070,7 @@ static void aSNMgr_force_go_home_event_start(SET_NPC_MANAGER_ACTOR* manager) {
         if (((manager->npc_info.exist >> i) & 1) == 1 && ((manager->npc_info.joint_event >> i) & 1) == 0) {
             if (mFI_Wpos2BlockNum(&now_bx, &now_bz, list_p->position) == TRUE && !animal_p->is_home) {
                 if (now_bx == goal_bx && now_bz == goal_bz) {
-                    if (animal_p->home_info.block_x != now_bx || animal_p->home_info.block_z != now_bz) {
+                    if (animal_p->home_info.bx != now_bx || animal_p->home_info.bz != now_bz) {
                         if (!aSNMgr_set_go_home_status(manager, i, goal_bx, goal_bz, player_bx, player_bz)) {
                             aSNMgr_set_stay_home_status(manager, i);
                         }
@@ -1100,7 +1100,7 @@ static void aSNMgr_force_go_home(SET_NPC_MANAGER_ACTOR* manager) {
         if (aSNMgr_chk_exist_and_appear_and_event(manager, mNpcW_APPEAR_STATUS_REGULAR, i) == TRUE) {
             if (mFI_Wpos2BlockNum(&bx, &bz, list_p->position) == TRUE) {
                 if (!aSNMgr_check_move_npc_schedule(schedule_p, animal_p) && *timer_p == 0) {
-                    if (animal_p->home_info.block_x != bx || animal_p->home_info.block_z != bz) {
+                    if (animal_p->home_info.bx != bx || animal_p->home_info.bz != bz) {
                         aSNMgr_set_go_home_status(manager, i, -1, -1, player_bx, player_bz);
                     } else if ((bx != player_bx || bz != player_bz) && animal_p->is_home == TRUE && *winfo_p != NULL) {
                         aSNMgr_go_back_home_sub(manager->npc_info.walk_p, winfo_p, manager->npc_info.winfo_p);

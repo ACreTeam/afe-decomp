@@ -12,6 +12,7 @@
 #include "m_bgm.h"
 #include "m_timeIn_ovl.h"
 #include "dolphin/os/OSRtc.h"
+#include "m_mail_password_check.h"
 
 enum {
     aNPS2_TALK_SETUP_YURE,

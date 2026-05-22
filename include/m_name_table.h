@@ -4413,22 +4413,22 @@ enum ftr1_e {
 #define RSV_GBAORIGINAL5 0xFE93
 #define RSV_GBAORIGINAL6 0xFE94
 #define RSV_GBAORIGINAL7 0xFE95
-#define RSV_ISLAND_FTR0 0xFEB3  /* mRmTp_FTRSIZE_1x1 S */
-#define RSV_ISLAND_FTR1 0xFEB4  /* mRmTp_FTRSIZE_1x1 E */
-#define RSV_ISLAND_FTR2 0xFEB5  /* mRmTp_FTRSIZE_1x1 N */
-#define RSV_ISLAND_FTR3 0xFEB6  /* mRmTp_FTRSIZE_1x1 W */
-#define RSV_ISLAND_FTR4 0xFEB7  /* mRmTp_FTRSIZE_1x1 S */
-#define RSV_ISLAND_FTR5 0xFEB8  /* mRmTp_FTRSIZE_1x1 E */
-#define RSV_ISLAND_FTR6 0xFEB9  /* mRmTp_FTRSIZE_1x1 N */
-#define RSV_ISLAND_FTR7 0xFEBA  /* mRmTp_FTRSIZE_1x1 W */
-#define RSV_ISLAND_FTR8 0xFEBB  /* mRmTp_FTRSIZE_1x2 S */
-#define RSV_ISLAND_FTR9 0xFEBC  /* mRmTp_FTRSIZE_1x2 E */
-#define RSV_ISLAND_FTR10 0xFEBD /* mRmTp_FTRSIZE_1x2 N */
-#define RSV_ISLAND_FTR11 0xFEBE /* mRmTp_FTRSIZE_1x2 W */
-#define RSV_ISLAND_FTR12 0xFEBF /* mRmTp_FTRSIZE_2x2 S */
-#define RSV_ISLAND_FTR13 0xFEC0 /* mRmTp_FTRSIZE_2x2 E */
-#define RSV_ISLAND_FTR14 0xFEC1 /* mRmTp_FTRSIZE_2x2 N */
-#define RSV_ISLAND_FTR15 0xFEC2 /* mRmTp_FTRSIZE_2x2 W */
+#define RSV_ISLAND_FTR0 0xFEA8  /* mRmTp_FTRSIZE_1x1 S */
+#define RSV_ISLAND_FTR1 0xFEA9  /* mRmTp_FTRSIZE_1x1 E */
+#define RSV_ISLAND_FTR2 0xFEAA  /* mRmTp_FTRSIZE_1x1 N */
+#define RSV_ISLAND_FTR3 0xFEAB  /* mRmTp_FTRSIZE_1x1 W */
+#define RSV_ISLAND_FTR4 0xFEAC  /* mRmTp_FTRSIZE_1x1 S */
+#define RSV_ISLAND_FTR5 0xFEAD  /* mRmTp_FTRSIZE_1x1 E */
+#define RSV_ISLAND_FTR6 0xFEAE  /* mRmTp_FTRSIZE_1x1 N */
+#define RSV_ISLAND_FTR7 0xFEAF  /* mRmTp_FTRSIZE_1x1 W */
+#define RSV_ISLAND_FTR8 0xFEB0  /* mRmTp_FTRSIZE_1x2 S */
+#define RSV_ISLAND_FTR9 0xFEB1  /* mRmTp_FTRSIZE_1x2 E */
+#define RSV_ISLAND_FTR10 0xFEB2 /* mRmTp_FTRSIZE_1x2 N */
+#define RSV_ISLAND_FTR11 0xFEB3 /* mRmTp_FTRSIZE_1x2 W */
+#define RSV_ISLAND_FTR12 0xFEB4 /* mRmTp_FTRSIZE_2x2 S */
+#define RSV_ISLAND_FTR13 0xFEB5 /* mRmTp_FTRSIZE_2x2 E */
+#define RSV_ISLAND_FTR14 0xFEB6 /* mRmTp_FTRSIZE_2x2 N */
+#define RSV_ISLAND_FTR15 0xFEB7 /* mRmTp_FTRSIZE_2x2 W */
 #define RSV_WALL_NO 0xFFFE /* interior wall item, no collision */
 #define RSV_NO 0xFFFF /* reserved space, can't interact but no collision */
 

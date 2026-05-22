@@ -10,8 +10,8 @@ static void aNRG2_set_str_j3(void) {
         /* Set msg string 3 & 4 to acre Z & X respectively */
         Anmhome_c* home_p = &Save_Get(animals[idx]).home_info;
 
-        mMsg_Set_free_str(msg_p, mMsg_FREE_STR3, &choume_str[home_p->block_z], 1);
-        mFont_UnintToString(str, sizeof(str), home_p->block_x, sizeof(str), TRUE, FALSE, TRUE);
+        mMsg_Set_free_str(msg_p, mMsg_FREE_STR3, &choume_str[home_p->bz], 1);
+        mFont_UnintToString(str, sizeof(str), home_p->bx, sizeof(str), TRUE, FALSE, TRUE);
         mMsg_Set_free_str(msg_p, mMsg_FREE_STR4, str, sizeof(str));
     }
 

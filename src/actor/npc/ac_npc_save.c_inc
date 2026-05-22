@@ -10,8 +10,8 @@
 static void aNPC_check_stay_my_house(NPC_ACTOR* nactorx) {
     if (nactorx->action.idx == aNPC_ACT_INTO_HOUSE) {
         Animal_c* animal = aNPC_GET_ANM(nactorx);
-        int home_ux = animal->home_info.block_x * UT_X_NUM + animal->home_info.ut_x;
-        int home_uz = animal->home_info.block_z * UT_Z_NUM + animal->home_info.ut_z;
+        int home_ux = animal->home_info.bx * UT_X_NUM + animal->home_info.ux;
+        int home_uz = animal->home_info.bz * UT_Z_NUM + animal->home_info.uz;
 
         if (nactorx->condition_info.ut_x == home_ux && nactorx->condition_info.ut_z == home_uz) {
             aNPC_setup_stay_my_house(nactorx);

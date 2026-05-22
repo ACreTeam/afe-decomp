@@ -15,6 +15,7 @@
 #include "m_field_make.h"
 #include "m_name_table.h"
 #include "ac_npc_h.h"
+#include "m_add_npc_h.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -188,10 +189,10 @@ typedef struct animal_player_maiL_s {
 /* sizeof(Anmhome_c) == 5 */
 typedef struct animal_home_s {
     /* 0x00 */ u8 type_unused; /* Likely the house type, but seems to be unused outside of SChk_Anmhome_c_sub */
-    /* 0x01 */ u8 block_x;     /* acre x position */
-    /* 0x02 */ u8 block_z;     /* acre y position */
-    /* 0x03 */ u8 ut_x;        /* unit x position */
-    /* 0x04 */ u8 ut_z;        /* unit z position */
+    /* 0x01 */ u8 bx;     /* acre x position */
+    /* 0x02 */ u8 bz;     /* acre y position */
+    /* 0x03 */ u8 ux;        /* unit x position */
+    /* 0x04 */ u8 uz;        /* unit z position */
 } Anmhome_c;
 
 /* sizeof(Anmlet_c) == 1 */
@@ -221,7 +222,7 @@ typedef union {
     Anm_bestFtr_c island; /* size = 6 */
 } memuni_u;
 
-/* sizeof(Anmmem_c) == 0x138 */
+/* sizeof(Anmmem_c) == 0x0C8 */
 typedef struct animal_memory_s {
     /* 0x000 */ PersonalID_c memory_player_id; /* personal id of the player memory belongs to */
     /* 0x010 */ lbRTC_time_c last_speak_time;  /* time the player last spoke to this villager */
@@ -230,6 +231,7 @@ typedef struct animal_memory_s {
     /* 0x028 */ s8 friendship;                 /* friendship with the player */
     /* 0x029 */ Anmlet_c letter_info;          /* saved letter flags */
     /* 0x02A */ Anmplmail_c letter;            /* saved letter */
+    /* 0x0C4 */ u32 action_talk;               /* action talk memory */
 } Anmmem_c;
 
 /* sizeof(anmuni) == 8 */
@@ -286,6 +288,12 @@ typedef struct animal_return_s {
     /* 0x03 */ u8 exist;                /* if the villager exists */
     /* 0x04 */ lbRTC_time_c renew_time; /* time that this struct was updated */
 } Anmret_c;
+
+/* sizeof(InAnimal_c) == 0xDD0 */
+typedef struct in_animal_s {
+    /* 0x000 */ Animal_c animal;
+    /* 0x680 */ u8 compress_data[mAN_COMPRESS_INFO_TABLE_MAX_SIZE];
+} InAnimal_c;
 
 typedef struct demo_npc_s {
     mActor_name_t npc_name; /* villager id, E0XX */
@@ -369,7 +377,7 @@ typedef struct npc_sick_info_s {
     /* 0x14 */ lbRTC_time_c heal_time;
     /* 0x1C */ lbRTC_time_c sick_level_change_time;
     /* 0x24 */ lbRTC_time_c recovery_time;
-    /* 0x2C */ PersonalID_c id_gave_medicine[TOTAL_PLAYER_NUM];
+    /* 0x2C */ PersonalID_c id_gave_medicine[mNpc_SICK_LV_NUM];
     /* 0x7C */ u8 healed;
     /* 0x7D */ u8 gave_medicine;
     /* 0x7E */ u8 sick_level;
@@ -380,36 +388,39 @@ extern void mNpc_SubNowNpcMax(u8* npc_max);
 extern void mNpc_ClearAnimalPersonalID(AnmPersonalID_c* pid);
 extern int mNpc_CheckFreeAnimalPersonalID(AnmPersonalID_c* pid);
 extern void mNpc_CopyAnimalPersonalID(AnmPersonalID_c* dst, AnmPersonalID_c* src);
+extern int mNpc_CheckCmpAnimalNameStr(u8* name0, u8* name1);
 extern int mNpc_CheckCmpAnimalPersonalID(AnmPersonalID_c* pid0, AnmPersonalID_c* pid1);
 extern int mNpc_GetAnimalNum();
-extern int mNpc_CheckRemoveExp(Animal_c* animal);
-extern int mNpc_GetRemoveTime(Animal_c* animal);
-extern void mNpc_AddRemoveTime(Animal_c* animal);
-extern void mNpc_SetRemoveExp(Animal_c* animal, u16 remove_exp);
-extern void mNpc_SetRemoveExp(Animal_c* animal, u16 remove_exp);
 extern void mNpc_SetParentName(Animal_c* animal, PersonalID_c* parent_id);
 extern void mNpc_SetParentNameAllAnimal();
 extern void mNpc_ClearAnimalMail(Anmplmail_c* mail);
-extern void mNpc_CopyAnimalMail(Anmplmail_c* dst, Anmplmail_c* src);
 extern void mNpc_ClearAnimalMemory(Anmmem_c* memory, int num);
 extern void mNpc_ClearIslandAnimalMemory(Anmmem_c* memory, int num);
 extern void mNpc_CopyAnimalMemory(Anmmem_c* dst, Anmmem_c* src);
 extern int mNpc_AddFriendship(Anmmem_c* memory, int amount);
+extern int mNpc_AddFriendshipPlayer_id(PersonalID_c* pid, AnmPersonalID_c* anm_id, int amount);
+extern int mNpc_AddFriendshipPlayer(PersonalID_c* pid, mActor_name_t npc_id, int amount);
+extern int mNpc_AddFriendshipNowPlayer(AnmPersonalID_c* anm_id, int amount);
 extern int mNpc_CheckFreeAnimalMemory(Anmmem_c* memory);
 extern void mNpc_RenewalAnimalMemory();
-extern int mNpc_GetOldAnimalMemoryIdx(Anmmem_c* memory, int num);
 extern int mNpc_GetFreeAnimalMemoryIdx(Anmmem_c* memory, int num);
 extern int mNpc_GetOldPlayerAnimalMemoryIdx(Anmmem_c* memory, int num);
 extern int mNpc_ForceGetFreeAnimalMemoryIdx(Animal_c* animal, Anmmem_c* memory, int num);
+extern int mNpc_AddRelationPoint_id(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id, int amount);
+extern int mNpc_AddRelationPoint(Animal_c* from_animal, Animal_c* to_animal, int amount);
+extern int mNpc_GetRelation(Animal_c* from_animal, Animal_c* to_animal);
+extern int mNpc_GetRelationAnimal(Animal_c* from_animal, Animal_c* to_animal);
+extern int mNpc_GetNextRelationPoint(Animal_c* from_animal, Animal_c* to_animal);
+extern int mNpc_GetMatchingPoint(Animal_c* animal0, Animal_c* animal1);
+extern int mNpc_GetAnimal_relation(Animal_c* src_animal, int desired_relation);
+extern int mNpc_GetAnimal_relation_point(Animal_c* src_animal, int points);
 extern void mNpc_SetAnimalMemory(PersonalID_c* pid, AnmPersonalID_c* anm_id, Anmmem_c* memory);
 extern int mNpc_GetAnimalMemoryIdx(PersonalID_c* pid, Anmmem_c* memory, int num);
 extern void mNpc_SetAnimalLastTalk(Animal_c* animal);
 extern void mNpc_SetAnimalPersonalID2Memory(AnmPersonalID_c* anm_id);
 extern int mNpc_GetHighestFriendshipIdx(Anmmem_c* memory, int num);
+extern int mNpc_GetHighestFriendshipIdx_native(Anmmem_c* memory, int num);
 extern int mNpc_GetAnimalMemoryBestFriend(Anmmem_c* memory, int num);
-extern int mNpc_GetAnimalMemoryNum(Anmmem_c* memory, int count);
-extern int mNpc_GetAnimalMemoryLetterNum(Anmmem_c* memory, int count);
-extern int mNpc_GetAnimalMemoryLandKindNum(Anmmem_c* memory, int count);
 extern void mNpc_ClearAnimalInfo(Animal_c* animal);
 extern void mNpc_ClearIslandAnimalInfo(Animal_c* animal);
 extern void mNpc_ClearAnyAnimalInfo(Animal_c* animal, int count);
@@ -418,13 +429,16 @@ extern int mNpc_GetFreeAnimalInfo(Animal_c* animal, int count);
 extern int mNpc_UseFreeAnimalInfo(Animal_c* animal, int count);
 extern void mNpc_CopyAnimalInfo(Animal_c* dst, Animal_c* src);
 extern int mNpc_SearchAnimalinfo(Animal_c* animal, mActor_name_t npc_id, int count);
+extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 npc_add_id);
 extern Animal_c* mNpc_GetAnimalInfoP(mActor_name_t npc_id);
+extern int mNpc_SearchAnimalPersonalID_com(AnmPersonalID_c* anm_pid, Animal_c* animal, int count);
 extern int mNpc_SearchAnimalPersonalID(AnmPersonalID_c* anm_pid);
-extern AnmPersonalID_c* mNpc_GetOtherAnimalPersonalIDOtherBlock(AnmPersonalID_c* exclude_pids, int count, int bx,
+extern AnmPersonalID_c* mNpc_GetOtherAnimalPersonalIDOtherBlock(AnmPersonalID_c* pids, int count, int bx,
                                                                 int bz, int check_flag);
 extern AnmPersonalID_c* mNpc_GetOtherAnimalPersonalID(AnmPersonalID_c* pids, int count);
 extern void mNpc_SetAnimalThisLand(Animal_c* animal, int count);
 extern int mNpc_GetSameLooksNum(u8 looks);
+extern int mNpc_GetSameRaceNum(u8 race);
 extern int mNpc_CheckNpcExistBlock(int idx, int check_bx, int check_bz);
 extern void mNpc_Mail2AnimalMail(Anmplmail_c* animal_mail, Mail_c* mail);
 extern void mNpc_AnimalMail2Mail(Mail_c* mail, Anmplmail_c* animal_mail, PersonalID_c* pid, AnmPersonalID_c* anm_id);
@@ -434,8 +448,11 @@ extern int mNpc_SendMailtoNpc(Mail_c* mail);
 extern void mNpc_ClearRemail(Anmremail_c* remail);
 extern void mNpc_Remail();
 extern u8 mNpc_GetPaperType();
+extern void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
+                                     u8 paper_type, int mail_no);
 extern int mNpc_SendVtdayMail();
 extern int mNpc_CheckFriendship(PersonalID_c* pid, Animal_c* animal);
+extern int mNpc_CheckFriendship_native(PersonalID_c* pid, Animal_c* animal);
 extern int mNpc_SendEventBirthdayCard(PersonalID_c* pid);
 extern int mNpc_SendEventBirthdayCard2(PersonalID_c* pid, int player_no);
 extern int mNpc_SendEventXmasCard(PersonalID_c* pid, int player_no);
@@ -444,6 +461,7 @@ extern int mNpc_GetPresentClothMemoryIdx_rnd(Anmmem_c* memory);
 extern int mNpc_CheckTalkPresentCloth(Animal_c* animal);
 extern void mNpc_ChangePresentCloth();
 extern u8* mNpc_GetWordEnding(ACTOR* actor);
+extern u8* mNpc_GetWordEnding_forTag(ACTOR* actorx);
 extern void mNpc_ResetWordEnding(ACTOR* actorx);
 extern int mNpc_GetFreeEventNpcIdx();
 extern int mNpc_RegistEventNpc(mActor_name_t event_id, mActor_name_t texture_id, mActor_name_t npc_id,
@@ -456,19 +474,23 @@ extern int mNpc_RegistMaskNpc(mActor_name_t mask_id, mActor_name_t npc_id, mActo
 extern void mNpc_UnRegistMaskNpc(mNpc_MaskNpc_c* npc);
 extern void mNpc_ClearMaskNpc();
 extern mNpc_MaskNpc_c* mNpc_GetSameMaskNpc(mActor_name_t mask_id);
+extern u8 mNpc_GetRace(ACTOR* actorx);
 extern u8 mNpc_GetLooks(mActor_name_t npc_id);
+extern u8 mNpc_GetDefAnimalClothLAttr(Animal_c* animal);
+extern u8 mNpc_GetDefAnimalClothHAttr(Animal_c* animal);
 extern void mNpc_SetDefAnimalCloth(Animal_c* animal);
 extern void mNpc_SetDefAnimalUmbrella(Animal_c* animal);
 extern void mNpc_SetDefAnimal(Animal_c* animal, mActor_name_t npc_id, mNpc_Default_Data_c* def_data);
-extern void mNpc_SetHaveAppeared(mActor_name_t npc_id);
-extern void mNpc_SetNpcNameID(Animal_c* animal, int count);
 extern void mNpc_SetDefAnimal_name(Animal_c* animal, mActor_name_t npc_id);
+extern void mNpc_SetHaveAppeared(mActor_name_t npc_id);
+extern int mNpc_GetDefGrowPermissionName(mActor_name_t npc_id);
 extern void mNpc_SetAnimalTitleDemo(mNpc_demo_npc_c* demo_npc, Animal_c* animal, GAME* game);
 extern int mNpc_GetReservedUtNum(int* ut_x, int* ut_z, mActor_name_t* item);
-extern int mNpc_BlockNum2ReservedUtNum(int* ut_x, int* ut_z, int bx, int bz);
 extern void mNpc_MakeReservedListBeforeFieldct(Anmhome_c* reserved, int reserved_num, u8* reserved_count);
 extern void mNpc_MakeReservedListAfterFieldct(Anmhome_c* reserved, int reserved_num, u8* reserved_count, u8 bx_max,
                                               u8 bz_max);
+extern void mNpc_DestroyHouse_block(mFM_fg_c* fg, Anmhome_c* home);
+extern void mNpc_DestroyHouse(Anmhome_c* home);
 extern void mNpc_InitNpcData();
 extern void mNpc_InitNpcList(mNpc_NpcList_c* npclist, int count);
 extern void mNpc_SetNpcList(mNpc_NpcList_c* npclist, Animal_c* animal, int count, int malloc_flag);
@@ -481,17 +503,19 @@ extern int mNpc_CheckFriendAllAnimal(PersonalID_c* pid);
 extern void mNpc_SetNpcFurnitureRandom(mFM_fg_data_c** fg_data_table, int fg_base_id);
 extern mActor_name_t mNpc_GetNpcFurniture(AnmPersonalID_c* anm_id);
 extern void mNpc_ClearInAnimal();
-extern Animal_c* mNpc_GetInAnimalP();
+extern InAnimal_c* mNpc_GetInAnimalP(void);
+extern void mNpc_RenewRemoveHistory(void);
 extern void mNpc_SetRemoveAnimalNo(u8* remove_animal_no, Animal_c* animal, int ignored_idx);
 extern int mNpc_GetGoodbyAnimalIdx(int ignored_idx);
-extern void mNpc_DestroyHouse(Anmhome_c* home);
 extern void mNpc_FirstClearGoodbyMail();
 extern void mNpc_SetGoodbyAnimalMail(AnmPersonalID_c* anm_id);
 extern void mNpc_SendRegisteredGoodbyMail();
-extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, int moving_out);
-extern void mNpc_SetReturnAnimal(Animal_c* return_animal);
+extern void mNpc_GetRemoveAnimal(Animal_c* transferring_animal, u8* compress_data, int moving_out);
+extern void mNpc_ClearJustRemoveAnimal(void);
+extern void mNpc_SetReturnAnimal(InAnimal_c* in_animal);
 extern void mNpc_AddActor_inBlock(mFM_move_actor_c* move_actor_list, u8 bx, u8 bz);
 extern void mNpc_LoadNpcNameString(u8* dst, int name_id);
+extern void mNpc_SetNpcNameID(Animal_c* animal, int num);
 extern void mNpc_GetNpcWorldNameTableNo(u8* dst, mActor_name_t npc_id);
 extern void mNpc_ClearCacheName();
 extern void mNpc_GetNpcWorldNameAnm(u8* dst, AnmPersonalID_c* anm_id);
@@ -511,7 +535,9 @@ extern void mNpc_ForceRemove();
 extern int mNpc_DecideMaskNpc_summercamp(mActor_name_t* npc_id);
 extern int mNpc_RegistMaskNpc_summercamp(mActor_name_t mask_id, mActor_name_t npc_id, mActor_name_t cloth_id);
 extern int mNpc_CheckNpcSet_fgcol(mActor_name_t fg_item, u32 attribute);
+extern int mNpc_CheckNpcSet_fgcol_easy(mActor_name_t fg_item, u32 attribute, int chk_type);
 extern int mNpc_CheckNpcSet(int bx, int bz, int ut_x, int ut_z);
+extern int mNpc_CheckNpcSet_easy(int bx, int bz, int ut_x, int ut_z, int chk_type);
 extern int mNpc_GetMakeUtNuminBlock_hard_area(int* ut_x, int* ut_z, int bx, int bz, int restrict_area);
 extern int mNpc_GetMakeUtNuminBlock_area(int* ut_x, int* ut_z, int bx, int bz, int restrict_area);
 extern int mNpc_GetMakeUtNuminBlock(int* ut_x, int* ut_z, int bx, int bz);
@@ -520,19 +546,46 @@ extern int mNpc_GetMakeUtNuminBlock_hide_hard_area(int* ut_x, int* ut_z, int bx,
 extern void mNpc_ClearTalkInfo();
 extern int mNpc_CheckOverImpatient(int animal_idx, int looks);
 extern int mNpc_GetOverImpatient(int animal_idx, int looks);
-extern int mNpc_CheckQuestRequest(int animal_idx);
-extern void mNpc_SetQuestRequestOFF(int animal_idx, int looks);
 extern void mNpc_TalkInfoMove();
-extern void mNpc_TalkEndMove(int animal_idx, int feel);
+extern void mNpc_TalkEndMove(int animal_idx, int looks);
 extern int mNpc_GetNpcFloorNo();
 extern int mNpc_GetNpcWallNo();
-extern void mNpc_SetTalkBee();
+extern int mNpc_GetLooks2Name_idx(u8* name_p, u8 looks);
+extern int mNpc_GetRace2Name_idx(u8* name_p, u8 race);
+extern s8 mNpc_GetActor2NowPlayerFriendship(ACTOR* actorx);
+extern void mNpc_SetTalkBee(void);
+extern void mNpc_ClearTalkBee(void);
 extern u8 mNpc_GetFishCompleteTalk(mNpc_NpcList_c* npclist);
 extern u8 mNpc_GetInsectCompleteTalk(mNpc_NpcList_c* npclist);
 extern void mNpc_SetFishCompleteTalk(mNpc_NpcList_c* npclist);
 extern void mNpc_SetInsectCompleteTalk(mNpc_NpcList_c* npclist);
 extern void mNpc_SetNpcHomeYpos();
-extern void mNpc_DecideIslandNpc(Animal_c* animal);
+extern int mNpc_SetActionTalkMemory(Anmmem_c* memory, int action);
+extern int mNpc_SetActionTalk(Anmmem_c* memory, PersonalID_c* pid, int action);
+extern void mNpc_UnsetActionTalkMemory(Anmmem_c* memory, int action);
+extern int mNpc_CheckActionTalk(Anmmem_c* memory, int action);
+extern int mNpc_GetActionTalkNum(Anmmem_c* memory);
+extern u32 mNpc_GetMDIdx(mActor_name_t npc_id);
+extern mActor_name_t mNpc_GetMD(mActor_name_t npc_id);
+extern mActor_name_t mNpc_GetNowMD(void);
+extern void mNpc_ClearSick(mNpc_SickInfo_c* sick_info);
+extern void mNpc_HealSick(mNpc_SickInfo_c* sick_info);
+extern int mNpc_GetSickAnimalIdx_com(mNpc_SickInfo_c* sick_info);
+extern int mNpc_GetSickAnimalIdx(void);
+extern int mNpc_GetSickLevel(void);
+extern int mNpc_CheckSickAnimal(Animal_c* animal);
+extern void mNpc_InitSickAnimal(mNpc_SickInfo_c* sick_info, AnmPersonalID_c* anm_id, lbRTC_time_c* time);
+extern int mNpc_PrescribeForSickAnimal(mNpc_SickInfo_c* sick_info, PersonalID_c* pid, lbRTC_time_c* time);
+extern int mNpc_CheckSoonRecoverySick(mNpc_SickInfo_c* sick_info);
+extern void mNpc_HealingSick(mNpc_SickInfo_c* sickInfo);
+extern void mNpc_GetWorseSickAnimal(mNpc_SickInfo_c* sick_info);
+extern int mNpc_CheckSickPersonalID(mNpc_SickInfo_c* sick_info, PersonalID_c* pid);
+extern int mNpc_CheckCmpSickAnimalName(u8* name);
+extern void mNpc_PrintRemoveInfo(gfxprint_t* gfxprint);
+extern void mNpc_SetTalkAnimalIdx_fdebug(AnmPersonalID_c* anm_id);
+extern void mNpc_PrintRelation_fdebug(gfxprint_t* gfxprint);
+extern void mNpc_PrintFriendship_fdebug(gfxprint_t* gfxprint);
+extern int mNpc_get_npc_param(u8* buf, mActor_name_t npc_name);
 extern void mNpc_SetIslandRoomFtr(Animal_c* animal);
 extern void mNpc_SetIslandGetFtr(mActor_name_t ftr);
 extern void mNpc_SetIslandGetFtrtoRoom();
@@ -562,52 +615,19 @@ extern mActor_name_t mNpc_GetRandomBestFtr();
 extern Anmmem_c* mNpc_GetOtherBestFtr(PersonalID_c* pid, mActor_name_t* other_best_ftr, mActor_name_t exist_ftr);
 extern mActor_name_t mNpc_GetPlayerBestFtr(PersonalID_c* pid, mActor_name_t exist_ftr);
 extern mActor_name_t mNpc_GetPlayerFtr(PersonalID_c* pid);
-extern int mNpc_CheckIslandAnimal(Animal_c* animal);
-extern u32 mNpc_GetMDIdx(mActor_name_t npc_id);
-extern u32 mNpc_GetIslandMDIdx();
-extern void mNpc_ClearHPMail(AnmHPMail_c* hp_mail, int count);
-extern void mNpc_AllClearHPMailPlayerIdx(int player_no);
-extern int mNpc_ReceiveHPMail(Mail_c* mail);
-extern void mNpc_SendHPMail();
-extern void mNpc_PrintRemoveInfo(gfxprint_t* gfxprint);
-extern void mNpc_set_addd_bit(int bit);
-extern void mNpc_set_addd_edit_bit(int bit);
-extern void mNpc_set_addd_edit_info(int mtype, int disp_add);
-extern void mNpc_SetTalkAnimalIdx_fdebug(AnmPersonalID_c* anm_id);
-extern void mNpc_PrintFriendship_fdebug(gfxprint_t* gfxprint);
-extern void mNpc_PrintRelation_fdebug(gfxprint_t* gfxprint);
-
-extern int mNpc_SearchIslandAnimalinfo(mActor_name_t npc_id, u8 card_id);
 extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id);
-extern void mNpc_EraseIslandAnimal(int island_idx);
-extern void mNpc_RenewRemoveHistory(void);
-extern int mNpc_GetSickAnimalIdx(void);
-extern int mNpc_CheckSickAnimal(Animal_c* animal);
-extern int mNpc_GetSickLevel(void);
-extern void mNpc_HealSick(mNpc_SickInfo_c* sick_info);
-extern int mNpc_GetRelationAnimal(Animal_c* animal0, Animal_c* animal1);
-extern int mNpc_AddRelationPoint(Animal_c* animal0, Animal_c* animal1, int point);
-extern u8 mNpc_GetDefAnimalClothHAttr(Animal_c* animal);
-extern u8 mNpc_GetDefAnimalClothLAttr(Animal_c* animal);
-extern int mNpc_get_npc_param(u8* buf, mActor_name_t npc_name);
-extern int mNpc_GetMatchingPoint(Animal_c* animal0, Animal_c* animal1);
-extern int mNpc_GetSickAnimalIdx_com(mNpc_SickInfo_c* sick_info);
-extern int mNpc_SearchAnimalPersonalID_com(AnmPersonalID_c* anm_pid, Animal_c* animal, int count);
-extern int mNpc_GetAnimal_relation(Animal_c* src_animal, int desired_relation);
-extern int mNpc_GetAnimal_relation_point(Animal_c* src_animal, int points);
-extern int mNpc_AddRelationPoint_id(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id, int amount);
-extern int mNpc_AddFriendshipNowPlayer(AnmPersonalID_c* anm_id, int amount);
-extern void mNpc_InitSickAnimal(mNpc_SickInfo_c* sick_info, AnmPersonalID_c* anm_id, lbRTC_time_c* time);
-extern void mNpc_LoadMailDataCommon2(Mail_c* mail, PersonalID_c* pid, AnmPersonalID_c* anm_id, mActor_name_t present,
-    u8 paper_type, int mail_no);
-extern int mNpc_CheckCmpSickAnimalName(u8* name);
-extern mActor_name_t mNpc_GetNowMD(void);
-extern mActor_name_t mNpc_GetMD(mActor_name_t npc_id);
-extern void mNpc_DestroyHouse_block(mFM_fg_c* fg, Anmhome_c* home);
+extern int mNpc_CheckIslandAnimalID(AnmPersonalID_c* anm_id);
+extern int mNpc_CheckIslandAnimal(Animal_c* animal);
+extern void mNpc_BuildIslandAnimalHome(void);
+extern int mNpc_EraseIslandAnimal(int island_idx);
+extern void mNpc_ClearIslandFurniture(void);
+extern void mNpc_SetIslandFurniture(void);
+extern mActor_name_t mNpc_GetIslandFurniture(void);
 
 extern mNpc_Default_Data_c npc_def_list[];
 extern s8 npc_grow_list[];
 extern mNpc_NpcHouseData_c npc_house_list[];
+extern mActor_name_t npc_md_list[];
 
 #ifdef __cplusplus
 }

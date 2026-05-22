@@ -25,6 +25,7 @@
 #include "m_common_data.h"
 #include "m_design_ovl.h"
 #include "m_flashrom.h"
+#include "m_mail_password_check.h"
 
 static void famicom_emu_initial_common_data() {
     // stubbed
@@ -482,7 +483,7 @@ extern void mSDI_StartInitAfter(GAME* game, int renew_mode, int init_mode, int m
     mEnv_DecideTodayWindPowerRange();
     mFI_SetClimate(mFI_CLIMATE_0);
     mISL_RestoreIsland();
-    mNpc_SendHPMail();
+    mMpswd_SendHPMail();
 }
 
 typedef int (*mSDI_INIT_PROC)(GAME*, int, int);

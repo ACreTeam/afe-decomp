@@ -1,0 +1,1545 @@
+#ifdef __INTELLISENSE__
+#include "m_npc.h"
+
+#include "m_font.h"
+#include "m_name_table.h"
+#include "m_common_data.h"
+#include "m_mail_check.h"
+#include "m_mail_check_ovl.h"
+#include "m_handbill.h"
+#include "m_string.h"
+#include "m_shop.h"
+#include "m_house.h"
+#include "m_event_map_npc.h"
+#include "ac_my_room.h"
+#include "m_mail_password_check.h"
+#include "libultra/libultra.h"
+#include "jsyswrap.h"
+#include "ac_npc.h"
+#include "m_matching.h"
+#include "m_text.h"
+#include "m_msg.h"
+
+static void mNpc_BuildHouse(mActor_name_t* item_data, u16* deposit_data, mActor_name_t set_item, int x, int z);
+#endif
+
+static mActor_name_t l_island_furniture = EMPTY_NO;
+static int l_mnpc_get_letter = FALSE;
+static int l_mnpc_chk_ftr_msg = FALSE;
+
+typedef struct island_ftr_s {
+    u16 set_ftr_bitfield;
+    mActor_name_t trade_list[mNpc_ISLAND_FTR_SAVE_NUM];
+    mActor_name_t item_list[mNpc_ISLAND_FTR_NUM];
+} mNpc_Island_Ftr_c;
+
+static mNpc_Island_Ftr_c l_mnpc_island_ftr;
+
+static void mNpc_ClearIslandItemList(mActor_name_t* item_list, int count) {
+    bzero(item_list, count * sizeof(mActor_name_t));
+}
+
+static int mNpc_GetFreeIslandItemListIdx(mActor_name_t* item_list, int count) {
+    int idx = -1;
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (*item_list == EMPTY_NO) {
+            idx = i;
+            break;
+        }
+
+        item_list++;
+    }
+
+    return idx;
+}
+
+static int mNpc_SetIslandItemList(mActor_name_t* item_list, int count, mActor_name_t item) {
+    int res = FALSE;
+    int free_idx = mNpc_GetFreeIslandItemListIdx(item_list, count);
+
+    if (free_idx != -1) {
+        item_list[free_idx] = item;
+        res = TRUE;
+    }
+
+    return res;
+}
+
+extern void mNpc_SetIslandRoomFtr(Animal_c* animal) {
+    mNpc_Island_Ftr_c* island_ftr_p = &l_mnpc_island_ftr;
+
+    if (animal != NULL) {
+        Anmmem_c* memory = animal->memories;
+        int i;
+
+        island_ftr_p->set_ftr_bitfield = 0;
+        for (i = 0; i < ANIMAL_MEMORY_NUM; i++) {
+            if (mNpc_CheckFreeAnimalMemory(memory) == FALSE) {
+                island_ftr_p->set_ftr_bitfield |= memory->memuni.island.have_bitfield;
+            }
+
+            memory++;
+        }
+
+        bcopy(&animal->anmuni.island_ftr, island_ftr_p->trade_list, mNpc_ISLAND_FTR_SAVE_NUM * sizeof(mActor_name_t));
+        mNpc_ClearIslandItemList(island_ftr_p->item_list, mNpc_ISLAND_FTR_NUM);
+    }
+}
+
+static int mNpc_GetIslandFtrIdx(mActor_name_t item) {
+    mActor_name_t* island_room = NULL;
+    int n = 0;
+    int idx = -1;
+    int i;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        island_room = mNpc_GetIslandRoomP(Common_Get(cur_island_house_p)->island.animal.id.npc_id);
+    }
+
+    if (island_room != NULL && ITEM_IS_FTR(item)) {
+        if (mNpc_CheckFtrIsIslandBestFtr(item) == TRUE) {
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    if (aMR_CorrespondFurniture(item, *island_room) == TRUE) {
+                        idx = n;
+                        break;
+                    }
+
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    n++;
+                }
+
+                if (n == mNpc_ISLAND_FTR_NUM) {
+                    break;
+                }
+
+                island_room++;
+            }
+        } else {
+            int ftr_unit = aMR_GetFurnitureUnit(item);
+            u32 ftr_variant0;
+            u32 ftr_variant1;
+            int j;
+
+            if (ftr_unit == mRmTp_FTRSIZE_1x1) {
+                ftr_variant0 = RSV_ISLAND_FTR0;
+                ftr_variant1 = RSV_ISLAND_FTR4;
+            } else {
+                ftr_variant0 = (mActor_name_t)(RSV_ISLAND_FTR0 + (ftr_unit + 1) * mRmTp_DIRECT_NUM);
+                ftr_variant1 = EMPTY_NO;
+            }
+
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                        if (*island_room == (mActor_name_t)(ftr_variant0 + j) ||
+                            *island_room == (mActor_name_t)(ftr_variant1 + j)) {
+                            idx = n;
+                            break;
+                        }
+                    }
+
+                    if (idx != -1) {
+                        break;
+                    }
+
+                    n++;
+                }
+
+                if (n == mNpc_ISLAND_FTR_NUM) {
+                    break;
+                }
+
+                island_room++;
+            }
+        }
+    }
+
+    return idx;
+}
+
+extern void mNpc_SetIslandGetFtr(mActor_name_t ftr) {
+    int n;
+    mNpc_Island_Ftr_c* island_ftr_p = &l_mnpc_island_ftr;
+    mActor_name_t* island_room = NULL;
+    int set;
+    int variant;
+    int slot;
+    int i;
+
+    n = 0;
+    set = FALSE;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        island_room = mNpc_GetIslandRoomP(Common_Get(cur_island_house_p)->island.animal.id.npc_id);
+    }
+
+    if (ftr != EMPTY_NO && ITEM_IS_FTR(ftr) && island_room != NULL) {
+        if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
+            int idx = mNpc_GetIslandFtrIdx(ftr);
+
+            if (idx >= 0 && idx < mNpc_ISLAND_FTR_NUM && ((island_ftr_p->set_ftr_bitfield >> idx) & 1) == 0) {
+                island_ftr_p->set_ftr_bitfield |= (1 << idx);
+                set = TRUE;
+            }
+        } else {
+            int ftr_unit = aMR_GetFurnitureUnit(ftr);
+            mActor_name_t ftr_variant0;
+            mActor_name_t ftr_variant1;
+            int j;
+
+            if (ftr_unit == mRmTp_FTRSIZE_1x1) {
+                ftr_variant0 = RSV_ISLAND_FTR0;
+                ftr_variant1 = RSV_ISLAND_FTR4;
+            } else {
+                ftr_variant0 = RSV_ISLAND_FTR0 + (ftr_unit + 1) * 4;
+                ftr_variant1 = EMPTY_NO;
+            }
+
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    variant = -1;
+
+                    for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                        if (*island_room == (mActor_name_t)(ftr_variant0 + j)) {
+                            variant = 0;
+                            break;
+                        } else if (*island_room == (mActor_name_t)(ftr_variant1 + j)) {
+                            variant = 1;
+                            break;
+                        }
+                    }
+
+                    if (variant != -1 && n >= 0 && n < mNpc_ISLAND_FTR_NUM &&
+                        ((island_ftr_p->set_ftr_bitfield >> n) & 1) == 0) {
+                        island_ftr_p->set_ftr_bitfield |= (1 << n);
+
+                        if (variant == 0) {
+                            slot = (ftr_variant0 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
+                        } else {
+                            slot = (ftr_variant1 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
+                        }
+
+                        if (slot < mNpc_ISLAND_FTR_SAVE_NUM) {
+                            ftr = aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, j);
+                            island_ftr_p->trade_list[slot] = ftr;
+                            set = TRUE;
+                        }
+
+                        break;
+                    }
+
+                    n++;
+                }
+
+                if (n == mNpc_ISLAND_FTR_NUM) {
+                    break;
+                }
+
+                island_room++;
+            }
+        }
+
+        if (set == TRUE) {
+            mNpc_SetIslandItemList(island_ftr_p->item_list, mNpc_ISLAND_FTR_NUM, ftr);
+        }
+    }
+}
+
+extern void mNpc_SetIslandGetFtrtoRoom() {
+    mActor_name_t* item_list = l_mnpc_island_ftr.item_list;
+    Animal_c* animal = NULL;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+    }
+
+    if (Now_Private != NULL && animal != NULL) {
+        Private_c* priv = Now_Private;
+        int i;
+
+        for (i = 0; i < mNpc_ISLAND_FTR_NUM; i++) {
+            if (*item_list != EMPTY_NO && ITEM_IS_FTR(*item_list)) {
+                mNpc_SetIslandFtr(&priv->player_ID, *item_list);
+            }
+
+            item_list++;
+        }
+
+        mNpc_RestoreIslandPresentFtr();
+        mNpc_ClearIslandPresentFtrInfo();
+        mNpc_SetIslandRoomFtr(animal);
+    }
+}
+
+extern void mNpc_SetIslandGetLetter(int get) {
+    l_mnpc_get_letter = get;
+}
+
+extern int mNpc_GetIslandGetLetter() {
+    return l_mnpc_get_letter;
+}
+
+extern void mNpc_SetIslandCheckFtrMsg(int set) {
+    l_mnpc_chk_ftr_msg = set;
+}
+
+extern int mNpc_GetIslandCheckFtrMsg() {
+    return l_mnpc_chk_ftr_msg;
+}
+
+typedef struct npc_island_room_data_s {
+    mActor_name_t items[UT_Z_NUM][UT_X_NUM];
+    int wall_no;
+    int floor_no;
+    mActor_name_t npc_id;
+    mActor_name_t desired_items_fg_id;
+} mNpc_Island_Npc_Room_Data_c;
+
+static mNpc_Island_Npc_Room_Data_c l_island_npc_room_list[NPC_ISLANDER_NUM];
+
+typedef struct npc_island_best_fg_id_s {
+    mActor_name_t fg_id_base;
+    mActor_name_t fg_id_top;
+    mActor_name_t fg_id_best;
+} mNpc_Island_Best_Fg_Id_c;
+
+static mNpc_Island_Best_Fg_Id_c l_island_npc_best_fg_id[NPC_ISLANDER_NUM] = {
+    {0x0250, 0x0251, 0x0252},
+    {0x0346, 0x0347, 0x0348},
+    {0x0372, 0x0373, 0x0374},
+    {0x027C, 0x027D, 0x027E},
+    {0x02EA, 0x02EB, 0x02EC},
+    {0x0326, 0x0327, 0x0328},
+    {0x0270, 0x0271, 0x0272},
+    {0x01C0, 0x01C1, 0x01C2},
+    {0x039A, 0x039B, 0x039C},
+    {0x02F0, 0x02F1, 0x02F2},
+    {0x02C4, 0x02C5, 0x02C6},
+    {0x0224, 0x0225, 0x0226},
+    {0x02D4, 0x02D5, 0x02D6},
+    {0x02A4, 0x02A5, 0x02A6},
+    {0x038C, 0x038D, 0x038E},
+    {0x01FE, 0x01FF, 0x0200},
+    {0x032E, 0x032F, 0x0330},
+    {0x01E6, 0x01E7, 0x01E8},
+};
+
+extern void mNpc_ClearIslandNpcRoomData() {
+    bzero(l_island_npc_room_list, sizeof(l_island_npc_room_list));
+}
+
+extern void mNpc_IslandNpcRoomDataSet(mFM_fg_data_c** data_table, int base_idx) {
+    mNpc_Island_Npc_Room_Data_c* dst = l_island_npc_room_list;
+    s8* grow_list = npc_grow_list;
+    mNpc_NpcHouseData_c* house_list = npc_house_list;
+    int islander = 0;
+    int i;
+
+    for (i = 0; i < NPC_ROM_NUM; i++) {
+        if (*grow_list == mNpc_GROW_ISLANDER) {
+            mNpc_Island_Best_Fg_Id_c* best_fg_id = &l_island_npc_best_fg_id[islander];
+            int idx = best_fg_id->fg_id_base - base_idx;
+            mFM_fg_data_c* best_id_p = data_table[idx];
+
+            if (best_id_p != NULL) {
+                dst->wall_no = house_list->wall_id;
+                dst->floor_no = house_list->floor_id;
+                bcopy(data_table[idx]->items, dst->items, sizeof(best_id_p->items));
+                dst->npc_id = NPC_START | i;
+                dst->desired_items_fg_id = best_fg_id->fg_id_best;
+
+                islander++;
+                dst++;
+            }
+        }
+
+        if (islander >= NPC_ISLANDER_NUM) {
+            break;
+        }
+
+        grow_list++;
+        house_list++;
+    }
+}
+
+static mNpc_Island_Npc_Room_Data_c* mNpc_GetIslandRoomInfoP(mActor_name_t npc_id) {
+    mNpc_Island_Npc_Room_Data_c* room_p = l_island_npc_room_list;
+    mNpc_Island_Npc_Room_Data_c* res = NULL;
+    int i;
+
+    if (IS_NPC_ADD_NPC(npc_id)) {
+        AnimalInfo_c* info = mAN_getP_animalInfo(npc_id);
+
+        if (info != NULL) {
+            for (i = 0; i < NPC_ISLANDER_NUM; i++) {
+                if (room_p->desired_items_fg_id == info->room_base_idx) {
+                    res = room_p;
+                    break;
+                }
+
+                room_p++;
+            }
+        }
+    } else {
+        for (i = 0; i < NPC_ISLANDER_NUM; i++) {
+            if (room_p->npc_id == npc_id && npc_id != EMPTY_NO) {
+                res = room_p;
+                break;
+            }
+
+            room_p++;
+        }
+    }
+
+    return res;
+}
+
+extern mActor_name_t* mNpc_GetIslandRoomP(mActor_name_t npc_id) {
+    mActor_name_t* res = NULL;
+    mNpc_Island_Npc_Room_Data_c* room_info = mNpc_GetIslandRoomInfoP(npc_id);
+
+    if (room_info != NULL) {
+        res = room_info->items[0];
+    }
+
+    return res;
+}
+
+extern void mNpc_GetIslandWallFloorIdx(int* wall, int* floor, mActor_name_t npc_id) {
+    AnimalInfo_c* info = NULL;
+    mNpc_Island_Npc_Room_Data_c* room_info;
+
+    if (wall != NULL && floor != NULL) {
+        if (IS_NPC_ADD_NPC(npc_id)) {
+            info = mAN_getP_animalInfo(npc_id);
+        }
+
+        if (info != NULL) {
+            *wall = info->wall_no;
+            *floor = info->floor_no;
+        } else {
+            *wall = FLOOR_NPC008;
+            *floor = FLOOR_NPC032;
+
+            room_info = mNpc_GetIslandRoomInfoP(npc_id);
+            if (room_info != NULL) {
+                *wall = room_info->wall_no;
+                *floor = room_info->floor_no;
+            }
+        }
+
+    }
+}
+
+static mActor_name_t mNpc_getNormalFtr(mActor_name_t rsv_name, Animal_c* animal) {
+    mActor_name_t ftr = EMPTY_NO;
+    int idx;
+
+    if (rsv_name >= RSV_ISLAND_FTR0 && rsv_name <= RSV_ISLAND_FTR15) {
+        int rsv = rsv_name - RSV_ISLAND_FTR0;
+
+        idx = (rsv - (rsv % mNpc_ISLAND_FTR_SAVE_NUM)) / mNpc_ISLAND_FTR_SAVE_NUM;
+        if (idx >= mNpc_ISLAND_FTR_SAVE_NUM) {
+            idx = 0;
+        }
+
+        ftr = animal->anmuni.island_ftr[idx];
+    }
+
+    return ftr;
+}
+
+static int mNpc_CheckIslandNpcRoomFtrIdx(int ftr_idx) {
+    Animal_c* animal = NULL;
+    Anmmem_c* memory;
+    int i;
+    int res = -1;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+    }
+
+    if (animal != NULL && mNpc_CheckFreeAnimalInfo(animal) == FALSE && ftr_idx >= 0 && ftr_idx < mNpc_ISLAND_FTR_NUM) {
+        memory = animal->memories;
+
+        for (i = 0; i < ANIMAL_MEMORY_NUM; i++) {
+            if (mPr_NullCheckPersonalID(&memory->memory_player_id) == FALSE &&
+                ((memory->memuni.island.have_bitfield >> ftr_idx) & 1) == 1) {
+                res = i;
+                break;
+            }
+
+            memory++;
+        }
+    }
+
+    return res;
+}
+
+extern int mNpc_CheckIslandNpcRoomFtrItemNo_keep(mActor_name_t ftr) {
+    mActor_name_t* island_room;
+    int keep;
+    mActor_name_t* trade_list;
+    mNpc_Island_Ftr_c* island_ftr_p;
+    mActor_name_t rsv_item;
+    int n;
+    int found;
+    int i;
+    int j;
+
+    island_ftr_p = &l_mnpc_island_ftr;
+    trade_list = l_mnpc_island_ftr.trade_list;
+    rsv_item = EMPTY_NO;
+    found = FALSE;
+    n = 0;
+    keep = FALSE;
+
+    // @BUG - devs forgot to assign NULL to this which is UB
+#ifdef BUGFIXES
+    island_room = NULL;
+#endif
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        island_room = mNpc_GetIslandRoomP(Common_Get(cur_island_house_p)->island.animal.id.npc_id);
+    }
+
+    if (ITEM_IS_FTR(ftr) && island_room != NULL) {
+        if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
+            int idx = mNpc_GetIslandFtrIdx(ftr);
+
+            if (((idx >= 0) && (idx < mNpc_ISLAND_FTR_NUM)) && ((island_ftr_p->set_ftr_bitfield >> idx) & 1)
+                == 0) {
+                    keep = TRUE;
+            }
+        } else {
+            for (i = 0; i < mNpc_ISLAND_FTR_SAVE_NUM; i++) {
+                /* Why loop through each direction instead of just masking off the rotation bits */
+                for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                    mActor_name_t dir_item = aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, j);
+
+                    if (dir_item == trade_list[i]) {
+                        found = TRUE;
+                        break;
+                    }
+                }
+
+                if (found == TRUE) {
+                    break;
+                }
+            }
+
+            if (found == FALSE) {
+                int ftr_unit = aMR_GetFurnitureUnit(ftr);
+
+                if (ftr_unit == mRmTp_FTRSIZE_1x1) {
+                    if (trade_list[0] == EMPTY_NO) {
+                        rsv_item = RSV_ISLAND_FTR0;
+                    } else if (trade_list[1] == EMPTY_NO) {
+                        rsv_item = RSV_ISLAND_FTR4;
+                    }
+                } else if (ftr_unit != -1) {
+                    ftr_unit++;
+
+                    if (trade_list[ftr_unit] == EMPTY_NO) {
+                        rsv_item = RSV_ISLAND_FTR0 + ftr_unit * mRmTp_DIRECT_NUM;
+                    }
+                }
+
+                if (rsv_item != EMPTY_NO) {
+                    for (i = 0; i < UT_TOTAL_NUM; i++) {
+                        if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                            for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                                if (*island_room == (mActor_name_t)(rsv_item + j)) {
+                                    keep = TRUE;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (keep == TRUE) {
+                            break;
+                        }
+
+                        island_room++;
+                    }
+                }
+            }
+        }
+    }
+
+    return keep;
+}
+
+extern void mNpc_ChangeIslandRoom(mActor_name_t* items) {
+    Animal_c* animal = NULL;
+    int n = 0;
+    int i;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+    }
+
+    if (items != NULL && animal != NULL) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (ITEM_IS_FTR(*items)) {
+                if (mNpc_CheckIslandNpcRoomFtrIdx(n) == -1) {
+                    items[0] = RSV_NO; // cleared because the item hasn't been "obtained" by the islander yet
+                }
+
+                n++;
+            } else if (*items >= RSV_ISLAND_FTR0 && *items <= RSV_ISLAND_FTR15) {
+                if (mNpc_CheckIslandNpcRoomFtrIdx(n) == -1) {
+                    items[0] = RSV_NO; // cleared because the item hasn't been "obtained" by the islander yet
+                } else {
+                    items[0] = mNpc_getNormalFtr(*items, animal); // update with "not best" furniture
+                }
+
+                n++;
+            }
+
+            if (n >= mNpc_ISLAND_FTR_NUM) {
+                break;
+            }
+
+            items++;
+        }
+    }
+}
+
+extern int mNpc_CheckFtrIsIslandBestFtr(mActor_name_t ftr) {
+    mActor_name_t* island_room = NULL;
+    int i;
+    int res = FALSE;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        island_room = mNpc_GetIslandRoomP(Common_Get(cur_island_house_p)->island.animal.id.npc_id);
+    }
+
+    if (island_room != NULL && ITEM_IS_FTR(ftr)) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (aMR_CorrespondFurniture(ftr, *island_room) == TRUE) {
+                res = TRUE;
+                break;
+            }
+
+            island_room++;
+        }
+    }
+
+    return res;
+}
+
+extern int mNpc_CheckFtrIsIslandNormalFtr(mActor_name_t ftr) {
+    int res = FALSE;
+
+    if (ITEM_IS_FTR(ftr) && mNpc_CheckFtrIsIslandBestFtr(ftr) == FALSE) {
+        res = TRUE;
+    }
+
+    return res;
+}
+
+extern int mNpc_SetIslandFtr(PersonalID_c* pid, mActor_name_t ftr) {
+    int n;
+    Anmmem_c* memory;
+    mActor_name_t* island_room;
+    int slot;
+    mActor_name_t rsv_item;
+    Animal_c* animal;
+    int i;
+    int j;
+    int variant;
+    int set;
+    int direct;
+
+    memory = NULL;
+    island_room = NULL;
+    animal = NULL;
+    n = 0;
+    rsv_item = EMPTY_NO;
+    set = FALSE;
+    slot = 0;
+    direct = 0;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        memory = Common_Get(cur_island_house_p)->island.animal.memories;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+    }
+
+    if (ITEM_IS_FTR(ftr) && island_room != NULL && memory != NULL && pid != NULL && mPr_NullCheckPersonalID(pid) == FALSE) {
+        int mem_idx = mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM);
+
+        if (mem_idx == -1) {
+            memory = &memory[mNpc_ForceGetFreeAnimalMemoryIdx(animal, memory, ANIMAL_MEMORY_NUM)];
+            mNpc_SetAnimalMemory(pid, &animal->id, memory);
+        } else {
+            memory = &memory[mem_idx];
+        }
+
+        /* Unnecessary NULL check, memory is guaranteed to exist */
+        if (memory != NULL) {
+            if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
+                int idx = mNpc_GetIslandFtrIdx(ftr);
+
+                if (idx != -1 && mNpc_CheckIslandNpcRoomFtrIdx(idx) == -1) {
+                    memory->memuni.island.have_bitfield |= (1 << idx);
+                    set = TRUE;
+                }
+            } else {
+                mActor_name_t ftr_variant0;
+                mActor_name_t ftr_variant1;
+                int ftr_unit = aMR_GetFurnitureUnit(ftr);
+
+                if (ftr_unit == mRmTp_FTRSIZE_1x1) {
+                    ftr_variant0 = RSV_ISLAND_FTR0;
+                    ftr_variant1 = RSV_ISLAND_FTR4;
+                } else {
+                    ftr_variant0 = RSV_ISLAND_FTR0 + (ftr_unit + 1) * 4;
+                    ftr_variant1 = EMPTY_NO;
+                }
+
+                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                    if (ITEM_IS_FTR(*island_room)) {
+                        n++;
+                    } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                        variant = -1;
+
+                        for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                            if (*island_room == (mActor_name_t)(ftr_variant0 + j)) {
+                                direct = j;
+                                variant = 0;
+                                break;
+                            } else if (*island_room == (mActor_name_t)(ftr_variant1 + j)) {
+                                direct = j;
+                                variant = 1;
+                                break;
+                            }
+                        }
+
+                        if (variant != -1 && mNpc_CheckIslandNpcRoomFtrIdx(n) == -1) {
+                            memory->memuni.island.have_bitfield |= (1 << n);
+
+                            if (variant == 0) {
+                                slot = (ftr_variant0 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
+                            } else {
+                                slot = (ftr_variant1 - RSV_ISLAND_FTR0) / mNpc_ISLAND_FTR_SAVE_NUM;
+                            }
+
+                            if (slot < mNpc_ISLAND_FTR_SAVE_NUM) {
+                                Common_Get(cur_island_house_p)->island.animal.anmuni.island_ftr[slot] =
+                                    aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, direct);
+                                set = TRUE;
+                            }
+
+                            break;
+                        }
+
+                        n++;
+                    }
+
+                    if (n == mNpc_ISLAND_FTR_NUM) {
+                        break;
+                    }
+
+                    island_room++;
+                }
+            }
+        }
+    }
+
+    return set;
+}
+
+extern int mNpc_EraseIslandFtr(mActor_name_t ftr) {
+    int n;
+    Animal_c* animal;
+    mActor_name_t* island_room;
+    mActor_name_t* island_ftr;
+    mActor_name_t rsv_no;
+    int i;
+    int j;
+    int variant;
+    int set;
+
+    animal = NULL;
+    island_room = NULL;
+    island_ftr = NULL;
+    rsv_no = EMPTY_NO;
+    n = 0;
+    set = FALSE;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+        island_ftr = Common_Get(cur_island_house_p)->island.animal.anmuni.island_ftr;
+    }
+
+    if (ITEM_IS_FTR(ftr) && island_room != NULL) {
+        if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
+            int idx = mNpc_GetIslandFtrIdx(ftr);
+            int mem_idx = mNpc_CheckIslandNpcRoomFtrIdx(idx);
+
+            if (idx != -1 && mem_idx != -1) {
+                Anmmem_c* memory = &Common_Get(cur_island_house_p)->island.animal.memories[mem_idx];
+                u16* have_bitfield_p = &memory->memuni.island.have_bitfield;
+                u16 have_bitfield = have_bitfield_p[0] & ~(1 << idx);
+                have_bitfield_p[0] = have_bitfield;
+                set = TRUE;
+            }
+        } else {
+            for (i = 0; i < mNpc_ISLAND_FTR_SAVE_NUM; i++) {
+                for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                    mActor_name_t ftr_rot = aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, j);
+
+                    if (island_ftr != NULL &&ftr_rot == island_ftr[i]) {
+                        rsv_no = RSV_ISLAND_FTR0 + i * mRmTp_DIRECT_NUM;
+                        island_ftr[i] = EMPTY_NO;
+                        break;
+                    }
+                }
+
+                if (rsv_no != EMPTY_NO) {
+                    break;
+                }
+            }
+
+            if (rsv_no != EMPTY_NO) {
+                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                    if (ITEM_IS_FTR(*island_room)) {
+                        n++;
+                    } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                        variant = -1;
+
+                        for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                            if (*island_room == (mActor_name_t)(rsv_no + j)) {
+                                variant = 1;
+                                break;
+                            }
+                        }
+
+                        if (variant != -1) {
+                            int mem_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                            if (mem_idx != -1) {
+                                Anmmem_c* memory = &Common_Get(cur_island_house_p)->island.animal.memories[mem_idx];
+                                u16* have_bitfield_p = &memory->memuni.island.have_bitfield;
+                                u16 have_bitfield = have_bitfield_p[0] & ~(1 << n);
+                                have_bitfield_p[0] = have_bitfield;
+                                set = TRUE;
+
+                                break;
+                            }
+                        }
+
+                        n++;
+                    }
+
+                    if (n == mNpc_ISLAND_FTR_NUM) {
+                        break;
+                    }
+
+                    island_room++;
+                }
+            }
+        }
+    }
+
+    return set;
+}
+
+extern int mNpc_EraseIslandFtr_keep(mActor_name_t ftr) {
+    int n;
+    Animal_c* animal;
+    mNpc_Island_Ftr_c* island_ftr_p;
+    mActor_name_t* island_room;
+    mActor_name_t* trade_list;
+    int set;
+    mActor_name_t rsv_no;
+    int i;
+    int j;
+
+    animal = NULL;
+    island_ftr_p = &l_mnpc_island_ftr;
+    island_room = NULL;
+    trade_list = l_mnpc_island_ftr.trade_list;
+    rsv_no = EMPTY_NO;
+    n = 0;
+    set = FALSE;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+    }
+
+    if (ITEM_IS_FTR(ftr) && island_room != NULL) {
+        if (mNpc_CheckFtrIsIslandBestFtr(ftr) == TRUE) {
+            int idx = mNpc_GetIslandFtrIdx(ftr);
+
+            if (idx >= 0 && idx < mNpc_ISLAND_FTR_NUM && ((island_ftr_p->set_ftr_bitfield >> idx) & 1) == 1) {
+                u16* set_ftr_bitfield_p = &island_ftr_p->set_ftr_bitfield;
+                u16 set_bitfield = set_ftr_bitfield_p[0] & ~(1 << idx);
+                set_ftr_bitfield_p[0] = set_bitfield;
+                set = TRUE;
+            }
+        } else {
+            for (i = 0; i < mNpc_ISLAND_FTR_SAVE_NUM; i++) {
+                for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                    mActor_name_t ftr_rot = aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, j);
+
+                    if (ftr_rot == trade_list[i]) {
+                        rsv_no = RSV_ISLAND_FTR0 + i * mRmTp_DIRECT_NUM;
+                        trade_list[i] = EMPTY_NO;
+                        break;
+                    }
+                }
+
+                if (rsv_no != EMPTY_NO) {
+                    break;
+                }
+            }
+
+            if (rsv_no != EMPTY_NO) {
+                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                    if (ITEM_IS_FTR(*island_room)) {
+                        n++;
+                    } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                        int variant = -1;
+
+                        for (j = 0; j < mRmTp_DIRECT_NUM; j++) {
+                            if (*island_room == (mActor_name_t)(rsv_no + j)) {
+                                variant = 1;
+                                break;
+                            }
+                        }
+
+                        if (variant != -1 && n >= 0 && n < mNpc_ISLAND_FTR_NUM &&
+                            ((island_ftr_p->set_ftr_bitfield >> n) & 1) == 1) {
+                            u16* set_ftr_bitfield_p = &island_ftr_p->set_ftr_bitfield;
+                            u16 set_bitfield = set_ftr_bitfield_p[0] & ~(1 << n);
+                            set_ftr_bitfield_p[0] = set_bitfield;
+                            set = TRUE;
+
+                            break;
+                        }
+
+                        n++;
+                    }
+
+                    if (n == mNpc_ISLAND_FTR_NUM) {
+                        break;
+                    }
+
+                    island_room++;
+                }
+            }
+        }
+    }
+
+    return set;
+}
+
+typedef struct island_present_ftr_s {
+    PersonalID_c pid;
+    mActor_name_t present;
+} mNpc_IslandPresentFtr_c;
+
+static mNpc_IslandPresentFtr_c l_mnpc_island_present_ftr;
+
+static void mNpc_ClearIslandPresentFtrInfo_common(mNpc_IslandPresentFtr_c* info) {
+    mPr_ClearPersonalID(&info->pid);
+    info->present = EMPTY_NO;
+}
+
+extern void mNpc_ClearIslandPresentFtrInfo() {
+    mNpc_ClearIslandPresentFtrInfo_common(&l_mnpc_island_present_ftr);
+}
+
+extern void mNpc_SetIslandPresentFtr() {
+    int i;
+    Animal_c* animal;
+    mNpc_IslandPresentFtr_c* present_ftr_p;
+    Anmmem_c* memory;
+    mActor_name_t* island_room;
+    int ftr_num;
+    int selected;
+    int n;
+    int j;
+
+    animal = NULL;
+    memory = NULL;
+    ftr_num = 0;
+    n = 0;
+    present_ftr_p = &l_mnpc_island_present_ftr;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        memory = animal->memories;
+    }
+
+    mNpc_ClearIslandPresentFtrInfo_common(present_ftr_p);
+
+    if (animal != NULL) {
+        for (j = 0; j < mNpc_ISLAND_FTR_NUM; j++) {
+            if (mNpc_CheckIslandNpcRoomFtrIdx(j) != -1) {
+                ftr_num++;
+            }
+        }
+    }
+
+    if (ftr_num > 1) {
+        selected = RANDOM(ftr_num);
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+
+        if (island_room != NULL) {
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    if (mNpc_CheckIslandNpcRoomFtrIdx(n) != -1) {
+                        if (selected == 0) {
+                            int mem_idx;
+
+                            present_ftr_p->present =
+                                aMR_FurnitureFg_to_FurnitureFgWithDirect(*island_room, mRmTp_DIRECT_SOUTH);
+                            mem_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                            if (mem_idx != -1) {
+                                memory = &memory[mem_idx];
+                                mPr_CopyPersonalID(&present_ftr_p->pid, &memory->memory_player_id);
+                            }
+
+                            break;
+                        } else {
+                            selected--;
+                        }
+                    }
+
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    if (mNpc_CheckIslandNpcRoomFtrIdx(n) != -1) {
+                        if (selected == 0) {
+                            int mem_idx;
+
+                            present_ftr_p->present = mNpc_getNormalFtr(*island_room, animal);
+                            mem_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                            if (mem_idx != -1) {
+                                memory = &memory[mem_idx];
+                                mPr_CopyPersonalID(&present_ftr_p->pid, &memory->memory_player_id);
+                            }
+
+                            break;
+                        } else {
+                            selected--;
+                        }
+                    }
+
+                    n++;
+                }
+
+                island_room++;
+            }
+        }
+    }
+
+    if (mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        mNpc_EraseIslandFtr(mNpc_GetIslandPresentFtr());
+    }
+}
+
+extern void mNpc_RestoreIslandPresentFtr() {
+    PersonalID_c* pid;
+    mActor_name_t present;
+
+    if (mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        present = mNpc_GetIslandPresentFtr();
+        pid = mNpc_GetIslandPresentFtrPersonalID();
+
+        if (present != EMPTY_NO && pid != NULL && mPr_NullCheckPersonalID(pid) == FALSE) {
+            mNpc_SetIslandFtr(pid, present);
+        }
+    }
+}
+
+extern int mNpc_GetIslandRoomFtrNum() {
+    int num = 0;
+    int i;
+
+    for (i = 0; i < mNpc_ISLAND_FTR_NUM; i++) {
+        if (mNpc_CheckIslandNpcRoomFtrIdx(i) != -1) {
+            num++;
+        }
+    }
+
+    return num;
+}
+
+extern int mNpc_CheckIslandPresentFtrIs() {
+    mNpc_IslandPresentFtr_c* present_ftr_p = &l_mnpc_island_present_ftr;
+    int res = FALSE;
+
+    if (present_ftr_p->present != EMPTY_NO && mPr_NullCheckPersonalID(&present_ftr_p->pid) == FALSE) {
+        res = TRUE;
+    }
+
+    return res;
+}
+
+extern mActor_name_t mNpc_GetIslandPresentFtr() {
+    return l_mnpc_island_present_ftr.present;
+}
+
+extern PersonalID_c* mNpc_GetIslandPresentFtrPersonalID() {
+    PersonalID_c* pid = NULL;
+
+    if (mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        pid = &l_mnpc_island_present_ftr.pid;
+    }
+
+    return pid;
+}
+
+extern mActor_name_t mNpc_GetRandomBestFtr() {
+    Animal_c* animal = NULL;
+    mActor_name_t* island_room = NULL;
+    mNpc_Island_Ftr_c* island_ftr_p = &l_mnpc_island_ftr;
+    mActor_name_t* island_room_p = NULL;
+    int other_ftr_num = 0;
+    int n = 0;
+    mActor_name_t best_ftr = EMPTY_NO;
+    mActor_name_t present = mNpc_GetIslandPresentFtr();
+    int selected;
+    int i;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+        island_room_p = island_room;
+    }
+
+    if (island_room != NULL) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (ITEM_IS_FTR(*island_room)) {
+                if (n >= 0 && n < mNpc_ISLAND_FTR_NUM && ((island_ftr_p->set_ftr_bitfield >> n) & 1) == 0 &&
+                    aMR_CorrespondFurniture(present, *island_room) == FALSE) {
+                    other_ftr_num++;
+                }
+
+                n++;
+            } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                n++;
+            }
+
+            island_room++;
+        }
+
+        island_room = island_room_p;
+        n = 0;
+
+        if (island_room != NULL && other_ftr_num > 0) {
+            selected = RANDOM(other_ftr_num);
+
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    if (n >= 0 && n < mNpc_ISLAND_FTR_NUM && ((island_ftr_p->set_ftr_bitfield >> n) & 1) == 0 &&
+                        aMR_CorrespondFurniture(present, *island_room) == FALSE) {
+                        if (selected == 0) {
+                            best_ftr = aMR_FurnitureFg_to_FurnitureFgWithDirect(*island_room,
+                            mRmTp_DIRECT_SOUTH); break;
+                        } else {
+                            selected--;
+                        }
+                    }
+
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    n++;
+                }
+
+                island_room++;
+            }
+        }
+    }
+
+    return best_ftr;
+}
+
+extern Anmmem_c* mNpc_GetOtherBestFtr(PersonalID_c* pid, mActor_name_t* other_best_ftr, mActor_name_t exist_ftr) {
+    Animal_c* animal;
+    mActor_name_t* island_room;
+    Anmmem_c* memory;
+    Anmmem_c* memories;
+    mActor_name_t* island_room_p;
+    int other_ftr_num;
+    int n;
+    int mem_idx;
+    int i;
+
+    animal = NULL;
+    memory = NULL;
+    memories = NULL;
+    island_room = NULL;
+    island_room_p = NULL;
+    other_ftr_num = 0;
+    n = 0;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        memories = animal->memories;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+        island_room_p = island_room;
+    }
+
+    if (island_room != NULL && other_best_ftr != NULL) {
+        other_best_ftr[0] = EMPTY_NO;
+        mem_idx = mNpc_GetAnimalMemoryIdx(pid, memories, ANIMAL_MEMORY_NUM);
+
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (ITEM_IS_FTR(*island_room)) {
+                if (aMR_CorrespondFurniture(*island_room, exist_ftr) == FALSE) {
+                    int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                    /* The item must not have been gifted by the current player */
+                    if (ftr_idx != -1 && ftr_idx != mem_idx) {
+                        other_ftr_num++;
+                    }
+                }
+
+                n++;
+            } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                n++;
+            }
+
+            island_room++;
+        }
+
+        island_room = island_room_p;
+        n = 0;
+
+        if (island_room != NULL && other_ftr_num > 0) {
+            int selected = RANDOM(other_ftr_num);
+
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    if (aMR_CorrespondFurniture(*island_room, exist_ftr) == FALSE) {
+                        int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                        /* The item must not have been gifted by the current player */
+                        if (ftr_idx != -1 && ftr_idx != mem_idx) {
+                            if (selected == 0) {
+                                other_best_ftr[0] =
+                                    aMR_FurnitureFg_to_FurnitureFgWithDirect(*island_room, mRmTp_DIRECT_SOUTH);
+                                memory = &memories[ftr_idx]; /* Memory of the other player who gave it */
+                                break;
+                            } else {
+                                selected--;
+                            }
+                        }
+                    }
+
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    n++;
+                }
+
+                island_room++;
+            }
+        }
+    }
+
+    return memory;
+}
+
+extern mActor_name_t mNpc_GetPlayerBestFtr(PersonalID_c* pid, mActor_name_t exist_ftr) {
+    AnmPersonalID_c* anm_id;
+    Anmmem_c* memories;
+    mActor_name_t* island_room;
+    mActor_name_t* island_room_p;
+    int mem_idx;
+    int other_ftr_num;
+    int n;
+    int selected;
+    int i;
+    mActor_name_t best_ftr;
+
+    anm_id = NULL;
+    memories = NULL;
+    island_room = NULL;
+    island_room_p = NULL;
+    other_ftr_num = 0;
+    n = 0;
+    best_ftr = EMPTY_NO;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        anm_id = &Common_Get(cur_island_house_p)->island.animal.id;
+        memories = Common_Get(cur_island_house_p)->island.animal.memories;
+        island_room = mNpc_GetIslandRoomP(anm_id->npc_id);
+        island_room_p = island_room;
+    }
+
+    if (island_room != NULL && pid != NULL) {
+        mem_idx = mNpc_GetAnimalMemoryIdx(pid, memories, ANIMAL_MEMORY_NUM);
+
+        if (mem_idx != -1) {
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room)) {
+                    if (aMR_CorrespondFurniture(*island_room, exist_ftr) == FALSE) {
+                        int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                        /* The item must have been gifted by the current player */
+                        if (ftr_idx == mem_idx) {
+                            other_ftr_num++;
+                        }
+                    }
+
+                    n++;
+                } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                    n++;
+                }
+
+                island_room++;
+            }
+
+            n = 0;
+
+            if (island_room_p != NULL && other_ftr_num > 0) {
+                selected = RANDOM(other_ftr_num);
+                island_room = island_room_p;
+
+                for (i = 0; i < UT_TOTAL_NUM; i++) {
+                    if (ITEM_IS_FTR(*island_room)) {
+                        if (aMR_CorrespondFurniture(*island_room, exist_ftr) == FALSE) {
+                            int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                            /* The item must have been gifted by the current player */
+                            if (ftr_idx == mem_idx) {
+                                if (selected == 0) {
+                                    best_ftr =
+                                        aMR_FurnitureFg_to_FurnitureFgWithDirect(*island_room,
+                                        mRmTp_DIRECT_SOUTH);
+                                    break;
+                                } else {
+                                    selected--;
+                                }
+                            }
+                        }
+
+                        n++;
+                    } else if (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15) {
+                        n++;
+                    }
+
+                    island_room++;
+                }
+            }
+        }
+    }
+
+    return best_ftr;
+}
+
+extern mActor_name_t mNpc_GetPlayerFtr(PersonalID_c* pid) {
+    Animal_c* animal = NULL;
+    int mem_idx = -1;
+    mActor_name_t* island_room = NULL;
+    mActor_name_t* island_room_p = NULL;
+    mActor_name_t best_ftr = EMPTY_NO;
+    int other_ftr_num = 0;
+    int n = 0;
+    int selected;
+    int i;
+
+    if (Common_Get(cur_island_house_p) != NULL) {
+        animal = &Common_Get(cur_island_house_p)->island.animal;
+        island_room = mNpc_GetIslandRoomP(animal->id.npc_id);
+        island_room_p = island_room;
+        mem_idx = mNpc_GetAnimalMemoryIdx(pid, animal->memories, ANIMAL_MEMORY_NUM);
+    }
+
+    if (island_room != NULL && mem_idx != -1) {
+        for (i = 0; i < UT_TOTAL_NUM; i++) {
+            if (ITEM_IS_FTR(*island_room) || (*island_room >= RSV_ISLAND_FTR0 && *island_room <=
+            RSV_ISLAND_FTR15)) {
+                int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                /* The item must have been gifted by the current player */
+                if (ftr_idx == mem_idx) {
+                    other_ftr_num++;
+                }
+
+                n++;
+            }
+
+            island_room++;
+        }
+
+        island_room = island_room_p;
+        n = 0;
+
+        if (island_room != NULL && other_ftr_num > 0) {
+            selected = RANDOM(other_ftr_num);
+
+            for (i = 0; i < UT_TOTAL_NUM; i++) {
+                if (ITEM_IS_FTR(*island_room) ||
+                    (*island_room >= RSV_ISLAND_FTR0 && *island_room <= RSV_ISLAND_FTR15)) {
+                    int ftr_idx = mNpc_CheckIslandNpcRoomFtrIdx(n);
+
+                    /* The item must have been gifted by the current player */
+                    if (ftr_idx == mem_idx) {
+                        if (selected == 0) {
+                            mActor_name_t ftr = *island_room;
+
+                            if (ftr >= RSV_ISLAND_FTR0 && ftr <= RSV_ISLAND_FTR15) {
+                                ftr = mNpc_getNormalFtr(ftr, animal);
+                            }
+
+                            best_ftr = aMR_FurnitureFg_to_FurnitureFgWithDirect(ftr, mRmTp_DIRECT_SOUTH);
+                            break;
+                        } else {
+                            selected--;
+                        }
+                    }
+
+                    n++;
+                }
+
+                island_room++;
+            }
+        }
+    }
+
+    return best_ftr;
+}
+
+extern int mNpc_CheckIslandAnimalTableNo(mActor_name_t npc_id) {
+    int res = FALSE;
+
+    if (ITEM_NAME_GET_TYPE(npc_id) == NAME_TYPE_NPC) {
+        if (IS_NPC_ADD_NPC(npc_id)) {
+            AnimalInfo_c* animal_info = mAN_getP_animalInfo(npc_id);
+
+            if (animal_info != NULL && animal_info->is_islander == TRUE) {
+                res = TRUE;
+            }
+        } else if ((npc_id & 0xFFF) < NPC_ROM_NUM &&  npc_grow_list[npc_id & 0xFFF] == mNpc_GROW_ISLANDER) {
+            res = TRUE;
+        }
+    }
+
+    return res;
+}
+
+extern int mNpc_CheckIslandAnimalID(AnmPersonalID_c* anm_id) {
+    int res = FALSE;
+
+    if (anm_id != NULL && mNpc_CheckFreeAnimalPersonalID(anm_id) == FALSE) {
+        res = mNpc_CheckIslandAnimalTableNo(anm_id->npc_id);
+    }
+
+    return res;
+}
+
+extern int mNpc_CheckIslandAnimal(Animal_c* animal) {
+    int res = FALSE;
+
+    if (animal != NULL) {
+        res = mNpc_CheckIslandAnimalID(&animal->id);
+    }
+
+    return res;
+}
+
+
+extern void mNpc_BuildIslandAnimalHome(void) {
+    Private_c* priv = Save_Get(private_data);
+    int arrange_idx;
+    Island_c* island;
+    Animal_c* animal;
+    int player_idx;
+
+    for (player_idx = 0; player_idx < PLAYER_NUM; player_idx++, priv++) {
+        if (mPr_NullCheckPersonalID(&priv->player_ID) == FALSE) {
+            arrange_idx = mHS_get_arrange_idx(player_idx);
+            island = &Save_Get(homes[arrange_idx]).island;
+            animal = &island->animal;
+
+            if (island->house_idx != -1 && mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE) {
+                lbRTC_time_c date;
+
+                mTM_ymd_2_time(&date, &island->islander_spawn_date);
+                if (date.day != 0 && date.day != 0xFF && date.day != 0x80 &&
+                    lbRTC_IsEqualTime(&date, Common_GetPointer(time.rtc_time),
+                                      lbRTC_CHECK_YEARS | lbRTC_CHECK_MONTHS | lbRTC_CHECK_DAYS) == FALSE) {
+                    mNpc_BuildHouse(island->fgblock[0][0].items[0], island->deposit[0], COTTAGE_NPC,
+                                    animal->home_info.ux, animal->home_info.uz - 1);
+                    mem_copy((u8*)&island->islander_spawn_date, (u8*)&mTM_rtcTime_ymd_clear_code, sizeof(lbRTC_ymd_c));
+                }
+            }
+        }
+    }
+}
+
+extern int mNpc_EraseIslandAnimal(int island_idx) {
+    int ret = FALSE;
+
+    if (island_idx >= 0 && island_idx < PLAYER_NUM) {
+        Island_c* island = &Save_Get(homes[island_idx]).island;
+
+        if (mNpc_CheckFreeAnimalPersonalID(&island->animal.id) == FALSE) {
+            mActor_name_t* items = island->fgblock[0][0].items[0];
+            Anmhome_c* home = &island->animal.home_info;
+            int ux = home->ux;
+            int uz = home->uz - 1;
+            int ut = uz * UT_X_NUM + ux;
+
+            if (ux > 0 && ux < UT_X_NUM - 1 && uz > 0 && uz < UT_Z_NUM - 1) {
+                mActor_name_t* fg_p = items + ut;
+
+                fg_p[0] = RESERVE_ISLANDER_COTTAGE;
+                fg_p[-1] = EMPTY_NO;
+                fg_p[1] = EMPTY_NO;
+                fg_p[-UT_X_NUM - 1] = EMPTY_NO;
+                fg_p[-UT_X_NUM] = EMPTY_NO;
+                fg_p[-UT_X_NUM + 1] = EMPTY_NO;
+                fg_p[UT_X_NUM - 1] = EMPTY_NO;
+                fg_p[UT_X_NUM] = EMPTY_NO;
+                fg_p[UT_X_NUM + 1] = EMPTY_NO;
+            }
+
+            if (IS_NPC_ADD_NPC(island->animal.id.npc_id)) {
+                mAN_clear_compress_info_table(island->animal.id.npc_id, &Save_Get(add_npc).save.regist_add_npc,
+                                              Common_GetPointer(add_npc_info));
+            }
+        }
+
+        mNpc_ClearIslandAnimalInfo(&island->animal);
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+extern void mNpc_ClearIslandFurniture(void) {
+    l_island_furniture = EMPTY_NO;
+}
+
+extern void mNpc_SetIslandFurniture(void) {
+    int list_type = mSP_LISTTYPE_ISLAND;
+
+    if (mQst_GetRandom(100) < 5) {
+        list_type = mSP_LISTTYPE_ISLANDFAMICOM;
+    }
+
+    mSP_SelectRandomItem_New(NULL, &l_island_furniture, 1, NULL, 0, mSP_KIND_FURNITURE, list_type, FALSE);
+}
+
+extern mActor_name_t mNpc_GetIslandFurniture(void) {
+    return l_island_furniture;
+}

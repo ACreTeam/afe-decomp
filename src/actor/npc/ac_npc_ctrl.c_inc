@@ -976,24 +976,24 @@ static void aNPC_actor_ct_c(ACTOR* actorx, GAME* game) {
 
             if (list_p->name == EMPTY_NO) {
                 mNpc_SetNpcList(list_p, islander_p, 1, TRUE);
-                bx = (int)islander_p->home_info.block_x;
-                bz = (int)islander_p->home_info.block_z;
-                ux = (int)islander_p->home_info.ut_x;
-                uz = (int)islander_p->home_info.ut_z;
+                bx = (int)islander_p->home_info.bx;
+                bz = (int)islander_p->home_info.bz;
+                ux = (int)islander_p->home_info.ux;
+                uz = (int)islander_p->home_info.uz;
             } else {
                 int ret = mFI_Wpos2BkandUtNuminBlock(&bx, &bz, &ux, &uz, list_p->position);
 
                 if (ret == FALSE) {
-                    bx = (int)islander_p->home_info.block_x;
-                    bz = (int)islander_p->home_info.block_z;
-                    ux = (int)islander_p->home_info.ut_x;
-                    uz = (int)islander_p->home_info.ut_z;
+                    bx = (int)islander_p->home_info.bx;
+                    bz = (int)islander_p->home_info.bz;
+                    ux = (int)islander_p->home_info.ux;
+                    uz = (int)islander_p->home_info.uz;
                 } else {
                     if (!mNpc_CheckNpcSet(bx, bz, ux, uz) && !mNpc_GetMakeUtNuminBlock_area(&ux, &uz, bx, bz, 0)) {
-                        bx = (int)islander_p->home_info.block_x;
-                        bz = (int)islander_p->home_info.block_z;
-                        ux = (int)islander_p->home_info.ut_x;
-                        uz = (int)islander_p->home_info.ut_z;
+                        bx = (int)islander_p->home_info.bx;
+                        bz = (int)islander_p->home_info.bz;
+                        ux = (int)islander_p->home_info.ux;
+                        uz = (int)islander_p->home_info.uz;
                     }
                 }
             }

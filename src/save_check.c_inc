@@ -350,8 +350,8 @@ static int sChk_Anmhome_c_sub(Anmhome_c* animal_home, int depth) {
         res = TRUE;
     }
 
-    res |= sChk_block_num_sub(animal_home->block_x, animal_home->block_z);
-    res |= sChk_ut_num_sub(animal_home->ut_x, animal_home->ut_z);
+    res |= sChk_block_num_sub(animal_home->bx, animal_home->bz);
+    res |= sChk_ut_num_sub(animal_home->ux, animal_home->uz);
 
     return res;
 }

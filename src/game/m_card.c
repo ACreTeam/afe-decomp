@@ -4755,7 +4755,7 @@ static int mCD_InitGameStart_bg_make_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
     int private_idx = fileInfo->fileNo;
     int start_cond = fileInfo->chan;
     Private_c* priv;
-    Animal_c* in_animal = mNpc_GetInAnimalP();
+    Animal_c* in_animal = &mNpc_GetInAnimalP()->animal;
     mCD_cardPrivate_c* card_priv;
     u16 copy_protect;
     int res = TRUE;
@@ -6272,8 +6272,8 @@ static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mCD_ClearResetCode();
         mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = mNpc_GetInAnimalP();
-        mNpc_GetRemoveAnimal(in_animal, TRUE);
+        in_animal = &mNpc_GetInAnimalP()->animal;
+        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
         mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
         if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
             priv->exists = FALSE;
@@ -6336,8 +6336,8 @@ static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mCD_ClearResetCode();
         mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = mNpc_GetInAnimalP();
-        mNpc_GetRemoveAnimal(in_animal, TRUE);
+        in_animal = &mNpc_GetInAnimalP()->animal;
+        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
         mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
         if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
             priv->exists = FALSE;
@@ -6661,8 +6661,8 @@ static int mCD_SaveStation_Passport_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mCD_ClearResetCode();
         mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = mNpc_GetInAnimalP();
-        mNpc_GetRemoveAnimal(in_animal, TRUE);
+        in_animal = &mNpc_GetInAnimalP()->animal;
+        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
         mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
         if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
             priv->exists = FALSE;

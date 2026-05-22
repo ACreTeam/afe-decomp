@@ -752,7 +752,7 @@ static void mMP_set_house_data(mMP_Ovl_c* map_ovl, mSM_MenuInfo_c* menu) {
             resident_p->sex = mNpc_GetLooks2Sex(animal->id.looks);
             resident_p->house_layer = mMP_check_layer(Common_Get(npclist[i].house_position.y));
 
-            fgblock_name = mMP_GetFgBlockName(map_ovl, home->block_x, home->block_z);
+            fgblock_name = mMP_GetFgBlockName(map_ovl, home->bx, home->bz);
             house_pos = house_pos_top;
             pos_info = house_pos[0].entries;
 
@@ -761,7 +761,7 @@ static void mMP_set_house_data(mMP_Ovl_c* map_ovl, mSM_MenuInfo_c* menu) {
                     pos_info = house_pos->entries;
 
                     for (j = 0; j < 3; j++, pos_info++) {
-                        if (pos_info->ut_x == home->ut_x && pos_info->ut_z == home->ut_z - 1) {
+                        if (pos_info->ut_x == home->ux && pos_info->ut_z == home->uz - 1) {
                             break;
                         }
                     }
@@ -776,7 +776,7 @@ static void mMP_set_house_data(mMP_Ovl_c* map_ovl, mSM_MenuInfo_c* menu) {
 
             resident_p->house_idx = pos_info->idx;
 
-            block_label = &map_ovl->label_info[home->block_z - 1][home->block_x - 1];
+            block_label = &map_ovl->label_info[home->bz - 1][home->bx - 1];
             block_label->residents[block_label->label_cnt] = resident_p;
             block_label->label_cnt++;
             block_label->label_no = mMP_LABEL_NPC;

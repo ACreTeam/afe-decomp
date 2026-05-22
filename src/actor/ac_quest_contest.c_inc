@@ -99,7 +99,7 @@ static int aQMgr_actor_check_flower(mQst_contest_c* contest, int bx, int bz) {
 static int aQMgr_actor_check_fin_flower(mQst_base_c* quest_info, Animal_c* animal) {
     mQst_contest_c* contest = (mQst_contest_c*)quest_info;
 
-    return aQMgr_actor_check_flower(contest, animal->home_info.block_x, animal->home_info.block_z);
+    return aQMgr_actor_check_flower(contest, animal->home_info.bx, animal->home_info.bz);
 }
 
 static int aQMgr_actor_check_fin_quest_have_item1(mQst_contest_c* contest, u8 item1_category) {
@@ -156,7 +156,7 @@ static void aQMgr_save_contest_flower(aQMgr_regist_c* regist) {
     mQst_contest_c* contest = (mQst_contest_c*)regist->quest_info;
     Anmhome_c* home = &Save_Get(animals[regist->animal_idx]).home_info;
 
-    if (aQMgr_actor_check_flower(contest, home->block_x, home->block_z) == TRUE) {
+    if (aQMgr_actor_check_flower(contest, home->bx, home->bz) == TRUE) {
         mPr_ClearPersonalID(&contest->player_id);
         mPr_CopyPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID);
     }
