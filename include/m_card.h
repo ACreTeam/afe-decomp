@@ -15,11 +15,13 @@ extern "C" {
 #endif
 
 #define mCD_LAND_SAVE_SIZE 0x72000
-#define mCD_ORIGINAL_SAVE_SIZE 0xE000
-#define mCD_MAIL_SAVE_SIZE 0xC000
-#define mCD_DIARY_SAVE_SIZE 0xC000
+#define mCD_MISC_SAVE_SIZE 0x10000
+#define mCD_ORIGINAL_SAVE_SIZE 0x10000
+#define mCD_MAIL_SAVE_SIZE 0xA000
+#define mCD_DIARY_SAVE_SIZE 0xE000
 #define mCD_PRESENT_SAVE_SIZE 0x2000
-#define mCD_PLAYER_SAVE_SIZE 0x6000
+#define mCD_PLAYER_SAVE_SIZE 0x8000
+#define mCD_SD_LAND_SAVE_SIZE 0x3C000
 /* Offset to start of save data when loading from card.
    Skips the comment, banner, & icon data. */
 #define mCD_SAVE_DATA_OFS 0x1440
@@ -75,11 +77,12 @@ enum {
     mCD_FILE_SAVE_MISC,
     mCD_FILE_SAVE_MAIN,
     mCD_FILE_SAVE_MAIN_BAK,
-    mCD_FILE_SAVE_MAIL,
-    mCD_FILE_SAVE_ORIGINAL,
     mCD_FILE_SAVE_DIARY,
     mCD_FILE_PRESENT,
     mCD_FILE_PLAYER,
+    mCD_FILE_MAIL,
+    mCD_FILE_ORIGINAL,
+    mCD_FILE_SD_LAND,
 
     mCD_FILE_NUM
 };
@@ -143,7 +146,7 @@ typedef struct {
 
 #define mCD_KEEP_ORIGINAL_PAGE_COUNT 8
 #define mCD_KEEP_ORIGINAL_COUNT 12
-#define mCD_KEEP_ORIGINAL_FOLDER_NAME_LEN 12
+#define mCD_KEEP_ORIGINAL_FOLDER_NAME_LEN 10
 
 typedef struct {
     u16 checksum;
@@ -157,7 +160,7 @@ typedef struct {
 
 #define mCD_KEEP_MAIL_PAGE_COUNT 8
 #define mCD_KEEP_MAIL_COUNT 20
-#define mCD_KEEP_MAIL_FOLDER_NAME_LEN 12
+#define mCD_KEEP_MAIL_FOLDER_NAME_LEN 10
 
 typedef struct {
     u16 checksum;
@@ -208,13 +211,14 @@ typedef struct {
     int _14;
     s32 game_result;
     int _1C;
+    u8 _20[0x14];
 } mCD_memMgr_fileInfo_c;
 
 typedef struct private_item_keep_s {
     mActor_name_t items[mPr_POCKETS_SLOT_COUNT];
     u8 ticket_expiry_month;
     u8 ticket_storage;
-    u32 item_cond;
+    u8 item_cond[mPr_POCKETS_SLOT_COUNT];
     u32 wallet;
     mQst_delivery_c delivery[mPr_DELIVERY_QUEST_NUM];
     mQst_errand_c errand[mPr_ERRAND_QUEST_NUM];
@@ -225,11 +229,13 @@ typedef struct private_item_keep_s {
     mPr_animal_memory_c animal_memory;
 } mCD_PrivateItem_c;
 
-typedef struct {
+typedef struct card_mem_mgr_s {
     int chan;
+    int _0004;
     int loaded_file_type;
     u32 workArea_size;
     void* workArea;
+    void* _0014;
     u8 _0010;
     mCD_memMgr_fileInfo_c save_home_info;
     mCD_memMgr_fileInfo_c init_game_start_info;
@@ -240,13 +246,17 @@ typedef struct {
     int _0188;
     int _018C;
     int _0190;
+    int _01D4;
     int _0194;
     int _0198;
     int _019C;
     int _01A0;
     int broken_file_idx;
+    int _01DC;
     mCD_PrivateItem_c private_item;
     char filename[32];
+    u8 sd_eng_name[8];
+    u8 _pad[28];
 } mCD_memMgr_c;
 
 /* Bonus letter */
@@ -305,7 +315,6 @@ extern int mCD_CheckStation_bg(s32* chan);
 extern int mCD_SaveStation_NextLand_bg(s32* chan);
 extern int mCD_SaveStation_Passport_bg(s32* chan);
 
-extern void mCD_PrintErrInfo(gfxprint_t* gfxprint);
 extern void mCD_InitAll();
 extern void mCD_LoadLand(void);
 extern void mCD_toNextLand();
@@ -324,6 +333,12 @@ extern int mCD_save_data_main_to_aram(void* src, u32 size, u32 idx);
 extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size);
 extern void mCD_SD_static_clear(void);
 extern int mCD_castingoff_mura_chk(void);
+
+extern void mCD_ClearErrInfo(void);
+extern void mCD_OnErrInfo(int err);
+extern void mCD_OffErrInfo(int err);
+extern void mCD_SetErrResult(s32 result);
+extern void mCD_PrintErrInfo(gfxprint_t* gfxprint);
 
 #ifdef __cplusplus
 }

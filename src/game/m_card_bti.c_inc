@@ -1,4 +1,11 @@
-static u8* mCD_set_bti_data(u8* data, int res_fileNo, int tlut_size, int count, int pal_size) {
+#ifdef __INTELLISENSE__
+#include "m_card.h"
+#include "libultra/libultra.h"
+#include "jsyswrap.h"
+#include "m_malloc.h"
+#endif
+
+static u8* mCD_set_bti_data(u8* data, int res_fileNo, int tlut_size, int count, int pal_size, int random) {
     u32 addr = JW_GetAramAddress(res_fileNo);
     u32 size = ALIGN_NEXT(JW_GetResSizeFileNo(res_fileNo), 32);
     CResTIMG* buf = (CResTIMG*)mCD_malloc_32(size);
@@ -11,14 +18,21 @@ static u8* mCD_set_bti_data(u8* data, int res_fileNo, int tlut_size, int count, 
         _JW_GetResourceAram(addr, (u8*)buf, size);
         DCStoreRangeNoSync(buf, size);
         tex_p = (u8*)(buf) + buf->mImageDataOffset;
-        idx = count > 1 ? RANDOM(count) : count;
+        idx = random ? RANDOM(count) : count;
         
         while (TRUE) {
-            u8* dst = tex_p;
+            u8* dst;
 
             count--;
-            if (count == idx) {
-                dst = tex_p + tlut_size;
+            if (random != FALSE) {
+                if (count == idx) {
+                    dst = tex_p + tlut_size;
+                } else {
+                    dst = tex_p;
+                }
+            } else {
+                dst = tex_p;
+                tex_p += tlut_size;
             }
 
             bcopy(dst, data, tlut_size);

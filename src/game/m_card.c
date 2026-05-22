@@ -34,6 +34,7 @@
 #include "m_cockroach.h"
 #include "m_start_data_init.h"
 #include <string.h>
+#include "m_sdcard.h"
 
 typedef struct card_bg_info {
     CARDFileInfo fileInfo;
@@ -80,68 +81,8 @@ enum {
     mCD_SAVEHOME_BG_PROC_NUM
 };
 
-static char mCD_file_name[32] = "DobutsunomoriP_MURA";
-static int l_mcd_err_debug[mCD_ERROR_NUM] = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE };
-static s32 l_mcd_err_result = CARD_RESULT_READY;
+static char mCD_file_name[32] = "DobutsunomoriE_MURA";
 static mCD_bg_info_c l_mcd_bg_info;
-
-static void mCD_ClearErrInfo(void) {
-    bzero(l_mcd_err_debug, sizeof(l_mcd_err_debug));
-    l_mcd_err_result = 0;
-}
-
-static void mCD_OnErrInfo(int err) {
-    if (err >= 0 && err < mCD_ERROR_NUM) {
-        l_mcd_err_debug[err] = TRUE;
-    }
-}
-
-static void mCD_OffErrInfo(int err) {
-    if (err >= 0 && err < mCD_ERROR_NUM) {
-        l_mcd_err_debug[err] = FALSE;
-    }
-}
-
-static void mCD_SetErrResult(s32 result) {
-    l_mcd_err_result = result;
-}
-
-extern void mCD_PrintErrInfo(gfxprint_t* gfxprint) {
-    gfxprint_color(gfxprint, 250, 100, 250, 255);
-    gfxprint_locate8x8(gfxprint, 22, 3);
-
-    if (l_mcd_err_debug[mCD_ERROR_NOT_ENABLED]) {
-        gfxprint_printf(gfxprint, "N");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_AREA]) {
-        gfxprint_printf(gfxprint, "A");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_WRITE]) {
-        gfxprint_printf(gfxprint, "W");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_READ]) {
-        gfxprint_printf(gfxprint, "R");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_CHECKSUM]) {
-        gfxprint_printf(gfxprint, "C");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_OUTDATED]) {
-        gfxprint_printf(gfxprint, "O");
-    }
-
-    if (l_mcd_err_debug[mCD_ERROR_CREATE]) {
-        gfxprint_printf(gfxprint, "c");
-    }
-
-    if (l_mcd_err_result != CARD_RESULT_READY) {
-        gfxprint_printf(gfxprint, "%d", l_mcd_err_result);
-    }
-}
 
 static void* mCD_malloc_32(u32 size) {
     return zelda_malloc_align(size, 32);
@@ -157,6 +98,9 @@ static int mCD_check_card_common(s32* result, s32 req_sector_size, s32 chan) {
     if (*result == CARD_RESULT_READY && sector_size == req_sector_size) {
         res = mCD_RESULT_SUCCESS;
     } else if (*result != CARD_RESULT_BUSY) {
+        if (*result == CARD_RESULT_READY) {
+            *result = CARD_RESULT_FATAL_ERROR;
+        }
         res = mCD_RESULT_ERROR;
     }
 
@@ -187,8 +131,8 @@ static int mCD_check_card(s32* result, s32 req_sector_size, s32 chan) {
 static int mCD_check_sector_size(u32 req_sector_size, s32 chan) {
     s32 mem_size = 0;
     s32 sector_size = 0;
-    int ms = 0;
     s32 result = CARD_RESULT_BUSY;
+    int ms = 0;
     int res = mCD_RESULT_ERROR;
 
     while (result == CARD_RESULT_BUSY && ms < 500) {
@@ -592,6 +536,41 @@ static int mCD_write_comp_bg_open_file(mCD_bg_info_c* bg_info, s32 chan, s32* re
     return res;
 }
 
+static int mCD_write_comp_bg_next(mCD_bg_info_c* bg_info, s32 chan, s32* result, void* data, const char* filename,
+                                  s32 data_len, u32 length, s32 offset, void** workArea_p, void** read_p,
+                                  CARDStat* stat) {
+    int res;
+    int ofs;
+
+    bg_info->offset += mCD_MEMCARD_SECTORSIZE;
+    ofs = bg_info->offset - offset;
+
+    if (ofs >= data_len) {
+        mCD_close_and_unmount(&bg_info->fileInfo, chan);
+        bg_info->space_proc = mCD_WBC_FINISHED;
+        res = mCD_RESULT_SUCCESS;
+    } else {
+        if (data_len - ofs < mCD_MEMCARD_SECTORSIZE) {
+            bg_info->length = data_len - ofs; /* Remaining size less than memcard sector size */
+        } else {
+            bg_info->length = mCD_MEMCARD_SECTORSIZE;
+        }
+
+        bg_info->data = (void*)((u32)data + ofs);
+        bzero(*read_p, mCD_MEMCARD_SECTORSIZE);
+        *result = CARDReadAsync(&bg_info->fileInfo, *read_p, bg_info->length, bg_info->offset, NULL);
+        if (*result == CARD_RESULT_READY) {
+            bg_info->space_proc = mCD_WBC_READ;
+            res = mCD_RESULT_SUCCESS;
+        } else {
+            mCD_close_and_unmount(&bg_info->fileInfo, chan);
+            res = mCD_RESULT_ERROR;
+        }
+    }
+
+    return res;
+}
+
 static int mCD_write_comp_bg_read(mCD_bg_info_c* bg_info, s32 chan, s32* result, void* data, const char* filename,
                                   s32 data_len, u32 length, s32 offset, void** workArea_p, void** read_p,
                                   CARDStat* stat) {
@@ -609,33 +588,7 @@ static int mCD_write_comp_bg_read(mCD_bg_info_c* bg_info, s32 chan, s32* result,
                 res = mCD_RESULT_ERROR;
             }
         } else {
-            int ofs;
-
-            bg_info->offset += mCD_MEMCARD_SECTORSIZE;
-            ofs = bg_info->offset - offset;
-
-            if (ofs >= data_len) {
-                mCD_close_and_unmount(&bg_info->fileInfo, chan);
-                bg_info->space_proc = mCD_WBC_FINISHED;
-                res = mCD_RESULT_SUCCESS;
-            } else {
-                if (data_len - ofs < mCD_MEMCARD_SECTORSIZE) {
-                    bg_info->length = data_len - ofs; /* Remaining size less than memcard sector size */
-                } else {
-                    bg_info->length = mCD_MEMCARD_SECTORSIZE;
-                }
-
-                bg_info->data = (void*)((u32)data + ofs);
-                bzero(*read_p, mCD_MEMCARD_SECTORSIZE);
-                *result = CARDReadAsync(&bg_info->fileInfo, *read_p, bg_info->length, bg_info->offset, NULL);
-                if (*result == CARD_RESULT_READY) {
-                    bg_info->space_proc = mCD_WBC_READ;
-                    res = mCD_RESULT_SUCCESS;
-                } else {
-                    mCD_close_and_unmount(&bg_info->fileInfo, chan);
-                    res = mCD_RESULT_ERROR;
-                }
-            }
+            res = mCD_write_comp_bg_next(bg_info, chan, result, data, filename, data_len, length, offset, workArea_p, read_p, stat);
         }
     } else if (*result != CARD_RESULT_BUSY) {
         mCD_close_and_unmount(&bg_info->fileInfo, chan);
@@ -649,35 +602,10 @@ static int mCD_write_comp_bg_write(mCD_bg_info_c* bg_info, s32 chan, s32* result
                                    s32 data_len, u32 length, s32 offset, void** workArea_p, void** read_p,
                                    CARDStat* stat) {
     int res = mCD_RESULT_BUSY;
-    int ofs;
 
     *result = CARDGetResultCode((s32)chan);
     if (*result == CARD_RESULT_READY) {
-        bg_info->offset += mCD_MEMCARD_SECTORSIZE;
-        ofs = bg_info->offset - offset;
-
-        if (ofs >= data_len) {
-            mCD_close_and_unmount(&bg_info->fileInfo, chan);
-            bg_info->space_proc = mCD_WBC_FINISHED;
-            res = mCD_RESULT_SUCCESS;
-        } else {
-            if (data_len - ofs < mCD_MEMCARD_SECTORSIZE) {
-                bg_info->length = data_len - ofs; /* Remaining size less than memcard sector size */
-            } else {
-                bg_info->length = mCD_MEMCARD_SECTORSIZE;
-            }
-            bg_info->data = (void*)((u32)data + ofs);
-            bzero(*read_p, mCD_MEMCARD_SECTORSIZE);
-
-            *result = CARDReadAsync(&bg_info->fileInfo, *read_p, bg_info->length, bg_info->offset, NULL);
-            if (*result == CARD_RESULT_READY) {
-                bg_info->space_proc = mCD_WBC_READ;
-                res = mCD_RESULT_SUCCESS;
-            } else {
-                mCD_close_and_unmount(&bg_info->fileInfo, chan);
-                res = mCD_RESULT_ERROR;
-            }
-        }
+        res = mCD_write_comp_bg_next(bg_info, chan, result, data, filename, data_len, length, offset, workArea_p, read_p, stat);
     } else if (*result != CARD_RESULT_BUSY) {
         mCD_close_and_unmount(&bg_info->fileInfo, chan);
         res = mCD_RESULT_ERROR;
@@ -1494,6 +1422,76 @@ static int mCD_rename_file_fg(const char* new_filename, const char* filename, s3
 static u16 l_mcd_copy_protect = 0xFFFF;
 
 // clang-format off
+static u8 l_mcd_font[512] = {
+    0x82, 0xA0, 0x82, 0xA2, 0x82, 0xA4, 0x82, 0xA6,
+    0x82, 0xA8, 0x82, 0xA9, 0x82, 0xAB, 0x82, 0xAD,
+    0x82, 0xAF, 0x82, 0xB1, 0x82, 0xB3, 0x82, 0xB5,
+    0x82, 0xB7, 0x82, 0xB9, 0x82, 0xBB, 0x82, 0xBD,
+    0x82, 0xBF, 0x82, 0xC2, 0x82, 0xC4, 0x82, 0xC6,
+    0x82, 0xC8, 0x82, 0xC9, 0x82, 0xCA, 0x82, 0xCB,
+    0x82, 0xCC, 0x82, 0xCD, 0x82, 0xD0, 0x82, 0xD3,
+    0x82, 0xD6, 0x82, 0xD9, 0x82, 0xDC, 0x82, 0xDD,
+    0x81, 0x40, 0x81, 0x49, 0x81, 0x8D, 0x82, 0xDE,
+    0x82, 0xDF, 0x81, 0x93, 0x81, 0x95, 0x81, 0x8C,
+    0x81, 0x69, 0x81, 0x6A, 0x81, 0x60, 0x88, 0xA4,
+    0x81, 0x43, 0x81, 0x7C, 0x81, 0x44, 0x81, 0xF4,
+    0x82, 0x4F, 0x82, 0x50, 0x82, 0x51, 0x82, 0x52,
+    0x82, 0x53, 0x82, 0x54, 0x82, 0x55, 0x82, 0x56,
+    0x82, 0x57, 0x82, 0x58, 0x81, 0x46, 0x8B, 0x83,
+    0x81, 0x83, 0x81, 0x81, 0x81, 0x84, 0x81, 0x48,
+    0x81, 0x97, 0x82, 0x60, 0x82, 0x61, 0x82, 0x62,
+    0x82, 0x63, 0x82, 0x64, 0x82, 0x65, 0x82, 0x66,
+    0x82, 0x67, 0x82, 0x68, 0x82, 0x69, 0x82, 0x6A,
+    0x82, 0x6B, 0x82, 0x6C, 0x82, 0x6D, 0x82, 0x6E,
+    0x82, 0x6F, 0x82, 0x70, 0x82, 0x71, 0x82, 0x72,
+    0x82, 0x73, 0x82, 0x74, 0x82, 0x75, 0x82, 0x76,
+    0x82, 0x77, 0x82, 0x78, 0x82, 0x79, 0x82, 0xE0,
+    0x93, 0x7B, 0x82, 0xE2, 0x82, 0xE4, 0x81, 0x51,
+    0x82, 0xE6, 0x82, 0x81, 0x82, 0x82, 0x82, 0x83,
+    0x82, 0x84, 0x82, 0x85, 0x82, 0x86, 0x82, 0x87,
+    0x82, 0x88, 0x82, 0x89, 0x82, 0x8A, 0x82, 0x8B,
+    0x82, 0x8C, 0x82, 0x8D, 0x82, 0x8E, 0x82, 0x8F,
+    0x82, 0x90, 0x82, 0x91, 0x82, 0x92, 0x82, 0x93,
+    0x82, 0x94, 0x82, 0x95, 0x82, 0x96, 0x82, 0x97,
+    0x82, 0x98, 0x82, 0x99, 0x82, 0x9A, 0x82, 0xE7,
+    0x82, 0xE8, 0x82, 0xE9, 0x82, 0xEA, 0x81, 0x40,
+    0x81, 0x40, 0x81, 0x42, 0x81, 0x75, 0x81, 0x76,
+    0x81, 0x41, 0x81, 0x45, 0x83, 0x92, 0x83, 0x40,
+    0x83, 0x42, 0x83, 0x44, 0x83, 0x46, 0x83, 0x48,
+    0x83, 0x83, 0x83, 0x85, 0x83, 0x87, 0x83, 0x62,
+    0x81, 0x5B, 0x83, 0x41, 0x83, 0x43, 0x83, 0x45,
+    0x83, 0x47, 0x83, 0x49, 0x83, 0x4A, 0x83, 0x4C,
+    0x83, 0x4E, 0x83, 0x50, 0x83, 0x52, 0x83, 0x54,
+    0x83, 0x56, 0x83, 0x58, 0x83, 0x5A, 0x83, 0x5C,
+    0x83, 0x5E, 0x83, 0x60, 0x83, 0x63, 0x83, 0x65,
+    0x83, 0x67, 0x83, 0x69, 0x83, 0x6A, 0x83, 0x6B,
+    0x83, 0x6C, 0x83, 0x6D, 0x83, 0x6E, 0x83, 0x71,
+    0x83, 0x74, 0x83, 0x77, 0x83, 0x7A, 0x83, 0x7D,
+    0x83, 0x7E, 0x83, 0x80, 0x83, 0x81, 0x83, 0x82,
+    0x83, 0x84, 0x83, 0x86, 0x83, 0x88, 0x83, 0x89,
+    0x83, 0x8A, 0x83, 0x8B, 0x83, 0x8C, 0x83, 0x8D,
+    0x83, 0x8F, 0x83, 0x93, 0x83, 0x94, 0x8F, 0xCE,
+    0x82, 0xEB, 0x82, 0xED, 0x82, 0xF0, 0x82, 0xF1,
+    0x82, 0x9F, 0x82, 0xA1, 0x82, 0xA3, 0x82, 0xA5,
+    0x82, 0xA7, 0x82, 0xE1, 0x82, 0xE3, 0x82, 0xE5,
+    0x82, 0xC1, 0x81, 0xAB, 0x83, 0x4B, 0x83, 0x4D,
+    0x83, 0x4F, 0x83, 0x51, 0x83, 0x53, 0x83, 0x55,
+    0x83, 0x57, 0x83, 0x59, 0x83, 0x5B, 0x83, 0x5D,
+    0x83, 0x5F, 0x83, 0x61, 0x83, 0x64, 0x83, 0x66,
+    0x83, 0x68, 0x83, 0x6F, 0x83, 0x72, 0x83, 0x75,
+    0x83, 0x78, 0x83, 0x7B, 0x83, 0x70, 0x83, 0x73,
+    0x83, 0x76, 0x83, 0x79, 0x83, 0x7C, 0x82, 0xAA,
+    0x82, 0xAC, 0x82, 0xAE, 0x82, 0xB0, 0x82, 0xB2,
+    0x82, 0xB4, 0x82, 0xB6, 0x82, 0xB8, 0x82, 0xBA,
+    0x82, 0xBC, 0x82, 0xBE, 0x82, 0xC0, 0x82, 0xC3,
+    0x82, 0xC5, 0x82, 0xC7, 0x82, 0xCE, 0x82, 0xD1,
+    0x82, 0xD4, 0x82, 0xD7, 0x82, 0xDA, 0x82, 0xCF,
+    0x82, 0xD2, 0x82, 0xD5, 0x82, 0xD8, 0x82, 0xDB,
+};
+// clang-format on
+
+// clang-format off
+#if 0
 static u8 l_mcd_font_1[256] ATTRIBUTE_ALIGN(4) = {
     0xa1, 0xbf, 0xc4, 0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce,
     0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdf, 0xde, 0xe0,
@@ -1512,21 +1510,25 @@ static u8 l_mcd_font_1[256] ATTRIBUTE_ALIGN(4) = {
     0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97,
     0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97, 0x97
 };
+#endif
 // clang-format on
 
-static char l_comment_0_str[32] ATTRIBUTE_ALIGN(4) = "Animal Crossing";
-static char l_comment_1_str[32] ATTRIBUTE_ALIGN(4) = " Town Data";
-static char l_comment_erase_land[32] ATTRIBUTE_ALIGN(4) = "Letters and Designs Data";
-static char l_comment_player_0_str[32] ATTRIBUTE_ALIGN(4) = "Animal Crossing";
-static char l_comment_player_1_str[32] ATTRIBUTE_ALIGN(4) = " is traveling";
-static char l_comment_present_0_str[32] ATTRIBUTE_ALIGN(4) = "Animal Crossing";
-static char l_comment_present_1_str[32] ATTRIBUTE_ALIGN(4) = "Bonus Letters:";
-static char l_comment_gift_1_str[32] ATTRIBUTE_ALIGN(4) = "Gift Letters:";
+static char l_comment_0_str[32] ATTRIBUTE_ALIGN(4) = "どうぶつの森ｅ＋";
+static char l_comment_1_str[32] ATTRIBUTE_ALIGN(4) = "｢｣村の記録";
+static char l_comment_erase_land[32] ATTRIBUTE_ALIGN(4) = "お手紙とデザインの記録";
+static char l_comment_player_0_str[32] ATTRIBUTE_ALIGN(4) = "どうぶつの森ｅ＋";
+static char l_comment_player_1_str[32] ATTRIBUTE_ALIGN(4) = "｢｣さんお出かけ中";
+static char l_comment_present_0_str[32] ATTRIBUTE_ALIGN(4) = "どうぶつの森ｅ＋";
+static char l_comment_present_1_str[32] ATTRIBUTE_ALIGN(4) = "おまけの手紙(通入り)";
+// static char l_comment_gift_1_str[32] ATTRIBUTE_ALIGN(4) = "Gift Letters:";
 
-static char l_mCD_land_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriP_MURA";
-static char l_mCD_land_file_name_dummy[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriP_MURA_d";
-static char l_mCD_player_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriP_PL_";
-static char l_mCD_present_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriP_Omake_";
+static char l_mCD_land_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_MURA";
+static char l_mCD_land_file_name_dummy[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_MURA_d";
+static char l_mCD_player_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_PL_";
+static char l_mCD_present_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_Omake_";
+static char l_mCD_letter0_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_LT0";
+static char l_mCD_mydesign0_file_name[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriE_MD0";
+static char l_mCD_sdland0_file_name[32] ATTRIBUTE_ALIGN(4) = "mura.dbm";
 
 #define l_mCD_land_file_name_len (sizeof("DobutsunomoriP_PL_")-1)
 
@@ -1537,14 +1539,15 @@ typedef struct {
 } mCD_file_entry_c;
 
 static mCD_file_entry_c l_mcd_file_table[] = {
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, sizeof(Save) },
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, sizeof(Save) },
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, sizeof(Save) },
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, mCD_MAIL_SAVE_SIZE },
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, mCD_ORIGINAL_SAVE_SIZE },
-    { l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, mCD_DIARY_SAVE_SIZE },
-    { l_mCD_present_file_name, mCD_PRESENT_SAVE_SIZE, mCD_PRESENT_SAVE_SIZE },
-    { l_mCD_player_file_name, mCD_PLAYER_SAVE_SIZE, mCD_PLAYER_SAVE_SIZE },
+    {l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, mCD_MISC_SAVE_SIZE},
+    {l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, sizeof(Save)},
+    {l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, sizeof(Save)},
+    {l_mCD_land_file_name, mCD_LAND_SAVE_SIZE, mCD_DIARY_SAVE_SIZE},
+    {l_mCD_present_file_name, mCD_PRESENT_SAVE_SIZE, mCD_PRESENT_SAVE_SIZE},
+    {l_mCD_player_file_name, mCD_PLAYER_SAVE_SIZE, mCD_PLAYER_SAVE_SIZE},
+    {l_mCD_letter0_file_name, mCD_MAIL_SAVE_SIZE, mCD_MAIL_SAVE_SIZE},
+    {l_mCD_mydesign0_file_name, mCD_ORIGINAL_SAVE_SIZE, mCD_ORIGINAL_SAVE_SIZE},
+    {l_mCD_sdland0_file_name, mCD_SD_LAND_SAVE_SIZE, mCD_SD_LAND_SAVE_SIZE},
 };
 
 static int l_keepSave_set = FALSE;
@@ -1583,11 +1586,13 @@ extern int mCD_save_data_aram_to_main(void* dst, u32 size, u32 idx) {
         idx = 0;
     }
 
-    aram_block = l_aram_block_p_table[idx];
-    if (aram_block != NULL) {
-        JC__JKRAramToMainRam_block(aram_block, dst, size);
-        DCFlushRange(dst, size);
-        res = TRUE;
+    if (idx != mCD_ARAM_DATA_MAIL) {
+        aram_block = l_aram_block_p_table[idx];
+        if (aram_block != NULL) {
+            JC__JKRAramToMainRam_block(aram_block, dst, size);
+            DCFlushRange(dst, size);
+            res = TRUE;
+        }
     }
 
     return res;
@@ -1601,11 +1606,13 @@ extern int mCD_save_data_main_to_aram(void* src, u32 size, u32 idx) {
         idx = 0;
     }
 
-    aram_block = l_aram_block_p_table[idx];
-    if (aram_block != NULL) {
-        DCFlushRange(src, size);
-        JC__JKRMainRamToAram_block(src, aram_block, size);
-        res = TRUE;
+    if (idx != mCD_ARAM_DATA_MAIL) {
+        aram_block = l_aram_block_p_table[idx];
+        if (aram_block != NULL) {
+            DCFlushRange(src, size);
+            JC__JKRMainRamToAram_block(src, aram_block, size);
+            res = TRUE;
+        }
     }
 
     return res;
@@ -1700,6 +1707,7 @@ static int mCD_TransErrorCode(s32 result_code) {
             return mCD_TRANS_ERR_NONE;
         case CARD_RESULT_NOCARD:
         case CARD_RESULT_WRONGDEVICE:
+        case CARD_RESULT_NOFILE:
             return mCD_TRANS_ERR_NOCARD;
         case CARD_RESULT_IOERROR:
             return mCD_TRANS_ERR_IOERROR;
@@ -1715,8 +1723,9 @@ static int mCD_TransErrorCode(s32 result_code) {
         case CARD_RESULT_NAMETOOLONG:
         case CARD_RESULT_LIMIT:
         case CARD_RESULT_NOPERM:
-        case CARD_RESULT_NOFILE:
             return mCD_TRANS_ERR_GENERIC;
+        case -97:
+            return mCD_TRANS_ERR_NO_FILES;
         case CARD_RESULT_BUSY:
             return mCD_TRANS_ERR_BUSY;
         default:
@@ -1731,6 +1740,7 @@ static int mCD_TransErrorCode_nes(s32 result_code) {
         case CARD_RESULT_WRONGDEVICE:
             return mCD_TRANS_ERR_WRONGDEVICE;
         case CARD_RESULT_NOCARD:
+        case CARD_RESULT_NOFILE:
             return mCD_TRANS_ERR_NOCARD;
         case CARD_RESULT_IOERROR:
             return mCD_TRANS_ERR_IOERROR;
@@ -1746,8 +1756,9 @@ static int mCD_TransErrorCode_nes(s32 result_code) {
         case CARD_RESULT_NAMETOOLONG:
         case CARD_RESULT_LIMIT:
         case CARD_RESULT_NOPERM:
-        case CARD_RESULT_NOFILE:
-            return mCD_TRANS_ERR_GENERIC;
+            return mCD_TRANS_ERR_NOT_MEMCARD;
+        case -97:
+            return mCD_TRANS_ERR_NO_FILES;
         case CARD_RESULT_BUSY:
             return mCD_TRANS_ERR_BUSY;
         default:
@@ -1792,6 +1803,10 @@ static void mCD_ClearMemMgr_com(mCD_memMgr_c* mgr) {
 }
 
 static void mCD_ClearMemMgr_com2(mCD_memMgr_c* mgr) {
+    if (mgr->_0014 != NULL) {
+        zelda_free(mgr->_0014);
+    }
+
     if (mgr->workArea != NULL) {
         zelda_free(mgr->workArea);
     }
@@ -1821,11 +1836,11 @@ typedef struct {
     char filename[32];
 } mCD_cardPrivate_c;
 
-static mCD_cardPrivate_c l_mcd_card_private_table[19];
+static mCD_cardPrivate_c l_mcd_card_private_table[14];
 static mCD_cardPrivate_c l_mcd_card_private;
 
 static void mCD_ClearCardPrivateTable_com(mCD_cardPrivate_c* priv, int count) {
-    for (count; count != 0; count--) {
+    for (; count != 0; count--) {
         mPr_ClearPersonalID(&priv->pid);
         mem_clear((u8*)priv->filename, sizeof(priv->filename), 0);
         priv++;
@@ -1845,18 +1860,21 @@ typedef struct {
     u16 checksum;
     Private_c priv;
     Animal_c remove_animal;
+    u8 compress_data[mAN_COMPRESS_INFO_TABLE_MAX_SIZE];
     u16 copy_protect;
-    u8 _2DEA[54];
+    u8 _2DEA[24];
 } mCD_foreigner_c;
 
+typedef struct foreigner_file_s {
+    char comment[CARD_COMMENT_SIZE];
+    u8 banner[0xC00 + 0x200];
+    u8 icon[0x400 * 8 + 0x200];
+    mCD_foreigner_c file;
+} mCD_ForeignerFile_c;
+
 typedef union {
-    struct {
-        char comment[CARD_COMMENT_SIZE];
-        u8 banner[0xC00 + 0x200];
-        u8 icon[0x400 * 8 + 0x200];
-        mCD_foreigner_c file;
-    };
-    u8 sector_align[mCD_ALIGN_SECTORSIZE(sizeof(MemcardHeader_c) + sizeof(mCD_foreigner_c))];
+    mCD_ForeignerFile_c file;
+    u8 sector_align[mCD_ALIGN_SECTORSIZE(sizeof(mCD_ForeignerFile_c))];
 } ForeignerFile_c;
 
 static union {
@@ -1962,9 +1980,10 @@ static int mCD_CompNoLandCode(u16* code0, u16* code1) {
     return res;
 }
 
-static void mCD_SetForeignerFile(mCD_foreigner_c* foreigner, Private_c* priv, Animal_c* animal) {
+static void mCD_SetForeignerFile(mCD_foreigner_c* foreigner, Private_c* priv, InAnimal_c* in_animal) {
     mPr_CopyPrivateInfo(&foreigner->priv, priv);
-    bcopy(animal, &foreigner->remove_animal, sizeof(Animal_c));
+    bcopy(&in_animal->animal, &foreigner->remove_animal, sizeof(Animal_c));
+    bcopy(in_animal->compress_data, foreigner->compress_data, sizeof(foreigner->compress_data));
     foreigner->checksum = mFRm_GetFlatCheckSum((u16*)foreigner, sizeof(mCD_foreigner_c), foreigner->checksum);
 }
 
@@ -2375,8 +2394,15 @@ static int mCD_CheckThisLandSlot(s32* result, s32* game_result, s32 chan, Save_t
     return res;
 }
 
+#if 0
 static void mCD_set_1byte(char* c, int idx) {
     *c = l_mcd_font_1[idx];
+}
+#endif
+
+static void mCD_set_2byte(char* c, int idx) {
+    *c = l_mcd_font[idx * 2];
+    *(c + 1) = l_mcd_font[idx * 2 + 1];
 }
 
 static void mCD_set_number_str(char* str, u8 num) {
@@ -2426,14 +2452,15 @@ static void mCD_get_land_comment1(char* comment1, u8* town_name) {
 
     town_name = town_name_p;
     n = LAND_NAME_SIZE - spaces;
+    *comment1++ = l_comment_1_str[0];
     for (i = 0; i < n; i++) {
-        mCD_set_1byte(comment1, *town_name);
-        comment1++;
+        mCD_set_2byte(comment1, *town_name);
+        comment1 += 2;
         town_name++;
     }
 
-    comment_p = l_comment_1_str;
-    for (i = 0; i < 32; i++) {
+    comment_p = l_comment_1_str + 1;
+    for (i = 0; i < 32 - 1; i++) {
         *comment1 = *comment_p;
         if (*comment_p == '\0') {
             break;
@@ -2465,14 +2492,15 @@ static void mCD_get_passport_comment1(char* comment1, u8* player_name) {
 
     player_name = player_name_p;
     n = PLAYER_NAME_LEN - spaces;
+    *comment1++ = l_comment_player_1_str[0];
     for (i = 0; i < n; i++) {
-        mCD_set_1byte(comment1, *player_name);
-        comment1++;
+        mCD_set_2byte(comment1, *player_name);
+        comment1 += 2;
         player_name++;
     }
 
-    comment_p = l_comment_player_1_str;
-    for (i = 0; i < 32; i++) {
+    comment_p = l_comment_player_1_str + 1;
+    for (i = 0; i < 32 - 1; i++) {
         *comment1 = *comment_p;
         if (*comment_p == '\0') {
             break;
@@ -2483,17 +2511,28 @@ static void mCD_get_passport_comment1(char* comment1, u8* player_name) {
     }
 }
 
-static void mCD_get_present_comment1(char* comment1, int num, char* src_comment, int src_len) {
+static void mCD_get_present_comment1(char* comment1, int num) {
+    char* comment1_p;
     int i;
 
+    num %= 10;
     mem_clear((u8*)comment1, 32, 0);
-    for (i = 0; i < src_len; i++) {
-        *comment1++ = *src_comment++;
+    for (i = 0; i < 13; i++) {
+        *comment1++ = l_comment_present_1_str[i];
     }
 
-    if (num >= 0) {
-        num %= 10;
-        mCD_set_1byte(comment1, '0' + num);
+    mCD_set_2byte(comment1, '0' + num);
+    comment1 += 2;
+
+    comment1_p = l_comment_present_1_str + 13;
+    for (i = 0; i < 19; i++) {
+        *comment1 = *comment1_p;
+        if (*comment1_p == '\0') {
+            break;
+        }
+
+        comment1++;
+        comment1_p++;
     }
 }
 
@@ -2549,7 +2588,7 @@ static int mCD_get_this_land_slot_no_game_start(mCD_memMgr_c* mgr) {
 
     if (buf_save != NULL) {
         for (i = 0; i < CARD_NUM_CHANS; i++) {
-            int t_res = mCD_CheckThisLandSlot(&card_info->result, &card_info->game_result, i, buf_save);
+            int t_res = mCD_CheckThisLandSlot(&card_info[i].result, &card_info[i].game_result, i, buf_save);
 
             if (t_res == mCD_RESULT_SUCCESS) {
                 mgr->chan = i;
@@ -2557,14 +2596,17 @@ static int mCD_get_this_land_slot_no_game_start(mCD_memMgr_c* mgr) {
                 break;
             }
 
-            if (card_info->game_result == mCD_TRANS_ERR_NOCARD || t_res == mCD_RESULT_ERROR) {
-                card_info->game_result = mCD_TransErrorCode(card_info->result);
-            } else {
-                card_info->game_result = mCD_TRANS_ERR_WRONG_LAND;
+            if (card_info[i].game_result == mCD_TRANS_ERR_NOCARD || t_res == mCD_RESULT_ERROR) {
+                if (mCsd_sdcard_selectslot_sweet_chk(i) == TRUE) {
+                    card_info[i].game_result = 41;
+                } else {
+                    card_info[i].game_result = mCD_TransErrorCode(card_info[i].result);
+                }
                 mgr->chan = i;
+            } else {
+                card_info[i].game_result = mCD_TRANS_ERR_OTHER_TOWN;
+                mgr->chan = ~i & 1;
             }
-
-            card_info++;
         }
     }
 
@@ -2700,6 +2742,16 @@ static int mCD_SaveHome_bg_erase_dummy(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c*
     return mCD_RESULT_SUCCESS;
 }
 
+static int mCD_SaveHome_bg_erase_mura(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int chan = mgr->chan;
+    mCD_memMgr_card_info_c* card_info = &mgr->cards[chan];
+    s32 result;
+
+    mCD_erase_file_fg(l_mCD_land_file_name, chan, &result, card_info->workArea);
+    fileInfo->proc++;
+    return mCD_RESULT_SUCCESS;
+}
+
 static int mCD_send_present(PresentSaveFile_c* present_file, int length) {
     Mail_c* letter = present_file->save.letters;
     int res = FALSE;
@@ -2820,55 +2872,21 @@ static int mCD_SaveHome_bg_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* 
 }
 
 static int mCD_CheckPresentFile(char* filename, s32* fileNo, s32 chan, s32* result, void* workArea) {
-    CARDStat stat;
-    int file;
     int res = FALSE;
 
-    if (mCD_check_card(result, mCD_MEMCARD_SECTORSIZE, (s32)chan) == mCD_RESULT_SUCCESS) {
-        *result = CARDMount((s32)chan, workArea, NULL);
-        if (*result == CARD_RESULT_READY || *result == CARD_RESULT_BROKEN) {
-            *result = CARDCheck((s32)chan);
-            if (*result == CARD_RESULT_READY) {
-                for (file = *fileNo; file < 32; file++) {
-                    *result = CARDGetStatus((s32)chan, file, &stat);
-                    if (*result == CARD_RESULT_READY && mCD_CheckPresentFileStatus(&stat) == TRUE) {
-                        bcopy(stat.fileName, filename, CARD_FILENAME_MAX);
-                        res = TRUE;
-                        break;
-                    }
-                }
-            }
-
-            /* @BUG - if CARDCheck fails, file will be undefined */
-            *fileNo = file;
-            CARDUnmount((s32)chan);
-        } else {
-            if (*result == CARD_RESULT_ENCODING) {
-                CARDUnmount((s32)chan);
-            }
-
-            *fileNo = 32;
-        }
-    } else {
-        *fileNo = 32;
-    }
-
+    *fileNo = 32;
     return res;
 }
 
 static int mCD_SaveHome_bg_read_send_present(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     static int icon_fileNo[mCD_PRESENT_TYPE_NUM] = { RESOURCE_TEGAMI, RESOURCE_TEGAMI2 };
-    static char* comment_p_table[mCD_PRESENT_TYPE_NUM] = { l_comment_present_1_str, l_comment_gift_1_str };
-    static int comment_len_table[mCD_PRESENT_TYPE_NUM] = { 14, 13 };
-    void* workArea = mgr->workArea;
     mCD_file_entry_c* present_entry;
     mCD_memMgr_card_info_c* card_info;
-    int type;
     PresentSaveFile_c* present_buf;
+    void* workArea = mgr->workArea;
     int icon;
 
     icon = 0;
-    type = mCD_PRESENT_TYPE_BONUS;
     present_entry = &l_mcd_file_table[mCD_FILE_PRESENT];
     if (mgr->cards[0].workArea != NULL && mgr->cards[1].workArea != NULL && workArea != NULL) {
         mgr->chan = -1;
@@ -2881,23 +2899,17 @@ static int mCD_SaveHome_bg_read_send_present(mCD_memMgr_c* mgr, mCD_memMgr_fileI
                             mCD_get_offset(mCD_FILE_PRESENT), fileInfo->chan,
                             &card_info->result) == mCD_RESULT_SUCCESS) {
                 present_buf = (PresentSaveFile_c*)workArea;
-                
-                /* Determine if this is a bonus gift file or a 'gift' present file */
-                if (mCD_CheckFilename(present_buf->header.comment + 32, l_comment_gift_1_str, 13) == TRUE) {
-                    type = mCD_PRESENT_TYPE_GIFT;
-                }
                                 
                 /* Try sending the presents */
                 if (mCD_send_present(present_buf, present_entry->entrysize) == TRUE) {
                     mgr->loaded_file_type = mCD_FILE_PRESENT;
                     mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
                     mgr->chan = fileInfo->chan;
-                    mCD_get_present_comment1(present_buf->header.comment + 32, present_buf->save.present_count,
-                                             comment_p_table[type], comment_len_table[type]);
+                    mCD_get_present_comment1(present_buf->header.comment + 32, present_buf->save.present_count);
                     if (present_buf->save.present_count == 0) {
                         icon = 1;
                     }
-                    mCD_set_bti_data(present_buf->header.icon, icon_fileNo[icon], 0x400, 1, 0x200);
+                    mCD_set_bti_data(present_buf->header.icon, icon_fileNo[icon], 0x400, 1, 0x200, FALSE);
                     present_buf->save.checksum =
                         mFRm_GetFlatCheckSum((u16*)workArea, mgr->workArea_size, present_buf->save.checksum);
                     fileInfo->proc++;
@@ -3201,8 +3213,8 @@ static int mCD_SaveHome_bg_set_icon_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_
             bzero(buf, mgr->workArea_size);
             bcopy(l_comment_0_str, buf, sizeof(l_comment_0_str));
             mCD_get_land_comment1((char*)buf + sizeof(l_comment_0_str), Save_Get(land_info).name);
-            buf = mCD_set_bti_data(buf, icon_fileNo[Save_Get(station_type)], 0xC00, 1, 0x200);
-            buf = mCD_set_bti_data(buf, banner_fileNo[Common_Get(time.season)], 0x400, 1, 0x200);
+            buf = mCD_set_bti_data(buf, icon_fileNo[Save_Get(station_type)], 0xC00, 1, 0x200, FALSE);
+            buf = mCD_set_bti_data(buf, banner_fileNo[Common_Get(time.season)], 0x400, 1, 0x200, FALSE);
             fileInfo->proc++;
             return mCD_RESULT_SUCCESS;
         }
@@ -3344,6 +3356,8 @@ static int mCD_SaveHome_bg_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fi
 
                 pockets_p++;
             }
+
+            mQst_ClearLostQuest();
         }
 
         Save_Set(save_exist, TRUE);
@@ -3351,6 +3365,9 @@ static int mCD_SaveHome_bg_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fi
         Common_Set(copy_protect, copy_protect);
         Save_Set(copy_protect, copy_protect);
         Save_Set(travel_hard_time, lbRTC_HardTime());
+        if (mCD_castingoff_mura_chk() != TRUE) {
+            Save_Set(nukegara_time, lbRTC_HardTime());
+        }
         bcopy(&Common_Get(save).save, save, sizeof(Save_t));
         save->save_check.version = mFRm_VERSION;
         mFRm_SetSaveCheckData(&save->save_check);
@@ -3458,40 +3475,21 @@ static int mCD_SaveHome_bg_set_others(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* 
     // clang-format on
 
     u8* data_p = (u8*)mgr->workArea;
-    size_t data_size;
+    size_t data_size = (sizeof(MemcardHeader_c) + 32);
 
     if (data_p != NULL) {
-        bzero(data_p, OTHERS_SIZE);
+        bzero(data_p, sizeof(Save));
         bcopy(l_comment_0_str, data_p, sizeof(l_comment_0_str));
         mCD_get_land_comment1((char*)data_p + sizeof(l_comment_0_str), Save_Get(land_info).name);
-        data_p = mCD_set_bti_data(data_p + CARD_COMMENT_SIZE, banner_fileNo[Common_Get(time.season)], 0xC00, 1, 0x200);
-        data_p = mCD_set_bti_data(data_p, icon_fileNo[Save_Get(station_type)], 0x400, 1, 0x200) + 32;
+        data_p = mCD_set_bti_data(data_p + CARD_COMMENT_SIZE, banner_fileNo[Common_Get(time.season)], 0xC00, 1, 0x200, FALSE);
+        data_p = mCD_set_bti_data(data_p, icon_fileNo[Save_Get(station_type)], 0x400, 1, 0x200, FALSE);
+        data_p += 32;
 
         {
-            mCD_keep_mail_c* mail = (mCD_keep_mail_c*)data_p;
+            mCD_keep_diary_c* diary;
 
-            mCD_save_data_aram_to_main(mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
-            mail->landid = Save_Get(land_info).id;
-            mail->checksum = mFRm_GetFlatCheckSum((u16*)mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mail->checksum);
-            data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL];
-            data_size = (sizeof(MemcardHeader_c) + 32) + l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL];
-        }
-
-        {
-            mCD_keep_original_c* original = (mCD_keep_original_c*)data_p;
-
-            mCD_save_data_aram_to_main(original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
-            original->landid = Save_Get(land_info).id;
-            original->checksum = mFRm_GetFlatCheckSum((u16*)original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL],
-                                                      original->checksum);
-            data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL];
-            data_size += l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL];
-        }
-
-        {
-            mCD_keep_diary_c* diary = (mCD_keep_diary_c*)data_p;
-
-            mCD_save_data_aram_to_main(diary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY], mCD_ARAM_DATA_DIARY);
+            mCD_save_data_aram_to_main(data_p, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY], mCD_ARAM_DATA_DIARY);
+            diary = (mCD_keep_diary_c*)data_p;
             diary->checksum = mFRm_GetFlatCheckSum((u16*)diary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY],
                                                    diary->checksum);
             data_size += l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY];
@@ -3520,7 +3518,7 @@ static int mCD_SaveHome_bg_write_others(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c
 
     if (mgr->workArea != NULL && chan != -1) {
         card_info = &mgr->cards[chan];
-        ret = mCD_write_comp_bg(workArea, filename, mgr->workArea_size, OTHERS_SIZE + sizeof(Save) * 2, 0, chan,
+        ret = mCD_write_comp_bg(workArea, filename, mgr->workArea_size, mCD_LAND_SAVE_SIZE, 0, chan,
                                 &card_info->result);
         card_info->game_result = mCD_TransErrorCode(card_info->result);
 
@@ -3756,36 +3754,35 @@ static void mCD_load_set_others_common(mCD_memMgr_c* mgr, mCD_memMgr_card_info_c
     u8* data_p = (u8*)mgr->workArea;
     mCD_file_entry_c* entry;
 
-    bzero(data_p, OTHERS_SIZE);
+    bzero(data_p, sizeof(Save));
 
     entry = &l_mcd_file_table[mCD_FILE_SAVE_MISC];
     if (mCD_read_fg(data_p, entry->filename, entry->entrysize, 0, chan, &card_info->result) == mCD_RESULT_SUCCESS) {
         data_p += sizeof(MemcardHeader_c) + 32;
         
-        {
-            mCD_keep_mail_c* mail = (mCD_keep_mail_c*)data_p;
+        // {
+        //     mCD_keep_mail_c* mail = (mCD_keep_mail_c*)data_p;
 
-            if (mFRm_ReturnCheckSum((u16*)mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
-                mCD_save_data_main_to_aram(mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
-            }
+        //     if (mFRm_ReturnCheckSum((u16*)mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
+        //         mCD_save_data_main_to_aram(mail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
+        //     }
 
-            data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL];
-        }
+        //     data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL];
+        // }
 
-        {
-            mCD_keep_original_c* original = (mCD_keep_original_c*)data_p;
+        // {
+        //     mCD_keep_original_c* original = (mCD_keep_original_c*)data_p;
 
-            if (mFRm_ReturnCheckSum((u16*)original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
-                mCD_save_data_main_to_aram(original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
-            }
+        //     if (mFRm_ReturnCheckSum((u16*)original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
+        //         mCD_save_data_main_to_aram(original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
+        //     }
 
-            data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL];
-        }
+        //     data_p += l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL];
+        // }
 
         if (diary_flag) {
-            mCD_keep_diary_c* diary = (mCD_keep_diary_c*)data_p;
-
-            if (mFRm_ReturnCheckSum((u16*)diary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]) == 0) {
+            if (mFRm_ReturnCheckSum((u16*)data_p, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]) == 0) {
+                mCD_keep_diary_c* diary = (mCD_keep_diary_c*)data_p;
                 mCD_save_data_main_to_aram(diary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY], mCD_ARAM_DATA_DIARY);
             }
         }
@@ -3830,6 +3827,7 @@ extern void mCD_LoadLand(void) {
                             Common_Set(copy_protect, Save_Get(copy_protect));
                             cond[chan] = 0;
                             save_chan = chan;
+                            mCsd_nowdrive_set(~chan & 1);
                             if (type == 1) {
                                 mCD_OnErrInfo(mCD_ERROR_OUTDATED); // loaded backup
                             } else {
@@ -4140,6 +4138,7 @@ extern int mCD_EraseLand_bg(int* slot) {
         mCD_EraseLand_bg_write_bk,
         mCD_EraseLand_bg_load_icon,
         mCD_EraseLand_bg_write_icon,
+        mCD_SaveHome_bg_erase_mura,
     };
     // clang-format on
 
@@ -4152,10 +4151,10 @@ extern int mCD_EraseLand_bg(int* slot) {
 
     mgr->_0188++;
     if (mgr->_018C == 0) {
-        if (proc < 7) {
+        if (proc < 8) {
             res = (*erase_proc[proc])(mgr, fileInfo);
             if (res == mCD_RESULT_SUCCESS) {
-                if (fileInfo->proc == 7) {
+                if (fileInfo->proc == 8) {
                     *slot = mgr->chan;
                     ret = mCD_TRANS_ERR_NONE;
                 }
@@ -4171,7 +4170,7 @@ extern int mCD_EraseLand_bg(int* slot) {
                 }
             }
 
-            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 7)) {
+            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 8)) {
                 if (mgr->_0188 >= 170) {
                     sAdo_SysLevStop(NA_SE_53);
                     mCD_ClearMemMgr_com2(mgr);
@@ -4277,6 +4276,7 @@ extern int mCD_EraseBrokenLand_bg(int* slot) {
         mCD_EraseLand_bg_write_bk,
         mCD_EraseLand_bg_load_icon,
         mCD_EraseLand_bg_write_icon,
+        mCD_SaveHome_bg_erase_mura,
     };
     // clang-format on
 
@@ -4289,10 +4289,10 @@ extern int mCD_EraseBrokenLand_bg(int* slot) {
 
     mgr->_0188++;
     if (mgr->_018C == 0) {
-        if (proc < 7) {
+        if (proc < 8) {
             res = (*erase_proc[proc])(mgr, fileInfo);
             if (res == mCD_RESULT_SUCCESS) {
-                if (fileInfo->proc == 7) {
+                if (fileInfo->proc == 8) {
                     *slot = mgr->chan;
                     ret = mCD_TRANS_ERR_NONE;
                 }
@@ -4308,7 +4308,7 @@ extern int mCD_EraseBrokenLand_bg(int* slot) {
                 }
             }
 
-            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 7)) {
+            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 8)) {
                 if (mgr->_0188 >= 170) {
                     sAdo_SysLevStop(NA_SE_53);
                     mCD_ClearMemMgr_com2(mgr);
@@ -4389,7 +4389,7 @@ extern int mCD_CheckBrokenPassportFile(int slot) {
                         if (result == CARD_RESULT_READY) {
                             result = CARDRead(&file_info, foreigner_file, mCD_PLAYER_SAVE_SIZE, 0);
                             
-                            if (result == CARD_RESULT_READY && (mFRm_ReturnCheckSum((u16*)&foreigner_file->file, sizeof(mCD_foreigner_c)) != 0 || mPr_NullCheckPersonalID(&foreigner_file->file.priv.player_ID) == TRUE)) {
+                            if (result == CARD_RESULT_READY && (mFRm_ReturnCheckSum((u16*)&foreigner_file->file.file, sizeof(mCD_foreigner_c)) != 0 || mPr_NullCheckPersonalID(&foreigner_file->file.file.priv.player_ID) == TRUE)) {
                                 CARDClose(&file_info);
                                 ret = TRUE;
                                 break;
@@ -4484,7 +4484,7 @@ static int mCD_ErasePassportFile_bg_get_broken_Passport(mCD_memMgr_c* mgr, mCD_m
                 if (card_info->result == CARD_RESULT_READY) {
                     card_info->result = CARDRead(&file_info, foreigner_file, mCD_PLAYER_SAVE_SIZE, 0);
                     
-                    if (card_info->result == CARD_RESULT_READY && (mFRm_ReturnCheckSum((u16*)&foreigner_file->file, sizeof(mCD_foreigner_c)) != 0 || mPr_NullCheckPersonalID(&foreigner_file->file.priv.player_ID) == TRUE)) {
+                    if (card_info->result == CARD_RESULT_READY && (mFRm_ReturnCheckSum((u16*)&foreigner_file->file.file, sizeof(mCD_foreigner_c)) != 0 || mPr_NullCheckPersonalID(&foreigner_file->file.file.priv.player_ID) == TRUE)) {
                         fileInfo->_04 = i;
                         CARDClose(&file_info);
                         card_info->result = CARDDeleteAsync((s32)chan, stat->fileName, NULL);
@@ -4643,11 +4643,11 @@ static Private_c* mCD_GetSaveFilePrivateP(void) {
 }
 
 static int mCD_InitGameStart_bg_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    static int sound_mode[] = { 2, 0, 0, 0, 0 };
+    static int sound_mode[] = { 2, 0, 0, 0, 0, 0 };
     
     int soundm = 2;
 
-    if (fileInfo->chan >= 0 && fileInfo->chan < 5) {
+    if (fileInfo->chan >= 0 && fileInfo->chan < 6) {
         soundm = sound_mode[fileInfo->chan];
     }
 
@@ -4681,9 +4681,14 @@ static int mCD_InitGameStart_bg_get_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_
                         card_info[chan].game_result = mCD_TRANS_ERR_WRONG_LAND;
                     }
                 } else {
+                    mgr->chan = mCD_SLOT_A;
+                    mgr->cards[mgr->chan].game_result = mCD_TRANS_ERR_WRONG_LAND;
                     res = mCD_RESULT_ERROR;
                 } 
             } else if (slot != mCD_SLOT_A) {
+                if (mgr->chan != -1) {
+                    mgr->cards[mgr->chan].game_result = mCD_TRANS_ERR_WRONG_LAND;
+                }
                 res = mCD_RESULT_ERROR;
             }
         }
@@ -4708,7 +4713,7 @@ static int mCD_InitGameStart_bg_check_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_
     return mCD_RESULT_SUCCESS;
 }
 
-static int mCD_LoadPrivate_idx(mCD_memMgr_c* mgr, Private_c* priv, Animal_c* animal, int idx) {
+static int mCD_LoadPrivate_idx(mCD_memMgr_c* mgr, Private_c* priv, InAnimal_c* in_animal, int idx) {
     ForeignerFile_c* file;
     mCD_foreigner_c* foreigner;
     void* workArea = mgr->workArea;
@@ -4724,7 +4729,7 @@ static int mCD_LoadPrivate_idx(mCD_memMgr_c* mgr, Private_c* priv, Animal_c* ani
             
             for (i = 0; i < mCD_SLOT_NUM; i++) {
                 file = (ForeignerFile_c*)workArea;
-                foreigner = &file->file;
+                foreigner = &file->file.file;
 
                 bzero(workArea, sizeof(ForeignerFile_c));
 
@@ -4733,8 +4738,9 @@ static int mCD_LoadPrivate_idx(mCD_memMgr_c* mgr, Private_c* priv, Animal_c* ani
                         mPr_CheckCmpPersonalID(&foreigner->priv.player_ID, &card_priv->pid) == TRUE
                     ) {
                         mPr_CopyPrivateInfo(priv, &foreigner->priv);
-                        if (animal != NULL) {
-                            bcopy(&foreigner->remove_animal, animal, sizeof(Animal_c));
+                        if (in_animal != NULL) {
+                            bcopy(&foreigner->remove_animal, &in_animal->animal, sizeof(Animal_c));
+                            bcopy(foreigner->compress_data, in_animal->compress_data, sizeof(foreigner->compress_data));
                         }
 
                         bcopy(foreigner, &l_mcd_foreigner_file.file, sizeof(l_mcd_foreigner_file));
@@ -4755,14 +4761,14 @@ static int mCD_InitGameStart_bg_make_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
     int private_idx = fileInfo->fileNo;
     int start_cond = fileInfo->chan;
     Private_c* priv;
-    Animal_c* in_animal = &mNpc_GetInAnimalP()->animal;
+    InAnimal_c* in_animal = mNpc_GetInAnimalP();
     mCD_cardPrivate_c* card_priv;
     u16 copy_protect;
     int res = TRUE;
     int ret;
 
 
-    if (start_cond >= 5) {
+    if (start_cond >= 6) {
         start_cond = 0;
         fileInfo->chan = 0;
     }
@@ -4781,14 +4787,15 @@ static int mCD_InitGameStart_bg_make_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
             priv = mPr_GetForeignerP();
             mPr_CopyPrivateInfo(priv, &l_mcd_foreigner_file.file.priv);
             if (in_animal != NULL) {
-                bcopy(&l_mcd_foreigner_file.file.remove_animal, in_animal, sizeof(Animal_c));
+                bcopy(&l_mcd_foreigner_file.file.remove_animal, &in_animal->animal, sizeof(Animal_c));
+                bcopy(l_mcd_foreigner_file.file.compress_data, in_animal->compress_data, sizeof(l_mcd_foreigner_file.file.compress_data));
             }
             mPr_LoadPak_and_SetPrivateInfo2(priv, player_no);
             break;
     }
 
     if (res == TRUE) {
-        static int init_mode_table[] = { 0, 2, 1, 3, 3 };
+        static int init_mode_table[] = { 0, 2, 1, 3, 3, 3 };
 
         ret = mSDI_StartDataInit(game, player_no, init_mode_table[start_cond]);
         l_mcd_keep_startCond = start_cond;
@@ -4819,6 +4826,9 @@ static int mCD_InitGameStart_bg_make_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
 
                 fileInfo->_14 = 0;
                 Save_Set(travel_hard_time, lbRTC_HardTime());
+                if (mCD_castingoff_mura_chk() != TRUE) {
+                    Save_Set(nukegara_time, lbRTC_HardTime());
+                }
                 copy_protect = mCD_get_land_copyProtect();
                 Common_Set(copy_protect, copy_protect);
                 Save_Set(copy_protect, copy_protect);
@@ -4860,6 +4870,9 @@ static int mCD_InitGameStart_bg_make_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
                 }
 
                 Save_Set(travel_hard_time, lbRTC_HardTime());
+                if (mCD_castingoff_mura_chk() != TRUE) {
+                    Save_Set(nukegara_time, lbRTC_HardTime());
+                }
                 copy_protect = mCD_get_land_copyProtect();
                 Common_Set(copy_protect, copy_protect);
                 Save_Set(copy_protect, copy_protect);
@@ -4907,9 +4920,9 @@ static void mCD_set_passport_icon(void* data, int sex, int face) {
     if (data != NULL) {
         ForeignerFile_c* passport = (ForeignerFile_c*)data;
 
-        bcopy(l_comment_player_0_str, passport->comment, sizeof(l_comment_0_str));
-        mCD_get_passport_comment1(&passport->comment[sizeof(l_comment_0_str)], Now_Private->player_ID.player_name);
-        mCD_set_bti_data(passport->banner, RESOURCE_ODEKAKE, 0xC00, 1, 0x200);
+        bcopy(l_comment_player_0_str, passport->file.comment, sizeof(l_comment_0_str));
+        mCD_get_passport_comment1(&passport->file.comment[sizeof(l_comment_0_str)], Now_Private->player_ID.player_name);
+        mCD_set_bti_data(passport->file.banner, RESOURCE_ODEKAKE, 0xC00, 1, 0x200, FALSE);
 
         if (sex != mPr_SEX_MALE && sex != mPr_SEX_FEMALE) {
             sex = mPr_SEX_MALE;
@@ -4919,7 +4932,7 @@ static void mCD_set_passport_icon(void* data, int sex, int face) {
             face = mPr_FACE_TYPE0;
         }
 
-        mCD_set_bti_data(passport->icon, icon_fileNo[sex][face], 0x400, 8, 0x200);
+        mCD_set_bti_data(passport->file.icon, icon_fileNo[sex][face], 0x400, 8, 0x200, TRUE);
     }
 }
 
@@ -4938,8 +4951,8 @@ static int mCD_InitGameStart_bg_write_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInf
             case 2:
                 bzero(mgr->workArea, mgr->workArea_size);
                 passport = (ForeignerFile_c*)mgr->workArea;
-                bcopy(&l_mcd_foreigner_file, &passport->file, sizeof(mCD_foreigner_c));
-                mCD_set_passport_icon(mgr->workArea, passport->file.priv.gender, passport->file.priv.face);
+                bcopy(&l_mcd_foreigner_file, &passport->file.file, sizeof(mCD_foreigner_c));
+                mCD_set_passport_icon(mgr->workArea, passport->file.file.priv.gender, passport->file.file.priv.face);
                 mgr->loaded_file_type = mCD_FILE_PLAYER;
                 mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
                 mgr->chan = ~mgr->chan & 1;
@@ -5115,6 +5128,7 @@ extern int mCD_InitGameStart_bg(int player_no, int card_private_idx, int start_c
     u8 proc = fileInfo->proc;
     int res;
     int ret = mCD_TRANS_ERR_BUSY;
+    Private_c* priv = Now_Private;
 
     mgr->_0188++;
     if (mgr->_018C == 0) {
@@ -5130,6 +5144,17 @@ extern int mCD_InitGameStart_bg(int player_no, int card_private_idx, int start_c
                     ret = mCD_TRANS_ERR_NONE;
                 }
             } else if (res != mCD_RESULT_BUSY) {
+                if (priv != NULL) {
+                    priv->reset_code = 0;
+                }
+
+                priv = mCD_GetSaveFilePrivateP();
+                if (priv != NULL) {
+                    priv->reset_code = 0;
+                }
+
+                Common_Set(reset_flag, FALSE);
+
                 if (mgr->_01A0 == 1) {
                     *mounted_chan = mgr->chan;
                     mgr->copy_protect = -1;
@@ -5188,7 +5213,6 @@ extern int mCD_InitGameStart_bg(int player_no, int card_private_idx, int start_c
         }
     }
 
-    ret = mCD_GameStart_ChangeErrCode(ret);
     if (ret != mCD_TRANS_ERR_BUSY) {
         SoftResetEnable = TRUE;
     }
@@ -5210,8 +5234,9 @@ static int mCD_SaveHome_bg_write_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* 
 static int mCD_SaveErasePlayer_bg_write_bk(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     int ret = mCD_write_common(mgr);
 
-    if (ret == mCD_RESULT_SUCCESS) {
+    if (ret != mCD_RESULT_BUSY) {
         fileInfo->proc++;
+        ret = mCD_RESULT_SUCCESS;
     }
 
     return ret;
@@ -5325,10 +5350,10 @@ extern int mCD_GetPlayerNum(void) {
                                     u16 checksum;
                                     
                                     foreigner = (ForeignerFile_c*)mgr->workArea;
-                                    checksum = mFRm_ReturnCheckSum((u16*)&foreigner->file, sizeof(foreigner->file));
-                                    priv = &foreigner->file.priv;
+                                    checksum = mFRm_ReturnCheckSum((u16*)&foreigner->file.file, sizeof(foreigner->file.file));
+                                    priv = &foreigner->file.file.priv;
                                     if (checksum == 0 && !mPr_NullCheckPersonalID(&priv->player_ID)) {
-                                        mCD_SetCardPrivateTable(card_priv, &foreigner->file.priv.player_ID, stat->fileName);
+                                        mCD_SetCardPrivateTable(card_priv, &foreigner->file.file.priv.player_ID, stat->fileName);
                                         count++;
                                         card_priv++;
                                         
@@ -5629,6 +5654,7 @@ static int mCD_CheckStation_check_next_land(mCD_memMgr_c* mgr, mCD_memMgr_fileIn
                         } else {
                             fileInfo->_04 = mCD_TRANS_ERR_NO_SPACE; // ?? shouldn't this be same land?
                             ret = mCD_RESULT_ERROR;
+                            i = mCD_FILE_SAVE_MAIN;
                         }
                     } else {
                         fileInfo->_04 = mCD_TRANS_ERR_CORRUPT;
@@ -5639,6 +5665,7 @@ static int mCD_CheckStation_check_next_land(mCD_memMgr_c* mgr, mCD_memMgr_fileIn
                     ret = mCD_RESULT_ERROR;
                 }
             } else {
+                fileInfo->_04 = mCD_TransErrorCode(card->result);
                 card->_8C++;
                 ret = mCD_RESULT_ERROR;
             }
@@ -5668,7 +5695,7 @@ static int mCD_CheckStation_check_next_land(mCD_memMgr_c* mgr, mCD_memMgr_fileIn
                         ret = mCD_RESULT_ERROR;
                         break;
                     default:
-                        if (mLd_PlayerManKindCheck() && l_mcd_keep_startCond != 4) {
+                        if (mLd_PlayerManKindCheck() && l_mcd_keep_startCond != 4 && l_mcd_keep_startCond != 5) {
                             fileInfo->proc++;
                         } else {
                             fileInfo->proc = 4;
@@ -5705,7 +5732,7 @@ static int mCD_CheckStation_check_foreigner(mCD_memMgr_c* mgr, mCD_memMgr_fileIn
         ofs = mCD_get_offset(mgr->loaded_file_type);
         res = mCD_read_fg(mgr->workArea, filename, mgr->workArea_size, ofs, chan, &card->result);
         foreignerFile = (ForeignerFile_c*)mgr->workArea;
-        if (res == mCD_RESULT_SUCCESS && l_mcd_copy_protect == foreignerFile->file.copy_protect) {
+        if (res == mCD_RESULT_SUCCESS && l_mcd_copy_protect == foreignerFile->file.file.copy_protect) {
             bcopy(filename, mgr->filename, sizeof(mgr->filename));
             fileInfo->_04 = mCD_TRANS_ERR_NONE;
             fileInfo->proc = 5;
@@ -5769,8 +5796,8 @@ static int mCD_CheckStation_check_passport(mCD_memMgr_c* mgr, mCD_memMgr_fileInf
                                 card->result = CARDRead(&cardFileInfo, mgr->workArea, sizeof(ForeignerFile_c), 0);
                                 if (card->result == CARD_RESULT_READY) {
                                     passport = (ForeignerFile_c*)mgr->workArea;
-                                    res = mFRm_ReturnCheckSum((u16*)&passport->file, sizeof(passport->file));
-                                    passport_priv = &passport->file.priv;
+                                    res = mFRm_ReturnCheckSum((u16*)&passport->file.file, sizeof(passport->file.file));
+                                    passport_priv = &passport->file.file.priv;
 
                                     if (res == 0) {
                                         if (mPr_CheckCmpPersonalID(&priv->player_ID, &passport_priv->player_ID) == TRUE) {
@@ -6060,6 +6087,13 @@ static union {
     u8 buf[mCD_ALIGN_SECTORSIZE(sizeof(mCD_keep_diary_c))];
 } l_keepDiary ATTRIBUTE_ALIGN(32);
 
+static int order_bss(void) {
+    bzero(&l_keepMail, sizeof(mCD_keep_mail_c));
+    bzero(&l_keepOriginal, sizeof(mCD_keep_original_c));
+    bzero(&l_keepDiary, sizeof(mCD_keep_diary_c));
+    return 0;
+}
+
 static int mCD_SaveStation_NextLand_load_others(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     u8* buf = (u8*)mgr->workArea;
     mCD_memMgr_card_info_c* card;
@@ -6067,31 +6101,14 @@ static int mCD_SaveStation_NextLand_load_others(mCD_memMgr_c* mgr, mCD_memMgr_fi
     mCD_file_entry_c* entry;
     int ret = mCD_RESULT_SUCCESS;
 
-    mCD_set_init_mail_data(&l_keepMail);
-    mCD_set_init_original_data(&l_keepOriginal);
     mCD_set_init_diary_data(&l_keepDiary);
 
     if (mgr->workArea != NULL && chan != -1) {
-        bzero(buf, sizeof(OthersSave_u));
+        bzero(buf, sizeof(Save));
         card = &mgr->cards[chan];
         entry = &l_mcd_file_table[mCD_FILE_SAVE_MISC];
         if (mCD_read_fg(buf, entry->filename, entry->entrysize, 0, chan, &card->result) == mCD_RESULT_SUCCESS) {
             buf += offsetof(OthersSave_c, keep_mail);
-
-            if (mFRm_ReturnCheckSum((u16*)buf, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
-                bcopy(buf, &l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]);
-            }
-            buf += l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL];
-
-            if (mFRm_ReturnCheckSum((u16*)buf, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
-                // @BUG - this should be &l_keepOriginal
-#ifndef BUGFIXES
-                bcopy(buf, &l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
-#else
-                bcopy(buf, &l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
-#endif
-            }
-            buf += l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL];
 
             if (mFRm_ReturnCheckSum((u16*)buf, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]) == 0) {
                 bcopy(buf, &l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]);
@@ -6108,7 +6125,7 @@ static void mCD_CopyKeep(
     mActor_name_t* pockets_p, //
     u8* lotto_ticket_expiry_p, //
     u8* lotto_ticket_mail_storage_p, //
-    u32* item_cond_p, //
+    u8* item_cond_p, //
     u32* wallet_p, //
     mQst_delivery_c* delivery_p, //
     mQst_errand_c* errand_p, //
@@ -6119,7 +6136,7 @@ static void mCD_CopyKeep(
     mActor_name_t* pockets, //
     u8 lotto_ticket_expiry, //
     u8 lotto_ticket_mail_storage, //
-    u32 item_cond, //
+    u8* item_cond, //
     u32 wallet, //
     mQst_delivery_c* delivery, //
     mQst_errand_c* errand, //
@@ -6131,7 +6148,9 @@ static void mCD_CopyKeep(
     int i;
 
     bcopy(pockets, pockets_p, membersize(Private_c, inventory.pockets));
-    *item_cond_p = item_cond;
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        item_cond_p[i] = item_cond[i];
+    }
     *lotto_ticket_expiry_p = lotto_ticket_expiry;
     *lotto_ticket_mail_storage_p = lotto_ticket_mail_storage;
     *wallet_p = wallet;
@@ -6168,38 +6187,38 @@ static void mCD_CopyKeep(
 static void mCD_ClearPrivateItem(Private_c* priv, mCD_PrivateItem_c* privItem) {
     if (privItem != NULL) {
         bzero(privItem, sizeof(mCD_PrivateItem_c));
-        // mCD_CopyKeep(
-        //     // dst
-        //     privItem->items,
-        //     &privItem->ticket_expiry_month,
-        //     &privItem->ticket_storage,
-        //     &privItem->item_cond,
-        //     &privItem->wallet,
-        //     privItem->delivery,
-        //     privItem->errand,
-        //     privItem->mail,
-        //     privItem->catalog_order,
-        //     &privItem->remail,
-        //     &privItem->animal_memory,
-        //     // src
-        //     priv->inventory.pockets,
-        //     priv->inventory.lotto_ticket_expiry_month,
-        //     priv->inventory.lotto_ticket_mail_storage,
-        //     priv->inventory.item_conditions,
-        //     priv->inventory.wallet,
-        //     priv->deliveries,
-        //     priv->errands,
-        //     priv->mail,
-        //     priv->catalog_orders,
-        //     &priv->remail,
-        //     &priv->animal_memory
-        // );
+        mCD_CopyKeep(
+            // dst
+            privItem->items,
+            &privItem->ticket_expiry_month,
+            &privItem->ticket_storage,
+            privItem->item_cond,
+            &privItem->wallet,
+            privItem->delivery,
+            privItem->errand,
+            privItem->mail,
+            privItem->catalog_order,
+            &privItem->remail,
+            &privItem->animal_memory,
+            // src
+            priv->inventory.pockets,
+            priv->inventory.lotto_ticket_expiry_month,
+            priv->inventory.lotto_ticket_mail_storage,
+            priv->inventory.item_conditions,
+            priv->inventory.wallet,
+            priv->deliveries,
+            priv->errands,
+            priv->mail,
+            priv->catalog_orders,
+            &priv->remail,
+            &priv->animal_memory
+        );
 
         privItem->_0FF0 = TRUE;
     }
 
     bzero(priv->inventory.pockets, membersize(Private_c, inventory.pockets));
-    // priv->inventory.item_conditions = 0;
+    bzero(priv->inventory.item_conditions, sizeof(priv->inventory.item_conditions));
     priv->inventory.lotto_ticket_expiry_month = 0;
     priv->inventory.lotto_ticket_mail_storage = 0;
     priv->inventory.wallet = 0;
@@ -6213,108 +6232,41 @@ static void mCD_ClearPrivateItem(Private_c* priv, mCD_PrivateItem_c* privItem) {
 
 static void mCD_ReplaceKeep(Private_c* priv, mCD_PrivateItem_c* privItem) {
     if (privItem != NULL && privItem->_0FF0 == TRUE) {
-        // mCD_CopyKeep(
-        //     // dst
-        //     priv->inventory.pockets,
-        //     &priv->inventory.lotto_ticket_expiry_month,
-        //     &priv->inventory.lotto_ticket_mail_storage,
-        //     &priv->inventory.item_conditions,
-        //     &priv->inventory.wallet,
-        //     priv->deliveries,
-        //     priv->errands,
-        //     priv->mail,
-        //     priv->catalog_orders,
-        //     &priv->remail,
-        //     &priv->animal_memory,
-        //     // src
-        //     privItem->items,
-        //     privItem->ticket_expiry_month,
-        //     privItem->ticket_storage,
-        //     privItem->item_cond,
-        //     privItem->wallet,
-        //     privItem->delivery,
-        //     privItem->errand,
-        //     privItem->mail,
-        //     privItem->catalog_order,
-        //     &privItem->remail,
-        //     &privItem->animal_memory
-        // );
+        mCD_CopyKeep(
+            // dst
+            priv->inventory.pockets,
+            &priv->inventory.lotto_ticket_expiry_month,
+            &priv->inventory.lotto_ticket_mail_storage,
+            priv->inventory.item_conditions,
+            &priv->inventory.wallet,
+            priv->deliveries,
+            priv->errands,
+            priv->mail,
+            priv->catalog_orders,
+            &priv->remail,
+            &priv->animal_memory,
+            // src
+            privItem->items,
+            privItem->ticket_expiry_month,
+            privItem->ticket_storage,
+            privItem->item_cond,
+            privItem->wallet,
+            privItem->delivery,
+            privItem->errand,
+            privItem->mail,
+            privItem->catalog_order,
+            &privItem->remail,
+            &privItem->animal_memory
+        );
     }
 }
 
-// TODO: probably fakematch
-#if VERSION == VER_GAFU01_00
-static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    Save_t* save;
-    Private_c* priv;
-    mCD_persistent_data_c* persistant = Common_GetPointer(travel_persistent_data);
-    int i;
-    mActor_name_t* pocket_p;
-    Animal_c* in_animal;
-    int j;
-    u16 copy_protect;
-    s32 chan;
-    int ret = mCD_RESULT_BUSY;
-
-    chan = mgr->chan;
-    save = (Save_t*)mgr->workArea;
-    if (save != NULL && chan != -1) {
-        priv = Now_Private;
-        mCkRh_SavePlayTime(Common_Get(player_no));
-        if (priv != NULL) {
-            pocket_p = priv->inventory.pockets;
-            for (j = 0; j < mPr_POCKETS_SLOT_COUNT; j++, pocket_p++) {
-                if (ITEM_IS_WISP(*pocket_p)) {
-                    mPr_SetPossessionItem(priv, j, EMPTY_NO, mPr_ITEM_COND_NORMAL);
-                }
-            }
-        }
-
-        mCD_ClearResetCode();
-        mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = &mNpc_GetInAnimalP()->animal;
-        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
-        mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
-        if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
-            priv->exists = FALSE;
-            mCD_ClearPrivateItem(priv, &mgr->private_item);
-            mgr->_0198 = 1;
-        }
-
-        bcopy(Save_GetPointer(land_info), &persistant->land, sizeof(mLd_land_info_c));
-        // priv = Save_Get(private_data);
-        for (i = 0; i < PLAYER_NUM; i++) {
-            mPr_CopyPersonalID(&persistant->pid[i], &Save_Get(private_data[i]).player_ID);
-        }
-
-        mAGrw_ClearMoneyStoneShineGround();
-        Save_Set(travel_hard_time, lbRTC_HardTime());
-        mgr->copy_protect = Common_Get(copy_protect);
-        copy_protect = mCD_get_land_copyProtect();
-        Common_Set(copy_protect, copy_protect);
-        Save_Set(copy_protect, copy_protect);
-        bcopy(Common_GetPointer(save), save, sizeof(Save));
-        save->save_check.version = 6;
-        mFRm_SetSaveCheckData(&save->save_check);
-        save->save_check.checksum = mFRm_GetFlatCheckSum((u16*)save, sizeof(Save), save->save_check.checksum);
-        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
-        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
-        fileInfo->proc++;
-        ret = mCD_RESULT_SUCCESS;
-    } else {
-        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-        ret = mCD_RESULT_ERROR;
-    }
-
-    return ret;
-}
-#else
 static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     Save_t* save;
     Private_c* priv;
     mCD_persistent_data_c* persistant = Common_GetPointer(travel_persistent_data);
     mActor_name_t* pocket_p;
-    Animal_c* in_animal;
+    InAnimal_c* in_animal;
     int i;
     u16 copy_protect;
     s32 chan;
@@ -6336,8 +6288,9 @@ static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mCD_ClearResetCode();
         mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = &mNpc_GetInAnimalP()->animal;
-        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
+        in_animal = mNpc_GetInAnimalP();
+        mNpc_GetRemoveAnimal(&in_animal->animal, in_animal->compress_data, TRUE);
+        mQst_ClearLostQuest();
         mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
         if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
             priv->exists = FALSE;
@@ -6353,6 +6306,9 @@ static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mAGrw_ClearMoneyStoneShineGround();
         Save_Set(travel_hard_time, lbRTC_HardTime());
+        if (mCD_castingoff_mura_chk() != TRUE) {
+            Save_Set(nukegara_time, lbRTC_HardTime());
+        }
         mgr->copy_protect = Common_Get(copy_protect);
         copy_protect = mCD_get_land_copyProtect();
         Common_Set(copy_protect, copy_protect);
@@ -6372,7 +6328,6 @@ static int mCD_SaveStation_NextLand_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
     return ret;
 }
-#endif
 
 static int mCD_SaveStation_NextLand_write_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     s32 result;
@@ -6529,8 +6484,8 @@ extern int mCD_SaveStation_NextLand_bg(s32* chan) {
     mCD_memMgr_card_info_c* cardInfo;
     mCD_memMgr_c* mgr = &l_memMgr;
     mCD_memMgr_fileInfo_c* fileInfo = &mgr->save_home_info;
-    int ret = mCD_TRANS_ERR_BUSY;
     u8 proc = (u8)fileInfo->proc;
+    int ret = mCD_TRANS_ERR_BUSY;
 
     mgr->_0188++;
     if (mgr->_018C == 0) {
@@ -6600,13 +6555,18 @@ extern int mCD_SaveStation_NextLand_bg(s32* chan) {
     if (ret != mCD_TRANS_ERR_BUSY) {
         SoftResetEnable = TRUE;
     }
+
+    if (ret != mCD_TRANS_ERR_BUSY && ret != mCD_TRANS_ERR_NONE && proc >= 5) {
+        mNpc_ClearJustRemoveAnimal();
+    }
+
     return ret;
 }
 
 static int mCD_SaveStation_Passport_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     int ret = mCD_RESULT_BUSY;
 
-    if (mLd_PlayerManKindCheck() && l_mcd_keep_startCond != 4) {
+    if (mLd_PlayerManKindCheck() && l_mcd_keep_startCond != 4 && l_mcd_keep_startCond != 5) {
         if (mCD_CheckStation_check_foreigner(mgr, fileInfo) == TRUE && fileInfo->_04 == mCD_TRANS_ERR_NONE) {
             fileInfo->fileNo = 1;
             fileInfo->proc = 4;
@@ -6636,7 +6596,7 @@ static int mCD_SaveStation_Passport_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
     Private_c* priv;
     Save_t* save;
     mActor_name_t* pocket_p;
-    Animal_c* in_animal;
+    InAnimal_c* in_animal;
     mCD_persistent_data_c* persistant = Common_GetPointer(travel_persistent_data);
     u16 copy_protect;
     s32 chan;
@@ -6661,8 +6621,9 @@ static int mCD_SaveStation_Passport_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mCD_ClearResetCode();
         mHm_KeepHouseSize(Common_Get(player_no));
-        in_animal = &mNpc_GetInAnimalP()->animal;
-        mNpc_GetRemoveAnimal(in_animal, NULL, TRUE);
+        in_animal = mNpc_GetInAnimalP();
+        mNpc_GetRemoveAnimal(&in_animal->animal, in_animal->compress_data, TRUE);
+        mQst_ClearLostQuest();
         mCD_SetForeignerFile(&l_mcd_foreigner_file.file, priv, in_animal);
         if (mLd_PlayerManKindCheckNo(Common_Get(player_no)) == FALSE) {
             priv->exists = FALSE;
@@ -6672,6 +6633,9 @@ static int mCD_SaveStation_Passport_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileI
 
         mAGrw_ClearMoneyStoneShineGround();
         Save_Set(travel_hard_time, lbRTC_HardTime());
+        if (mCD_castingoff_mura_chk() != TRUE) {
+            Save_Set(nukegara_time, lbRTC_HardTime());
+        }
         mgr->copy_protect = Common_Get(copy_protect);
         copy_protect = mCD_get_land_copyProtect();
         Common_Set(copy_protect, copy_protect);
@@ -6787,6 +6751,7 @@ static int mCD_SaveStation_Passport_rewrite_main(mCD_memMgr_c* mgr, mCD_memMgr_f
                 break;
             case CARD_RESULT_WRONGDEVICE:
             case CARD_RESULT_NOCARD:
+            case CARD_RESULT_NOFILE:
                 fileInfo->_04 = mCD_TRANS_ERR_NO_TOWN_DATA;
                 break;
             default:
@@ -6878,6 +6843,14 @@ static int mCD_SaveStation_Passport_make_file_name(mCD_memMgr_c* mgr, mCD_memMgr
     return ret;
 }
 
+// @HACK - only here until we do the rest of m_card
+static u8 unused[0xF4A0];
+
+static int order_bss_2(void) {
+    bzero(unused, sizeof(unused));
+    return 0;
+}
+
 static int mCD_SaveStation_Passport_create_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     mCD_file_entry_c* entry;
     mCD_memMgr_card_info_c* card;
@@ -6924,9 +6897,9 @@ static int mCD_SaveStation_Passport_set_icon_data(mCD_memMgr_c* mgr, mCD_memMgr_
         mgr->loaded_file_type = mCD_FILE_PLAYER;
         mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
         bzero(file, mgr->workArea_size);
-        bcopy(l_comment_player_0_str, file->comment, sizeof(l_comment_player_0_str));
-        mCD_get_passport_comment1(file->comment + sizeof(l_comment_player_0_str), Now_Private->player_ID.player_name);
-        mCD_set_bti_data(file->banner, RESOURCE_ODEKAKE, 0xC00, 1, 0x200);
+        bcopy(l_comment_player_0_str, file->file.comment, sizeof(l_comment_player_0_str));
+        mCD_get_passport_comment1(file->file.comment + sizeof(l_comment_player_0_str), Now_Private->player_ID.player_name);
+        mCD_set_bti_data(file->file.banner, RESOURCE_ODEKAKE, 0xC00, 1, 0x200, FALSE);
         sex = Now_Private->gender;
         face = Now_Private->face;
 
@@ -6938,8 +6911,8 @@ static int mCD_SaveStation_Passport_set_icon_data(mCD_memMgr_c* mgr, mCD_memMgr_
             face = 0;
         }
 
-        mCD_set_bti_data(file->icon, icon_fileNo[sex][face], 0x400, 8, 0x200);
-        bcopy(&l_mcd_foreigner_file.file, &file->file, sizeof(file->file));
+        mCD_set_bti_data(file->file.icon, icon_fileNo[sex][face], 0x400, 8, 0x200, TRUE);
+        bcopy(&l_mcd_foreigner_file.file, &file->file.file, sizeof(file->file.file));
         fileInfo->proc++;
         ret = mCD_RESULT_SUCCESS;
     } else {
@@ -7107,8 +7080,8 @@ extern int mCD_SaveStation_Passport_bg(s32* chan) {
     mCD_memMgr_card_info_c* cardInfo;
     mCD_memMgr_c* mgr = &l_memMgr;
     mCD_memMgr_fileInfo_c* fileInfo = &mgr->save_home_info;
-    int ret = mCD_TRANS_ERR_BUSY;
     u8 proc = (u8)fileInfo->proc;
+    int ret = mCD_TRANS_ERR_BUSY;
 
     mgr->_0188++;
     if (mgr->_018C == 0) {
@@ -7182,6 +7155,11 @@ extern int mCD_SaveStation_Passport_bg(s32* chan) {
     if (ret != mCD_TRANS_ERR_BUSY) {
         SoftResetEnable = TRUE;
     }
+
+    if (ret != mCD_TRANS_ERR_BUSY && ret != mCD_TRANS_ERR_NONE && proc >= 4) {
+        mNpc_ClearJustRemoveAnimal();
+    }
+
     return ret;
 }
 
@@ -7242,6 +7220,7 @@ extern void mCD_toNextLand(void) {
             Common_Set(_2664E, 0);
             Common_Set(_26650, 0);
             mNpc_ClearCacheName();
+            mAN_regist_add_npc_info();
             mCD_StartSetCardBgInfo();
             mCD_ClearMemMgr();
             mCD_ClearKeepLand();
@@ -7261,15 +7240,15 @@ extern void mCD_toNextLand(void) {
             bzero(&l_keepSave, sizeof(Save));
             l_keepSave_set = FALSE;
             
-            if (mFRm_ReturnCheckSum((u16*)&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
-                mCD_save_data_main_to_aram(&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
-            }
-            mCD_set_init_mail_data(&l_keepMail);
+            // if (mFRm_ReturnCheckSum((u16*)&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
+            //     mCD_save_data_main_to_aram(&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
+            // }
+            // mCD_set_init_mail_data(&l_keepMail);
 
-            if (mFRm_ReturnCheckSum((u16*)&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
-                mCD_save_data_main_to_aram(&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
-            }
-            mCD_set_init_original_data(&l_keepOriginal);
+            // if (mFRm_ReturnCheckSum((u16*)&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
+            //     mCD_save_data_main_to_aram(&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
+            // }
+            // mCD_set_init_original_data(&l_keepOriginal);
 
             if (mFRm_ReturnCheckSum((u16*)&l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]) == 0) {
                 mCD_save_data_main_to_aram(&l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY], mCD_ARAM_DATA_DIARY);

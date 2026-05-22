@@ -1189,6 +1189,7 @@ config.libs = [
             Object(NonMatching, "game/m_calendar_ovl.c"),
             Object(Matching, "game/m_camera2.c"),
             Object(NonMatching, "game/m_card.c"),
+            Object(Matching, "game/m_card_debug.c"),
             Object(NonMatching, "game/m_catalog_ovl.c"),
             Object(Matching, "game/m_choice.c"),
             Object(Matching, "game/m_clip.c"),
@@ -1209,7 +1210,7 @@ config.libs = [
             Object(Matching, "game/m_debug_mode.c"),
             Object(Matching, "game/m_demo.c"),
             Object(Matching, "game/m_design_ovl.c"),
-            Object(Equivalent, "game/m_diary.c"), # matching but needs investigation
+            Object(Matching, "game/m_diary.c"),
             Object(NonMatching, "game/m_diary_ovl.c"),
             Object(Matching, "game/m_eappli.c"),
             Object(Matching, "game/m_editEndChk_ovl.c"),
