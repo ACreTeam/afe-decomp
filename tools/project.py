@@ -1589,6 +1589,7 @@ def generate_objdiff_config(
             "*.pch",
             "*.pch++",
             "*.inc",
+            "*.c_inc",
             "*.py",
             "*.yml",
             "*.txt",
