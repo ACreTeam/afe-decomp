@@ -162,7 +162,7 @@ typedef struct keep_original_s {
 #define mCD_KEEP_MAIL_COUNT 20
 #define mCD_KEEP_MAIL_FOLDER_NAME_LEN 10
 
-typedef struct {
+typedef struct keep_mail_s {
     u16 checksum;
     u16 landid;
     u8 folder_names[mCD_KEEP_MAIL_PAGE_COUNT][mCD_KEEP_MAIL_FOLDER_NAME_LEN];
@@ -301,6 +301,17 @@ typedef union original_save_u {
     OriginalSave_c save;
     u8 __align[ALIGN_NEXT(sizeof(OriginalSave_c), mCD_MEMCARD_SECTORSIZE)];
 } OriginalSave_u;
+
+typedef struct letter_save_s {
+    MemcardHeader_c header;
+    u8 pad[32];
+    mCD_keep_mail_c mail;
+} LetterSave_c;
+
+typedef union letter_save_u {
+    LetterSave_c save;
+    u8 __align[ALIGN_NEXT(sizeof(LetterSave_c), mCD_MEMCARD_SECTORSIZE)];
+} LetterSave_u;
 
 enum {
     mCD_PRESENT_TYPE_BONUS,
