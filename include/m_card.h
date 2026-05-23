@@ -148,12 +148,12 @@ typedef struct {
 #define mCD_KEEP_ORIGINAL_COUNT 12
 #define mCD_KEEP_ORIGINAL_FOLDER_NAME_LEN 10
 
-typedef struct {
+typedef struct keep_original_s {
     u16 checksum;
     u16 landid;
     u8 folder_names[mCD_KEEP_ORIGINAL_PAGE_COUNT][mCD_KEEP_ORIGINAL_FOLDER_NAME_LEN];
     mNW_original_design_c original[mCD_KEEP_ORIGINAL_PAGE_COUNT][mCD_KEEP_ORIGINAL_COUNT];
-    int _CC80; // force size to 0xCCA0
+    int _CC80; // force size to 0xCC80
 } mCD_keep_original_c ATTRIBUTE_ALIGN(32);
 
 #define mCD_KEEP_ORIGINAL_SIZE ALIGN_NEXT(sizeof(mCD_keep_original_c), 32)
@@ -256,7 +256,8 @@ typedef struct card_mem_mgr_s {
     mCD_PrivateItem_c private_item;
     char filename[32];
     u8 sd_eng_name[8];
-    u8 _pad[28];
+    u8 _pad[24];
+    void* _115C;
 } mCD_memMgr_c;
 
 /* Bonus letter */
@@ -288,6 +289,17 @@ typedef union {
     OthersSave_c save;
     u8 __align[ALIGN_NEXT(sizeof(OthersSave_c), mCD_MEMCARD_SECTORSIZE)];
 } OthersSave_u;
+
+typedef struct original_save_s {
+    MemcardHeader_c header;
+    u8 pad[32];
+    mCD_keep_original_c original;
+} OriginalSave_c;
+
+typedef union original_save_u {
+    OriginalSave_c save;
+    u8 __align[ALIGN_NEXT(sizeof(OriginalSave_c), mCD_MEMCARD_SECTORSIZE)];
+} OriginalSave_u;
 
 enum {
     mCD_PRESENT_TYPE_BONUS,

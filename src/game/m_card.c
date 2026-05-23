@@ -7239,16 +7239,6 @@ extern void mCD_toNextLand(void) {
             Common_Set(submenu_disabled, TRUE);
             bzero(&l_keepSave, sizeof(Save));
             l_keepSave_set = FALSE;
-            
-            // if (mFRm_ReturnCheckSum((u16*)&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL]) == 0) {
-            //     mCD_save_data_main_to_aram(&l_keepMail, l_aram_real_size_32_table[mCD_ARAM_DATA_MAIL], mCD_ARAM_DATA_MAIL);
-            // }
-            // mCD_set_init_mail_data(&l_keepMail);
-
-            // if (mFRm_ReturnCheckSum((u16*)&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
-            //     mCD_save_data_main_to_aram(&l_keepOriginal, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], mCD_ARAM_DATA_ORIGINAL);
-            // }
-            // mCD_set_init_original_data(&l_keepOriginal);
 
             if (mFRm_ReturnCheckSum((u16*)&l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY]) == 0) {
                 mCD_save_data_main_to_aram(&l_keepDiary, l_aram_real_size_32_table[mCD_ARAM_DATA_DIARY], mCD_ARAM_DATA_DIARY);
@@ -7257,3 +7247,10 @@ extern void mCD_toNextLand(void) {
         }
     }
 }
+
+static int S_mura_slot_no;
+static u16 S_comp_code;
+static char S_slot_a_file_extence[6];
+static char S_slot_b_file_extence[6];
+
+#include "../src/game/m_card_mydesign.c_inc"
