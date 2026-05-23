@@ -211,7 +211,8 @@ typedef struct {
     int _14;
     s32 game_result;
     int _1C;
-    u8 _20[0x14];
+    int _20;
+    u8 _24[0x10];
 } mCD_memMgr_fileInfo_c;
 
 typedef struct private_item_keep_s {
@@ -329,6 +330,7 @@ extern int mCD_SaveStation_Passport_bg(s32* chan);
 
 extern void mCD_InitAll();
 extern void mCD_LoadLand(void);
+extern void mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig);
 extern void mCD_toNextLand();
 
 extern int mCD_EraseBrokenLand_bg(int* slot);

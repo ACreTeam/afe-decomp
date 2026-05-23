@@ -1,0 +1,1105 @@
+#ifdef __INTELLISENSE__
+#include "m_card.h"
+
+#include "card.h"
+#include "card/CARDBios.h"
+#include "card/CARDCheck.h"
+#include "card/CARDMount.h"
+#include "../src/static/dolphin/card/__card.h"
+#include "graph.h"
+#include "lb_rtc.h"
+#include "libultra/libultra.h"
+#include "m_actor_type.h"
+#include "m_all_grow_ovl.h"
+#include "m_event.h"
+#include "m_flashrom.h"
+#include "m_home.h"
+#include "m_island.h"
+#include "m_land.h"
+#include "m_land_h.h"
+#include "m_mail.h"
+#include "m_malloc.h"
+#include "libc64/sleep.h"
+#include "m_common_data.h"
+#include "m_font.h"
+#include "jsyswrap.h"
+#include "m_name_table.h"
+#include "m_npc.h"
+#include "m_private.h"
+#include "m_private_h.h"
+#include "m_quest.h"
+#include "m_time.h"
+#include "types.h"
+#include "zurumode.h"
+#include "m_house.h"
+#include "m_cockroach.h"
+#include "m_start_data_init.h"
+#include <string.h>
+#include "m_sdcard.h"
+#endif
+
+static char l_comment_md_0_str0[32] ATTRIBUTE_ALIGN(4) = "どうぶつの森ｅ＋";
+static char l_comment_md_0_str1[32] ATTRIBUTE_ALIGN(4) = "デザインの保存１";
+static char l_comment_md_0_str2[32] ATTRIBUTE_ALIGN(4) = "デザインの保存２";
+static char l_comment_md_0_str3[32] ATTRIBUTE_ALIGN(4) = "デザインの保存３";
+static char l_comment_md_0_str4[32] ATTRIBUTE_ALIGN(4) = "デザインの保存４";
+static char l_comment_md_0_str5[32] ATTRIBUTE_ALIGN(4) = "デザインの保存５";
+static char l_mCDpp_mydesign_file_name_dummy[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriPP_MYD_d";
+
+static int mCD_CheckPPMydesignFilename(const char* filename, int idx) {
+    char name[32];
+
+    bcopy(l_mCD_mydesign0_file_name, name, sizeof(l_mCD_mydesign0_file_name));
+    name[17] = '0' | (idx & 0xF);
+    name[18] = '\0';
+    return mCD_CheckFilename(filename, name, 18);
+}
+
+static int mCD_CheckPPMydesignFileStatus(CARDStat* stat, int idx) {
+    int ret = FALSE;
+
+    if (stat->company[0] == '0' && stat->company[1] == '1') {
+        ret = mCD_CheckPPMydesignFilename(stat->fileName, idx);
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_bg_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    SoftResetEnable = FALSE;
+    return mCD_bg_get_area_common(mgr, fileInfo, mCD_FILE_SAVE_MAIN, 0);
+}
+
+static int mCD_SaveMydesign_mura_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int res = mCD_RESULT_BUSY;
+
+    if (mgr->cards[0].workArea != NULL && mgr->cards[1].workArea != NULL && mgr->workArea != NULL) {
+        int slot = mCD_get_this_land_slot_no_nes(mgr);
+
+        if (slot == mCD_RESULT_SUCCESS) {
+            s32 chan = mgr->chan;
+
+            S_mura_slot_no = chan;
+            if (chan != -1) {
+                if (mCD_check_copyProtect(mgr->workArea, chan) == TRUE) {
+                    res = mCD_RESULT_SUCCESS;
+                    fileInfo->proc++;
+                    mgr->land_saved = Save_Get(save_exist);
+                    mgr->copy_protect = Common_Get(copy_protect);
+                } else {
+                    res = mCD_RESULT_ERROR;
+                    mgr->cards[chan].game_result = mCD_TRANS_ERR_WRONG_LAND;
+                    mgr->land_saved = Save_Get(save_exist);
+                    mgr->copy_protect = Common_Get(copy_protect);
+                    fileInfo->_04 = mCD_TRANS_ERR_WRONG_LAND;
+                }
+            } else {
+                fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+                res = mCD_RESULT_ERROR;
+            }
+        } else if (slot != mCD_RESULT_BUSY) {
+            fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+            res = mCD_RESULT_ERROR;
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+        res = mCD_RESULT_ERROR;
+    }
+
+    return res;
+}
+
+static int mCD_SaveMydesign_check_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int success = FALSE;
+    int ret = mCD_RESULT_SUCCESS;
+
+    if (mCD_check_broken_land(mgr) == TRUE) {
+        if (mCD_repair_load_land(mgr) == TRUE) {
+            fileInfo->proc++;
+        } else {
+            success = TRUE;
+        }
+    } else {
+        success = TRUE;
+    }
+
+    if (success) {
+        fileInfo->proc++;
+        fileInfo->proc++;
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret = mCD_RESULT_BUSY;
+
+    if (mCD_repair_land(mgr)) {
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        fileInfo->proc++;
+        ret = mCD_RESULT_SUCCESS;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int saved_chan = mgr->chan;
+    int chan;
+    mCD_memMgr_card_info_c* card;
+    int ret = mCD_RESULT_BUSY;
+    int i;
+
+    mgr->chan = fileInfo->fileNo;
+    chan = mgr->chan;
+    if (mgr->workArea != NULL && chan != -1) {
+        card = &mgr->cards[mgr->chan];
+        if (card->workArea != NULL && mCD_check_card(&card->result, mCD_MEMCARD_SECTORSIZE, chan) == mCD_RESULT_SUCCESS) {
+            card->result = CARDMount((s32)chan, card->workArea, NULL);
+            if (card->result == CARD_RESULT_READY || card->result == CARD_RESULT_BROKEN) {
+                card->result = CARDCheck((s32)chan);
+                if (card->result == CARD_RESULT_READY) {
+                    for (i = 0; i < CARD_MAX_FILE; i++) {
+                        bzero(mgr->workArea, mCD_ORIGINAL_SAVE_SIZE);
+                        card->result = CARDGetStatus((s32)chan, i, &card->stat);
+                        if (card->result == CARD_RESULT_READY &&
+                            mCD_CheckPPMydesignFileStatus(&card->stat, fileInfo->chan) == TRUE) {
+                            bcopy(card->stat.fileName, mgr->filename, sizeof(mgr->filename));
+                            fileInfo->_04 = mCD_TRANS_ERR_TRAVEL_DATA_EXISTS;
+                            ret = mCD_RESULT_SUCCESS;
+                            break;
+                        }
+                    }
+
+                    if (ret == mCD_RESULT_BUSY) {
+                        fileInfo->_04 = 32; // TODO: need a error for this
+                        ret = mCD_RESULT_ERROR;
+                    }
+                } else {
+                    fileInfo->_04 = mCD_TRANS_ERR_DAMAGED;
+                    ret = mCD_RESULT_ERROR;
+                }
+
+                CARDUnmount((s32)chan);
+            } else {
+                if (card->result == CARD_RESULT_ENCODING) {
+                    fileInfo->_04 = mCD_TRANS_ERR_BROKEN_WRONGENCODING;
+                    CARDUnmount((s32)chan);
+                } else {
+                    fileInfo->_04 = mCD_TransErrorCode_nes(card->result);
+                }
+
+                ret = mCD_RESULT_ERROR;
+            }
+        } else {
+            if (card->result == CARD_RESULT_WRONGDEVICE) {
+                fileInfo->_04 = mCD_TRANS_ERR_WRONGDEVICE;
+            } else {
+                fileInfo->_04 = mCD_TransErrorCode_nes(card->result);
+            }
+            ret = mCD_RESULT_ERROR;
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+        ret = mCD_RESULT_ERROR;
+    }
+
+    mgr->chan = saved_chan;
+    return ret;
+}
+
+static int mCD_SaveMydesign_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret;
+
+    if (fileInfo->chan < 5) {
+        ret = mCD_SaveMydesign_file(mgr, fileInfo);
+    } else {
+        ret = mCD_RESULT_SUCCESS;
+        fileInfo->_04 = mCD_TRANS_ERR_NONE;
+    }
+
+    if (ret == mCD_RESULT_SUCCESS) {
+        if (fileInfo->_04 == mCD_TRANS_ERR_TRAVEL_DATA_EXISTS) {
+            fileInfo->_10 = 1;
+        } else {
+            fileInfo->_10 = 0;
+        }
+
+        fileInfo->proc++;
+        ret = mCD_RESULT_SUCCESS;
+    } else {
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    Save_t* save = (Save_t*)mgr->workArea;
+    InAnimal_c* in_animal = mNpc_GetInAnimalP(); // @unused
+    u16 copy_protect;
+    int chan = mgr->chan;
+    int ret = mCD_RESULT_BUSY;
+    
+    if (save != NULL && chan != -1) {
+        Private_c* priv = Now_Private;
+        mCkRh_SavePlayTime(Common_Get(player_no));
+        if (mCD_CheckResetCode(priv) == TRUE) {
+            mCD_SetResetCode(priv);
+        }
+
+        Save_Set(save_exist, TRUE);
+        copy_protect = mCD_get_land_copyProtect();
+        Save_Set(copy_protect, copy_protect);
+        Common_Set(copy_protect, copy_protect);
+        Save_Set(travel_hard_time, lbRTC_HardTime());
+        if (mCD_castingoff_mura_chk() != TRUE) {
+            Save_Set(nukegara_time, lbRTC_HardTime());
+        }
+
+        // @BUG - this is duplicated code
+        if (mCD_castingoff_mura_chk() != TRUE) {
+            Save_Set(nukegara_time, lbRTC_HardTime());
+        }
+
+        bcopy(Common_GetPointer(save.save), save, sizeof(Save_t));
+        if (Common_Get(player_decoy_flag) == TRUE) {
+            save->private_data[Common_Get(player_no)].exists = FALSE;
+        }
+
+        save->save_check.version = mFRm_VERSION;
+        mFRm_SetSaveCheckData(&save->save_check);
+        save->save_check.checksum = mFRm_GetFlatCheckSum((u16*)save, sizeof(Save), save->save_check.checksum);
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        fileInfo->proc++;
+        ret = mCD_RESULT_SUCCESS;
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_write_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    Save_t* save;
+    mCD_memMgr_card_info_c* card;
+    s32 chan;
+    s32 result;
+    int ret;
+
+    ret = mCD_write_common(mgr);
+    if (ret == mCD_RESULT_SUCCESS) {
+        mgr->chan = fileInfo->fileNo;
+        mgr->loaded_file_type = mCD_FILE_ORIGINAL;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        bzero(mgr->workArea, mgr->workArea_size);
+
+        if (fileInfo->_10 == 0) {
+            fileInfo->proc++;
+        } else {
+            fileInfo->proc = 9; /* TODO: proc enum */
+        }
+    } else if (ret != mCD_RESULT_BUSY) {
+        chan = mgr->chan;
+        if (chan != -1) {
+            card = &mgr->cards[chan];
+            result = card->result;
+
+            switch (result) {
+                case CARD_RESULT_BROKEN:
+                    fileInfo->_04 = mCD_TRANS_ERR_DAMAGED;
+                    break;
+                case CARD_RESULT_ENCODING:
+                    fileInfo->_04 = mCD_TRANS_ERR_BROKEN_WRONGENCODING;
+                    break;
+                case CARD_RESULT_NOCARD:
+                    fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+                    break;
+                case CARD_RESULT_WRONGDEVICE:
+                    fileInfo->_04 = mCD_TRANS_ERR_WRONGDEVICE;
+                    break;
+                default:
+                    fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+                    break;
+            }
+        } else {
+            fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+        }
+
+        fileInfo->chan = fileInfo->_04;
+        fileInfo->_1C = mgr->chan;
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN_BAK;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        bzero(mgr->workArea, mgr->workArea_size);
+        card = &mgr->cards[mgr->chan];
+        if (mCD_load_file(mgr->workArea, mgr->loaded_file_type, (s32)mgr->chan, &card->result) == mCD_RESULT_SUCCESS) {
+            u16 checksum = mFRm_ReturnCheckSum((u16*)mgr->workArea, mgr->workArea_size);
+            save = (Save_t*)mgr->workArea;
+            if (checksum == 0 && mLd_CheckId(save->land_info.id) == TRUE && mLd_CheckThisLand(save->land_info.name, save->land_info.id) == TRUE) {
+                mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+                ret = mCD_RESULT_SUCCESS;
+            }
+        }
+
+        if (ret == mCD_RESULT_SUCCESS) {
+            fileInfo->proc = 13; /* TODO: proc enum */
+        }
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_make_file_name(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int chan = mgr->chan;
+    u8 idx;
+    int i;
+
+    if (chan == -1) {
+        chan = 0;
+    }
+
+    mem_clear((u8*)mgr->filename, sizeof(mgr->filename), 0);
+    bcopy(l_mCD_mydesign0_file_name, mgr->filename, 0x12);
+
+    if (fileInfo->chan >= 5) {
+        idx = 0;
+        for (i = 0; i < 5; i++) {
+            if (chan == mCD_SLOT_A) {
+                if (S_slot_a_file_extence[i] == '\0') {
+                    break;
+                }
+            } else {
+                if (S_slot_b_file_extence[i] == '\0') {
+                    break;
+                }
+            }
+            idx++;
+        }
+
+        if (idx >= 5) {
+            idx = 4;
+        }
+        fileInfo->chan = idx;
+    } else {
+        idx = (u8)fileInfo->chan;
+    }
+
+    mgr->filename[0x11] = '0' | (idx & 0xF);
+    mgr->filename[0x12] = '\0';
+    fileInfo->proc++;
+
+    return mCD_RESULT_SUCCESS;
+}
+
+static int mCD_SaveMydesign_set_rewrite_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    Save_t* save;
+    mCD_memMgr_card_info_c* card;
+    s32 saved_chan;
+    int saved_err;
+    s32 result;
+    int ret = mCD_RESULT_ERROR;
+
+    saved_chan = mgr->chan;
+    saved_err = fileInfo->_04;
+    mgr->chan = S_mura_slot_no;
+    if (mgr->chan == -1) {
+        fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+        mCD_get_this_land_slot_no(mgr);
+    }
+
+    if (mgr->chan != -1) {
+        card = &mgr->cards[saved_chan];
+        result = card->result;
+
+        switch (result) {
+            case CARD_RESULT_BROKEN:
+                fileInfo->_04 = mCD_TRANS_ERR_DAMAGED;
+                break;
+            case CARD_RESULT_ENCODING:
+                fileInfo->_04 = mCD_TRANS_ERR_BROKEN_WRONGENCODING;
+                break;
+            case CARD_RESULT_NOCARD:
+                fileInfo->_04 = mCD_TRANS_ERR_NO_TOWN_DATA;
+                break;
+            case CARD_RESULT_WRONGDEVICE:
+                fileInfo->_04 = mCD_TRANS_ERR_WRONGDEVICE;
+                break;
+            default:
+                fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+                break;
+        }
+
+        if (saved_err != mCD_TRANS_ERR_NONE) {
+            fileInfo->_04 = saved_err;
+        }
+
+        fileInfo->chan = fileInfo->_04;
+        fileInfo->_1C = mgr->chan;
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN_BAK;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        bzero(mgr->workArea, mgr->workArea_size);
+        card = &mgr->cards[mgr->chan];
+        if (mCD_load_file(mgr->workArea, mgr->loaded_file_type, (s32)mgr->chan, &card->result) == mCD_RESULT_SUCCESS) {
+            u16 checksum = mFRm_ReturnCheckSum((u16*)mgr->workArea, mgr->workArea_size);
+            save = (Save_t*)mgr->workArea;
+            if (checksum == 0 &&
+                mLd_CheckId(save->land_info.id) == TRUE && mLd_CheckThisLand(save->land_info.name, save->land_info.id) == TRUE) {
+                mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+                fileInfo->proc = 13; /* TODO: proc enum */
+                ret = mCD_RESULT_SUCCESS;
+            }
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_create_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    mCD_file_entry_c* entry = &l_mcd_file_table[mCD_FILE_ORIGINAL];
+    mCD_memMgr_card_info_c* card;
+    int ret;
+    s32 chan;
+
+    chan = mgr->chan;
+    if (chan != -1) {
+        card = &mgr->cards[chan];
+        ret = mCD_create_file_bg(mgr->filename, CARD_ATTR_NO_COPY, entry->filesize, chan, &card->result, &card->fileNo);
+        card->game_result = mCD_TransErrorCode_nes(card->result);
+        if (ret == mCD_RESULT_SUCCESS) {
+            fileInfo->proc++;
+        } else if (ret != mCD_RESULT_BUSY) {
+            fileInfo->_04 = card->game_result;
+            ret = mCD_SaveMydesign_set_rewrite_main(mgr, fileInfo);
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+        ret = mCD_SaveMydesign_set_rewrite_main(mgr, fileInfo);
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_set(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    static int icon_fileNo[] = { RESOURCE_DESIGN1, RESOURCE_DESIGN2, RESOURCE_DESIGN3, RESOURCE_DESIGN4, RESOURCE_DESIGN5 };
+    OriginalSave_c* save;
+    u8* data_p;
+    mCD_keep_original_c* original;
+    s32 result;
+    u8 chan_idx;
+
+    save = (OriginalSave_c*)mgr->workArea;
+    if (save != NULL) {
+        mgr->loaded_file_type = mCD_FILE_ORIGINAL;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+
+        if (fileInfo->_10 != 0) {
+            bzero(save, mgr->workArea_size);
+            if (mCD_read_fg(save, mgr->filename, mCD_ORIGINAL_SAVE_SIZE, 0, fileInfo->fileNo, &result) == mCD_RESULT_SUCCESS) {
+                original = &save->original;
+                if (mFRm_ReturnCheckSum((u16*)&original->checksum, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0 &&
+                    S_comp_code != original->landid) {
+                    fileInfo->_04 = 0x20; /* TODO: add mCD_TRANS_ERR_* enum */
+                    return mCD_RESULT_ERROR;
+                }
+            } else {
+                fileInfo->_04 = mCD_TransErrorCode_nes(result);
+                return mCD_RESULT_ERROR;
+            }
+        }
+
+        save = (OriginalSave_c*)mgr->workArea;
+        bzero(save, mgr->workArea_size);
+        chan_idx = (u8)fileInfo->chan;
+        bcopy(l_comment_md_0_str0, save->header.comment, sizeof(l_comment_md_0_str0));
+
+        switch (chan_idx) {
+            case 0:
+                bcopy(l_comment_md_0_str1, save->header.comment + sizeof(l_comment_md_0_str0), sizeof(l_comment_md_0_str1));
+                break;
+            case 1:
+                bcopy(l_comment_md_0_str2, save->header.comment + sizeof(l_comment_md_0_str0), sizeof(l_comment_md_0_str2));
+                break;
+            case 2:
+                bcopy(l_comment_md_0_str3, save->header.comment + sizeof(l_comment_md_0_str0), sizeof(l_comment_md_0_str3));
+                break;
+            case 3:
+                bcopy(l_comment_md_0_str4, save->header.comment + sizeof(l_comment_md_0_str0), sizeof(l_comment_md_0_str4));
+                break;
+            case 4:
+                bcopy(l_comment_md_0_str5, save->header.comment + sizeof(l_comment_md_0_str0), sizeof(l_comment_md_0_str5));
+                break;
+        }
+
+        data_p = mCD_set_bti_data(save->header.banner, RESOURCE_B_DESIGN, 0xC00, 1, 0x200, FALSE);
+        data_p = mCD_set_bti_data(data_p, icon_fileNo[chan_idx], 0x400, 1, 0x200, FALSE);
+        data_p += 32;
+        bcopy(mgr->_115C, data_p, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
+        original = (mCD_keep_original_c*)data_p;
+        original->landid = (u16)RANDOM(0xFFFF);
+        original->checksum = mFRm_GetFlatCheckSum((u16*)original, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL], original->checksum);
+        mgr->workArea_size = ALIGN_NEXT(l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL] + sizeof(MemcardHeader_c) + 0x20, mCD_MEMCARD_SECTORSIZE);
+        fileInfo->proc++;
+        return mCD_RESULT_SUCCESS;
+    }
+    
+    return mCD_RESULT_ERROR;
+}
+
+static int mCD_SaveMydesign_write(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    Save_t* save;
+    mCD_memMgr_card_info_c* card;
+    s32 chan;
+    mCD_file_entry_c* entry;
+    s32 result;
+    int ret;
+    int ofs;
+
+    chan = mgr->chan;
+    card = &mgr->cards[chan];
+    entry = &l_mcd_file_table[mgr->loaded_file_type];
+    ofs = mCD_get_offset(mgr->loaded_file_type);
+    ret = mCD_write_comp_bg(mgr->workArea, mgr->filename, mgr->workArea_size, entry->filesize, ofs, chan,
+                            &card->result);
+
+    if (ret == mCD_RESULT_SUCCESS) {
+        fileInfo->proc++;
+    } else if (ret != mCD_RESULT_BUSY) {
+        result = card->result;
+        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN_BAK;
+        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+        bzero(mgr->workArea, mgr->workArea_size);
+        fileInfo->_1C = mgr->chan;
+        mgr->chan = S_mura_slot_no;
+        card = &mgr->cards[mgr->chan];
+        if (mCD_load_file(mgr->workArea, mgr->loaded_file_type, mgr->chan, &card->result) == mCD_RESULT_SUCCESS) {
+            u16 checksum = mFRm_ReturnCheckSum((u16*)mgr->workArea, mgr->workArea_size);
+            save = (Save_t*)mgr->workArea;
+            if (checksum == 0 && mLd_CheckId(save->land_info.id) == TRUE && mLd_CheckThisLand(save->land_info.name, save->land_info.id) == TRUE) {
+                mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+                ret = mCD_RESULT_SUCCESS;
+            }
+        }
+
+        switch (result) {
+            case CARD_RESULT_BROKEN:
+                fileInfo->_04 = mCD_TRANS_ERR_DAMAGED;
+                break;
+            case CARD_RESULT_ENCODING:
+                fileInfo->_04 = mCD_TRANS_ERR_BROKEN_WRONGENCODING;
+                break;
+            case CARD_RESULT_NOCARD:
+                fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+                break;
+            case CARD_RESULT_WRONGDEVICE:
+                fileInfo->_04 = mCD_TRANS_ERR_WRONGDEVICE;
+                break;
+            default:
+                fileInfo->_04 = mCD_TRANS_ERR_IOERROR;
+                break;
+        }
+
+        fileInfo->chan = fileInfo->_04;
+        if (ret == mCD_RESULT_SUCCESS) {
+            fileInfo->proc = 13; /* TODO: proc enum */
+        }
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_get_status(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret;
+
+    ret = mCD_get_status_common(mgr, fileInfo, mgr->filename, 0, CARD_COMMENT_SIZE, CARD_STAT_ICON_C8, CARD_STAT_SPEED_SLOW, 1,
+                              CARD_STAT_BANNER_C8);
+    if (ret == mCD_RESULT_ERROR) {
+        mCD_SaveMydesign_set_rewrite_main(mgr, fileInfo);
+        ret = mCD_RESULT_SUCCESS;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_set_status(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    Save_t* save;
+    mCD_memMgr_card_info_c* card;
+    s32 chan;
+    int ret;
+
+    chan = mgr->chan;
+    if (chan != -1) {
+        card = &mgr->cards[chan];
+        ret = mCD_set_file_status_bg(&card->stat, mgr->filename, chan, &card->result);
+        if (ret == mCD_RESULT_SUCCESS) {
+            mgr->chan = S_mura_slot_no;
+            mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
+            mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+            bzero(mgr->workArea, mgr->workArea_size);
+            chan = mgr->chan;
+            card = &mgr->cards[chan];
+            if (mCD_load_file(mgr->workArea, mgr->loaded_file_type, chan, &card->result) == mCD_RESULT_SUCCESS) {
+                u16 checksum = mFRm_ReturnCheckSum((u16*)mgr->workArea, mgr->workArea_size);
+                save = (Save_t*)mgr->workArea;
+
+                if (checksum == 0 &&
+                    mLd_CheckId(save->land_info.id) == TRUE && mLd_CheckThisLand(save->land_info.name, save->land_info.id) == TRUE) {
+                    fileInfo->proc = 13; /* TODO: proc enum */
+                    mgr->loaded_file_type = mCD_FILE_SAVE_MAIN_BAK;
+                    mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+                    ret = mCD_RESULT_SUCCESS;
+                } else {
+                    fileInfo->_04 = mCD_TRANS_ERR_DAMAGED;
+                    ret = mCD_RESULT_ERROR;
+                }
+            } else {
+                fileInfo->_04 = mCD_TransErrorCode_nes(card->result);
+                ret = mCD_RESULT_ERROR;
+            }
+        } else if (ret != mCD_RESULT_BUSY) {
+            ret = mCD_SaveMydesign_set_rewrite_main(mgr, fileInfo);
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_SaveMydesign_write_bk(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret;
+
+    mgr->chan = S_mura_slot_no;
+    ret = mCD_write_common(mgr);
+    if (mgr->loaded_file_type == mCD_FILE_SAVE_MAIN) {
+        if (ret != mCD_RESULT_BUSY) {
+            fileInfo->_04 = fileInfo->chan;
+            mgr->chan = fileInfo->_1C;
+            if (mgr->copy_protect != -1) {
+                Common_Set(copy_protect, mgr->copy_protect);
+            }
+
+            ret = mCD_RESULT_ERROR;
+        }
+    } else if (ret == mCD_RESULT_SUCCESS) {
+        fileInfo->proc++;
+    } else if (ret != mCD_RESULT_BUSY) {
+        fileInfo->proc = 14; /* TODO: proc enum */
+        ret = mCD_RESULT_SUCCESS;
+    }
+
+    return ret;
+}
+
+// TODO: it's probably not 'void* buf'
+// TODO: it looks like save_home_info has a generic 'param' member instead of 'fileNo' or 'chan'.
+extern int mCD_SaveMydesign_bg(void* buf, s32 chan, s32 idx) {
+    // clang-format off
+    static mCD_SAVEHOME_PROC save_proc[] = {
+        mCD_SaveMydesign_bg_get_area,
+        mCD_SaveMydesign_mura_check_slot,
+        mCD_SaveMydesign_check_repair_land,
+        mCD_SaveMydesign_repair_land,
+        mCD_SaveMydesign_check_slot,
+        mCD_SaveMydesign_set_data,
+        mCD_SaveMydesign_write_main,
+        mCD_SaveMydesign_make_file_name,
+        mCD_SaveMydesign_create_file,
+        mCD_SaveMydesign_set,
+        mCD_SaveMydesign_write,
+        mCD_SaveMydesign_get_status,
+        mCD_SaveMydesign_set_status,
+        mCD_SaveMydesign_write_bk,
+    };
+    // clang-format on
+
+    mCD_memMgr_c* mgr = &l_memMgr;
+    mCD_memMgr_fileInfo_c* fileInfo = &mgr->save_home_info;
+    int ret = mCD_TRANS_ERR_BUSY;
+    u8 proc;
+    int res;
+
+    proc = (u8)fileInfo->proc;
+    mgr->_115C = buf;
+    if (proc == 0) {
+        mgr->chan = chan;
+        fileInfo->fileNo = chan;
+        fileInfo->chan = idx;
+    }
+
+    mgr->_0188++;
+    if (mgr->_018C == 0) {
+        if (proc < 14) {
+            res = (*save_proc[proc])(mgr, fileInfo);
+            if (res == mCD_RESULT_SUCCESS) {
+                if (fileInfo->proc == 14) {
+                    ret = mCD_TRANS_ERR_NONE;
+                }
+            } else if (res != mCD_RESULT_BUSY) {
+                ret = fileInfo->_04;
+            }
+
+            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 14)) {
+                if (mgr->_0188 >= 112) {
+                    sAdo_SysLevStop(NA_SE_47);
+                    mCD_ClearMemMgr_com2(mgr);
+                } else {
+                    mgr->_018C = 1;
+                    mgr->_0190 = ret;
+                    ret = mCD_TRANS_ERR_BUSY;
+                    if (mgr->_0190 == mCD_TRANS_ERR_BUSY) {
+                        mgr->_0190 = mCD_TRANS_ERR_NOCARD;
+                    }
+                }
+            }
+        } else {
+            ret = mCD_TRANS_ERR_NONE;
+            mCD_ClearMemMgr_com2(mgr);
+        }
+    } else if (mgr->_0188 >= 112) {
+        ret = mgr->_0190;
+        mCD_ClearMemMgr_com2(mgr);
+        sAdo_SysLevStop(NA_SE_47);
+    }
+
+    if (ret != mCD_TRANS_ERR_BUSY) {
+        SoftResetEnable = TRUE;
+    }
+
+    return ret;
+}
+
+extern void mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig) {
+    mCD_memMgr_c* mgr = &l_memMgr;
+    OriginalSave_c* save;
+    mCD_memMgr_fileInfo_c* fileInfo;
+    mCD_keep_original_c* original;
+    s32 result = 0;
+    int failed = FALSE;
+    int res;
+
+    fileInfo = &mgr->save_home_info;
+    if (idx < 5) {
+        res = mCD_bg_get_area_common(mgr, fileInfo, mCD_FILE_ORIGINAL, 2);
+        save = (OriginalSave_c*)mgr->workArea;
+        if (res == mCD_RESULT_SUCCESS) {
+            mgr->loaded_file_type = mCD_FILE_ORIGINAL;
+            mgr->workArea_size = mCD_get_size(mCD_FILE_ORIGINAL);
+            bzero(save, mgr->workArea_size);
+            bcopy(l_mCD_mydesign0_file_name, mgr->filename, 0x20);
+            mgr->filename[0x11] = '0' | (idx & 0xF);
+            mgr->filename[0x12] = '\0';
+            if (mCD_read_fg(save, mgr->filename, mCD_ORIGINAL_SAVE_SIZE, 0, chan, &result) == mCD_RESULT_SUCCESS) {
+                if (mFRm_ReturnCheckSum((u16*)&save->original.checksum, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0) {
+                    S_comp_code = save->original.landid;
+                    bcopy(&save->original, keep_orig, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
+                } else {
+                    failed = TRUE;
+                }
+            } else {
+                failed = TRUE;
+            }
+        }
+    } else {
+        failed = TRUE;
+    }
+
+    if (failed == TRUE) {
+        mCD_set_init_original_data(keep_orig);
+    }
+
+    mCD_ClearMemMgr_com2(mgr);
+    mCD_TransErrorCode_nes(result);
+}
+
+static int mCD_GetSpaceSlot_check_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int i;
+
+    SoftResetEnable = FALSE;
+    S_slot_ok[0] = 0;
+    S_slot_ok[1] = 0;
+
+    for (i = 0; i < 6; i++) {
+        S_slot_a_file_extence[i] = '\0';
+        S_slot_b_file_extence[i] = '\0';
+    }
+
+    S_slot_file_count = 0;
+    S_slot_slot_count = 0;
+    mgr->cards[0].game_result = mCD_TRANS_ERR_NONE;
+    mgr->cards[1].game_result = mCD_TRANS_ERR_NONE;
+
+    return mCD_bg_get_area_common(mgr, fileInfo, mCD_FILE_ORIGINAL, 0);
+}
+
+static int mCD_GetSpaceSlot_check_mura_check(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret = mCD_RESULT_BUSY;
+    int slot;
+
+    fileInfo->_04 = mCD_TRANS_ERR_NONE;
+
+    if (mgr->cards[0].workArea != NULL && mgr->cards[1].workArea != NULL && mgr->workArea != NULL) {
+        if (Save_Get(save_exist) == 0) {
+            fileInfo->_04 = mCD_TRANS_ERR_TOWN_INVALID;
+            ret = mCD_RESULT_ERROR;
+        } else {
+            slot = mCD_get_this_land_slot_no_nes(mgr);
+            if (slot == mCD_RESULT_SUCCESS) {
+                s32 chan = mgr->chan;
+
+                fileInfo->_20 = chan;
+                if (chan != -1) {
+                    if (mCD_check_copyProtect(mgr->workArea, chan) == TRUE) {
+                        ret = mCD_RESULT_SUCCESS;
+                        fileInfo->proc++;
+                    } else {
+                        fileInfo->_04 = mCD_TRANS_ERR_WRONG_LAND;
+                        ret = mCD_RESULT_ERROR;
+                        mgr->land_saved = Save_Get(save_exist);
+                        mgr->copy_protect = Common_Get(copy_protect);
+                    }
+                } else {
+                    fileInfo->_04 = mCD_TRANS_ERR_NO_TOWN_DATA;
+                    ret = mCD_RESULT_ERROR;
+                }
+            } else if (slot != mCD_RESULT_BUSY) {
+                fileInfo->_04 = mCD_TRANS_ERR_NO_TOWN_DATA;
+                ret = mCD_RESULT_ERROR;
+            }
+        }
+    } else {
+        fileInfo->_04 = mCD_TRANS_ERR_NO_TOWN_DATA;
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_mydesign_GetSpaceSlot_bg(mCD_memMgr_c* mgr, int size, int slot) {
+    mCD_memMgr_card_info_c* card;
+    int ret = mCD_RESULT_BUSY;
+    int space_res;
+
+    card = &mgr->cards[slot];
+
+    if (slot == mCD_SLOT_A) {
+        S_slot_a_file_extence[5] = 1;
+    } else {
+        S_slot_b_file_extence[5] = 1;
+    }
+
+    if (card->workArea != NULL) {
+        space_res = mCD_get_space_bg(&card->freeBytes, slot, &card->result, card->workArea);
+        if (space_res == mCD_RESULT_SUCCESS) {
+            ret = mCD_RESULT_SUCCESS;
+            S_slot_ok[slot] = mCD_SLOT_B;
+            if (card->freeBytes > size) {
+                if (mCD_get_file_num(card->workArea, slot) >= CARD_MAX_FILE) {
+                    if (slot == mCD_SLOT_A) {
+                        S_slot_a_file_extence[5] = '\0';
+                    } else {
+                        S_slot_b_file_extence[5] = '\0';
+                    }
+                    mgr->cards[slot].game_result = mCD_TRANS_ERR_NO_FILES;
+                }
+            } else {
+                if (slot == mCD_SLOT_A) {
+                    S_slot_a_file_extence[5] = '\0';
+                } else {
+                    S_slot_b_file_extence[5] = '\0';
+                }
+                mgr->cards[slot].game_result = mCD_TRANS_ERR_NO_SPACE;
+            }
+        } else if (space_res != mCD_RESULT_BUSY) {
+            mgr->cards[slot].game_result = mCD_TransErrorCode_nes(card->result);
+            ret = mCD_RESULT_ERROR;
+        }
+    } else {
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_GetSpaceSlot_check_spacechk(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret = mCD_RESULT_BUSY;
+    int space_res;
+
+    space_res = mCD_mydesign_GetSpaceSlot_bg(mgr, mCD_ORIGINAL_SAVE_SIZE, S_slot_slot_count);
+    if (space_res != mCD_RESULT_BUSY) {
+        if (space_res == mCD_RESULT_SUCCESS) {
+            S_slot_ok[S_slot_slot_count] = 1;
+        }
+        S_slot_slot_count++;
+        if (S_slot_slot_count >= 2) {
+            ret = mCD_RESULT_SUCCESS;
+            S_slot_slot_count = 0;
+            fileInfo->proc++;
+        }
+    }
+
+    return ret;
+}
+
+static int mCD_Mydesign_existence_check_common(mCD_memMgr_c* mgr, int file_idx, int slot) {
+    OriginalSave_c* save;
+    s32 result;
+    int ret;
+
+    save = (OriginalSave_c*)mgr->workArea;
+    mgr->loaded_file_type = mCD_FILE_ORIGINAL;
+    mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
+    bzero(save, mgr->workArea_size);
+    bcopy(l_mCD_mydesign0_file_name, mgr->filename, 0x20);
+    mgr->filename[0x11] = '0' | (file_idx & 0xF);
+    mgr->filename[0x12] = '\0';
+    if (mCD_read_fg(save, mgr->filename, mCD_ORIGINAL_SAVE_SIZE, 0, slot, &result) == mCD_RESULT_SUCCESS) {
+        mFRm_ReturnCheckSum((u16*)&save->original.checksum, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
+        ret = mCD_RESULT_SUCCESS;
+    } else {
+        if (mgr->cards[slot].game_result == mCD_TRANS_ERR_NONE) {
+            mgr->cards[slot].game_result = mCD_TransErrorCode_nes(result);
+        }
+        ret = mCD_RESULT_ERROR;
+    }
+
+    return ret;
+}
+
+static int mCD_GetSpaceSlot_check_file_existence(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    int ret = mCD_RESULT_BUSY;
+    int exists;
+
+    exists = mCD_Mydesign_existence_check_common(mgr, S_slot_file_count, S_slot_slot_count);
+    if (exists == mCD_RESULT_SUCCESS) {
+        if (S_slot_slot_count == 0) {
+            S_slot_a_file_extence[S_slot_file_count] = 1;
+        } else {
+            S_slot_b_file_extence[S_slot_file_count] = 1;
+        }
+    }
+
+    S_slot_file_count++;
+    if (S_slot_file_count >= 5) {
+        S_slot_file_count = 0;
+        S_slot_slot_count++;
+        if (S_slot_slot_count >= 2) {
+            S_slot_slot_count = 0;
+
+            if (S_slot_a_file_extence[0] == '\0' && S_slot_a_file_extence[1] == '\0' &&
+                S_slot_a_file_extence[2] == '\0' && S_slot_a_file_extence[3] == '\0' &&
+                S_slot_a_file_extence[4] == '\0' && S_slot_a_file_extence[5] == '\0') {
+                S_slot_ok[0] = 0;
+            }
+
+            if (S_slot_b_file_extence[0] == '\0' && S_slot_b_file_extence[1] == '\0' &&
+                S_slot_b_file_extence[2] == '\0' && S_slot_b_file_extence[3] == '\0' &&
+                S_slot_b_file_extence[4] == '\0' && S_slot_b_file_extence[5] == '\0') {
+                S_slot_ok[1] = 0;
+            }
+
+            if (S_slot_a_file_extence[0] == 1 && S_slot_a_file_extence[1] == 1 &&
+                S_slot_a_file_extence[2] == 1 && S_slot_a_file_extence[3] == 1 &&
+                S_slot_a_file_extence[4] == 1) {
+                S_slot_a_file_extence[5] = '\0';
+            }
+
+            if (S_slot_b_file_extence[0] == 1 && S_slot_b_file_extence[1] == 1 &&
+                S_slot_b_file_extence[2] == 1 && S_slot_b_file_extence[3] == 1 &&
+                S_slot_b_file_extence[4] == 1) {
+                S_slot_b_file_extence[5] = '\0';
+            }
+
+            if (S_slot_ok[0] == 0 && S_slot_ok[1] == 0) {
+                mgr->chan = (~fileInfo->_20) & 1;
+                if (mgr->cards[mgr->chan].game_result == mCD_TRANS_ERR_NOCARD) {
+                    mgr->chan = fileInfo->_20 & 1;
+                }
+                ret = mCD_RESULT_ERROR;
+                fileInfo->_04 = mgr->cards[mgr->chan].game_result;
+                S_slot_ok[mgr->chan] = 0xFF;
+            } else {
+                ret = mCD_RESULT_SUCCESS;
+                fileInfo->proc++;
+            }
+        }
+    }
+
+    return ret;
+}
+
+// TODO: verify these types
+extern int mCD_GetSpaceSlot_check_light_main_bg(u8* slot_ok, u8* slot_a_file_extence, u8* slot_b_file_extence) {
+    // clang-format off
+    static mCD_SAVEHOME_PROC save_proc[] = {
+        mCD_GetSpaceSlot_check_get_area,
+        mCD_GetSpaceSlot_check_mura_check,
+        mCD_GetSpaceSlot_check_spacechk,
+        mCD_GetSpaceSlot_check_file_existence,
+    };
+    // clang-format on
+
+    mCD_memMgr_c* mgr = &l_memMgr;
+    mCD_memMgr_fileInfo_c* fileInfo = &mgr->save_home_info;
+    int ret = mCD_TRANS_ERR_BUSY;
+    u8 proc;
+    int res;
+
+    proc = (u8)fileInfo->proc;
+    mgr->_0188++;
+    if (mgr->_018C == 0) {
+        if (proc < 4) {
+            res = (*save_proc[proc])(mgr, fileInfo);
+            if (res == mCD_RESULT_SUCCESS) {
+                if (fileInfo->proc == 4) {
+                    ret = mCD_TRANS_ERR_NONE;
+                }
+            }
+
+            if (res == mCD_RESULT_ERROR || (res == mCD_RESULT_SUCCESS && fileInfo->proc == 4)) {
+                if (res == mCD_RESULT_ERROR) {
+                    ret = fileInfo->_04;
+                }
+
+                if (mgr->_0188 >= 112) {
+                    sAdo_SysLevStop(NA_SE_47);
+                    mCD_ClearMemMgr_com2(mgr);
+                    if (ret == mCD_TRANS_ERR_BUSY) {
+                        ret = mCD_TRANS_ERR_NOCARD;
+                    }
+                } else {
+                    mgr->_0190 = ret;
+                    ret = mCD_TRANS_ERR_BUSY;
+                    mgr->_018C = 1;
+                    if (mgr->_0190 == mCD_TRANS_ERR_BUSY) {
+                        mgr->_0190 = mCD_TRANS_ERR_NOCARD;
+                    }
+                }
+            }
+        } else {
+            ret = mCD_TRANS_ERR_NONE;
+            mCD_ClearMemMgr_com2(mgr);
+        }
+    } else if (mgr->_0188 >= 112) {
+        ret = mgr->_0190;
+        mCD_ClearMemMgr_com2(mgr);
+        sAdo_SysLevStop(NA_SE_47);
+    }
+
+    if (ret != mCD_TRANS_ERR_BUSY) {
+        SoftResetEnable = TRUE;
+    }
+
+    memcpy(slot_ok, S_slot_ok, 2);
+    memcpy(slot_a_file_extence, S_slot_a_file_extence, 6);
+    memcpy(slot_b_file_extence, S_slot_b_file_extence, 6);
+
+    return ret;
+}

@@ -34,6 +34,7 @@
 #include "m_cockroach.h"
 #include "m_start_data_init.h"
 #include <string.h>
+#include "_mem.h"
 #include "m_sdcard.h"
 
 typedef struct card_bg_info {
@@ -6843,14 +6844,6 @@ static int mCD_SaveStation_Passport_make_file_name(mCD_memMgr_c* mgr, mCD_memMgr
     return ret;
 }
 
-// @HACK - only here until we do the rest of m_card
-static u8 unused[0xF4A0];
-
-static int order_bss_2(void) {
-    bzero(unused, sizeof(unused));
-    return 0;
-}
-
 static int mCD_SaveStation_Passport_create_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     mCD_file_entry_c* entry;
     mCD_memMgr_card_info_c* card;
@@ -7248,9 +7241,40 @@ extern void mCD_toNextLand(void) {
     }
 }
 
-static int S_mura_slot_no;
 static u16 S_comp_code;
+static int S_mura_slot_no;
 static char S_slot_a_file_extence[6];
 static char S_slot_b_file_extence[6];
+static u8 S_slot_ok[2];
+static u8 S_slot_file_count;
+static u8 S_slot_slot_count;
+static int S_SDprobe_fg;
+static int S_SDthread_use_fg;
+static int S_movingInfo;
+static OSThread MemCardThread;
+static u8 MemCardStack[0x5000];
+static u8* mCsd_EfbTextureBuffer_p;
+static mLd_land_info_c S_keep_landinfo;
+static int S_CheckReten_next_cnt;
+static u8 MemCardWorkArea0[0xA000] ATTRIBUTE_ALIGN(32);
+
+static void order_bss_2(void) {
+    bzero(&S_comp_code, sizeof(S_comp_code));
+    bzero(&S_mura_slot_no, sizeof(S_mura_slot_no));
+    bzero(S_slot_a_file_extence, sizeof(S_slot_a_file_extence));
+    bzero(S_slot_b_file_extence, sizeof(S_slot_b_file_extence));
+    bzero(S_slot_ok, sizeof(S_slot_ok));
+    bzero(&S_slot_file_count, sizeof(S_slot_file_count));
+    bzero(&S_slot_slot_count, sizeof(S_slot_slot_count));
+    bzero(&S_SDprobe_fg, sizeof(S_SDprobe_fg));
+    bzero(&S_SDthread_use_fg, sizeof(S_SDthread_use_fg));
+    bzero(&S_movingInfo, sizeof(S_movingInfo));
+    bzero(&MemCardThread, sizeof(MemCardThread));
+    bzero(MemCardStack, sizeof(MemCardStack));
+    bzero(&mCsd_EfbTextureBuffer_p, sizeof(mCsd_EfbTextureBuffer_p));
+    bzero(&S_keep_landinfo, sizeof(S_keep_landinfo));
+    bzero(&S_CheckReten_next_cnt, sizeof(S_CheckReten_next_cnt));
+    bzero(MemCardWorkArea0, sizeof(MemCardWorkArea0));
+}
 
 #include "../src/game/m_card_mydesign.c_inc"
