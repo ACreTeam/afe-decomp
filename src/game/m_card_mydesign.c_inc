@@ -537,7 +537,8 @@ static int mCD_SaveMydesign_set(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileIn
                 break;
         }
 
-        data_p = mCD_set_bti_data(save->header.banner, RESOURCE_B_DESIGN, 0xC00, 1, 0x200, FALSE);
+        data_p = save->header.banner;
+        data_p = mCD_set_bti_data(data_p, RESOURCE_B_DESIGN, 0xC00, 1, 0x200, FALSE);
         data_p = mCD_set_bti_data(data_p, icon_fileNo[chan_idx], 0x400, 1, 0x200, FALSE);
         data_p += 32;
         bcopy(mgr->_115C, data_p, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]);
