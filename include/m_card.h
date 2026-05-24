@@ -174,7 +174,7 @@ typedef struct keep_mail_s {
 #define mCD_KEEP_DIARY_COUNT PLAYER_NUM
 #define mCD_KEEP_DIARY_ENTRY_COUNT lbRTC_MONTHS_MAX
 
-typedef struct {
+typedef struct keep_diary_s {
     u16 checksum;
     mDi_entry_c entries[mCD_KEEP_DIARY_COUNT][mCD_KEEP_DIARY_ENTRY_COUNT];
 } mCD_keep_diary_c ATTRIBUTE_ALIGN(32);
@@ -312,6 +312,22 @@ typedef union letter_save_u {
     LetterSave_c save;
     u8 __align[ALIGN_NEXT(sizeof(LetterSave_c), mCD_MEMCARD_SECTORSIZE)];
 } LetterSave_u;
+
+typedef struct diary_save_s {
+    MemcardHeader_c header;
+    u8 pad[32];
+    mCD_keep_diary_c diary;
+} DiarySave_c;
+
+typedef union diary_save_u {
+    DiarySave_c save;
+    u8 __align[ALIGN_NEXT(sizeof(DiarySave_c), mCD_MEMCARD_SECTORSIZE)];
+} DiarySave_u;
+
+typedef struct sd_card_info_s {
+    s32 chan;
+    int exist;
+} mCD_sd_card_info_c;
 
 enum {
     mCD_PRESENT_TYPE_BONUS,

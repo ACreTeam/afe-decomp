@@ -7279,3 +7279,4 @@ static void order_bss_2(void) {
 
 #include "../src/game/m_card_mydesign.c_inc"
 #include "../src/game/m_card_letter.c_inc"
+#include "../src/game/m_card_sd.c_inc"
