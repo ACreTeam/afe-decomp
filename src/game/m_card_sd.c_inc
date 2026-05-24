@@ -57,9 +57,10 @@ static u8 MemCardWorkArea0[0xA000] ATTRIBUTE_ALIGN(32);
 #define mCD_SD_MURA_WRITE_SIZE 0x3B1D4
 #define mCD_SD_MURA_READ_SIZE 0x3C000
 #define mCD_SD_TIFF_BUFFER_MIN_SIZE 0x96000
+#define mCD_SD_TIFF_BUFFER_SIZE 0x12C000
 
 extern int mCsd_tiffBufferSize_get(void);
-extern void mSD_tiff_make(void* dst, u32 param_1);
+extern void mSD_tiff_make(void* dst, void* src);
 extern int mSD_sdcard_test(s32 chan);
 extern int mSD_sdcard_mura_write(void* buf, u32 size, int param_2);
 extern int mSD_sdcard_tiff_write(void* buf, u32 size);
@@ -69,6 +70,7 @@ extern int mSD_sdcard_format(void);
 extern int mSD_mura_allcount_get_common(s32* count);
 extern int mSD_mura_nextname_get_common(u8* name, int* param_1);
 extern int mCD_SD_CheckStation_bg_thread(void);
+extern int mCsd_sdcard_slot_chk(void);
 
 void mSdcardthread_main(void* arg);
 void mSdtr_tiff_write_main(void* arg);
@@ -783,22 +785,20 @@ extern void mCsd_exitence_chk_start(void) {
 }
 
 extern int mCsd_exitence_chk(void) {
+    int res;
     int probe_fg;
     int ret;
 
     if (mSdcard_thread_endchk() == TRUE) {
         probe_fg = mSdcardprobe_fg_chk();
-        SoftResetEnable = TRUE;
-        ret = mCD_RESULT_SUCCESS;
-        switch (probe_fg) {
-            case 0x23:
-            case 0:
-                break;
-            default:
-                ret = mCD_RESULT_BUSY;
-                break;
+        SoftResetEnable = ret = TRUE;
+        if (probe_fg == 0x23) {
+            (void)(res = (int)probe_fg == 0 ? 0 : 1);
+        } else if (probe_fg == 0) {
+            (void)(res = (int)probe_fg == 0 ? 0 : 1);
+        } else {
+            ret = mCD_RESULT_BUSY;
         }
-
     } else {
         ret = mCD_RESULT_ERROR;
     }
@@ -852,6 +852,21 @@ extern int mCsd_sd_format_wait(void) {
     return ret;
 }
 
+static int mCD_SaveTiff_sd_mem_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
+    SoftResetEnable = FALSE;
+    mgr->workArea = mCD_malloc_32(mCD_SD_TIFF_BUFFER_SIZE);
+    if (mgr->workArea != NULL) {
+        int chan = mCsd_sdcard_slot_chk();
+        if (chan >= 0) {
+            mCsd_nowdrive_set(chan);
+        }
+        
+        fileInfo->proc++;
+    }
+
+    return mCD_RESULT_SUCCESS;
+}
+
 extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size) {
     if (buf_p != NULL) {
         if (size < mCD_SD_TIFF_BUFFER_MIN_SIZE) {
@@ -865,11 +880,11 @@ extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size) {
     mCsd_EfbTextureBuffer_p = NULL;
 }
 
-extern int mCD_SaveTiff_sd_mem_data_set(void* timg, int* proc) {
+static int mCD_SaveTiff_sd_mem_data_set(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     if (mCsd_EfbTextureBuffer_p != NULL) {
-        mSD_tiff_make(mCsd_EfbTextureBuffer_p, *(u32*)((u8*)timg + 0x10));
+        mSD_tiff_make(mCsd_EfbTextureBuffer_p, mgr->workArea);
         mCsd_tiff_write_start();
-        (*proc)++;
+        fileInfo->proc++;
     }
 
     return mCD_RESULT_SUCCESS;
