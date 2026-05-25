@@ -375,6 +375,8 @@ extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size);
 extern void mCD_SD_static_clear(void);
 extern int mCD_castingoff_mura_chk(void);
 
+extern int mCD_movingInfo_get(void);
+
 extern void mCD_ClearErrInfo(void);
 extern void mCD_OnErrInfo(int err);
 extern void mCD_OffErrInfo(int err);

@@ -80,6 +80,13 @@ typedef struct lighthouse_s {
     u8 players_completed;
 } LightHouse_c;
 
+typedef struct sd_save_info_s {
+    u16 _000038;
+    u16 _00003A;
+    u16 _00003C[8];
+    u16 _00004C[8];
+} SDSaveInfo_c;
+
 /* sizeof(Save_s) == 0x2D800 */
 typedef struct Save_s {
     /* 0x00000 */ mFRm_chk_t save_check; /* save information */
@@ -93,10 +100,7 @@ typedef struct Save_s {
     /* 0x00032 */ u16 _000032;
     /* 0x00034 */ u16 _000034;
     /* 0x00036 */ u16 _000036;
-    /* 0x00038 */ u16 _000038;
-    /* 0x0003A */ u16 _00003A;
-    /* 0x0003C */ u16 _00003C[8];
-    /* 0x0004C */ u16 _00004C[8];
+    /* 0x00038 */ SDSaveInfo_c sd_save_info;
     /* 0x0005C */ AnmPersonalID_c sd_anm_ids[ANIMAL_NUM_MAX];
     /* 0x00188 */ OSTime nukegara_time;
     /* 0x00190 */ u8 _000190[0x1C0 - 0x0190]; // TODO: this has to do with SD card stuff
