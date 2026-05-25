@@ -212,7 +212,10 @@ typedef struct {
     s32 game_result;
     int _1C;
     int _20;
-    u8 _24[0x10];
+    int _24;
+    int _28;
+    int _2C;
+    int _30;
 } mCD_memMgr_fileInfo_c;
 
 typedef struct private_item_keep_s {

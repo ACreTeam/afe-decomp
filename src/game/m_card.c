@@ -1857,6 +1857,12 @@ static void mCD_SetCardPrivateTable(mCD_cardPrivate_c* priv, PersonalID_c* pid, 
     bcopy(filename, priv->filename, sizeof(priv->filename));
 }
 
+// @unused
+static u8 cond[127];
+static u16 noLand_code[16];
+static u8 cond2[127];
+static u16 noLand_code2[16];
+
 typedef struct {
     u16 checksum;
     Private_c priv;
@@ -3964,6 +3970,9 @@ extern void mCD_ReCheckLoadLand(GAME_PLAY* play) {
             scene = SCENE_PLAYERSELECT_2;
             Common_Set(time.rtc_enabled, rtc_on);
             mEv_ClearEventInfo();
+#if VERSION >= VER_GAEJ01_01
+            mAN_regist_add_npc_info();
+#endif
         }
     }
 
@@ -7275,6 +7284,13 @@ static void order_bss_2(void) {
     bzero(&S_keep_landinfo, sizeof(S_keep_landinfo));
     bzero(&S_CheckReten_next_cnt, sizeof(S_CheckReten_next_cnt));
     bzero(MemCardWorkArea0, sizeof(MemCardWorkArea0));
+
+    // unused variables
+    bzero(cond, sizeof(cond));
+    bzero(noLand_code, sizeof(noLand_code));
+    bzero(cond2, sizeof(cond2));
+    bzero(noLand_code2, sizeof(noLand_code2));
+    bzero(&l_mcd_keep_private, sizeof(l_mcd_keep_private));
 }
 
 #include "../src/game/m_card_mydesign.c_inc"

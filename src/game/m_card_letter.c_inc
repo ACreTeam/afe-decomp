@@ -38,12 +38,12 @@
 #include "m_sdcard.h"
 #endif
 
-static char l_comment_lt_0_str0[32] ATTRIBUTE_ALIGN(4) = "どうぶつの森ｅ＋";
-static char l_comment_lt_0_str1[32] ATTRIBUTE_ALIGN(4) = "手紙の保存１";
-static char l_comment_lt_0_str2[32] ATTRIBUTE_ALIGN(4) = "手紙の保存２";
-static char l_comment_lt_0_str3[32] ATTRIBUTE_ALIGN(4) = "手紙の保存３";
-static char l_comment_lt_0_str4[32] ATTRIBUTE_ALIGN(4) = "手紙の保存４";
-static char l_comment_lt_0_str5[32] ATTRIBUTE_ALIGN(4) = "手紙の保存５";
+static char l_comment_lt_0_str0[32] ATTRIBUTE_ALIGN(4) = "�ǂ��Ԃ̐X���{";
+static char l_comment_lt_0_str1[32] ATTRIBUTE_ALIGN(4) = "�莆�̕ۑ��P";
+static char l_comment_lt_0_str2[32] ATTRIBUTE_ALIGN(4) = "�莆�̕ۑ��Q";
+static char l_comment_lt_0_str3[32] ATTRIBUTE_ALIGN(4) = "�莆�̕ۑ��R";
+static char l_comment_lt_0_str4[32] ATTRIBUTE_ALIGN(4) = "�莆�̕ۑ��S";
+static char l_comment_lt_0_str5[32] ATTRIBUTE_ALIGN(4) = "�莆�̕ۑ��T";
 static char l_mCDpp_letter_file_name_dummy[32] ATTRIBUTE_ALIGN(4) = "DobutsunomoriPP_LET_d";
 
 static int mCD_CheckPPLetterFilename(const char* filename, int idx) {
@@ -531,7 +531,7 @@ extern int mCD_SavePostOffice_bg(void* buf, s32 chan, s32 idx) {
         mCD_SavePostOffice_check_repair_land,
         mCD_SavePostOffice_repair_land,
         mCD_SavePostOffice_check_slot,
-        mCD_SavePostOffice_set_data,
+        mCD_SaveMydesign_set_data,
         mCD_SavePostOffice_write_main,
         mCD_SavePostOffice_make_file_name,
         mCD_SavePostOffice_create_file,
@@ -763,7 +763,11 @@ static int mCD_myletter_GetSpaceSlot_bg(mCD_memMgr_c* mgr, int size, int slot) {
         if (space_res == mCD_RESULT_SUCCESS) {
             ret = mCD_RESULT_SUCCESS;
             S_slot_ok[slot] = mCD_SLOT_B;
+#if VERSION == VER_GAEJ01_00
             if (card->freeBytes > size) {
+#else
+            if (card->freeBytes >= size) {
+#endif
                 if (mCD_get_file_num(card->workArea, slot) >= CARD_MAX_FILE) {
                     if (slot == mCD_SLOT_A) {
                         S_slot_a_file_extence[5] = '\0';
@@ -798,7 +802,7 @@ static int mCD_LET_GetSpaceSlot_check_spacechk(mCD_memMgr_c* mgr, mCD_memMgr_fil
     int ret = mCD_RESULT_BUSY;
     int space_res;
 
-    space_res = mCD_mydesign_GetSpaceSlot_bg(mgr, mCD_MAIL_SAVE_SIZE, S_slot_slot_count);
+    space_res = mCD_myletter_GetSpaceSlot_bg(mgr, mCD_MAIL_SAVE_SIZE, S_slot_slot_count);
     if (space_res != mCD_RESULT_BUSY) {
         if (space_res == mCD_RESULT_SUCCESS) {
             S_slot_ok[S_slot_slot_count] = 1;
@@ -905,10 +909,10 @@ static int mCD_LET_GetSpaceSlot_check_file_existence(mCD_memMgr_c* mgr, mCD_memM
 extern int mCD_LET_GetSpaceSlot_check_light_main_bg(u8* slot_ok, u8* slot_a_file_extence, u8* slot_b_file_extence) {
     // clang-format off
     static mCD_SAVEHOME_PROC save_proc[] = {
-        mCD_GetSpaceSlot_check_get_area,
-        mCD_GetSpaceSlot_check_mura_check,
-        mCD_GetSpaceSlot_check_spacechk,
-        mCD_GetSpaceSlot_check_file_existence,
+        mCD_LET_GetSpaceSlot_check_get_area,
+        mCD_LET_GetSpaceSlot_check_mura_check,
+        mCD_LET_GetSpaceSlot_check_spacechk,
+        mCD_LET_GetSpaceSlot_check_file_existence,
     };
     // clang-format on
 
