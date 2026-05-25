@@ -82,6 +82,8 @@ enum {
     mCD_SAVEHOME_BG_PROC_NUM
 };
 
+static u8* mCD_set_bti_data(u8* data, int res_fileNo, int tlut_size, int count, int pal_size, int random);
+
 static char mCD_file_name[32] = "DobutsunomoriE_MURA";
 static mCD_bg_info_c l_mcd_bg_info;
 
@@ -1897,8 +1899,6 @@ static void mCD_ClearForeignerFile(mCD_foreigner_c* foreigner) {
     foreigner->copy_protect = 0xFFFF;
 }
 
-#include "../src/game/m_card_bti.c_inc"
-
 typedef struct {
     u16 code[4];
 } mCD_LandProtectCode_c;
@@ -3203,13 +3203,13 @@ static int mCD_SaveHome_bg_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c*
 // @unused mCD_SaveHome_bg_set_icon_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo)
 static int mCD_SaveHome_bg_set_icon_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
         // clang-format off
+        static int banner_fileNo[] = { RESOURCE_MURA_SPRING, RESOURCE_MURA_SUMMER, RESOURCE_MURA_FALL, RESOURCE_MURA_WINTER };
+
         static int icon_fileNo[] = {
             RESOURCE_EKI1, RESOURCE_EKI1_2, RESOURCE_EKI1_3, RESOURCE_EKI1_4, RESOURCE_EKI1_5,
             RESOURCE_EKI2, RESOURCE_EKI2_2, RESOURCE_EKI2_3, RESOURCE_EKI2_4, RESOURCE_EKI2_5,
             RESOURCE_EKI3, RESOURCE_EKI3_2, RESOURCE_EKI3_3, RESOURCE_EKI3_4, RESOURCE_EKI3_5,
         };
-    
-        static int banner_fileNo[] = { RESOURCE_MURA_SPRING, RESOURCE_MURA_SUMMER, RESOURCE_MURA_FALL, RESOURCE_MURA_WINTER };
         // clang-format on
 
         u8* buf = (u8*)mgr->workArea;
@@ -5764,13 +5764,6 @@ static int mCD_CheckStation_check_foreigner(mCD_memMgr_c* mgr, mCD_memMgr_fileIn
     return ret;
 }
 
-#ifdef MUST_MATCH
-static inline int mCD_check_card_inline_hack(s32* result_p, s32 req_sector_size, int chan) {
-    return mCD_check_card(result_p, req_sector_size, chan);
-}
-#endif
-
-// @non-matching - equivalent (missing mr instruction)
 static int mCD_CheckStation_check_passport(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     Private_c* priv;
     Private_c* passport_priv;
@@ -5780,19 +5773,16 @@ static int mCD_CheckStation_check_passport(mCD_memMgr_c* mgr, mCD_memMgr_fileInf
     int res;
     int i;
     s32 chan;
+    int chan2;
     mCD_memMgr_card_info_c* card;
     int ret = mCD_RESULT_BUSY;
 
     chan = mgr->chan;
+    chan2 = chan; // @hack - I don't think this should be necessary
     if (mgr->workArea != NULL && chan != -1 && Now_Private != NULL) {
         priv = Now_Private;
         card = &mgr->cards[chan];
-        // issue - changing mCD_check_card's `chan` parameter to be s32 fixes this func but breaks several others
-#ifdef MUST_MATCH
-        if (card->workArea != NULL && mCD_check_card_inline_hack(&card->result, mCD_MEMCARD_SECTORSIZE, chan) == mCD_RESULT_SUCCESS) {
-#else
-        if (card->workArea != NULL && mCD_check_card(&card->result, mCD_MEMCARD_SECTORSIZE, chan) == mCD_RESULT_SUCCESS) {
-#endif
+        if (card->workArea != NULL && mCD_check_card(&card->result, mCD_MEMCARD_SECTORSIZE, (s32)chan2) == mCD_RESULT_SUCCESS) {
             card->result = CARDMount(chan, card->workArea, NULL);
             if (card->result == CARD_RESULT_READY || card->result == CARD_RESULT_BROKEN) {
                 card->result = CARDCheck(chan);
@@ -7293,6 +7283,7 @@ static void order_bss_2(void) {
     bzero(&l_mcd_keep_private, sizeof(l_mcd_keep_private));
 }
 
+#include "../src/game/m_card_bti.c_inc"
 #include "../src/game/m_card_mydesign.c_inc"
 #include "../src/game/m_card_letter.c_inc"
 #include "../src/game/m_card_sd.c_inc"

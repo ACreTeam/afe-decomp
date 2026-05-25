@@ -262,7 +262,7 @@ static int mCD_SaveLand_sd_mem_get_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c
     int ret = mCD_RESULT_BUSY;
 
     if (mgr->cards[0].workArea != NULL && mgr->cards[1].workArea != NULL && mgr->workArea != NULL) {
-        slot = mCD_SD_get_this_land_slot_no_game_start(mgr);
+        slot = mCD_get_this_land_slot_no_game_start(mgr);
         chan = mgr->chan;
         if (slot == mCD_RESULT_SUCCESS) {
             if (chan != -1) {
@@ -819,12 +819,12 @@ extern void mCsd_mura_write_start(void) {
     mSdcard_thread_init(2);
 }
 
-extern void mCsd_sd_format_start(void) {
-    mSdcard_thread_init(3);
-}
-
 extern void mCsd_mura_read_start(void) {
     mSdcard_thread_init(4);
+}
+
+extern void mCsd_sd_format_start(void) {
+    mSdcard_thread_init(3);
 }
 
 extern void mCsd_sd_tiff_read_start(void) {
@@ -839,14 +839,6 @@ extern void mCsd_sd_mura_nextname_get_start(void) {
     mSdcard_thread_init(8);
 }
 
-extern int mCsd_thread_result_chk(void) {
-    if (mSdcard_thread_endchk() == TRUE) {
-        return mCD_RESULT_SUCCESS;
-    }
-
-    return mCD_RESULT_ERROR;
-}
-
 extern int mCsd_sd_format_wait(void) {
     int ret = 0x26;
 
@@ -855,6 +847,14 @@ extern int mCsd_sd_format_wait(void) {
     }
 
     return ret;
+}
+
+extern int mCsd_thread_result_chk(void) {
+    if (mSdcard_thread_endchk() == TRUE) {
+        return mCD_RESULT_SUCCESS;
+    }
+
+    return mCD_RESULT_ERROR;
 }
 
 #define mCD_SD_TIFF_BG_BUSY 0x26
@@ -1359,11 +1359,12 @@ extern int mCD_SD_CheckStation_bg(mCD_sd_card_info_c* sd_info) {
     return ret;
 }
 
+#pragma optimizewithasm off
 static int mCD_SD_CheckStation_bg_thread(void) {
     mCD_sd_card_info_c sd_info;
     mCD_memMgr_c* mgr = &l_memMgr;
     mCD_memMgr_fileInfo_c* fileInfo = &mgr->init_game_start_info;
-    mCD_sd_card_info_c* sd_info_p;
+    register mCD_sd_card_info_c* sd_info_p;
     u8 proc;
     int res;
     int ret = mCD_SD_BG_BUSY;
@@ -1392,7 +1393,17 @@ static int mCD_SD_CheckStation_bg_thread(void) {
         } else if (res != mCD_RESULT_BUSY) {
             sd_info_p->chan = mgr->chan;
             if (res == mCD_RESULT_SD_SLOT) {
+                // TODO: This forces the compiler to store the result of mCsd_nowdrive_get into
+                // chan immediately. Otherwise, the '1' literal immediate is loaded into r0
+                // before the store instruction.
+#if defined(MUST_MATCH) && defined(__MWERKS__)
+                register int tmp = mCsd_nowdrive_get();
+                asm {
+                    stw tmp, (mCD_sd_card_info_c.chan)(sd_info_p)
+                }
+#else
                 sd_info.chan = mCsd_nowdrive_get();
+#endif
                 sd_info.exist = TRUE;
             }
             ret = fileInfo->_04;
@@ -1410,6 +1421,7 @@ static int mCD_SD_CheckStation_bg_thread(void) {
 
     return ret;
 }
+#pragma optimizewithasm reset
 
 static int mCD_SD_SaveStation_NextLand_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     Save_t* save;

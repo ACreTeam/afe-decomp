@@ -70,82 +70,6 @@ static int mCD_SavePostOffice_bg_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
     return mCD_bg_get_area_common(mgr, fileInfo, mCD_FILE_SAVE_MAIN, 0);
 }
 
-static int mCD_SavePostOffice_mura_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    int res = mCD_RESULT_BUSY;
-
-    if (mgr->cards[0].workArea != NULL && mgr->cards[1].workArea != NULL && mgr->workArea != NULL) {
-        int slot = mCD_get_this_land_slot_no_nes(mgr);
-
-        if (slot == mCD_RESULT_SUCCESS) {
-            s32 chan = mgr->chan;
-
-            S_mura_slot_no = chan;
-            if (chan != -1) {
-                if (mCD_check_copyProtect(mgr->workArea, chan) == TRUE) {
-                    res = mCD_RESULT_SUCCESS;
-                    fileInfo->proc++;
-                    mgr->land_saved = Save_Get(save_exist);
-                    mgr->copy_protect = Common_Get(copy_protect);
-                } else {
-                    res = mCD_RESULT_ERROR;
-                    mgr->cards[chan].game_result = mCD_TRANS_ERR_WRONG_LAND;
-                    mgr->land_saved = Save_Get(save_exist);
-                    mgr->copy_protect = Common_Get(copy_protect);
-                    fileInfo->_04 = mCD_TRANS_ERR_WRONG_LAND;
-                }
-            } else {
-                fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-                res = mCD_RESULT_ERROR;
-            }
-        } else if (slot != mCD_RESULT_BUSY) {
-            fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-            res = mCD_RESULT_ERROR;
-        }
-    } else {
-        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-        res = mCD_RESULT_ERROR;
-    }
-
-    return res;
-}
-
-static int mCD_SavePostOffice_check_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    int success = FALSE;
-    int ret = mCD_RESULT_SUCCESS;
-
-    if (mCD_check_broken_land(mgr) == TRUE) {
-        if (mCD_repair_load_land(mgr) == TRUE) {
-            fileInfo->proc++;
-        } else {
-            success = TRUE;
-        }
-    } else {
-        success = TRUE;
-    }
-
-    if (success) {
-        fileInfo->proc++;
-        fileInfo->proc++;
-        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
-        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
-    }
-
-    return ret;
-}
-
-static int mCD_SavePostOffice_repair_land(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    int ret = mCD_RESULT_BUSY;
-
-    if (mCD_repair_land(mgr)) {
-        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
-        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
-        fileInfo->proc++;
-        ret = mCD_RESULT_SUCCESS;
-    }
-
-    return ret;
-}
-
 static int mCD_SavePostOffice_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     int saved_chan = mgr->chan;
     int chan;
@@ -166,7 +90,7 @@ static int mCD_SavePostOffice_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fil
                         bzero(mgr->workArea, mCD_MAIL_SAVE_SIZE);
                         card->result = CARDGetStatus((s32)chan, i, &card->stat);
                         if (card->result == CARD_RESULT_READY &&
-                            mCD_CheckPPMydesignFileStatus(&card->stat, fileInfo->chan) == TRUE) {
+                            mCD_CheckPPLetterFileStatus(&card->stat, fileInfo->chan) == TRUE) {
                             bcopy(card->stat.fileName, mgr->filename, sizeof(mgr->filename));
                             fileInfo->_04 = mCD_TRANS_ERR_TRAVEL_DATA_EXISTS;
                             ret = mCD_RESULT_SUCCESS;
@@ -237,54 +161,6 @@ static int mCD_SavePostOffice_check_slot(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_
     return ret;
 }
 
-static int mCD_SavePostOffice_set_data(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    Save_t* save = (Save_t*)mgr->workArea;
-    InAnimal_c* in_animal = mNpc_GetInAnimalP(); // @unused
-    u16 copy_protect;
-    int chan = mgr->chan;
-    int ret = mCD_RESULT_BUSY;
-    
-    if (save != NULL && chan != -1) {
-        Private_c* priv = Now_Private;
-        mCkRh_SavePlayTime(Common_Get(player_no));
-        if (mCD_CheckResetCode(priv) == TRUE) {
-            mCD_SetResetCode(priv);
-        }
-
-        Save_Set(save_exist, TRUE);
-        copy_protect = mCD_get_land_copyProtect();
-        Save_Set(copy_protect, copy_protect);
-        Common_Set(copy_protect, copy_protect);
-        Save_Set(travel_hard_time, lbRTC_HardTime());
-        if (mCD_castingoff_mura_chk() != TRUE) {
-            Save_Set(nukegara_time, lbRTC_HardTime());
-        }
-
-        // @BUG - this is duplicated code
-        if (mCD_castingoff_mura_chk() != TRUE) {
-            Save_Set(nukegara_time, lbRTC_HardTime());
-        }
-
-        bcopy(Common_GetPointer(save.save), save, sizeof(Save_t));
-        if (Common_Get(player_decoy_flag) == TRUE) {
-            save->private_data[Common_Get(player_no)].exists = FALSE;
-        }
-
-        save->save_check.version = mFRm_VERSION;
-        mFRm_SetSaveCheckData(&save->save_check);
-        save->save_check.checksum = mFRm_GetFlatCheckSum((u16*)save, sizeof(Save), save->save_check.checksum);
-        mgr->loaded_file_type = mCD_FILE_SAVE_MAIN;
-        mgr->workArea_size = mCD_get_size(mgr->loaded_file_type);
-        fileInfo->proc++;
-        ret = mCD_RESULT_SUCCESS;
-    } else {
-        fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-        ret = mCD_RESULT_ERROR;
-    }
-
-    return ret;
-}
-
 static int mCD_SavePostOffice_write_main(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
     int ret = mCD_SaveMydesign_write_main(mgr, fileInfo);
     // TODO: enums
@@ -307,7 +183,7 @@ static int mCD_SavePostOffice_make_file_name(mCD_memMgr_c* mgr, mCD_memMgr_fileI
     }
 
     mem_clear((u8*)mgr->filename, sizeof(mgr->filename), 0);
-    bcopy(l_mCD_mydesign0_file_name, mgr->filename, 0x12);
+    bcopy(l_mCD_letter0_file_name, mgr->filename, 0x12);
 
     if (fileInfo->chan >= 5) {
         idx = 0;
@@ -369,7 +245,7 @@ static int mCD_SavePostOffice_create_file(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo
         }
     } else {
         fileInfo->_04 = mCD_TRANS_ERR_NOCARD;
-        ret = mCD_SavePostOffice_set_rewrite_main(mgr, fileInfo);
+        ret = mCD_SaveMydesign_set_rewrite_main(mgr, fileInfo);
     }
 
     return ret;
@@ -443,7 +319,7 @@ static int mCD_SaveLetter_set(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo
 }
 
 static int mCD_SavePostOffice_write(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {
-    int ret = mCD_SaveMydesign_write_main(mgr, fileInfo);
+    int ret = mCD_SaveMydesign_write(mgr, fileInfo);
     // TODO: enums
     if (fileInfo->proc == 13) {
         fileInfo->proc = 13;
@@ -527,9 +403,9 @@ extern int mCD_SavePostOffice_bg(void* buf, s32 chan, s32 idx) {
     // clang-format off
     static mCD_SAVEHOME_PROC save_proc[] = {
         mCD_SavePostOffice_bg_get_area,
-        mCD_SavePostOffice_mura_check_slot,
-        mCD_SavePostOffice_check_repair_land,
-        mCD_SavePostOffice_repair_land,
+        mCD_SaveMydesign_mura_check_slot,
+        mCD_SaveMydesign_check_repair_land,
+        mCD_SaveMydesign_repair_land,
         mCD_SavePostOffice_check_slot,
         mCD_SaveMydesign_set_data,
         mCD_SavePostOffice_write_main,
@@ -847,7 +723,7 @@ static int mCD_LET_GetSpaceSlot_check_file_existence(mCD_memMgr_c* mgr, mCD_memM
     int ret = mCD_RESULT_BUSY;
     int exists;
 
-    exists = mCD_Mydesign_existence_check_common(mgr, S_slot_file_count, S_slot_slot_count);
+    exists = mCD_Myletter_existence_check_common(mgr, S_slot_file_count, S_slot_slot_count);
     if (exists == mCD_RESULT_SUCCESS) {
         if (S_slot_slot_count == 0) {
             S_slot_a_file_extence[S_slot_file_count] = 1;

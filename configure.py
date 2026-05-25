@@ -1188,7 +1188,7 @@ config.libs = [
             Object(Matching, "game/m_calendar.c"),
             Object(NonMatching, "game/m_calendar_ovl.c"),
             Object(Matching, "game/m_camera2.c"),
-            Object(Equivalent, "game/m_card.c"),
+            Object(Matching, "game/m_card.c"),
             Object(Matching, "game/m_card_debug.c"),
             Object(NonMatching, "game/m_catalog_ovl.c"),
             Object(Matching, "game/m_choice.c"),
