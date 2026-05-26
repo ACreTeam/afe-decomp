@@ -14,6 +14,7 @@ extern "C" {
 #define mString_RESETTI_GOOD_WORD_END 0x493
 #define mString_RESETTI_NG_WORD_START 0x4C0
 #define mString_RESETTI_NG_WORD_END 0x4DF
+#define mString_HANIWA_MESSAGE_JP 0x55C
 #define mString_DAY_START 0x64E
 #define mString_MONTH_START 0x66D
 #define mString_SONCHO_EVENT_NAME_START 0x6F8

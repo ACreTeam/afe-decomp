@@ -26,6 +26,9 @@
 #include "m_design_ovl.h"
 #include "m_flashrom.h"
 #include "m_mail_password_check.h"
+#include "m_random_field.h"
+#include "m_birthday_msg.h"
+#include "m_agb_pp.h"
 
 static void famicom_emu_initial_common_data() {
     // stubbed
@@ -40,32 +43,13 @@ static void decide_fish_location(u8* location) {
 }
 
 static void title_game_haniwa_data_init() {
-    static int haniwa_msg[4] = { mString_HANIWA_MSG0, mString_HANIWA_MSG1, mString_HANIWA_MSG2, mString_HANIWA_MSG3 };
     u8 haniwa_buf[HANIWA_MESSAGE_LEN];
-
-    int line_len;
-    int haniwa_msg_len;
-    int i;
-    int j;
     Haniwa_c* haniwa;
     mHm_hs_c* house;
-    u8* dst;
+    int i;
+    int j;
 
-    /* Load message line-by-line */
-    dst = haniwa_buf;
-    haniwa_msg_len = 0;
-    for (i = 0; i < 4; i++) {
-
-        mString_Load_StringFromRom(dst, HANIWA_MESSAGE_LEN - haniwa_msg_len, haniwa_msg[i]);
-        line_len = mMl_strlen(dst, HANIWA_MESSAGE_LEN - haniwa_msg_len, CHAR_SPACE);
-
-        if (i < 3) {
-            dst[line_len] = CHAR_NEW_LINE;
-            haniwa_msg_len += line_len + 1;
-            dst += line_len + 1;
-        }
-    }
-
+    mString_Load_StringFromRom(haniwa_buf, HANIWA_MESSAGE_LEN, mString_HANIWA_MESSAGE_JP);
     for (i = 0; i < mHS_HOUSE_NUM; i++) {
         haniwa = &Save_Get(homes + i)->haniwa;
         house = Save_Get(homes + i);
@@ -176,8 +160,8 @@ static void mSDI_PullTreeUnderPlayerBlock() {
 static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
     int town_day;
     Private_c* priv;
-    int i;
     Private_c* priv_p;
+    int i;
     Animal_c* animals = Save_Get(animals);
     GAME_PLAY* play = (GAME_PLAY*)game;
     GAME* g = NULL;
@@ -200,7 +184,9 @@ static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
 
     bzero(Save_Get(deposit), sizeof(Save_Get(deposit)));
     Save_Set(dust_flag, FALSE);
-    // bzero(Save_GetPointer(island), sizeof(Island_c));
+    mLd_LandDataInit();
+    mRF_RenewIslandPattern();
+    Save_Set(song_cards_scanned, 0);
     mFM_InitFgCombiSaveData(g);
 
     /* Remove trees */
@@ -218,7 +204,6 @@ static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
     priv_p = Save_Get(private_data);
 
     mMld_SetDefaultMelody();
-    mLd_LandDataInit();
     mEv_ClearEventSaveInfo(Save_GetPointer(event_save_data));
     mEv_init(&play->event);
     mNpc_InitNpcAllInfo(malloc_flag);
@@ -249,11 +234,11 @@ static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
     lbRTC_TimeCopy(Save_GetPointer(treasure_checked_time), &mTM_rtcTime_clear_code);
     lbRTC_TimeCopy(Save_GetPointer(saved_auto_nwrite_time), &mTM_rtcTime_clear_code);
 
-    Save_Set(station_type, RANDOM(15));
     // Save_Set(island.last_song_to_island, -1);
     // Save_Set(island.last_song_from_island, -1);
+    Save_Set(station_type, RANDOM_F(15));
 
-    mPr_SetPossessionItem(Common_Get(now_private), 0, ITM_MONEY_1000, mPr_ITEM_COND_QUEST);
+    mPr_SetPossessionItem(Now_Private, 0, ITM_MONEY_1000, mPr_ITEM_COND_QUEST);
 
     town_day = RANDOM(30) + 1; /* Initial spread is [1, 30] */
     if (town_day >= 4) {
@@ -261,7 +246,9 @@ static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
     }
 
     Save_Set(town_day, town_day);
+    Save_Set(monument_set, RANDOM(4));
 
+    mHm_SetNowHome();
     mCkRh_InitGokiSaveData_AllRoom();
 
     mNW_InitMyOriginal();
@@ -278,6 +265,7 @@ static int mSDI_StartInitNew(GAME* game, int player_no, int malloc_flag) {
     mFI_PullTanukiPathTrees();
 
     Common_Set(_2dbe1, 0);
+    mNpc_ClearSick(Save_GetPointer(sick_info));
 
     return TRUE;
 }
@@ -299,10 +287,10 @@ static int mSDI_StartInitFrom(GAME* game, int player_no, int malloc_flag) {
         Private_c* priv = Save_Get(private_data + player_no);
 
         if (mPr_CheckPrivate(priv) == TRUE) {
-
             if (priv->exists == TRUE) {
                 Common_Set(now_private, priv);
                 Common_Set(player_no, player_no);
+                mHm_SetNowHome();
                 mFM_SetBlockKindLoadCombi(g);
                 mEv_init_force(&play->event);
                 mHsRm_GetHuusuiRoom(g, player_no);
@@ -310,7 +298,8 @@ static int mSDI_StartInitFrom(GAME* game, int player_no, int malloc_flag) {
                 mSP_ExchangeLineUp_InGame(g);
                 mNpc_SetRemoveAnimalNo(Save_GetPointer(remove_animal_idx), animals, -1);
                 mMkRm_MarkRoom(g);
-                mRmTp_SetDefaultLightSwitchData(2); // TODO: enum
+                mRmTp_SetDefaultLightSwitchData(2);
+                mQst_SetLostAfterRecovery(&priv->player_ID);
                 res = TRUE;
             } else {
                 /* Player loaded their player data while "out travelling" */
@@ -318,8 +307,8 @@ static int mSDI_StartInitFrom(GAME* game, int player_no, int malloc_flag) {
                 priv->exists = TRUE;
                 Common_Set(now_private, priv);
                 Common_Set(player_no, player_no);
+                mHm_SetNowHome();
                 mFM_SetBlockKindLoadCombi(g);
-                mEv_init_force(&play->event);
                 mHsRm_GetHuusuiRoom(g, player_no);
                 mCkRh_DecideNowGokiFamilyCount(player_no);
                 mSP_ExchangeLineUp_InGame(g);
@@ -329,9 +318,10 @@ static int mSDI_StartInitFrom(GAME* game, int player_no, int malloc_flag) {
                 bzero(&priv->inventory.pockets, sizeof(priv->inventory.pockets));
                 priv->inventory.lotto_ticket_expiry_month = 0;
                 priv->inventory.lotto_ticket_mail_storage = 0;
-                // priv->inventory.item_conditions = 0;
+                bzero(priv->inventory.item_conditions, sizeof(priv->inventory.item_conditions));
                 priv->inventory.wallet = 0;
                 mQst_ClearDelivery(priv->deliveries, mPr_DELIVERY_QUEST_NUM);
+                mQst_ClearDelivery(&priv->lost_item_quest, 1);
                 mQst_ClearErrand(priv->errands, mPr_ERRAND_QUEST_NUM);
 
                 mMkRm_MarkRoom(g);
@@ -363,12 +353,17 @@ static int mSDI_StartInitNewPlayer(GAME* game, int player_no, int malloc_flag) {
             Common_Get(now_private)->gender = mPr_SEX_MALE;
             mNW_InitOneMyOriginal(Common_Get(player_no));
             mCkRh_InitGokiSaveData_InitNewPlayer();
+            mNpc_HealSick(Save_GetPointer(sick_info));
 
             if (malloc_flag == FALSE) {
+                mRF_RenewIslandPattern();
+                mFM_RenewalIslandFg(game);
                 mFM_SetBlockKindLoadCombi(game);
                 mEv_init_force(&play->event);
                 mSP_ExchangeLineUp_InGame(game);
             } else {
+                mRF_RenewIslandPattern();
+                mFM_RenewalIslandFg(NULL);
                 mFM_SetBlockKindLoadCombi(NULL);
                 mEv_init_force(&play->event);
                 mSP_ExchangeLineUp_InGame(NULL);
@@ -378,6 +373,7 @@ static int mSDI_StartInitNewPlayer(GAME* game, int player_no, int malloc_flag) {
             mSDI_ClearMoneyPlayerHomeStationBlock();
             mRmTp_SetDefaultLightSwitchData(1); // TODO: enum
             mFI_PullTanukiPathTrees();
+            mHm_SetNowHome();
             res = TRUE;
         }
     }
@@ -401,6 +397,7 @@ static int mSDI_StartInitPak(GAME* game, int player_no, int malloc_flag) {
 
     if (mFRm_CheckSaveData() == TRUE) {
         mFM_SetBlockKindLoadCombi(g);
+        mHm_SetNowHome();
         mEv_init_force(&play->event);
         mHsRm_GetHuusuiRoom(g, player_no);
         mCkRh_DecideNowGokiFamilyCount(player_no);
@@ -408,6 +405,9 @@ static int mSDI_StartInitPak(GAME* game, int player_no, int malloc_flag) {
         mNpc_SetRemoveAnimalNo(Save_GetPointer(remove_animal_idx), animals, -1);
         mNpc_SetReturnAnimal(mNpc_GetInAnimalP());
         mNpc_SendRegisteredGoodbyMail();
+        if (Now_Private != NULL) {
+            mQst_SetLostAfterRecovery(&Now_Private->player_ID);
+        }
         mMkRm_MarkRoom(g);
         mEv_SetGateway();
         mRmTp_SetDefaultLightSwitchData(2); // TODO: enum
@@ -421,15 +421,42 @@ static int mSDI_StartInitErr(GAME* game, int player_no, int malloc_flag) {
     return TRUE;
 }
 
+#if VERSION >= VER_GAEJ01_01
+static void mSDI_set_haniwa_post() {
+    mActor_name_t* fg_p = Save_Get(fg[1][2]).items[0]; // house block
+    int i;
+
+    for (i = 0; i < UT_TOTAL_NUM; i++) {
+        switch (*fg_p) {
+            case DUMMY_HANIWA0:
+            case DUMMY_HANIWA1:
+            case DUMMY_HANIWA2:
+            case DUMMY_HANIWA3:
+                *fg_p = *fg_p - DUMMY_HANIWA0 + ACTOR_PROP_HANIWA0;
+                break;
+            case DUMMY_MAILBOX0:
+            case DUMMY_MAILBOX1:
+            case DUMMY_MAILBOX2:
+            case DUMMY_MAILBOX3:
+                *fg_p = *fg_p - DUMMY_MAILBOX0 + ACTOR_PROP_MAILBOX0;
+                break;
+        }
+
+        fg_p++;
+    }
+}
+#endif
+
 extern void mSDI_StartInitAfter(GAME* game, int renew_mode, int init_mode, int malloc_flag) {
     GAME_PLAY* play = (GAME_PLAY*)game;
-    Animal_c* animals = Save_Get(animals);
 
     Common_Set(house_owner_name, -1);
     mEA_InitLetterCardE();
     Common_Set(last_field_id, -1);
-    mHm_SetNowHome();
     mNpc_RenewalAnimalMemory();
+    if (mLd_PlayerManKindCheck() == NATIVE && mEv_CheckFirstJob() == TRUE) {
+        mNpc_HealSick(Save_GetPointer(sick_info));
+    }
     mNpc_ForceRemove();
     mTM_renewal_renew_time();
     mEv_ClearEventInfo();
@@ -441,11 +468,14 @@ extern void mSDI_StartInitAfter(GAME* game, int renew_mode, int init_mode, int m
     mAGrw_RestoreStoneShine(Common_Get(player_no));
     mFAs_SetFieldRank();
     mEv_2nd_init(&play->event);
+    mEv_alarm_init();
+    mAN_regist_add_npc();
     mNpc_Grow();
+    mNpc_BuildIslandAnimalHome();
     Kabu_manager();
     mNpc_InitNpcData();
     mNpc_InitNpcList(Common_Get(npclist), ANIMAL_NUM_MAX);
-    mNpc_SetNpcList(Common_Get(npclist), animals, ANIMAL_NUM_MAX, malloc_flag);
+    mNpc_SetNpcList(Common_Get(npclist), Save_Get(animals), ANIMAL_NUM_MAX, malloc_flag);
     mNpc_InitNpcList(Common_Get(island_npclist), 1);
     mNpc_ClearTalkInfo();
 
@@ -457,11 +487,19 @@ extern void mSDI_StartInitAfter(GAME* game, int renew_mode, int init_mode, int m
     mQst_ClearNotSaveQuest(Common_GetPointer(quest));
     mGH_check_delete();
     mMC_check_delete();
+    mNpc_ClearIslandNpcRoomData();
     mFM_SetIslandNpcRoomData(game, malloc_flag);
     mCD_calendar_wellcome_on();
+    mBm_check_birthday_msg();
     mPr_SetItemCollectBit(FTR_START(FTR_SUM_CASSE01));
     mPr_SetItemCollectBit(FTR_START(FTR_NOG_COLLEGENOTE));
     mPr_SetItemCollectBit(FTR_START(FTR_NOG_MIKANBOX));
+    mAP_decide_today_agb_game();
+
+    if (init_mode == mSDI_INIT_MODE_FROM || (init_mode == mSDI_INIT_MODE_PAK && mLd_PlayerManKindCheck() == NATIVE)) {
+        mNpc_SetParentNameAllAnimal();
+    }
+
     mNPS_set_all_schedule_area();
     mNpcW_InitNpcWalk(Common_GetPointer(npc_walk));
     mHm_CheckRehouseOrder();
@@ -483,15 +521,33 @@ extern void mSDI_StartInitAfter(GAME* game, int renew_mode, int init_mode, int m
     mEnv_DecideTodayWindPowerRange();
     mFI_SetClimate(mFI_CLIMATE_0);
     mISL_RestoreIsland();
+    Common_Set(islander_start_ux, -1);
+    Common_Set(islander_start_uz, -1);
     mMpswd_SendHPMail();
+    mQst_InitReserveAll();
+    mQst_SetReverveAll();
+    mISL_ClearNowPlayerAction_land();
+    mQst_ClearOfferTalk();
+    mQst_SendRemailAll();
+    mNpc_HealingSick(Save_GetPointer(sick_info));
+    mNpc_GetWorseSickAnimal(Save_GetPointer(sick_info));
+    if (init_mode != mSDI_INIT_MODE_NEW && init_mode != mSDI_INIT_MODE_NEW_PLAYER) {
+        mQst_OccurSick();
+    }
+    mQst_SetRewardSick();
+    mQst_ClearTalkSelect();
+
+#if VERSION >= VER_GAEJ01_01
+    mSDI_set_haniwa_post();
+#endif
 }
 
 typedef int (*mSDI_INIT_PROC)(GAME*, int, int);
 
 extern int mSDI_StartInitBefore(GAME* game, int player_no, int init_mode, int malloc_flag) {
-    static mSDI_INIT_PROC init_proc[mSDI_INIT_MODE_NUM] = { &mSDI_StartInitNew, &mSDI_StartInitNewPlayer,
-                                                            &mSDI_StartInitFrom, &mSDI_StartInitPak,
-                                                            &mSDI_StartInitErr };
+    static mSDI_INIT_PROC init_proc[mSDI_INIT_MODE_NUM] = {
+        &mSDI_StartInitNew, &mSDI_StartInitNewPlayer, &mSDI_StartInitFrom, &mSDI_StartInitPak, &mSDI_StartInitErr,
+    };
 
     mEv_UnSetGateway();
     return (*init_proc[init_mode])(game, player_no, malloc_flag);
@@ -508,7 +564,7 @@ extern int mSDI_StartDataInit(GAME* game, int player_no, int init_mode) {
 
     res = mSDI_StartInitBefore(game, player_no, init_mode, mSDI_MALLOC_FLAG_ZELDA);
     if (res == TRUE) {
-        mSDI_StartInitAfter(game, renew_reserve_mode_table[init_mode], 0, mSDI_MALLOC_FLAG_ZELDA);
+        mSDI_StartInitAfter(game, renew_reserve_mode_table[init_mode], init_mode, mSDI_MALLOC_FLAG_ZELDA);
     }
 
     return res;

@@ -741,6 +741,7 @@ extern void mMC_check_delete();
 extern void mMC_set_time();
 extern int mEv_check_run_calendar_event(void);
 extern int mEv_check_calendar_event(lbRTC_ymd_c* ymd, int add_day);
+extern void mEv_alarm_init(void);
 
 #define mEv_IsEventActive(event) mEv_check_status(event, mEv_STATUS_ACTIVE)
 

@@ -593,6 +593,7 @@ extern void mNT_present_new_music_live_version(int idx);
 #define ITEM_IS_DUST(item) ((item) >= ITM_DUST0_EMPTY_CAN && (item) <= ITM_DUST2_OLD_TIRE)
 
 #define ITEM_IS_DUMMY_MAILBOX(item) ((item) >= DUMMY_MAILBOX0 && (item) <= DUMMY_MAILBOX3)
+#define ITEM_IS_DUMMY_HANIWA(item) ((item) >= DUMMY_HANIWA0 && (item) <= DUMMY_HANIWA3)
 #define ITEM_IS_SIGN(item) ((item) == DUMMY_RESERVE || ITEM_IS_SIGNBOARD(item))
 
 #define IS_ITEM_QUEST_ITEM(item) ((item) >= ITM_QST_LETTER && (item) <= ITM_MONEY1000BELL)
