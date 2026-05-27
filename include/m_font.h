@@ -255,6 +255,34 @@ enum {
 };
 
 enum {
+    mFont_TAG_CHOICE_OP2,
+    mFont_TAG_CHOICE_OP3,
+    mFont_TAG_CHOICE_OP4,
+    mFont_TAG_CHOICE_OP5,
+    mFont_TAG_CHOICE_OP6,
+    mFont_TAG_CHOICE_ANS0,
+    mFont_TAG_CHOICE_ANS1,
+    mFont_TAG_CHOICE_ANS2,
+    mFont_TAG_CHOICE_ANS3,
+    mFont_TAG_CHOICE_ANS4,
+    mFont_TAG_CHOICE_ANS5,
+
+    mFont_TAG_CHOICE_NUM
+};
+
+enum {
+    mFont_TAG_NPC_EM_FUN,
+    mFont_TAG_NPC_EM_ANGRY,
+    mFont_TAG_NPC_EM_SAD,
+    mFont_TAG_NPC_EM_SLEEPY,
+    mFont_TAG_NPC_EM_NORMAL,
+    mFont_TAG_NPC_EM_GLOOMY,
+    mFont_TAG_NPC_EM_CONTINUE,
+
+    mFont_TAG_NPC_EM_NUM
+};
+
+enum {
     mFont_TAG_COM_BUTTON,
     mFont_TAG_COM_BUTTON_NO_SE,
     mFont_TAG_COM_B_CANCEL,
@@ -281,9 +309,233 @@ enum {
 };
 
 enum {
-    mFont_TAG_STR_0,
+    mFont_TAG_STR_PLAYERNAME,
+    mFont_TAG_STR_NPCNAME,
+    mFont_TAG_STR_TAIL,
+    mFont_TAG_STR_DETERMINATION,
+    mFont_TAG_STR_MAIL,
+    mFont_TAG_STR_COUNTRYNAME,
+    mFont_TAG_STR_ISLANDNAME,
+    mFont_TAG_STR_YEAR,
+    mFont_TAG_STR_MOUNTH,
+    mFont_TAG_STR_WEEK,
+    mFont_TAG_STR_DAY,
+    mFont_TAG_STR_HOUR,
+    mFont_TAG_STR_MIN,
+    mFont_TAG_STR_SEC,
+    mFont_TAG_STR_RANDOMNUM,
+    mFont_TAG_STR_AMPM,
+    mFont_TAG_STR_CAPITAL,
+    mFont_TAG_STR_ARTICLECUT,
+    mFont_TAG_STR_FREE0,
+    mFont_TAG_STR_FREE1,
+    mFont_TAG_STR_FREE2,
+    mFont_TAG_STR_FREE3,
+    mFont_TAG_STR_FREE4,
+    mFont_TAG_STR_FREE5,
+    mFont_TAG_STR_FREE6,
+    mFont_TAG_STR_FREE7,
+    mFont_TAG_STR_FREE8,
+    mFont_TAG_STR_FREE9,
+    mFont_TAG_STR_FREE10,
+    mFont_TAG_STR_FREE11,
+    mFont_TAG_STR_FREE12,
+    mFont_TAG_STR_FREE13,
+    mFont_TAG_STR_FREE14,
+    mFont_TAG_STR_FREE15,
+    mFont_TAG_STR_FREE16,
+    mFont_TAG_STR_FREE17,
+    mFont_TAG_STR_FREE18,
+    mFont_TAG_STR_FREE19,
+    mFont_TAG_STR_ITEM0,
+    mFont_TAG_STR_ITEM1,
+    mFont_TAG_STR_ITEM2,
+    mFont_TAG_STR_ITEM3,
+    mFont_TAG_STR_ITEM4,
+    mFont_TAG_STR_NPCNAMEPERSONAL,
+    mFont_TAG_STR_NPCNAMETRIBE,
+    mFont_TAG_STR_OPLN,
+    mFont_TAG_STR_OWNISLANDNAME,
+    mFont_TAG_STR_PLCLOTHTYPE,
+    mFont_TAG_STR_NPCNAMEPERSONALPASS,
+    mFont_TAG_STR_NPCNAMETRIBEPASS,
+    mFont_TAG_STR_TRUTHTAIL,
+    mFont_TAG_STR_COUNTRYNAMEKANA,
 
-    mFont_TAG_STR_NUM = 52 // TODO
+    mFont_TAG_STR_NUM
+};
+
+enum {
+    mFont_TAG_PLST_DESTINY0,
+    mFont_TAG_PLST_DESTINY1,
+    mFont_TAG_PLST_DESTINY2,
+    mFont_TAG_PLST_DESTINY3,
+    mFont_TAG_PLST_DESTINY4,
+    mFont_TAG_PLST_DESTINY5,
+    mFont_TAG_PLST_DEMOPL_0_2,
+    mFont_TAG_PLST_DEMOPL_0_253,
+    mFont_TAG_PLST_DEMOPL_0_254,
+    mFont_TAG_PLST_DEMOPL_0_255,
+
+    mFont_TAG_PLST_NUM
+};
+
+enum {
+    mFont_TAG_SPEC_VOICEFALSE,
+    mFont_TAG_SPEC_VOICETRUE,
+    mFont_TAG_SPEC_DEMONPC0_1_4,
+    mFont_TAG_SPEC_DEMONPC0_7_1,
+    mFont_TAG_SPEC_DEMONPC0_9_0,
+    mFont_TAG_SPEC_DEMONPC0_9_1,
+    mFont_TAG_SPEC_DEMONPC0_9_2,
+    mFont_TAG_SPEC_DEMONPC0_9_3,
+    mFont_TAG_SPEC_DEMONPC0_9_4,
+    mFont_TAG_SPEC_DEMONPC0_9_5,
+    mFont_TAG_SPEC_DEMONPC0_9_6,
+    mFont_TAG_SPEC_DEMONPC0_9_7,
+
+    mFont_TAG_SPEC_NUM
+};
+
+enum {
+    mFont_TAG_QUEST_DEMOQ_2,
+    mFont_TAG_QUEST_DEMOQ_3,
+    mFont_TAG_QUEST_DEMOQ_9,
+    mFont_TAG_QUEST_FRIENDUP,
+    mFont_TAG_QUEST_FRIENDDOWN,
+    mFont_TAG_QUEST_DEMOQ_0_2,
+    mFont_TAG_QUEST_GIVEMAP,
+    mFont_TAG_QUEST_DEMOQ_0_1,
+    mFont_TAG_QUEST_DEMOQ_0_2B,
+    mFont_TAG_QUEST_DEMOQ_0_3,
+    mFont_TAG_QUEST_DEMOQ_0_4,
+    mFont_TAG_QUEST_DEMOQ_0_5,
+    mFont_TAG_QUEST_DEMOQ_0_6,
+    mFont_TAG_QUEST_DEMOQ_0_7,
+    mFont_TAG_QUEST_DEMOQ_0_8,
+    mFont_TAG_QUEST_DEMOQ_0_9,
+    mFont_TAG_QUEST_DEMOQ_0_10,
+    mFont_TAG_QUEST_DEMOQ_0_11,
+    mFont_TAG_QUEST_DEMOQ_0_12,
+    mFont_TAG_QUEST_DEMOQ_1_1,
+    mFont_TAG_QUEST_DEMOQ_1_2,
+    mFont_TAG_QUEST_DEMOQ_4_1,
+    mFont_TAG_QUEST_DEMOQ_6_1,
+    mFont_TAG_QUEST_DEMOQ_7_1,
+    mFont_TAG_QUEST_DEMOQ_8_1,
+    mFont_TAG_QUEST_DEMOQ_8_2,
+    mFont_TAG_QUEST_NNKC,
+
+    mFont_TAG_QUEST_NUM
+};
+
+enum {
+    mFont_TAG_JUMP_NEXTFORCE,
+    mFont_TAG_JUMP_NEXTRANDSEC,
+    mFont_TAG_JUMP_NEXTRAND2,
+    mFont_TAG_JUMP_NEXTRAND3,
+    mFont_TAG_JUMP_NEXTRAND4,
+    mFont_TAG_JUMP_IFSJ,
+    mFont_TAG_JUMP_IFJJ,
+    mFont_TAG_JUMP_IFSX,
+    mFont_TAG_JUMP_IFTL,
+    mFont_TAG_JUMP_IFHL,
+    mFont_TAG_JUMP_IFBL,
+    mFont_TAG_JUMP_IFIL,
+    mFont_TAG_JUMP_IFIC,
+    mFont_TAG_JUMP_IFFFC,
+    mFont_TAG_JUMP_IFPN,
+    mFont_TAG_JUMP_IFDJ,
+    mFont_TAG_JUMP_IFKJ,
+    mFont_TAG_JUMP_IFGK,
+    mFont_TAG_JUMP_IFMT,
+    mFont_TAG_JUMP_IFDA,
+    mFont_TAG_JUMP_IFTM,
+    mFont_TAG_JUMP_IFWJ,
+    mFont_TAG_JUMP_IFHF,
+    mFont_TAG_JUMP_IFMD,
+    mFont_TAG_JUMP_IFSD,
+    mFont_TAG_JUMP_IFPL,
+    mFont_TAG_JUMP_IFMO,
+    mFont_TAG_JUMP_CHKBKEY,
+    mFont_TAG_JUMP_CHKALLKEY,
+    mFont_TAG_JUMP_HAPPY,
+
+    mFont_TAG_JUMP_NUM
+};
+
+enum {
+    mFont_TAG_TALK3_3PBJ,
+    mFont_TAG_TALK3_QUEST_7_2,
+    mFont_TAG_TALK3_DEMONPC0_5_2,
+    mFont_TAG_TALK3_DEMONPC0_5_1,
+    mFont_TAG_TALK3_DEMONPC2_5_2,
+    mFont_TAG_TALK3_DEMONPC2_5_1,
+    mFont_TAG_TALK3_DEMOQ_9_5,
+    mFont_TAG_TALK3_DEMONPC0_5_3,
+    mFont_TAG_TALK3_DEMONPC0_6_2,
+    mFont_TAG_TALK3_DEMONPC0_6_1,
+
+    mFont_TAG_TALK3_NUM
+};
+
+enum {
+    mFont_TAG_BODY_DEMONPC0_5_1,
+    mFont_TAG_BODY_DEMONPC0_5_2,
+    mFont_TAG_BODY_DEMONPC0_5_3,
+    mFont_TAG_BODY_DEMONPC0_6_1,
+    mFont_TAG_BODY_DEMONPC0_6_2,
+    mFont_TAG_BODY_DEMONPC0_6_3,
+
+    mFont_TAG_BODY_NUM
+};
+
+enum {
+    mFont_TAG_NPC_EM_SUB_FUN,
+    mFont_TAG_NPC_EM_SUB_ANGRY,
+    mFont_TAG_NPC_EM_SUB_SAD,
+    mFont_TAG_NPC_EM_SUB_SLEEPY,
+    mFont_TAG_NPC_EM_SUB_NORMAL,
+    mFont_TAG_NPC_EM_SUB_GLOOMY,
+    mFont_TAG_NPC_EM_SUB_CONTINUE,
+
+    mFont_TAG_NPC_EM_SUB_NUM
+};
+
+enum {
+    mFont_TAG_BODY_SUB_DEMONPC2_5_1,
+    mFont_TAG_BODY_SUB_DEMONPC2_5_2,
+    mFont_TAG_BODY_SUB_DEMONPC2_5_3,
+    mFont_TAG_BODY_SUB_DEMONPC2_6_1,
+    mFont_TAG_BODY_SUB_DEMONPC2_6_2,
+    mFont_TAG_BODY_SUB_DEMONPC2_6_3,
+
+    mFont_TAG_BODY_SUB_NUM
+};
+
+enum {
+    mFont_TAG_SOUND_VOICENORMAL,
+    mFont_TAG_SOUND_VOICEANGRY,
+    mFont_TAG_SOUND_VOICESAD,
+    mFont_TAG_SOUND_VOICEFUN,
+    mFont_TAG_SOUND_VOICESLEEPY,
+    mFont_TAG_SOUND_VOICEGLOOMY,
+    mFont_TAG_SOUND_MINDON,
+    mFont_TAG_SOUND_MINDOFF,
+    mFont_TAG_SOUND_SE_0,
+    mFont_TAG_SOUND_SE_1,
+    mFont_TAG_SOUND_SE_2,
+    mFont_TAG_SOUND_SE_3,
+    mFont_TAG_SOUND_SE_4,
+    mFont_TAG_SOUND_SE_5,
+    mFont_TAG_SOUND_SE_6,
+    mFont_TAG_SOUND_SE_7,
+    mFont_TAG_SOUND_SE_8,
+    mFont_TAG_SOUND_NOSEPAGE,
+    mFont_TAG_SOUND_BGMDELETE,
+    mFont_TAG_SOUND_BGMMAKE,
+
+    mFont_TAG_SOUND_NUM
 };
 
 enum {
@@ -449,7 +701,7 @@ extern int mFont_GetStringWidthW(const u16* str, int len, int cut);
 extern void mFont_CopyStringsW(u16* dst, const u16* src, int len);
 extern void mFont_ClearStringsW(u16* str, int len, u16 c);
 extern int mFont_CodeSize_get(const u8* str);
-extern int mFont_CodeSize_idx_get(u8* str, int idx);
+extern int mFont_CodeSize_idx_get(const u8* str, int idx);
 extern int mFont_cont_attr_get(int cont_code);
 extern void mFont_gppSetMode(Gfx** gfx_pp);
 extern void mFont_SetMode(GRAPH* graph, int mode);

@@ -366,6 +366,7 @@ typedef int (*aNPC_CHK_GROUP_TALK_PROC)(NPC_ACTOR* nactorx);
 typedef void (*aNPC_MAKE_ACCESSORY_PROC)(ACTOR* actorx, GAME* game, s16 type, s16 joint);
 typedef void (*aNPC_SET_INSECT_ACTOR_PROC)(NPC_ACTOR* nactorx, ACTOR* insect_actor);
 typedef int (*aNPC_GET_FEEL_INFO_PROC)(NPC_ACTOR* nactorx);
+typedef u8 (*aNPC_GET_TALK_FEEL_PROC)(void);
 
 struct ac_npc_clip_s {
     /* 0x000 */ aNPC_SETUP_ACTOR_PROC setupActor_proc;
@@ -413,7 +414,7 @@ struct ac_npc_clip_s {
     /* 0x148 */ aNPC_MAKE_ACCESSORY_PROC make_accessory_proc;
     /* 0x14C */ aNPC_SET_INSECT_ACTOR_PROC set_insect_actor_proc;
     /* 0x150 */ aNPC_GET_FEEL_INFO_PROC get_feel_info_proc;
-    /* 0x154 */ u8 _154[4];
+    /* 0x154 */ aNPC_GET_TALK_FEEL_PROC get_talk_feel_proc; // I have no idea what this is supposed to be, it's never assigned.
 };
 
 typedef struct npc_info_s {

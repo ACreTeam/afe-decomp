@@ -1,22 +1,139 @@
+#ifdef __INTELLISENSE__
+#include "m_msg.h"
+#include "m_font.h"
+#endif
+
+static float mMsg_Get_StartScale(mMsg_Window_c* msg_p) {
+    int max;
+    int i;
+    u8* data;
+    u8* data_p;
+    float scale;
+
+    i = 0;
+    max = msg_p->start_text_cursor_idx;
+    scale = 1.0f;
+    data = msg_p->msg_data->text_buf.data;
+    do {
+        data_p = data + i;
+        if (mFont_Check_TagId(data_p, sizeof(u16), mFont_TAG_GROUP_SYS, mFont_TAG_SYS_SCALE)) {
+            int tag_scale = (int)mFont_Get_TagPrmU16(data_p);
+            scale = tag_scale * 0.01f;
+        }
+
+        i += mFont_CodeSize_get(data_p);
+    } while (i < max);
+
+    return scale;
+}
+
+static int mMsg_Get_StartColorId(mMsg_Window_c* msg_p) {
+    int color_id;
+    int max;
+    int i;
+    u8* data;
+    u8* data_p;
+
+    color_id = 0;
+    max = msg_p->start_text_cursor_idx;
+    i = 0;
+    data = msg_p->msg_data->text_buf.data;
+    do {
+        data_p = data + i;
+        if (mFont_Check_TagId(data_p, sizeof(u8), mFont_TAG_GROUP_SYS, mFont_TAG_SYS_COLOR)) {
+            color_id = mFont_Get_TagPrmU8(data_p);
+        }
+
+        i += mFont_CodeSize_get(data_p);
+    } while (i < max);
+
+    return color_id;
+}
+
+static int mMsg_Count_LineSize(u8* start_p, u8* last_p, int* line_size) {
+    int done;
+    u8* p = start_p;
+    int end_flag;
+    int code_size;
+
+    end_flag = FALSE;
+    done = FALSE;
+
+    *line_size = 0;
+
+    while (p < last_p && done == FALSE) {
+        if (*p == CHAR_NEW_LINE) {
+            done = TRUE;
+        } else {
+            if (mFont_Check_Cont(*p)) {
+                u8 cont_type = p[1];
+
+                // LAST/CONTINUE end the current sentence segment, MSG_TIME_END also ends.
+                if (cont_type == mFont_CONT_CODE_LAST || cont_type == mFont_CONT_CODE_CONTINUE || cont_type == mFont_CONT_CODE_MSG_TIME_END) {
+                    done = TRUE;
+                    end_flag = TRUE;
+                }
+            } else {
+                // Some base tags also terminate the current sentence segment.
+                if (mFont_Check_TagId(p, 0, mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_LAST) ||
+                    mFont_Check_TagId(p, 0, mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_CONTINUE) ||
+                    mFont_Check_TagId(p, sizeof(u16), mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_WAIT_LAST)) {
+                    done = TRUE;
+                    end_flag = TRUE;
+                }
+            }
+        }
+
+        code_size = mFont_CodeSize_get(p);
+        p += code_size;
+        *line_size += code_size;
+    }
+
+    if (p >= last_p) {
+        end_flag = TRUE;
+    }
+
+    return end_flag;
+}
+
+static void mMsg_mFontSentence_set(mFontSentence* sentence, u8* start_p, int line_len, int sentence_flags, const xy_t* pos, int line_type, const xy_t* scale, const rgba_t* color, int voice_idx_pos, u8 voice_idx, s16 animal_voice_idx, int ruby_saved_base_end, int ruby_saved_reading_end) {
+    mFontSentence_set(sentence, start_p, line_len, sentence_flags, pos, line_type, scale, color, voice_idx_pos, voice_idx, animal_voice_idx);
+    sentence->ruby_saved_base_end = ruby_saved_base_end;
+    sentence->ruby_saved_reading_end = ruby_saved_reading_end;
+}
+
 static void mMsg_draw_font(mMsg_Window_c* msg_p, GAME* game) {
     mFontSentence sentence;
-    u8* last_p = &msg_p->msg_data->text_buf.data[msg_p->end_text_cursor_idx];
-    u8* start_p = &msg_p->msg_data->text_buf.data[msg_p->start_text_cursor_idx];
+    u8* last_p;
+    u8* start_p;
+    int ruby_active;
+    int font_kigou_at_end;
+    u8* base_p;
+    u8* last_p_tmp;
     int line_num;
-    u8* cur_p;
-    u8 code;
-    u8 cont_type;
-    int len;
     int line_len;
     int total_len;
     xy_t scale;
     xy_t pos;
     Gfx* gfx;
-    int line_end_flag;
     int sentence_finished_flag;
     u32 sentence_flags;
-    int sentence_voice_idx = msg_p->voice_sfx_idx - msg_p->start_text_cursor_idx;
-    int voice = FALSE;
+    int sentence_voice_idx;
+
+    base_p = msg_p->msg_data->text_buf.data;
+    last_p_tmp = &base_p[msg_p->end_text_cursor_idx];
+    ruby_active = msg_p->ruby_saved_base_end != 0 || msg_p->ruby_saved_reading_end != 0;
+    font_kigou_at_end = last_p_tmp - 3 >= base_p && last_p_tmp[-3] == CHAR_CONTROL_CODE && last_p_tmp[-2] == mFont_CONT_CODE_FONT_KIGOU;
+
+    if (ruby_active) {
+        int code_size = (int)mFont_CodeSize_get(last_p_tmp);
+        last_p = last_p_tmp + code_size;
+    } else {
+        last_p = last_p_tmp;
+    }
+
+    start_p = &base_p[msg_p->start_text_cursor_idx];
+    sentence_voice_idx = msg_p->voice_sfx_idx - msg_p->start_text_cursor_idx;
 
     if (fabsf(msg_p->text_scale) < 0.001f) {
         return;
@@ -32,38 +149,19 @@ static void mMsg_draw_font(mMsg_Window_c* msg_p, GAME* game) {
     pos.x = msg_p->center_x - (96.0f * scale.x);
     pos.y = msg_p->center_y - (32.0f * scale.y);
 
-    if ((msg_p->status_flags & mMsg_STATUS_FLAG_VOICE_ENTRY)) {
-        if ((msg_p->status_flags & mMsg_STATUS_FLAG_18)) {
-            voice = TRUE;
-        } else if (!F32_IS_ZERO(msg_p->cursor_timer) || msg_p->force_voice_enable_flag == TRUE) {
-            voice = TRUE;
-        }
-    }
+    // Match the original message drawing behavior by keeping font's "current"
+    // scale/color state in sync with SYS_SCALE/SYS_COLOR tags.
+    mFont_CurrentScale_push();
+    mFont_CurrentScale_set(mMsg_Get_StartScale(msg_p));
+    mFont_CurrentColor_push();
+    mFont_CurrentColor_set((u32)mMsg_Get_StartColorId(msg_p));
 
     line_num = 0;
     sentence_finished_flag = FALSE;
     total_len = 0;
 
     while (line_num < msg_p->text_lines && sentence_finished_flag == FALSE) {
-        for (line_len = 0, cur_p = start_p, line_end_flag = FALSE; cur_p < last_p && line_end_flag == FALSE;
-             len = mFont_CodeSize_get(cur_p), cur_p += len, line_len += len) {
-            code = cur_p[0];
-
-            if (code == CHAR_NEW_LINE) {
-                line_end_flag = TRUE;
-            } else if (code == CHAR_CONTROL_CODE) {
-                cont_type = cur_p[1];
-                if (cont_type == mFont_CONT_CODE_LAST || cont_type == mFont_CONT_CODE_CONTINUE ||
-                    cont_type == mFont_CONT_CODE_MSG_TIME_END) {
-                    line_end_flag = TRUE;
-                    sentence_finished_flag = TRUE;
-                }
-            }
-        }
-
-        if (cur_p >= last_p) {
-            sentence_finished_flag = TRUE;
-        }
+        sentence_finished_flag = mMsg_Count_LineSize(start_p, last_p, &line_len);
 
         if (line_num == 0) {
             sentence_flags = mFont_SENTENCE_SKIP_DRAW_NEW_LINE | mFont_SENTENCE_FLAG_CUT;
@@ -72,23 +170,36 @@ static void mMsg_draw_font(mMsg_Window_c* msg_p, GAME* game) {
                              mFont_SENTENCE_FLAG_3 | mFont_SENTENCE_FLAG_CUT;
         }
 
-        if (voice && sentence_voice_idx >= total_len && sentence_voice_idx < (total_len + line_len)) {
+        // Add voice SE marker for the line containing the voice SE index.
+        if (((msg_p->status_flags & mMsg_STATUS_FLAG_VOICE_ENTRY) != 0) && sentence_voice_idx >= total_len && sentence_voice_idx < (total_len + line_len)) {
             sentence_flags |= mFont_SENTENCE_FLAG_VOICE_SE;
-            msg_p->status_flags &= ~(mMsg_STATUS_FLAG_18 | mMsg_STATUS_FLAG_VOICE_ENTRY);
         }
 
-        mFontSentence_set(&sentence, start_p, line_len, sentence_flags, &pos, mFont_LineType_Top, &scale,
+        // Ruby / font-kigou sentence boundary flags.
+        if (ruby_active && (sentence_finished_flag != 0 || line_num + 1 >= msg_p->text_lines)) {
+            sentence_flags |= mFont_SENTENCE_FLAG_8;
+        }
+        if (font_kigou_at_end && (sentence_finished_flag != 0 || line_num + 1 >= msg_p->text_lines)) {
+            sentence_flags |= mFont_SENTENCE_FLAG_FONT_KIGOU;
+        }
+
+        mMsg_mFontSentence_set(&sentence, start_p, line_len, sentence_flags, &pos, mFont_LineType_Top, &scale,
                           &msg_p->font_color[line_num], sentence_voice_idx - total_len, msg_p->voice_idx,
-                          msg_p->animal_voice_idx);
+                          msg_p->animal_voice_idx, msg_p->ruby_saved_base_end, msg_p->ruby_saved_reading_end);
 
         mFontSentence_gppDraw(&sentence, game, &gfx);
 
         pos.y += 16.0f * scale.y;
-        start_p = cur_p;
+        start_p = start_p + line_len;
         line_num++;
         total_len += line_len;
     }
 
+    mFont_CurrentColor_pop();
+    mFont_CurrentScale_pop();
+    
     SET_FONT_DISP(gfx);
     CLOSE_DISP(game->graph);
+
+    msg_p->status_flags &= ~mMsg_STATUS_FLAG_VOICE_ENTRY;
 }

@@ -334,7 +334,7 @@ extern int mFont_CodeSize_get(const u8* str) {
     return size;
 }
 
-extern int mFont_CodeSize_idx_get(u8* str, int idx) {
+extern int mFont_CodeSize_idx_get(const u8* str, int idx) {
     return mFont_CodeSize_get(str + idx);
 }
 

@@ -199,7 +199,10 @@ typedef struct island_s {
     /* 0x15F8 */ u8 grass_tex_type; /* grass type */
     /* 0x15F9 */ u8 last_song_to_island; /* last song kapp'n sang to the island */
     /* 0x15FA */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
-    /* 0x15FB */ u8 flags;
+    /* 0x15FB */ struct {
+        u8 unlocked : 1;
+        u8 pad : 7;
+    } flags;
     /* 0x15FC */ int house_idx;
     /* 0x1600 */ lbRTC_ymd_c islander_spawn_date; // date the islander spawned via e-Reader card
     /* 0x1604 */ u8 unused_15FC[28]; // unused

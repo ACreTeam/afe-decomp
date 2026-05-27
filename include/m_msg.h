@@ -12,13 +12,16 @@
 extern "C" {
 #endif
 
-#define mMsg_MSG_BUF_MAX 1536
-#define mMsg_MSG_BUF_SIZE 1600
+#define mMsg_MSG_BUF_MAX 1792
+#define mMsg_MSG_BUF_SIZE 1856
 #define mMsg_FREE_STRING_LEN 66
-#define mMsg_MAIL_STRING_LEN 204
+#define mMsg_MAIL_STRING_LEN 68
+#define mMsg_MAIL_STRING_WIDE_LEN (mMsg_MAIL_STRING_LEN * 3)
 #define mMsg_MAX_LINE 4
 
 #define mMsg_BUTTON_TURN_TIME 60.0f
+
+#define mMsg_KEY_MAX 9999
 
 enum {
     mMsg_INDEX_HIDE,
@@ -82,6 +85,16 @@ enum {
     mMsg_RESULT_NUM
 };
 
+enum {
+    mMsg_STICK_NEUTRAL,
+    mMsg_STICK_BOT_RIGHT,
+    mMsg_STICK_BOT_LEFT,
+    mMsg_STICK_TOP_LEFT,
+    mMsg_STICK_TOP_RIGHT,
+
+    mMsg_STICK_NUM
+};
+
 #define mMsg_STATUS_FLAG_SOUND_CUT (1 << 0)        // 0x000001
 #define mMsg_STATUS_FLAG_NO_SE_PAGE_OKURI (1 << 1) // 0x000002
 #define mMsg_STATUS_FLAG_NO_ZOOMUP (1 << 2)        // 0x000004
@@ -101,6 +114,10 @@ enum {
 #define mMsg_STATUS_FLAG_CAPITALIZE (1 << 16)      // 0x010000
 #define mMsg_STATUS_FLAG_USE_AM (1 << 17)          /* 'AM' when set, 'PM' when not set */
 #define mMsg_STATUS_FLAG_18 (1 << 18)              // 0x040000
+#define mMsg_STATUS_FLAG_19 (1 << 19)              // 0x080000
+#define mMsg_STATUS_FLAG_20 (1 << 20)              // 0x100000
+#define mMsg_STATUS_FLAG_21 (1 << 21)              // 0x200000
+#define mMsg_STATUS_FLAG_KEYCNT (1 << 22)          // 0x400000
 
 typedef struct message_window_s mMsg_Window_c;
 typedef struct message_data_s mMsg_Data_c;
@@ -202,8 +219,8 @@ struct message_window_s {
     /* 0x1C8 */ u8 item_str[mMsg_ITEM_STR_NUM][mMsg_FREE_STRING_LEN];
     /* 0x218 */ int item_str_article[mMsg_ITEM_STR_NUM];
 
-    /* 0x22C */ u8 mail_str[mMsg_MAIL_STR_NUM][mMsg_MAIL_STRING_LEN];
-    u8 _7DC[68]; // TODO: figure out what goes here
+    u8 mail_str[mMsg_MAIL_STR_NUM][mMsg_MAIL_STRING_LEN];
+    /* 0x22C */ u8 mail_str_w[mMsg_MAIL_STR_NUM][mMsg_MAIL_STRING_WIDE_LEN];
 
     /* 0x2B0 */ rgba_t name_text_color;
     /* 0x2B4 */ rgba_t name_background_color;
@@ -230,14 +247,16 @@ struct message_window_s {
     /* 0x3EE */ s16 animal_voice_idx;
     /* 0x3F0 */ int voice_sfx_idx;
     /* 0x3F4 */ u8 voice_idx;
-    /* 0x3F5 */ u8 voice2_idx;
-    /* 0x3F6 */ u8 voice3_idx;
+    // /* 0x3F5 */ u8 voice2_idx;
+    // /* 0x3F6 */ u8 voice3_idx;
     /* 0x3F7 */ s8 hide_choice_window_timer;
-    /* 0x3F8 */ u8 force_voice_enable_flag;
+    // /* 0x3F8 */ u8 force_voice_enable_flag;
     /* 0x3FC */ int spec;
     /* 0x400 */ u8 free_str_color_idx[4];
-    int font_bank;
-    /* 0x408 */ u8 _404[8]; // unused?
+    /* 0x3F8 */ u8 _3F8[4];
+    /* 0xAD4 */ int font_bank;
+    /* 0xAD8 */ int ruby_saved_base_end;
+    /* 0xADC */ int ruby_saved_reading_end;
     /* 0x40C */ u32 status_flags;
 
     /* 0x410 */ f32 timer;
@@ -261,9 +280,16 @@ struct message_window_s {
     /* 0x44C */ int force_next;
     /* 0x450 */ int lock_continue;
     /* 0x454 */ u8 now_utter;
+    
+    /* 0xB2C */ int keyCnt_a;
+    /* 0xB30 */ int keyCnt_b;
+    /* 0xB34 */ int keyCnt_x;
+    /* 0xB38 */ int keyCnt_y;
+    /* 0xB3C */ int keyCnt_other;
+    /* 0xB40 */ int keyCnt_stickDir;
 
-    /* 0x458 */ mMsg_Main_Data_c main_data;
-    /* 0x460 */ mMsg_Request_Data_c request_data;
+    /* 0xB44 */ mMsg_Main_Data_c main_data;
+    /* 0xB4C */ mMsg_Request_Data_c request_data;
 };
 
 typedef struct msg_bmg_info_s {
@@ -281,6 +307,11 @@ typedef struct msg_bmg_info_section_s {
     u16 entry_size;
     u32 pad;
 } mMsg_bmg_info_section_c;
+
+typedef struct msg_bmg_data_section_s {
+    u32 magic; // 'DAT1'
+    u32 size;
+} mMsg_bmg_data_section_c;
 
 typedef struct msg_bmc_info_s {
     u32 start_addr;
@@ -323,7 +354,7 @@ extern int mMsg_Get_msg_num(mMsg_Window_c* msg_p);
 extern void mMsg_Get_BodyParam(u32 table_addr, u32 data_addr, int index, u32* addr, u32* size);
 extern int mMsg_ChangeMsgData(mMsg_Window_c* msg_p, int index);
 extern int mMsg_Check_NowUtter();
-extern int mMsg_Get_Length_String(u8* str, int str_len);
+extern int mMsg_Get_Length_String(const u8* str, int str_len);
 extern int mMsg_Check_MainNormalContinue(mMsg_Window_c* msg_p);
 extern int mMsg_Check_MainNormal(mMsg_Window_c* msg_p);
 extern int mMsg_Check_MainHide(mMsg_Window_c* msg_p);
@@ -368,6 +399,7 @@ extern int mMsg_sound_spec_change_voice(mMsg_Window_c* msg_p);
 extern void mMsg_sound_set_voice_click(mMsg_Window_c* msg_p);
 extern void mMsg_sound_set_voice_silent(mMsg_Window_c* msg_p, int update_mode);
 extern void mMsg_sound_unset_voice_silent(mMsg_Window_c* msg_p, int update_mode);
+extern void mMsg_sound_voice_mode(mMsg_Window_c* msg_p);
 
 extern void mMsg_Set_mail_strW(mMsg_Window_c* msg_p, int mail_str_no, u16* str, int str_len);
 extern u8* mMsgLoad_get_buff(void);

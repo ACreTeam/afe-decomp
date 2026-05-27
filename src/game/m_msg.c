@@ -5,14 +5,30 @@
 #include "m_string.h"
 #include "m_handbill.h"
 #include "m_common_data.h"
+#include "m_house.h"
+#include "m_home_h.h"
+#include "m_name_table.h"
+#include "m_demo.h"
+#include "m_shop.h"
+#include "m_land.h"
+#include "m_event.h"
+#include "m_monument.h"
+#include "m_item_name.h"
+#include "m_field_info.h"
+#include "m_npc.h"
+#include "ac_npc.h"
+#include "m_room_type.h"
+#include "m_private.h"
 #include "jsyswrap.h"
 #include "m_bgm.h"
+#include "ac_gyoei.h"
 #include "libforest/emu64/emu64_wrapper.h"
 #include "sys_matrix.h"
 #include "m_flashrom.h"
+#include "libultra/libultra.h"
 
-static u32 Msg_table_rom_start = 0;
 static u32 Msg_rom_start = 0;
+u32 Msg_color_start = 0;
 
 static mMsg_Data_c mMsg_data;
 static mMsg_Window_c mMsg_window;
@@ -23,6 +39,7 @@ typedef void (*mMsg_MAIN_PROC)(mMsg_Window_c*, GAME*);
 static void mMsg_MainSetup_Window(mMsg_Window_c* msg_p, GAME* game);
 static int mMsg_end_to_disappear(mMsg_Window_c* msg_p);
 
+#include "../src/game/m_msg_bmg.c_inc"
 #include "../src/game/m_msg_ctrl.c_inc"
 
 static void mMsg_sound_MessageSpeedForce(f32 timer);
@@ -73,6 +90,10 @@ static void mMsg_Main_Window(mMsg_Window_c* msg_p, GAME* game) {
             return;
         }
 
+        if (idx != mMsg_INDEX_HIDE) {
+            mMsg_Main_KeyCnt(msg_p, game);
+        }
+
         (*proc[idx])(msg_p, game);
     }
 }
@@ -101,6 +122,8 @@ extern void mMsg_aram_init() {
 
 extern void mMsg_aram_init2() {
     Msg_rom_start = JW_GetAramAddress(RESOURCE_MESSAGE);
+    Msg_color_start = JW_GetAramAddress(RESOURCE_MESSAGE_COLOR);
+    mMsgLoad_bmc_ct();
 }
 
 extern void mMsg_ct(GAME* game) {

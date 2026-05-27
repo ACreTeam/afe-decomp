@@ -19,7 +19,7 @@ extern "C" {
 #define MSG_SONCHO_LIGHTHOUSE_1     0x33f4
 #define MSG_SONCHO_LIGHTHOUSE_2     0x340b
 
-#define MSG_MAX                     0x3F91 /* Maximum message id */
+#define MSG_MAX                     0x5738 /* Maximum message id */
 
 #ifdef __cplusplus
 }

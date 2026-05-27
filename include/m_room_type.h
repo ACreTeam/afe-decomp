@@ -186,5 +186,7 @@ extern int mRmTp_FtrItemNo2FtrIdx(mActor_name_t ftr_item_no);
 extern mActor_name_t mRmTp_FtrIdx2FtrItemNo(int ftr_idx, int direct);
 extern int mRmTp_SoundStepWalkSE(xyz_t* wpos);
 extern int mRmTp_GetPlayerRoomIdx();
+extern int mRmTp_CheckNowPlayerHouseCarpet_MyOriginal();
+extern int mRmTp_CheckNowPlayerHouseWall_MyOriginal();
 
 #endif

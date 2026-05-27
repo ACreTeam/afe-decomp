@@ -3,65 +3,78 @@
 #include "m_font.h"
 #include "jsyswrap.h"
 #include "m_flashrom.h"
+
+extern mMsg_Window_c mMsg_window;
+extern mMsg_Data_c mMsg_data;
 #endif
 
 static int mMsg_Set_SizeCode(mMsg_Window_c* msg_p, int idx) {
     return mFont_CodeSize_idx_get(msg_p->msg_data->text_buf.data, idx);
 }
 
-static int mMsg_Count_SameCode(u8* data, int start, int length, u8 code) {
+static int mMsg_Count_SameCode(u8* data, int start, int length) {
     int res = 0;
     int i = start;
     u8* now_p;
     u8 now_code;
+    u8 last_code = CHAR_MESSAGE_TAG;
 
     while (i < length) {
         now_p = &data[i];
         now_code = *now_p;
 
-        if (now_code == CHAR_CONTROL_CODE) {
+        if (mFont_Check_Cont(now_code) || mFont_Check_Tag(now_code)) {
             i += mFont_CodeSize_get(now_p);
-        } else if (now_code == code) {
+            continue;
+            // ー/っ (chouonpu and sokuon)
+        } else if ((now_code == CHAR_PP_144 || now_code == CHAR_PP_204) != FALSE) {
             res++;
             i++;
         } else {
+            if (res > 0) {
+                // treat tte/ppe as normal grammar instead of a drawn-out consonant (sokuon)
+                // って/っぺ
+                if (last_code != CHAR_PP_204 || (now_code != CHAR_PP_018 && now_code != CHAR_PP_254)) {
+                    break;
+                }
+
+                res--;
+            }
             break;
         }
+
+        last_code = now_code;
     }
 
     return res;
 }
 
-static int mMsg_Check_LastCode_forData(u8* data, int idx) {
-    u8 code = data[idx];
+static int mMsg_Check_LastCode_forData(const u8* data, int idx) {
+    int ret = FALSE;
 
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_LAST) {
-            return TRUE;
-        }
+    data += idx;
+    if (mFont_Check_ContId(data, mFont_CONT_CODE_LAST) ||
+        mFont_Check_TagId(data, 0, mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_LAST)) {
+        ret = TRUE;
     }
 
-    return FALSE;
+    return ret;
 }
 
 static int mMsg_Check_LastCode(mMsg_Window_c* msg_p, int idx) {
     return mMsg_Check_LastCode_forData(msg_p->msg_data->text_buf.data, idx);
 }
 
-static int mMsg_Check_ContinueCode_forData(u8* data, int idx) {
-    u8 code = data[idx];
+static int mMsg_Check_ContinueCode_forData(const u8* data, int idx) {
+    int ret = FALSE;
 
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_CONTINUE) {
-            return TRUE;
-        }
+    data += idx;
+    if (mFont_Check_ContId(data, mFont_CONT_CODE_CONTINUE) ||
+        mFont_Check_TagId(data, 0, mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_CONTINUE)) {
+        ret = TRUE;
     }
 
-    return FALSE;
+    return ret;
 }
 
 static int mMsg_Check_ContinueCode(mMsg_Window_c* msg_p, int idx) {
@@ -85,35 +98,34 @@ static int mMsg_Check_NextIndex_LastCode(mMsg_Window_c* msg_p) {
 }
 
 static int mMsg_Check_NextIndex_SetSelectWindowCode(mMsg_Window_c* msg_p) {
+    int ret = FALSE;
     u8* data = msg_p->msg_data->text_buf.data;
     int idx = msg_p->end_text_cursor_idx;
-    u8 code = data[idx];
+    u8* code_p = &data[idx];
 
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_SET_SELECT_WINDOW) {
-            return TRUE;
-        }
+    if (mFont_Check_ContId(code_p, mFont_CONT_CODE_SET_SELECT_WINDOW) ||
+        mFont_Check_TagId(code_p, 0, mFont_TAG_GROUP_COM, mFont_TAG_COM_OPEN_CHOICE)) {
+        ret = TRUE;
     }
 
-    return FALSE;
+    return ret;
 }
 
-static f32 mMsg_Get_CursolSetTimeCode_forData(u8* data, int idx) {
-    u8 code = data[idx];
+static f32 mMsg_Get_CursolSetTimeCode_forData(const u8* data, int idx) {
+    const u8* code_p = &data[idx];
+    float ret = -1.0f;
 
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_CURSOR_SET_TIME) {
-            code = data[idx + 2];
-
-            return (f32)(int)code * 2.0f; /* Multiply by two due to AC running at 60fps over 30fps */
+    if (mFont_Check_Cont(*code_p)) {
+        if (code_p[1] == mFont_CONT_CODE_CURSOR_SET_TIME) {
+            ret = (f32)(int)mFont_Get_ContPrmU8(code_p);
+        }
+    } else if (mFont_Check_Tag(*code_p)) {
+        if (mFont_Check_TagId(code_p, sizeof(u16), mFont_TAG_GROUP_BASE, mFont_TAG_BASE_TIME_INTERVAL)) {
+            ret = (f32)mFont_Get_TagPrmU16(code_p);
         }
     }
 
-    return 0.0f;
+    return ret >= 0.0f ? ret * 2.0f : 0.0f;
 }
 
 static f32 mMsg_Get_CursolSetTimeCode(mMsg_Window_c* msg_p, int idx) {
@@ -121,17 +133,11 @@ static f32 mMsg_Get_CursolSetTimeCode(mMsg_Window_c* msg_p, int idx) {
 }
 
 static int mMsg_Get_ColorCode_forData(u8* data, int idx, u8* r, u8* g, u8* b) {
-    u8 code = data[idx];
-
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_COLOR) {
-            *r = data[idx + 2];
-            *g = data[idx + 3];
-            *b = data[idx + 4];
-            return TRUE;
-        }
+    if (mFont_Check_Cont(data[idx]) && data[idx + 1] == mFont_CONT_CODE_COLOR) {
+        *r = data[idx + 2];
+        *g = data[idx + 3];
+        *b = data[idx + 4];
+        return TRUE;
     }
 
     return FALSE;
@@ -141,50 +147,58 @@ static int mMsg_Get_ColorCode(mMsg_Window_c* msg_p, int idx, u8* r, u8* g, u8* b
     return mMsg_Get_ColorCode_forData(msg_p->msg_data->text_buf.data, idx, r, g, b);
 }
 
-static int mMsg_Get_OrderCode_forData(u8* data, int idx, int* order_idx, u16* order_val) {
-    u8 code = data[idx];
+static int mMsg_Get_OrderCode_forData(const u8* data, int idx, int* order_idx, u16* order_val) {
+    const u8* code_p = &data[idx];
+    int ret = FALSE;
 
-    if (code == CHAR_CONTROL_CODE) {
-        code = data[idx + 1];
-
-        if (code == mFont_CONT_CODE_SET_DEMO_ORDER_PLAYER || code == mFont_CONT_CODE_SET_DEMO_ORDER_NPC0 ||
-            code == mFont_CONT_CODE_SET_DEMO_ORDER_NPC1 || code == mFont_CONT_CODE_SET_DEMO_ORDER_NPC2 ||
-            code == mFont_CONT_CODE_SET_DEMO_ORDER_QUEST) {
+    if (mFont_Check_Cont(*code_p)) {
+        if (code_p[1] == mFont_CONT_CODE_SET_DEMO_ORDER_PLAYER || code_p[1] == mFont_CONT_CODE_SET_DEMO_ORDER_NPC0 ||
+            code_p[1] == mFont_CONT_CODE_SET_DEMO_ORDER_NPC1 || code_p[1] == mFont_CONT_CODE_SET_DEMO_ORDER_NPC2 ||
+            code_p[1] == mFont_CONT_CODE_SET_DEMO_ORDER_QUEST) {
             u16 val;
 
-            *order_idx = data[idx + 2];
-            val = (u16)(data[idx + 3]) << 8;
-            *order_val = val | ((data[idx + 4]) & 0xFF);
-            return TRUE;
+            *order_idx = code_p[2];
+            val = (u16)(code_p[3]) << 8;
+            *order_val = val | ((code_p[4]) & 0xFF);
+            ret = TRUE;
         }
     }
 
-    return FALSE;
+    return ret;
 }
 
 static int mMsg_Get_OrderCode(mMsg_Window_c* msg_p, int idx, int* order_idx, u16* order_val) {
     return mMsg_Get_OrderCode_forData(msg_p->msg_data->text_buf.data, idx, order_idx, order_val);
 }
 
-static int mMsg_Get_SoundCutCode_forData(u8* data, int idx) {
-    if (data[idx] == CHAR_CONTROL_CODE && data[idx + 1] == mFont_CONT_CODE_SOUND_CUT) {
-        return data[idx + 2];
+static int mMsg_Get_SoundCutCode_forData(const u8* data, int idx) {
+    const u8* code_p = &data[idx];
+    int ret = -1;
+
+    if (mFont_Check_ContId(code_p, mFont_CONT_CODE_SOUND_CUT)) {
+        ret = mFont_Get_ContPrmU8(code_p);
+    } else if (mFont_Check_TagId(code_p, 0, mFont_TAG_GROUP_SOUND, mFont_TAG_SOUND_MINDON)) {
+        ret = 0;
+    } else if (mFont_Check_TagId(code_p, 0, mFont_TAG_GROUP_SOUND, mFont_TAG_SOUND_MINDOFF)) {
+        ret = 1;
     }
 
-    return FALSE;
+    return ret;
 }
 
 static int mMsg_Get_SoundCutCode(mMsg_Window_c* msg_p, int idx) {
     return mMsg_Get_SoundCutCode_forData(msg_p->msg_data->text_buf.data, idx);
 }
 
-static void mMsg_Get_bgm_make_forData(u8* data, int idx, int* bgm_type, int* stop_type) {
-    u8* code_p = &data[idx];
+static void mMsg_Get_bgm_make_forData(const u8* data, int idx, int* bgm_type, int* stop_type) {
+    const u8* code_p = &data[idx];
 
-    if (code_p[0] == CHAR_CONTROL_CODE && code_p[1] == mFont_CONT_CODE_BGM_MAKE && code_p[2] < mFont_BGM_NUM &&
-        code_p[3] < mFont_BGM_STOP_TYPE_NUM) {
+    if (mFont_Check_ContId(code_p, mFont_CONT_CODE_BGM_MAKE)) {
         *bgm_type = code_p[2];
         *stop_type = code_p[3];
+    } else if (mFont_Check_TagId(code_p, 2 * sizeof(u8), mFont_TAG_GROUP_SOUND, mFont_TAG_SOUND_BGMMAKE)) {
+        *bgm_type = code_p[5];
+        *stop_type = code_p[6];
     } else {
         *bgm_type = mFont_BGM_NUM;
         *stop_type = mFont_BGM_STOP_TYPE_NUM;
@@ -195,13 +209,15 @@ static void mMsg_Get_bgm_make(mMsg_Window_c* msg_p, int idx, int* bgm_type, int*
     mMsg_Get_bgm_make_forData(msg_p->msg_data->text_buf.data, idx, bgm_type, stop_type);
 }
 
-static void mMsg_Get_bgm_delete_forData(u8* data, int idx, int* bgm_type, int* stop_type) {
-    u8* code_p = &data[idx];
+static void mMsg_Get_bgm_delete_forData(const u8* data, int idx, int* bgm_type, int* stop_type) {
+    const u8* code_p = &data[idx];
 
-    if (code_p[0] == CHAR_CONTROL_CODE && code_p[1] == mFont_CONT_CODE_BGM_DELETE && code_p[2] < mFont_BGM_NUM &&
-        code_p[3] < mFont_BGM_STOP_TYPE_NUM) {
+    if (mFont_Check_ContId(code_p, mFont_CONT_CODE_BGM_DELETE)) {
         *bgm_type = code_p[2];
         *stop_type = code_p[3];
+    } else if (mFont_Check_TagId(code_p, 2 * sizeof(u8), mFont_TAG_GROUP_SOUND, mFont_TAG_SOUND_BGMDELETE)) {
+        *bgm_type = code_p[5];
+        *stop_type = code_p[6];
     } else {
         *bgm_type = mFont_BGM_NUM;
         *stop_type = mFont_BGM_STOP_TYPE_NUM;
@@ -212,24 +228,33 @@ static void mMsg_Get_bgm_delete(mMsg_Window_c* msg_p, int idx, int* bgm_type, in
     mMsg_Get_bgm_delete_forData(msg_p->msg_data->text_buf.data, idx, bgm_type, stop_type);
 }
 
-static int mMsg_Get_MsgTimeEnd_time_forData(u8* data, int idx) {
-    u8* code_p = &data[idx];
+static int mMsg_Get_MsgTimeEnd_time_forData(const u8* data, int idx) {
+    const u8* code_p = &data[idx];
+    int ret = -1;
 
-    if (code_p[0] == CHAR_CONTROL_CODE && code_p[1] == mFont_CONT_CODE_MSG_TIME_END) {
-        return code_p[2];
+    if (mFont_Check_ContId(code_p, mFont_CONT_CODE_MSG_TIME_END)) {
+        ret = mFont_Get_ContPrmU8(code_p);
+    } else if (mFont_Check_TagId(code_p, sizeof(u16), mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_WAIT_LAST)) {
+        ret = mFont_Get_TagPrmU16(code_p);
     }
 
-    return 0;
+    return ret >= 0 ? ret : 0;
 }
 
 static int mMsg_Get_MsgTimeEnd_time(mMsg_Window_c* msg_p, int idx) {
     return mMsg_Get_MsgTimeEnd_time_forData(msg_p->msg_data->text_buf.data, idx);
 }
 
-static int mMsg_Check_MsgTimeEndCode_forData(u8* data, int idx) {
-    u8* code_p = &data[idx];
+static int mMsg_Check_MsgTimeEndCode_forData(const u8* data, int idx) {
+    int ret = FALSE;
 
-    return (code_p[0] == CHAR_CONTROL_CODE && code_p[1] == mFont_CONT_CODE_MSG_TIME_END);
+    data += idx;
+    if (mFont_Check_ContId(data, mFont_CONT_CODE_MSG_TIME_END) ||
+        mFont_Check_TagId(data, sizeof(u16), mFont_TAG_GROUP_BASE, mFont_TAG_BASE_MSG_WAIT_LAST)) {
+        ret = TRUE;
+    }
+
+    return ret;
 }
 
 static int mMsg_Check_MsgTimeEndCode(mMsg_Window_c* msg_p, int idx) {
@@ -241,9 +266,9 @@ static int mMsg_Check_NextIndex_MsgTimeEndCode(mMsg_Window_c* msg_p) {
 }
 
 static void mMsg_Get_sound_trg_sys_forData(u8* data, int idx, int* se_no) {
-    u8* code_p = &data[idx];
+    const u8* code_p = &data[idx];
 
-    if (code_p[0] == CHAR_CONTROL_CODE && code_p[1] == mFont_CONT_CODE_SOUND_TRG_SYS && code_p[2] < mFont_SE_NUM) {
+    if (mFont_Check_Cont(*code_p) && code_p[1] == mFont_CONT_CODE_SOUND_TRG_SYS && code_p[2] < mFont_SE_NUM) {
         *se_no = code_p[2];
     } else {
         *se_no = mFont_SE_NUM;
@@ -287,85 +312,57 @@ static void mMsg_SetTimer(mMsg_Window_c* msg_p, f32 timer) {
     msg_p->cursor_timer = timer;
 }
 
-extern void mMsg_Get_BodyParam(u32 table_addr, u32 data_addr, int index, u32* addr, u32* size) {
-    static u32 tmp_buff[16] ATTRIBUTE_ALIGN(32);
-    int first_entry = index == 0;
-    u32 aligned_ofs = first_entry ? 0 : ALIGN_PREV((index - 1) * sizeof(u32), 32);
-    int ofs = first_entry ? 0 : (index - 1) & 7;
-
-    _JW_GetResourceAram(table_addr + aligned_ofs, (u8*)tmp_buff, sizeof(tmp_buff));
-
-    if (first_entry) {
-        *addr = data_addr;
-        *size = tmp_buff[ofs];
-    } else {
-        *addr = data_addr + tmp_buff[ofs];
-        *size = tmp_buff[ofs + 1] - tmp_buff[ofs];
-    }
-}
-
-static void mMsg_Get_MsgDataAddressAndSize(int idx, u32* addr, u32* size) {
-    mMsg_Get_BodyParam(Msg_table_rom_start, Msg_rom_start, idx, addr, size);
-}
-
-static int mMsg_Count_MsgData(u8* data) {
+static int mMsg_Count_MsgData(const mMsg_Data_c* msg_data) {
+    int end = FALSE;
+    const u8* data = msg_data->text_buf.data;
     int i = 0;
 
     while (i < mMsg_MSG_BUF_MAX) {
+        end = FALSE;
         if (mMsg_Check_LastCode_forData(data, i) || mMsg_Check_ContinueCode_forData(data, i) ||
             mMsg_Check_MsgTimeEndCode_forData(data, i)) {
-            i += mFont_CodeSize_idx_get(data, i);
-            break;
+            end = TRUE;
         }
 
         i += mFont_CodeSize_idx_get(data, i);
+        if (end) {
+            break;
+        }
+    }
+
+    if (i > mMsg_MSG_BUF_MAX) {
+        i = mMsg_MSG_BUF_MAX;
+    }
+
+    if (end == FALSE) {
+        i = 0;
     }
 
     return i;
 }
 
-static int mMsg_LoadMsgData(mMsg_Data_c* msg_data, int index, int cut) {
-    if (msg_data != NULL) {
-        u32 addr;
-        u32 size;
+static int mMsg_LoadMsgData_new(mMsg_Data_c* msg_data, int index, int cut) {
+    mMsg_bmg_info_c bmg_info;
+    int ret;
 
-        mFRm_set_msg_idx(index);
-        mMsg_Get_MsgDataAddressAndSize(index, &addr, &size);
-
-        if (addr != 0 && size != 0) {
-            u32 aligned_addr = ALIGN_PREV(addr, 32);
-            int ofs = addr - aligned_addr;
-            int i;
-            int len;
-            u8* dst_p;
-            u8* src_p;
-
-            /* DMA copy from ARAM */
-            _JW_GetResourceAram(aligned_addr, msg_data->text_buf.data, ALIGN_NEXT(ofs + size, 32));
-
-            /* Move text to beginning of buffer since we copied aligned to 32 bytes */
-            len = size;
-            dst_p = msg_data->text_buf.data;
-            src_p = msg_data->text_buf.data + ofs;
-
-            for (i = 0; i < len; i++) {
-                *dst_p++ = *src_p++;
-            }
-
-            msg_data->msg_no = index;
-            msg_data->data_loaded = TRUE;
-            msg_data->msg_len = mMsg_Count_MsgData(msg_data->text_buf.data);
-            msg_data->cut = cut;
-            return TRUE;
-        }
+    mFRm_set_msg_idx(index);
+    bzero(msg_data->text_buf.data, sizeof(msg_data->text_buf.data));
+    mMsgLoad_bmg_init(&bmg_info, Msg_rom_start, index, msg_data->text_buf.data, sizeof(msg_data->text_buf.data));
+    ret = mMsgLoad_bmg_load(&bmg_info);
+    if (ret) {
+        msg_data->msg_no = index;
+        msg_data->data_loaded = TRUE;
+        msg_data->cut = cut;
+        msg_data->msg_len = mMsg_Count_MsgData(msg_data);
+    } else {
+        msg_data->data_loaded = FALSE;
     }
 
-    msg_data->data_loaded = FALSE;
-    return FALSE;
+    return ret;
 }
 
 extern int mMsg_ChangeMsgData(mMsg_Window_c* msg_p, int index) {
-    if (index >= 0 && index < MSG_MAX && mMsg_LoadMsgData(msg_p->msg_data, index, FALSE)) {
+    if (index >= 0 && index < MSG_MAX && mMsg_LoadMsgData_new(msg_p->msg_data, index, FALSE)) {
         msg_p->end_text_cursor_idx = 0;
         mMsg_Clear_CursolIndex(msg_p);
         mMsg_SetTimer(msg_p, 20.0f);
@@ -448,22 +445,67 @@ static void mMsg_init(GAME* game) {
     mMsg_window.status_flags &=
         ~(mMsg_STATUS_FLAG_SOUND_CUT | mMsg_STATUS_FLAG_IDLING_REQ | mMsg_STATUS_FLAG_IDLING_NOW |
           mMsg_STATUS_FLAG_NOT_PAUSE_FRAME | mMsg_STATUS_FLAG_NO_ZOOMDOWN | mMsg_STATUS_FLAG_VOICE_CLICK |
-          mMsg_STATUS_FLAG_VOICE_SILENT | mMsg_STATUS_FLAG_CURSOL_JUST); // ~7AC1
+          mMsg_STATUS_FLAG_VOICE_SILENT | mMsg_STATUS_FLAG_CURSOL_JUST | mMsg_STATUS_FLAG_19); // ~87AC1
     mMsg_window.free_str_color_idx[0] = 0;
     mMsg_window.free_str_color_idx[1] = 0;
     mMsg_window.free_str_color_idx[2] = 0;
+    mMsg_window.free_str_color_idx[3] = 0;
+    mMsg_window.font_bank = mFont_TEX_TYPE_FONT1;
+    mMsg_window.ruby_saved_base_end = 0;
+    mMsg_window.ruby_saved_reading_end = 0;
+    mMsg_window.keyCnt_a = 0;
+    mMsg_window.keyCnt_b = 0;
+    mMsg_window.keyCnt_x = 0;
+    mMsg_window.keyCnt_y = 0;
+    mMsg_window.keyCnt_other = 0;
+    mMsg_window.keyCnt_stickDir = 0;
 }
 
-extern int mMsg_Get_Length_String(u8* str, int str_len) {
+static int mMsg_Get_Length_String_sub(const u8* str, int len) {
     int i;
 
-    for (i = str_len - 1; i >= 0; i--) {
+    for (i = len - 1; i >= 0; i--) {
         if (str[i] != CHAR_SPACE) {
             break;
         }
     }
 
     return i + 1;
+}
+
+extern int mMsg_Get_Length_String(const u8* str, int str_len) {
+    int len = mMsg_Get_Length_String_sub(str, str_len);
+
+    if (len >= 2 && len < str_len && str[len] == CHAR_SPACE) {
+        if (str[len - 1] == mFont_CONT_CODE_FONT_KIGOU && str[len - 2] == CHAR_CONTROL_CODE) {
+            if (len < str_len) {
+                len++;
+            }
+        } else {
+            int i;
+            const u8* code_p;
+
+            for (i = 0; i < len; i += mFont_CodeSize_get(code_p)) {
+                code_p = &str[i];
+                if (code_p[0] == CHAR_MESSAGE_TAG) {
+                    int group = mFont_Get_TagGroup(code_p);
+                    int tag = mFont_Get_TagId(code_p);
+
+                    if (group == mFont_TAG_GROUP_SYS && tag == mFont_TAG_SYS_RUBY) {
+                        mFontRuby_c ruby;
+
+                        mFontTag_Get_Ruby(code_p, &ruby);
+                        if (len == ruby.cmd_size + ruby.kana_count + i - 1) {
+                            len++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return len;
 }
 
 extern int mMsg_Check_MainNormalContinue(mMsg_Window_c* msg_p) {
@@ -592,7 +634,7 @@ static int mMsg_Set_PlayerNameColor(u8* data, int* start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, *start_idx);
 
     if (name_len > 0) {
-        hypen_count = mMsg_Count_SameCode(data, (*start_idx) + command_len, len, CHAR_HYPHEN);
+        hypen_count = mMsg_Count_SameCode(data, (*start_idx) + command_len, len);
         add_string[5] = name_len + hypen_count;
         new_len = mMsg_MoveDataCut(data, initial_start_idx + sizeof(add_string), initial_start_idx, len, FALSE);
         mMsg_CopyString(data + initial_start_idx, add_string, sizeof(add_string));
@@ -658,10 +700,26 @@ extern int mMsg_CopyTail(ACTOR* actor_p, u8* data, int start_idx, int len, u32 c
     return new_len;
 }
 
+extern int mMsg_CopyTruthTail(ACTOR* actor_p, u8* data, int start_idx, int len, u32 capitalize) {
+    int command_len = mFont_CodeSize_idx_get(data, start_idx);
+    u8* tail_p = actor_p != NULL ? mNpc_GetWordEnding_forTag(actor_p) : NULL;
+    int tail_len = tail_p != NULL ? mMsg_Get_Length_String(tail_p, ANIMAL_CATCHPHRASE_LEN) : 0;
+    int new_len;
+
+    new_len = mMsg_MoveDataCut(data, start_idx + tail_len, start_idx + command_len, len, FALSE);
+    mMsg_CopyString(&data[start_idx], tail_p, tail_len);
+
+    if (capitalize) {
+        data[start_idx] = mFont_small_to_capital(data[start_idx]);
+    }
+
+    return new_len;
+}
+
 extern int mMsg_CopyYear(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u16 year = Common_Get(time.rtc_time.year);
-    u8 year_str[6];
+    u8 year_str[mMsg_FREE_STRING_LEN];
     int year_len = mString_Load_YearStringFromRom(year_str, year);
     int new_len = mMsg_MoveDataCut(data, start_idx + year_len, start_idx + command_len, len, FALSE);
 
@@ -672,7 +730,7 @@ extern int mMsg_CopyYear(u8* data, int start_idx, int len) {
 extern int mMsg_CopyMonth(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 month = Common_Get(time.rtc_time.month);
-    u8 month_str[9];
+    u8 month_str[mMsg_FREE_STRING_LEN];
     int month_len = mString_Load_MonthStringFromRom(month_str, month);
     int new_len = mMsg_MoveDataCut(data, start_idx + month_len, start_idx + command_len, len, FALSE);
 
@@ -683,7 +741,7 @@ extern int mMsg_CopyMonth(u8* data, int start_idx, int len) {
 extern int mMsg_CopyWeek(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 week = Common_Get(time.rtc_time.weekday);
-    u8 week_str[9];
+    u8 week_str[mMsg_FREE_STRING_LEN];
     int week_len = mString_Load_WeekStringFromRom(week_str, week);
     int new_len = mMsg_MoveDataCut(data, start_idx + week_len, start_idx + command_len, len, FALSE);
 
@@ -694,7 +752,7 @@ extern int mMsg_CopyWeek(u8* data, int start_idx, int len) {
 extern int mMsg_CopyDay(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 day = Common_Get(time.rtc_time.day);
-    u8 day_str[4];
+    u8 day_str[mMsg_FREE_STRING_LEN];
     int day_len = mString_Load_DayStringFromRom(day_str, day);
     int new_len = mMsg_MoveDataCut(data, start_idx + day_len, start_idx + command_len, len, FALSE);
 
@@ -705,8 +763,8 @@ extern int mMsg_CopyDay(u8* data, int start_idx, int len) {
 extern int mMsg_CopyHour(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 hour = Common_Get(time.rtc_time.hour);
-    u8 hour_str[2];
-    int hour_len = mString_Load_HourStringFromRom2(hour_str, hour);
+    u8 hour_str[mMsg_FREE_STRING_LEN];
+    int hour_len = mString_Load_HourStringFromRom(hour_str, hour);
     int new_len = mMsg_MoveDataCut(data, start_idx + hour_len, start_idx + command_len, len, FALSE);
 
     mMsg_CopyString(&data[start_idx], hour_str, hour_len);
@@ -716,7 +774,7 @@ extern int mMsg_CopyHour(u8* data, int start_idx, int len) {
 extern int mMsg_CopyMin(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 min = Common_Get(time.rtc_time.min);
-    u8 min_str[2];
+    u8 min_str[mMsg_FREE_STRING_LEN];
     int min_len = mString_Load_MinStringFromRom(min_str, min);
     int new_len = mMsg_MoveDataCut(data, start_idx + min_len, start_idx + command_len, len, FALSE);
 
@@ -727,7 +785,7 @@ extern int mMsg_CopyMin(u8* data, int start_idx, int len) {
 extern int mMsg_CopySec(u8* data, int start_idx, int len) {
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
     u8 sec = Common_Get(time.rtc_time.sec);
-    u8 sec_str[2];
+    u8 sec_str[mMsg_FREE_STRING_LEN];
     int sec_len = mString_Load_SecStringFromRom(sec_str, sec);
     int new_len = mMsg_MoveDataCut(data, start_idx + sec_len, start_idx + command_len, len, FALSE);
 
@@ -750,17 +808,17 @@ extern int mMsg_CopyFree(mMsg_Window_c* msg_p, int str_no, u8* data, int start_i
         new_len = mMsg_MoveDataCut(data, start_idx + free_str_len, start_idx + command_len, len, FALSE);
         mMsg_CopyString(&data[start_idx], free_str_p, free_str_len);
 
-        article = article != mIN_ARTICLE_NUM ? article : msg_p->free_str_article[str_no];
-        if (article != mIN_ARTICLE_NONE) {
-            u8 article_str[mIN_ITEM_NAME_LEN + 1];
-            int article_len;
+        // article = article != mIN_ARTICLE_NUM ? article : msg_p->free_str_article[str_no];
+        // if (article != mIN_ARTICLE_NONE) {
+        //     u8 article_str[mIN_ITEM_NAME_LEN + 1];
+        //     int article_len;
 
-            mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
-            article_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN);
-            article_str[article_len] = CHAR_SPACE;
-            new_len = mMsg_MoveDataCut(data, start_idx + article_len + 1, start_idx, new_len, FALSE);
-            mMsg_CopyString(&data[start_idx], article_str, article_len + 1);
-        }
+        //     mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
+        //     article_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN);
+        //     article_str[article_len] = CHAR_SPACE;
+        //     new_len = mMsg_MoveDataCut(data, start_idx + article_len + 1, start_idx, new_len, FALSE);
+        //     mMsg_CopyString(&data[start_idx], article_str, article_len + 1);
+        // }
 
         if (capitalize) {
             data[start_idx] = mFont_small_to_capital(data[start_idx]);
@@ -770,14 +828,15 @@ extern int mMsg_CopyFree(mMsg_Window_c* msg_p, int str_no, u8* data, int start_i
     }
 }
 
-static u8 MMSG_pf_cl[6][3] = { { 0, 0, 0 },     { 145, 60, 145 }, { 50, 130, 70 },
-                               { 75, 95, 155 }, { 160, 50, 75 },  { 50, 75, 225 } };
+static u8 MMSG_pf_cl[6][3] = {
+    { 0, 0, 0 }, { 145, 60, 145 }, { 50, 130, 70 }, { 75, 95, 155 }, { 160, 50, 75 }, { 50, 75, 225 },
+};
 
 static int mMsg_Set_PfColor(u8* data, int* start_idx, int len, u8* free_str, int pf_color_id, int article) {
     static u8 add_string[] = { CHAR_CONTROL_CODE, mFont_CONT_CODE_SET_COLOR_CHAR, 0, 0, 0, 0 };
 
     int free_str_len = mMsg_Get_Length_String(free_str, mMsg_FREE_STRING_LEN);
-    int article_len;
+    int article_len = 0;
     int src_idx = *start_idx;
     int new_len;
     u8* color_data = MMSG_pf_cl[pf_color_id];
@@ -786,14 +845,14 @@ static int mMsg_Set_PfColor(u8* data, int* start_idx, int len, u8* free_str, int
     add_string[3] = color_data[1];
     add_string[4] = color_data[2];
 
-    if (article == mIN_ARTICLE_NONE) {
-        article_len = 0;
-    } else {
-        u8 article_str[mIN_ITEM_NAME_LEN];
+    // if (article == mIN_ARTICLE_NONE) {
+    //     article_len = 0;
+    // } else {
+    //     u8 article_str[mIN_ITEM_NAME_LEN];
 
-        mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
-        article_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN) + 1;
-    }
+    //     mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
+    //     article_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN) + 1;
+    // }
 
     add_string[5] = free_str_len + article_len;
     new_len = mMsg_MoveDataCut(data, src_idx + sizeof(add_string), src_idx, len, FALSE);
@@ -824,20 +883,42 @@ extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize
 
     mMsg_CopyString(&data[start_idx], land_name, land_name_len);
 
-// This entire block can be removed in the English version
-#ifndef IMPROVEMENTS
     /* Leftover from JP to add 'むら' (mura) to the town name */
     {
         u8 mura_str[mMsg_FREE_STRING_LEN];
         u8* mura_str_p = mura_str;
         int mura_size;
 
-        mString_Load_StringFromRom(mura_str_p, sizeof(mura_str), 0x1E4);
+        mString_Load_StringFromRom(mura_str_p, sizeof(mura_str), not_kanji ? 0x1E4 : 0x75D);
         mura_size = mMsg_Get_Length_String(mura_str_p, sizeof(mura_str));
         new_len = mMsg_MoveDataCut(data, new_start_idx + mura_size, new_start_idx, new_len, FALSE);
         mMsg_CopyString(&data[new_start_idx], mura_str_p, mura_size);
     }
-#endif
+
+    if (capitalize) {
+        data[start_idx] = mFont_small_to_capital(data[start_idx]);
+    }
+
+    return new_len;
+}
+
+static int mMsg_CopyIslandName_sub(u8* data, int start_idx, int len, u32 capitalize, u8* island_name_p, int island_name_len) {
+    // clang-format off
+    static const u8 string[] = {
+        // convert じま (jima) to 島 if Kanji level is set high enough
+        CHAR_MESSAGE_TAG, 6, mFont_TAG_GROUP_BASE, (mFont_TAG_BASE_KANJI_COM) >> 8, (mFont_TAG_BASE_KANJI_COM) & 0xFF, 10 + 3,
+        CHAR_MESSAGE_TAG, 8, mFont_TAG_GROUP_SYS, (mFont_TAG_SYS_RUBY) >> 8, (mFont_TAG_SYS_RUBY) & 0xFF, 1, CHAR_PP_237, CHAR_PP_030, CHAR_PP_KANJI0_089,
+    };
+    // clang-format on
+    int new_len;
+    int command_len = mFont_CodeSize_idx_get(data, start_idx);
+    int d_idx = start_idx + island_name_len;
+
+    new_len = mMsg_MoveDataCut(data, start_idx + island_name_len, start_idx + command_len, len, FALSE);
+    mMsg_CopyString(data + start_idx, island_name_p, island_name_len);
+    // insert the 'island' word string (じま/島) after the island name
+    new_len = mMsg_MoveDataCut(data, d_idx + sizeof(string), d_idx, new_len, FALSE);
+    mMsg_CopyString(data + d_idx, string, sizeof(string));
 
     if (capitalize) {
         data[start_idx] = mFont_small_to_capital(data[start_idx]);
@@ -847,13 +928,36 @@ extern int mMsg_CopyCountryName(u8* data, int start_idx, int len, u32 capitalize
 }
 
 extern int mMsg_CopyIslandName(u8* data, int start_idx, int len, u32 capitalize) {
-    int new_len;
-    int command_len = mFont_CodeSize_idx_get(data, start_idx);
-    u8* str = NULL; //Save_Get(island).name;
-    int str_len = mMsg_Get_Length_String(str, mISL_ISLAND_NAME_LEN);
+    if (Common_Get(cur_island_house_p) != NULL) {
+        Island_c* island = &Common_Get(cur_island_house_p)->island;
+        int island_name_len = mMsg_Get_Length_String(island->name, mISL_ISLAND_NAME_LEN);
+        return mMsg_CopyIslandName_sub(data, start_idx, len, capitalize, island->name, island_name_len);
+    }
 
+    // @BUG - if no island is set, this should return the original length
+#ifdef BUGFIXES
+    return len;
+#endif
+}
+
+extern int mMsg_CopyOwnIslandName(u8* data, int start_idx, int len, u32 capitalize) {
+    Island_c* island = &Common_Get(now_home)->island;
+    int island_name_len = mMsg_Get_Length_String(island->name, mISL_ISLAND_NAME_LEN);
+    return mMsg_CopyIslandName_sub(data, start_idx, len, capitalize, island->name, island_name_len);
+}
+
+extern int mMsg_CopyPlClothType(u8* data, int start_idx, int len, u32 capitalize) {
+    int cloth_type = mNT_get_cloth_type(Common_Get(now_private)->cloth.item, Common_Get(now_private)->cloth.idx & 0xFF);
+    u8 str[mMsg_FREE_STRING_LEN];
+    int command_len;
+    int new_len;
+    int str_len;
+
+    mString_Load_StringFromRom(str, sizeof(str), cloth_type + 0x748);
+    command_len = mFont_CodeSize_idx_get(data, start_idx);
+    str_len = mMsg_Get_Length_String(str, sizeof(str));
     new_len = mMsg_MoveDataCut(data, start_idx + str_len, start_idx + command_len, len, FALSE);
-    mMsg_CopyString(&data[start_idx], str, str_len);
+    mMsg_CopyString(data + start_idx, str, str_len);
 
     if (capitalize) {
         data[start_idx] = mFont_small_to_capital(data[start_idx]);
@@ -865,7 +969,7 @@ extern int mMsg_CopyIslandName(u8* data, int start_idx, int len, u32 capitalize)
 extern int mMsg_CopyAmPm(mMsg_Window_c* msg_p, u8* data, int start_idx, int len) {
     int new_len;
     int command_len = mFont_CodeSize_idx_get(data, start_idx);
-    u8 str[15];
+    u8 str[mMsg_FREE_STRING_LEN];
     int str_len;
 
     mString_Load_StringFromRom(str, sizeof(str), (msg_p->status_flags & mMsg_STATUS_FLAG_USE_AM) ? 1 : 2);
@@ -881,7 +985,7 @@ extern int mMsg_CopyRamdomNumber2(u8* data, int start_idx, int len) {
     u16 rng = get_random_timer(0, 100) % 100;
     u8 str[2];
     u8* str_p = str;
-    int str_len = mFont_UnintToString(str_p, 2, rng, 2, TRUE, FALSE, TRUE);
+    int str_len = mFont_UnintToString(str_p, 2, rng, 2, TRUE, FALSE, FALSE);
     int new_len = mMsg_MoveDataCut(data, start_idx + str_len, start_idx + command_len, len, FALSE);
 
     mMsg_CopyString(&data[start_idx], str_p, str_len);
@@ -903,16 +1007,16 @@ extern int mMsg_CopyItem(mMsg_Window_c* msg_p, int str_no, u8* data, int start_i
         new_len = mMsg_MoveDataCut(data, start_idx + free_str_len, start_idx + command_len, len, FALSE);
         mMsg_CopyString(&data[start_idx], free_str_p, free_str_len);
 
-        article = article != mIN_ARTICLE_NUM ? article : msg_p->item_str_article[str_no];
-        if (article != mIN_ARTICLE_NONE) {
-            u8 article_str[mIN_ITEM_NAME_LEN + 1];
+        // article = article != mIN_ARTICLE_NUM ? article : msg_p->item_str_article[str_no];
+        // if (article != mIN_ARTICLE_NONE) {
+        //     u8 article_str[mIN_ITEM_NAME_LEN + 1];
 
-            mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
-            command_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN);
-            article_str[command_len] = CHAR_SPACE;
-            new_len = mMsg_MoveDataCut(data, start_idx + command_len + 1, start_idx, new_len, FALSE);
-            mMsg_CopyString(&data[start_idx], article_str, command_len + 1);
-        }
+        //     mString_Load_StringFromRom(article_str, mIN_ITEM_NAME_LEN, mString_ARTICLE_START + article);
+        //     command_len = mMsg_Get_Length_String(article_str, mIN_ITEM_NAME_LEN);
+        //     article_str[command_len] = CHAR_SPACE;
+        //     new_len = mMsg_MoveDataCut(data, start_idx + command_len + 1, start_idx, new_len, FALSE);
+        //     mMsg_CopyString(&data[start_idx], article_str, command_len + 1);
+        // }
 
         if (capitalize) {
             data[start_idx] = mFont_small_to_capital(data[start_idx]);
@@ -929,8 +1033,8 @@ extern int mMsg_CopyMail(mMsg_Window_c* msg_p, int str_no, u8* data, int start_i
 
     {
         int command_len = mFont_CodeSize_idx_get(data, start_idx);
-        u8* free_str_p = msg_p->mail_str[str_no];
-        int free_str_len = mMsg_Get_Length_String(free_str_p, mMsg_MAIL_STRING_LEN);
+        u8* free_str_p = msg_p->mail_str_w[str_no];
+        int free_str_len = mMsg_Get_Length_String(free_str_p, mMsg_MAIL_STRING_WIDE_LEN);
         int new_len = mMsg_MoveDataCut(data, start_idx + free_str_len, start_idx + command_len, len, TRUE);
 
         mMsg_CopyString(&data[start_idx], free_str_p, free_str_len);
@@ -940,5 +1044,142 @@ extern int mMsg_CopyMail(mMsg_Window_c* msg_p, int str_no, u8* data, int start_i
         }
 
         return new_len;
+    }
+}
+
+static int mMsg_Main_KeyCnt_a(mMsg_Window_c* msg_p, GAME* game) {
+    if (chkTrigger(BUTTON_A)) {
+        msg_p->keyCnt_a++;
+        if (msg_p->keyCnt_a > mMsg_KEY_MAX) {
+            msg_p->keyCnt_a = mMsg_KEY_MAX;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int mMsg_Main_KeyCnt_b(mMsg_Window_c* msg_p, GAME* game) {
+    if (chkTrigger(BUTTON_B)) {
+        msg_p->keyCnt_b++;
+        if (msg_p->keyCnt_b > mMsg_KEY_MAX) {
+            msg_p->keyCnt_b = mMsg_KEY_MAX;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int mMsg_Main_KeyCnt_x(mMsg_Window_c* msg_p, GAME* game) {
+    if (chkTrigger(BUTTON_X)) {
+        msg_p->keyCnt_x++;
+        if (msg_p->keyCnt_x > mMsg_KEY_MAX) {
+            msg_p->keyCnt_x = mMsg_KEY_MAX;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int mMsg_Main_KeyCnt_y(mMsg_Window_c* msg_p, GAME* game) {
+    if (chkTrigger(BUTTON_Y)) {
+        msg_p->keyCnt_y++;
+        if (msg_p->keyCnt_y > mMsg_KEY_MAX) {
+            msg_p->keyCnt_y = mMsg_KEY_MAX;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int mMsg_Main_KeyCnt_other(mMsg_Window_c* msg_p, GAME* game) {
+    int stickX;
+    int stickY;
+    int stickDir;
+    int count = 0;
+
+    if (chkTrigger(BUTTON_DUP) || chkTrigger(BUTTON_DDOWN) || chkTrigger(BUTTON_DLEFT) || chkTrigger(BUTTON_DRIGHT)) {
+        count++;
+    }
+
+    if (chkTrigger(BUTTON_CLEFT) || chkTrigger(BUTTON_CDOWN) || chkTrigger(BUTTON_CUP) || chkTrigger(BUTTON_CRIGHT)) {
+        count++;
+    }
+
+    if (chkTrigger(BUTTON_START)) {
+        count++;
+    }
+
+    if (chkTrigger(BUTTON_Z)) {
+        count++;
+    }
+
+    if (chkTrigger(BUTTON_L)) {
+        count++;
+    }
+
+    if (chkTrigger(BUTTON_R)) {
+        count++;
+    }
+
+    stickX = getJoystick_X();
+    stickY = getJoystick_Y();
+    if (stickX > -25 && stickX < 25 && stickY > -25 && stickY < 25) {
+        stickDir = mMsg_STICK_NEUTRAL; // none
+    } else if (stickX >= 0 && stickY >= 0) {
+        stickDir = mMsg_STICK_BOT_RIGHT;
+    } else if (stickX < 0 && stickY >= 0) {
+        stickDir = mMsg_STICK_BOT_LEFT;
+    } else if (stickX < 0 && stickY < 0) {
+        stickDir = mMsg_STICK_TOP_LEFT;
+    } else {
+        stickDir = mMsg_STICK_TOP_RIGHT;
+    }
+
+    if (msg_p->keyCnt_stickDir != stickDir) {
+        if (stickDir != mMsg_STICK_NEUTRAL) {
+            count++;
+        }
+
+        msg_p->keyCnt_stickDir = stickDir;
+    }
+
+    if (count != 0) {
+        msg_p->keyCnt_other += count;
+        if (msg_p->keyCnt_other > mMsg_KEY_MAX) {
+            msg_p->keyCnt_other = mMsg_KEY_MAX;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/**
+ * @brief Updates key count statistics for the message window
+ *
+ * Tracks button presses and joystick movements for the message system.
+ * Only updates counts when the key count flag is enabled.
+ *
+ * @param msg_p Pointer to the message window structure
+ * @param game Pointer to the game structure
+ */
+extern void mMsg_Main_KeyCnt(mMsg_Window_c* msg_p, GAME* game) {
+    if ((msg_p->status_flags & mMsg_STATUS_FLAG_KEYCNT) != 0) {
+        mMsg_Main_KeyCnt_a(msg_p, game);
+        mMsg_Main_KeyCnt_b(msg_p, game);
+        mMsg_Main_KeyCnt_x(msg_p, game);
+        mMsg_Main_KeyCnt_y(msg_p, game);
+        mMsg_Main_KeyCnt_other(msg_p, game);
+    } else {
+        msg_p->keyCnt_stickDir = mMsg_STICK_NEUTRAL;
     }
 }

@@ -368,7 +368,7 @@ static int sChk_Animal_c_sub(Animal_c* animal, int depth) {
 
     res |= sChk_Anmhome_c_sub(&animal->home_info, depth + 1);
 
-    if (animal->mood >= mNpc_MOOD_NUM) {
+    if (animal->mood >= mNpc_FEEL_ALL_NUM) {
         mFRm_ERRORLINE(1458);
         res = TRUE;
     }

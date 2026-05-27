@@ -40,20 +40,6 @@ extern "C" {
 #define mNpc_ISLANDER_NO ANIMAL_NUM_MAX
 
 enum {
-    mNpc_MOOD_0,
-    mNpc_MOOD_1,
-    mNpc_MOOD_2,
-    mNpc_MOOD_3,
-    mNpc_MOOD_4,
-    mNpc_MOOD_5,
-    mNpc_MOOD_6,
-    mNpc_MOOD_7,
-    mNpc_MOOD_8,
-
-    mNpc_MOOD_NUM
-};
-
-enum {
     mNpc_LETTER_RANK_BAD,
     mNpc_LETTER_RANK_OK,
 
