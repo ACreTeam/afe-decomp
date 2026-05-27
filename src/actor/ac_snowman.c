@@ -274,25 +274,41 @@ static int aSMAN_FG_Position_Get(ACTOR* actorx) {
     int i;
 
     for (i = 0; i < ARRAY_COUNT(chk_pos_tbl); i++) {
+        mActor_name_t* item_p;
         mActor_name_t item;
         u32 attr;
         xyz_t pos;
         f32 ground_y;
 
-        pos = actorx->world.position;
-        pos.x += chk_pos_tbl[i].x;
-        pos.z += chk_pos_tbl[i].y;
+        pos.x = actorx->world.position.x + chk_pos_tbl[i].x;
+        pos.z = actorx->world.position.z + chk_pos_tbl[i].y;
         pos.y = mCoBG_GetBgY_AngleS_FromWpos(NULL, pos, 0.0f);
-        // @optimization - function call inside of ABS macro...
-        ground_y = ABS(pos.y - mCoBG_GetBgY_AngleS_FromWpos(NULL, actorx->world.position, 0.0f));
-        item =
-            *mFI_GetUnitFG(pos); // @BUG - they don't check for NULL here, and mFI_GetUnitFG can return a NULL pointer.
-        attr = mCoBG_Wpos2Attribute(pos, NULL);
 
-        if (!mCoBG_ExistHeightGap_KeepAndNow(pos) && item != RSV_NO && item != RSV_WALL_NO &&
-            attr != mCoBG_ATTRIBUTE_STONE && attr != mCoBG_ATTRIBUTE_WOOD && ground_y < 60.0f) {
-            actor->fg_pos = pos;
-            return TRUE;
+        if (!mCoBG_ExistHeightGap_KeepAndNow(pos)) {
+            item_p = mFI_GetUnitFG(pos);
+            if (item_p != NULL) {
+                item = *item_p;
+
+                if (!IS_ITEM_MONUMENT(item) && !IS_ITEM_DUMMY_MONUMENT(item)) {
+                    if (item == RSV_WALL_NO || item == RSV_NO) {
+                        continue;
+                    }
+
+                    attr = mCoBG_Wpos2Attribute(pos, NULL);
+
+                    if (attr != mCoBG_ATTRIBUTE_STONE && attr != mCoBG_ATTRIBUTE_WOOD) {
+                        if (mCoBG_Wpos2CheckNpc(pos) == TRUE) {
+                            // @optimization - function call inside of ABS macro...
+                            ground_y = ABS(pos.y - mCoBG_GetBgY_AngleS_FromWpos(NULL, actorx->world.position, 0.0f));
+
+                            if (!(ground_y >= 60.0f)) {
+                                actor->fg_pos = pos;
+                                return TRUE;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -508,6 +524,7 @@ static void aSMAN_MakeBreakEffect(SNOWMAN_ACTOR* actor, GAME* game) {
 }
 
 static int aSMAN_status_check_in_move(SNOWMAN_ACTOR* actor, GAME* game) {
+    int in_move = TRUE;
     int ret = FALSE;
 
     if ((actor->flags & aSMAN_FLAG_ON_GROUND) != 0 && (actor->flags & aSMAN_FLAG_COMBINED) == 0) {
@@ -515,6 +532,7 @@ static int aSMAN_status_check_in_move(SNOWMAN_ACTOR* actor, GAME* game) {
         aSMAN_MakeBreakEffect(actor, game);
         Actor_delete((ACTOR*)actor);
         ret = TRUE;
+        in_move = FALSE;
     }
 
     if (actor->flags & aSMAN_FLAG_COMBINED) {
@@ -530,7 +548,7 @@ static int aSMAN_status_check_in_move(SNOWMAN_ACTOR* actor, GAME* game) {
         aSMAN_player_push_free(game);
     }
 
-    return ret;
+    return in_move;
 }
 
 static void aSMAN_position_move(ACTOR* actorx) {
@@ -597,11 +615,11 @@ static int aSMAN_BGcheck(ACTOR* actorx, GAME* game) {
 
             if (actor->process != aSMAN_process_player_push && !actorx->bg_collision_check.result.is_in_water &&
                 actorx->speed > 0.5f) {
-                sAdo_OngenTrgStartSpeed(actorx->speed, 0x103, &actorx->world.position);
+                sAdo_OngenTrgStartSpeed(actorx->speed, SE_SINGLETON(0x103), &actorx->world.position);
             }
         } else {
             if (actor->process == aSMAN_process_air) {
-                sAdo_OngenTrgStartSpeed(actorx->speed, 0x103, &actorx->world.position);
+                sAdo_OngenTrgStartSpeed(actorx->speed, SE_SINGLETON(0x103), &actorx->world.position);
                 actorx->world.angle.y = angle;
                 actorx->speed *= 1.2f;
                 actorx->position_speed.y = 0.0f;
@@ -615,14 +633,20 @@ static int aSMAN_BGcheck(ACTOR* actorx, GAME* game) {
 }
 
 static int aSMAN_snowman_hit_check(SNOWMAN_ACTOR* actor, GAME* game, ACTOR* oc_actorx) {
+    GAME_PLAY* play = (GAME_PLAY*)game;
     int b_ux;
     int b_uz;
+    
+    if (play->fb_fade_type != FADE_TYPE_NONE || play->fb_wipe_mode != WIPE_MODE_NONE) {
+        return FALSE;
+    }
 
     actor->col_actor = oc_actorx;
     if (oc_actorx->id == mAc_PROFILE_SNOWMAN) {
         SNOWMAN_ACTOR* oc_actor = (SNOWMAN_ACTOR*)oc_actorx;
         u32 attr;
         xyz_t center_pos;
+        mActor_name_t* item_p;
 
         if ((F32_IS_ZERO(actor->actor_class.speed) && F32_IS_ZERO(oc_actorx->speed))) {
             return FALSE;
@@ -636,10 +660,11 @@ static int aSMAN_snowman_hit_check(SNOWMAN_ACTOR* actor, GAME* game, ACTOR* oc_a
 
         attr = mCoBG_Wpos2Attribute(center_pos, NULL);
         mFI_Wpos2UtNum_inBlock(&b_ux, &b_uz, center_pos);
+        item_p = mFI_GetUnitFG(center_pos);
         if (attr == mCoBG_ATTRIBUTE_STONE || attr == mCoBG_ATTRIBUTE_WOOD ||
             mCoBG_Wpos2CheckSlateCol(&center_pos, FALSE) || b_ux == 0 || b_ux == (UT_X_NUM - 1) || b_uz == 0 ||
             b_uz == (UT_Z_NUM - 1) || (oc_actor->flags & aSMAN_FLAG_IN_HOLE) != 0 || oc_actor->ground_angle.x != 0 ||
-            oc_actor->ground_angle.z != 0 || !aSNOWMAN_player_block_check((ACTOR*)actor, game)) {
+            oc_actor->ground_angle.z != 0 || !aSNOWMAN_player_block_check((ACTOR*)actor, game) || (item_p != NULL && (IS_ITEM_MONUMENT(*item_p) || IS_ITEM_DUMMY_MONUMENT(*item_p)))) {
             return FALSE;
         }
 
@@ -689,7 +714,7 @@ static void aSMAN_OBJcheck(SNOWMAN_ACTOR* actor, GAME* game) {
                 tmp = oc_actorx->position_speed;
                 xyz_t_mult_v(&tmp, rate);
                 if (oc_actorx->speed > 0.5f) {
-                    sAdo_OngenTrgStartSpeed(oc_actorx->speed, 0x102, &actor->actor_class.world.position);
+                    sAdo_OngenTrgStartSpeed(oc_actorx->speed, SE_SINGLETON(0x102), &actor->actor_class.world.position);
                 }
             } else {
                 f32 add = 0.16f - actor->normalized_scale * 0.14f;
@@ -748,7 +773,7 @@ static void aSMAN_set_speed_relations_swim(ACTOR* actorx) {
     s16 flow_angle;
     f32 water_height;
 
-    water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 1362);
+    water_height = mCoBG_GetWaterHeight_File(actorx->world.position, __FILE__, 1412);
     mCoBG_GetWaterFlow(&flow, actorx->bg_collision_check.result.unit_attribute);
     flow_angle = atans_table(flow.z, flow.x);
     chase_angle(&actorx->world.angle.y, flow_angle,
@@ -1072,7 +1097,7 @@ static int aSMAN_process_swim(ACTOR* actorx, GAME* game) {
     if (actor->timer < 32) {
         if (((game->frame_counter & 3) == 0 && actor->timer < 16) || (game->frame_counter & 7) == 0) {
             xyz_t pos = actorx->world.position;
-            pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 1855);
+            pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 1906);
             eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_HAMON, pos, 1, actorx->world.angle.y, game, actorx->npc_id, 5,
                                        (s16)(actor->normalized_scale * 100.0f));
         }
@@ -1116,7 +1141,7 @@ static int aSMAN_process_air(ACTOR* actorx, GAME* game) {
     if (actorx->bg_collision_check.result.is_in_water) {
         xyz_t pos = actorx->world.position;
 
-        pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 1934);
+        pos.y = mCoBG_GetWaterHeight_File(pos, __FILE__, 1985);
         eEC_CLIP->effect_make_proc(eEC_EFFECT_AMI_MIZU, pos, 1, 0, game, actorx->npc_id, 2,
                                    (s16)(actor->normalized_scale * 100.0f));
         if (CLIP(gyo_clip) != NULL) {
@@ -1295,6 +1320,7 @@ static void aSMAN_process_combine_head_init(ACTOR* actorx) {
     actorx->shape_info.rotation.x = DEG2SHORT_ANGLE2(-17.578125f);
     mCoBG_SetPlussOffset(actorx->world.position, 3, mCoBG_ATTRIBUTE_NONE);
     if ((actorx->state_bitfield & ACTOR_STATE_NO_CULL) == 0) {
+        actor->flags |= aSMAN_FLAG_COMBINE_SPEAK;
         actor->flags |= aSMAN_FLAG_NO_SPEAK;
     } else {
         mDemo_Request(mDemo_TYPE_SPEAK, actorx, aSMAN_set_talk_info_combine_head_init);
@@ -1307,14 +1333,21 @@ static int aSMAN_process_combine_head(ACTOR* actorx, GAME* game) {
     SNOWMAN_ACTOR* actor = (SNOWMAN_ACTOR*)actorx;
 
     if ((actor->flags & aSMAN_FLAG_NO_SPEAK) == 0) {
-        if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
-            if (!mDemo_Check_ListenAble()) {
-                mDemo_Set_ListenAble();
-                mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
-                mPlib_Set_able_hand_all_item_in_demo(FALSE);
+        if ((actor->flags & aSMAN_FLAG_COMBINE_SPEAK) == 0) {
+            if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
+                if (!mDemo_Check_ListenAble()) {
+                    mDemo_Set_ListenAble();
+                    mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
+                    mPlib_Set_able_hand_all_item_in_demo(FALSE);
+                    actor->flags |= aSMAN_FLAG_COMBINE_SPEAK;
+                }
+            } else {
+                mDemo_Request(mDemo_TYPE_SPEAK, actorx, aSMAN_set_talk_info_combine_head_init);
             }
         } else {
-            actor->flags |= aSMAN_FLAG_NO_SPEAK;
+            if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == FALSE) {
+                actor->flags |= aSMAN_FLAG_NO_SPEAK;
+            }
         }
     } else if (!mRlib_PSnowman_NormalTalk(actorx, (GAME_PLAY*)game, &actor->impact_speed,
                                           aSMAN_set_talk_info_normal_init)) {
@@ -1377,7 +1410,9 @@ static int aSMAN_process_combine_body(ACTOR* actorx, GAME* game) {
 static void aSMAN_actor_move(ACTOR* actorx, GAME* game) {
     SNOWMAN_ACTOR* actor = (SNOWMAN_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
-
+    mActor_name_t* item_p;
+    xyz_t pos;
+    
     if ((actorx->state_bitfield & ACTOR_STATE_NO_CULL) == 0) {
         if ((actor->flags & aSMAN_FLAG_COMBINED) != 0 && (actor->flags & aSMAN_FLAG_HEAD_JUMP) != 0 &&
             !aSNOWMAN_player_block_check(actorx, game) && (actor->flags & aSMAN_FLAG_NO_SPEAK) != 0) {
@@ -1391,16 +1426,34 @@ static void aSMAN_actor_move(ACTOR* actorx, GAME* game) {
         }
     }
 
-    aSMAN_status_check_in_move(actor, game);
-    aSMAN_position_move(actorx);
-    aSMAN_BGcheck(actorx, game);
-    actor->process(actorx, game);
-    aSMAN_calc_objChkRange(actorx);
-    aSMAN_calc_axis(actorx);
+    xyz_t_move(&pos, &actorx->world.position);
+    item_p = mFI_GetUnitFG(pos);
+    if (item_p != NULL && IS_ITEM_RST_HOLE(*item_p)) {
+        actor->flags |= aSMAN_FLAG_MOVED;
+        actor->flags |= aSMAN_FLAG_ON_GROUND;
+    }
 
-    if ((actor->flags & aSMAN_FLAG_COMBINED) == 0) {
-        CollisionCheck_Uty_ActorWorldPosSetPipeC(actorx, &actor->col_pipe);
-        CollisionCheck_setOC(game, &play->collision_check, &actor->col_pipe.collision_obj);
+    pos.z -= 40.0f;
+    item_p = mFI_GetUnitFG(pos);
+    if (item_p != NULL && (ITEM_IS_DUMMY_NPC_HOUSE(*item_p) || ITEM_IS_NPC_HOUSE(*item_p))) {
+        actor->flags |= aSMAN_FLAG_MOVED;
+        actor->flags |= aSMAN_FLAG_ON_GROUND;
+    }
+
+    if (aSMAN_status_check_in_move(actor, game)) {
+        aSMAN_position_move(actorx);
+        aSMAN_BGcheck(actorx, game);
+        actor->process(actorx, game);
+
+        if (actorx->mv_proc != NULL || actorx->dw_proc != NULL) {
+            aSMAN_calc_objChkRange(actorx);
+            aSMAN_calc_axis(actorx);
+
+            if ((actor->flags & aSMAN_FLAG_COMBINED) == 0) {
+                CollisionCheck_Uty_ActorWorldPosSetPipeC(actorx, &actor->col_pipe);
+                CollisionCheck_setOC(game, &play->collision_check, &actor->col_pipe.collision_obj);
+            }
+        }
     }
 }
 

@@ -852,7 +852,7 @@ config.libs = [
             Object(Matching, "actor/ac_shop_umbrella.c"),
             Object(NonMatching, "actor/ac_shrine.c"),
             Object(Matching, "actor/ac_sign.c"),
-            Object(NonMatching, "actor/ac_snowman.c"),
+            Object(Matching, "actor/ac_snowman.c"),
             Object(NonMatching, "actor/ac_station.c"),
             Object(Matching, "actor/ac_structure.c"),
             Object(Matching, "actor/ac_super.c"),

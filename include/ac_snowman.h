@@ -24,8 +24,9 @@ enum {
 #define aSMAN_FLAG_IN_HOLE (1 << 3)
 #define aSMAN_FLAG_4 (1 << 4) // unused?
 #define aSMAN_FLAG_COMBINED (1 << 5)
-#define aSMAN_FLAG_NO_SPEAK (1 << 6)
-#define aSMAN_FLAG_DELETE (1 << 7)
+#define aSMAN_FLAG_COMBINE_SPEAK (1 << 6)
+#define aSMAN_FLAG_NO_SPEAK (1 << 7)
+#define aSMAN_FLAG_DELETE (1 << 8)
 
 typedef int (*aSMAN_PROC)(ACTOR* actorx, GAME* game);
 
