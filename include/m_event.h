@@ -594,6 +594,7 @@ typedef struct event_area_s {
 #define mEv_HOUSE_ALARM_STATE_FINISHED 1
 #define mEv_HOUSE_ALARM_STATE_READY 2
 #define mEv_HOUSE_ALARM_STATE_ACTIVE 3
+#define mEv_HOUSE_ALARM_STATE_4 4
 
 typedef struct event_alarm_info_s {
     u8 hour;

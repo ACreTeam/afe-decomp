@@ -16,11 +16,14 @@
 #include "m_random_field.h"
 #include "zurumode.h"
 #include "_mem.h"
+#include "ac_snowman.h"
+#include "m_birthday_msg.h"
 
 // this is cursed
 #define aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN (mEv_place_data_c*)-1
 
 static int title_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int state, u32 area);
+static int alarm_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int state, u32 area, int idx);
 static void schedule_init(ACTOR* actorx);
 static void schedule_main(ACTOR* actorx);
 
@@ -28,25 +31,217 @@ static mEv_place_data_c* wpppp;
 static mEv_place_data_c* spppp;
 static mEv_place_data_c* dpppp;
 static mEv_place_data_c* tpppp;
+static mEv_place_data_c* mpppp;
 
 static int get_forward_block(int* bx, int* bz) {
-    if (Common_Get(player_actor_exists) == FALSE) {
+    int ret = FALSE;
+
+    if (Common_Get(player_actor_exists) != FALSE) {
+        if (mFI_GetNextBlockNum(bx, bz) == TRUE) {
+            ret = TRUE;
+        } else {
+            ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
+
+            if (playerx != NULL && mFI_Wpos2BlockNum(bx, bz, playerx->world.position) == TRUE) {
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int aEvMgr_alarm_ban(EVENT_MANAGER_ACTOR* evmgr) {
+    mEv_common_data_c* common = Common_GetPointer(event_common);
+    u32 player_no = Common_Get(player_no);
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+
+    if (play->fb_fade_type != FADE_TYPE_NONE || play->fb_wipe_mode != WIPE_MODE_NONE) {
+        return TRUE;
+    }
+
+    if (mDemo_CheckDemo() && mDemo_CheckDemoType() != mDemo_TYPE_ALARM) {
+        return TRUE;
+    }
+
+    if (mEv_PlayerOK() == FALSE) {
+        return TRUE;
+    }
+
+    if (mEv_LivePlayer(player_no) == FALSE) {
+        return TRUE;
+    }
+
+    if (Common_Get(reset_flag) != 0) {
+        return TRUE;
+    }
+
+    if (mEv_LiveSonchoPresent()) {
+        return TRUE;
+    }
+
+    if (Common_Get(my_room_message_control_flags) & 0x4) {
+        return TRUE;
+    }
+
+    if (mDemo_CheckDemo() == FALSE && mEv_ArbeitPlayer_kari(player_no) == FALSE && mEv_LivePlayer(player_no) && mEv_LiveSonchoPresent() ==  FALSE && evmgr->change != mEv_change(&play->event)) {
+        return TRUE;
+    }
+
+    if (common->exist_flags0 & 3) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int aEvMgr_alarm_init(void) {
+    int i;
+    mHm_hs_c* home = Save_Get(homes);
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    u32 player_no;
+    
+    if (alarm->house_alarm_state[0] != mEv_HOUSE_ALARM_STATE_NONE) {
         return FALSE;
     }
 
-    if (mFI_GetNextBlockNum(bx, bz) == FALSE) {
-        ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
-
-        if (playerx == NULL) {
-            return FALSE;
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (home[i].haniwa.alarm_info.enabled == FALSE) {
+            alarm->house_alarm_state[i] = mEv_HOUSE_ALARM_STATE_4;
+        } else {
+            alarm->house_alarm_state[i] = mEv_HOUSE_ALARM_STATE_FINISHED;
         }
+    }
 
-        if (mFI_Wpos2BlockNum(bx, bz, playerx->world.position) == FALSE) {
+    player_no = Common_Get(player_no);
+    if (player_no < PLAYER_NUM) {
+        alarm->house_alarm_state[mHS_get_arrange_idx(player_no)] = mEv_HOUSE_ALARM_STATE_4;
+    }
+
+    alarm->start_hour = rtc_time->hour;
+    alarm->start_min = rtc_time->min;
+    alarm->hour = rtc_time->hour;
+    alarm->min = rtc_time->min;
+
+    return TRUE;
+}
+
+static int aEvMgr_alarm_runcheck(void) {
+    int i;
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+
+    for (i = 0; i < mHS_HOUSE_NUM; i++) {
+        if (alarm->house_alarm_state[i] == mEv_HOUSE_ALARM_STATE_ACTIVE) {
+            if (mDemo_CheckDemoType() == mDemo_TYPE_ALARM) {
+                return TRUE;
+            }
+
+            alarm->house_alarm_state[i] = mEv_HOUSE_ALARM_STATE_FINISHED;
             return FALSE;
         }
     }
 
-    return TRUE;
+    return FALSE;
+}
+
+static int aEvMgr_alarm_readycheck(EVENT_MANAGER_ACTOR* evmgr) {
+    int idx;
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+
+    idx = mDemo_Alarm_Priority_Ready();
+    if (idx == -1) {
+        return FALSE;
+    }
+    
+    if (alarm_fade(evmgr, mEv_EVENT_76, 3, mRF_BLOCKKIND_NONE, idx)) {
+        alarm->house_alarm_state[idx] = mEv_HOUSE_ALARM_STATE_ACTIVE;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int aEvMgr_alarm_pass(int idx, int param) {
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+    mHm_hs_c* home = Save_GetPointer(homes[idx]);
+    u16 rtc_now = (rtc_time->hour << 8) + rtc_time->min;
+    u16 alarm_time = (alarm->hour << 8) + alarm->min;
+    u16 sched_time;
+
+    if (home->haniwa.alarm_info.mode == mHm_HANIWA_ALARM_MODE_ON_PLAY) {
+        u8 hour = alarm->start_hour + home->haniwa.alarm_info.hour;
+        u8 min = alarm->start_min + home->haniwa.alarm_info.minute;
+        
+        if (min >= lbRTC_MINUTES_PER_HOUR) {
+            min -= lbRTC_MINUTES_PER_HOUR;
+            hour++;
+        }
+
+        if (hour >= lbRTC_HOURS_PER_DAY) {
+            hour -= lbRTC_HOURS_PER_DAY;
+        }
+
+        sched_time = (hour << 8) + min;
+    } else {
+        sched_time = (home->haniwa.alarm_info.hour << 8) + home->haniwa.alarm_info.minute;
+    }
+
+    if (param) {
+        if (sched_time == rtc_now) {
+            return TRUE;
+        }
+    } else {
+        if (rtc_now > alarm_time) {
+            if (alarm_time < sched_time && rtc_now >= sched_time) {
+                return TRUE;
+            }
+        } else {
+            if (alarm_time < sched_time || rtc_now >= sched_time) {
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+static int aEvMgr_alarm_waitcheck(int param) {
+    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
+    int i;
+    mEv_alarm_info_c* alarm = &Common_Get(event_common).alarm;
+    int ret = FALSE;
+
+    if (alarm->house_alarm_state[0] == mEv_HOUSE_ALARM_STATE_NONE) {
+        return FALSE;
+    }
+
+    if (param || alarm->hour != rtc_time->hour || alarm->min != rtc_time->min) {
+        for (i = 0; i < mHS_HOUSE_NUM; i++) {
+            if (alarm->house_alarm_state[i] == mEv_HOUSE_ALARM_STATE_FINISHED && aEvMgr_alarm_pass(i, param)) {
+                alarm->house_alarm_state[i] = mEv_HOUSE_ALARM_STATE_READY;
+                ret = TRUE;
+            }
+        }
+    }
+
+    alarm->hour = rtc_time->hour;
+    alarm->min = rtc_time->min;
+    return ret;
+}
+
+static void aEvMgr_alarm_proc(EVENT_MANAGER_ACTOR* evmgr) {
+    int res = aEvMgr_alarm_waitcheck(FALSE);
+    int init = aEvMgr_alarm_init();
+
+    if (init != FALSE) {
+        res = aEvMgr_alarm_waitcheck(init);
+    }
+
+    if (res == FALSE && aEvMgr_alarm_ban(evmgr) == FALSE && (init || aEvMgr_alarm_runcheck() == FALSE)) {
+        aEvMgr_alarm_readycheck(evmgr);
+    }
 }
 
 static void aEvMgr_actor_renewal_player_pos(GAME* game, EVENT_MANAGER_ACTOR* evmgr) {
@@ -81,28 +276,29 @@ static void aEvMgr_actor_set_shop_handbill_str(mEv_special_c* sp_ev, int sale_it
     mActor_name_t* item_p = bargin_p->items;
     lbRTC_time_c* start_p = &bargin_p->start_time;
     u8 item_cnt_str[1] = { 0 };
-    u8 month_str[9];
-    u8 day_str[4];
-    u8 hour_str[15];
-    u8 item_name_str[mIN_ITEM_NAME_LEN];
+    u8 month_str[mMsg_FREE_STRING_LEN];
+    u8 day_str[mMsg_FREE_STRING_LEN];
+    u8 hour_str[mMsg_FREE_STRING_LEN];
+    u8 item_name_str[mMsg_FREE_STRING_LEN];
     int len;
     int i;
 
-    mFont_UnintToString(item_cnt_str, 1, sale_item_count, 1, TRUE, FALSE, TRUE);
+    mFont_UnintToString(item_cnt_str, 1, sale_item_count, 1, TRUE, FALSE, FALSE);
     mHandbill_Set_free_str(mHandbill_FREE_STR0, item_cnt_str, sizeof(item_cnt_str));
     
     for (i = 0; i < sale_item_count; i++) {
+        mem_clear(item_name_str, sizeof(item_name_str), CHAR_SPACE);
         mIN_copy_name_str(item_name_str, item_p[i]);
-        mHandbill_Set_free_str(mHandbill_FREE_STR7 + i, item_name_str, mIN_ITEM_NAME_LEN);
+        mHandbill_Set_free_str(mHandbill_FREE_STR7 + i, item_name_str, mMsg_FREE_STRING_LEN);
     }
 
-    mem_clear(month_str, sizeof(month_str), CHAR_SPACE);
-    mString_Load_StringFromRom(month_str, sizeof(month_str), mString_MONTH_START + (start_p->month - 1));
-    mHandbill_Set_free_str(mHandbill_FREE_STR17, month_str, sizeof(month_str));
+    // mem_clear(month_str, sizeof(month_str), CHAR_SPACE);
+    len = mString_Load_MonthStringFromRom(month_str, start_p->month);
+    mHandbill_Set_free_str(mHandbill_FREE_STR17, month_str, len);
 
-    mem_clear(day_str, sizeof(day_str), CHAR_SPACE);
-    mString_Load_StringFromRom(day_str, sizeof(day_str), mString_DAY_START + (start_p->day - 1));
-    mHandbill_Set_free_str(mHandbill_FREE_STR18, day_str, sizeof(day_str));
+    // mem_clear(day_str, sizeof(day_str), CHAR_SPACE);
+    len = mString_Load_DayStringFromRom(day_str, start_p->day);
+    mHandbill_Set_free_str(mHandbill_FREE_STR18, day_str, len);
 
     len = mString_Load_HourStringFromRom(hour_str, start_p->hour);
     mHandbill_Set_free_str(mHandbill_FREE_STR19, hour_str, len);
@@ -110,18 +306,16 @@ static void aEvMgr_actor_set_shop_handbill_str(mEv_special_c* sp_ev, int sale_it
 
 static void aEvMgr_actor_set_broker_handbill_str(mEv_special_c* sp_ev) {
     lbRTC_time_c* start_p = &sp_ev->scheduled;
-    u8 month_str[9];
-    u8 day_str[4];
-    u8 hour_str[15];
+    u8 month_str[mMsg_FREE_STRING_LEN];
+    u8 day_str[mMsg_FREE_STRING_LEN];
+    u8 hour_str[mMsg_FREE_STRING_LEN];
     int len;
 
-    mem_clear(month_str, sizeof(month_str), CHAR_SPACE);
-    mString_Load_StringFromRom(month_str, sizeof(month_str), mString_MONTH_START + (start_p->month - 1));
-    mHandbill_Set_free_str(mHandbill_FREE_STR0, month_str, sizeof(month_str));
+    len = mString_Load_MonthStringFromRom(month_str, start_p->month);
+    mHandbill_Set_free_str(mHandbill_FREE_STR0, month_str, len);
 
-    mem_clear(day_str, sizeof(day_str), CHAR_SPACE);
-    mString_Load_StringFromRom(day_str, sizeof(day_str), mString_DAY_START + (start_p->day - 1));
-    mHandbill_Set_free_str(mHandbill_FREE_STR1, day_str, sizeof(day_str));
+    len = mString_Load_DayStringFromRom(day_str, start_p->day);
+    mHandbill_Set_free_str(mHandbill_FREE_STR1, day_str, len);
 
     len = mString_Load_HourStringFromRom(hour_str, start_p->hour);
     mHandbill_Set_free_str(mHandbill_FREE_STR2, hour_str, len);
@@ -155,6 +349,7 @@ static void aEvMgr_move(ACTOR* actorx, GAME* game) {
     aEvMgr_actor_renewal_player_pos(game, evmgr);
     mEv_RenewalDataEveryDay();
     schedule_main(actorx);
+    aEvMgr_alarm_proc(evmgr);
 }
 
 static void aEvMgr_draw(ACTOR* actorx, GAME* game) {
@@ -175,6 +370,7 @@ static void aEvMgr_ct(ACTOR* actorx, GAME* game) {
     spppp = NULL;
     dpppp = NULL;
     tpppp = NULL;
+    mpppp = NULL;
     aEvMgr_actor_player_pos_init(evmgr);
     aEvMgr_actor_init_field_info(&evmgr->field_info);
     schedule_init(actorx);
@@ -284,6 +480,60 @@ static void turkey_guide_arrow(void) {
     }
 }
 
+static void maskcat_guide_arrow(void) {
+    ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
+    int bx;
+    int bz;
+
+    if (mFI_Wpos2BlockNum(&bx, &bz, playerx->world.position) && mpppp != NULL) {
+        xyz_t arrow_pos = playerx->world.position;
+        xyz_t center_pos;
+        s_xyz angle;
+
+        arrow_pos.y += 60.0f;
+        mFI_BkandUtNum2CenterWpos(&center_pos, mpppp->block.x, mpppp->block.z, mpppp->unit.x, mpppp->unit.z);
+        angle = sanglexy_by_2pos(&arrow_pos, &center_pos);
+        if (bx != mpppp->block.x || bz != mpppp->block.z) {
+            Debug_Display_new(arrow_pos.x, arrow_pos.y, arrow_pos.z, 0, angle.y, 0, 0.4f, 0.4f, 0.5f, 250, 200, 200, 128, Debug_Display_SHAPE_ARROW_MODEL, gamePT->graph);
+        } else {
+            Debug_Display_new(arrow_pos.x, arrow_pos.y, arrow_pos.z, 0, angle.y, 0, 0.4f, 0.4f, 0.8f, 250, 200, 200, 128, Debug_Display_SHAPE_ARROW_MODEL, gamePT->graph);
+        }
+    }
+}
+
+static void snowball_guide_arrow_com(mEv_place_data_c* place, ACTOR* actorx, int bx, int bz) {
+    if (place != NULL) {
+        xyz_t arrow_pos = actorx->world.position;
+        xyz_t center_pos;
+        s_xyz angle;
+
+        arrow_pos.y += 60.0f;
+        mFI_BkandUtNum2CenterWpos(&center_pos, place->block.x, place->block.z, place->unit.x, place->unit.z);
+        angle = sanglexy_by_2pos(&arrow_pos, &center_pos);
+        if (bx != place->block.x || bz != place->block.z) {
+            Debug_Display_new(arrow_pos.x, arrow_pos.y, arrow_pos.z, 0, angle.y, 0, 0.4f, 0.4f, 0.5f, 50, 200, 20, 128, Debug_Display_SHAPE_ARROW_MODEL, gamePT->graph);
+        } else {
+            Debug_Display_new(arrow_pos.x, arrow_pos.y, arrow_pos.z, 0, angle.y, 0, 0.4f, 0.4f, 0.8f, 50, 200, 20, 128, Debug_Display_SHAPE_ARROW_MODEL, gamePT->graph);
+        }
+    }
+}
+
+static void snowball_guide_arrow(void) {
+    ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
+    mEv_place_data_c* place;
+    int bx;
+    int bz;
+
+    if (mFI_GET_TYPE(mFI_GetFieldId()) == mFI_FIELDTYPE2_FG && playerx != NULL) {
+        if (mFI_Wpos2BlockNum(&bx, &bz, playerx->world.position)) {
+            place = mEv_get_common_place(mEv_EVENT_SNOWMAN_SEASON, 100 + aSMAN_PART0);
+            snowball_guide_arrow_com(place, playerx, bx, bz);
+            place = mEv_get_common_place(mEv_EVENT_SNOWMAN_SEASON, 100 + aSMAN_PART1);
+            snowball_guide_arrow_com(place, playerx, bx, bz);
+        }
+    }
+}
+
 typedef struct event_control_s aEvMgr_event_ctrl_c;
 
 typedef int (*aEvMgr_EVENT_START_PROC)(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* event_ctrl);
@@ -304,6 +554,21 @@ struct event_control_s {
 
 static int fluc = 0;
 
+static mActor_name_t aEv_get_not_collect(int kind) {
+    mActor_name_t item = EMPTY_NO;
+
+    mSP_SelectRandomItem(&item, 1, NULL, 0, kind, mSP_LISTTYPE_RARE, TRUE);
+    if (item == EMPTY_NO) {
+        mSP_SelectRandomItem(&item, 1, NULL, 0, kind, mSP_LISTTYPE_UNCOMMON, TRUE);
+    }
+
+    if (item == EMPTY_NO) {
+        mSP_SelectRandomItem(&item, 1, NULL, 0, kind, mSP_LISTTYPE_COMMON, TRUE);
+    }
+
+    return item;
+}
+
 static int init_sp_bargain(void) {
     int cat_table[4] = { mSP_KIND_FURNITURE, mSP_KIND_CARPET, mSP_KIND_WALLPAPER, mSP_KIND_CLOTH };
     int handbill_table[mSP_SHOP_TYPE_NUM][4] = {
@@ -320,7 +585,6 @@ static int init_sp_bargain(void) {
     mEv_schedule_date_u end_day;
     int shop_level = mSP_GetShopLevel();
     int item_count;
-    int item_count_table[mSP_SHOP_TYPE_NUM] = { 1, 2, 3, 5 };
     int cat;
     int cat_idx;
     int i;
@@ -358,23 +622,14 @@ static int init_sp_bargain(void) {
     cat_idx = start_day.md % 4;
     cat = cat_table[cat_idx];
     
-    item_count = 1 + ((int)rtc_time->sec % 3);
-    if (item_count > item_count_table[shop_level]) {
-        item_count = item_count_table[shop_level];
-    }
+    item_count = mSP_GetBargainNum(cat_idx, shop_level);
     
     for (i = 0; i < ARRAY_COUNT(bargin_p->items); i++) {
         bargin_p->items[i] = EMPTY_NO;
     }
 
     // Try selecting an uncollected item from ABC list going from rare -> uncommon -> common
-    mSP_SelectRandomItem_New(NULL, &spotlight, 1, NULL, 0, cat, mSP_LISTTYPE_RARE, TRUE);
-    if (spotlight == EMPTY_NO) {
-        mSP_SelectRandomItem_New(NULL, &spotlight, 1, NULL, 0, cat, mSP_LISTTYPE_UNCOMMON, TRUE);
-    }
-    if (spotlight == EMPTY_NO) {
-        mSP_SelectRandomItem_New(NULL, &spotlight, 1, NULL, 0, cat, mSP_LISTTYPE_COMMON, TRUE);
-    }
+    spotlight = aEv_get_not_collect(cat);
 
     if (spotlight == EMPTY_NO) {
         // No uncollected items in ABC list, so pick a random one from the rare list
@@ -392,6 +647,7 @@ static int init_sp_bargain(void) {
     bargin_p->kind = cat;
     aEvMgr_actor_set_shop_handbill_str(ev_save, item_count);
     aEvMgr_actor_regist_handbill(handbill_table[shop_level][cat_idx], (ITM_PAPER55 - ITM_PAPER_START), mMl_TYPE_SHOP_SALE_LEAFLET);
+    mSP_MakeBargainGoods();
     return TRUE;
 }
 
@@ -680,11 +936,7 @@ static int search_select_unit_cancel_check(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_ev
         return TRUE;
     }
 
-    if (mNpc_GetMakeUtNuminBlock(&unit->x, &unit->z, block.x, block.z) == FALSE) {
-        return TRUE;
-    }
-
-    if (unit->x < adjust || unit->x >= (UT_X_NUM - adjust) || unit->z < adjust || unit->z >= (UT_Z_NUM - adjust)) {
+    if (aSNMgr_get_safe_utnum_in_block(&unit->x, &unit->z, block.x, block.z, adjust) == FALSE) {
         return TRUE;
     }
 
@@ -705,6 +957,8 @@ static int search_free_unit_cancel_check(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_even
         (block.x == evmgr->dock_block.x && block.z == evmgr->dock_block.z)
         // clang-format on
     ) {
+        return TRUE;
+    } else if (block.x <= 0 || block.x > FG_BLOCK_X_NUM || block.z <= 0 || block.z > FG_BLOCK_Z_NUM) {
         return TRUE;
     }
 
@@ -734,7 +988,7 @@ static int search_free_unit(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctr
             block_tmp.x = 1 + nseed % x;
             block_tmp.z = 2 + nseed / x;
             
-            if (search_free_unit_cancel_check(evmgr, ctrl, block_tmp, &unit_tmp, i, adjust) == FALSE) {
+            if (search_free_unit_cancel_check(evmgr, ctrl, block_tmp, &unit_tmp, i, adjust) != TRUE) {
                 *block = block_tmp;
                 *unit = unit_tmp;
                 i = 0;
@@ -832,26 +1086,7 @@ static int search_empty_unit(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ct
 }
 
 static void be_flat_unit(mEv_place_data_c* place_data) {
-    mActor_name_t* fg_p;
-    mActor_name_t item;
-    int res;
-    xyz_t pos;
-
-    mFI_BkandUtNum2CenterWpos(&pos, place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z);
-    fg_p = mFI_GetUnitFG(pos);
-
-    if (fg_p != NULL && mSN_ClearSnowman(fg_p) == FALSE) {
-        item = *fg_p;
-
-        if ((ITEM_IS_BURIED_PITFALL_HOLE(item) || item == SHINE_SPOT) == TRUE) {
-            mPB_keep_item(bg_item_fg_sub_dig2take_conv(item));
-            mFI_SetFG_common(EMPTY_NO, pos, TRUE);
-            mFI_Wpos2DepositOFF(pos);
-        } else if (ITEM_IS_SIGNBOARD(item)) {
-            mPB_keep_item(ITM_SIGNBOARD);
-            mFI_SetFG_common(EMPTY_NO, pos, TRUE);
-        }
-    }
+    mEvMN_be_flat_unit(place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z);
 }
 
 static int search_seaside_unit(EVENT_MANAGER_ACTOR* evmgr, BlockOrUnit_c* block, BlockOrUnit_c* unit, int seed) {
@@ -1157,13 +1392,13 @@ static mEv_place_data_c* make_FG_somewhere_lot4sale(EVENT_MANAGER_ACTOR* evmgr, 
     }
 
     if (common_place_data == NULL) {
-        save_area = mEv_get_save_area(ctrl->type, mEv_EVENT_NUM); // search free area
+        save_area = mEv_get_save_area(ctrl->type, mEv_EVENT_NONE); // search free area
         if (save_area != NULL) {
             memcpy(&place_data, save_area, sizeof(mEv_place_data_c));
             mFI_GetBlockUtNum2FG(&reserve_item, place_data.block.x, place_data.block.z, place_data.unit.x, place_data.unit.z);
             if (!mNT_IS_RESERVE(reserve_item)) {
                 // reset save area because it's also not a free lot anymore
-                mEv_clear_save_area(ctrl->type, mEv_EVENT_NUM);
+                mEv_clear_save_area(ctrl->type, mEv_EVENT_NONE);
                 save_area = NULL;
             }
         }
@@ -1177,7 +1412,7 @@ static mEv_place_data_c* make_FG_somewhere_lot4sale(EVENT_MANAGER_ACTOR* evmgr, 
                 return NULL;
             }
 
-            save_area = mEv_reserve_save_area(ctrl->type, mEv_EVENT_NUM);
+            save_area = mEv_reserve_save_area(ctrl->type, mEv_EVENT_NONE);
             if (save_area != NULL) {
                 memcpy(save_area, &place_data, sizeof(mEv_place_data_c));
             }
@@ -1565,22 +1800,14 @@ static mEv_place_data_c* show_actor_at_wade(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_e
                 return aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN;
             }
 
-            if (mNpc_CheckNpcSet(place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z) == FALSE ||
-                mFI_CheckLapPolice(place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z) != FALSE) {
+            if (aSNMgr_get_safe_utnum_regular(&place_data->unit.x, &place_data->unit.z, place_data->block.x, place_data->block.z, 1) == FALSE) {
                 memcpy(&sel_place_data, place_data, sizeof(mEv_place_data_c));
-
-                if (mNpc_GetMakeUtNuminBlock(&sel_place_data.unit.x, &sel_place_data.unit.z, place_data->block.x, place_data->block.z) == FALSE) {
-                    if (search_free_unit(evmgr, ctrl, &place_data->block, &place_data->unit, 1, fluc + ctrl->type + id)) {
-                        // @BUG - this is completely unnecessary, we call memcpy on the same thing immediately after
-                        memcpy(place_data, &sel_place_data, sizeof(mEv_place_data_c));
-                    } else {
-                        mEv_set_status(ctrl->type, mEv_STATUS_ERROR);
-                        return NULL;
-                    }
-
+                if (search_free_unit(evmgr, ctrl, &place_data->block, &place_data->unit, 1, fluc + ctrl->type + id) == FALSE) {
+                    mEv_set_status(ctrl->type, mEv_STATUS_ERROR);
+                    return NULL;
+                } else {
+                    memcpy(place_data, &sel_place_data, sizeof(mEv_place_data_c));
                 }
-
-                memcpy(place_data, &sel_place_data, sizeof(mEv_place_data_c));
             }
 
             be_flat_unit(place_data);
@@ -1595,7 +1822,7 @@ static mEv_place_data_c* show_actor_at_wade(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_e
     return aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN;
 }
 
-static mEv_place_data_c* show_actor_at_wade_checkless(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl, u8 id) {
+static mEv_place_data_c* show_actor_at_wade_checkless(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl, u8 id, s16 arg) {
     mEv_place_data_c* place_data;
 
     if (mFI_GET_TYPE(mFI_GetFieldId()) == mFI_FIELDTYPE2_FG) {
@@ -1614,7 +1841,7 @@ static mEv_place_data_c* show_actor_at_wade_checkless(EVENT_MANAGER_ACTOR* evmgr
             }
 
             be_flat_unit(place_data);
-            if (CLIP(npc_clip)->setupActor_proc((GAME_PLAY*)gamePT, place_data->actor_name, -1, -1, -1, place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z)) {
+            if (CLIP(npc_clip)->setupActor_proc((GAME_PLAY*)gamePT, place_data->actor_name, -1, -1, arg, place_data->block.x, place_data->block.z, place_data->unit.x, place_data->unit.z)) {
                 return place_data;
             }
 
@@ -1769,9 +1996,9 @@ static mEv_place_data_c* walk_FG_somewhere_lot4sale(EVENT_MANAGER_ACTOR* evmgr, 
 
             memcpy(common_place_data, &place_data, sizeof(mEv_place_data_c));
 
-            save_area = mEv_get_save_area(ctrl->type, mEv_EVENT_NUM);
+            save_area = mEv_get_save_area(ctrl->type, mEv_EVENT_NONE);
             if (save_area == NULL) {
-                save_area = mEv_reserve_save_area(ctrl->type, mEv_EVENT_NUM);
+                save_area = mEv_reserve_save_area(ctrl->type, mEv_EVENT_NONE);
             }
 
             if (save_area != NULL) {
@@ -1828,6 +2055,22 @@ static int is_need2escape_unit(int bx, int bz, int ux, int uz) {
     }
 
     if (mNpc_CheckNpcSet(bx, bz, ux, uz) == FALSE) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int is_need2escape_unit_easy(int bx, int bz, int ux, int uz, int clear_type) {
+    if (mEvMN_CheckLapPlayer(ux, uz)) {
+        return TRUE;
+    }
+
+    if (lap_fixed_actor(bx, bz, ux, uz)) {
+        return TRUE;
+    }
+
+    if (mNpc_CheckNpcSet_easy(bx, bz, ux, uz, clear_type) == FALSE) {
         return TRUE;
     }
 
@@ -2044,20 +2287,152 @@ static int player_lap_check(EVENT_MANAGER_ACTOR* evmgr, s_xyz* escape_pos, xyz_t
     return -1;
 }
 
-static int title_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 blockkind) {
+static int player_lap_check_reset_stone(xyz_t* pos_p) {
+    BlockOrUnit_c block;
+    BlockOrUnit_c unit;
+    int ret = FALSE;
+
+    if (mFI_Wpos2BkandUtNuminBlock(&block.x, &block.z, &unit.x, &unit.z, *pos_p) == TRUE) {
+        mActor_name_t* fg_p = mFI_BkNumtoUtFGTop(block.x, block.z);
+
+        if (fg_p != NULL) {
+            mActor_name_t item = fg_p[unit.x + unit.z * UT_X_NUM];
+
+            if (IS_ITEM_RST_STONE(item) || IS_ITEM_CRACKED_STONE(item) || IS_ITEM_RST_HOLE(item)) {
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int player_lap_check2(s_xyz* escape_pos, xyz_t* pos) {
+    // clang-format off
+    static int delta[][2] = {
+        { 0,  1},
+        { 0, -1},
+        { 1,  0},
+        {-1,  0},
+        { 1,  1},
+        {-1,  1},
+        { 1, -1},
+        {-1, -1},
+    };
+    // clang-format on
+    BlockOrUnit_c block;
+    BlockOrUnit_c unit;
+    int ret = FALSE;
+    int i;
+    int j;
+    int uz;
+    int ux;
+    
+    if (mFI_Wpos2BkandUtNuminBlock(&block.x, &block.z, &unit.x, &unit.z, *pos) == TRUE && mNpc_CheckNpcSet(block.x, block.z, unit.x, unit.z) == FALSE) {
+        for (j = 0; j < ARRAY_COUNT(delta); j++) {
+            ux = unit.x + delta[j][0];
+            uz = unit.z + delta[j][1];
+            if (ux >= 0 && ux < UT_X_NUM) {
+                if (uz >= 0 && uz < UT_Z_NUM) {
+                    if (is_need2escape_unit(block.x, block.z, ux, uz) == FALSE) {
+                        set_escape_unit(escape_pos, block.x, block.z, ux, uz);
+                        ret = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (ret != TRUE) {
+            int uz;
+            int ux;
+            int i;
+            int j;
+            for (i = 0; i < 4; i++) {
+                for (j = 0; j < ARRAY_COUNT(delta); j++) {
+                    ux = unit.x + delta[j][0];
+                    uz = unit.z + delta[j][1];
+
+                    if (ux >= 0 && ux < UT_X_NUM) {
+                        if (uz >= 0 && uz < UT_Z_NUM) {
+                            if (is_need2escape_unit_easy(block.x, block.z, ux, uz, i) == FALSE) {
+                                set_escape_unit(escape_pos, block.x, block.z, ux, uz);
+                                ret = TRUE;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (ret == TRUE) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int title_fade_chk_parmision(void) {
+    if (!(mDemo_CheckDemo4Event() == FALSE && mEv_PlayerOK() != FALSE && Common_Get(reset_flag) == FALSE && mEv_LiveSonchoPresent() == FALSE && (Common_Get(my_room_message_control_flags) & 0x4) == 0)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int title_fade_goto_other(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 blockkind, Door_data_c door_data) {
     GAME_PLAY* play = (GAME_PLAY*)gamePT;
     ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR();
-    Door_data_c door_data;
     s16 angle_y = playerx->world.angle.y;
-    s_xyz pos_s;
-    u8 exit_drt;
+    u8 exit_drt = Common_Get(door_data).exit_orientation;
+    s_xyz escape_pos;
 
-    if (mDemo_CheckDemo4Event() ||
-        mEv_PlayerOK() == FALSE ||
-        Common_Get(reset_flag) ||
-        mEv_LiveSonchoPresent() ||
-        (Common_Get(my_room_message_control_flags) & 0x4)
-    ) {
+    escape_pos.x = Common_Get(door_data).exit_position.x;
+    escape_pos.y = Common_Get(door_data).exit_position.y;
+    escape_pos.z = Common_Get(door_data).exit_position.z;
+
+    if (goto_other_scene(play, &door_data, FALSE) == TRUE) {
+        mFI_SetClimate(mFI_CLIMATE_NUM);
+        evmgr->skip_event_at_wade = TRUE;
+        Common_Get(event_door_data).exit_type = 0;
+        Common_Get(event_door_data).next_scene_id = Save_Get(scene_no);
+        Common_Get(event_door_data).extra_data = 0;
+
+        if (mPlib_Check_CorrectPlayerPos_forEvent() == FALSE) {
+            exit_drt = ((angle_y + 0x1000 - 1) >> 13) & 7;
+            if (player_lap_check(evmgr, &escape_pos, &playerx->world.position, blockkind, type) == FALSE && mFI_GET_TYPE(mFI_GetFieldId()) == mFI_FIELDTYPE2_FG && player_lap_check_reset_stone(&playerx->world.position) == TRUE) {
+                player_lap_check2(&escape_pos, &playerx->world.position);
+            }
+        }
+
+        Common_Get(event_door_data).exit_orientation = exit_drt;
+        Common_Get(event_door_data).exit_position.x = escape_pos.x;
+        Common_Get(event_door_data).exit_position.y = escape_pos.y;
+        Common_Get(event_door_data).exit_position.z = escape_pos.z;
+        Common_Get(event_door_data).door_actor_name = RSV_NO;
+        Common_Get(event_door_data).wipe_type = WIPE_TYPE_EVENT;
+        Common_Set(event_id, type);
+        Common_Set(event_title_flags, title_type);
+        Common_Set(event_title_fade_in_progress, 0);
+        play->fb_wipe_type = WIPE_TYPE_EVENT;
+        play->fb_fade_type = FADE_TYPE_EVENT;
+        Common_Get(transition).wipe_type = WIPE_TYPE_EVENT;
+        aMR_SaveWaltzTempo2();
+        mPlib_request_player_warp_forEvent();
+        mBGMForce_inform_start();
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int title_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 blockkind) {
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+    Door_data_c door_data;
+
+    if (title_fade_chk_parmision() == FALSE) {
         return FALSE;
     }
 
@@ -2112,38 +2487,8 @@ static int title_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 
 
     door_data.door_actor_name = EMPTY_NO;
     door_data.wipe_type = WIPE_TYPE_EVENT;
-    exit_drt = Common_Get(door_data).exit_orientation;
-    pos_s.x = Common_Get(door_data).exit_position.x;
-    pos_s.y = Common_Get(door_data).exit_position.y;
-    pos_s.z = Common_Get(door_data).exit_position.z;
-
-    if (goto_other_scene(play, &door_data, 0) == TRUE) {
-        mFI_SetClimate(mFI_CLIMATE_NUM);
-        evmgr->skip_event_at_wade = TRUE;
-        Common_Get(event_door_data).exit_type = 0;
-        Common_Get(event_door_data).next_scene_id = Save_Get(scene_no);
-        Common_Get(event_door_data).extra_data = 0;
-
-        if (mPlib_Check_CorrectPlayerPos_forEvent() == FALSE) {
-            exit_drt = ((angle_y + 0x1000 - 1) >> 13) & 7;
-            player_lap_check(evmgr, &pos_s, &playerx->world.position, blockkind, type);
-        }
-
-        Common_Get(event_door_data).exit_orientation = exit_drt;
-        Common_Get(event_door_data).exit_position.x = pos_s.x;
-        Common_Get(event_door_data).exit_position.y = pos_s.y;
-        Common_Get(event_door_data).exit_position.z = pos_s.z;
-        Common_Get(event_door_data).door_actor_name = RSV_NO;
-        Common_Get(event_door_data).wipe_type = WIPE_TYPE_EVENT;
-        Common_Set(event_id, type);
-        Common_Set(event_title_flags, title_type);
-        Common_Set(event_title_fade_in_progress, 0);
-        play->fb_wipe_type = WIPE_TYPE_EVENT;
-        play->fb_fade_type = FADE_TYPE_EVENT;
-        Common_Get(transition).wipe_type = WIPE_TYPE_EVENT;
-        aMR_SaveWaltzTempo2();
-        mPlib_request_player_warp_forEvent();
-        mBGMForce_inform_start();
+    
+    if (title_fade_goto_other(evmgr, type, title_type, blockkind, door_data)) {
         return TRUE;
     }
 
@@ -2152,6 +2497,34 @@ static int title_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 
 
 static int wait_culling(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     if (mEv_check_status(ctrl->type, mEv_STATUS_STOP)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int alarm_fade(EVENT_MANAGER_ACTOR* evmgr, int type, int title_type, u32 blockkind, int idx) {
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+    ACTOR* playerx = GET_PLAYER_ACTOR_NOW_ACTOR(); // @unused
+    Door_data_c door_data;
+
+    if (title_fade_chk_parmision() == FALSE) {
+        return FALSE;
+    }
+
+    door_data.next_scene_id = SCENE_FG;
+    door_data.exit_orientation = mSc_DIRECT_SOUTH;
+    door_data.exit_type = 0;
+    door_data.extra_data = 4;
+    door_data.exit_position.x = (int)mFI_BK_UT_2_POS(3, 8); // Acre 3, unit 8
+    door_data.exit_position.y = 7 * mFI_UNIT_BASE_SIZE;
+    door_data.exit_position.z = (int)mFI_BK_UT_2_POS(2, 8); // Acre 2, unit 8
+    door_data.door_actor_name = EMPTY_NO;
+    door_data.wipe_type = WIPE_TYPE_EVENT;
+    Common_Get(start_demo_request).type = mDemo_TYPE_ALARM;
+    
+    if (title_fade_goto_other(evmgr, type, title_type, blockkind, door_data)) {
+        mDemo_Alarm_Set_Msg(idx);
         return TRUE;
     }
 
@@ -2223,6 +2596,7 @@ static int broker_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
             spppp = place_data;
             unit.x = place_data->unit.x;
             unit.z = place_data->unit.z + 2;
+            mEv_clear_common_place(ctrl->type, 1);
             make_actor_in_fixed_block_checkless(evmgr, ctrl, &place_data->block, &unit, SP_NPC_BROKER, 1);
         }
         mEv_EventON(mEv_SPNPC_BROKER);
@@ -2248,7 +2622,7 @@ static int broker_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
 }
 
 static int broker_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 1);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 1, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -2276,6 +2650,7 @@ static int designer_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl)
             spppp = place_data;
             unit.x = place_data->unit.x;
             unit.z = place_data->unit.z + 2;
+            mEv_clear_common_place(ctrl->type, 1);
             make_actor_in_fixed_block(evmgr, ctrl, &place_data->block, &unit, SP_NPC_DESIGNER, 1);
         }
         mEv_EventON(mEv_SPNPC_DESIGNER);
@@ -2465,6 +2840,10 @@ static int staffroll_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl
         ret = 1;
     }
 
+    if (mBm_chk_sing_birthday()) {
+        return ret;
+    }
+
     if (ret != 0) {
         wpppp = make_actor_in_fixed_block_checkless(evmgr, ctrl, &b, &u, SP_NPC_TOTAKEKE, 0x51);
     }
@@ -2491,7 +2870,63 @@ static int staffroll_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
         return 3;
     }
 
-    place_res = show_actor_at_wade_checkless(evmgr, ctrl, 0x51);
+    if (mBm_chk_sing_birthday()) {
+        return 3;
+    }
+
+    place_res = show_actor_at_wade_checkless(evmgr, ctrl, 0x51, -1);
+    if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
+        return 2;
+    }
+
+    return place_res != 0;
+}
+
+static int birthday_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
+    int ret = 2;
+
+    if (mEv_check_keep(ctrl->type) == FALSE) {
+        mEv_set_keep(ctrl->type);
+        ret = 1;
+    }
+
+    if (mBm_chk_sing_birthday() == FALSE) {
+        return 1;
+    }
+    
+    if (ret != 0) {
+        static BlockOrUnit_c b = { 1, 3 }; // A-3
+        static BlockOrUnit_c u = { 7, 7 }; // middle of acre
+
+        make_actor_in_fixed_block_checkless(evmgr, ctrl, &b, &u, SP_NPC_TOTAKEKE_BIRTHDAY, 0x51);
+    }
+
+    return ret;
+}
+
+static int birthday_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
+    int ret = 2;
+    
+    if (mEv_check_keep(ctrl->type) != FALSE) {
+        mEv_clear_keep(ctrl->type);
+        ret = 1;
+    }
+
+    return ret;
+}
+
+static int birthday_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
+    mEv_place_data_c* place_res;
+
+    if (Common_Get(event_title_flags) != 0) {
+        return 3;
+    }
+
+    if (mBm_chk_sing_birthday() == FALSE) {
+        return 3;
+    }
+
+    place_res = show_actor_at_wade_checkless(evmgr, ctrl, 0x51, -1);
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
     }
@@ -2573,7 +3008,7 @@ static int downing_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
 }
 
 static int downing_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 0x51);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 0x51, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -2667,6 +3102,7 @@ static int christmas_behind(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctr
 
 static int halloween_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     int ret = 2;
+    int i;
 
     if (mEv_check_keep(ctrl->type) == FALSE) {
         if (title_fade(evmgr, ctrl->type, 1, mRF_BLOCKKIND_POOL)) {
@@ -2679,6 +3115,15 @@ static int halloween_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl
 
     if (ret != 0) {
         dpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_HALLOWEEN, 0x51, 1);
+
+        if (ret == 1) {
+            mNpc_NpcList_c* list_p = Common_Get(npclist);
+
+            for (i = 0; i < ARRAY_COUNT(Common_Get(npclist)); i++) {
+                list_p->conversation_flags.spoke_halloween = FALSE;
+                list_p++;
+            }
+        }
     }
 
     return ret;
@@ -2777,6 +3222,7 @@ static int anglingtournament_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c*
 
 static int countdown_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     int ret = 2;
+    mEv_common_data_c* common = Common_GetPointer(event_common);
 
     if (evmgr->pool_block_exists == FALSE) {
         mEv_clear_status(ctrl->type, mEv_STATUS_ACTIVE);
@@ -2798,6 +3244,7 @@ static int countdown_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl
         make_FG_in_reserved_block(evmgr, ctrl, 5, mRF_BLOCKKIND_POOL, 5);
         make_FG_in_reserved_block(evmgr, ctrl, 6, mRF_BLOCKKIND_POOL, 6);
         make_actor_in_reserved_block(evmgr, ctrl, 7, mRF_BLOCKKIND_POOL, 7);
+        common->exist_flags0 &= ~2;
     }
 
     return ret;
@@ -2805,6 +3252,7 @@ static int countdown_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl
 
 static int countdown_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     int ret = 2;
+    mEv_common_data_c* common = Common_GetPointer(event_common);
 
     if (mEv_check_keep(ctrl->type) != FALSE) {
         if (title_fade(evmgr, ctrl->type, 9, mRF_BLOCKKIND_NONE)) {
@@ -2816,6 +3264,7 @@ static int countdown_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl)
     }
 
     if (ret != 0) {
+        common->exist_flags0 &= ~2;
         delete_FG(ctrl, 5);
         delete_FG(ctrl, 6);
     }
@@ -2882,7 +3331,7 @@ static int firework_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) 
 }
 
 static int firework_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -2940,7 +3389,7 @@ static int flowerviewing_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* c
 }
 
 static int flowerviewing_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 7);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 7, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -2997,8 +3446,8 @@ static int radiogymnastic_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* 
 }
 
 static int radiogymnastic_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4);
-    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 6);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4, -1);
+    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 6, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN || place_res2 == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3101,8 +3550,8 @@ static int fdgymnastic_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctr
 }
 
 static int fdgymnastic_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4);
-    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 6);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4, -1);
+    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 6, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN || place_res2 == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3154,7 +3603,7 @@ static int fdrace_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
 }
 
 static int fdrace_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3202,7 +3651,7 @@ static int fdbasket_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) 
 }
 
 static int fdbasket_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 9);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 9, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3264,7 +3713,7 @@ static int fdtug_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
 }
 
 static int fdtug_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3327,7 +3776,7 @@ static int harvestmoon_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ct
         }
     }
 
-    if (ret != 0) {
+    if (ret == 2) {
         clean_FG(evmgr, mRF_BLOCKKIND_POOL);
         make_effect(eEC_EFFECT_NIGHT13_MOON);
         make_actor_in_reserved_block(evmgr, ctrl, 4, mRF_BLOCKKIND_POOL, 4);
@@ -3526,8 +3975,8 @@ static int newyear_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
 }
 
 static int newyear_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5);
-    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 7);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5, -1);
+    mEv_place_data_c* place_res2 = show_actor_at_wade_checkless(evmgr, ctrl, 7, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN || place_res2 == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3550,6 +3999,7 @@ static int ghost_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     mEv_gst_common_c* gst_common = (mEv_gst_common_c*)mEv_get_common_area(mEv_EVENT_GHOST, 0x37);
     int player_no = Common_Get(player_no);
     lbRTC_time_c* now = Common_GetPointer(time.rtc_time);
+    mEv_common_data_c* common = Common_GetPointer(event_common);
 
     if (mEv_check_keep(ctrl->type) == FALSE) {
         mEv_set_keep(ctrl->type);
@@ -3560,6 +4010,7 @@ static int ghost_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
         ret = 2;
     } else if (ret != 0) {
         wpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_EV_GHOST, 0x51, 5);
+        common->exist_flags0 &= ~1;
 
         if (gst_common == NULL) {
             gst_common = (mEv_gst_common_c*)mEv_reserve_common_area(mEv_EVENT_GHOST, 0x37);
@@ -3620,11 +4071,13 @@ static void ghost_delete_hitodama(void) {
 
 static int ghost_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     int ret = 2;
+    mEv_common_data_c* common = Common_GetPointer(event_common);
     
     if (mEv_check_keep(ctrl->type) != FALSE) {
         mEv_clear_keep(ctrl->type);
         ret = 1;
         ghost_delete_hitodama();
+        common->exist_flags0 &= ~1;
     }
 
     wpppp = NULL;
@@ -3892,7 +4345,7 @@ static int groundhog_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl)
 
 static int groundhog_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     int ret = 0;
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 4, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         ret = 2;
@@ -3958,7 +4411,7 @@ static int harvestfestival_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c*
 }
 
 static int harvestfestival_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
-    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5);
+    mEv_place_data_c* place_res = show_actor_at_wade_checkless(evmgr, ctrl, 5, -1);
 
     if (place_res == aEvMgr_SHOW_ACTOR_RESULT_NOT_SHOWN) {
         return 2;
@@ -3982,6 +4435,7 @@ static int harvestfestival_turkey_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event
 
     if (mEv_check_keep(ctrl->type) == FALSE) {
         mEv_set_keep(ctrl->type);
+        Common_Set(turkey_talk_flg, FALSE);
         ret = 1;
     }
 
@@ -4021,6 +4475,7 @@ static int harvestfestival_turkey_in(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ct
 static int turkey_behind(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctrl) {
     if (mEv_check_status(ctrl->type, mEv_STATUS_TALK) && walk_actor_at_wade_hide(evmgr, ctrl, 0x51)) {
         mEv_clear_status(ctrl->type, mEv_STATUS_TALK);
+        Common_Set(turkey_talk_flg, FALSE);
         return 1;
     }
 
@@ -4135,12 +4590,12 @@ static int gohome_mask_start(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ct
     // Visiting player cannot trigger this event
     if (Common_Get(player_no) != PLAYER_NUM) {
         if (mMC_check_birth_day()) {
-            wpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_MASK_CAT, 0x51, 1);
+            mpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_MASK_CAT, 0x51, 1);
         } else if (mGH_check_birth()) {
             return_animal->exist = TRUE;
-            wpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_GO_HONE_NPC, 0x51, 1);
+            mpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_GO_HONE_NPC, 0x51, 1);
         } else if (mMC_check_birth()) {
-            wpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_MASK_CAT, 0x51, 1);
+            mpppp = make_actor_in_free_block(evmgr, ctrl, SP_NPC_MASK_CAT, 0x51, 1);
         }
     }
 
@@ -4155,7 +4610,7 @@ static int gohome_mask_stop(EVENT_MANAGER_ACTOR* evmgr, aEvMgr_event_ctrl_c* ctr
         ret = 1;
     }
 
-    wpppp = NULL;
+    mpppp = NULL;
     return ret;
 }
 
@@ -4427,6 +4882,7 @@ static aEvMgr_event_ctrl_c schedule_event[] = {
     { mEv_EVENT_TALK_NEW_YEARS_COUNTDOWN, NULL, NULL, NULL, NULL, NULL, {0, 0} },
     { mEv_EVENT_HARVEST_FESTIVAL_FRANKLIN, harvestfestival_turkey_start, harvestfestival_turkey_stop, harvestfestival_turkey_in, wait_culling, turkey_behind, {0, 0} },
     { mEv_EVENT_SUMMER_CAMPER, summercamp_start, summercamp_stop, summercamp_in, summercamp_out, NULL, {0, 0} },
+    { mEv_EVENT_PLAYER_BIRTHDAY, birthday_start, birthday_stop, birthday_in, wait_culling, NULL, {0, 0} },
 };
 
 static int n_schedule_event = ARRAY_COUNT(schedule_event);
@@ -4707,6 +5163,8 @@ static void schedule_main(ACTOR* actorx) {
         sp_guide_arrow();
         day_guide_arrow();
         turkey_guide_arrow();
+        maskcat_guide_arrow();
+        snowball_guide_arrow();
     }
 }
 

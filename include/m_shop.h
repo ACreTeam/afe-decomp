@@ -238,6 +238,7 @@ extern int mSP_CollectCheck(mActor_name_t item);
 extern void mSP_SelectRandomItem_New(GAME* game, mActor_name_t* goods_table, int goods_count,
                                      mActor_name_t* goods_exist_table, int goods_exist_count, int category,
                                      int list_type, int uncollected_only);
+#define mSP_SelectRandomItem(goods_table, goods_count, goods_exist_table, goods_exist_count, category, list_type, uncollected_only) mSP_SelectRandomItem_New(NULL, goods_table, goods_count, goods_exist_table, goods_exist_count, category, list_type, uncollected_only)
 extern int mSP_ShopSaleReport(mActor_name_t sold_item, mActor_name_t* goods_table, int goods_count,
                               mActor_name_t rsv_item);
 extern u32 mSP_ItemNo2ItemPrice(mActor_name_t item_no);

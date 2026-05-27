@@ -9,13 +9,6 @@
 #include "m_handbill.h"
 #include "m_malloc.h"
 
-enum {
-    aSMAN_PART0,
-    aSMAN_PART1,
-
-    aSMAN_PART_NUM
-};
-
 static void aSMAN_actor_ct(ACTOR* actorx, GAME* game);
 static void aSMAN_actor_dt(ACTOR* actorx, GAME* game);
 static void aSMAN_actor_move(ACTOR* actorx, GAME* game);

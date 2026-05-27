@@ -9,6 +9,13 @@
 extern "C" {
 #endif
 
+enum {
+    aSMAN_PART0,
+    aSMAN_PART1,
+
+    aSMAN_PART_NUM
+};
+
 #define aSMAN_MOVE_DIST_MAX (6400.0f)
 
 #define aSMAN_FLAG_HEAD_JUMP (1 << 0)

@@ -4290,8 +4290,8 @@ enum ftr1_e {
 #define RSV_TREE 0xFE1A
 #define RSV_DOOR 0xFE1E
 #define RSV_FE1C 0xFE1F
-#define RSV_BRIDGE0 0xFE1D
-#define RSV_BRIDGE1 0xFE1E
+#define RSV_BRIDGE0 0xFE20
+#define RSV_BRIDGE1 0xFE21
 #define RSV_FE1F 0xFE22
 #define RSV_CLOTH 0xFE23
 #define RSV_CLOTH1 0xFE24
