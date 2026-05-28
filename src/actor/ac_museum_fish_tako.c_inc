@@ -1,0 +1,67 @@
+#include "ac_museum_fish_priv.h"
+
+static xyz_t takotubo_pos = { 378.0f, 50.0f, -20.0f };
+static float takotubo_scale = 0.013f;
+static s16 takotubo_shape_angle_sy = 0;
+
+static void mfish_tako_ct(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_onefish_ct(actor, game);
+}
+
+static void mfish_tako_mv(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    xyz_t pos = takotubo_pos;
+
+    mfish_onefish_mv(actor, game);
+    if (actor->position.y < 58.0f) {
+        actor->position.y = 58.0f;
+    }
+
+    actor->objchk_pos.x = pos.x;
+    actor->objchk_pos.y = pos.y;
+    actor->objchk_pos.z = pos.z;
+}
+
+static void mfish_tako_dw(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    float scale;
+    mfish_keyframe_c* skele = &actor->kf;
+    Mtx* mtx;
+    xyz_t pos = takotubo_pos;
+
+    scale = takotubo_scale + GETREG(NMREG, 79) * 0.001f;
+    if (game->frame_counter & 1) {
+        mtx = skele->mtx[0];
+    } else {
+        mtx = skele->mtx[1];
+    }
+
+    OPEN_DISP(game->graph);
+
+    Matrix_translate(pos.x, pos.y, pos.z, MTX_LOAD);
+    Matrix_rotateXYZ(0, takotubo_shape_angle_sy + DEG2SHORT_ANGLE2(GETREG(NMREG, 35) * 0.1f), 0, MTX_MULT);
+    Matrix_scale(scale, scale, scale, MTX_MULT);
+
+    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+    CLOSE_DISP(game->graph);
+
+    cKF_Si3_draw_R_SV(game, &skele->keyframe, mtx, NULL, NULL, actor);
+}
+
+extern Gfx obj_takotubo_model[];
+
+static void mfish_takotubo_dw(GAME* game) {
+    xyz_t pos = takotubo_pos;
+    f32 scale;
+    
+    scale = takotubo_scale + GETREG(NMREG, 79) * 0.001f;
+    OPEN_DISP(game->graph);
+
+    Matrix_translate(pos.x, pos.y, pos.z, MTX_LOAD);
+    Matrix_rotateXYZ(0, takotubo_shape_angle_sy + DEG2SHORT_ANGLE2(GETREG(NMREG, 35) * 0.1f), 0, MTX_MULT);
+    Matrix_scale(scale, scale, scale, MTX_MULT);
+
+    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, obj_takotubo_model);
+
+    CLOSE_DISP(game->graph);
+}

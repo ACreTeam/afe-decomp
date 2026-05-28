@@ -1,0 +1,211 @@
+#include "ac_museum_fish_priv.h"
+
+static void mfish_ika_reduction(MUSEUM_FISH_PRIVATE_DATA* actor) {
+    add_calc2(&actor->work_f[2], 0.95f + GETREG(TAKREG, 32) * 0.01f, 0.15f, 0.08f);
+    add_calc2(&actor->work_f[3], 0.95f + GETREG(TAKREG, 33) * 0.01f, 0.15f, 0.08f);
+    add_calc2(&actor->work_f[4], 1.04f + GETREG(TAKREG, 34) * 0.01f, 0.15f, 0.08f);
+    add_calc2(&actor->work_f[5], 1.04f + GETREG(TAKREG, 35) * 0.01f, 0.15f, 0.08f);
+}
+
+static void mfish_ika_expansion(MUSEUM_FISH_PRIVATE_DATA* actor) {
+    add_calc2(&actor->work_f[2], 1.10f + GETREG(TAKREG, 36) * 0.01f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[3], 1.11f + GETREG(TAKREG, 37) * 0.01f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[4], 0.97f + GETREG(TAKREG, 38) * 0.01f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[5], 0.97f + GETREG(TAKREG, 39) * 0.01f, 0.05f, 0.025f);
+}
+
+static void mfish_ika_normal(MUSEUM_FISH_PRIVATE_DATA* actor) {
+    add_calc2(&actor->work_f[2], 1.0f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[3], 1.0f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[4], 1.0f, 0.05f, 0.025f);
+    add_calc2(&actor->work_f[5], 1.0f, 0.05f, 0.025f);
+}
+
+static void mfish_ika_turn(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    f32 a = MAX(actor->speedF / (actor->init_data.speed_range + actor->init_data.speed_base), 0.4f) * 182.0f;
+    s16 s = (s16)MY_MAX((s16)(int)a, DEG2SHORT_ANGLE(20)) >> 1;
+
+    add_calc_short_angle2(&actor->angle.y, actor->goalAngle.y, CALC_EASE2(0.1f), s >> 1, DEG2SHORT_ANGLE(0.25f));
+
+    if (actor->distLeftWall < actor->work_f[0] - (actor->init_data.tank_bounds * 0.5f)) {
+        if (actor->goalAngle.y < 0) {
+            s16 v;
+
+            if (actor->distBackWall > actor->distFrontWall) {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(-90.0f);
+            } else {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(90.0f);
+            }
+
+            actor->goalAngle.y = v;
+            actor->work_f[1] = 15.0f + RANDOM_F(60.0f);
+        } else {
+            add_calc_short_angle2(&actor->goalAngle.y, DEG2SHORT_ANGLE2(90.0f), CALC_EASE(0.5f), DEG2SHORT_ANGLE2(7.5f), DEG2SHORT_ANGLE2(0.5f));
+        }
+    } else if (actor->distRightWall < actor->work_f[1] - (actor->init_data.tank_bounds * 0.5f)) {
+        if (actor->goalAngle.y > 0) {
+            s16 v;
+
+            if (actor->distBackWall > actor->distFrontWall) {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(90.0f);
+            } else {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(-90.0f);
+            }
+
+            actor->goalAngle.y = v;
+            actor->work_f[0] = 15.0f + RANDOM_F(60.0f);
+        } else {
+            add_calc_short_angle2(&actor->goalAngle.y, DEG2SHORT_ANGLE2(-90.0f), CALC_EASE(0.5f), DEG2SHORT_ANGLE2(7.5f), DEG2SHORT_ANGLE2(0.5f));
+        }
+    } else if (actor->flags & 0x100) {
+        int angle;
+        actor->position.z += 0.05f;
+        angle = actor->goalAngle.y - DEG2SHORT_ANGLE2(180.0f);
+        if (ABS((s16)angle) < DEG2SHORT_ANGLE2(110.0f)) {
+            if (actor->goalAngle.y > 0) {
+                actor->goalAngle.y += DEG2SHORT_ANGLE2(-1.5f);
+            } else {
+                actor->goalAngle.y += DEG2SHORT_ANGLE2(1.5f);
+            }
+        }
+    } else if ((actor->flags & 0x20) != 0 && actor->collisionPatience > (0.5f * actor->init_data.collision_size)) {
+        if (actor->init_data.fish_strength > actor->pCollisionTarget->init_data.fish_strength) {
+            s16 escape_angle = mfish_get_escape_angle(actor, game);
+            add_calc_short_angle2(&actor->goalAngle.y, escape_angle, CALC_EASE(0.25f), DEG2SHORT_ANGLE2(2.5f), DEG2SHORT_ANGLE2(0.0f));
+        }
+    } else if (actor->flags & 0x1E) {
+        s16 diff = actor->angle.y - actor->avoid_angle;
+        if (diff > 0) {
+            actor->goalAngle.y = actor->avoid_angle + DEG2SHORT_ANGLE2(112.5f);
+        } else {
+            actor->goalAngle.y = actor->avoid_angle + DEG2SHORT_ANGLE2(-112.5f);
+        }
+    }
+}
+
+static void mfish_ika_move_process(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game);
+
+static void mfish_ika_move_process_init(MUSEUM_FISH_PRIVATE_DATA* actor) {
+    actor->currentProcess = mfish_ika_move_process;
+    actor->speedF = actor->init_data.speed_base + RANDOM_F(actor->init_data.speed_range);
+    actor->work_f[6] = actor->speedF;
+    actor->work_f[7] = Rnd_EX_fx(0.05f);
+}
+
+static void mfish_ika_move_process(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    add_calc0(&actor->speedF, 1.0f - actor->init_data.speed_decay, 0.025f);
+    add_calc2(&actor->speed.y, actor->work_f[7], 0.2f, 0.1f);
+
+    if (actor->speedF < (actor->work_f[6] / 10.0f)) {
+        mfish_ika_reduction(actor);
+    } else if (actor->speedF < (actor->work_f[6] / 6.0f)) {
+        mfish_ika_normal(actor);
+    } else {
+        mfish_ika_expansion(actor);
+        actor->work_s[0] += DEG2SHORT_ANGLE2(1.0f);
+        actor->angle.z = DEG2SHORT_ANGLE3(90.0f) + DEG2SHORT_ANGLE2(60.0f) * ABS(sin_s(actor->work_s[0]));
+    }
+
+    if (actor->speedF < 0.1f) {
+        mfish_ika_move_process_init(actor);
+    }
+
+    mfish_ika_turn(actor, game);
+}
+
+static void mfish_ika_ct(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_onefish_ct(actor, game);
+    actor->angle.y = DEG2SHORT_ANGLE2(90.0f);
+    mfish_ika_move_process_init(actor);
+    actor->work_f[0] = 15.0f;
+    actor->work_f[1] = 15.0f;
+    actor->work_f[2] = 1.0f;
+    actor->work_f[3] = 1.0f;
+    actor->work_f[4] = 1.0f;
+    actor->work_f[5] = 1.0f;
+}
+
+static void mfish_ika_mv(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_onefish_mv(actor, game);
+    actor->currentProcess(actor, game);
+    mfish_move_smooth(actor, game);
+    mfish_get_flow_vec(actor, game);
+    mfish_pos_move_flow(actor);
+    mfish_pos_moveF(actor);
+    actor->position.y = CLAMP(actor->position.y, 58.0f, 100.0f);
+    Museum_Fish_BGCheck(actor, game);
+    mfish_body_wind_anime_play(actor, game);
+}
+
+static int mfish_ika_before_disp(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int joint_idx, Gfx** joint_shape, u8* joint_flags,
+    void* arg, s_xyz* joint_rot, xyz_t* joint_pos) {
+    MUSEUM_FISH_PRIVATE_DATA* actor = (MUSEUM_FISH_PRIVATE_DATA*)arg;
+    f32 x = (0.1f + GETREG(NMREG, 40) * 0.01f) * sin_s(actor->bodyWindPhase0);
+    f32 y = (0.1f + GETREG(NMREG, 41) * 0.01f) * cos_s(actor->bodyWindPhase1);
+
+
+    if (joint_idx == 1) {
+        int adjust_x = (int)(actor->bodyAngle.z * (0.5f + GETREG(TAKREG, 55) * 0.01f));
+        int new_x = joint_rot->x + adjust_x;
+        joint_rot->x = MY_CLAMP(new_x, DEG2SHORT_ANGLE2(-15.0f), DEG2SHORT_ANGLE2(15.0f));
+        Matrix_scale(
+            1.0f,
+            1.0f + (0.035f + GETREG(TAKREG, 54) * 0.001f) * sin_s(actor->bodyWindPhase0 + actor->bodyWindPhase1),
+            1.0f + (0.035f + GETREG(TAKREG, 54) * 0.001f) * sin_s(actor->bodyWindPhase0),
+            MTX_MULT
+        );
+        Matrix_scale(actor->work_f[2] + x, actor->work_f[4] + y, actor->work_f[5], MTX_MULT);
+    } else if (joint_idx == 2) {
+        f32 sx;
+        f32 sy;
+        f32 sz;
+        int new_y = joint_rot->y - actor->bodyAngle.z * 2;
+
+        joint_rot->y = MY_CLAMP(new_y, DEG2SHORT_ANGLE2(-80.0f), DEG2SHORT_ANGLE2(80.0f));
+        Matrix_scale(1.0f, 1.0f + 0.07f * sin_s(actor->bodyWindPhase0 + DEG2SHORT_ANGLE2(270.0f)), 1.0f + 0.07f * sin_s(actor->bodyWindPhase0 + DEG2SHORT_ANGLE2(90.0f)), MTX_MULT);
+        sx = actor->work_f[3] + x;
+        sy = actor->work_f[4] + y;
+        sz = actor->work_f[5];
+
+        if (actor->work_f[2] != 0.0f) {
+            sx /= actor->work_f[2];
+        }
+
+        if (actor->work_f[4] != 0.0f) {
+            sy /= actor->work_f[4];
+        }
+
+        if (actor->work_f[5] != 0.0f) {
+            sz /= actor->work_f[5];
+        }
+
+        Matrix_scale(sx, sy, sz, MTX_MULT);
+    }
+
+    return TRUE;
+}
+
+static void mfish_ika_dw(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_keyframe_c* kf = &actor->kf;
+    Mtx* mtx;
+
+    if (game->frame_counter & 1) {
+        mtx = kf->mtx[0];
+    } else {
+        mtx = kf->mtx[1];
+    }
+
+    OPEN_DISP(game->graph);
+
+    Matrix_translate(actor->position.x, actor->position.y, actor->position.z, MTX_LOAD);
+    Matrix_rotateXYZ(0, actor->angle.y, 0, MTX_MULT);
+    Matrix_translate(0.0f, 0.0f, actor->init_data.ofs_z, MTX_MULT);
+    Matrix_rotateXYZ(0, 0, actor->angle.z, MTX_MULT);
+    Matrix_scale(actor->init_data.renderScale, actor->init_data.renderScale, actor->init_data.renderScale, MTX_MULT);
+
+    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+    CLOSE_DISP(game->graph);
+
+    cKF_Si3_draw_R_SV(game, &kf->keyframe, mtx, mfish_ika_before_disp, NULL, actor);
+}

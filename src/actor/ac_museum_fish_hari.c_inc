@@ -1,0 +1,251 @@
+#include "ac_museum_fish_priv.h"
+
+static void mfish_hari_hari_scale(MUSEUM_FISH_PRIVATE_DATA* actor) {
+    if (actor->work_s[1]-- <= 0) {
+        actor->work_s[1] = 0;
+        add_calc0(&actor->work_f[0], CALC_EASE(0.25f), 0.1f);
+        add_calc0(&actor->work_f[1], CALC_EASE(0.25f), 0.1f);
+        add_calc2(&actor->work_f[2], 1.0f, CALC_EASE(0.25f), 0.1f);
+    } else {
+        add_calc2(&actor->work_f[0], 1.0f, CALC_EASE(0.25f), 0.1f);
+        add_calc2(&actor->work_f[1], 1.15f, CALC_EASE(0.25f), 0.1f);
+        add_calc2(&actor->work_f[2], 1.15f, CALC_EASE(0.25f), 0.1f);
+    }
+}
+
+static void mfish_hari_turn(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    f32 a = MAX(actor->speedF / (actor->init_data.speed_range + actor->init_data.speed_base), 0.4f) * 5461.0f;
+    s16 s = (s16)MY_MAX((s16)(int)a, DEG2SHORT_ANGLE(20)) >> 1;
+
+    add_calc_short_angle2(&actor->angle.y, actor->goalAngle.y, CALC_EASE2(0.1f), s >> 1, DEG2SHORT_ANGLE(0.25f));
+
+    if (actor->distLeftWall < actor->bobOfs.x - (actor->init_data.tank_bounds * 0.5f)) {
+        if (actor->goalAngle.y < 0) {
+            s16 v;
+
+            if (actor->distBackWall > actor->distFrontWall) {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(-90.0f);
+            } else {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(90.0f);
+            }
+
+            actor->goalAngle.y = v;
+            actor->bobOfs.z = 15.0f + RANDOM_F(60.0f);
+        } else {
+            add_calc_short_angle2(&actor->goalAngle.y, DEG2SHORT_ANGLE2(90.0f), CALC_EASE(0.5f), DEG2SHORT_ANGLE2(7.5f), DEG2SHORT_ANGLE2(0.5f));
+        }
+    } else if (actor->distRightWall < actor->bobOfs.z - (actor->init_data.tank_bounds * 0.5f)) {
+        if (actor->goalAngle.y > 0) {
+            s16 v;
+
+            if (actor->distBackWall > actor->distFrontWall) {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(90.0f);
+            } else {
+                v = actor->angle.y + DEG2SHORT_ANGLE2(-90.0f);
+            }
+
+            actor->goalAngle.y = v;
+            actor->bobOfs.x = 15.0f + RANDOM_F(60.0f);
+        } else {
+            add_calc_short_angle2(&actor->goalAngle.y, DEG2SHORT_ANGLE2(-90.0f), CALC_EASE(0.5f), DEG2SHORT_ANGLE2(7.5f), DEG2SHORT_ANGLE2(0.5f));
+        }
+    } else if (actor->flags & 0x100) {
+        int angle;
+        actor->position.z += 0.05f;
+
+        angle = actor->goalAngle.y - DEG2SHORT_ANGLE2(180.0f);
+        if (ABS((s16)angle) < DEG2SHORT_ANGLE2(110.0f)) {
+            if (actor->goalAngle.y > 0) {
+                actor->goalAngle.y += DEG2SHORT_ANGLE2(-1.5f);
+            } else {
+                actor->goalAngle.y += DEG2SHORT_ANGLE2(1.5f);
+            }
+        }
+    } else if ((actor->flags & 0x20) != 0 && actor->collisionPatience > (0.5f * actor->init_data.collision_size)) {
+        if (actor->init_data.fish_strength > actor->pCollisionTarget->init_data.fish_strength) {
+            s16 escape_angle = mfish_get_escape_angle(actor, game);
+
+            add_calc_short_angle2(&actor->goalAngle.y, escape_angle, CALC_EASE(0.25f), DEG2SHORT_ANGLE2(2.5f), DEG2SHORT_ANGLE2(0.0f));
+        }
+    } else if (actor->flags & 0x1E) {
+        s16 diff = actor->angle.y - actor->avoid_angle;
+
+        if (diff > 0) {
+            actor->goalAngle.y = actor->avoid_angle + DEG2SHORT_ANGLE2(112.5f);
+        } else {
+            actor->goalAngle.y = actor->avoid_angle + DEG2SHORT_ANGLE2(-112.5f);
+        }
+    }
+
+    actor->targetBodyAngle.z = add_calc_short_angle2(&actor->angle.y, actor->goalAngle.y, CALC_EASE2(0.25f + GETREG(TAKREG, 23) * 0.01f), DEG2SHORT_ANGLE2(3.75f), DEG2SHORT_ANGLE2(0.121f));
+    add_calc_short_angle2(&actor->bodyAngle.z, actor->targetBodyAngle.z, CALC_EASE2(0.2f), DEG2SHORT_ANGLE2(1.25f), DEG2SHORT_ANGLE2(0.25f));
+}
+
+static void mfish_hari_normal_process_init(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game);
+static void mfish_hari_normal_process(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game);
+
+static void mfish_hari_ct(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    s16 rng = qrand();
+
+    mfish_onefish_ct(actor, game);
+    actor->speedF = actor->init_data.speed_base + RANDOM_F(actor->init_data.speed_range);
+    actor->moveSpeed1 = actor->speedF;
+    actor->angle.y = rng;
+    actor->goalAngle.y = actor->angle.y;
+    actor->yOfsSpeed = 0.0f;
+    actor->speed.y = 0.0f;
+    actor->bobOfs = ZeroVec;
+    actor->bobPhase = qrand();
+    actor->targetBodyAngle.z = 0;
+    actor->activityFrameCount = actor->init_data.activeFramesMin + RANDOM(actor->init_data.activeFramesRange);
+    actor->savedActivityFrameCount = actor->activityFrameCount;
+    actor->fishType = mfish_TYPE_SEA_FISH;
+    actor->pCollisionTarget = NULL;
+    actor->pClosestFish = NULL;
+    actor->moveSpeed0 = 0.08f;
+    actor->bobOfs.x = 15.0f;
+    actor->bobOfs.z = 15.0f;
+    mfish_hari_normal_process_init(actor, game);
+    actor->work_f[0] = 0.0f;
+    actor->work_f[1] = 0.0f;
+    actor->work_f[2] = 1.0f;
+    actor->work_s[1] = 0;
+    actor->work_s[2] = 0;
+}
+
+static void mfish_hari_normal_process_init(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    if (actor->work_s[1] > 0) {
+        actor->activityFrameCount *= (1 + GETREG(NMREG, 16)) * 0.1f;
+        actor->moveSpeed1 = (actor->init_data.speed_base + Rnd_EX_f(actor->init_data.speed_range)) * 1.3f;
+    } else {
+        actor->activityFrameCount = actor->init_data.activeFramesMin + RANDOM(actor->init_data.activeFramesRange);
+        actor->moveSpeed1 = (actor->init_data.speed_base + Rnd_EX_f(actor->init_data.speed_range));
+    }
+
+    actor->savedActivityFrameCount = actor->activityFrameCount;
+    actor->moveSpeed0 = 0.15f + Rnd_EX_f(0.15f);
+    actor->currentProcess = mfish_hari_normal_process;
+}
+
+static void mfish_hari_normal_process(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    if (actor->activityFrameCount < 0) {
+        fqrand(); // @unused
+        if (actor->work_s[1] > 0) {
+            actor->activityFrameCount *= (1 + GETREG(NMREG, 16)) * 0.1f;
+            actor->moveSpeed1 = (actor->init_data.speed_base + Rnd_EX_f(actor->init_data.speed_range)) * 1.3f;
+        } else {
+            actor->activityFrameCount = actor->init_data.activeFramesMin + RANDOM(actor->init_data.activeFramesRange);
+            actor->moveSpeed1 = (actor->init_data.speed_base + Rnd_EX_f(actor->init_data.speed_range));
+        }
+    
+        actor->savedActivityFrameCount = actor->activityFrameCount;
+    }
+
+    mfish_hari_turn(actor, game);
+}
+
+static void mfish_hari_mv(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_onefish_mv(actor, game);
+    actor->currentProcess(actor, game);
+    actor->bodyAngle.x += DEG2SHORT_ANGLE2(actor->speedF * RANDOM_F(3.0f));
+    actor->yOfsSpeed = 5.0f * sin_s(actor->bodyAngle.x);
+
+    if (actor->flags & 0x20) {
+        if (actor->work_s[1] == 0) {
+            if (
+                actor->pCollisionTarget->fish_idx == aGYO_TYPE_SWORDFISH ||
+                actor->pCollisionTarget->fish_idx == aGYO_TYPE_COELACANTH ||
+                actor->pCollisionTarget->fish_idx == aGYO_TYPE_SALMON
+            ) {
+                actor->work_s[1] = 150 + GETREG(NMREG, 17) + RANDOM(50 + GETREG(NMREG, 18));
+                mfish_hari_normal_process_init(actor, game);
+            }
+        }
+
+        add_calc2(&actor->position.y, actor->yOfsSpeed + actor->init_data.depthOfs, 0.02f, 0.05f);
+    } else {
+        add_calc2(&actor->position.y, actor->yOfsSpeed + actor->init_data.depthOfs, 0.1f, 0.1f);
+    }
+
+    add_calc0(&actor->collisionPatience, 0.25f, 0.05f);
+    actor->collisionPatience = MIN(1.0f, actor->collisionPatience);
+    
+    if (ABS(actor->bodyAngle.z) > DEG2SHORT_ANGLE2(15.0f) && ABS(actor->targetBodyAngle.z) - ABS(actor->bodyAngle.z) < 0) {
+        add_calc2(&actor->speedF, MAX(actor->moveSpeed1, 0.8f), 0.5f, 0.25f);
+    } else if (actor->activityFrameCount < (actor->savedActivityFrameCount - 80)) {
+        add_calc2(&actor->speedF, actor->moveSpeed0, 1.0f - actor->init_data.speed_decay, 0.0025f);
+    } else if (actor->speedF > actor->moveSpeed1) {
+        add_calc2(&actor->speedF, actor->moveSpeed1, 0.1f, 0.01f);
+    } else {
+        add_calc2(&actor->speedF, actor->moveSpeed1, 0.2f, 0.02f);
+    }
+
+    actor->kf.keyframe.frame_control.speed = (0.5f + GETREG(TAKREG, 20) * 0.01f) * 0.5f + (1.2f + GETREG(TAKREG, 21) * 0.01f) * actor->speedF;
+    actor->speed.x = actor->speedF * sin_s(actor->angle.y);
+    actor->speed.z = actor->speedF * cos_s(actor->angle.y);
+
+    {
+        xyz_t flow_vec;
+
+        flow_vec = mfish_get_flow_vec(actor, game);
+        actor->position.x += actor->speed.x + flow_vec.x;
+        actor->position.z += actor->speed.z + flow_vec.z;
+    }
+
+    mfish_move_smooth(actor, game);
+    mfish_body_wind_anime_play(actor, game);
+    Museum_Fish_BGCheck(actor, game);
+    if (actor->position.y < 55.0f + GETREG(TAKREG, 71) - actor->init_data.ofs_y) {
+        actor->position.y = 55.0f + GETREG(TAKREG, 71) - actor->init_data.ofs_y;
+    }
+    actor->activityFrameCount--;
+    mfish_hari_hari_scale(actor);
+}
+
+static int mfish_hari_before_disp(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int joint_idx, Gfx** joint_shape, u8* joint_flags,
+    void* arg, s_xyz* joint_rot, xyz_t* joint_pos) {
+    MUSEUM_FISH_PRIVATE_DATA* actor = (MUSEUM_FISH_PRIVATE_DATA*)arg;
+    f32 scale;
+
+    if (joint_idx == 3) {
+        int y = joint_rot->y - actor->bodyAngle.z * 2;
+        joint_rot->y = MY_CLAMP(y, DEG2SHORT_ANGLE2(-80.0f), DEG2SHORT_ANGLE2(80.0f));
+    }
+
+    if (actor->work_s[1] > 0) {
+        actor->work_s[2] += DEG2SHORT_ANGLE2(1.84575f) + GETREG(NMREG, 19);
+    }
+
+    scale = 0.8f + 0.2f * ABS(sin_s(actor->work_s[2]));
+    if (joint_idx == 2) {
+        Matrix_scale(actor->work_f[0] * scale, actor->work_f[1] * scale, actor->work_f[1] * scale, MTX_MULT);
+    } else if (joint_idx == 4) {
+        Matrix_scale(actor->work_f[0] * scale, actor->work_f[1] * scale, actor->work_f[1] * scale, MTX_MULT);
+    }
+
+    return TRUE;
+}
+
+static void mfish_hari_dw(MUSEUM_FISH_PRIVATE_DATA* actor, GAME* game) {
+    mfish_keyframe_c* kf = &actor->kf;
+    Mtx* mtx;
+
+    if (game->frame_counter & 1) {
+        mtx = kf->mtx[0];
+    } else {
+        mtx = kf->mtx[1];
+    }
+
+    OPEN_DISP(game->graph);
+
+    Matrix_translate(actor->position.x, actor->position.y, actor->position.z, MTX_LOAD);
+    Matrix_rotateXYZ(actor->angle.x, actor->angle.y, actor->angle.z, MTX_MULT);
+    Matrix_translate(0.0f, 0.0f, actor->init_data.ofs_z, MTX_MULT);
+    Matrix_scale(actor->init_data.renderScale, actor->init_data.renderScale, actor->init_data.renderScale, MTX_MULT);
+
+    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+    CLOSE_DISP(game->graph);
+
+    cKF_Si3_draw_R_SV(game, &kf->keyframe, mtx, mfish_hari_before_disp, NULL, actor);
+}
