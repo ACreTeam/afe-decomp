@@ -14,6 +14,7 @@ struct museum_indoor_actor_s {
     ACTOR actor_class;
     f32 alpha;
     int cull_index;
+    float jama_alpha;
 };
 
 extern ACTOR_PROFILE Museum_Indoor_Profile;

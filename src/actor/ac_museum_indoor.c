@@ -6,6 +6,8 @@
 #include "sys_matrix.h"
 #include "m_play.h"
 #include "m_common_data.h"
+#include "m_rcp.h"
+#include "ac_museum_insect.h"
 
 static void Museum_Indoor_Actor_ct(ACTOR* actorx, GAME* game);
 static void Museum_Indoor_Actor_draw(ACTOR* actorx, GAME* game);
@@ -75,26 +77,38 @@ static void Museum_Indoor_Actor_ct(ACTOR* actorx, GAME* game) {
 
     museum_indoor->alpha = 255.0f;
     museum_indoor->cull_index = aMI_GetThisSceneCullIndex();
+    museum_indoor->jama_alpha = 255.0f;
 }
 
 static void Museum_Indoor_Actor_dt(ACTOR* actorx, GAME* game) {
     // nothing
 }
 
+extern Gfx rom_museum4_pp_jama_modelT[];
+
 static void Museum_Indoor_Actor_draw(ACTOR* actorx, GAME* game) {
     MUSEUM_INDOOR_ACTOR* museum_indoor = (MUSEUM_INDOOR_ACTOR*)actorx;
+    int cull_idx = museum_indoor->cull_index;
+    u8 r;
+    u8 g;
+    u8 b;
 
-    if (museum_indoor->cull_index != -1) {
-        Gfx* cull_gfx = aMI_museum_indoor_cull_info[museum_indoor->cull_index].cull_gfx;
-        u8 r;
-        u8 g;
-        u8 b;
+    mEnv_GetRoomPrimColor(&r, &g, &b, (GAME_PLAY*)game);
+    _texture_z_light_fog_prim_xlu(game->graph);
+    _texture_z_light_fog_prim(game->graph);
+
+    if (cull_idx != -1) {
+        Gfx* cull_gfx = aMI_museum_indoor_cull_info[cull_idx].cull_gfx;
         u8 a = (int)museum_indoor->alpha;
 
-        mEnv_GetRoomPrimColor(&r, &g, &b, (GAME_PLAY*)game);
         OPEN_DISP(game->graph);
 
-        Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
+        if (Save_Get(scene_no) == SCENE_MUSEUM_ROOM_FISH) {
+            Matrix_translate(-40.0f, 0.0f, 0.0f, MTX_LOAD);
+        } else {
+            Matrix_translate(40.0f, 0.0f, 0.0f, MTX_LOAD);
+        }
+        
         Matrix_RotateY(0, MTX_MULT);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
@@ -104,25 +118,41 @@ static void Museum_Indoor_Actor_draw(ACTOR* actorx, GAME* game) {
 
         CLOSE_DISP(game->graph);
     }
+
+    if (Save_Get(scene_no) == SCENE_MUSEUM_ROOM_INSECT) {
+        OPEN_DISP(game->graph);
+
+        Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
+        Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
+
+        gSPMatrix(NEXT_POLY_XLU_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gDPSetPrimColor(NEXT_POLY_XLU_DISP, 0, 0, r, g, b, (u8)(int)museum_indoor->jama_alpha);
+        gSPDisplayList(NEXT_POLY_XLU_DISP, rom_museum4_pp_jama_modelT);
+
+        CLOSE_DISP(game->graph);
+    }
 }
 
 static void aMI_SetAlpha(MUSEUM_INDOOR_ACTOR* museum_indoor, GAME* game) {
+    GAME_PLAY* play = (GAME_PLAY*)game;
     int cull_idx = museum_indoor->cull_index;
-
+    int angle;
+    
     if (cull_idx != -1) {
-        int camera_state = Camera2NormalState_get((GAME_PLAY*)game);
+        int camera_state = Camera2NormalState_get(play);
+        Camera2* camera = &play->camera;
         f32* alpha_p = &museum_indoor->alpha;
-
+        
         switch (aMI_museum_indoor_cull_info[cull_idx].type) {
             case 0:
-                if (camera_state == 3 || camera_state == 7) {
+                if ((camera_state & (1 << 1)) || (camera_state & (1 << 5))) {
                     aMI_AlphaToOFF(alpha_p);
                 } else {
                     aMI_AlphaToON(alpha_p);
                 }
                 break;
             case 1:
-                if (camera_state == 1 || camera_state == 5) {
+                if ((camera_state & (1 << 0)) || (camera_state & (1 << 3))) {
                     aMI_AlphaToOFF(alpha_p);
                 } else {
                     aMI_AlphaToON(alpha_p);
@@ -136,4 +166,9 @@ static void Museum_Indoor_Actor_move(ACTOR* actorx, GAME* game) {
     MUSEUM_INDOOR_ACTOR* museum_indoor = (MUSEUM_INDOOR_ACTOR*)actorx;
 
     aMI_SetAlpha(museum_indoor, game);
+    if (Museum_Insect_obstruct_draw(game)) {
+        aMI_AlphaToON(&museum_indoor->jama_alpha);
+    } else {
+        aMI_AlphaToOFF(&museum_indoor->jama_alpha);
+    }
 }
