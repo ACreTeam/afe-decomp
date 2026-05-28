@@ -30,24 +30,41 @@ enum {
 
 static void aMSC_actor_ct(ACTOR* actorx, GAME* game);
 static void aMSC_actor_move(ACTOR* actorx, GAME* game);
+static void aMSC_actor_draw(ACTOR* actorx, GAME* game);
 
 // clang-format off
 ACTOR_PROFILE Mscore_Control_Profile = {
     mAc_PROFILE_MSCORE_CONTROL,
     ACTOR_PART_CONTROL,
-    ACTOR_STATE_NO_MOVE_WHILE_CULLED,
+    ACTOR_STATE_NO_MOVE_WHILE_CULLED | ACTOR_STATE_NO_DRAW_WHILE_CULLED,
     EMPTY_NO,
     ACTOR_OBJ_BANK_KEEP,
     sizeof(MSCORE_CONTROL_ACTOR),
     &aMSC_actor_ct,
     mActor_NONE_PROC1,
     &aMSC_actor_move,
-    mActor_NONE_PROC1,
+    &aMSC_actor_draw,
     NULL,
 };
 // clang-format on
 
 static void aMSC_setupAction(MSCORE_CONTROL_ACTOR* mscore_ctrl, int act_idx);
+
+static void aMSC_InitVar(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)mscore_ctrl)) {
+        mSM_Set_unable_shutter_label(play, (u32)mscore_ctrl);
+    }
+
+    mGcgba_InitVar();
+}
+
+static void aMSC_EndComm(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+    if (mSM_CheckOwner_unable_shutter_label(play, (u32)mscore_ctrl)) {
+        mSM_Set_unable_shutter_label(play, 0);
+    }
+
+    mGcgba_EndComm();
+}
 
 static void aMSC_actor_ct(ACTOR* actorx, GAME* game) {
     MSCORE_CONTROL_ACTOR* mscore_ctrl = (MSCORE_CONTROL_ACTOR*)actorx;
@@ -90,6 +107,7 @@ static void aMSC_menu_close_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* p
         int next_action = aMSC_ACT_MENU_OPEN_WAIT;
 
         if (submenu->after_mode == aHOI_REQUEST_NUM) {
+            submenu->after_mode = aHOI_REQUEST_NO_REQUEST;
             next_action = aMSC_ACT_REQUEST_FORCE_TALK;
         }
 
@@ -100,7 +118,7 @@ static void aMSC_menu_close_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* p
 static void aMSC_set_force_talk_info_talk_request(ACTOR* actorx) {
     mDemo_Set_msg_num(MSG_15834);
     mDemo_Set_talk_turn(FALSE);
-    mDemo_Set_camera(CAMERA2_PROCESS_STOP);
+    mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
     mDemo_Set_talk_display_name(FALSE);
 }
 
@@ -140,12 +158,13 @@ static void aMSC_select_read_prg_or_data(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME
     }
 }
 
-static void aMSC_check_connect_agb_start_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+static void aMSC_check_connect_agb_d_start_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
 
     if (order != 0 && mMsg_Check_MainNormalContinue(msg_p)) {
-        mGcgba_InitVar();
+        aMSC_EndComm(mscore_ctrl, play);
+        aMSC_InitVar(mscore_ctrl, play);
         mscore_ctrl->counter = 0;
         mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
         mMsg_Set_LockContinue(msg_p);
@@ -153,11 +172,25 @@ static void aMSC_check_connect_agb_start_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl,
     }
 }
 
-// Aus version sets force next flag when connection fails
-static void aMSC_check_connect_agb_end_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
-    int next_act_idx = -1;
+static void aMSC_check_connect_agb_p_start_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
 
-    switch (mGcgba_ConnectEnabled()) {
+    if (order != 0 && mMsg_Check_MainNormalContinue(msg_p)) {
+        aMSC_EndComm(mscore_ctrl, play);
+        aMSC_InitVar(mscore_ctrl, play);
+        mscore_ctrl->counter = 0;
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        mMsg_Set_LockContinue(msg_p);
+        aMSC_setupAction(mscore_ctrl, mscore_ctrl->action + 1);
+    }
+}
+
+static void aMSC_check_connect_agb_d_end_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+    int next_act_idx = -1;
+    int gba_state = mGcgba_ConnectEnabled();
+
+    switch (gba_state) {
         case GBA2_GBA_STATE_TRANSMITTING:
             break;
         case GBA2_GBA_STATE_SUCCESS:
@@ -167,43 +200,78 @@ static void aMSC_check_connect_agb_end_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, G
 
     mscore_ctrl->counter++;
     if (next_act_idx != -1) {
-        mGcgba_InitVar();
+        aMSC_InitVar(mscore_ctrl, play);
         sAdo_SysLevStart(NA_SE_47);
-        if (next_act_idx == aMSC_ACT_READ_DATA) {
-            mscore_ctrl->readbuf_p = (u8*)zelda_malloc_align(sizeof(mscore_ctrl->melody), 32);
-        }
+        aMSC_setupAction(mscore_ctrl, next_act_idx);
+    } else if (gba_state != GBA2_GBA_STATE_SUCCESS && gba_state != GBA2_GBA_STATE_TRANSMITTING) {
+        mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+        mMsg_Set_continue_msg_num(msg_p, 0x3DDF);
+        mMsg_Unset_LockContinue(msg_p);
+        aMSC_EndComm(mscore_ctrl, play);
+        aMSC_setupAction(mscore_ctrl, aMSC_ACT_TALK_END_WAIT);
+        mMsg_Set_ForceNext(msg_p);
+    }
+}
+
+static void aMSC_check_connect_agb_p_end_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
+    int next_act_idx = -1;
+    int gba_state = mGcgba_ConnectEnabled();
+
+    switch (gba_state) {
+        case GBA2_GBA_STATE_TRANSMITTING:
+            break;
+        case GBA2_GBA_STATE_SUCCESS:
+            next_act_idx = mscore_ctrl->action + 1;
+            break;
+    }
+
+    mscore_ctrl->counter++;
+    if (next_act_idx != -1) {
+        aMSC_InitVar(mscore_ctrl, play);
+        sAdo_SysLevStart(NA_SE_47);
         aMSC_setupAction(mscore_ctrl, next_act_idx);
     } else if (mscore_ctrl->counter > 60) {
         mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
 
         mMsg_Set_continue_msg_num(msg_p, 0x3DDF);
         mMsg_Unset_LockContinue(msg_p);
-#if VERSION >= VER_GAFU01_00
-        mMsg_SET_FORCENEXT();
-#endif
-        mGcgba_EndComm();
+        aMSC_EndComm(mscore_ctrl, play);
         aMSC_setupAction(mscore_ctrl, aMSC_ACT_TALK_END_WAIT);
+        mMsg_Set_ForceNext(msg_p);
     }
 }
 
 static void aMSC_read_data(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
 
-    switch (mGcgba_Read(mscore_ctrl->readbuf_p, sizeof(mscore_ctrl->melody), GBA2_EAPPLI_TYPE_MUSICSCORE)) {
+    switch (mGcgba_Read(mscore_ctrl->read_buf, sizeof(mscore_ctrl->read_buf), GBA2_EAPPLI_TYPE_MUSICSCORE)) {
         case GBA2_GBA_STATE_TRANSMITTING:
             break;
         case GBA2_GBA_STATE_SUCCESS:
-            mMld_SetSaveMelody(mscore_ctrl->readbuf_p);
-            zelda_free(mscore_ctrl->readbuf_p);
-            mGcgba_EndComm();
+            mMld_SetSaveMelody(mscore_ctrl->read_buf);
+            aMSC_EndComm(mscore_ctrl, play);
             sAdo_SysLevStop(NA_SE_47);
             mMsg_Set_CancelNormalContinue(msg_p);
             mMsg_Unset_LockContinue(msg_p);
             mMsg_Set_ForceNext(msg_p);
+            mDemo_Set_talk_return_demo_wait(TRUE);
             aMSC_setupAction(mscore_ctrl, aMSC_ACT_FORCE_MENU_OPEN_WAIT);
+
+            if (mscore_ctrl->read_buf[16] != 0xFF) {
+                int idx = (mscore_ctrl->read_buf[16] - 1) & 0xF;
+                int i;
+
+                Save_Get(song_cards_scanned) |= (u16)(1 << (idx & 0xF));
+                for (i = 0; i < PLAYER_NUM; i++) {
+                    if (mPr_NullCheckPersonalID(&Save_Get(private_data[i]).player_ID) == FALSE) {
+                        Save_Get(private_data[i & 3]).new_music_card_scanned |= (u16)(1 << (idx & 0xF));
+                    }
+                }
+            }
             break;
         default:
-            mGcgba_EndComm();
+            aMSC_EndComm(mscore_ctrl, play);
             sAdo_SysLevStop(NA_SE_47);
             mMsg_Set_continue_msg_num(msg_p, 0x3DDC);
             mMsg_Unset_LockContinue(msg_p);
@@ -231,7 +299,7 @@ static void aMSC_send_prg(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PLAY* play) {
     }
 
     if (idx != -1) {
-        mGcgba_EndComm();
+        aMSC_EndComm(mscore_ctrl, play);
         sAdo_SysLevStop(NA_SE_47);
         mMsg_Set_continue_msg_num(msg_p, next_msg_num[idx]);
         mMsg_Unset_LockContinue(msg_p);
@@ -275,6 +343,7 @@ static void aMSC_force_menu_open_wait(MSCORE_CONTROL_ACTOR* mscore_ctrl, GAME_PL
             player->a_btn_pressed = FALSE;
             player->a_btn_triggers_submenu = TRUE;
             aMSC_setupAction(mscore_ctrl, aMSC_ACT_MENU_CLOSE_WAIT);
+            mPlib_request_main_wait_type3((GAME*)play);
         }
     }
 }
@@ -292,11 +361,11 @@ static void aMSC_setupAction(MSCORE_CONTROL_ACTOR* mscore_ctrl, int act_idx) {
         &aMSC_menu_close_wait,
         &aMSC_request_force_talk,
         &aMSC_select_read_prg_or_data,
-        &aMSC_check_connect_agb_start_wait,
-        &aMSC_check_connect_agb_end_wait,
+        &aMSC_check_connect_agb_d_start_wait,
+        &aMSC_check_connect_agb_d_end_wait,
         &aMSC_read_data,
-        &aMSC_check_connect_agb_start_wait,
-        &aMSC_check_connect_agb_end_wait,
+        &aMSC_check_connect_agb_p_start_wait,
+        &aMSC_check_connect_agb_p_end_wait,
         &aMSC_send_prg,
         &aMSC_select_read_data_or_not,
         &aMSC_force_menu_open_wait,
@@ -313,4 +382,8 @@ static void aMSC_actor_move(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     (*mscore_ctrl->action_proc)(mscore_ctrl, play);
+}
+
+static void aMSC_actor_draw(ACTOR* actorx, GAME* game) {
+    // nothing
 }

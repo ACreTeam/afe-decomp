@@ -807,7 +807,7 @@ config.libs = [
             Object(Matching, "actor/ac_mikuji.c"),
             Object(Matching, "actor/ac_misin.c"),
             Object(Matching, "actor/ac_monument.c"),
-            Object(NonMatching, "actor/ac_mscore_control.c"),
+            Object(Matching, "actor/ac_mscore_control.c"),
             Object(Matching, "actor/ac_mural.c"),
             Object(Matching, "actor/ac_museum.c"),
             Object(NonMatching, "actor/ac_museum_fish.c"),

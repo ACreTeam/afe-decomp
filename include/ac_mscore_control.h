@@ -13,12 +13,12 @@ typedef struct mscore_control_actor_s MSCORE_CONTROL_ACTOR;
 typedef void (*aMSC_ACTION_PROC)(MSCORE_CONTROL_ACTOR*, GAME_PLAY*);
 
 struct mscore_control_actor_s {
-    ACTOR actor_class;
-    aMSC_ACTION_PROC action_proc;
-    int action;
-    int counter;
-    u8* readbuf_p;
-    u8 melody[16];
+    /* 0x000 */ ACTOR actor_class;
+    /* 0x174 */ aMSC_ACTION_PROC action_proc;
+    /* 0x178 */ int action;
+    /* 0x17C */ int counter;
+    /* 0x180 */ u8 read_buf[20];
+    /* 0x194 */ u8 melody[16];
 };
 
 extern ACTOR_PROFILE Mscore_Control_Profile;
