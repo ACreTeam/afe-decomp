@@ -21,6 +21,7 @@ extern "C" {
 #define aNPC_SPNPC_BIT_SHOP_MASTER 3
 #define aNPC_SPNPC_BIT_DOZAEMON 4
 #define aNPC_SPNPC_BIT_EV_SONCHO 5
+#define aNPC_SPNPC_BIT_SET_OVL_GYOEI_COELACANTH 6
 
 #define aNPC_SPNPC_BIT_GET(field, bit) (((field) >> (bit)) & 1)
 #define aNPC_SPNPC_BIT_SET(field, bit) ((field) |= (1 << (bit)))

@@ -12,15 +12,15 @@ extern "C" {
 #define aSOG_TERM_TRANSITION_MAX_DAYS 5
 
 enum fish_spawn_area {
-  aSOG_SPAWN_AREA_POOL, /* river pool */
-  aSOG_SPAWN_AREA_WATERFALL,
-  aSOG_SPAWN_AREA_RIVER_MOUTH,
-  aSOG_SPAWN_AREA_OFFING, /* aka 'deep sea' */
-  aSOG_SPAWN_AREA_SEA,
-  aSOG_SPAWN_AREA_RIVER,
-  aSOG_SPAWN_AREA_POND,
+    aSOG_SPAWN_AREA_POOL, /* river pool */
+    aSOG_SPAWN_AREA_WATERFALL,
+    aSOG_SPAWN_AREA_RIVER_MOUTH,
+    aSOG_SPAWN_AREA_OFFING, /* aka 'deep sea' */
+    aSOG_SPAWN_AREA_SEA,
+    aSOG_SPAWN_AREA_RIVER,
+    aSOG_SPAWN_AREA_POND,
 
-  aSOG_SPAWN_AREA_NUM
+    aSOG_SPAWN_AREA_NUM
 };
 
 #define aSOG_TIME_NO_0_END 3      /* 9pm-3:59am */
@@ -30,33 +30,42 @@ enum fish_spawn_area {
 
 /* number of terms in a given month */
 enum fish_term {
-  aSOG_TERM_0,
-  aSOG_TERM_1,
+    aSOG_TERM_0,
+    aSOG_TERM_1,
 
-  aSOG_TERM_NUM
+    aSOG_TERM_NUM
 };
 
 enum time_no {
-  aSOG_TIME_0,
-  aSOG_TIME_1,
-  aSOG_TIME_2,
-  aSOG_TIME_3,
+    aSOG_TIME_0,
+    aSOG_TIME_1,
+    aSOG_TIME_2,
+    aSOG_TIME_3,
 
-  aSOG_TIME_NUM
+    aSOG_TIME_NUM
 };
 
 enum range_proc {
-  aSOG_RANGE_PROC_RIVER,
-  aSOG_RANGE_PROC_SEA,
-  aSOG_RANGE_PROC_OFFING,
-  aSOG_RANGE_PROC_POOL,
-  aSOG_RANGE_PROC_FISHING_EVENT,
-  aSOG_RANGE_PROC_ISLAND,
+    aSOG_RANGE_PROC_RIVER,
+    aSOG_RANGE_PROC_SEA,
+    aSOG_RANGE_PROC_OFFING,
+    aSOG_RANGE_PROC_POOL,
+    aSOG_RANGE_PROC_FISHING_EVENT,
+    aSOG_RANGE_PROC_ISLAND,
 
-  aSOG_RANGE_PROC_NUM
+    aSOG_RANGE_PROC_NUM
+};
+
+enum gyoei_area {
+    aSOG_AREA_RIVER,
+    aSOG_AREA_SEA,
+    aSOG_AREA_POND,
+
+    aSOG_AREA_NUM
 };
 
 extern int aSOG_gyoei_set(SET_MANAGER* set_manager, GAME_PLAY* play);
+extern mActor_name_t aSOG_get_fish_now(void);
 
 #ifdef __cplusplus
 }
