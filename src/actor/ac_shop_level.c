@@ -5,6 +5,7 @@
 #include "m_house.h"
 #include "m_handbill.h"
 #include "m_string.h"
+#include "m_msg.h"
 
 static void Shop_Level_Actor_ct(ACTOR* actorx, GAME* game);
 static void Shop_Level_Actor_dt(ACTOR* actorx, GAME* game);
@@ -27,15 +28,16 @@ ACTOR_PROFILE Shop_Level_Profile = {
 };
 // clang-format on
 
-static void aSL_SetShopRenewalChirashi_Notice(int shop_level, lbRTC_time_c* time_p) {
-    static int renewal_chirashi_bunmen[] = { 0x0018, 0x0019, 0x001A, 0x001A };
+static void aSL_SetShopRenewalLeaflet_Notice(int shop_level, lbRTC_time_c* time_p) {
+    static int renewal_leaflet_bunmen[] = { 0x0018, 0x0019, 0x001A, 0x001A };
     int header_back_start;
     Mail_c mail;
     Mail_ct_c* content = &mail.content;
-    u8 year_str[6];
-    u8 month_str[9];
-    u8 day_str[4];
+    u8 year_str[mMsg_FREE_STRING_LEN];
+    u8 month_str[mMsg_FREE_STRING_LEN];
+    u8 day_str[mMsg_FREE_STRING_LEN];
     lbRTC_time_c renew_start_date = *time_p;
+    int len;
     int i;
 
     lbRTC_Sub_DD(&renew_start_date, 1);
@@ -46,16 +48,15 @@ static void aSL_SetShopRenewalChirashi_Notice(int shop_level, lbRTC_time_c* time
         if (free_idx >= 0 && player_no != -1 && mEv_ArbeitPlayer(player_no) == FALSE) {
             int year_str_len;
 
-            mString_Load_StringFromRom(month_str, sizeof(month_str),
-                                       mString_MONTH_START + (renew_start_date.month - 1));
-            mHandbill_Set_free_str(mHandbill_FREE_STR0, month_str, sizeof(month_str));
-            mString_Load_StringFromRom(day_str, sizeof(day_str), mString_DAY_START + (renew_start_date.day - 1));
-            mHandbill_Set_free_str(mHandbill_FREE_STR1, day_str, sizeof(day_str));
+            len = mString_Load_MonthStringFromRom(month_str, renew_start_date.month);
+            mHandbill_Set_free_str(mHandbill_FREE_STR0, month_str, len);
+            len = mString_Load_DayStringFromRom(day_str, renew_start_date.day);
+            mHandbill_Set_free_str(mHandbill_FREE_STR1, day_str, len);
             year_str_len = mString_Load_YearStringFromRom(year_str, renew_start_date.year);
             mHandbill_Set_free_str(mHandbill_FREE_STR2, year_str, year_str_len);
             mMl_clear_mail(&mail);
             mHandbill_Load_HandbillFromRom(content->text.split.header, &header_back_start, content->text.split.footer, content->text.split.body,
-                                           renewal_chirashi_bunmen[shop_level & 3]);
+                                           renewal_leaflet_bunmen[shop_level & 3]);
             content->header_back_start = header_back_start;
             content->font = mMl_FONT_RECV;
             content->paper_type = (u8)ITM_PAPER55;
@@ -67,7 +68,7 @@ static void aSL_SetShopRenewalChirashi_Notice(int shop_level, lbRTC_time_c* time
     }
 }
 
-static void aSL_SetRenewalChiraswhi_Notice(void) {
+static void aSL_SetRenewalLeaflet_Notice(void) {
     if (Save_Get(shop).shop_info.send_upgrade_notice == TRUE) {
         if (mSP_GetShopLevel() < mSP_GetRealShopLevel()) {
             lbRTC_time_c* rtc_time_p = Common_GetPointer(time.rtc_time);
@@ -76,11 +77,11 @@ static void aSL_SetRenewalChiraswhi_Notice(void) {
             lbRTC_Sub_DD(&renew_time, 1);
             if (lbRTC_IsOverTime(&renew_time, rtc_time_p) == lbRTC_OVER ||
                 lbRTC_IsEqualTime(rtc_time_p, &renew_time, lbRTC_CHECK_YEARS | lbRTC_CHECK_MONTHS | lbRTC_CHECK_DAYS)) {
-                aSL_SetShopRenewalChirashi_Notice(mSP_GetShopLevel(), &Save_Get(shop).renewal_time);
+                aSL_SetShopRenewalLeaflet_Notice(mSP_GetShopLevel(), &Save_Get(shop).renewal_time);
                 Save_Get(shop).shop_info.send_upgrade_notice = FALSE;
             }
         } else {
-            aSL_SetShopRenewalChirashi_Notice((mSP_GetShopLevel() - 1) & 3, &Save_Get(shop).renewal_time);
+            aSL_SetShopRenewalLeaflet_Notice((mSP_GetShopLevel() - 1) & 3, &Save_Get(shop).renewal_time);
             Save_Get(shop).shop_info.send_upgrade_notice = FALSE;
         }
     }
@@ -230,7 +231,7 @@ static void aSL_RenewShop(ACTOR* actorx, GAME* game) {
         lbRTC_time_c renew_time = Save_Get(shop).renewal_time;
         lbRTC_time_c now_time = Common_Get(time.rtc_time);
 
-        aSL_SetRenewalChiraswhi_Notice();
+        aSL_SetRenewalLeaflet_Notice();
         if (lbRTC_IsOverTime(&renew_time, &now_time) == lbRTC_OVER ||
             lbRTC_IsEqualTime(&now_time, &renew_time, lbRTC_CHECK_YEARS | lbRTC_CHECK_MONTHS | lbRTC_CHECK_DAYS)) {
             if (aSL_RewriteShopFg(actorx, game, mSP_GetShopLevel(), mSP_GetRealShopLevel()) && mSP_RenewShopLevel()) {
@@ -251,6 +252,7 @@ static void Shop_Level_Actor_ct(ACTOR* actorx, GAME* game) {
 
     shop_level->bx = 0;
     shop_level->bz = 0;
+    shop_level->update = TRUE;
     if (player_actor != NULL) {
         pos_p = &player_actor->world.position;
     } else {
@@ -260,10 +262,6 @@ static void Shop_Level_Actor_ct(ACTOR* actorx, GAME* game) {
     /* Try to move shop level actor to where the player currently is */
     actorx->world.position = *pos_p;
     shop_block_flag = mFI_BlockKind2BkNum(&shop_level->bx, &shop_level->bz, mRF_BLOCKKIND_SHOP);
-    if (Save_Get(scene_no) == SCENE_FG) {
-        mSP_SetShopRareFurnitureLeaflet(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, NULL);
-        Save_Get(shop).shop_info.not_loaded_before = FALSE;
-    }
 
     if (shop_block_flag) {
         aSL_RenewShop(actorx, game);
@@ -317,15 +315,10 @@ static void aSL_JudgeRenewShop(ACTOR* actorx, GAME* game) {
                     (renewal_one_day.day == lbRTC_GetDaysByMonth(renewal_one_day.year, renewal_one_day.month))) {
                     return;
                 }
-                /* Don't upgrade shop on sale day */
-                if ((now_month == lbRTC_NOVEMBER &&
-                     now_day == (lbRTC_Weekly_day(now_year, lbRTC_NOVEMBER, 4, lbRTC_THURSDAY) + 1)) ||
-                    (renewal_two_days.month == lbRTC_NOVEMBER &&
-                     renewal_two_days.day ==
-                         (lbRTC_Weekly_day(renewal_two_days.year, lbRTC_NOVEMBER, 4, lbRTC_THURSDAY) + 1)) ||
-                    (renewal_one_day.month == lbRTC_NOVEMBER &&
-                     renewal_one_day.day ==
-                         (lbRTC_Weekly_day(renewal_one_day.year, lbRTC_NOVEMBER, 4, lbRTC_THURSDAY) + 1))) {
+                
+                if ((now_month == lbRTC_JANUARY && now_day >= 1 && now_day <= 3) ||
+                    (renewal_two_days.month == lbRTC_JANUARY && renewal_two_days.day >= 1 && renewal_two_days.day <= 3) ||
+                    (renewal_one_day.month == lbRTC_JANUARY && renewal_one_day.day >= 1 && renewal_one_day.day <= 3)) {
                     return;
                 }
             }
@@ -350,39 +343,45 @@ static void aSL_JudgeRenewShop(ACTOR* actorx, GAME* game) {
         }
     }
 
-    aSL_SetRenewalChiraswhi_Notice();
+    aSL_SetRenewalLeaflet_Notice();
     mSP_SetRenewalLeaflet_AppoDay();
 }
 
-static void aSL_ExchangeShopGoodsInGame(ACTOR* actorx, GAME* game, lbRTC_hour_t hour) {
-    lbRTC_time_c now_time = Common_Get(time.rtc_time);
-    lbRTC_hour_t now_hour = now_time.hour;
+static void aSL_ExchangeShopGoodsInGame(ACTOR* actorx, GAME* game) {
+    SHOP_LEVEL_ACTOR* shop_level = (SHOP_LEVEL_ACTOR*)actorx;
 
-    if (mEv_CheckEvent(mEv_SAVED_RENEWSHOP) == FALSE && Save_Get(scene_no) == SCENE_FG && now_hour >= hour &&
-        mSP_CheckExchangeDay2()) {
+    if (mEv_CheckEvent(mEv_SAVED_RENEWSHOP) == FALSE && mSP_CheckExchangeDay2() && shop_level->update == TRUE) {
         if (mSP_CheckExchangeMonth()) {
             mSP_LotteryLineUp_ZeldaMalloc();
         }
 
         mSP_NewExchangeDay();
         mSP_ExchangeLineUp_ZeldaMalloc();
+        mSP_SetShopRareFurnitureLeaflet(Common_Get(player_no), Save_Get(shop).items, mSP_GOODS_COUNT, game);
     }
 }
 
 static void aSL_ReportShopOpen2Event(void) {
-    int status = mSP_ShopOpen(); // @unused
+    int status = mSP_ShopOpen();
 
-    if (mSP_ShopOpen() == mSP_SHOP_STATUS_OPEN || mSP_ShopOpen() == mSP_SHOP_STATUS_OPENEVENT) {
-        mEv_EventON(mEv_DAILY_OPEN_SHOP);
-    } else {
-        mEv_EventOFF(mEv_DAILY_OPEN_SHOP);
+    switch (status) {
+        case mSP_SHOP_STATUS_OPEN:
+        case mSP_SHOP_STATUS_OPENEVENT:
+            mEv_EventON(mEv_DAILY_OPEN_SHOP);
+            break;
+        default:
+            mEv_EventOFF(mEv_DAILY_OPEN_SHOP);
+            break;
     }
 }
 
 static void Shop_Level_Actor_move(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
+    SHOP_LEVEL_ACTOR* shop_level = (SHOP_LEVEL_ACTOR*)actorx;
     ACTOR* player_actor = GET_PLAYER_ACTOR_ACTOR(play);
     xyz_t* pos_p;
+    int bx;
+    int bz;
 
     if (player_actor != NULL) {
         pos_p = &player_actor->world.position;
@@ -392,6 +391,20 @@ static void Shop_Level_Actor_move(ACTOR* actorx, GAME* game) {
 
     actorx->world.position = *pos_p;
     aSL_JudgeRenewShop(actorx, game);
-    aSL_ExchangeShopGoodsInGame(actorx, game, 6);
+
+    if (shop_level->update == TRUE) {
+        if (Save_Get(scene_no) != SCENE_FG) {
+            shop_level->update = FALSE;
+        } else if (mDemo_CheckEventMsgDemo() == TRUE) {
+            shop_level->update = FALSE;
+        }
+    }
+
+    if (mFI_Wpos2BlockNum(&bx, &bz, actorx->world.position)) {
+        if ((mFI_BkNum2BlockKind(bx, bz) & mRF_BLOCKKIND_PLAYER) != 0) {
+            aSL_ExchangeShopGoodsInGame(actorx, game);
+        }
+    }
+
     aSL_ReportShopOpen2Event();
 }

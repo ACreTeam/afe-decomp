@@ -218,6 +218,7 @@ extern int mDemo_Check_DiffAngle_forTalk(s16 diff_angle);
 extern void mDemo_KeepCamera(int camera_type);
 extern int mDemo_Alarm_Priority_Ready(void);
 extern void mDemo_Alarm_Set_Msg(int house_idx);
+extern int mDemo_CheckEventMsgDemo(void);
 
 #define mDemo_CAN_ACTOR_TALK(actor) (!mDemo_Check(mDemo_TYPE_SPEAK, (actor)) && !mDemo_Check(mDemo_TYPE_TALK, (actor)))
 #define mDemo_IS_ACTOR_TALKING(actor) (mDemo_Check(mDemo_TYPE_SPEAK, (actor)) == TRUE || mDemo_Check(mDemo_TYPE_TALK, (actor)) == TRUE)

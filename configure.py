@@ -847,7 +847,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_shop_design.c"),
             Object(NonMatching, "actor/ac_shop_goods.c"),
             Object(NonMatching, "actor/ac_shop_indoor.c"),
-            Object(NonMatching, "actor/ac_shop_level.c"),
+            Object(Matching, "actor/ac_shop_level.c"),
             Object(Matching, "actor/ac_shop_manekin.c"),
             Object(Matching, "actor/ac_shop_umbrella.c"),
             Object(NonMatching, "actor/ac_shrine.c"),

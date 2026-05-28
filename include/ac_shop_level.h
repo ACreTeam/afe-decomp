@@ -11,9 +11,10 @@ extern "C" {
 typedef struct shop_level_actor_s SHOP_LEVEL_ACTOR;
 
 struct shop_level_actor_s {
-    ACTOR actor_class;
-    int bx;
-    int bz;
+    /* 0x000 */ ACTOR actor_class;
+    /* 0x0174 */ int bx;
+    /* 0x0178 */ int bz;
+    /* 0x017C */ int update;
 };
 
 extern ACTOR_PROFILE Shop_Level_Profile;
