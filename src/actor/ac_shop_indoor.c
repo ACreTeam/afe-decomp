@@ -106,10 +106,10 @@ static aSI_disp_data_c aSI_disp_data_table[] = {
 };
 
 static s16 aSI_wall_default_table[] = {
-    (u8)ITM_WALL67, (u8)ITM_WALL68, (u8)ITM_WALL69, (u8)ITM_WALL68, (u8)ITM_WALL70,
+    WALL_SHOP1, WALL_SHOP2, WALL_SHOP3, WALL_SHOP2, WALL_SHOP4_2,
 };
 static s16 aSI_floor_default_table[] = {
-    (u8)ITM_CARPET67, (u8)ITM_CARPET68, (u8)ITM_CARPET69, (u8)ITM_CARPET70, (u8)ITM_CARPET70,
+    FLOOR_SHOP1, FLOOR_SHOP2, FLOOR_SHOP3, FLOOR_SHOP4_1, FLOOR_SHOP4_2,
 };
 
 static void Shop_Indoor_Actor_ct(ACTOR* actorx, GAME* game);
@@ -194,7 +194,7 @@ static void aSI_CopyWallTexture(ACTOR* actorx, s16 wall_idx, s16 bank_idx) {
     }
 }
 
-static void aSI_ShopIndoorCopy(ACTOR* actorx, GAME* game) {
+static void aSI_CopyDefaultTexture(ACTOR* actorx, GAME* game) {
     SHOP_INDOOR_ACTOR* shop_indoor = (SHOP_INDOOR_ACTOR*)actorx;
 
     aSI_CopyWallTexture(actorx, (s16)aSI_wall_default_table[shop_indoor->shop_idx], 2);
@@ -236,7 +236,7 @@ static void Shop_Indoor_Actor_ct(ACTOR* actorx, GAME* game) {
         }
     }
 
-    if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI &&
+    if (mSP_force_opend() == FALSE && Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI &&
         actorx->actor_specific != aSI_SHOP_TYPE_DEPART_2F) {
         shop_indoor->fukubiki_active = TRUE;
     }
@@ -257,7 +257,7 @@ static void Shop_Indoor_Actor_ct(ACTOR* actorx, GAME* game) {
     shop_indoor->wall_data_p[1] = NULL;
 
     aSI_GetShopIndoorBank(actorx, game);
-    aSI_ShopIndoorCopy(actorx, game);
+    aSI_CopyDefaultTexture(actorx, game);
     aSI_SetClipProc(actorx, FALSE);
 }
 
@@ -294,7 +294,7 @@ static void aSI_DrawShopFloor(ACTOR* actorx, GAME* game) {
     tex3 = (u8*)(shop_indoor->floor_data_p[data_idx] + aMI_PAL_SIZE + aMI_TEX_SIZE * 3);
 
     _texture_z_light_fog_prim_xlu(game->graph);
-    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_bg(game->graph);
     Global_kankyo_set_room_prim(game);
 
     if (shop_indoor->floor_data_p[data_idx] != NULL) {
@@ -302,17 +302,17 @@ static void aSI_DrawShopFloor(ACTOR* actorx, GAME* game) {
             OPEN_DISP(game->graph);
 
             /* Load floor palette & textures */
-            gSPSegment(NEXT_POLY_OPA_DISP, ANIME_1_TXT_SEG, tex0);
-            gSPSegment(NEXT_POLY_OPA_DISP, ANIME_2_TXT_SEG, tex1);
-            gSPSegment(NEXT_POLY_OPA_DISP, ANIME_3_TXT_SEG, tex2);
-            gSPSegment(NEXT_POLY_OPA_DISP, ANIME_4_TXT_SEG, tex3);
-            gSPSegment(NEXT_POLY_OPA_DISP, ANIME_5_TXT_SEG, pal);
+            gSPSegment(NEXT_BG_OPA_DISP, ANIME_1_TXT_SEG, tex0);
+            gSPSegment(NEXT_BG_OPA_DISP, ANIME_2_TXT_SEG, tex1);
+            gSPSegment(NEXT_BG_OPA_DISP, ANIME_3_TXT_SEG, tex2);
+            gSPSegment(NEXT_BG_OPA_DISP, ANIME_4_TXT_SEG, tex3);
+            gSPSegment(NEXT_BG_OPA_DISP, ANIME_5_TXT_SEG, pal);
 
             Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
             Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
-            gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-            gSPDisplayList(NEXT_POLY_OPA_DISP, aSI_disp_data_table[shop_level].floor_gfx);
+            gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            gSPDisplayList(NEXT_BG_OPA_DISP, aSI_disp_data_table[shop_level].floor_gfx);
 
             CLOSE_DISP(game->graph);
         }
@@ -338,18 +338,40 @@ static void aSI_DrawShopFloor(ACTOR* actorx, GAME* game) {
     }
 }
 
+static Hilite* aSI_HiliteReflect_bg_init(xyz_t* pos, xyz_t* eye, xyz_t* light_direction, GRAPH* graph) {
+    Hilite* hilite;
+
+    OPEN_DISP(graph);
+
+    SET_BG_OPA_DISP(HiliteReflect_new(pos, eye, light_direction, graph, NOW_BG_OPA_DISP, &hilite));
+
+    CLOSE_DISP(graph);
+
+    return hilite;
+}
+
+static Hilite* aSI_Setpos_HiliteReflect_init(xyz_t* pos, GAME_PLAY* play) {
+    xyz_t light_dir;
+
+    light_dir.x = (int)play->kankyo.sun_light.lights.diffuse.x;
+    light_dir.y = (int)play->kankyo.sun_light.lights.diffuse.y;
+    light_dir.z = (int)play->kankyo.sun_light.lights.diffuse.z;
+
+    return aSI_HiliteReflect_bg_init(pos, &play->view.eye, &light_dir, play->game.graph);
+}
+
 static void aSI_DrawShopFukubiki(ACTOR* actorx, GAME* game) {
     SHOP_INDOOR_ACTOR* shop_indoor = (SHOP_INDOOR_ACTOR*)actorx;
     int shop_level = shop_indoor->shop_idx;
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     if (aSI_disp_data_table[shop_level].fukubiki_gfx != NULL) {
-        _texture_z_light_fog_prim(game->graph);
+        _texture_z_light_fog_prim_bg(game->graph);
 
         if (shop_level == aSI_SHOP_TYPE_CONVENI) {
             xyz_t mirror_pos = { 10.0f, 10.0f, 10.0f };
 
-            Setpos_HiliteReflect_init(&mirror_pos, play);
+            aSI_Setpos_HiliteReflect_init(&mirror_pos, play);
         }
 
         OPEN_DISP(game->graph);
@@ -357,9 +379,9 @@ static void aSI_DrawShopFukubiki(ACTOR* actorx, GAME* game) {
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         Global_kankyo_set_room_prim(game);
-        gSPDisplayList(NEXT_POLY_OPA_DISP, aSI_disp_data_table[shop_level].fukubiki_gfx);
+        gSPDisplayList(NEXT_BG_OPA_DISP, aSI_disp_data_table[shop_level].fukubiki_gfx);
 
         CLOSE_DISP(game->graph);
     }
@@ -391,25 +413,25 @@ static void aSI_DrawShopWall(ACTOR* actorx, GAME* game) {
 
         OPEN_DISP(game->graph);
 
-        _texture_z_light_fog_prim(game->graph);
+        _texture_z_light_fog_prim_bg(game->graph);
 
         if (shop_level == aSI_SHOP_TYPE_CONVENI) {
             xyz_t mirror_pos = { 10.0f, 10.0f, 10.0f };
 
-            Setpos_HiliteReflect_init(&mirror_pos, play);
+            aSI_Setpos_HiliteReflect_init(&mirror_pos, play);
         }
 
         /* Load floor palette & textures */
-        gSPSegment(NEXT_POLY_OPA_DISP, ANIME_1_TXT_SEG, tex0);
-        gSPSegment(NEXT_POLY_OPA_DISP, ANIME_2_TXT_SEG, tex1);
-        gSPSegment(NEXT_POLY_OPA_DISP, ANIME_3_TXT_SEG, pal);
+        gSPSegment(NEXT_BG_OPA_DISP, ANIME_1_TXT_SEG, tex0);
+        gSPSegment(NEXT_BG_OPA_DISP, ANIME_2_TXT_SEG, tex1);
+        gSPSegment(NEXT_BG_OPA_DISP, ANIME_3_TXT_SEG, pal);
 
         Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
         Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
-        gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         Global_kankyo_set_room_prim(game);
-        gSPDisplayList(NEXT_POLY_OPA_DISP, aSI_disp_data_table[shop_level].wall_gfx);
+        gSPDisplayList(NEXT_BG_OPA_DISP, aSI_disp_data_table[shop_level].wall_gfx);
 
         CLOSE_DISP(game->graph);
     }
