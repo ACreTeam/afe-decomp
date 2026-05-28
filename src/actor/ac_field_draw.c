@@ -185,13 +185,11 @@ static int aFD_OperateWaterSound(xyz_t* center_pos, ACTOR* actorx, s16 ongen_typ
     return res;
 }
 
-static f32 aFD_position_offset = 0.0f;
-
 static void aFD_SetActorPosition(ACTOR* actorx, GAME_PLAY* play) {
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
 
     actorx->world.position = player->actor_class.world.position;
-    actorx->world.position.y += aFD_position_offset;
+    actorx->world.position.y += 1000.0f;
 }
 
 static void aFD_PrepareFieldDraw(ACTOR* actorx, GAME* game) {
@@ -236,17 +234,8 @@ static void aFD_PrepareFieldDraw(ACTOR* actorx, GAME* game) {
     aFD_MakeMarinScrollInfo(actorx, game);
 }
 
-static void aFD_SetPositionOffset(f32 ofs) {
-    aFD_position_offset = ofs;
-}
-
-static void aFD_SetDefaultPositionOffset() {
-    aFD_SetPositionOffset(1000.0f);
-}
-
 static void Bg_Draw_Actor_ct(ACTOR* actorx, GAME* game) {
     aFD_PrepareFieldDraw(actorx, game);
-    aFD_SetDefaultPositionOffset();
 }
 
 static void Bg_Draw_Actor_dt(ACTOR* actorx, GAME* game) {
@@ -498,11 +487,7 @@ static void aFD_DrawBlock(aFD_block_c* block, ACTOR* actorx, GAME* game) {
     }
 }
 
-static void aFD_MakeMarinScrollInfo(ACTOR* actorx, GAME* game) {
-    FIELD_DRAW_ACTOR* field_draw = (FIELD_DRAW_ACTOR*)actorx;
-    aFD_marin_info_c* marin_info = &field_draw->marin_info;
-    GAME_PLAY* play = (GAME_PLAY*)game;
-
+static void aFD_MakeMarinScrollInfoBase(aFD_marin_info_c* marin_info, GAME_PLAY* play) {
     int frame = play->game_frame % 300;
     f32 frame_f = (f32)frame;
     f32 wave_radian = (frame_f / 300.0f) * F_PI * 2.0f;
@@ -519,6 +504,14 @@ static void aFD_MakeMarinScrollInfo(ACTOR* actorx, GAME* game) {
     marin_info->beach_env_color.g = (u8)(int)(128.0f + ((beach_cos * -18.0f) + 18.0f));
     marin_info->beach_env_color.b = (u8)(int)(96.0f + ((beach_cos * -14.0f) + 14.0f));
     marin_info->beach_env_color.a = (u8)255;
+}
+
+static void aFD_MakeMarinScrollInfo(ACTOR* actorx, GAME* game) {
+    FIELD_DRAW_ACTOR* field_draw = (FIELD_DRAW_ACTOR*)actorx;
+    aFD_marin_info_c* marin_info = &field_draw->marin_info;
+    GAME_PLAY* play = (GAME_PLAY*)game;
+
+    aFD_MakeMarinScrollInfoBase(marin_info, play);
 }
 
 static void Bg_Draw_Actor_draw(ACTOR* actorx, GAME* game) {

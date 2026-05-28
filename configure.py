@@ -757,7 +757,7 @@ config.libs = [
             Object(Matching, "actor/ac_event_manager.c"),
             Object(Matching, "actor/ac_fallS.c"),
             Object(Matching, "actor/ac_fallSESW.c"),
-            Object(NonMatching, "actor/ac_field_draw.c"),
+            Object(Matching, "actor/ac_field_draw.c"),
             Object(Matching, "actor/ac_fieldm_draw.c"),
             Object(Matching, "actor/ac_flag.c"),
             Object(Matching, "actor/ac_fuusen.c"),
