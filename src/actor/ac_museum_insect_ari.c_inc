@@ -1,0 +1,121 @@
+#include "ac_museum_insect_priv.h"
+
+xyz_t ari_rail_pos[3] = {
+    {217.0f, 45.0f, -14.0f},
+    {282.0f, 45.0f, 10.0f},
+    {347.0f, 45.0f, -14.0f},
+};
+
+void ari_alone_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    actor->_8C |= 1;
+    if (RANDOM_F(1.f) < (2.f / 3.f)) {
+        actor->_74 = 1;
+        actor->_1C = ari_rail_pos[0];
+    } else {
+        actor->_1C = ari_rail_pos[2];
+        actor->_74 = -1;
+    }
+    actor->_70 = 1;
+    actor->_40 = RANDOM_F(0.25f) + 0.05f;
+    actor->_6E = (s16)RANDOM_F(1160.f) + 40;
+    actor->_5C = RANDOM2_F(5.f);
+}
+
+void ari_alone_make(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    int i = 0;
+    for (i = 0; i < 15; actor++, i++) {
+        if ((actor->_8C & 1) == 0) {
+            ari_alone_ct(actor, game);
+            break;
+        }
+    }
+}
+
+void ari_alone_dt(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    actor->_8C &= ~1;
+}
+
+void ari_alone_move(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    xyz_t p = ari_rail_pos[actor->_70];
+    xyz_t p2;
+    actor->_6E--;
+    if (actor->_40 > 0.f) {
+        f32 v;
+        s16 s;
+        if (actor->_74 > 0) {
+            v = 347.f - actor->_1C.x;
+        } else {
+            v = actor->_1C.x - 217.f;
+        }
+        s = DEG2SHORT_ANGLE2((v * 360.f) / 130.f);
+        if (actor->_70 == 1) {
+            actor->_58 = (-5.f - (GETREG(TAKREG, 0x32) * 0.1f)) * sin_s(s);
+        } else {
+            actor->_58 = (5.f + (GETREG(TAKREG, 0x32) * 0.1f)) * sin_s(s);
+        }
+        p.z += actor->_5C;
+        if (!chase_xyz_t(&actor->_1C, &p, actor->_40)) {
+            if (actor->_70 == 1) {
+                actor->_70 += actor->_74;
+            } else {
+                ari_alone_dt(actor, game);
+            }
+        }
+        xyz_t_sub(&p, &actor->_1C, &p2);
+        actor->_72 = atans_table(p2.z, p2.x);
+        add_calc_short_angle2(&actor->_68.y, actor->_72, CALC_EASE2(0.3f), DEG2SHORT_ANGLE(1.25f),
+                              DEG2SHORT_ANGLE(0.25f));
+        if (actor->_6E < 0) {
+            actor->_40 = 0.f;
+            actor->_6E = (s16)RANDOM_F(260.f) + 40;
+        }
+    } else if (actor->_6E < 0) {
+        actor->_40 = RANDOM_F(0.25f) + 0.05f;
+        actor->_6E = (s16)RANDOM_F(1160.f) + 40;
+    }
+}
+
+void ari_alone_draw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    _texture_z_light_fog_prim_xlu(game->graph);
+    OPEN_DISP(game->graph);
+    Matrix_translate(actor->_1C.x, actor->_1C.y, actor->_1C.z + actor->_58, FALSE);
+    Matrix_rotateXYZ(actor->_68.x, actor->_68.y, actor->_68.z, TRUE);
+    Matrix_scale(actor->_14, actor->_14, actor->_14, TRUE);
+    gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, act_m_mu_ariT_model);
+    CLOSE_DISP(game->graph);
+}
+
+void minsect_ari_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    MUSEUM_INSECT_PRIVATE_DATA* priv = &MI_Control_Actor->_1CA0[0];
+    int i;
+    actor->_6E = (s16)RANDOM_F(100.f) + 20;
+    for (i = 0; i < 15; priv++, i++) {
+        ari_alone_dt(priv, game);
+    }
+}
+
+void minsect_ari_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    MUSEUM_INSECT_PRIVATE_DATA* priv = MI_Control_Actor->_1CA0;
+    int i;
+    if (actor->_6E-- < 0) {
+        actor->_6E = (s16)RANDOM_F(100.f) + 20;
+        ari_alone_make(priv, game);
+    }
+    for (i = 0; i < 15; priv++, i++) {
+        if (priv->_8C & 1) {
+            ari_alone_move(priv, game);
+            priv->_14 = actor->_14;
+        }
+    }
+}
+
+void minsect_ari_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    MUSEUM_INSECT_PRIVATE_DATA* priv = MI_Control_Actor->_1CA0;
+    int i;
+    for (i = 0; i < 15; priv++, i++) {
+        if (priv->_8C & 1) {
+            ari_alone_draw(priv, game);
+        }
+    }
+}

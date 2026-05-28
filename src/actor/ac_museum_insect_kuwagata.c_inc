@@ -13,7 +13,10 @@ cKF_Animation_R_c* kuwagata_anim_tbl[] = { &cKF_ba_r_act_m_hirata_b, &cKF_ba_r_a
                                            &cKF_ba_r_act_m_miyama_b, &cKF_ba_r_act_m_okuwa_b };
 
 xyz_t kuwagata_base_pos[4] = {
-    { 166.f, 80.5f, 0.5f }, { 169.f, 66.5f, 5.0f }, { 318.f, 80.0f, 1.0f }, { 315.f, 65.0f, 5.5f }
+    {206.0f, 80.5f, 0.5f},
+    {209.0f, 66.5f, 5.0f},
+    {358.0f, 80.0f, 1.0f},
+    {355.0f, 65.0f, 5.5f},
 };
 
 void mi_kuwagata_rensa_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
@@ -25,7 +28,7 @@ void mi_kuwagata_rensa(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 
 void mi_kuwagata_wait_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_6E = (s16)RANDOM_F(200.f) + 40;
-    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->_00, actor->_08->_2AC, NULL, 0.5f, 0.0f);
+    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->insect_type, actor->_08->_2AC, NULL, 0.5f, 0.0f);
 }
 
 void mi_kuwagata_wait(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
@@ -47,13 +50,13 @@ void mi_kuwagata_wait(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     }
     actor->_76--;
     if (actor->_76 < 0) {
-        cKF_SkeletonInfo_R_play(&actor->_08->_00);
-        if ((int)actor->_08->_00.frame_control.current_frame == 14) {
+        cKF_SkeletonInfo_R_play(&actor->_08->insect_type);
+        if ((int)actor->_08->insect_type.frame_control.current_frame == 14) {
             actor->_76 = (s16)RANDOM_F(356.F) + 4;
             if (actor->_8E == 0) {
                 actor->_76 *= 10;
             }
-        } else if ((int)actor->_08->_00.frame_control.current_frame == 1) {
+        } else if ((int)actor->_08->insect_type.frame_control.current_frame == 1) {
             actor->_76 = (s16)RANDOM_F(1760.f) + 40;
             if (actor->_8E == 0) {
                 actor->_76 *= 10;
@@ -84,7 +87,7 @@ void mi_kuwagata_battle_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 void mi_kuwagata_battle(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     MUSEUM_INSECT_PRIVATE_DATA* priv;
     f32 v;
-    switch (actor->_00) {
+    switch (actor->insect_type) {
         case 0x15:
             priv = &MI_Control_Actor->privInsects[0x1d];
             break;
@@ -146,13 +149,13 @@ void mi_kuwagata_battle(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     } else {
         actor->_76--;
         if (actor->_76 < 0) {
-            cKF_SkeletonInfo_R_play(&actor->_08->_00);
-            if ((int)actor->_08->_00.frame_control.current_frame == 14) {
+            cKF_SkeletonInfo_R_play(&actor->_08->insect_type);
+            if ((int)actor->_08->insect_type.frame_control.current_frame == 14) {
                 actor->_76 = (s16)RANDOM_F(356.f) + 4;
                 if (actor->_8E == 0) {
                     actor->_76 *= 10;
                 }
-            } else if ((int)actor->_08->_00.frame_control.current_frame == 1) {
+            } else if ((int)actor->_08->insect_type.frame_control.current_frame == 1) {
                 actor->_76 = (s16)RANDOM_F(1760.f) + 40;
                 if (actor->_8E == 0) {
                     actor->_76 *= 10;
@@ -168,7 +171,7 @@ void mi_kuwagata_menace_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_7A = 3640 - DEG2SHORT_ANGLE(GETREG(NMREG, 0) * 0.01f);
     actor->_6E = (s16)((s16)RANDOM_F(200.f) + 40) * 5;
     actor->_76 = 10;
-    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->_00, actor->_08->_2AC, NULL, 0.75f, 0.0f);
+    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->insect_type, actor->_08->_2AC, NULL, 0.75f, 0.0f);
 }
 
 void mi_kuwagata_menace(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
@@ -194,10 +197,10 @@ void mi_kuwagata_menace(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 
     actor->_76--;
     if (actor->_76 < 0) {
-        cKF_SkeletonInfo_R_play(&actor->_08->_00);
-        if ((int)actor->_08->_00.frame_control.current_frame == 1) {
+        cKF_SkeletonInfo_R_play(&actor->_08->insect_type);
+        if ((int)actor->_08->insect_type.frame_control.current_frame == 1) {
             cKF_Animation_R_c* anim = actor->_08->_2AC;
-            cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->_00, anim, NULL,
+            cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->insect_type, anim, NULL,
                                                                      (RANDOM_F(1.f) + 1.5f) * 0.5f, 0.f);
             if (RANDOM_F(1.f) > 0.9f) {
                 actor->_76 = (s16)RANDOM_F(1760.f) + 40;
@@ -230,36 +233,36 @@ void mi_kuwagata_setupAction(MUSEUM_INSECT_PRIVATE_DATA* actor, int r4, GAME* ga
 }
 
 void minsect_kuwagata_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    switch (actor->_00) {
+    switch (actor->insect_type) {
         case 0x15:
             actor->_70 = 0;
             break;
         case 0x1d:
         case 0x1e:
         default:
-            actor->_70 = actor->_00 - 0x1c;
+            actor->_70 = actor->insect_type - 0x1c;
             break;
     }
-    if (actor->_00 == 0x1e) {
+    if (actor->insect_type == 0x1e) {
         if (mMmd_InsectInfo(0x1f)) {
             actor->_8C |= 0x10;
         }
-    } else if (actor->_00 == 0x15) {
+    } else if (actor->insect_type == 0x15) {
         if (mMmd_InsectInfo(0x1d)) {
             actor->_8C |= 0x10;
         }
-    } else if (actor->_00 == 0x1f) {
+    } else if (actor->insect_type == 0x1f) {
         if (mMmd_InsectInfo(0x1e)) {
             actor->_8C |= 0x10;
         }
-    } else if (actor->_00 == 0x1d) {
+    } else if (actor->insect_type == 0x1d) {
         if (mMmd_InsectInfo(0x15)) {
             actor->_8C |= 0x10;
         }
     }
 
     if (actor->_8C & 0x10) {
-        if (actor->_00 == 0x1e || actor->_00 == 0x15) {
+        if (actor->insect_type == 0x1e || actor->insect_type == 0x15) {
             xyz_t p;
             xyz_t_sub(&kuwagata_base_pos[actor->_70 + 1], &kuwagata_base_pos[actor->_70], &p);
             actor->_74 = atans_table(p.y, -p.x);
@@ -272,9 +275,9 @@ void minsect_kuwagata_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_08 = &MI_Control_Actor->_24B8[actor->_70];
     actor->_08->_2A8 = kuwagata_model_tbl[actor->_70];
     actor->_08->_2AC = kuwagata_anim_tbl[actor->_70];
-    cKF_SkeletonInfo_R_ct(&actor->_08->_00, actor->_08->_2A8, actor->_08->_2AC, &actor->_08->_270, &actor->_08->_288);
-    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->_00, actor->_08->_2AC, NULL, 0.5f, 0.0f);
-    cKF_SkeletonInfo_R_play(&actor->_08->_00);
+    cKF_SkeletonInfo_R_ct(&actor->_08->insect_type, actor->_08->_2A8, actor->_08->_2AC, &actor->_08->_270, &actor->_08->_288);
+    cKF_SkeletonInfo_R_init_standard_repeat_speedsetandmorph(&actor->_08->insect_type, actor->_08->_2AC, NULL, 0.5f, 0.0f);
+    cKF_SkeletonInfo_R_play(&actor->_08->insect_type);
     actor->_76 = (s16)RANDOM_F(1760.f) + 40;
     actor->_1C = kuwagata_base_pos[actor->_70];
     actor->_44 = actor->_1C;
@@ -317,6 +320,6 @@ void minsect_kuwagata_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_rotateXYZ(DEG2SHORT_ANGLE(90), 0, DEG2SHORT_ANGLE2(180), MTX_MULT);
 
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    cKF_Si3_draw_R_SV(game, &actor->_08->_00, mtx, NULL, NULL, actor);
+    cKF_Si3_draw_R_SV(game, &actor->_08->insect_type, mtx, NULL, NULL, actor);
     CLOSE_DISP(game->graph);
 }

@@ -1,8 +1,11 @@
 #include "ac_museum_insect_priv.h"
 
 void minsect_semi_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    const static xyz_t init_pos[4] = {
-        { 97.f, 85.f, -18.5f }, { 396.f, 85.5f, -20.f }, { 471.5f, 65.5f, 4.5f }, { 248.f, 88.f, -21.f }
+    static const xyz_t init_pos[4] = {
+        {137.0f, 85.0f, -18.5f},
+        {436.0f, 85.5f, -20.0f},
+        {511.5f, 65.5f, 4.5f},
+        {288.0f, 88.0f, -21.0f},
     };
     int s;
     actor->_58 = 1.0f;
@@ -10,7 +13,7 @@ void minsect_semi_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_76 = 0;
     actor->_74 = 0;
     actor->_78 = 0;
-    s = (actor->_00 - 4);
+    s = (actor->insect_type - 4);
     actor->_1C = init_pos[s];
     actor->_68 = ZeroSVec;
     actor->_68.x = DEG2SHORT_ANGLE(-70);
@@ -46,7 +49,7 @@ void mi_semi_check_player(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 }
 
 void minsect_semi_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    int id = actor->_00 - 4;
+    int id = actor->insect_type - 4;
     get_now_mind_flag(actor, game);
     if (actor->_8E) {
         mi_semi_hane_anime(actor);
@@ -102,7 +105,7 @@ void minsect_semi_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_rotateXYZ(actor->_68.x, actor->_68.y, actor->_68.z, MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     CLOSE_DISP(game->graph);
 
     _texture_z_light_fog_prim_xlu(game->graph);
@@ -112,6 +115,6 @@ void minsect_semi_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_scale(actor->_58 + (GETREG(NMREG, 1) * 0.01f), GETREG(NMREG, 2) * 0.01f + 1.0f,
                  GETREG(NMREG, 3) * 0.01f + 1.0f, MTX_MULT);
     gSPMatrix(POLY_XLU_DISP++, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->_00][1]);
+    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->insect_type][1]);
     CLOSE_POLY_XLU_DISP(game->graph);
 }

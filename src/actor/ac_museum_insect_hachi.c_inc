@@ -1,5 +1,5 @@
 #include "ac_museum_insect_priv.h"
-xyz_t hachi_base_pos = { 165.5f, 78.5f, 482.5f };
+xyz_t hachi_base_pos = {60.5f, 78.5f, 2.5f};
 
 void mi_hachi_hane_anime(MUSEUM_INSECT_PRIVATE_DATA* actor) {
     static f32 scaleX_table[7] = { 1.f, 0.85f, 1.15f, 0.85f, 1.15f, 0.85f, 1.15f };
@@ -186,7 +186,7 @@ void minsect_hachi_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     CLOSE_DISP(game->graph);
 
     _texture_z_light_fog_prim_xlu(game->graph);
@@ -194,6 +194,6 @@ void minsect_hachi_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     gDPSetEnvColor(POLY_XLU_DISP++, 0xff, 0xff, 0xff, 0xff);
     Matrix_scale(actor->_5C, 1.0f, 1.0f, MTX_MULT);
     gSPMatrix(POLY_XLU_DISP++, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->_00][1]);
+    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->insect_type][1]);
     CLOSE_POLY_XLU_DISP(game->graph);
 }

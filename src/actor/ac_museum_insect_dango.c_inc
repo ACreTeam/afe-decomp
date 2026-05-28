@@ -1,7 +1,13 @@
 #include "ac_museum_insect_priv.h"
 
-xyz_t rail_pos[6] = { { 368.f, 45.f, 467.f }, { 363.f, 45.f, 482.f }, { 374.f, 45.f, 499.f },
-                      { 393.f, 45.f, 502.f }, { 407.f, 45.f, 488.f }, { 407.f, 45.f, 469.f } };
+xyz_t rail_pos[6] = {
+    {408.0f, 45.0f, 467.0f},
+    {403.0f, 45.0f, 482.0f},
+    {414.0f, 45.0f, 499.0f},
+    {433.0f, 45.0f, 502.0f},
+    {447.0f, 45.0f, 488.0f},
+    {447.0f, 45.0f, 469.0f},
+};
 
 void mi_dango_defence_anime(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     static f32 scale_table[] = { 1.f, 0.85f, 1.15f, 0.75f, 1.05f, 0.65f, 0.95f };
@@ -195,10 +201,10 @@ void minsect_dango_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_scale(actor->_14, actor->_14, actor->_14, MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     if (actor->_7C) {
-        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][1]);
+        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][1]);
 
     } else {
-        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     }
     minsect_draw_shadow(actor, game);
     CLOSE_DISP(game->graph);

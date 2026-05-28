@@ -23,8 +23,15 @@ struct _MUSEUM_INSECT_PRIVATE_DATA;
 
 typedef void (*PRIV_INSECT_PROCESS)(struct _MUSEUM_INSECT_PRIVATE_DATA*, GAME*);
 
+typedef struct museum_insect_time_s {
+    int active_time;
+    int relax_time;
+} MUSEUM_INSECT_TIME;
+
+static MUSEUM_INSECT_TIME minsect_init_tbl[aINS_INSECT_TYPE_NUM];
+
 typedef struct _MUSEUM_INSECT_SKELETON {
-    cKF_SkeletonInfo_R_c _00;
+    cKF_SkeletonInfo_R_c insect_type;
     Mtx _70;
     artificial_padding(0x70, 0x170, Mtx);
     Mtx _170;
@@ -38,7 +45,7 @@ typedef struct _MUSEUM_INSECT_SKELETON {
 } MUSEUM_INSECT_SKELETON;
 
 typedef struct _MUSEUM_INSECT_PRIVATE_DATA {
-    int _00;
+    int insect_type;
     PRIV_INSECT_PROCESS _04;
     MUSEUM_INSECT_SKELETON* _08;
     f32 _0C;
@@ -61,7 +68,8 @@ typedef struct _MUSEUM_INSECT_PRIVATE_DATA {
         };
     };
     f32 _60;
-    artificial_padding(0x60, 0x68, f32);
+    f32 _64;
+    f32 _new_68;
     s_xyz _68;
     s16 _6E;
     s16 _70;
@@ -74,7 +82,8 @@ typedef struct _MUSEUM_INSECT_PRIVATE_DATA {
     s16 _7E;
     s16 _80;
     s16 _82;
-    artificial_padding(0x82, 0x8C, s16);
+    f32 _84;
+    u8 _88[0x8C - 0x88];
     s16 _8C;
     s16 _8E;
     int _90;
@@ -94,6 +103,7 @@ typedef struct _MUSEUM_INSECT_ACTOR {
     int _2F78;                                                    // offset: 0x2F78
     int _2F7C;                                                    // offset: 0x2F7C
     INSECT_DISPLAY_MSG_INFO _2F80[7];                             // offset: 0x2F82
+    u8 _3554[8];
     s16 _2F9C[5];                                                 // offset: 0x2F9C
 } MUSEUM_INSECT_ACTOR;
 
@@ -118,8 +128,9 @@ extern PRIV_INSECT_PROCESS minsect_dw[aINS_INSECT_TYPE_NUM];
 extern f32 minsect_shadow_scale_tbl[aINS_INSECT_TYPE_NUM];
 extern int active_time_tbl[aINS_INSECT_TYPE_NUM];
 extern int relax_time_tbl[aINS_INSECT_TYPE_NUM];
-extern xyz_t flower_pos[8];
-extern xyz_t tree_pos[8];
+extern xyz_t flower_pos[9];
+static xyz_t chou_tree_pos[2];
+extern xyz_t tree_pos[9];
 extern xyz_t rock_pos[2];
 extern xyz_t tonbo_rock_pos[6];
 extern xyz_t tentou_flower_pos[4];
@@ -128,13 +139,13 @@ extern xyz_t kabuto_base_pos[9];
 extern cKF_Skeleton_R_c* kuwagata_model_tbl[4];
 extern cKF_Animation_R_c* kuwagata_anim_tbl[4];
 extern xyz_t kuwagata_base_pos[4];
-extern xyz_t amenbo_center_pos;
+extern xyz_t amenbo_center_pos[2];
 extern xyz_t rail_pos[6];
 extern xyz_t ari_rail_pos[3];
 extern f32 minsect_scale_tbl[aINS_INSECT_TYPE_NUM];
 
 // rodata
-extern const f32 base_high_tbl[4];
+extern const f32 base_high_tbl[5];
 extern const s16 aim_angle_tbl[6];
 extern const xyz_t mino_base_pos;
 extern const xyz_t mino_top_pos;
@@ -179,8 +190,11 @@ void minsect_kanban_BGCheck(MUSEUM_INSECT_PRIVATE_DATA* actor);
 void minsect_tree_ObjCheck(MUSEUM_INSECT_PRIVATE_DATA* actor);
 void minsect_rock_ObjCheck(MUSEUM_INSECT_PRIVATE_DATA* actor);
 void minsect_batta_ObjCheck(MUSEUM_INSECT_PRIVATE_DATA* actor);
-BOOL get_now_mind_flag(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
+static void minsect_kani_ObjCheck(MUSEUM_INSECT_PRIVATE_DATA* actor);
+s16 get_now_mind_flag(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
 void set_relax_active_time(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
+static f32 Rnd_EX_fx(f32 v);
+
 
 // ac_museum_insect_chou.c_inc
 void minsect_chou_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
@@ -381,6 +395,14 @@ void minsect_okera_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
 void minsect_ka_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
 void minsect_ka_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
 void minsect_ka_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game);
+
+static void minsect_fun_ct(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
+static void minsect_fun_mv(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
+static void minsect_fun_dw(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
+
+static void minsect_kani_ct(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
+static void minsect_kani_mv(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
+static void minsect_kani_dw(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game);
 
 #ifdef __cplusplus
 }

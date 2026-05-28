@@ -1,6 +1,6 @@
 #include "ac_museum_insect_priv.h"
 
-const xyz_t okera_base_pos = { 235.f, 45.f, 445.f };
+const xyz_t okera_base_pos = { 275.f, 45.f, 445.f };
 
 void mi_okera_check_player(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     PLAYER_ACTOR* player = get_player_actor_withoutCheck((GAME_PLAY*)game);
@@ -209,7 +209,7 @@ void minsect_okera_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_scale(actor->_14, actor->_14, actor->_14, MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     CLOSE_DISP(game->graph);
     if (actor->_04 != okera_dig_down_process) {
         minsect_draw_shadow(actor, game);

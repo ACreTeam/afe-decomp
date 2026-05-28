@@ -1,10 +1,8 @@
 #include "ac_museum_insect_priv.h"
 
-const xyz_t kumo_base_pos = { 330.f, 64.5f, 229.f };
-
-const xyz_t kumo_top_pos = { 330.f, 90.f, 229.f };
-
-const xyz_t kumo_bottom_pos = { 330.f, 54.f, 229.f };
+const xyz_t kumo_base_pos = {450.0f, 64.5f, 229.0f};
+const xyz_t kumo_top_pos = {450.0f, 90.0f, 229.0f};
+const xyz_t kumo_bottom_pos = {450.0f, 54.0f, 229.0f};
 
 void minsect_kumo_hide_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_40 = 0.165f;
@@ -236,6 +234,10 @@ void minsect_kumo_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 }
 
 void minsect_kumo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    if (Museum_Insect_obstruct_draw(game) == FALSE) {
+        return;
+    }
+
     _texture_z_light_fog_prim(game->graph);
     OPEN_DISP(game->graph);
     Matrix_translate(actor->_1C.x, actor->_1C.y + actor->_58, actor->_1C.z, MTX_LOAD);
@@ -250,9 +252,9 @@ void minsect_kumo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
     if (actor->_80) {
-        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     } else {
-        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][1]);
+        gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][1]);
     }
     CLOSE_DISP(game->graph);
 
@@ -279,7 +281,7 @@ void minsect_kumo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_scale(actor->_14, actor->_14, actor->_14, MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][2]);
-    minsect_draw_shadow(actor, game);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][2]);
     CLOSE_DISP(game->graph);
+    minsect_draw_shadow(actor, game);
 }

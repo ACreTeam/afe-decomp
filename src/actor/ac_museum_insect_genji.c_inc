@@ -1,8 +1,7 @@
 #include "ac_museum_insect_priv.h"
 
-const xyz_t base_genji_pos = { 258.f, 62.f, 258.5f };
-
-const xyz_t genji_mizu_pos = { 289.f, 25.f, 218.f };
+const xyz_t base_genji_pos = {321.0f, 62.0f, 233.5f};
+const xyz_t genji_mizu_pos = {306.0f, 25.0f, 202.0f};
 
 void mi_genji_check_player(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     PLAYER_ACTOR* player = get_player_actor_withoutCheck((GAME_PLAY*)game);

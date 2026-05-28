@@ -1,0 +1,186 @@
+#include "ac_museum_insect_priv.h"
+
+xyz_t amenbo_center_pos[2] = {
+    {289.5f, 25.0f, 202.0f},
+    {351.5f, 25.0f, 198.0f},
+};
+static float museum_insect_ike_width = 16.5f;
+static float museum_insect_ike_height = 25.0f;
+
+static void minsect_amenbo_anime_proc(MUSEUM_INSECT_PRIVATE_DATA* priv, GAME* game) {
+    static s16 angl_table[] = { DEG2SHORT_ANGLE2(0.0), DEG2SHORT_ANGLE2(90.0f) };
+    s16 angle;
+    
+    priv->_74--;
+
+    if (priv->_74 <= 0) {
+        if (priv->_76 == 0) {
+            priv->_74 = 360.0f + RANDOM_F(120.0f);
+            priv->_76 = 1;
+        } else {
+            priv->_74 = 720.0f + RANDOM_F(120.0f);
+            priv->_76 = 0;
+            eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_HAMON, priv->_1C, 1, priv->_68.y, game, EMPTY_NO, 1, 0);
+            if (priv->insect_type == aINS_INSECT_TYPE_DIVING_BEETLE) {
+                sAdo_OngenTrgStart(0x47A, &priv->_1C);
+            }
+        }
+    }
+
+    angle = priv->_78;
+    chase_angle(&angle, angl_table[priv->_76], 0x400);
+    priv->_78 = angle;
+    priv->_58 = (u32)(100.0f * cos_s(angle));
+}
+
+void minsect_amenbo_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    actor->_34 = ZeroVec;
+    actor->_44 = ZeroVec;
+    actor->_68 = ZeroSVec;
+    actor->_68.y = qrand();
+    actor->_70 = actor->_68.y;
+    actor->_6E = (s16)RANDOM_F(60.f);
+    actor->_40 = 0.f;
+
+    switch (actor->insect_type) {
+        case aINS_INSECT_TYPE_POND_SKATER:
+            actor->_72 = 0;
+            break;
+        case aINS_INSECT_TYPE_DIVING_BEETLE:
+            actor->_72 = 1;
+            break;
+        default:
+            actor->_72 = 0;
+            break;
+    }
+
+    actor->_58 = 100.0f;
+    actor->_1C = amenbo_center_pos[actor->_72];
+    actor->_76 = 0;
+    actor->_74 = 720.0f + RANDOM_F(120.0f);
+    actor->_5C = 0.0f;
+    actor->_60 = 0.0021f;
+    actor->_64 = actor->_14;
+    actor->_new_68 = actor->_14;
+}
+
+void minsect_amenbo_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    f32 t;
+    
+    actor->_8E = get_now_mind_flag(actor, game);
+    t = actor->_5C;
+    chase_f(&actor->_60, -0.0021f, 0.00035f);
+    t += actor->_60;
+    if (t < 0.0f) {
+        t = 0.0f;
+    }
+
+    actor->_5C = t;
+    actor->_64 = t + 0.01f;
+    actor->_new_68 = 0.01f - t;
+
+    if (actor->insect_type == aINS_INSECT_TYPE_DIVING_BEETLE) {
+        minsect_amenbo_anime_proc(actor, game);
+    }
+
+    actor->_6E--;
+    if (actor->_40 > 0.f) {
+        if (!add_calc(&actor->_40, 0.f, CALC_EASE(0.1f), 0.05f, 0.005f)) {
+            actor->_70 += (s16)DEG2SHORT_ANGLE2(RANDOM2_F(120.f));
+            actor->_6E = RANDOM_F(60.f);
+            if (actor->_8E == 0) {
+                actor->_6E *= 10;
+            }
+        }
+        mID_insect_moveF(actor);
+    } else {
+        if (actor->_6E < 0) {
+            if (!add_calc_short_angle2(&actor->_68.y, actor->_70, CALC_EASE(0.5f), DEG2SHORT_ANGLE(5),
+                                       DEG2SHORT_ANGLE(0.5f))) {
+                actor->_40 = (RANDOM_F(1.19f) + 1.15f) * 0.5f;
+                eEC_CLIP->effect_make_proc(eEC_EFFECT_TURI_HAMON, actor->_1C, 1, actor->_68.y, game, EMPTY_NO, 1, 0);
+
+                if (actor->insect_type == aINS_INSECT_TYPE_DIVING_BEETLE) {
+                    sAdo_OngenTrgStart(0x47B, &actor->_1C);
+                }
+            }
+        }
+    }
+
+    if (actor->_1C.x < amenbo_center_pos[actor->_72].x - museum_insect_ike_width) {
+        actor->_1C.x = amenbo_center_pos[actor->_72].x - museum_insect_ike_width;
+        actor->_6E = 0;
+        actor->_40 = 0.f;
+        actor->_70 = -actor->_68.y;
+    } else if (actor->_1C.x > amenbo_center_pos[actor->_72].x + museum_insect_ike_width) {
+        actor->_1C.x = amenbo_center_pos[actor->_72].x + museum_insect_ike_width;
+        actor->_6E = 0;
+        actor->_40 = 0.f;
+        actor->_70 = -actor->_68.y;
+    }
+
+    if (actor->_1C.z < amenbo_center_pos[actor->_72].z - museum_insect_ike_height) {
+        actor->_1C.z = amenbo_center_pos[actor->_72].z - museum_insect_ike_height;
+        actor->_6E = 0;
+        actor->_40 = 0.f;
+        actor->_70 = (s16)DEG2SHORT_ANGLE2(180);
+        actor->_70 -= actor->_68.y;
+    } else if (actor->_1C.z > amenbo_center_pos[actor->_72].z + museum_insect_ike_height) {
+        actor->_1C.z = amenbo_center_pos[actor->_72].z + museum_insect_ike_height;
+        actor->_6E = 0;
+        actor->_40 = 0.f;
+        actor->_70 = (s16)DEG2SHORT_ANGLE2(180);
+        actor->_70 -= actor->_68.y;
+    }
+}
+
+void minsect_amenbo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
+    Gfx* gfx;
+
+    _texture_z_light_fog_prim(game->graph);
+    _texture_z_light_fog_prim_xlu(game->graph);
+
+    OPEN_DISP(game->graph);
+
+    if (actor->insect_type == aINS_INSECT_TYPE_DIVING_BEETLE) {
+        if (actor->_58 > 99.0f) {
+            gfx = NOW_POLY_OPA_DISP;
+        } else {
+            gfx = NOW_POLY_XLU_DISP;
+        }
+    } else {
+        gfx = NOW_POLY_OPA_DISP;
+    }
+
+    Matrix_translate(actor->_1C.x, actor->_1C.y, actor->_1C.z, FALSE);
+    Matrix_scale(actor->_64, actor->_new_68, actor->_14, TRUE);
+    Matrix_rotateXYZ(actor->_68.x, actor->_68.y, actor->_68.z, TRUE);
+
+
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+
+    if (actor->insect_type == aINS_INSECT_TYPE_DIVING_BEETLE) {
+        if (actor->_58 > 99.0f) {
+            gDPSetEnvColor(gfx++, 255, 255, 255, 255);
+            gSPDisplayList(gfx++, minsect_mdl[actor->insect_type][1]);
+            SET_POLY_OPA_DISP(gfx);
+        } else {
+            if (REGADDR(NMREG, 30) == 0 && actor->_76 == 1) {
+                gDPSetEnvColor(gfx++, 255, 255, 255, (u32)(245.0f * (1.0f - actor->_58 * 0.01f)));
+                gSPDisplayList(gfx++, minsect_mdl[actor->insect_type][2]);
+            }
+            
+            if (REGADDR(NMREG, 31) == 0) {
+                gDPSetEnvColor(gfx++, 255, 255, 255, (u32)(245.0f * actor->_58 * 0.01f));
+                gSPDisplayList(gfx++, minsect_mdl[actor->insect_type][0]);
+            }
+            SET_POLY_XLU_DISP(gfx);
+        }
+    } else {
+        gDPSetEnvColor(gfx++, 0, 255, 155, 255);
+        gSPDisplayList(gfx++, minsect_mdl[actor->insect_type][0]);
+        SET_POLY_OPA_DISP(gfx);
+    }
+
+    CLOSE_DISP(game->graph);
+}

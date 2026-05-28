@@ -74,6 +74,7 @@ extern f32 Math3DVecLengthSquare(xyz_t* v);
 extern f32 Math3DVecLength(xyz_t* v);
 extern f32 Math3DLengthSquare(xyz_t* a, xyz_t* b);
 extern f32 Math3DLength(const xyz_t* a, const xyz_t* b);
+extern float Math3DVectorProductZX(const xyz_t* a, const xyz_t* b, float x, float z);
 extern void Math3DVectorProduct2Vec(const xyz_t* a, const xyz_t* b, xyz_t* ret);
 extern void Math3DVectorProductXYZ(xyz_t* va, xyz_t* vb, xyz_t* vc, xyz_t* ret);
 extern void Math3DPlane(xyz_t* va, xyz_t* vb, xyz_t* vc, f32* nox, f32* noy, f32* noz, f32* odist);

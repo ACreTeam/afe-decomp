@@ -1,7 +1,5 @@
 #include "ac_museum_insect_priv.h"
 
-xyz_t ari_rail_pos[3] = { { 177.f, 45.f, -14.f }, { 242.f, 45.f, 10.f }, { 307.f, 45.f, -14.f } };
-
 void minsect_ka_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     static xyz_t init_pos = { 280.f, 40.f, 320.f };
     actor->_72 = qrand();
@@ -32,9 +30,9 @@ void minsect_ka_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
         actor->_70 = search_position_angleY(&actor->_1C, &p);
     } else if (actor->_1C.z < 60.f) {
         actor->_70 = search_position_angleY(&actor->_1C, &p);
-    } else if (actor->_1C.x > 340.f) {
+    } else if (actor->_1C.x > 380.f) {
         actor->_70 = search_position_angleY(&actor->_1C, &p);
-    } else if (actor->_1C.x < 60.f) {
+    } else if (actor->_1C.x < 20.f) {
         actor->_70 = search_position_angleY(&actor->_1C, &p);
     }
 
@@ -79,7 +77,7 @@ void minsect_ka_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     }
     mID_insect_moveF(actor);
     actor->_0C += actor->_10;
-    if (minsect_mdl[actor->_00][(int)actor->_0C] == 0) {
+    if (minsect_mdl[actor->insect_type][(int)actor->_0C] == 0) {
         actor->_0C = 1.f;
     }
     actor->_72 += DEG2SHORT_ANGLE(2.5f);
@@ -100,13 +98,13 @@ void minsect_ka_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     Matrix_scale(actor->_14, actor->_14, actor->_14, MTX_MULT);
     Matrix_rotateXYZ(actor->_68.x, actor->_68.y, actor->_68.z, MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     CLOSE_DISP(game->graph);
 
     _texture_z_light_fog_prim_xlu(game->graph);
     OPEN_POLY_XLU_DISP(game->graph);
     gSPMatrix(POLY_XLU_DISP++, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->_00][(int)actor->_0C]);
+    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->insect_type][(int)actor->_0C]);
     CLOSE_POLY_XLU_DISP(game->graph);
     minsect_draw_shadow(actor, game);
 }

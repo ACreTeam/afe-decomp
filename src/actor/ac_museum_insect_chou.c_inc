@@ -1,7 +1,9 @@
 #include "ac_museum_insect_priv.h"
 
+const f32 base_high_tbl[5] = { 85.0f, 95.0f, 90.0f, 100.0f, 100.0f };
+
 void minsect_chou_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    actor->_58 = base_high_tbl[actor->_00];
+    actor->_58 = base_high_tbl[actor->_7C];
     actor->_34 = ZeroVec;
     actor->_0C = 0.0f;
     actor->_10 = 0.25f;
@@ -11,26 +13,50 @@ void minsect_chou_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     if (actor->_8E == 1) {
         static const xyz_t init_center_pos = { 280.f, 100.f, 180.f };
         actor->_1C = init_center_pos;
-        actor->_1C.x += RANDOM2_F(460.f);
-        actor->_1C.z += RANDOM2_F(200.f);
-
         actor->_68 = ZeroSVec;
         actor->_68.y = qrand();
-        actor->_1C.y = actor->_58 + RANDOM_F(5.f);
         actor->_40 = 0.75f;
         minsect_chou_normal_process_init(actor, game);
+
+        if (actor->insect_type == aINS_INSECT_TYPE_PURPLE_BUTTERFLY) {
+            actor->_78 = 1;
+            actor->_7A = 0;
+            actor->_1C = chou_tree_pos[actor->_7A];
+        } else if (actor->insect_type == aINS_INSECT_TYPE_BIRDWING_BUTTERFLY) {
+            actor->_78 = 1;
+            actor->_7A = 1;
+            actor->_1C = chou_tree_pos[actor->_7A];
+        } else {
+            actor->_74 = actor->insect_type;
+            MI_Control_Actor->_2F9C[0] |= 1 << actor->_74;
+            actor->_78 = 0;
+        }
+
+        actor->_1C.x += RANDOM2_F(50.f);
+        actor->_1C.z += RANDOM2_F(40.f);
+        actor->_1C.y = actor->_58 + RANDOM_F(5.f);
     } else {
-        if (actor->_00 <= 2) {
-            actor->_1C = flower_pos[actor->_00];
+        if (actor->insect_type == aINS_INSECT_TYPE_PURPLE_BUTTERFLY) {
+            actor->_68 = ZeroSVec;
+            actor->_68.y = DEG2SHORT_ANGLE2(180.0f);
+            actor->_78 = 1;
+            actor->_7A = 0;
+            actor->_1C = chou_tree_pos[actor->_7A];
+        } else if (actor->insect_type == aINS_INSECT_TYPE_BIRDWING_BUTTERFLY) {
+            actor->_68 = ZeroSVec;
+            actor->_68.y = DEG2SHORT_ANGLE2(180.0f);
+            actor->_78 = 1;
+            actor->_7A = 1;
+            actor->_1C = chou_tree_pos[actor->_7A];
+        } else {
+            actor->_1C = flower_pos[actor->insect_type];
             actor->_68 = ZeroSVec;
             actor->_68.y = qrand();
-            actor->_74 = actor->_00;
+            actor->_74 = actor->insect_type;
             MI_Control_Actor->_2F9C[0] |= 1 << actor->_74;
-        } else {
-            actor->_1C = ohmurasaki_tree_pos;
-            actor->_68 = ZeroSVec;
-            actor->_68.y = DEG2SHORT_ANGLE(-180);
+            actor->_78 = 0;
         }
+
         actor->_40 = 0.0f;
         minsect_chou_flower_process_init(actor, game);
         actor->_76 = DEG2SHORT_ANGLE(-180);
@@ -58,7 +84,11 @@ void minsect_chou_normal_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) 
         actor->_72 = aim_angle_tbl[actor->_70];
         actor->_72 += (s16)DEG2SHORT_ANGLE2(RANDOM2_F(20.f));
         if (actor->_70 % 3 == 0) {
-            actor->_6E += (s16)(actor->_6E + 10);
+            if (actor->insect_type == aINS_INSECT_TYPE_BIRDWING_BUTTERFLY) {
+                actor->_6E += (s16)(actor->_6E + 60 + RANDOM(70) * 2 + GETREG(NMREG, 92) * 2);
+            } else {
+                actor->_6E += (s16)(actor->_6E + 10 + GETREG(NMREG, 93) * 2);
+            }
         }
     }
 
@@ -70,10 +100,12 @@ void minsect_chou_normal_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) 
 }
 
 void minsect_chou_aim_flower_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    if (actor->_00 != 3) {
+    if (actor->_78 == 1) {
+        actor->_72 = search_position_angleY(&actor->_1C, &chou_tree_pos[actor->_7A]);
+    } else {
         actor->_74 = RANDOM_F(8.0f);
         while (MI_Control_Actor->_2F9C[0] & (1 << actor->_74)) {
-            if (actor->_74 < 7) {
+            if (actor->_74 < ARRAY_COUNT(flower_pos) - 1) {
                 actor->_74++;
             } else {
                 actor->_74 = 0;
@@ -81,8 +113,6 @@ void minsect_chou_aim_flower_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAM
         }
         MI_Control_Actor->_2F9C[0] |= (1 << actor->_74);
         actor->_72 = search_position_angleY(&actor->_1C, &flower_pos[actor->_74]);
-    } else {
-        actor->_72 = search_position_angleY(&actor->_1C, &ohmurasaki_tree_pos);
     }
     actor->_6E = RANDOM_F(20.f) + 40.f;
     actor->_04 = minsect_chou_aim_flower_process;
@@ -92,10 +122,10 @@ void minsect_chou_aim_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* ga
     xyz_t* target;
     f32 dist;
     f32 diff;
-    if (actor->_00 != 3) {
-        target = &flower_pos[actor->_74];
+    if (actor->_78 == 1) {
+        target = &chou_tree_pos[actor->_7A];
     } else {
-        target = &ohmurasaki_tree_pos;
+        target = &flower_pos[actor->_74];
     }
     dist = search_position_distanceXZ(&actor->_1C, target);
     diff = actor->_1C.y - target->y;
@@ -103,7 +133,7 @@ void minsect_chou_aim_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* ga
         actor->_72 = search_position_angleY(&actor->_1C, target);
         actor->_72 += DEG2SHORT_ANGLE(RANDOM2_F(90.f));
         actor->_6E = RANDOM_F(20.f) + 40.f;
-        if (actor->_00 == 3 &&
+        if (actor->_78 == 1 &&
             ((actor->_72 < DEG2SHORT_ANGLE(90) && actor->_72 > DEG2SHORT_ANGLE(-90)) || actor->_1C.z < target->z)) {
             if ((s16)actor->_72 > 0) {
                 actor->_72 += DEG2SHORT_ANGLE(30);
@@ -116,7 +146,7 @@ void minsect_chou_aim_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* ga
     if (actor->_1C.y < actor->_58) {
         actor->_34.y = (RANDOM_F(1.0f) + 2.0f) * 0.5f;
     }
-    if ((dist < 30.f) || (actor->_00 == 3 && dist < 50.f && actor->_1C.z > target->z)) {
+    if ((dist < 30.f) || (actor->_78 == 1 && dist < 50.f && actor->_1C.z > target->z)) {
         add_calc(&actor->_40, 0.2f, CALC_EASE(0.1f), 0.05f, 0.005f);
         add_calc(&actor->_58, target->y, CALC_EASE(0.5f), 0.5f, 0.05f);
         if (ABS(diff) < 10 && dist < (GETREG(TAKREG, 0x27) + 10.f)) {
@@ -131,7 +161,7 @@ void minsect_chou_flower_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* g
     actor->_04 = minsect_chou_flower_process;
     actor->_10 = 0.25f;
     actor->_0C = 0.0f;
-    actor->_6E = 0x10;
+    actor->_6E = 16;
     actor->_28 = actor->_1C;
     actor->_76 = 0;
 }
@@ -140,17 +170,17 @@ void minsect_chou_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) 
     xyz_t* target;
     f32 dist;
     f32 diff;
-    if (actor->_00 != 3) {
-        target = &flower_pos[actor->_74];
+    if (actor->_78 == 1) {
+        target = &chou_tree_pos[actor->_7A];
     } else {
-        target = &ohmurasaki_tree_pos;
+        target = &flower_pos[actor->_74];
     }
     actor->_6E--;
     actor->_1C.x = actor->_28.x + (target->x - actor->_28.x) * (ABS(actor->_76) / 32768.0f);
-    if (actor->_00 != 3) {
-        actor->_1C.z = actor->_28.z + (target->z - actor->_28.z) * (ABS(actor->_76) / 32768.0f);
-    } else {
+    if (actor->_78 == 1) {
         actor->_1C.z = actor->_28.z + (target->z - actor->_28.z - 20.f) * (ABS(actor->_76) / 32768.0f);
+    } else {
+        actor->_1C.z = actor->_28.z + (target->z - actor->_28.z) * (ABS(actor->_76) / 32768.0f);
     }
 
     actor->_1C.y = actor->_28.y + (target->y - actor->_28.y) * (0.5f * (1.0f - cos_s(actor->_76)));
@@ -172,11 +202,11 @@ void minsect_chou_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) 
             minsect_chou_fly_process_init(actor, game);
         } else {
             actor->_10 = 0.25f;
-            actor->_6E = 0x10;
+            actor->_6E = 16;
         }
     }
 
-    if (actor->_00 == 3) {
+    if (actor->_78 == 1) {
         add_calc_short_angle2(&actor->_72, DEG2SHORT_ANGLE(-180), CALC_EASE2(GETREG(TAKREG, 0x2a) * 0.01f + 0.3f),
                               (s16)(DEG2SHORT_ANGLE(GETREG(TAKREG, 0x2c) + 10.f) >> 1) >> 1, DEG2SHORT_ANGLE(0.25f));
         add_calc_short_angle2(&actor->_68.x, DEG2SHORT_ANGLE(-90), CALC_EASE2(GETREG(TAKREG, 0x2b) * 0.01f + 0.3f),
@@ -185,8 +215,8 @@ void minsect_chou_flower_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) 
 }
 
 void minsect_chou_fly_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    actor->_58 = base_high_tbl[actor->_00];
-    if (actor->_00 != 3) {
+    actor->_58 = base_high_tbl[actor->_7C];
+    if (actor->_78 != 1) {
         MI_Control_Actor->_2F9C[0] &= ~(1 << actor->_74);
     }
     actor->_10 = 0.25f;
@@ -194,13 +224,13 @@ void minsect_chou_fly_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game
     actor->_40 = 0.75f;
     actor->_34.y = (RANDOM_F(1.0f) + 2.0f) * 0.5f;
     actor->_44.y = -0.075f;
-    if (actor->_00 == 3) {
-        actor->_1C.z += 2.0f;
+    if (actor->_78 == 1) {
+        actor->_1C.z += 10.0f + GETREG(NMREG, 90) * 0.1f;
     }
 }
 
 void minsect_chou_fly_process(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
-    if (actor->_00 == 3) {
+    if (actor->_78 == 1) {
         add_calc_short_angle2(&actor->_68.y, DEG2SHORT_ANGLE(90), CALC_EASE2(0.5f), DEG2SHORT_ANGLE(2.5f),
                               DEG2SHORT_ANGLE(0.25f));
         add_calc_short_angle2(&actor->_68.x, DEG2SHORT_ANGLE(0), CALC_EASE2(0.5f), DEG2SHORT_ANGLE(3.75f),
@@ -223,7 +253,7 @@ void minsect_chou_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_34.y += actor->_44.y;
     actor->_0C += actor->_10;
 
-    if (!minsect_mdl[actor->_00][(int)actor->_0C]) {
+    if (minsect_mdl[actor->insect_type][(int)actor->_0C] == NULL) {
         actor->_0C = 0.0f;
     }
 
@@ -231,7 +261,11 @@ void minsect_chou_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
         minsect_tree_ObjCheck(actor);
     }
 
-    minsect_fly_BGCheck(actor, 360.0, 40.0);
+    if (actor->insect_type == aINS_INSECT_TYPE_BIRDWING_BUTTERFLY) {
+        minsect_fly_BGCheck(actor, 520.0f + GETREG(NMREG, 93) * 0.1f, 280.0f + GETREG(NMREG, 94) * 0.1f);
+    } else {
+        minsect_fly_BGCheck(actor, 360.0f, 40.0f);
+    }
 }
 
 void minsect_chou_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
@@ -244,7 +278,7 @@ void minsect_chou_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
                  MTX_MULT);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetEnvColor(NEXT_POLY_OPA_DISP, 0, 0xff, 0x9b, 0xff);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][(int)actor->_0C]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][(int)actor->_0C]);
     minsect_draw_shadow(actor, game);
     CLOSE_DISP(game->graph);
 }

@@ -9,6 +9,8 @@ extern "C" {
 
 extern ACTOR_PROFILE Museum_Insect_Profile;
 
+int Museum_Insect_obstruct_draw(GAME* game);
+
 #ifdef __cplusplus
 }
 #endif

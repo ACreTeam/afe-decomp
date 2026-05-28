@@ -1,7 +1,13 @@
 #include "ac_museum_insect_priv.h"
 
-xyz_t tonbo_rock_pos[6] = { { 215.f, 68.f, 403.f }, { 232.f, 60.f, 381.f }, { 372.f, 65.f, 482.f },
-                            { 390.f, 68.f, 469.f }, { 328.f, 72.f, 501.f }, { 351.f, 72.f, 501.f } };
+xyz_t tonbo_rock_pos[6] = {
+    {255.0f, 68.0f, 403.0f},
+    {272.0f, 60.0f, 381.0f},
+    {412.0f, 65.0f, 482.0f},
+    {430.0f, 68.0f, 469.0f},
+    {368.0f, 72.0f, 501.0f},
+    {391.0f, 72.0f, 501.0f},
+};
 
 void minsect_tonbo_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
     actor->_34 = ZeroVec;
@@ -22,7 +28,7 @@ void minsect_tonbo_ct(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
         actor->_76 = qrand();
         minsect_tonbo_normal_process_init(actor, game);
     } else {
-        actor->_74 = actor->_00 - 9;
+        actor->_74 = actor->insect_type - 9;
         MI_Control_Actor->_2F9C[2] |= (1 << actor->_74);
         actor->_44 = actor->_1C = tonbo_rock_pos[actor->_74];
         minsect_tonbo_rock_wait_process_init(actor, game);
@@ -152,12 +158,12 @@ f32 minsect_tonbo_acc_change(MUSEUM_INSECT_PRIVATE_DATA* actor) {
     } else {
         v = 55.f;
     }
-    if (actor->_00 != 10) {
-        if (actor->_00 == 9) {
+    if (actor->insect_type != 10) {
+        if (actor->insect_type == 9) {
             v *= 0.9f;
-        } else if (actor->_00 == 11) {
+        } else if (actor->insect_type == 11) {
             v *= 1.5f;
-        } else if (actor->_00 == 12) {
+        } else if (actor->insect_type == 12) {
             v *= 1.7f;
         }
     }
@@ -165,16 +171,16 @@ f32 minsect_tonbo_acc_change(MUSEUM_INSECT_PRIVATE_DATA* actor) {
 }
 
 void minsect_tonbo_max_speed_set(MUSEUM_INSECT_PRIVATE_DATA* actor) {
-    if (actor->_00 == 10) {
+    if (actor->insect_type == 10) {
         actor->_5C = RANDOM_F(1.0f) + 1.75f;
         actor->_6E = 0;
-    } else if (actor->_00 == 9) {
+    } else if (actor->insect_type == 9) {
         actor->_5C = (RANDOM_F(1.0f) + 1.75f) * 0.9f;
         actor->_6E = 0;
-    } else if (actor->_00 == 11) {
+    } else if (actor->insect_type == 11) {
         actor->_5C = (RANDOM_F(1.0f) + 1.75f) * 1.5f;
         actor->_6E = 0;
-    } else if (actor->_00 == 12) {
+    } else if (actor->insect_type == 12) {
         actor->_5C = (RANDOM_F(1.0f) + 1.75f) * 1.7f;
         actor->_6E = 0;
     }
@@ -184,17 +190,17 @@ f32 minsect_tonbo_aim_distance_set(MUSEUM_INSECT_PRIVATE_DATA* actor) {
     f32 v;
     if (GETREG(NMREG, 2)) {
         v = (GETREG(NMREG, 2) + RANDOM_F(GETREG(NMREG, 3))) * 4.0f;
-    } else if (actor->_00 == 12) {
+    } else if (actor->insect_type == 12) {
         v = (RANDOM_F(5.0f) + 41.25f) * 4.0f;
     } else {
         v = (RANDOM_F(5.0f) + 27.5f) * 4.0f;
     }
-    if (actor->_00 != 10) {
-        if (actor->_00 == 9) {
+    if (actor->insect_type != 10) {
+        if (actor->insect_type == 9) {
             v *= 0.9f;
-        } else if (actor->_00 == 11) {
+        } else if (actor->insect_type == 11) {
             v *= 1.1f;
-        } else if (actor->_00 == 12) {
+        } else if (actor->insect_type == 12) {
             v *= 1.7f;
         }
     }
@@ -212,9 +218,9 @@ void minsect_tonbo_aim_angle_check(MUSEUM_INSECT_PRIVATE_DATA* actor) {
     b = actor->_1C;
     b.x += sin_s(actor->_70) * v;
     b.z += cos_s(actor->_70) * v;
-    if (b.x < 80.f) {
+    if (b.x < 40.f) {
         actor->_70 = DEG2SHORT_ANGLE(90);
-    } else if (b.x > 480.f) {
+    } else if (b.x > 520.f) {
         actor->_70 = DEG2SHORT_ANGLE(-90);
         actor->_70 += (s16)DEG2SHORT_ANGLE2(RANDOM2_F(90));
     } else if (b.z > 560.f) {
@@ -315,7 +321,7 @@ void minsect_tonbo_aim_rock_process_init(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME
         }
     }
     MI_Control_Actor->_2F9C[2] |= (1 << actor->_74);
-    if (actor->_00 == 12) {
+    if (actor->insect_type == 12) {
         actor->_5C = (RANDOM_F(1.f) + 1.75f) * 1.7f;
         actor->_6E = 0;
     } else {
@@ -553,7 +559,7 @@ void minsect_tonbo_mv(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
         actor->_72 = actor->_8C;
     }
     actor->_0C += actor->_10;
-    if (!minsect_mdl[actor->_00][(int)actor->_0C]) {
+    if (!minsect_mdl[actor->insect_type][(int)actor->_0C]) {
         actor->_0C = 1.0f;
     }
 }
@@ -585,12 +591,12 @@ void minsect_tonbo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 
     OPEN_POLY_XLU_DISP(game->graph);
     gSPMatrix(POLY_XLU_DISP++, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->_00][(int)actor->_0C]);
+    gSPDisplayList(POLY_XLU_DISP++, minsect_mdl[actor->insect_type][(int)actor->_0C]);
     CLOSE_POLY_XLU_DISP(game->graph);
 
     OPEN_DISP(game->graph);
     gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->_00][0]);
+    gSPDisplayList(NEXT_POLY_OPA_DISP, minsect_mdl[actor->insect_type][0]);
     CLOSE_DISP(game->graph);
     minsect_draw_shadow(actor, game);
 }
@@ -598,7 +604,7 @@ void minsect_tonbo_dw(MUSEUM_INSECT_PRIVATE_DATA* actor, GAME* game) {
 void minsect_tonbo_MoveF(MUSEUM_INSECT_PRIVATE_DATA* actor) {
     xyz_t p = actor->_44;
     f32 v = search_position_distance(&actor->_1C, &actor->_44);
-    if (actor->_00 == 12) {
+    if (actor->insect_type == 12) {
         if (actor->_8C & 0x1e && !(actor->_8C & 8)) {
             v = 0.0f;
         } else {
