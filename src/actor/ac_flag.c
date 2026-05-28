@@ -59,6 +59,7 @@ extern u8 hakushi_tex[];
 extern u16 hakushi_pal[];
 
 static void aFLAG_setup_action(STRUCTURE_ACTOR* flag, int action);
+static int aFLAG_is_owner(void);
 
 static void aFLAG_actor_ct(ACTOR* actor, GAME* game) {
     static cKF_Skeleton_R_c* skl[] = { &cKF_bs_r_obj_s_frag, &cKF_bs_r_obj_w_frag };
@@ -147,6 +148,10 @@ static void aFLAG_talk(STRUCTURE_ACTOR* flag, GAME_PLAY* game_play) {
 
 static void aFLAG_wait(STRUCTURE_ACTOR* flag, GAME_PLAY* game_play) {
     PLAYER_ACTOR* player_actor;
+    if (aFLAG_is_owner() == FALSE) {
+        return;
+    }
+
     if (mDemo_Check(mDemo_TYPE_TALK, (ACTOR*)flag) == FALSE) {
         player_actor = get_player_actor_withoutCheck(game_play);
         if (player_actor != NULL) {
@@ -165,7 +170,7 @@ static void aFLAG_menu_open_wait(STRUCTURE_ACTOR* flag, GAME_PLAY* game_play) {
 static void aFLAG_menu_end_wait(STRUCTURE_ACTOR* flag, GAME_PLAY* game_play) {
     Submenu* submenu;
     Submenu_Item_c* sm_item;
-    u8 design_index;
+    int design_index;
 
     submenu = &game_play->submenu;
     if (submenu->open_flag == FALSE) {
@@ -173,16 +178,18 @@ static void aFLAG_menu_end_wait(STRUCTURE_ACTOR* flag, GAME_PLAY* game_play) {
         if (sm_item->item == RSV_NO) {
             design_index = mNW_get_image_no(submenu, sm_item->slot_no) & 7;
 
-            // bcopy(Player_Design_Get(design_index), Save_GetPointer(island.flag_design.design),
-            //       sizeof(mNW_original_tex_c));
-            // osWritebackDCache(Save_GetPointer(island.flag_design.design), sizeof(mNW_original_tex_c));
+            bcopy(Player_Design_Get(design_index), &Common_Get(cur_island_house_p)->island.flag_design.design,
+                  sizeof(mNW_original_tex_c));
+            osWritebackDCache(&Common_Get(cur_island_house_p)->island.flag_design.design, sizeof(mNW_original_tex_c));
 
-            // Save_Get(island.flag_design).flag_design_set = TRUE;
-            // Save_Get(island.flag_design).palette = Player_Palette_Get(design_index);
+            Common_Get(cur_island_house_p)->island.flag_design.flag_design_set = TRUE;
+            Common_Get(cur_island_house_p)->island.flag_design.palette = Player_Palette_Get(design_index);
 
             sAdo_OngenTrgStart(0x461, &flag->actor_class.world.position);
 
-            mISL_SetNowPlayerAction(4);
+            if (mFI_CheckInIsland() == TRUE) {
+                mISL_SetNowPlayerAction(4);
+            }
         }
 
         sAdo_OngenTrgStart(0x163, &flag->actor_class.world.position);
@@ -382,13 +389,14 @@ static void aFLAG_actor_draw(ACTOR* actor, GAME* game) {
         _texture_z_light_fog_prim_npc(graph);
         _texture_z_light_fog_prim_xlu(graph);
 
-        // if (Save_Get(island.flag_design).flag_design_set != FALSE) {
-        //     pal = mNW_PaletteIdx2Palette(Save_Get(island.flag_design).palette);
-        //     texture = (u8*)Save_GetPointer(island.flag_design.design);
-        // } else {
-        //     pal = hakushi_pal;
-        //     texture = hakushi_tex;
-        // }
+        if (Common_Get(cur_island_house_p) != NULL &&
+            Common_Get(cur_island_house_p)->island.flag_design.flag_design_set != FALSE) {
+            pal = mNW_PaletteIdx2Palette(Common_Get(cur_island_house_p)->island.flag_design.palette);
+            texture = (u8*)&Common_Get(cur_island_house_p)->island.flag_design.design;
+        } else {
+            pal = hakushi_pal;
+            texture = hakushi_tex;
+        }
 
         OPEN_DISP(graph);
         gfx = NOW_POLY_OPA_DISP;
@@ -402,4 +410,13 @@ static void aFLAG_actor_draw(ACTOR* actor, GAME* game) {
         cKF_Si3_draw_R_SV(game, keyframe, mtx, &aFLAG_before_draw, NULL, actor);
         (*Common_Get(clip).bg_item_clip->draw_shadow_proc)(game, &aFLAG_shadow_data, FALSE);
     }
+}
+
+static int aFLAG_is_owner(void) {
+    if (Common_Get(cur_island_house_p) != NULL &&
+        mPr_CheckCmpPersonalID(&Common_Get(cur_island_house_p)->ownerID, &Now_Private->player_ID)) {
+        return TRUE;
+    }
+
+    return FALSE;
 }

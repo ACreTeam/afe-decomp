@@ -759,7 +759,7 @@ config.libs = [
             Object(Matching, "actor/ac_fallSESW.c"),
             Object(NonMatching, "actor/ac_field_draw.c"),
             Object(Matching, "actor/ac_fieldm_draw.c"),
-            Object(NonMatching, "actor/ac_flag.c"),
+            Object(Matching, "actor/ac_flag.c"),
             Object(Matching, "actor/ac_fuusen.c"),
             Object(Matching, "actor/ac_garagara.c"),
             Object(Matching, "actor/ac_ghog.c"),
