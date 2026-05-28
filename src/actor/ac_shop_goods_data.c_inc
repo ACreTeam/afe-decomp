@@ -171,8 +171,8 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
         aSG_DATA_ROTATE_Y_FLAG
     },
     {
-        RSV_SHOP_SOLDOUT,
-        RSV_SHOP_SOLDOUT,
+        RSV_SHOP_SOLD_PAPER,
+        RSV_SHOP_SOLD_PAPER,
         { obj_soldoutT_mat_model, obj_soldoutT_mat_model },
         { obj_soldoutT_gfx_model, obj_soldoutT_gfx_model },
         { NULL, NULL },
@@ -180,9 +180,8 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
         0
     },
     {
-        // TODO: finish the reserve signs when shop design is done
-        0xFE11,
-        0xFE1B,
+        RSV_SHOP_SOLD_FTR,
+        RSV_SHOP_SOLD_MEDICINE,
         { obj_soldoutT_mat_model, obj_soldoutT_mat_model },
         { obj_soldoutT_gfx_model, obj_soldoutT_gfx_model },
         { NULL, NULL },

@@ -844,7 +844,7 @@ config.libs = [
             Object(Matching, "actor/ac_set_ovl_gyoei.c"),
             Object(NonMatching, "actor/ac_set_ovl_insect.c"),
             Object(Matching, "actor/ac_shop.c"),
-            Object(NonMatching, "actor/ac_shop_design.c"),
+            Object(Matching, "actor/ac_shop_design.c"),
             Object(Matching, "actor/ac_shop_goods.c"),
             Object(Matching, "actor/ac_shop_indoor.c"),
             Object(Matching, "actor/ac_shop_level.c"),
