@@ -746,7 +746,7 @@ config.libs = [
             Object(Matching, "actor/ac_broker_design.c"),
             Object(Matching, "actor/ac_buggy.c"),
             Object(Matching, "actor/ac_conveni.c"),
-            Object(NonMatching, "actor/ac_cottage.c"),
+            Object(Matching, "actor/ac_cottage.c"),
             Object(Matching, "actor/ac_count02.c"),
             Object(Matching, "actor/ac_countdown.c"),
             Object(Matching, "actor/ac_depart.c"),

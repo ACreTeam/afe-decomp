@@ -54,7 +54,7 @@ ACTOR_PROFILE Cottage_My_Profile = {
     &Cottage_my_actor_dt,
     &Cottage_actor_init,
     &Cottage_actor_draw,
-    NULL
+    NULL,
 };
 // clang-format on
 
@@ -70,7 +70,7 @@ ACTOR_PROFILE Cottage_Npc_Profile = {
     &Cottage_npc_actor_dt,
     &Cottage_actor_init,
     &Cottage_actor_draw,
-    NULL
+    NULL,
 };
 // clang-format on
 
@@ -81,7 +81,7 @@ static u8 Shadow_vtx_fix_flg_cottage_my[] = {
     TRUE, TRUE, FALSE, FALSE,
     FALSE, FALSE, TRUE, TRUE,
     TRUE, FALSE, TRUE, FALSE,
-    FALSE, TRUE, FALSE, FALSE
+    FALSE, TRUE,
 };
 // clang-format on
 
@@ -262,25 +262,23 @@ static const COTTAGE_DATA* Cottage_data_get(STRUCTURE_ACTOR* cottage) {
 }
 
 static f32 Cottage_my_light_aim(STRUCTURE_ACTOR* cottage) {
-    // return mRmTp_Index2LightSwitchStatus(mRmTp_LIGHT_SWITCH_COTTAGE_MY) ? 1.0f : 0.0f;
+    if (Common_Get(cur_island_house_p) != NULL) {
+        return mRmTp_Index2LightSwitchStatus(mRmTp_LIGHT_SWITCH_HOUSE0_COTTAGE + (Common_Get(cur_island_house_p)->island.house_idx & 3)) ? 1.0f : 0.0f;
+    }
+
+    return 0.0f;
 }
 
 static f32 Cottage_npc_light_aim(STRUCTURE_ACTOR* cottage) {
-    int now_sec;
     Animal_c* island_villager;
+    int now_sec;
     mNPS_schedule_c* schedule;
 
-    // island_villager = &Get_Island_Villager();
-    schedule = mNPS_get_schedule_area(&island_villager->id);
     now_sec = Common_Get(time.now_sec);
+    island_villager = &Common_Get(cur_island_house_p)->island.animal;
+    schedule = mNPS_get_schedule_area(&island_villager->id);
 
-// Aus changes the NPC islander cottage's lights to be on as long as they aren't asleep,
-// instead of only being on when they're inside and awake.
-#if VERSION >= VER_GAFU01_00
     if (schedule != NULL && schedule->current_type != mNPS_SCHED_SLEEP && island_villager->is_home != FALSE &&
-#else
-    if (schedule != NULL && schedule->current_type == mNPS_SCHED_IN_HOUSE && island_villager->is_home != FALSE &&
-#endif
         (now_sec >= (18 * mTM_SECONDS_IN_HOUR) || now_sec <= (5 * mTM_SECONDS_IN_HOUR)) && cottage->request_type != Cottage_ACTION_OPEN_PL_OUT_INIT) {
         return 1.0f;
     }
@@ -367,7 +365,7 @@ static int Cottage_npc_check_go_out(STRUCTURE_ACTOR* cottage, GAME_PLAY* play) {
     mNPS_schedule_c* schedule;
     int res;
 
-    // island_villager = &Get_Island_Villager();
+    island_villager = &Common_Get(cur_island_house_p)->island.animal;
     schedule = mNPS_get_schedule_area(&island_villager->id);
     res = FALSE;
 
@@ -464,10 +462,10 @@ static void Cottage_my_set_bgOffset(STRUCTURE_ACTOR* cottage, int offs) {
         pos.x = cottage->actor_class.home.position.x + ((mFI_UT_WORLDSIZE_X_F * (f32)unit_offset[i].x));
         pos.z = cottage->actor_class.home.position.z + ((mFI_UT_WORLDSIZE_Z_F * (f32)unit_offset[i].z));
 
-#if VERSION >= VER_GAFU01_00
-        mCoBG_SetPluss5PointOffset_file(pos, rewrite_data[i], __FILE__, 790);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, rewrite_data[i], __FILE__, 840);
 #else
-        mCoBG_SetPluss5PointOffset_file(pos, rewrite_data[i], __FILE__, 787);
+        mCoBG_SetPluss5PointOffset_file(pos, rewrite_data[i], __FILE__, 843);
 #endif
     }
 }
@@ -498,28 +496,27 @@ static void Cottage_npc_set_bgOffset(STRUCTURE_ACTOR* cottage, int offs) {
 
     offset = height_table[offs];
     for (i = 0; i < 3; i++) {
-#if VERSION >= VER_GAFU01_00
         pos.z = cottage->actor_class.home.position.z + addZ[i];
 
         pos.x = cottage->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 839);
-
-        pos.x = cottage->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 843);
-
-        pos.x = cottage->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 847);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 889);
 #else
-        pos.z = cottage->actor_class.home.position.z + addZ[i];
-
-        pos.x = cottage->actor_class.home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 836);
+        mCoBG_SetPluss5PointOffset_file(pos, offset[0], __FILE__, 892);
+#endif
 
         pos.x = cottage->actor_class.home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 840);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 893);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[1], __FILE__, 896);
+#endif
 
         pos.x = cottage->actor_class.home.position.x + addX[2];
-        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 844);
+#if VERSION == VER_GAEJ01_00
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 897);
+#else
+        mCoBG_SetPluss5PointOffset_file(pos, offset[2], __FILE__, 900);
 #endif
 
         offset += 3;
@@ -533,13 +530,26 @@ static void Cottage_change_FGUnit(ACTOR* actor, int type) {
     pos.z += 80.0f;
 
     if (type == 0) {
-        return;
-    }
+        mFI_SetFG_common(EMPTY_NO, pos, TRUE);
+    } else {
+        mActor_name_t* fg_p = mFI_GetUnitFG(pos);
 
-    mFI_SetFG_common(RSV_NO, pos, TRUE);
+        if (fg_p != NULL) {
+            if (ITEM_IS_BURIED_PITFALL_HOLE(*fg_p) || *fg_p == SHINE_SPOT) {
+                mPB_keep_item((mActor_name_t)(bg_item_fg_sub_dig2take_conv(*fg_p)));
+                mFI_SetFG_common(RSV_NO, pos, TRUE);
+                mFI_Wpos2DepositOFF(pos);
+            } else {
+                mFI_Wpos2DepositOFF(pos);
+                mPB_keep_item(*fg_p);
+                mFI_SetFG_common(RSV_NO, pos, TRUE);
+            }
+        }
+    }
 }
 
 static void Cottage_my_rewrite_door(ACTOR* actor, GAME_PLAY* play) {
+    int owner_idx;
     Door_data_c* door_data;
     xyz_t pos;
 
@@ -564,8 +574,17 @@ static void Cottage_my_rewrite_door(ACTOR* actor, GAME_PLAY* play) {
     door_data->door_actor_name = actor->npc_id;
 
     door_data->wipe_type = WIPE_TYPE_TRIFORCE;
+    
+    owner_idx = -1;
+    if (Common_Get(cur_island_house_p) != NULL) {
+        owner_idx = Common_Get(cur_island_house_p)->island.house_idx;
+    }
 
-    Common_Get(house_owner_name) = 0;
+    if (owner_idx >= 0) {
+        Common_Get(house_owner_name) = owner_idx;
+    } else {
+        Common_Get(house_owner_name) = 0;
+    }
 }
 
 static void Cottage_npc_rewrite_door(ACTOR* actor, GAME_PLAY* play) {
@@ -594,7 +613,11 @@ static void Cottage_npc_rewrite_door(ACTOR* actor, GAME_PLAY* play) {
 
     door_data->wipe_type = WIPE_TYPE_TRIFORCE;
 
-    Common_Get(house_owner_name) = 0;
+    if (Common_Get(cur_island_house_p) != NULL) {
+        Common_Get(house_owner_name) = Common_Get(cur_island_house_p)->island.animal.id.npc_id;
+    } else {
+        Common_Get(house_owner_name) = RSV_NO;
+    }
 }
 
 static void Cottage_my_demo_door_open(ACTOR* actor) {
@@ -613,8 +636,7 @@ static void Cottage_demo_speak_go_out(ACTOR* actor) {
     Animal_c* island_villager;
     u8 looks;
 
-    // island_villager = &Get_Island_Villager();
-
+    island_villager = &Common_Get(cur_island_house_p)->island.animal;
     looks = mNpc_GetLooks(island_villager->id.npc_id);
     mDemo_Set_msg_num((looks & 0xFF) + MSG_ISLANDER_NOENTRY_SLEEPING_BASE);
     mDemo_Set_talk_display_name(FALSE);
