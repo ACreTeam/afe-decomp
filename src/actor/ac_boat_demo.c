@@ -6,10 +6,6 @@
 #include "m_bgm.h"
 #include "m_msg.h"
 
-/* For whatever reason, this file seems to have -pool off */
-#pragma push
-#pragma pool_data off
-
 static void aBTD_actor_ct(ACTOR* actorx, GAME* game);
 static void aBTD_actor_dt(ACTOR* actorx, GAME* game);
 static void aBTD_actor_move(ACTOR* actorx, GAME* game);
@@ -24,24 +20,11 @@ ACTOR_PROFILE Boat_Demo_Profile = {
     &aBTD_actor_ct,
     &aBTD_actor_dt,
     &aBTD_actor_move,
-    mActor_NONE_PROC1,
+    &none_proc2,
     NULL,
 };
 
 static mDemo_Clip_c aBTD_clip;
-
-// #ifndef __INTELLISENSE__
-// static u8 aBTD_island_prg[] = {
-// #include "assets/aBTD_island_prg.inc"
-// };
-
-// static u8 aBTD_island_ldr[] = {
-// #include "assets/aBTD_island_ldr.inc"
-// };
-// #else
-static u8 aBTD_island_prg[] = {0};
-static u8 aBTD_island_ldr[] = {0};
-// #endif
 
 static void aBTD_setupAction(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play, int action);
 
@@ -53,8 +36,8 @@ static void aBTD_actor_ct(ACTOR* actorx, GAME* game) {
     bzero(&aBTD_clip, sizeof(aBTD_clip));
     Common_Get(clip).demo_clip2->demo_class = boat_demo;
     Common_Get(clip).demo_clip2->type = mDemo_CLIP_TYPE_BOAT_DEMO;
-    boat_demo->island_gba_loader_p = aBTD_island_ldr;
-    boat_demo->island_gba_program_p = aBTD_island_prg;
+    boat_demo->island_gba_loader_p = NULL;
+    boat_demo->island_gba_program_p = NULL;
 
     if (mFI_CheckBlockKind(play->block_table.block_x, play->block_table.block_z, mRF_BLOCKKIND_ISLAND) == TRUE) {
         boat_demo->at_island = TRUE;
@@ -71,5 +54,3 @@ static void aBTD_actor_dt(ACTOR* actorx, GAME* game) {
 }
 
 #include "../src/actor/ac_boat_demo_move.c_inc"
-
-#pragma pop

@@ -737,7 +737,7 @@ config.libs = [
             Object(Matching, "actor/ac_bee.c"),
             Object(Matching, "actor/ac_birth_control.c"),
             Object(Matching, "actor/ac_boat.c"),
-            Object(NonMatching, "actor/ac_boat_demo.c"),
+            Object(Matching, "actor/ac_boat_demo.c"),
             Object(Matching, "actor/ac_boxManager.c"),
             Object(Matching, "actor/ac_boxMove.c"),
             Object(Matching, "actor/ac_boxTrick01.c"),

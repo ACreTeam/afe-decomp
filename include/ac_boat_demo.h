@@ -78,8 +78,8 @@ struct boat_demo_s {
     u8 player_pattern;
     u8 sing_dialog_ofs;
     u8 sing_2nd_part;
-    u8 sing_2nd_part_bgm_no;
     int sing_msg_no;
+    u16 sing_2nd_part_bgm_no;
     u16 touch_wharf_timer;
     u8 touching_wharf;
 };

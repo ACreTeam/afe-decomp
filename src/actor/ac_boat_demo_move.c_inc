@@ -26,35 +26,45 @@ static int aBTD_check_sendo_and_boat(BOAT_DEMO_ACTOR* boat_demo) {
 }
 
 static int aBTD_regist_island_npc_info() {
-    // Island_c* island = Save_GetPointer(island);
-    // Animal_c* animal = &island->animal;
-    // mNpc_NpcList_c* npclist = Common_Get(island_npclist);
-    // int res;
+    Private_c* priv = Now_Private;
+    mNpc_NpcList_c* npclist = Common_Get(island_npclist);
+    int res = FALSE;
+    
+    if (Common_Get(cur_island_house_p) != NULL && priv != NULL) {
+        Island_c* island = &Common_Get(cur_island_house_p)->island;
+        Animal_c* animal = &island->animal;
 
-    // mNpc_SetNpcList(npclist, animal, mISL_ISLANDER_NUM, TRUE);
+        if (mISL_CheckAppearIslandNpc_com(Common_Get(cur_island_house_p), &Now_Private->player_ID) == TRUE) {
+            mNpc_SetNpcList(npclist, animal, mISL_ISLANDER_NUM, TRUE);
 
-    // res = mFI_RegistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz,
-    //                               animal->home_info.ux, animal->home_info.uz, -ANIMAL_NUM_MAX, 0);
+            res = mFI_RegistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz,
+                                        animal->home_info.ux, animal->home_info.uz, -ANIMAL_NUM_MAX, 0);
 
-    // if (res == TRUE) {
-    //     mNPS_set_island_schedule_area(&animal->id);
-    // }
+            if (res == TRUE) {
+                mNPS_set_island_schedule_area(&animal->id);
+            }
+        }
+    }
 
-    // return res;
+    return res;
 }
 
 static int aBTD_unregist_island_npc_info() {
-    // mNpc_NpcList_c* npclist = Common_Get(island_npclist);
-    // Island_c* island = Save_GetPointer(island);
-    // Animal_c* animal = &island->animal;
-    // int res = mFI_UnregistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz);
+    int res = FALSE;
+    
+    if (Common_Get(cur_island_house_p) != NULL) {
+        mNpc_NpcList_c* npclist = Common_Get(island_npclist);
+        Island_c* island = &Common_Get(cur_island_house_p)->island;
+        Animal_c* animal = &island->animal;
 
-    // if (res == TRUE) {
-    //     mNPS_reset_schedule_area(&Save_Get(island).animal.id);
-    //     mNpc_InitNpcList(npclist, mISL_ISLANDER_NUM);
-    // }
+        res = mFI_UnregistMoveActorList(npclist->name, animal->home_info.bx, animal->home_info.bz);
+        if (res == TRUE) {
+            mNPS_reset_schedule_area(&animal->id);
+            mNpc_InitNpcList(npclist, mISL_ISLANDER_NUM);
+        }
+    }
 
-    // return res;
+    return res;
 }
 
 static void aBTD_chg_regist_island_npc_info(BOAT_DEMO_ACTOR* boat_demo) {
@@ -108,10 +118,12 @@ static void aBTD_change_season(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
         aWeather_RequestChangeWeatherToIsland();
         mISL_ChangeBG();
         mRmTp_DecideCottageDefaultLightSwitch();
-        mSP_SelectRandomItemToAGB();
         mISL_ClearNowPlayerAction_island();
         mNpc_SetIslandPresentFtr();
-        // mNpc_SetIslandRoomFtr(&Save_Get(island).animal);
+        mNpc_SetIslandFurniture();
+        if (Common_Get(cur_island_house_p) != NULL) {
+            mNpc_SetIslandRoomFtr(&Common_Get(cur_island_house_p)->island.animal);
+        }
         mNpc_SetIslandGetLetter(FALSE);
         mNpc_SetIslandCheckFtrMsg(FALSE);
     }
@@ -244,6 +256,10 @@ static void aBTD_anchor(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
     }
 }
 
+static void aBTD_none_proc1(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
+    // do nothing
+}
+
 typedef void (*aBTD_INIT_PROC)(BOAT_DEMO_ACTOR*, GAME_PLAY*);
 
 static void aBTD_start_call_end_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
@@ -257,7 +273,7 @@ static void aBTD_song_bgm_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY*
 static void aBTD_sing_sendo_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
     static int player_pattern_table[2][2] = { { 0, 1 }, { 2, 3 } };
 
-    static u8 sing_1st_part_bgm_no[4][5] = {
+    static u16 sing_1st_part_bgm_no[4][5] = {
         { 0x5C, 0x5D, 0x5E, 0x5F, 0x60 },
         { 0x66, 0x67, 0x68, 0x69, 0x6A },
         { 0x61, 0x62, 0x63, 0x64, 0x65 },
@@ -267,24 +283,24 @@ static void aBTD_sing_sendo_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLA
     static int sing_1st_part_msg_base_no[4] = { 0x3091, 0x3163, 0x3096, 0x3168 };
 
     int at_island = boat_demo->at_island;
-    int gender = Common_Get(now_private)->gender;
+    int gender = Now_Private->gender;
     int kappn_song;
     int player_pattern;
 
-    // do {
-    //     kappn_song = RANDOM(5);
-    //     if (!at_island) {
-    //         if (kappn_song != Save_Get(island).last_song_to_island) {
-    //             Save_Get(island).last_song_to_island = kappn_song;
-    //             break;
-    //         }
-    //     } else {
-    //         if (kappn_song != Save_Get(island).last_song_from_island) {
-    //             Save_Get(island).last_song_from_island = kappn_song;
-    //             break;
-    //         }
-    //     }
-    // } while (TRUE);
+    while (TRUE) {
+        kappn_song = RANDOM(5);
+        if (!at_island) {
+            if (kappn_song != Common_Get(cur_island_house_p)->island.last_song_to_island) {
+                Common_Get(cur_island_house_p)->island.last_song_to_island = kappn_song;
+                break;
+            }
+        } else {
+            if (kappn_song != Common_Get(cur_island_house_p)->island.last_song_from_island) {
+                Common_Get(cur_island_house_p)->island.last_song_from_island = kappn_song;
+                break;
+            }
+        }
+    }
 
     player_pattern = player_pattern_table[at_island][gender];
     boat_demo->player_pattern = player_pattern;
@@ -292,7 +308,7 @@ static void aBTD_sing_sendo_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLA
     boat_demo->sing_msg_no = sing_1st_part_msg_base_no[player_pattern] + kappn_song;
     boat_demo->sing_dialog_ofs = RANDOM(10);
     boat_demo->sing_2nd_part = RANDOM(10);
-    boat_demo->song_bgm_timer = FRAMERATE_TIMER(930);
+    boat_demo->song_bgm_timer = 930;
 }
 
 static void aBTD_sendo_dialogue_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
@@ -307,8 +323,7 @@ static void aBTD_sendo_dialogue_start_wait_init(BOAT_DEMO_ACTOR* boat_demo, GAME
 }
 
 static void aBTD_sing_sendo_start_wait2_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
-    static u8 sing_2nd_part_bgm_no[10] = { 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79 };
-
+    static u16 sing_2nd_part_bgm_no[10] = { 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79 };
     static int sing_2nd_part_msg_base_no[4] = { 0x30AF, 0x3181, 0x30AF, 0x3181 };
 
     int song_no;
@@ -348,13 +363,13 @@ static void aBTD_anchor_init(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play) {
 
 static void aBTD_init_proc(BOAT_DEMO_ACTOR* boat_demo, GAME_PLAY* play, int action) {
     static aBTD_INIT_PROC init_proc[aBTD_ACTION_NUM] = {
-        (aBTD_INIT_PROC)&none_proc1,       (aBTD_INIT_PROC)&none_proc1,
-        (aBTD_INIT_PROC)&none_proc1,       &aBTD_start_call_end_wait_init,
+        &aBTD_none_proc1,       &aBTD_none_proc1,
+        &aBTD_none_proc1,       &aBTD_start_call_end_wait_init,
         &aBTD_song_bgm_start_wait_init,    &aBTD_sing_sendo_start_wait_init,
-        (aBTD_INIT_PROC)&none_proc1,       &aBTD_sendo_dialogue_start_wait_init,
+        &aBTD_none_proc1,       &aBTD_sendo_dialogue_start_wait_init,
         &aBTD_sing_sendo_start_wait2_init, &aBTD_move_boat_end_wait_init,
         &aBTD_touch_wharf_end_wait_init,   &aBTD_pl_ride_off_start_wait_init,
-        (aBTD_INIT_PROC)&none_proc1,       &aBTD_anchor_init,
+        &aBTD_none_proc1,       &aBTD_anchor_init,
     };
 
     (*init_proc[action])(boat_demo, play);
