@@ -33,32 +33,45 @@ static void eResetbreak_Parts_ct(eEC_Effect_c* effect, GAME* game, void* ct_arg)
     f32 scale;
     f32 vel;
     f32 base;
-    s16 angle_base;
-    s16 angle0;
+    float angle_base;
     s16 angle1;
+    s16 angle0;
 
-    rnd = RANDOM_F(1.0f);
+    rnd = fqrand();
+
     if (effect->arg1 == 1) {
         rnd = 0.0f;
     }
 
+    angle1 = (s16)(
+        (f32)(DEG2SHORT_ANGLE2(45.0f) + GETREG(MYKREG, 58)) +
+        rnd *
+            ((f32)(DEG2SHORT_ANGLE2(87.1875f) + GETREG(MYKREG, 56)) -
+             (f32)(DEG2SHORT_ANGLE2(45.0f) + GETREG(MYKREG, 58)))
+    );
+
+    vel = (5.1f + GETREG(MYKREG, 57) * 0.1f) +
+          rnd * ((9.0f + GETREG(MYKREG, 55) * 0.1f) -
+                 (5.1f + GETREG(MYKREG, 57) * 0.1f));
+
     scale = rnd * (0.76f * 0.01f) + 0.0024f;
-    base = 5.1f + GETREG(MYKREG, 57) * 0.1f;
-    angle_base = DEG2SHORT_ANGLE2(45.0f) + GETREG(MYKREG, 58);
-    vel = base + rnd * ((9.0f + GETREG(MYKREG, 55) * 0.1f) - base);
+
     angle0 = effect->arg0;
-    angle1 = (s16)((f32)angle_base + rnd * ((f32)(DEG2SHORT_ANGLE2(87.1875f) + GETREG(MYKREG, 56)) - (f32)angle_base));
 
     effect->velocity.y = vel * sin_s(angle1);
     effect->velocity.x = (vel * cos_s(angle1)) * sin_s(angle0);
     effect->velocity.z = (vel * cos_s(angle1)) * cos_s(angle0);
+
     effect->scale.x = scale;
     effect->scale.y = scale;
     effect->scale.z = scale;
+
     bzero(&effect->acceleration, sizeof(effect->acceleration));
     effect->acceleration.y = -0.5f;
+
     effect->effect_specific[0] = 0;
-    effect->effect_specific[1] = (int)(RANDOM_F(4608.0f) + -2304.0f);
+    effect->effect_specific[1] = (s16)(RANDOM_F(4608.0f) + -2304.0f);
+
     effect->timer = 80;
     effect->offset.x = rnd;
 }
@@ -99,7 +112,7 @@ static void eResetbreak_Parts_dw(eEC_Effect_c* effect, GAME* game) {
     Matrix_scale(effect->scale.x, effect->scale.y, effect->scale.z, MTX_MULT);
 
     gSPMatrix(NEXT_POLY_XLU_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gDPSetEnvColor(NEXT_POLY_XLU_DISP, 255, 255, 255, a);
+    gDPSetEnvColor(NEXT_POLY_XLU_DISP, 255, 255, 255, (u8)a);
     gSPDisplayList(NEXT_POLY_XLU_DISP, ef_isibakuhatu_model);
 
     CLOSE_DISP(game->graph);

@@ -1112,7 +1112,7 @@ config.libs = [
             Object(Matching, "effect/ef_pun_yuge.c"),
             Object(Matching, "effect/ef_resetbreak.c"),
             Object(Matching, "effect/ef_resetbreak_dust.c"),
-            Object(NonMatching, "effect/ef_resetbreak_parts.c"),
+            Object(Matching, "effect/ef_resetbreak_parts.c"),
             Object(Matching, "effect/ef_resetbreak_piece.c"),
             Object(Matching, "effect/ef_reset_hole.c"),
             Object(Matching, "effect/ef_room_sunshine.c"),
