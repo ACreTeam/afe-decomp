@@ -1,3 +1,10 @@
+#ifdef __INTELLISENSE__
+#include "ac_shop_goods.h"
+#include "m_name_table.h"
+
+#define aSG_DATA_ROTATE_Y_FLAG (1 << 0)
+#endif
+
 extern Gfx obj_apple2_modelT[];
 extern Gfx obj_axeT_mat_model[];
 extern Gfx obj_axeT_gfx_model[];
@@ -135,6 +142,12 @@ extern Gfx int_nog_schoolnote_model[];
 extern Gfx int_nog_systemnote_model[];
 extern Gfx int_nog_tudurinoteT_model[];
 extern Gfx int_tak_nikki01_on_model[];
+extern Gfx obj_item_liveT_mat_model[];
+extern Gfx obj_item_liveT_gfx_model[];
+extern Gfx obj_shop_cracker_1T_mat_model[];
+extern Gfx obj_shop_cracker_1T_gfx_model[];
+extern Gfx obj_shop_medicin_mat_model[];
+extern Gfx obj_shop_medicin_gfx_model[];
 
 typedef struct ac_shop_goods_data_s {
     mActor_name_t item_start;
@@ -158,8 +171,8 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
         aSG_DATA_ROTATE_Y_FLAG
     },
     {
-        0xFE0E,
-        0xFE0E,
+        RSV_SHOP_SOLDOUT,
+        RSV_SHOP_SOLDOUT,
         { obj_soldoutT_mat_model, obj_soldoutT_mat_model },
         { obj_soldoutT_gfx_model, obj_soldoutT_gfx_model },
         { NULL, NULL },
@@ -167,8 +180,9 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
         0
     },
     {
-        0xFE10,
-        0xFE18,
+        // TODO: finish the reserve signs when shop design is done
+        0xFE11,
+        0xFE1B,
         { obj_soldoutT_mat_model, obj_soldoutT_mat_model },
         { obj_soldoutT_gfx_model, obj_soldoutT_gfx_model },
         { NULL, NULL },
@@ -177,7 +191,7 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
     },
     {
         ITM_CARPET00,
-        ITM_CARPET66,
+        ITM_CARPET68,
         { obj_carpetT_mat_model, obj_carpetT_mat_model },
         { obj_carpetT_gfx_model, obj_carpetT_gfx_model },
         { NULL, NULL },
@@ -186,7 +200,7 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
     },
     {
         ITM_WALL00,
-        ITM_WALL66,
+        ITM_WALL68,
         { obj_wallT_mat_model, obj_wallT_mat_model },
         { obj_wallT_gfx_model, obj_wallT_gfx_model },
         { NULL, NULL },
@@ -447,7 +461,7 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
     },
     {
         ITM_FISH00,
-        ITM_FISH39,
+        ITM_FISH47,
         { item_fish_modelT, item_fish_modelT },
         { NULL, NULL },
         { NULL, NULL },
@@ -519,9 +533,36 @@ static const aSG_data_c l_shop_goods_dsp_table[] = {
     },
     {
         ITM_MINIDISK00,
-        ITM_MINIDISK54,
+        ITM_MINIDISK69,
         { obj_mdT_mat_model, obj_mdT_mat_model },
         { obj_mdT_gfx_model, obj_mdT_gfx_model },
+        { NULL, NULL },
+        { NULL, NULL },
+        0
+    },
+    {
+        ITM_MINIDISK_LIVE00,
+        ITM_MINIDISK_LIVE69,
+        { obj_item_liveT_mat_model, obj_item_liveT_mat_model },
+        { obj_item_liveT_gfx_model, obj_item_liveT_gfx_model },
+        { NULL, NULL },
+        { NULL, NULL },
+        0
+    },
+    {
+        ITM_CRACKER,
+        ITM_CRACKER,
+        { obj_shop_cracker_1T_mat_model, obj_shop_cracker_1T_mat_model },
+        { obj_shop_cracker_1T_gfx_model, obj_shop_cracker_1T_gfx_model },
+        { NULL, NULL },
+        { NULL, NULL },
+        0
+    },
+    {
+        ITM_MEDICINE,
+        ITM_MEDICINE,
+        { obj_shop_medicin_mat_model, obj_shop_medicin_mat_model },
+        { obj_shop_medicin_gfx_model, obj_shop_medicin_gfx_model },
         { NULL, NULL },
         { NULL, NULL },
         0
