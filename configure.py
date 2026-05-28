@@ -764,7 +764,7 @@ config.libs = [
             Object(Matching, "actor/ac_garagara.c"),
             Object(Matching, "actor/ac_ghog.c"),
             Object(Matching, "actor/ac_goza.c"),
-            Object(NonMatching, "actor/ac_groundhog_control.c"),
+            Object(Matching, "actor/ac_groundhog_control.c"),
             Object(Matching, "actor/ac_gyo_kage.c"),
             Object(Matching, "actor/ac_gyo_kaseki.c"),
             Object(Matching, "actor/ac_gyo_release.c"),
