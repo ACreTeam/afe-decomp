@@ -36,6 +36,7 @@
 #include <string.h>
 #include "_mem.h"
 #include "m_sdcard.h"
+#include "m_plus_data.h"
 
 typedef struct card_bg_info {
     CARDFileInfo fileInfo;

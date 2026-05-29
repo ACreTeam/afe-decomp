@@ -9,6 +9,7 @@
 #include "m_private.h"
 #include "m_diary.h"
 #include "dolphin/card.h"
+#include "m_plus_data.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -379,6 +380,7 @@ extern void mCD_SD_static_clear(void);
 extern int mCD_castingoff_mura_chk(void);
 
 extern int mCD_movingInfo_get(void);
+extern int mCD_CheckLoadOldData(PlusConvData_c* plus_data);
 
 extern void mCD_ClearErrInfo(void);
 extern void mCD_OnErrInfo(int err);

@@ -510,15 +510,15 @@ static void mRC_remove_cb(u32* pp_cb, u32* p_cb, int p_count, mRC_IDX2ITEM_PROC 
     }
 }
 
-extern void mRC_remove_collect_data_P_to_PP(Private_c* pp_priv, u8* p_priv) {
+extern void mRC_remove_collect_data_P_to_PP(Private_c* pp_priv, PrivatePlus_c* p_priv) {
     int i;
 
-    mRC_remove_cb(pp_priv->furniture_collected_bitfield, (u32*)(p_priv + 0xB3C), 1172, mRC_ftr_idx_to_item_no, mRC_item_no_to_ftr_idx);
-    mRC_remove_cb(pp_priv->wall_collected_bitfield, (u32*)(p_priv + 0xBD0), 64, mRC_wall_idx_to_item_no, mRC_item_no_to_wall_idx);
-    mRC_remove_cb(pp_priv->carpet_collected_bitfield, (u32*)(p_priv + 0xBD8), 64, mRC_carpet_idx_to_item_no, mRC_item_no_to_carpet_idx);
-    mRC_remove_cb(pp_priv->paper_collected_bitfield, (u32*)(p_priv + 0xBE0), 64, mRC_paper_idx_to_item_no, mRC_item_no_to_paper_idx);
-    mRC_remove_cb(pp_priv->music_collected_bitfield, (u32*)(p_priv + 0xBE8), 64, mRC_music_idx_to_item_no, mRC_item_no_to_music_idx);
-    memcpy(pp_priv->my_org, (u8*)(p_priv + 0xC40), sizeof(pp_priv->my_org));
+    mRC_remove_cb(pp_priv->furniture_collected_bitfield, p_priv->ftr_collection, 1172, mRC_ftr_idx_to_item_no, mRC_item_no_to_ftr_idx);
+    mRC_remove_cb(pp_priv->wall_collected_bitfield, p_priv->wall_collection, 64, mRC_wall_idx_to_item_no, mRC_item_no_to_wall_idx);
+    mRC_remove_cb(pp_priv->carpet_collected_bitfield, p_priv->carpet_collection, 64, mRC_carpet_idx_to_item_no, mRC_item_no_to_carpet_idx);
+    mRC_remove_cb(pp_priv->paper_collected_bitfield, p_priv->paper_collection, 64, mRC_paper_idx_to_item_no, mRC_item_no_to_paper_idx);
+    mRC_remove_cb(pp_priv->music_collected_bitfield, p_priv->music_collection, 64, mRC_music_idx_to_item_no, mRC_item_no_to_music_idx);
+    memcpy(pp_priv->my_org, p_priv->my_org, sizeof(pp_priv->my_org));
 
     for (i = 0; i < mPr_ORIGINAL_DESIGN_COUNT; i++) {
         pp_priv->my_org[i].attr = RANDOM(mNT_STYLE_NUM);

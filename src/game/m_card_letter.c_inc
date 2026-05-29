@@ -36,6 +36,7 @@
 #include "m_start_data_init.h"
 #include <string.h>
 #include "m_sdcard.h"
+#include "m_plus_data.h"
 #endif
 
 static char l_comment_lt_0_str0[32] ATTRIBUTE_ALIGN(4) = "Ç«Ç§Ç‘Ç¬ÇÃêXÇÖÅ{";
@@ -522,7 +523,7 @@ typedef struct {
     CARDFileInfo fileInfo;
 } mCD_card_file_info2_c;
 
-extern int mCD_CheckLoadOldData(mCD_keep_mail_c* mail) {
+extern int mCD_CheckLoadOldData(PlusConvData_c* plus_data) {
     volatile mCD_card_file_info2_c fileInfo2;
     CARDFileInfo fileInfo;
     s32 checkResult;
@@ -557,12 +558,12 @@ extern int mCD_CheckLoadOldData(mCD_keep_mail_c* mail) {
                                     for (readPass = 0; readPass < 2; readPass++) {
                                         s32 read_offset = readPass == 0 ? 0x2000 : 0x20000;
                                         checkResult =
-                                            CARDRead(&fileInfo, buf, 0x1E000, read_offset);
+                                            CARDRead(&fileInfo, buf, sizeof(SavePlus_c), read_offset);
                                         if (checkResult == CARD_RESULT_READY &&
-                                            mFRm_ReturnCheckSum(buf, 0x1E000) == 0) {
+                                            mFRm_ReturnCheckSum(buf, sizeof(SavePlus_c)) == 0) {
                                             foundOldData = TRUE;
-                                            if (mail != NULL) {
-                                                memcpy(mail, buf, 0x7820);
+                                            if (plus_data != NULL) {
+                                                memcpy(plus_data, buf, sizeof(PlusConvData_c));
                                                 break;
                                             }
                                         }

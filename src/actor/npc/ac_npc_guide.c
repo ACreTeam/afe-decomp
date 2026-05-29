@@ -11,6 +11,12 @@
 #include "libultra/libultra.h"
 #include "m_bgm.h"
 #include "m_soncho.h"
+#include "m_plus_data.h"
+#include "m_card.h"
+#include "m_remove_collect.h"
+#include "_mem.h"
+#include "m_agb_pp.h"
+#include "m_string.h"
 
 enum {
     aNGD_ACTION_ENTER,
@@ -31,6 +37,8 @@ enum {
     aNGD_ACTION_SEX_SELECT_AFTER,
     aNGD_ACTION_CNAME_MENU_OPEN_WAIT,
     aNGD_ACTION_CNAME_MENU_CLOSE_WAIT,
+    aNGD_ACTION_CENAME_MENU_OPEN_WAIT,
+    aNGD_ACTION_CENAME_MENU_CLOSE_WAIT,
     aNGD_ACTION_STANDUP_START_WAIT,
     aNGD_ACTION_STANDUP,
     aNGD_ACTION_MOVE_READY,
@@ -47,6 +55,11 @@ enum {
     aNGD_ACTION_SITDOWN2,
     aNGD_ACTION_LAST_TALK_END_WAIT,
     aNGD_ACTION_SCENE_CHANGE_WAIT,
+    aNGD_ACTION_WAIT_PERMISSION_PLUS,
+    aNGD_ACTION_37,
+    aNGD_ACTION_38,
+    aNGD_ACTION_SELECT_PLAYER_PLUS,
+    aNGD_ACTION_CONFIRM_PLAYER,
 
     aNGD_ACTION_NUM
 };
@@ -90,7 +103,7 @@ static void aNGD_actor_ct(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     PLAYER_ACTOR* player;
 
-    Common_Get(clip).npc_clip->ct_proc(actorx, game, &ct_data);
+    NPC_CLIP->ct_proc(actorx, game, &ct_data);
     guide->npc_class.condition_info.hide_flg = FALSE; // show guide actor
     guide->npc_class.condition_info.demo_flg =
         aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK | aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_TALK_CHECK |
@@ -102,6 +115,11 @@ static void aNGD_actor_ct(ACTOR* actorx, GAME* game) {
     guide->npc_class.eye_y = 30.0f;
     guide->camera_move_set_counter = 1;
     guide->npc_class.palActorIgnoreTimer = -1;
+
+    if (mCD_CheckLoadOldData(&guide->plus_data) == TRUE) {
+        guide->old_data_loaded = TRUE;
+    }
+
     guide->train_door_actor = Actor_info_fgName_search(&play->actor_info, TRAIN_DOOR, ACTOR_PART_BG);
     guide->npc_class.actor_class.shape_info.draw_shadow = TRUE;
     guide->npc_class.actor_class.world.position.z = 130.0f;
@@ -128,24 +146,24 @@ static void aNGD_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aNGD_actor_save(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aNGD_actor_dt(ACTOR* actorx, GAME* game) {
     /* Update all animals in town to have this town's info */
     mNpc_SetAnimalThisLand(Save_Get(animals), ANIMAL_NUM_MAX);
-    Common_Get(clip).npc_clip->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 
     /* Stop train noise sfx */
     sAdo_SysLevStop(NA_SE_TRAIN_RIDE);
 }
 
 static void aNGD_actor_init(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aNGD_actor_draw(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/ac_npc_guide_animation.c_inc"

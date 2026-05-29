@@ -256,7 +256,8 @@ struct private_s {
     /* 0x100C */ mPr_destiny_c destiny;   /* player fortune, seemingly called destiny */
     /* 0x1016 */ mPr_birthday_c birthday; /* player birthday */
     /* 0x101A */ mPr_catalog_order_c catalog_orders[mPr_CATALOG_ORDER_NUM];      /* items ordered from catalog to be mailed */
-    /* 0x102E */ u8 unk_10A8[22];                   /* seemingly unused? */
+    /* 0x102E */ u8 unk_10A8[20];                   /* seemingly unused? */
+    /* 0x1042 */ u8 _1042; // transferred from DnM+, seemingly unused
     /* 0x1044 */ u32 aircheck_collect_bitfield[3];  /* TODO: this should be a define like #define
                                                        mPr_AIRCHECK_BITFIELD_NUM ((MD_COUNT / 32) + 1) */
     /* 0x1050 */ Anmremail_c remail;                /* scheduled mail received from a foreign villager? */

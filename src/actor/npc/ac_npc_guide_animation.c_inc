@@ -1,3 +1,8 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_guide.h"
+#include "m_common_data.h"
+#endif
+
 typedef struct npc_guide_animation_s {
     int anim_id;
     int talk_flag;
@@ -6,40 +11,47 @@ typedef struct npc_guide_animation_s {
 static void aNGD_set_animation(NPC_GUIDE_ACTOR* guide, int action) {
     // clang-format off
     static aNGD_anime_c anime[] = {
-        { aNPC_ANIM_OPEN_D1, FALSE },
-        { aNPC_ANIM_WALK1, FALSE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_SITDOWN_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_STANDUP_D1, FALSE },
-        { aNPC_ANIM_WAIT1, FALSE },
-        { aNPC_ANIM_WALK1, FALSE },
-        { aNPC_ANIM_WALK1, FALSE },
-        { aNPC_ANIM_TO_DECK_D1, FALSE },
-        { aNPC_ANIM_KEITAI_ON1, FALSE },
-        { aNPC_ANIM_KEITAI_TALK1, TRUE },
-        { aNPC_ANIM_KEITAI_OFF1, FALSE },
-        { aNPC_ANIM_OPEN_D2, FALSE },
-        { aNPC_ANIM_WALK1, FALSE },
-        { aNPC_ANIM_WAIT1, FALSE },
-        { aNPC_ANIM_WAIT1, TRUE },
-        { aNPC_ANIM_SITDOWN_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
-        { aNPC_ANIM_SITDOWN_WAIT_D1, FALSE },
+        { aNPC_ANIM_OPEN_D1, FALSE }, // aNGD_ACTION_ENTER
+        { aNPC_ANIM_WALK1, FALSE }, // aNGD_ACTION_APPROACH
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_TALK_START_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_TIME_CHECK
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_SDON_AND_PB_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_TIME_MENU_OPEN_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_TIME_MENU_CLOSE_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_MSG_WIN_OPEN_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_CONFIRM_INPUT_DATA
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_WAIT_PERMISSION
+        { aNPC_ANIM_SITDOWN_D1, TRUE }, // aNGD_ACTION_SITDOWN
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_PNAME_MENU_OPEN_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_PNAME_MENU_CLOSE_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_SEX_SELECT_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_SEX_SELECT_WAIT2
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_SEX_SELECT_AFTER
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_CNAME_MENU_OPEN_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_CNAME_MENU_CLOSE_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_CENAME_MENU_OPEN_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_CENAME_MENU_CLOSE_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_STANDUP_START_WAIT
+        { aNPC_ANIM_STANDUP_D1, FALSE }, // aNGD_ACTION_STANDUP
+        { aNPC_ANIM_WAIT1, FALSE }, // aNGD_ACTION_MOVE_READY
+        { aNPC_ANIM_WALK1, FALSE }, // aNGD_ACTION_MOVE_TO_AISLE
+        { aNPC_ANIM_WALK1, FALSE }, // aNGD_ACTION_MOVE_TO_DOOR
+        { aNPC_ANIM_TO_DECK_D1, FALSE }, // aNGD_ACTION_MOVE_TO_DECK
+        { aNPC_ANIM_KEITAI_ON1, FALSE }, // aNGD_ACTION_KEITAI_ON
+        { aNPC_ANIM_KEITAI_TALK1, TRUE }, // aNGD_ACTION_KEITAI_TALK
+        { aNPC_ANIM_KEITAI_OFF1, FALSE }, // aNGD_ACTION_KEITAI_OFF
+        { aNPC_ANIM_OPEN_D2, FALSE }, // aNGD_ACTION_OPEN_DOOR
+        { aNPC_ANIM_WALK1, FALSE }, // aNGD_ACTION_RETURN_APPROACH
+        { aNPC_ANIM_WAIT1, FALSE }, // aNGD_ACTION_LAST_TALK_START_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_SITDOWN2_START_WAIT
+        { aNPC_ANIM_SITDOWN_D1, TRUE }, // aNGD_ACTION_SITDOWN2
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_LAST_TALK_END_WAIT
+        { aNPC_ANIM_SITDOWN_WAIT_D1, FALSE }, // aNGD_ACTION_SCENE_CHANGE_WAIT
+        { aNPC_ANIM_WAIT1, TRUE }, // aNGD_ACTION_WAIT_PERMISSION_PLUS
+        { aNPC_ANIM_SITDOWN_D1, TRUE }, // aNGD_ACTION_37
+        { aNPC_ANIM_SITDOWN_D1, TRUE }, // aNGD_ACTION_38
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_SELECT_PLAYER_PLUS
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE }, // aNGD_ACTION_CONFIRM_PLAYER
     };
     // clang-format on
 
@@ -55,5 +67,5 @@ static void aNGD_set_animation(NPC_GUIDE_ACTOR* guide, int action) {
         talk_flag = TRUE;
     }
 
-    Common_Get(clip).npc_clip->animation_init_proc(&guide->npc_class.actor_class, anim_id, talk_flag);
+    NPC_CLIP->animation_init_proc(&guide->npc_class.actor_class, anim_id, talk_flag);
 }
