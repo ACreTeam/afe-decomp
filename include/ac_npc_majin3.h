@@ -5,6 +5,7 @@
 #include "m_actor.h"
 #include "ac_npc.h"
 #include "m_string.h"
+#include "m_item_name.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +23,7 @@ struct npc_majin3_actor_s {
     aMJN3_THINK_PROC think_proc;
     int talk_idx;
     aMJN3_TALK_PROC talk_proc;
-    u8 reply[mString_DEFAULT_STR_SIZE];
+    u8 reply[mIN_ITEM_NAME_LEN];
     u8 reply_idx;
 };
 
