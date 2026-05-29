@@ -3750,12 +3750,12 @@ static void mTG_music_takeout_proc(Submenu* submenu, mSM_MenuInfo_c* menu_info) 
     int i;
 
     for (i = 0; i < MINIDISK_NUM; i++) {
-        if (ChkMusicBox(music_ovl->mark_flg, i)) {
+        if (ChkMusicBox(music_ovl->md_rack_mark, i)) {
             mark_cnt++;
         }
     }
 
-    if (mark_cnt == 0 || ChkMusicBox(music_ovl->mark_flg, idx) == FALSE) {
+    if (mark_cnt == 0 || ChkMusicBox(music_ovl->md_rack_mark, idx) == FALSE) {
         if (mPr_GetPossessionItemSum(Now_Private, EMPTY_NO) >= 1) {
             free_idx = mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO);
 
@@ -3772,7 +3772,7 @@ static void mTG_music_takeout_proc(Submenu* submenu, mSM_MenuInfo_c* menu_info) 
     } else {
         if (mPr_GetPossessionItemSum(Now_Private, EMPTY_NO) >= 1) {
             for (i = 0; i < MINIDISK_NUM; i++) {
-                if (ChkMusicBox(music_ovl->mark_flg, i)) {
+                if (ChkMusicBox(music_ovl->md_rack_mark, i)) {
                     free_idx = mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO);
 
                     if (free_idx >= 0) {
@@ -4471,7 +4471,7 @@ static int mTG_mark_main_sub(Submenu* submenu, int menu_type, int param, int tab
             break;
         }
         case mTG_MARK_TYPE_MUSIC: {
-            *(u32**)mark_bitfield_p = music_ovl->mark_flg;
+            *(u32**)mark_bitfield_p = music_ovl->md_rack_mark;
             updated_mark_bitfield->music_box[(table_idx / 32)] = 1 << ((u32)table_idx - (table_idx / 32) * 32);
             // SetMusicBox(updated_mark_bitfield->music_box, table_idx);
             *max_mark_count = MINIDISK_NUM;
