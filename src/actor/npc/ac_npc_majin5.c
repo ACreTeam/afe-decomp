@@ -118,12 +118,14 @@ static int aNMJ5_set_request_act(NPC_MAJIN5_ACTOR* actorx, u8 prio, u8 idx, u8 t
 }
 
 static void aNMJ5_actor_move(ACTOR* actorx, GAME* game) {
-    aNTT_event_save_c* save_area;
-    save_area = (aNTT_event_save_c*)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 10);
+    mEv_common_data_c* common;
+
     NPC_CLIP->move_proc(actorx, game);
     actorx->shape_info.rotation.y = 31000;
-    if ((save_area != NULL) && (save_area->bitfield & aNTT_FLAG_SP_DELETE_MAJIN)) {
-        save_area->bitfield &= ~aNTT_FLAG_SP_DELETE_MAJIN;
+
+    common = Common_GetPointer(event_common);
+    if ((common->exist_flags1 & aNTT_FLAG_SP_DELETE_MAJIN)) {
+        common->exist_flags1 &= ~aNTT_FLAG_SP_DELETE_MAJIN;
         Actor_delete(actorx);
     }
     actorx->shape_info.draw_shadow = FALSE;
