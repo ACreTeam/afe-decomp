@@ -17,19 +17,25 @@ extern "C" {
 
 enum insect_spawn_area {
     aSOI_SPAWN_AREA_ON_TREE,
+    aSOI_SPAWN_AREA_ON_PALM_TREE, // coconut crab
     aSOI_SPAWN_AREA_ON_FLOWER,
     aSOI_SPAWN_AREA_RAINING_ON_FLOWER,
     aSOI_SPAWN_AREA_FLYING,
     aSOI_SPAWN_AREA_ON_GROUND,
     aSOI_SPAWN_AREA_IN_BUSH,
-    aSOI_SPAWN_AREA_FLYING_NEAR_WATER,
+    aSOI_SPAWN_AREA_RIVER, // diving beetle
+    aSOI_SPAWN_AREA_WATERSIDE,
     aSOI_SPAWN_AREA_ON_WATER,
     aSOI_SPAWN_AREA_ON_CANDY,
     aSOI_SPAWN_AREA_ON_TRASH,
+    aSOI_SPAWN_AREA_ISLAND_GOKI,
+    aSOI_SPAWN_AREA_BEACH,
+    aSOI_SPAWN_AREA_WAVE,
+    aSOI_SPAWN_AREA_BALL, // dung beetle
+    aSOI_SPAWN_AREA_NOMI_NPC, // flea
     aSOI_SPAWN_AREA_UNDER_ROCK,
     aSOI_SPAWN_AREA_UNDERGROUND,
-    aSOI_SPAWN_AREA_FLYING_NEAR_FLOWERS_OR_AROUND, /* this prefers flowers, but will default to "FLYING" if no flowers
-                                                      are in the acre */
+    aSOI_SPAWN_AREA_FLYING_NEAR_FLOWERS_OR_AROUND, /* this prefers flowers, but will default to "FLYING" if no flowers are in the acre */
     aSOI_SPAWN_AREA_NOTHING,
 
     aSOI_SPAWN_AREA_NUM
@@ -49,6 +55,11 @@ enum insect_spawn_category {
     aSOI_SPAWN_CATEGORY_UT_ATTRIBUTE,
     aSOI_SPAWN_CATEGORY_TREE,
     aSOI_SPAWN_CATEGORY_UT_ATTRIBUTE_AND_FG_ITEM_RANGE,
+    aSOI_SPAWN_CATEGORY_NOMI_NPC,
+    aSOI_SPAWN_CATEGORY_BALL,
+    aSOI_SPAWN_CATEGORY_ISLAND_GOKI,
+    aSOI_SPAWN_CATEGORY_FREE,
+    aSOI_SPAWN_CATEGORY_FLOWER,
 
     aSOI_SPAWN_CATEGORY_NUM
 };

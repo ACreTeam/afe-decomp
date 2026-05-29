@@ -842,7 +842,7 @@ config.libs = [
             Object(Matching, "actor/ac_set_manager.c"),
             Object(Matching, "actor/ac_set_npc_manager.c"),
             Object(Matching, "actor/ac_set_ovl_gyoei.c"),
-            Object(NonMatching, "actor/ac_set_ovl_insect.c"),
+            Object(Matching, "actor/ac_set_ovl_insect.c"),
             Object(Matching, "actor/ac_shop.c"),
             Object(Matching, "actor/ac_shop_design.c"),
             Object(Matching, "actor/ac_shop_goods.c"),
