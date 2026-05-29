@@ -96,6 +96,7 @@ static int aMJN_talk_init(ACTOR* actorx, GAME* game) {
     if (actor->npc_class.draw.animation_id == aNPC_ANIM_APPEAR1 && actor->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
         actor->npc_class.talk_info.default_turn_animation = aNPC_ANIM_WAIT_R1;
         actor->npc_class.talk_info.default_animation = aNPC_ANIM_WAIT_R1;
+        actor->npc_class.talk_info.look_target = 0 | (3 << 4);
         actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
         mDemo_Set_ListenAble();
         ret = TRUE;
