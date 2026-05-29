@@ -1,3 +1,11 @@
+#ifdef __INTELLISENSE__
+#include "ac_countdown_npc0.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "m_font.h"
+#endif
+
 static void aCD0_set_request_act(COUNTDOWN_NPC0_ACTOR* actor) {
     actor->npc_class.request.act_priority = 4;
     actor->npc_class.request.act_idx = aNPC_ACT_SPECIAL;
@@ -15,6 +23,10 @@ static void aCD0_freeze_pl_wait(COUNTDOWN_NPC0_ACTOR* actor) {
         actor->npc_class.talk_info.default_animation = aNPC_ANIM_WAIT_KI1;
         aCD0_setupAction(actor, aCD0_ACT_AFTER_WAIT);
     }
+}
+
+static void aCD0_after_wait(COUNTDOWN_NPC0_ACTOR* actor) {
+    // nothing
 }
 
 static void aCD0_talk_after_turn(COUNTDOWN_NPC0_ACTOR* actor) {
@@ -46,7 +58,7 @@ static void aCD0_setupAction(COUNTDOWN_NPC0_ACTOR* actor, int action) {
     static aCD0_ACT_PROC process[] = {
         aCD0_before_wait,
         aCD0_freeze_pl_wait,
-        (aCD0_ACT_PROC)none_proc1,
+        aCD0_after_wait,
         aCD0_talk_after_turn,
     };
     // clang-format on
@@ -124,7 +136,7 @@ static void aCD0_set_term(COUNTDOWN_NPC0_ACTOR* actor, GAME_PLAY* play) {
     int now_term = aCD0_get_now_term();
 
     if (now_term != actor->term) {
-        aNPC_TALK_REQUEST_PROC talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+        aNPC_TALK_REQUEST_PROC talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc2;
         int in_same_block = TRUE;
         int bx;
         int bz;
@@ -203,7 +215,7 @@ static void aCD0_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             break;
         case aCD0_TERM_1_MIN:
             mEv_set_status(mEv_EVENT_NEW_YEARS_EVE_COUNTDOWN, mEv_STATUS_PLAYSOUND);
-            nactorx->talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+            nactorx->talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc2;
             break;
     }
 
@@ -230,8 +242,12 @@ static void aCD0_set_free_str_year(u32 year) {
 }
 
 static void aCD0_set_free_str_min(u32 min) {
+    // ふん/ぷん
+    static u8 tani[2][2] = { { CHAR_PP_027, CHAR_PP_195 }, { CHAR_PP_253, CHAR_PP_195 } };
+    static int tani_idx[] = { 1, 1, 0, 1, 0, 0, 1, 0, 0, 0 };
     u8 min_str[4];
     int len;
+    int idx;
 
     if (min < 10) {
         len = 1;
@@ -240,7 +256,15 @@ static void aCD0_set_free_str_min(u32 min) {
     }
 
     mFont_UnintToString(min_str, sizeof(min_str), min, len, TRUE, FALSE, FALSE);
-    mMsg_SET_FREE_STR(mMsg_FREE_STR2, min_str, len);
+
+    if (min == 0) {
+        idx = 0;
+    } else {
+        idx = tani_idx[min % 10];
+    }
+
+    mem_copy(min_str + len, tani[idx], 2);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR2, min_str, sizeof(min_str));
 }
 
 static void aCD0_set_free_str(void) {
@@ -304,7 +328,7 @@ static int aCD0_talk_init(ACTOR* actorx, GAME* game) {
     if (mDemo_Check_SpeakerAble() == TRUE) {
         if (actor->term == aCD0_TERM_1_MIN) {
             if (actor->npc_class.talk_info.talk_request_proc == aCD0_force_talk_request) {
-                actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+                actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc2;
             } else {
                 actor->npc_class.talk_info.talk_request_proc = aCD0_norm_talk_request;
             }

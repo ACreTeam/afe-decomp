@@ -44,7 +44,7 @@ ACTOR_PROFILE Countdown_Npc0_Profile = {
     aCD0_actor_ct,
     aCD0_actor_dt,
     aCD0_actor_init,
-    mActor_NONE_PROC1,
+    none_proc2,
     aCD0_actor_save,
 };
 // clang-format on
@@ -79,10 +79,24 @@ static void aCD0_actor_ct(ACTOR* actorx, GAME* game) {
     };
 
     if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
+        static s16 accessory_type_table[4] = {
+            TOOL_HAT_PARTY1, TOOL_HAT_PARTY2,
+            TOOL_HAT_PARTY3, TOOL_HAT_PARTY4,
+        };
         COUNTDOWN_NPC0_ACTOR* actor = (COUNTDOWN_NPC0_ACTOR*)actorx;
+        int idx;
+        int rnd;
 
         actor->npc_class.schedule.schedule_proc = aCD0_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
+
+        idx = 0;
+        if (mNpc_GetNpcSex(actorx) == mPr_SEX_MALE) {
+            idx = 1;
+        }
+
+        idx += 2 * RANDOM(2);
+        NPC_CLIP->make_accessory_proc(actorx, game, accessory_type_table[idx], aNPC_JOINT_FEEL);
     }
 }
 
@@ -91,6 +105,9 @@ static void aCD0_actor_save(ACTOR* actorx, GAME* game) {
 }
 
 static void aCD0_actor_dt(ACTOR* actorx, GAME* game) {
+    mEv_common_data_c* common = Common_GetPointer(event_common);
+
+    common->exist_flags0 &= ~2;
     NPC_CLIP->dt_proc(actorx, game);
 }
 
@@ -99,7 +116,18 @@ static void aCD0_actor_init(ACTOR* actorx, GAME* game) {
 }
 
 static void aCD0_actor_move(ACTOR* actorx, GAME* game) {
+    int now_sec;
+    mEv_common_data_c* common;
+
     NPC_CLIP->move_proc(actorx, game);
+
+    now_sec = Common_Get(time.now_sec);
+    common = Common_GetPointer(event_common);
+    if (now_sec >= mTM_TIME2SEC(23, 59, 50) || now_sec <= mTM_TIME2SEC(0, 0, 10)) {
+        common->exist_flags0 |= 2;
+    } else {
+        common->exist_flags0 &= ~2;
+    }
 }
 
 static void aCD0_actor_draw(ACTOR* actorx, GAME* game) {
