@@ -11,6 +11,12 @@
 #include "libultra/libultra.h"
 #include "m_bgm.h"
 #include "m_soncho.h"
+#include "m_plus_data.h"
+#include "m_card.h"
+#include "m_remove_collect.h"
+#include "_mem.h"
+#include "m_agb_pp.h"
+#include "m_string.h"
 
 enum {
     aNG2_ACTION_ENTER,
@@ -42,6 +48,11 @@ enum {
     aNG2_ACTION_SITDOWN2,
     aNG2_ACTION_LAST_TALK_END_WAIT,
     aNG2_ACTION_SCENE_CHANGE_WAIT,
+    aNG2_ACTION_WAIT_PERMISSION_PLUS,
+    aNG2_ACTION_30,
+    aNG2_ACTION_31,
+    aNG2_ACTION_SELECT_PLAYER_PLUS,
+    aNG2_ACTION_CONFIRM_PLAYER,
 
     aNG2_ACTION_NUM
 };
@@ -78,6 +89,7 @@ static void aNG2_actor_move(ACTOR* actorx, GAME* game);
 static void aNG2_actor_draw(ACTOR* actorx, GAME* game);
 
 static void aNG2_setupAction(NPC_GUIDE2_ACTOR* guide2, GAME_PLAY* play, int action);
+static int aNG2_except_same_name_player(NPC_GUIDE2_ACTOR *actor);
 
 static void aNG2_actor_ct(ACTOR* actorx, GAME* game) {
     static aNPC_ct_data_c ct_data = { &aNG2_actor_move, &aNG2_actor_draw, 0, NULL, NULL, NULL, 0 };
@@ -85,7 +97,7 @@ static void aNG2_actor_ct(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     PLAYER_ACTOR* player;
 
-    Common_Get(clip).npc_clip->ct_proc(actorx, game, &ct_data);
+    NPC_CLIP->ct_proc(actorx, game, &ct_data);
     guide2->npc_class.condition_info.hide_flg = FALSE; // show guide2 actor
     guide2->npc_class.condition_info.demo_flg =
         aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK | aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_TALK_CHECK |
@@ -97,6 +109,13 @@ static void aNG2_actor_ct(ACTOR* actorx, GAME* game) {
     guide2->npc_class.eye_y = 30.0f;
     guide2->camera_move_set_counter = 1;
     guide2->npc_class.palActorIgnoreTimer = -1;
+
+    if (mCD_CheckLoadOldData(&guide2->plus_data) == TRUE) {
+        if (aNG2_except_same_name_player(guide2) == TRUE) {
+            guide2->old_data_loaded = TRUE;
+        }
+    }
+
     guide2->train_door_actor = Actor_info_fgName_search(&play->actor_info, TRAIN_DOOR, ACTOR_PART_BG);
     guide2->npc_class.actor_class.shape_info.draw_shadow = TRUE;
     guide2->npc_class.actor_class.world.position.z = 130.0f;
@@ -116,22 +135,22 @@ static void aNG2_actor_ct(ACTOR* actorx, GAME* game) {
 }
 
 static void aNG2_actor_save(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aNG2_actor_dt(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 
     /* Stop train noise sfx */
     sAdo_SysLevStop(NA_SE_TRAIN_RIDE);
 }
 
 static void aNG2_actor_init(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aNG2_actor_draw(ACTOR* actorx, GAME* game) {
-    Common_Get(clip).npc_clip->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/ac_npc_guide2_animation.c_inc"

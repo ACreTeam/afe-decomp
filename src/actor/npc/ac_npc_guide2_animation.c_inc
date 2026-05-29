@@ -35,11 +35,16 @@ static void aNG2_set_animation(NPC_GUIDE2_ACTOR* guide2, int action) {
         { aNPC_ANIM_SITDOWN_D1, TRUE },
         { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
         { aNPC_ANIM_SITDOWN_WAIT_D1, FALSE },
+        { aNPC_ANIM_WAIT1, TRUE },
+        { aNPC_ANIM_SITDOWN_D1, TRUE },
+        { aNPC_ANIM_SITDOWN_D1, TRUE },
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
+        { aNPC_ANIM_SITDOWN_WAIT_D1, TRUE },
     };
     // clang-format on
 
     aNG2_anime_c* anime_info = &anime[action];
 
-    Common_Get(clip).npc_clip->animation_init_proc(&guide2->npc_class.actor_class, anime_info->anim_id,
+    NPC_CLIP->animation_init_proc(&guide2->npc_class.actor_class, anime_info->anim_id,
                                                    anime_info->talk_flag);
 }
