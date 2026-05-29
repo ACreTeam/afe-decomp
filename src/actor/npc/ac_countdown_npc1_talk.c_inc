@@ -219,6 +219,10 @@ static void aCD1_act_chg_data_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->action.act_obj = aNPC_ACT_OBJ_PLAYER;
 }
 
+static void aCD1_act_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    // nothing
+}
+
 static void aCD1_act_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     COUNTDOWN_NPC1_ACTOR* actor = (COUNTDOWN_NPC1_ACTOR*)nactorx;
 
@@ -226,7 +230,7 @@ static void aCD1_act_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aCD1_act_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
-    static aNPC_SUB_PROC act_proc[] = { (aNPC_SUB_PROC)none_proc1, aCD1_act_chg_data_proc, aCD1_act_main_proc };
+    static aNPC_SUB_PROC act_proc[] = { aCD1_act_init_proc, aCD1_act_chg_data_proc, aCD1_act_main_proc };
 
     (*act_proc[type])(nactorx, play);
 }
@@ -286,7 +290,7 @@ static void aCD1_decide_demo_flg(COUNTDOWN_NPC1_ACTOR* actor) {
             actor->npc_class.condition_info.demo_flg =
                 aNPC_COND_DEMO_SKIP_HEAD_LOOKAT | aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_BGCHECK |
                 aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
-            actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+            actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc2;
         } else {
             if ((actor->event_idx & 1) == 1) {
                 actor->npc_class.condition_info.demo_flg =
@@ -446,8 +450,12 @@ static void aCD1_set_free_str_year(u32 year) {
 }
 
 static void aCD1_set_free_str_min(u32 min) {
+    // ふん/ぷん
+    static u8 tani[2][2] = { { CHAR_PP_027, CHAR_PP_195 }, { CHAR_PP_253, CHAR_PP_195 } };
+    static int tani_idx[] = { 1, 1, 0, 1, 0, 0, 1, 0, 0, 0 };
     u8 min_str[4];
     int len;
+    int idx;
 
     if (min < 10) {
         len = 1;
@@ -456,7 +464,15 @@ static void aCD1_set_free_str_min(u32 min) {
     }
 
     mFont_UnintToString(min_str, sizeof(min_str), min, len, TRUE, FALSE, FALSE);
-    mMsg_SET_FREE_STR(mMsg_FREE_STR2, min_str, len);
+
+    if (min == 0) {
+        idx = 0;
+    } else {
+        idx = tani_idx[min % 10];
+    }
+
+    mem_copy(min_str + len, tani[idx], 2);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR2, min_str, sizeof(min_str));
 }
 
 static void aCD1_set_free_str(void) {
@@ -488,7 +504,7 @@ static int aCD1_talk_init(ACTOR* actorx, GAME* game) {
     COUNTDOWN_NPC1_ACTOR* actor = (COUNTDOWN_NPC1_ACTOR*)actorx;
 
     if (actor->term == aCD1_TERM_1_MIN) {
-        actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+        actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc2;
     }
 
     mDemo_Set_ListenAble();
