@@ -14,7 +14,7 @@
 #include "m_cpak.h"
 #include "m_flashrom.h"
 
-extern void flash_rom_and_player_info_clear() {
+static void flash_rom_and_player_info_clear() {
     Save* save = Common_GetPointer(save);
     Private_c* priv_p;
     int i;
@@ -31,9 +31,9 @@ extern void flash_rom_and_player_info_clear() {
     Save_Set(land_info.exists, TRUE);
 }
 
-extern int decide_next_scene_no() {
+static int decide_next_scene_no() {
     int is_first_game;
-    int bad_save;
+    int bad_save = FALSE;
     int next_scene_no;
 
     is_first_game = mFRm_CheckSaveData() == FALSE;
@@ -50,10 +50,6 @@ extern int decide_next_scene_no() {
         case mFRm_ERROR_NOT_MEMCARD:
         case mFRm_ERROR_NO_MEMCARD: {
             bad_save = TRUE;
-            break;
-        }
-        default: {
-            bad_save = FALSE;
             break;
         }
     }
@@ -93,7 +89,7 @@ extern int decide_next_scene_no() {
     return next_scene_no;
 }
 
-extern void title_action_data_init_start_select(GAME_PLAY* play) {
+static void title_action_data_init_start_select(GAME_PLAY* play) {
     mCD_LoadLand();
     mCPk_InitPak(0);
 
@@ -102,7 +98,7 @@ extern void title_action_data_init_start_select(GAME_PLAY* play) {
 
     mTD_rtc_reserve();
     mTM_clear_renew_is();
-    mNpc_ClearAnimalInfo(&mNpc_GetInAnimalP()->animal);
+    mNpc_ClearInAnimal();
     play->next_scene_no = decide_next_scene_no();
 
     {
@@ -113,6 +109,7 @@ extern void title_action_data_init_start_select(GAME_PLAY* play) {
     }
 
     mEv_ClearEventInfo();
+    mAN_regist_add_npc_info();
     Common_Set(scene_from_title_demo, -1);
     Common_Set(door_data.next_scene_id, 0);
     Common_Set(submenu_disabled, TRUE);

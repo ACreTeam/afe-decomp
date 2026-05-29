@@ -14,7 +14,7 @@ extern "C" {
 typedef void (*aAL_DATA_INIT_PROC)(GAME_PLAY*);
 
 typedef struct animal_logo_clip_s {
-  aAL_DATA_INIT_PROC data_init_proc;
+    aAL_DATA_INIT_PROC data_init_proc;
 } aAL_Clip_c;
 
 #define aAL_BACK_FADEIN_RATE 20
@@ -29,60 +29,50 @@ typedef struct actor_animal_logo_s ANIMAL_LOGO_ACTOR;
 
 typedef void (*ANIMAL_LOGO_ACTION_PROC)(ANIMAL_LOGO_ACTOR*, GAME*);
 
-typedef struct logo_skeleton_info_s {
-  cKF_SkeletonInfo_R_c skeleton;
-  s_xyz* work_area_p;
-  s_xyz* morph_area_p;
-} aAL_SkeletonInfo_c;
-
 struct actor_animal_logo_s {
-  ACTOR actor_class;
-  
-  int action;
-  ANIMAL_LOGO_ACTION_PROC action_proc;
-  
-  aAL_SkeletonInfo_c animal;
-  aAL_SkeletonInfo_c cros;
-  aAL_SkeletonInfo_c sing;
+    ACTOR actor_class;
+    
+    int action;
+    ANIMAL_LOGO_ACTION_PROC action_proc;
 
-  s_xyz animal_work_area[22];
-  s_xyz animal_morph_area[22];
+    int title_timer;
+    int logo_piece_count;
+    float rotation[6];
+    float rotation_speed[6];
 
-  s_xyz cros_work_area[15];
-  s_xyz cros_morph_area[15];
+    // s16 back_opacity;
+    int copyright_opacity;
+    f32 press_start_opacity;
+    s16 start_opacity_timer;
+    u8 _1BE;
+    int titledemo_no;
+    int _1C4;
 
-  s_xyz sing_work_area[15];
-  s_xyz sing_morph_area[15];
+    int _[6];
 
-  s16 back_opacity;
-  int copyright_opacity;
-  f32 press_start_opacity;
-  s16 start_opacity_timer;
-  int title_timer;
-  int titledemo_no;
-
-  int unused_56C[6];
+    float e_pos_x;
+    float e_move_right_speed;
+    float _1E8;
+    float _1EC;
+    float _1F0;
 };
 
 enum {
-  aAL_ACTION_IN,
-  aAL_ACTION_BACK_FADE_IN,
-  aAL_ACTION_START_KEY_CHK_START,
-  aAL_ACTION_GAME_START,
-  aAL_ACTION_FADE_OUT_START,
-  aAL_ACTION_OUT,
-  aAL_ACTION_6,
+    aAL_ACTION_E_PLUS_RIGHT_MOVE_START_WAIT,
+    aAL_ACTION_LOGO_ROTATE,
+    aAL_ACTION_E_PLUS_LEFT_MOVE_START_WAIT,
+    aAL_ACTION_PURURUN_START_WAIT,
+    aAL_ACTION_PURURUN_END_WAIT,
+    aAL_ACTION_START_KEY_CHK_START_WAIT,
+    aAL_ACTION_GAME_START_WAIT,
+    aAL_ACTION_FADE_OUT_START_WAIT,
+    aAL_ACTION_8,
+    aAL_ACTION_9,
 
-  aAL_ACTION_NUM
+    aAL_ACTION_NUM
 };
 
 extern ACTOR_PROFILE Animal_Logo_Profile;
-
-// TODO: these are private but due to the way our build system works,
-// we must expose them to get them in a separate TU.
-extern void flash_rom_and_player_info_clear();
-extern int decide_next_scene_no();
-extern void title_action_data_init_start_select(GAME_PLAY* play);
 
 #ifdef __cplusplus
 }
