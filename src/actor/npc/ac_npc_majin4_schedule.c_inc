@@ -55,6 +55,10 @@ static void aMJN4_color_filter_end_wait(NPC_MAJIN4_ACTOR* actor, GAME_PLAY* play
 
     alpha -= 8;
     if (alpha < 0) {
+        if (mSM_CheckOwner_unable_shutter_label(play, (u32)actor)) {
+            mSM_Set_unable_shutter_label(play, 0);
+        }
+
         alpha = 0;
         aMJN4_setup_think_proc(actor, play, aMJN4_THINK_CALL_2);
     }
@@ -125,6 +129,11 @@ static void aMJN4_call_init(NPC_MAJIN4_ACTOR* actor, GAME_PLAY* play) {
 static void aMJN4_force_reset_end_wait_init(NPC_MAJIN4_ACTOR* actor, GAME_PLAY* play) {
     l_fade_alpha = 255;
     l_ResetTime = osGetTime();
+
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)actor)) {
+        mSM_Set_unable_shutter_label(play, (u32)actor);
+    }
+
     mPlib_request_main_demo_wait_type1((GAME*)play, FALSE, NULL);
     sAdo_OngenTrgStart(NA_SE_43E, &actor->npc_class.actor_class.world.position);
     actor->reset_timer = 180;
