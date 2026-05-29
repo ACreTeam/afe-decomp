@@ -1183,7 +1183,7 @@ config.libs = [
             Object(Matching, "game/m_bg_tex.c"),
             Object(Matching, "game/m_bgm.c"),
             Object(Matching, "game/m_birthday_msg.c"),
-            Object(NonMatching, "game/m_birthday_ovl.c"),
+            Object(Matching, "game/m_birthday_ovl.c"),
             Object(NonMatching, "game/m_board_ovl.c"),
             Object(Matching, "game/m_calendar.c"),
             Object(NonMatching, "game/m_calendar_ovl.c"),
