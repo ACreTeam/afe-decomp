@@ -49,10 +49,11 @@ static void aRI_tv_sound(void) {
 
 static void aRI_tv_move(aRI_tv_c* tv) {
     s16 angle = tv->angle;
-    f32 mult = 0.3f + ((1.0f + sin_s(angle)) * 0.5f) * 0.5f;
+    float sin = sin_s(angle);
+    f32 mult = ((1.0f + sin) * 0.5f) * 0.5f + 0.3f;
     s16 rnd;
 
-    mEnv_OperateReservedPointLight_Color(tv->pointlight_idx, (int)(120 * mult), (int)(150 * mult), (int)(180 * mult));
+    mEnv_OperateReservedPointLight_Color(tv->pointlight_idx, (u8)(120 * mult), (u8)(150 * mult), (u8)(180 * mult));
     aRI_tv_sound();
     rnd = tv->counter & 0x3F;
 
@@ -92,15 +93,15 @@ static void aRI_tv_dt(RESETCENTER_INDOOR_ACTOR* actor, GAME_PLAY* play) {
 
 // door
 
-static void aRI_door_ct(aRI_door_c* door) {
+static void aRI_door_ct(aRI_door_c* door, GAME_PLAY* play) {
     door->target = 1.0f;
 }
 
-static void aRI_door_move(aRI_door_c* door) {
+static void aRI_door_move(aRI_door_c* door, GAME_PLAY* play) {
     f32 step;
 
     if (door->target == 1.0f) {
-        step = 0.3f;
+        step = 30.0f * 0.01f;
     } else {
         step = 0.25f;
     }
@@ -108,7 +109,7 @@ static void aRI_door_move(aRI_door_c* door) {
     add_calc(&door->alpha_percent, door->target, step, 1.0f, 0.005f);
 }
 
-static void aRI_door_dt(aRI_door_c* door) {
+static void aRI_door_dt(aRI_door_c* door, GAME_PLAY* play) {
     door->target = 1.0f;
 }
 
@@ -123,9 +124,9 @@ static void aRI_light_ct(aRI_light_c* light, GAME_PLAY* play) {
     u8 prim_b;
     
     mEnv_GetRoomPrimColor(&prim_r, &prim_g, &prim_b, play);
-    light->prim_r = prim_r;
-    light->prim_g = prim_g;
-    light->prim_b = prim_b;
+    light->prim_r = (int)prim_r;
+    light->prim_g = (int)prim_g;
+    light->prim_b = (int)prim_b;
     light->state = 0;
     light->pointlight_idx = mEnv_ReservePointLight(play, &l_light_position, 0, 0, 0, 1000);
     
@@ -142,6 +143,7 @@ static void aRI_light_move(aRI_light_c* light, GAME_PLAY* play) {
     u8 prim_b;
     f32 orig_prim_r;
     f32 mult;
+    u8 r, g, b;
     
     mEnv_GetRoomPrimColor(&prim_r, &prim_g, &prim_b, play);
     orig_prim_r = prim_r;
@@ -164,19 +166,23 @@ static void aRI_light_move(aRI_light_c* light, GAME_PLAY* play) {
         }
     }
 
-    add_calc(&light->prim_r, prim_r, 0.25f, 10.0f, 0.1f);
-    add_calc(&light->prim_g, prim_g, 0.25f, 10.0f, 0.1f);
-    add_calc(&light->prim_b, prim_b, 0.25f, 10.0f, 0.1f);
+    add_calc(&light->prim_r, (int)prim_r, 0.25f, 10.0f, 0.1f);
+    add_calc(&light->prim_g, (int)prim_g, 0.25f, 10.0f, 0.1f);
+    add_calc(&light->prim_b, (int)prim_b, 0.25f, 10.0f, 0.1f);
 
-    mult = (light->prim_r - orig_prim_r) / (210 - orig_prim_r);
-    mEnv_OperateReservedPointLight_Color(light->pointlight_idx, (int)(210 * mult), (int)(60 * mult), (int)(60 * mult));
+    mult = (light->prim_r - (int)orig_prim_r) / (210 - (float)(int)orig_prim_r);
+    r = (u8)(int)(210 * mult);
+    g = (u8)(int)(60 * mult);
+    b = (u8)(int)(60 * mult);
+    mEnv_OperateReservedPointLight_Color(light->pointlight_idx, r, g, b);
 }
 
 static void aRI_light_dt(aRI_light_c* light, GAME_PLAY* play) {
     light->pointlight_idx = mEnv_CancelReservedPointLight(light->pointlight_idx, play);
 }
 
-static void aRI_get_room_prim_color(u8* r, u8* g, u8* b, RESETCENTER_INDOOR_ACTOR* actor) {
+static void aRI_get_room_prim_color(u8* r, u8* g, u8* b, ACTOR* actorx) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
     *r = (int)actor->light.prim_r;
     *g = (int)actor->light.prim_g;
     *b = (int)actor->light.prim_b;
@@ -188,9 +194,9 @@ static void Resetcenter_Indoor_Actor_ct(ACTOR* actorx, GAME* game) {
 
     aRI_CLIP = actor;
     aRI_tv_ct(actor, play);
-    aRI_door_ct(&actor->door);
+    aRI_door_ct(&actor->door, play);
     aRI_light_ct(&actor->light, play);
-    Common_Get(event_common).resetcenter_flags = 0;
+    Common_Get(event_common).resetcenter_flags &= ~0xFFFF;
     if (Common_Get(door_data).door_actor_name != RSV_NO) {
         if (aRI_get_reset_mode() == 4 || Now_Private->reset_center_flags & (1 << 5)) {
             Now_Private->reset_center_flags &= ~(1 << 5);
@@ -205,7 +211,7 @@ static void Resetcenter_Indoor_Actor_dt(ACTOR* actorx, GAME* game) {
 
     aRI_CLIP = NULL;
     aRI_tv_dt(actor, play);
-    aRI_door_dt(&actor->door);
+    aRI_door_dt(&actor->door, play);
     aRI_light_dt(&actor->light, play);
 }
 
@@ -214,7 +220,7 @@ static void Resetcenter_Indoor_Actor_move(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
 
     aRI_tv_move(&actor->tv);
-    aRI_door_move(&actor->door);
+    aRI_door_move(&actor->door, play);
     aRI_light_move(&actor->light, play);
 }
 
@@ -223,22 +229,23 @@ extern Gfx rom_futoumeiT_model[];
 extern Gfx rom_boots_cmo_model[];
 extern Gfx rom_boots_cmb_model[];
 
-static void aRI_draw_normal(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
+static void aRI_draw_normal(ACTOR* actorx, GAME* game) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
     Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
     Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
     OPEN_DISP(game->graph);
 
-    gSPMatrix(NEXT_POLY_XLU_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(NEXT_POLY_XLU_DISP, rom_futoumei_model);
-    gSPDisplayList(NEXT_POLY_XLU_DISP, rom_futoumeiT_model);
+    gSPMatrix(NEXT_BG_OPA_DISP, _Matrix_to_Mtx_new(game->graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_futoumei_model);
+    gSPDisplayList(NEXT_BG_OPA_DISP, rom_futoumeiT_model);
 
     if (!actor->nodraw_cmo_boots) {
-        gSPDisplayList(NEXT_POLY_XLU_DISP, rom_boots_cmo_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, rom_boots_cmo_model);
     }
 
     if (!actor->nodraw_cmb_boots) {
-        gSPDisplayList(NEXT_POLY_XLU_DISP, rom_boots_cmb_model);
+        gSPDisplayList(NEXT_BG_OPA_DISP, rom_boots_cmb_model);
     }
 
     CLOSE_DISP(game->graph);
@@ -246,8 +253,10 @@ static void aRI_draw_normal(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
 
 extern Gfx rom_tvlight_model[];
 
-static void aRI_draw_tvlight(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
-    int alpha = actor->tv.rnd + (RANDOM_F(1.0f) + 1.0f) * 0.5f * (actor->tv._14 - actor->tv.rnd);
+static void aRI_draw_tvlight(ACTOR* actorx, GAME* game) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
+    float sin = sin_s(actor->tv.angle);
+    int alpha = actor->tv.rnd + (sin + 1.0f) * 0.5f * (actor->tv._14 - actor->tv.rnd);
 
     Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
     Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
@@ -274,10 +283,11 @@ static int aRI_draw_light_before(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int
 
 extern Gfx rom_lightbase_model[];
 
-static void aRI_draw_light(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
+static void aRI_draw_light(ACTOR* actorx, GAME* game) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
-    xyz_t pos = { 160.0f, 160.0f, 160.0f };
     Mtx* kf_mtx = actor->light.mtx[game->frame_counter & 1];
+    xyz_t pos = { 160.0f, 160.0f, 160.0f };
 
     Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
     Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
@@ -307,12 +317,13 @@ static void aRI_draw_light(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
 
 extern Gfx rom_door_model[];
 
-static void aRI_draw_door(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
+static void aRI_draw_door(ACTOR* actorx, GAME* game) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
     u8 r;
     u8 g;
     u8 b;
 
-    aRI_get_room_prim_color(&r, &g, &b, actor);
+    aRI_get_room_prim_color(&r, &g, &b, actorx);
     Matrix_translate(0.0f, 0.0f, 0.0f, MTX_LOAD);
     Matrix_scale(0.0625f, 0.0625f, 0.0625f, MTX_MULT);
 
@@ -326,12 +337,13 @@ static void aRI_draw_door(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
     CLOSE_DISP(game->graph);
 }
 
-static void aRI_set_bg_disp_prim_color(RESETCENTER_INDOOR_ACTOR* actor, GAME* game) {
+static void aRI_set_bg_disp_prim_color(ACTOR* actorx, GAME* game) {
+    RESETCENTER_INDOOR_ACTOR* actor = (RESETCENTER_INDOOR_ACTOR*)actorx;
     u8 r;
     u8 g;
     u8 b;
 
-    aRI_get_room_prim_color(&r, &g, &b, actor);
+    aRI_get_room_prim_color(&r, &g, &b, actorx);
 
     OPEN_DISP(game->graph);
 
@@ -356,11 +368,11 @@ static void Resetcenter_Indoor_Actor_draw(ACTOR* actorx, GAME* game) {
     _texture_z_light_fog_prim(game->graph);
     _texture_z_light_fog_prim_xlu(game->graph);
     _texture_z_light_fog_prim_bg(game->graph);
-    aRI_set_bg_disp_prim_color(actor, game);
-    aRI_draw_normal(actor, game);
-    aRI_draw_door(actor, game);
-    aRI_draw_light(actor, game);
-    aRI_draw_tvlight(actor, game);
+    aRI_set_bg_disp_prim_color(actorx, game);
+    aRI_draw_normal(actorx, game);
+    aRI_draw_door(actorx, game);
+    aRI_draw_light(actorx, game);
+    aRI_draw_tvlight(actorx, game);
 }
 
 // clip
@@ -391,7 +403,7 @@ extern f32 aRI_get_door_alpha_percent(void) {
         return aRI_CLIP->door.alpha_percent;
     }
 
-    return 0.0f;
+    return 1.0f;
 }
 
 extern int aRI_request_light_on(void) {
@@ -420,7 +432,7 @@ extern void aRI_set_resetcenter_prim_color(GAME* game) {
         u8 g;
         u8 b;
 
-        aRI_get_room_prim_color(&r, &g, &b, aRI_CLIP);
+        aRI_get_room_prim_color(&r, &g, &b, (ACTOR*)aRI_CLIP);
 
         OPEN_DISP(game->graph);
 
@@ -469,7 +481,7 @@ extern int aRI_get_reset_mode(void) {
     }
 
     if (Now_Private->reset_count >= 5) {
-        if (!(Now_Private->reset_center_flags & (1 << 5))) {
+        if (!(Now_Private->reset_center_flags & (1 << 7))) {
             Now_Private->reset_center_flags &= ~0xF;
             return 1;
         }

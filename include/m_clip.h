@@ -53,7 +53,7 @@ typedef struct clip_s {
     /* 0x024 */ aNI_Clip_c* needlework_indoor_clip;
     /* 0x028 */ aMSN_Clip_c* misin_clip;
     /* 0x02C */ aHTBL_Clip_c* htbl_clip;
-    /* 0x030 */ ACTOR* resetcenter_indoor_clip;
+    /* 0x030 */ void* _030;
     /* 0x034 */ void* _034;
     /* 0x038 */ void* _038;
     /* 0x03C */ void* _03C;
@@ -103,7 +103,7 @@ typedef struct clip_s {
     /* 0x0EC */ aAPC_Clip_c* aprilfool_control_clip;
     /* 0x0F0 */ aEvMgr_Clip_c* event_manager_clip;
     /* 0x0F4 */ aGHC_Clip_c* groundhog_control_clip;
-    /* 0x0F8 */ void* _0F8;
+    /* 0x0F8 */ ACTOR* resetcenter_indoor_clip;
     /* 0x0FC */ void* _0FC;
     /* 0x100 */ void* _100;
 } Clip_c;

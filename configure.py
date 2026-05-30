@@ -1022,7 +1022,7 @@ config.libs = [
             Object(Matching, "actor/ac_radio.c"),
             Object(Matching, "actor/ac_reserve.c"),
             Object(Matching, "actor/ac_reset_chair.c"),
-            Object(NonMatching, "actor/ac_resetcenter_indoor.c"),
+            Object(Matching, "actor/ac_resetcenter_indoor.c"),
             Object(Matching, "actor/ac_reset_demo.c"),
             Object(Matching, "actor/ac_ride_off_demo.c"),
             Object(Matching, "actor/ac_rope.c"),

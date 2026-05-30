@@ -34,6 +34,7 @@ typedef struct {
     f32 prim_g;
     f32 prim_b;
     int pointlight_idx;
+    int _14;
     cKF_SkeletonInfo_R_c kf;
     s_xyz work[aRI_LIGHT_JOINT_NUM+1];
     s_xyz morph[aRI_LIGHT_JOINT_NUM+1];
@@ -46,10 +47,10 @@ struct resetcenter_indoor_actor_s {
     aRI_tv_c tv;
     aRI_door_c door;
     aRI_light_c light;
-    s16 _AF0;
-    u8 _AF2[0xAF8-0xAF2];
+    // s16 _AF0;
     u8 nodraw_cmo_boots; // don't draw Resetti's boots
     u8 nodraw_cmb_boots; // don't draw Don's boots
+    u8 _AF4[0xAF8-0xAF4];
 };
 
 extern int aRI_request_appear_door(void);
