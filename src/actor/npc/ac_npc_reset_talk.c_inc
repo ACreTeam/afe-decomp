@@ -1,0 +1,500 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_reset.h"
+
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_msg.h"
+#include "m_bgm.h"
+#include "ac_resetcenter_indoor.h"
+#include "ac_reset_chair.h"
+#include "sys_matrix.h"
+#include "m_rcp.h"
+#include "libultra/libultra.h"
+
+#define aRST_CHAIR(actor)((RESET_CHAIR_ACTOR*)((actor)->reset_chair_p))
+
+enum {
+    aRST_TALK_BYEBYE,
+    aRST_TALK_EXIT,
+    aRST_TALK_STOP_PLAYER,
+    aRST_TALK_AINOTE_0,
+    aRST_TALK_AINOTE_1,
+    aRST_TALK_END_WAIT,
+    aRST_TALK_END_WAIT2,
+    aRST_TALK_END_WAIT3,
+    aRST_TALK_4_1,
+    aRST_TALK_4_2,
+    aRST_TALK_4_3,
+    aRST_TALK_4_4,
+    aRST_TALK_4_5,
+
+    aRST_TALK_NUM
+};
+
+enum {
+    aRST_THINK_PROC_NONE,
+    aRST_THINK_PROC_READY_SAILING,
+    aRST_THINK_PROC_SAILING,
+    aRST_THINK_PROC_SETTLEMENT,
+    aRST_THINK_PROC_HIDE,
+    aRST_THINK_PROC_RETURN,
+    aRST_THINK_PROC_RESET_AINOTE,
+    aRST_THINK_PROC_RACKET_AINOTE,
+    aRST_THINK_PROC_HUNT,
+    aRST_THINK_PROC_REMAIN,
+    aRST_THINK_PROC_TIMER,
+
+    aRST_THINK_PROC_NUM
+};
+
+enum {
+    aRST_THINK_INIT_PROC_NONE,
+    aRST_THINK_INIT_PROC_NORMAL_WAIT,
+    aRST_THINK_INIT_PROC_READY_SAILING,
+    aRST_THINK_INIT_PROC_SAILING,
+    aRST_THINK_INIT_PROC_SETTLEMENT,
+    aRST_THINK_INIT_PROC_HIDE,
+    aRST_THINK_INIT_PROC_RETURN,
+    aRST_THINK_INIT_PROC_END,
+    aRST_THINK_INIT_PROC_START,
+    aRST_THINK_INIT_PROC_START2,
+    aRST_THINK_INIT_PROC_START3,
+    aRST_THINK_INIT_PROC_TIMER_SAILING,
+
+    aRST_THINK_INIT_PROC_NUM
+};
+
+enum {
+    aRST_TALK_REQUEST_NONE,
+    aRST_TALK_REQUEST_NORM,
+    aRST_TALK_REQUEST_FORCE,
+
+    aRST_TALK_REQUEST_NUM
+};
+#endif
+
+static int aRST_sailing_process(NPC_RESET_ACTOR* actor) {
+    switch (actor->sailing_state) {
+        case 0:
+            if (aRST_CHAIR(actor)->act_idx == aRC_ACT_HIDE) {
+                actor->timer = 30;
+                actor->sailing_state++;
+            }
+            break;
+        case 1:
+            if (actor->timer > 0) {
+                actor->timer--;
+            } else {
+                actor->sailing_state++;
+                aRI_request_appear_door();
+            }
+            break;
+        case 2:
+            if (aRI_get_door_alpha_percent() == 1.0f) {
+                actor->sailing_state++;
+            }
+            break;
+        default:
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void aRST_talk_byebye(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+    if (mMsg_Check_idling_now(msg_p) == TRUE) {
+        mMsg_request_main_disappear_wait_type1(msg_p);
+        aRST_change_talk_proc(actor, aRST_TALK_EXIT);
+    }
+}
+
+static void aRST_talk_exit(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+    if (mMsg_Check_main_wait(msg_p) == TRUE) {
+        goto_other_scene(play, Common_GetPointer(structure_exit_door_data), TRUE);
+
+        if (play->fb_wipe_mode == WIPE_MODE_NONE) {
+            mBGMPsComp_scene_mode(14);
+            mBGMPsComp_volume_talk_end();
+            mBGMPsComp_make_ps_wipe(0x195);
+        }
+    }
+}
+
+static void aRST_talk_stop_player(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    mDemo_Set_talk_return_demo_wait(TRUE);
+    aRST_change_talk_proc(actor, aRST_TALK_END_WAIT);
+}
+
+static void aRST_talk_ainote_0(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+    if (order == 1 && mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        mDemo_Set_talk_return_demo_wait(TRUE);
+        mMsg_request_main_disappear_wait_type1(msg_p);
+        aRST_change_talk_proc(actor, aRST_TALK_AINOTE_1);
+    }
+}
+
+static void aRST_talk_ainote_1(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+    if (mMsg_Check_main_wait(msg_p) == TRUE) {
+        mMsg_request_main_forceoff();
+
+        if (Common_Get(event_common).resetcenter_flags & 0x100) {
+            mDemo_KeepCamera(CAMERA2_PROCESS_NORMAL);
+        } else {
+            mDemo_KeepCamera(CAMERA2_PROCESS_TALK);
+        }
+
+        aRST_change_talk_proc(actor, aRST_TALK_END_WAIT2);
+
+        if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_MAJIN) {
+            Common_Get(event_common).resetcenter_flags |= 0x1;
+        } else {
+            Common_Get(event_common).resetcenter_flags |= 0x10;
+        }
+    }
+}
+
+static void aRST_talk_end_wait(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (mDemo_CAN_ACTOR_TALK((ACTOR*)actor)) {
+        actor->talk_flag = 0;
+    }
+}
+
+static void aRST_talk_end_wait3(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (mDemo_CAN_ACTOR_TALK((ACTOR*)actor)) {
+        actor->talk_flag = 0;
+
+        if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_MAJIN) {
+            Common_Get(event_common).resetcenter_flags |= 0x8 | 0x1;
+        } else {
+            Common_Get(event_common).resetcenter_flags |= 0x80 | 0x10;
+        }
+    }
+}
+
+static void aRST_talk_4_1(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order == 1) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        aRI_request_light_on();
+        aRST_change_talk_proc_next(actor);
+        mDemo_Set_talk_return_demo_wait(TRUE);
+    }
+}
+
+static void aRST_talk_4_2(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    ACTOR* actorx = (ACTOR*)actor;
+
+    if (!mDemo_Check(mDemo_TYPE_TALK, actorx) && !mDemo_Check(mDemo_TYPE_SPEAK, actorx)) {
+        if (mPlib_get_player_actor_main_index((GAME*)play) != mPlayer_INDEX_DEMO_WAIT) {
+            mPlib_request_main_demo_wait_type1((GAME*)play, FALSE, NULL);
+        }
+
+        actor->talk_flag = 1;
+    }
+}
+
+static void aRST_talk_4_3(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order == 1) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        actor->talk_flag = 1;
+        aRI_request_disappear_door();
+        aRST_change_talk_proc_next(actor);
+    }
+}
+
+static void aRST_talk_4_4(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order == 1) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        aRST_CHAIR(actor)->next_act_idx = aRC_ACT_SAILING;
+        sAdo_OngenTrgStart(0x105, &actor->npc_class.actor_class.world.position);
+        aRST_change_talk_proc_next(actor);
+        actor->sailing_state = 0;
+    }
+}
+
+static void aRST_talk_4_5(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_talk_end_wait3(actor, play);
+    aRST_sailing_process(actor);
+
+    if (mDemo_CAN_ACTOR_TALK((ACTOR*)actor)) {
+        aRI_request_light_off();
+    }
+}
+
+static int aRST_change_talk_proc(NPC_RESET_ACTOR* actor, u8 talk_proc) {
+    actor->talk_proc_idx = talk_proc;
+    return TRUE;
+}
+
+static int aRST_change_talk_proc_next(NPC_RESET_ACTOR* actor) {
+    aRST_change_talk_proc(actor, actor->talk_proc_idx + 1);
+    return TRUE;
+}
+
+static void aRST_set_force_talk_info(ACTOR* actorx) {
+    static int racket_m8_msg_table[] = { MSG_7644, MSG_7646, MSG_7648 };
+    static int reset_m8_msg_table[] = { MSG_7643, MSG_7645, MSG_7647 };
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+    int msg_no = 0x0394; // Resetti "Hey what are you doing down here"
+    u8 talk_proc = aRST_TALK_END_WAIT;
+    int idx;
+
+    switch (actor->msg_type) {
+        case 0:
+            mMsg_SET_IDLING_REQ();
+            mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
+            break;
+        case 7:
+        case 8:
+            Common_Get(event_common).resetcenter_flags |= 0x100;
+            mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
+            break;
+        default:
+            if (Common_Get(event_common).resetcenter_flags& 0x100) {
+                mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
+            } else {
+                mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+            }
+            break;
+    }
+
+    mDemo_Set_talk_turn(TRUE);
+    actor->talk_flag = 4;
+    switch (actor->msg_type) {
+        case 1:
+            msg_no = 0x0394; // Resetti "Hey what are you doing down here"
+            break;
+        case 2:
+            msg_no = 0x012E; // Resetti&Don - Resetti "Don't waste your time on them"
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 5;
+            break;
+        case 3:
+            msg_no = 0x0130; // Resetti&Don - Resetti "Re-set Sur-veilence Center"
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 5;
+            break;
+        case 10:
+            msg_no = 0x012D; // Don "What are you doing here"
+            talk_proc = aRST_TALK_AINOTE_0;
+            break;
+        case 11:
+            msg_no = 0x012F;
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 6;
+            break;
+        case 12:
+            msg_no = 0x0131;
+            talk_proc = aRST_TALK_END_WAIT3;
+            actor->talk_flag = 6;
+            break;
+        case 4:
+            msg_no = 0x013D; // Resetti&Don - Resetti "If you could smooth things over"
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 5;
+            break;
+        case 5:
+            msg_no = 0x013F; // Resetti&Don - Resetti "I can't deal with that lady"
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 5;
+            break;
+        case 6:
+            msg_no = 0x0141; // Resetti&Don - Resetti "Don't be mad at me Big Bro"
+            talk_proc = aRST_TALK_4_1;
+            actor->talk_flag = 5;
+            break;
+        case 7:
+            msg_no = 0x0145; // Resetti immediate "Resetti Scramble"
+            talk_proc = aRST_TALK_4_3;
+            actor->talk_flag = 1;
+            break;
+        case 13:
+            msg_no = 0x013E;
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 6;
+            break;
+        case 14:
+            msg_no = 0x0140;
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 6;
+            break;
+        case 8:
+            msg_no = 0x1DD5; // Resetti immediate "Resetti Scramble" 2
+            talk_proc = aRST_TALK_4_3;
+            actor->talk_flag = 1;
+            break;
+        case 9:
+            idx = RANDOM(ARRAY_COUNT(reset_m8_msg_table));
+            Common_Get(event_common).resetcenter_flags &= ~0xC00;
+            Common_Get(event_common).resetcenter_flags |= idx << 10;
+            msg_no = reset_m8_msg_table[idx];
+            talk_proc = aRST_TALK_AINOTE_0;
+            actor->talk_flag = 5;
+            break;
+        case 15:
+            idx = (Common_Get(event_common).resetcenter_flags >> 10) & 3;
+            msg_no = racket_m8_msg_table[idx];
+            talk_proc = aRST_TALK_END_WAIT3;
+            actor->talk_flag = 6;
+            break;
+    }
+
+    mDemo_Set_msg_num(msg_no);
+    aRST_change_talk_proc(actor, talk_proc);
+}
+
+static void aRST_force_talk_request(ACTOR* actorx, GAME* game) {
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+
+    if (!actor->think_changed) {
+        mDemo_Request(mDemo_TYPE_SPEAK, actorx, aRST_set_force_talk_info);
+    } else {
+        actor->think_changed = FALSE;
+    }
+}
+
+static void aRST_set_norm_talk_info(ACTOR* actorx) {
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+    int msg_no = 0x0394; // Resetti "Hey what are you doing down here"
+    u8 talk_proc = aRST_TALK_END_WAIT;
+    int idx;
+
+    Common_Get(event_common).resetcenter_flags &= ~0x100;
+    actor->talk_flag = 4;
+    switch (actor->msg_type) {
+        case 1:
+            msg_no = 0x2FD3; // @BUG - I guess this is impossible to trigger or something?
+            // Because this is dialogue at Able Sisters in AC and e+.
+            talk_proc = aRST_TALK_STOP_PLAYER;
+            break;
+        case 2:
+            msg_no = 0x0395 + RANDOM(3); // Resetti
+            break;
+        case 3:
+            msg_no = 0x0132 + RANDOM(3); // Resetti
+            break;
+        case 8:
+            msg_no = 0x0135 + RANDOM(3); // Don
+            break;
+        case 4:
+            msg_no = 0x26E3; // Resetti
+            break;
+        case 5:
+            msg_no = 0x26E7 + RANDOM(3); // Resetti
+            break;
+        case 9:
+            msg_no = 0x0142 + RANDOM(3); // Don
+            break;
+        case 10:
+            msg_no = 0x2CE6; // Don
+            break;
+        case 11:
+            msg_no = 0x2CEA + RANDOM(3); // Don
+            break;
+        case 6:
+            msg_no = 0x1DD0; // Resetti
+            talk_proc = aRST_TALK_4_1;
+            break;
+        case 7:
+            msg_no = 0x1DE1 + RANDOM(3); // Resetti
+            break;
+        case 12:
+            msg_no = 0x1DE4 + RANDOM(3); // Don
+            break;
+    }
+
+    mDemo_Set_msg_num(msg_no);
+    mDemo_Set_talk_turn(TRUE);
+    mDemo_Set_camera(CAMERA2_PROCESS_TALK);
+    aRST_change_talk_proc(actor, talk_proc);
+    actor->npc_class.talk_info.turn = aNPC_TALK_TURN_HEAD;
+}
+
+static void aRST_norm_talk_request(ACTOR* actorx, GAME* game) {
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+
+    if (!actor->think_changed) {
+        mDemo_Request(mDemo_TYPE_TALK, actorx, aRST_set_norm_talk_info);
+    } else {
+        actor->think_changed = FALSE;
+    }
+}
+
+static int aRST_talk_init(ACTOR* actorx, GAME* game) {
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+
+    actor->npc_class.talk_info.talk_request_proc = (aNPC_TALK_REQUEST_PROC)none_proc1;
+    mDemo_Set_ListenAble();
+    mDemo_Start(actorx);
+    Now_Private->reset_center_flags |= (1 << 5); // talk flag
+    return TRUE;
+}
+
+typedef void (*aRST_TALK_PROC)(NPC_RESET_ACTOR* actor, GAME_PLAY* play);
+
+static int aRST_talk_end_chk(ACTOR* actorx, GAME* game) {
+    static aRST_TALK_PROC proc[] = {
+        aRST_talk_byebye, // aRST_TALK_BYEBYE
+        aRST_talk_exit, // aRST_TALK_EXIT
+        aRST_talk_stop_player, // aRST_TALK_STOP_PLAYER
+        aRST_talk_ainote_0, // aRST_TALK_AINOTE_0
+        aRST_talk_ainote_1, // aRST_TALK_AINOTE_1
+        aRST_talk_end_wait, // aRST_TALK_END_WAIT
+        (aRST_TALK_PROC)none_proc1, // aRST_TALK_END_WAIT2
+        aRST_talk_end_wait3, // aRST_TALK_END_WAIT3
+        aRST_talk_4_1, // aRST_TALK_4_1
+        aRST_talk_4_2, // aRST_TALK_4_2
+        aRST_talk_4_3, // aRST_TALK_4_3
+        aRST_talk_4_4, // aRST_TALK_4_4
+        aRST_talk_4_5, // aRST_TALK_4_5
+    };
+
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)actorx;
+    GAME_PLAY* play = (GAME_PLAY*)game;
+    int ret = FALSE;
+    int order;
+
+    (*proc[actor->talk_proc_idx])(actor, play);
+    order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    switch (order) {
+        case 2:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            actor->talk_flag = 4;
+            break;
+        case 3:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            if (actorx->npc_id == SP_NPC_RESET_MAJIN) {
+                actor->talk_flag = 5;
+            } else {
+                actor->talk_flag = 6;
+            }
+            break;
+        case 4:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            actor->talk_flag = 1;
+            break;
+    }
+
+    if (mDemo_CAN_ACTOR_TALK(actorx)) {
+        aRST_setup_think_proc(actor, play, actor->think_after_talk_idx);
+        ret = TRUE;
+    }
+
+    return ret;
+}

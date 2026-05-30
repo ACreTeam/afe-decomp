@@ -618,7 +618,7 @@ typedef struct event_common_s {
     u16 exist_flags0;
     u16 exist_flags1;
     s16 mikanbox_light_radius;
-    u16 resetcenter_flags;
+    s16 resetcenter_flags;
     int _224;
 } mEv_common_data_c;
 

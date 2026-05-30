@@ -1,0 +1,409 @@
+static void aRST_ready_sailing(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (aRI_get_door_alpha_percent() == 0.0f) {
+        if (actor->timer > 0) {
+            actor->timer--;
+        } else {
+            aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        }
+    }
+}
+
+static void aRST_sailing(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (aRST_CHAIR(actor)->act_idx == aRC_ACT_HIDE) {
+        if (actor->timer > 0) {
+            actor->timer--;
+        } else {
+            aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        }
+    }
+}
+
+static void aRST_settlement(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (aRI_get_door_alpha_percent() == 1.0f) {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        mPlib_request_main_wait_type3((GAME*)play);
+    }
+}
+
+static void aRST_hide(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->timer > 0) {
+        actor->timer--;
+    } else if (!mDemo_CheckDemo()) {
+        if (!mPlib_check_label_player_demo_wait((GAME*)play, actor)) {
+            mPlib_request_main_demo_wait_type1((GAME*)play, FALSE, actor);
+        } else {
+            aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        }
+    }
+}
+
+static void aRST_return(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (aRST_CHAIR(actor)->act_idx == aRC_ACT_WAIT) {
+        if (actor->timer > 0) {
+            actor->timer--;
+        } else {
+            aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        }
+    }
+}
+
+static void aRST_reset_ainote(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (Common_Get(event_common).resetcenter_flags & 0x80) {
+        actor->talk_flag = 0;
+        Common_Get(event_common).resetcenter_flags &= ~0x80;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x20) {
+        actor->talk_flag = 5;
+        Common_Get(event_common).resetcenter_flags &= ~0x20;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x40) {
+        actor->talk_flag = 4;
+        Common_Get(event_common).resetcenter_flags &= ~0x40;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x10) {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        Common_Get(event_common).resetcenter_flags &= ~0x10;
+    }
+}
+
+static void aRST_racket_ainote(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (Common_Get(event_common).resetcenter_flags & 0x8) {
+        actor->talk_flag = 0;
+        Common_Get(event_common).resetcenter_flags &= ~0x8;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x2) {
+        actor->talk_flag = 6;
+        Common_Get(event_common).resetcenter_flags &= ~0x2;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x4) {
+        actor->talk_flag = 4;
+        Common_Get(event_common).resetcenter_flags &= ~0x4;
+    }
+
+    if (Common_Get(event_common).resetcenter_flags & 0x1) {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+        Common_Get(event_common).resetcenter_flags &= ~0x1;
+    }
+}
+
+static void aRST_hunt(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->look_range != 0) {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+    }
+}
+
+static void aRST_remain(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (aRST_sailing_process(actor)) {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+    }
+}
+
+static void aRST_timer(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->timer > 0) {
+        actor->timer--;
+    } else {
+        aRST_setup_think_proc(actor, play, ++actor->think_idx);
+    }
+}
+
+static void aRST_think_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)nactorx;
+
+    actor->think_proc(actor, play);
+}
+
+static void aRST_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    static u8 reset_table[] = {
+        0x09, 0x0C, 0x13, 0x15, 0x1F, 0x20, 0x21, 0x26,
+        0x0B, 0x12, 0x14, 0x1E, 0x1F, 0x20, 0x25, 0x29,
+    };
+
+    static u8 racket_table[] = {
+        0x2A, 0x2B, 0x32, 0x33, 0x39, 0x3A, 0x3C, 0x3D,
+        0x2A, 0x31, 0x32, 0x38, 0x39, 0x3B, 0x3C, 0x3F,
+    };
+
+    NPC_RESET_ACTOR* actor = (NPC_RESET_ACTOR*)nactorx;
+    ACTOR* actorx = (ACTOR*)actor;
+    u8 think_idx = 0;
+
+    actorx->status_data.weight = MASSTYPE_IMMOVABLE;
+    nactorx->collision.check_kind = aNPC_BG_CHECK_TYPE_NONE;
+    nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_BGCHECK | aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+    nactorx->collision.BGcheck_radius = 1.0f;
+    nactorx->actor_class.position_speed.y = 0.0f;
+    nactorx->actor_class.gravity = 0.0f;
+    nactorx->actor_class.max_velocity_y = 0.0f;
+    nactorx->actor_class.world.position.y = 60.0f;
+    NPC_CLIP->animation_init_proc(actorx, aNPC_ANIM_WAIT_R1, FALSE);
+    nactorx->draw.main_animation.keyframe.frame_control.mode = cKF_FRAMECONTROL_REPEAT;
+    nactorx->talk_info.turn = aNPC_TALK_TURN_HEAD;
+
+    switch (nactorx->actor_class.npc_id) {
+        case SP_NPC_RESET_MAJIN:
+            think_idx = reset_table[actor->reset_mode_E];
+            switch (actor->reset_mode_E) {
+                case 7:
+                    actorx->talk_distance = 80.0f;
+                    break;
+            }
+            break;
+        case SP_NPC_RESET_BROTHER:
+            think_idx = racket_table[actor->reset_mode_E];
+            break;
+    }
+
+    nactorx->condition_info.hide_request = FALSE;
+    aRST_setup_think_proc(actor, play, think_idx);
+}
+
+static void aRST_normal_wait_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    ACTOR* actorx = (ACTOR*)actor;
+    cKF_SkeletonInfo_R_c* kf_p = &actor->npc_class.draw.main_animation.keyframe;
+
+    actor->npc_class.action.idx = aNPC_ACT_WAIT;
+    aRST_set_request_act(actor, 4, aNPC_ACT_WAIT, aNPC_ACT_TYPE_DEFAULT, aNPC_ACT_OBJ_DEFAULT, 0, 0);
+    NPC_CLIP->animation_init_proc(actorx, aNPC_ANIM_WAIT_R1, FALSE);
+    kf_p->frame_control.mode = cKF_FRAMECONTROL_REPEAT;
+    if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_BROTHER) {
+        kf_p->frame_control.current_frame = RANDOM(kf_p->frame_control.max_frames);
+    }
+}
+
+static void aRST_ready_sailing_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRI_request_light_on();
+    aRI_request_disappear_door();
+    aRST_normal_wait_init(actor, play);
+
+    switch (actor->think_after_talk_idx) {
+        case 2:
+            actor->timer = 120;
+            break;
+        case 6:
+            actor->timer = 30;
+            break;
+        default:
+            actor->timer = 0;
+            break;
+    }
+}
+
+static void aRST_sailing_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_CHAIR(actor)->next_act_idx = aRC_ACT_SAILING;
+    sAdo_OngenTrgStart(0x105, &actor->npc_class.actor_class.world.position);
+    actor->timer = 30;
+}
+
+static void aRST_settlement_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRI_request_light_off();
+    aRI_request_appear_door();
+}
+
+static void aRST_hide_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    actor->timer = 600;
+}
+
+static void aRST_return_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_CHAIR(actor)->next_act_idx = aRC_ACT_RETURN;
+    sAdo_OngenTrgStart(0x105, &actor->npc_class.actor_class.world.position);
+    actor->timer = 30;
+}
+
+static void aRST_end_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_normal_wait_init(actor, play);
+    actor->npc_class.actor_class.talk_distance = 45.0f;
+}
+
+static void aRST_start_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_normal_wait_init(actor, play);
+
+    if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_MAJIN) {
+        Common_Get(event_common).resetcenter_flags |= 0x4;
+    } else {
+        Common_Get(event_common).resetcenter_flags |= 0x40;
+    }
+}
+
+static void aRST_start2_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    aRST_normal_wait_init(actor, play);
+
+    if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_MAJIN) {
+        Common_Get(event_common).resetcenter_flags |= 0x2;
+    } else {
+        Common_Get(event_common).resetcenter_flags |= 0x20;
+    }
+}
+
+static void aRST_start3_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->npc_class.actor_class.npc_id == SP_NPC_RESET_MAJIN) {
+        Common_Get(event_common).resetcenter_flags |= 0x1;
+    } else {
+        Common_Get(event_common).resetcenter_flags |= 0x10;
+    }
+}
+
+static void aRST_timer_sailing_init(NPC_RESET_ACTOR* actor, GAME_PLAY* play) {
+    actor->timer = 10;
+}
+
+typedef struct {
+    u8 think_proc;
+    u8 think_init_proc;
+    u8 talk_req_type;
+    u8 msg_type;
+    u8 think_after_talk_idx;
+} aRST_think_data_c;
+
+static aRST_think_data_c dt_tbl[] = {
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x00, 0x00},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x01, 0x02},
+    {aRST_THINK_PROC_READY_SAILING, aRST_THINK_INIT_PROC_READY_SAILING, aRST_TALK_REQUEST_NONE, 0x00, 0x02},
+    {aRST_THINK_PROC_SAILING, aRST_THINK_INIT_PROC_SAILING, aRST_TALK_REQUEST_NONE, 0x00, 0x03},
+    {aRST_THINK_PROC_SETTLEMENT, aRST_THINK_INIT_PROC_SETTLEMENT, aRST_TALK_REQUEST_NONE, 0x00, 0x04},
+    {aRST_THINK_PROC_HIDE, aRST_THINK_INIT_PROC_HIDE, aRST_TALK_REQUEST_NONE, 0x00, 0x05},
+    {aRST_THINK_PROC_READY_SAILING, aRST_THINK_INIT_PROC_READY_SAILING, aRST_TALK_REQUEST_NONE, 0x00, 0x06},
+    {aRST_THINK_PROC_RETURN, aRST_THINK_INIT_PROC_RETURN, aRST_TALK_REQUEST_NONE, 0x00, 0x07},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_SETTLEMENT, aRST_TALK_REQUEST_FORCE, 0x00, 0x01},
+    {aRST_THINK_PROC_HUNT, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x09},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x01, 0x0B},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x02, 0x0B},
+    {aRST_THINK_PROC_HUNT, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x0C},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_START3, aRST_TALK_REQUEST_NONE, 0x00, 0x0D},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x02, 0x0F},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x0F},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x03, 0x11},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x11},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x03, 0x12},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x04, 0x14},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x05, 0x14},
+    {aRST_THINK_PROC_HUNT, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x15},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_START2, aRST_TALK_REQUEST_FORCE, 0x04, 0x17},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x17},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x05, 0x19},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x19},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x06, 0x1B},
+    {aRST_THINK_PROC_TIMER, aRST_THINK_INIT_PROC_TIMER_SAILING, aRST_TALK_REQUEST_NONE, 0x00, 0x1B},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x07, 0x1D},
+    {aRST_THINK_PROC_REMAIN, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x1D},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x1E},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x1F},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x20},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x06, 0x22},
+    {aRST_THINK_PROC_TIMER, aRST_THINK_INIT_PROC_TIMER_SAILING, aRST_TALK_REQUEST_NONE, 0x00, 0x22},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x08, 0x24},
+    {aRST_THINK_PROC_REMAIN, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x24},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x25},
+    {aRST_THINK_PROC_HUNT, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x26},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x09, 0x28},
+    {aRST_THINK_PROC_RESET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x28},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_END, aRST_TALK_REQUEST_NORM, 0x07, 0x29},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x2A},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x2B},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_START, aRST_TALK_REQUEST_FORCE, 0x0A, 0x2D},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x2D},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x0B, 0x2F},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x2F},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x0C, 0x31},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x08, 0x31},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x32},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x33},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x0D, 0x35},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x35},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x0E, 0x37},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x37},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x09, 0x38},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x39},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x0A, 0x3B},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x0B, 0x3B},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x3C},
+    {aRST_THINK_PROC_RACKET_AINOTE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NONE, 0x00, 0x3D},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_FORCE, 0x0F, 0x3F},
+    {aRST_THINK_PROC_NONE, aRST_THINK_INIT_PROC_NORMAL_WAIT, aRST_TALK_REQUEST_NORM, 0x0C, 0x3F},
+};
+
+static aRST_THINK_PROC proc_table[11] = {
+    (aRST_THINK_PROC)none_proc1,
+    aRST_ready_sailing,
+    aRST_sailing,
+    aRST_settlement,
+    aRST_hide,
+    aRST_return,
+    aRST_reset_ainote,
+    aRST_racket_ainote,
+    aRST_hunt,
+    aRST_remain,
+    aRST_timer,
+};
+
+typedef void (*aRST_THINK_INIT_PROC)(NPC_RESET_ACTOR* actor, GAME_PLAY* play);
+
+static aRST_THINK_INIT_PROC init_table[12] = {
+    (aRST_THINK_INIT_PROC)none_proc1,
+    aRST_normal_wait_init,
+    aRST_ready_sailing_init,
+    aRST_sailing_init,
+    aRST_settlement_init,
+    aRST_hide_init,
+    aRST_return_init,
+    aRST_end_init,
+    aRST_start_init,
+    aRST_start2_init,
+    aRST_start3_init,
+    aRST_timer_sailing_init,
+};
+
+static void aRST_setup_think_proc(NPC_RESET_ACTOR* actor, GAME_PLAY* play, u8 think_idx) {
+    static aNPC_TALK_REQUEST_PROC talk_request_table[] = {
+        (aNPC_TALK_REQUEST_PROC)none_proc1,
+        aRST_norm_talk_request,
+        aRST_force_talk_request,
+    };
+
+    aRST_think_data_c* data_p = &dt_tbl[think_idx];
+
+    actor->think_idx = think_idx;
+    actor->think_proc = proc_table[data_p->think_proc];
+    actor->npc_class.talk_info.talk_request_proc = talk_request_table[data_p->talk_req_type];
+    actor->msg_type = data_p->msg_type;
+    actor->think_after_talk_idx = data_p->think_after_talk_idx;
+    (*init_table[data_p->think_init_proc])(actor, play);
+    actor->think_changed = TRUE;
+}
+
+static void aRST_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int think_proc_type) {
+    switch (think_proc_type) {
+        case aNPC_THINK_PROC_INIT:
+            aRST_think_init_proc(nactorx, play);
+            break;
+        case aNPC_THINK_PROC_MAIN:
+            aRST_think_main_proc(nactorx, play);
+            break;
+    }
+}
+
+static void aRST_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    nactorx->think.think_proc = aRST_think_proc;
+    NPC_CLIP->think_proc(nactorx, play, aNPC_THINK_IN_BLOCK, aNPC_THINK_TYPE_INIT);
+}
+
+static void aRST_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
+    if (!NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT)) {
+        NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
+    }
+}
+
+static void aRST_schedule_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int sched_proc_type) {
+    switch (sched_proc_type) {
+        case aNPC_SCHEDULE_PROC_INIT:
+            aRST_schedule_init_proc(nactorx, play);
+            break;
+        case aNPC_SCHEDULE_PROC_MAIN:
+            aRST_schedule_main_proc(nactorx, play);
+            break;
+    }
+}

@@ -116,8 +116,8 @@ static mNpc_Sp_Npc_Name_c l_sp_actor_name[] = {
     // Resetti
     { SP_NPC_MAJIN_D080, mPr_SEX_MALE, 0x4E0, 2 },
     { SP_NPC_EV_MAJIN, mPr_SEX_MALE, 0x4E0, 2 },
-    { SP_NPC_T_RESET_MAJIN, mPr_SEX_MALE, 0x4E0, 2 },
-    { SP_NPC_T_RESET_BROTHER, mPr_SEX_MALE, 0x6D8, 2 }, // Don
+    { SP_NPC_RESET_MAJIN, mPr_SEX_MALE, 0x4E0, 2 },
+    { SP_NPC_RESET_BROTHER, mPr_SEX_MALE, 0x6D8, 2 }, // Don
     // Gulliver
     { SP_NPC_EV_DOZAEMON, mPr_SEX_MALE, 0x4E1, 2 },
     // Snowman

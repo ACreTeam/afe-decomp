@@ -53,7 +53,7 @@ typedef struct clip_s {
     /* 0x024 */ aNI_Clip_c* needlework_indoor_clip;
     /* 0x028 */ aMSN_Clip_c* misin_clip;
     /* 0x02C */ aHTBL_Clip_c* htbl_clip;
-    /* 0x030 */ void* _030;
+    /* 0x030 */ ACTOR* resetcenter_indoor_clip;
     /* 0x034 */ void* _034;
     /* 0x038 */ void* _038;
     /* 0x03C */ void* _03C;
