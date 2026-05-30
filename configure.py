@@ -302,6 +302,17 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     }
 
 
+def DolphinLibMtx(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": lib_name,
+        "mw_version": "GC/1.2.5",
+        "cflags": [*cflags_runtime, "-char signed"],
+        "progress_category": "sdk",
+        "src_dir": "src/static",
+        "objects": objects,
+    }
+
+
 # Helper function for REL script objects
 def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
@@ -337,6 +348,182 @@ def MatchingFor(*versions):
 config.warn_missing_config = True
 config.warn_missing_source = False
 config.libs = [
+        DolphinLib(
+        "ai",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/ai/ai.c"),
+        ],
+    ),
+    DolphinLib(
+        "ar",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/ar/ar.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/ar/arq.c"),
+        ],
+    ),
+    DolphinLib(
+        "amcstubs",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/amcstubs/AmcExi2Stubs.c"),
+        ],
+    ),
+    DolphinLib(
+        "base",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/base/PPCArch.c"),
+        ],
+    ),
+    DolphinLib(
+        "card",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDBios.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDBlock.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDCheck.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDCreate.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDDelete.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDDir.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDFormat.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDMount.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDNet.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDOpen.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDRdwr.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDRead.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDRename.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDStat.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDStatEx.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/card/CARDWrite.c"),
+        ],
+    ),
+    DolphinLib(
+        "db",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/db/db.c"),
+        ],
+    ),
+    DolphinLib(
+        "dsp",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dsp/dsp.c"),
+        ],
+    ),
+    DolphinLib(
+        "dvd",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/dvd.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/dvderror.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/dvdfs.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/dvdlow.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/dvdqueue.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/dvd/fstload.c"),
+        ],
+    ),
+    DolphinLib(
+        "exi",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/exi/EXIBios.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/exi/EXIUart.c"),
+        ],
+    ),
+    DolphinLib(
+        "gba",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBA.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAGetProcessStatus.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAJoyBoot.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBARead.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAWrite.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAXfer.c"),
+        ],
+    ),
+    DolphinLib(
+        "gx",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXAttr.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXBump.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXDisplayList.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXFifo.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXFrameBuf.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXGeometry.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXInit.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXLight.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXMisc.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXPerf.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXPixel.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXStubs.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXTev.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXTexture.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/gx/GXTransform.c"),
+        ],
+    ),
+    DolphinLibMtx(
+        "mtx",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/mtx/mtx.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/mtx/mtx44.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/mtx/mtxvec.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/mtx/vec.c"),
+        ],
+    ),
+    DolphinLib(
+        "OdemuExi2",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/OdemuExi2/DebuggerDriver.c", extra_cflags=["-inline deferred"]),
+        ],
+    ),
+    DolphinLib(
+        "odenotstub",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/odenotstub/odenotstub.c"),
+        ],
+    ),
+    DolphinLib(
+        "os",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/__ppc_eabi_init.cpp"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/__start.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OS.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSAlarm.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSAlloc.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSArena.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSAudioSystem.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSCache.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSContext.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSError.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSFont.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSInterrupt.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSLink.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSMemory.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSMessage.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSMutex.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSReboot.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSReset.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSResetSW.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSRtc.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSSync.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSThread.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/os/OSTime.c"),
+        ],
+    ),
+    DolphinLib(
+        "pad",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/pad/Pad.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/pad/Padclamp.c"),
+        ],
+    ),
+    DolphinLib(
+        "si",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/si/SIBios.c"),
+            Object(MatchingFor(), "GAEJ01_00/dolphin/si/SISamplingRate.c"),
+        ],
+    ),
+    DolphinLib(
+        "vi",
+        [
+            Object(MatchingFor(), "GAEJ01_00/dolphin/vi/vi.c"),
+        ],
+    ),
     JSystemLib(
         "J2DGraph",
         [
