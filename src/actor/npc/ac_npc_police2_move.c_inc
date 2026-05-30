@@ -1,23 +1,58 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_police2.h"
+
+#include "m_common_data.h"
+#include "libultra/libultra.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_string.h"
+#include "m_player_lib.h"
+#include "m_bgm.h"
+#include "m_melody.h"
+
+enum {
+    aPOL2_ACT_GREET,
+    aPOL2_ACT_WAIT,
+    aPOL2_ACT_WALK_PL_SAME_ZONE,
+    aPOL2_ACT_WALK_PL_OTHER_ZONE,
+    aPOL2_ACT_RUN_PL_SAME_ZONE,
+    aPOL2_ACT_RUN_PL_OTHER_ZONE,
+    aPOL2_ACT_TURN,
+    aPOL2_ACT_CHECK_ANSWER,
+    aPOL2_ACT_TALK_END_WAIT,
+
+    aPOL2_ACT_NUM
+};
+
+static void aPOL2_setupAction(NPC_POLICE2_ACTOR* actor, int action);
+#endif
+
 static void aPOL2_BGcheck(ACTOR* actorx) {
     mCoBG_BgCheckControll(NULL, actorx, 8.0f, 0.0f, mCoBG_WALL_TYPE1, mCoBG_REVERSE_TYPE_REVERSE, mCoBG_CHECK_TYPE_NORMAL);
 }
 
+typedef struct npc_police2_anim_info_s {
+    int seq_no;
+    int talk_flag;
+} aPOL2_anim_info_c;
+
 static void aPOL2_set_animation(NPC_POLICE2_ACTOR* actor, int action) {
     // clang-format off
-    static animeSeqNoTable[] = {
-        aNPC_ANIM_WAIT1,
-        aNPC_ANIM_WAIT1,
-        aNPC_ANIM_WALK1,
-        aNPC_ANIM_WALK1,
-        aNPC_ANIM_RUN1,
-        aNPC_ANIM_RUN1,
-        aNPC_ANIM_WALK1,
-        aNPC_ANIM_WAIT1,
-        aNPC_ANIM_WAIT1,
+    static aPOL2_anim_info_c animeSeqNoTable[] = {
+        { aNPC_ANIM_WAIT1, FALSE },
+        { aNPC_ANIM_WAIT1, FALSE },
+        { aNPC_ANIM_WALK1, FALSE },
+        { aNPC_ANIM_WALK1, FALSE },
+        { aNPC_ANIM_RUN1, FALSE },
+        { aNPC_ANIM_RUN1, FALSE },
+        { aNPC_ANIM_WALK1, FALSE },
+        { aNPC_ANIM_WAIT1, FALSE },
+        { aNPC_ANIM_WAIT1, FALSE },
     };
     // clang-format on
+    aPOL2_anim_info_c* anime_info = &animeSeqNoTable[action];
 
-    NPC_CLIP->animation_init_proc((ACTOR*)actor, animeSeqNoTable[action], FALSE);
+    NPC_CLIP->animation_init_proc((ACTOR*)actor, anime_info->seq_no, anime_info->talk_flag);
 }
 
 static void aPOL2_set_stop_spd(NPC_POLICE2_ACTOR* actor) {
@@ -164,11 +199,24 @@ static int aPOL2_decide_next_move_act(NPC_POLICE2_ACTOR* actor, GAME_PLAY* play)
         ACTOR* playerx = GET_PLAYER_ACTOR_ACTOR(play);
 
         if (playerx == NULL) {
+            actor->entered_from_door = FALSE;
             return actor->action;
         } else {
-            f32 dX = playerx->world.position.x - actor->npc_class.actor_class.world.position.x;
-            f32 dZ = playerx->world.position.z - actor->npc_class.actor_class.world.position.z;
-            f32 dist = SQ(dX) + SQ(dZ);
+            float dX;
+            float dZ;
+            float dist;
+
+            if (playerx->world.position.z > 360.0f) {
+                if (actor->entered_from_door == TRUE) {
+                    return aPOL2_ACT_WAIT;
+                }
+            } else {
+                actor->entered_from_door = FALSE;
+            }
+
+            dX = playerx->world.position.x - actor->npc_class.actor_class.world.position.x;
+            dZ = playerx->world.position.z - actor->npc_class.actor_class.world.position.z;
+            dist = SQ(dX) + SQ(dZ);
 
             if (dist < (SQ(50.0f)-50.0f)) {
                 return aPOL2_ACT_WAIT;
@@ -319,16 +367,23 @@ static void aPOL2_message_ctrl(NPC_POLICE2_ACTOR* actor, GAME_PLAY* play) {
     }
 }
 
-static void aPOL2_player_getout_check(GAME_PLAY* play, ACTOR* playerx) {
+static void aPOL2_set_player_getout_info(ACTOR* actorx) {
+    if (goto_other_scene((GAME_PLAY*)gamePT, Common_GetPointer(structure_exit_door_data), TRUE) != TRUE) {
+        mDemo_End(actorx);
+    } else {
+        mBGMPsComp_scene_mode(14);
+        mBGMPsComp_make_ps_wipe(0x195);
+        mPB_copy_itemBuf(Save_Get(police_box).keep_items);
+    }
+}
+
+static void aPOL2_player_getout_check(ACTOR* actorx, GAME_PLAY* play, ACTOR* playerx) {
     if (playerx != NULL) {
         PLAYER_ACTOR* player = (PLAYER_ACTOR*)playerx;
         mActor_name_t item = player->item_in_front;
 
-        if (item == EXIT_DOOR1) {
-            mBGMPsComp_scene_mode(14);
-            mBGMPsComp_make_ps_wipe(0x195);
-            mPB_copy_itemBuf(Save_Get(police_box).keep_items);
-            goto_other_scene(play, Common_GetPointer(structure_exit_door_data), TRUE);
+        if (item == EXIT_DOOR1 && mEv_IsNotTitleDemo() && play->fb_wipe_mode == WIPE_MODE_NONE && !mDemo_Check(mDemo_TYPE_EXITSCENE, actorx)) {
+            mDemo_Request(mDemo_TYPE_EXITSCENE, actorx, aPOL2_set_player_getout_info);
         }
     }
 }
@@ -536,7 +591,7 @@ static void aPOL2_actor_move(ACTOR* actorx, GAME* game) {
     aPOL2_set_zone_data(actor, playerx);
     aPOL2_set_player_angl(actor);
     actor->act_proc(actor, play);
-    aPOL2_player_getout_check(play, playerx);
+    aPOL2_player_getout_check(actorx, play, playerx);
 
     NPC_CLIP->move_after_proc(actorx, game);
 }

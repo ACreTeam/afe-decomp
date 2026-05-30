@@ -62,7 +62,7 @@ static void aPOL2_actor_ct(ACTOR* actorx, GAME* game) {
     NPC_POLICE2_ACTOR* actor = (NPC_POLICE2_ACTOR*)actorx;
     int action;
         
-    CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+    NPC_CLIP->ct_proc(actorx, game, &ct_data);
     actor->npc_class.condition_info.hide_flg = FALSE;
     actor->item_idx = -1;
     actorx->shape_info.draw_shadow = TRUE;
@@ -74,25 +74,26 @@ static void aPOL2_actor_ct(ACTOR* actorx, GAME* game) {
         actor->npc_class.talk_info.melody_inst = 0;
     } else {
         action = aPOL2_ACT_GREET;
+        actor->entered_from_door = TRUE;
     }
 
     aPOL2_setupAction(actor, action);
 }
 
 static void aPOL2_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aPOL2_actor_dt(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
 static void aPOL2_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aPOL2_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/ac_npc_police2_move.c_inc"

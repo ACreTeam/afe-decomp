@@ -1105,7 +1105,7 @@ config.libs = [
             Object(NonMatching, "actor/npc/ac_npc_p_sel.c"),
             Object(NonMatching, "actor/npc/ac_npc_p_sel2.c"),
             Object(NonMatching, "actor/npc/ac_npc_police.c"),
-            Object(NonMatching, "actor/npc/ac_npc_police2.c"),
+            Object(Matching, "actor/npc/ac_npc_police2.c"),
             Object(NonMatching, "actor/npc/ac_npc_post_girl.c"),
             Object(NonMatching, "actor/npc/ac_npc_post_man.c"),
             Object(NonMatching, "actor/npc/ac_npc_rcn_guide.c"),

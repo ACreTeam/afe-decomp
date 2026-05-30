@@ -23,6 +23,7 @@ struct npc_police2_actor_s {
     u8 pl_zone;
     s16 player_angl;
     s16 item_idx;
+    int entered_from_door;
 };
 
 extern ACTOR_PROFILE Npc_Police2_Profile;
