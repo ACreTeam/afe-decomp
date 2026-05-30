@@ -74,15 +74,15 @@ static void aRC_sailing(RESET_CHAIR_ACTOR* actor, GAME* game) {
             actor->sailing_state++;
             break;
         case 1:
-            if (actor->ofs_z > -130.0f) {
-                actor->ofs_z -= 2.0f;
-            } else {
+            if (actor->ofs_z <= -130.0f) {
                 actor->sailing_state++;
+            } else {
+                actor->ofs_z -= 2.0f;
             }
             break;
         default:
             actor->next_act_idx = 2;
-            break;
+            return;
     }
 
     actor->actor_class.world.position.z = actor->actor_class.home.position.z + actor->ofs_z;
@@ -99,16 +99,16 @@ static void aRC_return(RESET_CHAIR_ACTOR* actor, GAME* game) {
             actor->sailing_state++;
             break;
         case 1:
-            if (actor->ofs_z < 0.0f) {
-                actor->ofs_z += 2.0f;
-            } else {
-                actor->ofs_z = 0.0f;
+            if (actor->ofs_z >= 0.0f) {
                 actor->sailing_state++;
+                actor->ofs_z = 0.0f;
+            } else {
+                actor->ofs_z += 2.0f;
             }
             break;
         default:
             actor->next_act_idx = 0;
-            break;
+            return;
     }
 
     actor->actor_class.world.position.z = actor->actor_class.home.position.z + actor->ofs_z;

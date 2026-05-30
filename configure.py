@@ -1021,7 +1021,7 @@ config.libs = [
             Object(NonMatching, "actor/ac_quest_talk_normal_init.c"),
             Object(Matching, "actor/ac_radio.c"),
             Object(Matching, "actor/ac_reserve.c"),
-            Object(NonMatching, "actor/ac_reset_chair.c"),
+            Object(Matching, "actor/ac_reset_chair.c"),
             Object(NonMatching, "actor/ac_resetcenter_indoor.c"),
             Object(Matching, "actor/ac_reset_demo.c"),
             Object(Matching, "actor/ac_ride_off_demo.c"),
