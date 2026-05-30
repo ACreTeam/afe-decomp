@@ -21,16 +21,18 @@ typedef void (*aCR_ACT_PROC)(NPC_CURATOR_ACTOR*, GAME_PLAY*);
 typedef void (*aCR_TALK_ACT_PROC)(NPC_CURATOR_ACTOR*, GAME_PLAY*);
 
 struct npc_curator_actor_s {
-  NPC_ACTOR npc_class;
-  int action;
-  aCR_ACT_PROC action_proc;
-  int sleep_wait_timer;
-  int talk_act_idx;
-  aCR_TALK_ACT_PROC talk_proc;
-  aCR_SETUPTALKACTION_PROC setupTalkAction_proc;
-  int msg_no;
-  int _9B0; // might be unused 'awake' state
-  mActor_name_t donated_item;
+    NPC_ACTOR npc_class;
+    int action;
+    aCR_ACT_PROC action_proc;
+    int sleep_wait_timer;
+    int talk_act_idx;
+    aCR_TALK_ACT_PROC talk_proc;
+    aCR_SETUPTALKACTION_PROC setupTalkAction_proc;
+    int msg_no;
+    int _9B0; // might be unused 'awake' state
+    int donated_item_slot_no;
+    mActor_name_t donated_item;
+    mActor_name_t live_music;
 };
 
 extern ACTOR_PROFILE Npc_Curator_Profile;
@@ -40,4 +42,3 @@ extern ACTOR_PROFILE Npc_Curator_Profile;
 #endif
 
 #endif
-

@@ -1089,7 +1089,7 @@ config.libs = [
             Object(Matching, "actor/npc/ac_npc.c"),
             Object(Matching, "actor/npc/ac_npc2.c"),
             Object(NonMatching, "actor/npc/ac_npc_conv_master.c"),
-            Object(NonMatching, "actor/npc/ac_npc_curator.c"),
+            Object(Matching, "actor/npc/ac_npc_curator.c"),
             Object(NonMatching, "actor/npc/ac_npc_depart_master.c"),
             Object(Matching, "actor/npc/ac_npc_engineer.c"),
             Object(Matching, "actor/npc/ac_npc_guide.c"),
