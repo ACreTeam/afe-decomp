@@ -20,6 +20,7 @@
 #include "m_submenu.h"
 #include "m_field_info.h"
 #include "m_common_data.h"
+#include "m_string.h"
 
 extern cKF_Skeleton_R_c cKF_bs_r_hnw;
 extern cKF_Animation_R_c cKF_ba_r_hnw_move;

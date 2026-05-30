@@ -37,7 +37,6 @@ enum haniwa_action {
     aHNW_ACTION_DANCE,
     aHNW_ACTION_CHECK_PROCEEDS,
     aHNW_ACTION_TALK_WITH_MASTER,
-    aHNW_ACTION_TALK_WITH_MASTER2,
     aHNW_ACTION_TALK_END_WAIT,
     aHNW_ACTION_MENU_OPEN_WAIT,
     aHNW_ACTION_MENU_END_WAIT,
@@ -50,6 +49,8 @@ enum haniwa_action {
     aHNW_ACTION_PL_APPROACH_DOOR,
     aHNW_ACTION_DOOR_OPEN_WAIT,
     aHNW_ACTION_DOOR_OPEN_TIMER,
+    aHNW_ACTION_ALARM_1,
+    aHNW_ACTION_ALARM_2,
 
     aHNW_ACTION_NUM
 };
@@ -67,6 +68,7 @@ struct actor_haniwa_s {
     /* 0x282 */ u8 submenu_type;
     /* 0x283 */ u8 house_idx;
     /* 0x284 */ u8 playing_save_bgm;
+    /* 0x285 */ u8 alarm_mode;
 };
 
 extern ACTOR_PROFILE Haniwa_Profile;

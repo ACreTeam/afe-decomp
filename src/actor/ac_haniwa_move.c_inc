@@ -21,6 +21,7 @@
 #include "m_submenu.h"
 #include "m_field_info.h"
 #include "m_common_data.h"
+#include "m_string.h"
 
 static void aHNW_actor_draw(ACTOR* actor, GAME* game);
 
@@ -52,6 +53,29 @@ static int aHNW_set_save_permission() {
     return res;
 }
 
+static int aNNW_choise_check(void) {
+    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order == 0) {
+        return -1;
+    }
+
+    if (mMsg_Check_MainNormalContinue(msg_win)) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        return mChoice_GET_CHOSENUM();
+    }
+
+
+    return -1;
+}
+
+static HaniwaAlarmInfo_c* aHNW_get_alarmInfo(void) {
+    int arrange_idx = mHS_get_arrange_idx(Common_Get(player_no));
+    mHm_hs_c* house = Save_GetPointer(homes[arrange_idx]);
+    return &house->haniwa.alarm_info;
+}
+
 static void aHNW_search_player(HANIWA_ACTOR* haniwa) {
     chase_angle(&((ACTOR*)haniwa)->shape_info.rotation.y, ((ACTOR*)haniwa)->player_angle_y, 0x0600);
 }
@@ -80,9 +104,9 @@ static int aHNW_check_keep_item(HANIWA_ACTOR* haniwa) {
 }
 
 static void aHNW_set_proceeds_str(Haniwa_c* haniwa) {
-    u8 str[7];
+    u8 str[6];
 
-    mFont_UnintToString(str, 7, haniwa->bells, 6, TRUE, FALSE, TRUE);
+    mFont_UnintToString(str, 6, haniwa->bells, 6, TRUE, FALSE, FALSE);
     mMsg_SET_FREE_STR(mMsg_FREE_STR0, str, sizeof(str));
 }
 
@@ -109,7 +133,7 @@ static int aHNW_check_handOver_proceeds(Haniwa_c* haniwa) {
         } else {
             u8 str[5];
 
-            mFont_UnintToString(str, 5, num_30k_bell_bags, 5, TRUE, FALSE, TRUE);
+            mFont_UnintToString(str, 5, num_30k_bell_bags, 5, TRUE, FALSE, FALSE);
             mMsg_SET_FREE_STR(mMsg_FREE_STR1, str, sizeof(str));
         }
     }
@@ -189,8 +213,8 @@ static void aHNW_set_talk_info_dance(ACTOR* actor) {
         MSG_2356, /* aHNW_MSG_NO_OWNER */
         MSG_2357, /* aHNW_MSG_PROCEEDS */
         MSG_2341, /* aHNW_MSG_NORMAL */
-        MSG_2344, /* aHNW_MSG_OTHER_OWNER */
-        MSG_2350  /* aHNW_MSG_NEED_FRIEND */
+        MSG_2345, /* aHNW_MSG_OTHER_OWNER */
+        MSG_2350, /* aHNW_MSG_NEED_FRIEND */
     };
 
     HANIWA_ACTOR* haniwa = (HANIWA_ACTOR*)actor;
@@ -201,11 +225,6 @@ static void aHNW_set_talk_info_dance(ACTOR* actor) {
     switch (msg_idx) {
         case aHNW_MSG_PROCEEDS: {
             aHNW_set_proceeds_str(house_haniwa);
-            break;
-        }
-
-        case aHNW_MSG_OTHER_OWNER: {
-            mMsg_Set_mail_str(mMsg_Get_base_window_p(), 0, house_haniwa->message, HANIWA_MESSAGE_LEN);
             break;
         }
     }
@@ -240,8 +259,8 @@ static void aHNW_dance(HANIWA_ACTOR* haniwa, GAME* game) {
 
 static void aHNW_check_proceeds(HANIWA_ACTOR* haniwa, GAME* game) {
     static int msg_no[aHNW_HANDOVER_NUM] = {
-        0x0936, /* aHNW_HANDOVER_YES */
-        0x0937  /* aHNW_HANDOVER_NO */
+        MSG_2358, /* aHNW_HANDOVER_YES */
+        MSG_2359, /* aHNW_HANDOVER_NO */
     };
 
     static int next_act_idx[aHNW_HANDOVER_NUM] = {
@@ -268,73 +287,54 @@ static void aHNW_check_proceeds(HANIWA_ACTOR* haniwa, GAME* game) {
 }
 
 static void aHNW_talk_with_master(HANIWA_ACTOR* haniwa, GAME* game) {
-    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
+    int action = -1;
+    int choice = aNNW_choise_check();
 
-    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) && mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
-        int action = -1;
-
-        switch (mChoice_GET_CHOSENUM()) {
+    if (choice != -1) {
+        switch (choice) {
             case mChoice_CHOICE0: {
                 action = aHNW_ACTION_SAVE_CHECK;
                 break;
             }
 
             case mChoice_CHOICE1: {
+                u8 str[mMsg_FREE_STRING_LEN];
+                HaniwaAlarmInfo_c* alarm_info;
+                int msg_no;
+                int str_no;
+
+                action = aHNW_ACTION_ALARM_1;
+                alarm_info = aHNW_get_alarmInfo();
+                msg_no = alarm_info->enabled == TRUE ? MSG_2362 : MSG_2360;
+                str_no = alarm_info->mode == mHm_HANIWA_ALARM_MODE_ON_PLAY ? 0x0754 : 0x0755;
+
+                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+                mString_Load_StringFromRom(str, sizeof(str), str_no);
+                mMsg_SET_ITEM_STR(mMsg_ITEM_STR0, str, sizeof(str));
+                break;
+            }
+
+            case mChoice_CHOICE2: {
+                action = aHNW_ACTION_ROOF_CHECK;
+                break;
+            }
+
+            case mChoice_CHOICE3: {
                 action = aHNW_ACTION_MENU_OPEN_WAIT;
                 haniwa->submenu_type = mSM_OVL_INVENTORY;
                 break;
             }
 
-            case mChoice_CHOICE2: {
-                action = aHNW_ACTION_TALK_WITH_MASTER2;
-                break;
-            }
-
-            case mChoice_CHOICE3: {
+            case mChoice_CHOICE4: {
                 action = aHNW_ACTION_TALK_END_WAIT;
                 break;
             }
         }
 
         if (action != -1) {
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
             aHNW_setupAction(haniwa, game, action);
-        }
-    }
-}
-
-static void aHNW_talk_with_master2(HANIWA_ACTOR* haniwa, GAME* game) {
-    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
-
-    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) && mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
-        int action = -1;
-
-        switch (mChoice_GET_CHOSENUM()) {
-            case mChoice_CHOICE0: {
-                action = aHNW_ACTION_ROOF_CHECK;
-                break;
-            }
-
-            case mChoice_CHOICE1: {
-                action = aHNW_ACTION_MENU_OPEN_WAIT;
-                haniwa->submenu_type = mSM_OVL_HBOARD;
-                break;
-            }
-
-            case mChoice_CHOICE2: {
-                action = aHNW_ACTION_TALK_WITH_MASTER;
-                break;
-            }
-
-            case mChoice_CHOICE3: {
-                action = aHNW_ACTION_TALK_END_WAIT;
-                break;
-            }
-        }
-
-        if (action != -1) {
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-            aHNW_setupAction(haniwa, game, action);
+        } else {
+            aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_END_WAIT);
         }
     }
 }
@@ -352,9 +352,11 @@ static void aHNW_menu_open_wait(HANIWA_ACTOR* haniwa, GAME* game) {
         int submenu_type = haniwa->submenu_type;
         Submenu* submenu = &((GAME_PLAY*)game)->submenu;
         int arg1 = haniwa->house_idx;
+        int msg_no = MSG_2343;
 
         switch (submenu_type) {
             case mSM_OVL_HBOARD: {
+                msg_no = MSG_2344;
                 mSM_open_submenu(submenu, mSM_OVL_HBOARD, 0, arg1);
                 break;
             }
@@ -368,9 +370,18 @@ static void aHNW_menu_open_wait(HANIWA_ACTOR* haniwa, GAME* game) {
                 mSM_open_submenu(submenu, mSM_OVL_NEEDLEWORK, mNW_OPEN_DESIGN, arg1);
                 break;
             }
+
+            case mSM_OVL_ALARMIN: {
+                if (haniwa->alarm_mode != 0) {
+                    mSM_open_submenu(submenu, mSM_OVL_ALARMIN, mHm_HANIWA_ALARM_MODE_AT_TIME, arg1);
+                } else {
+                    mSM_open_submenu(submenu, mSM_OVL_ALARMIN, mHm_HANIWA_ALARM_MODE_ON_PLAY, arg1);
+                }
+                break;
+            }
         }
 
-        mMsg_ChangeMsgData(msg_win, 0x0927);
+        mMsg_ChangeMsgData(msg_win, msg_no);
         mMsg_Set_ForceNext(msg_win);
         aHNW_setupAction(haniwa, game, aHNW_ACTION_MENU_END_WAIT);
     }
@@ -382,16 +393,17 @@ static void aHNW_menu_end_wait(HANIWA_ACTOR* haniwa, GAME* game) {
 
     if (submenu->open_flag == FALSE) {
         if (mMsg_CHECK_NOT_SERIES_MAIN_WAIT() == TRUE) {
-            aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_WITH_MASTER);
-            switch (haniwa->submenu_type) {
-                case mSM_OVL_NEEDLEWORK: {
-                    Submenu_Item_c* item = submenu->item_p;
-                    if (item->item == RSV_NO) {
-                        Save_Get(homes[haniwa->house_idx]).door_original = mNW_get_image_no(submenu, item->slot_no);
-                        sAdo_SysTrgStart(NA_SE_461);
-                    }
+            if (haniwa->submenu_type == mSM_OVL_HBOARD) {
+                aHNW_setupAction(haniwa, game, aHNW_ACTION_ALARM_2);
+            } else {
+                aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_WITH_MASTER);
+            }
 
-                    break;
+            if (haniwa->submenu_type == mSM_OVL_NEEDLEWORK) {
+                Submenu_Item_c* item = submenu->item_p;
+                if (item->item == RSV_NO) {
+                    Save_Get(homes[haniwa->house_idx]).door_original = mNW_get_image_no(submenu, item->slot_no);
+                    sAdo_SysTrgStart(NA_SE_461);
                 }
             }
 
@@ -401,7 +413,7 @@ static void aHNW_menu_end_wait(HANIWA_ACTOR* haniwa, GAME* game) {
 }
 
 static void aHNW_talk_with_guest(HANIWA_ACTOR* haniwa, GAME* game) {
-    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 0)) {
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9)) {
         mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
         if (mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
             int action = -1;
@@ -425,7 +437,7 @@ static void aHNW_talk_with_guest(HANIWA_ACTOR* haniwa, GAME* game) {
             }
 
             if (action != -1) {
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0, 0);
+                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
                 aHNW_setupAction(haniwa, game, action);
             }
         }
@@ -453,12 +465,12 @@ static void aHNW_menu_end_wait_for_guest(HANIWA_ACTOR* haniwa, GAME* game) {
 }
 
 static void aHNW_save_check(HANIWA_ACTOR* haniwa, GAME* game) {
-    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
-    int order_value = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
     int action = -1;
+    int choice = aNNW_choise_check();
 
-    if (order_value && mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
-        switch (mChoice_GET_CHOSENUM()) {
+
+    if (choice != -1) {
+        switch (choice) {
             case mChoice_CHOICE0: {
                 action = aHNW_ACTION_SAVE_END_WAIT;
                 mBGMPsComp_scene_mode(13);
@@ -474,19 +486,19 @@ static void aHNW_save_check(HANIWA_ACTOR* haniwa, GAME* game) {
         }
 
         if (action != -1) {
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
             aHNW_setupAction(haniwa, game, action);
+        } else {
+            aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_END_WAIT);
         }
     }
 }
 
 static void aHNW_roof_check(HANIWA_ACTOR* haniwa, GAME* game) {
-    mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
-    int order_value = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
     int action = -1;
+    int choice = aNNW_choise_check();
 
-    if (order_value && mMsg_Check_MainNormalContinue(msg_win) == TRUE) {
-        switch (mChoice_GET_CHOSENUM()) {
+    if (choice != -1) {
+        switch (choice) {
             case mChoice_CHOICE0: {
                 action = aHNW_ACTION_MENU_OPEN_WAIT;
                 haniwa->submenu_type = mSM_OVL_NEEDLEWORK;
@@ -507,8 +519,9 @@ static void aHNW_roof_check(HANIWA_ACTOR* haniwa, GAME* game) {
         }
 
         if (action != -1) {
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
             aHNW_setupAction(haniwa, game, action);
+        } else {
+            aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_END_WAIT);
         }
     }
 }
@@ -599,6 +612,65 @@ static void aHNW_door_open_timer(HANIWA_ACTOR* haniwa, GAME* game) {
     }
 }
 
+static void aHNW_alarm_1(HANIWA_ACTOR* haniwa, GAME* game) {
+    int action = -1;
+    int choice = aNNW_choise_check();
+
+    if (choice != -1) {
+        HaniwaAlarmInfo_c* alarm_info = aHNW_get_alarmInfo();
+
+        switch (choice) {
+            case mChoice_CHOICE0: {
+                haniwa->submenu_type = mSM_OVL_HBOARD;
+                action = aHNW_ACTION_MENU_OPEN_WAIT;
+                alarm_info->enabled = TRUE;
+                break;
+            }
+
+            case mChoice_CHOICE1: {
+                action = aHNW_ACTION_TALK_WITH_MASTER;
+                alarm_info->enabled = TRUE;
+                break;
+            }
+
+            case mChoice_CHOICE2: {
+                action = aHNW_ACTION_TALK_WITH_MASTER;
+                alarm_info->enabled = FALSE;
+                break;
+            }
+        }
+
+        if (action != -1) {
+            aHNW_setupAction(haniwa, game, action);
+        } else {
+            aHNW_setupAction(haniwa, game, aHNW_ACTION_TALK_END_WAIT);
+        }
+    }
+}
+
+static void aHNW_alarm_2(HANIWA_ACTOR* haniwa, GAME* game) {
+    int choice = aNNW_choise_check();
+
+    if (choice != -1) {
+        HaniwaAlarmInfo_c* alarm_info = aHNW_get_alarmInfo(); // @unused
+
+        haniwa->submenu_type = mSM_OVL_ALARMIN;
+        switch (choice) {
+            case mChoice_CHOICE0: {
+                haniwa->alarm_mode = mHm_HANIWA_ALARM_MODE_ON_PLAY;
+                break;
+            }
+
+            case mChoice_CHOICE1: {
+                haniwa->alarm_mode = mHm_HANIWA_ALARM_MODE_AT_TIME;
+                break;
+            }
+        }
+
+        aHNW_setupAction(haniwa, game, aHNW_ACTION_MENU_OPEN_WAIT);
+    }
+}
+
 static void aHNW_menu_open_wait_init(HANIWA_ACTOR* haniwa, GAME* game) {
     mMsg_REQUEST_MAIN_DISAPPEAR_WAIT_TYPE1();
 }
@@ -630,7 +702,6 @@ static void aHNW_init_proc(HANIWA_ACTOR* actor, GAME* game, int action) {
         (HANIWA_PROC)&none_proc1,
         (HANIWA_PROC)&none_proc1,
         (HANIWA_PROC)&none_proc1,
-        (HANIWA_PROC)&none_proc1,
         &aHNW_menu_open_wait_init,
         &aHNW_menu_end_wait_init,
         &aHNW_talk_with_guest_init,
@@ -640,6 +711,8 @@ static void aHNW_init_proc(HANIWA_ACTOR* actor, GAME* game, int action) {
         (HANIWA_PROC)&none_proc1,
         (HANIWA_PROC)&none_proc1,
         &aHNW_pl_approach_door_init,
+        (HANIWA_PROC)&none_proc1,
+        (HANIWA_PROC)&none_proc1,
         (HANIWA_PROC)&none_proc1,
         (HANIWA_PROC)&none_proc1,
     };
@@ -654,7 +727,6 @@ static void aHNW_setupAction(HANIWA_ACTOR* haniwa, GAME* game, int action) {
         &aHNW_dance,
         &aHNW_check_proceeds,
         &aHNW_talk_with_master,
-        &aHNW_talk_with_master2,
         &aHNW_talk_end_wait,
         &aHNW_menu_open_wait,
         &aHNW_menu_end_wait,
@@ -667,6 +739,8 @@ static void aHNW_setupAction(HANIWA_ACTOR* haniwa, GAME* game, int action) {
         &aHNW_pl_approach_door,
         &aHNW_door_open_wait,
         &aHNW_door_open_timer,
+        &aHNW_alarm_1,
+        &aHNW_alarm_2,
     };
 
     int house_idx = haniwa->house_idx;

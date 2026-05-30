@@ -958,7 +958,7 @@ config.libs = [
             Object(Matching, "actor/ac_gyo_test.c"),
             Object(Matching, "actor/ac_gyoei.c"),
             Object(Matching, "actor/ac_handOverItem.c"),
-            Object(NonMatching, "actor/ac_haniwa.c"),
+            Object(Matching, "actor/ac_haniwa.c"),
             Object(Matching, "actor/ac_hatumode_control.c"),
             Object(Matching, "actor/ac_house.c"),
             Object(Matching, "actor/ac_house_clock.c"),
