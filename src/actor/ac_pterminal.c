@@ -8,8 +8,13 @@
 #include "m_font.h"
 #include "m_player_lib.h"
 #include "m_msg.h"
+#include "m_mail.h"
+#include "m_handbill.h"
+#include "m_npc.h"
 #include "GBA2/gba2.h"
 #include "libultra/libultra.h"
+#include "m_string.h"
+
 
 enum {
     aPT_PROC_WAIT,
@@ -46,16 +51,17 @@ ACTOR_PROFILE Pterminal_Profile = {
 
 static int aPT_Setup(PTERMINAL_ACTOR* actor, GAME* game, int proc);
 
-static u8 aPT_receive_buf[256];
+static u8 aPT_receive_buf[0x800];
 
-#define aPT_MAIL_HEADER_OFS (0)
-#define aPT_MAIL_BODY_OFS (aPT_MAIL_HEADER_OFS + MAIL_HEADER_LEN)
-#define aPT_MAIL_FOOTER_OFS (aPT_MAIL_BODY_OFS + MAIL_BODY_LEN)
-#define aPT_MAIL_PAPER_TYPE_OFS (aPT_MAIL_FOOTER_OFS + MAIL_FOOTER_LEN)
-#define aPT_MAIL_PRESENT_OFS (aPT_MAIL_PAPER_TYPE_OFS + sizeof(u8))
-#define aPT_MAIL_NPC_ID_OFS (aPT_MAIL_PRESENT_OFS + sizeof(mActor_name_t))
-#define aPT_MAIL_HEADER_BACK_START_OFS (aPT_MAIL_NPC_ID_OFS + sizeof(mActor_name_t))
-#define aPT_MAIL_CARD_NO_OFS (aPT_MAIL_HEADER_BACK_START_OFS + sizeof(u8))
+#define aPT_EMBEDDED_SENDER_OFS (2)
+#define aPT_EMBEDDED_PAPER_TYPE_OFS (8)
+#define aPT_EMBEDDED_HEADER_BACK_START_OFS (9)
+#define aPT_EMBEDDED_HEADER_OFS (10)
+#define aPT_EMBEDDED_BODY_OFS (0x14)
+#define aPT_EMBEDDED_FOOTER_OFS (0x74)
+#define aPT_EMBEDDED_PRESENT_OFS (0x84)
+
+#define aPT_ECARD_HANDBILL_NO_START (0x554)
 
 static int aPT_CheckMailBoxVac(void) {
     int idx = mHS_get_arrange_idx(Common_Get(player_no) & 3);
@@ -64,106 +70,149 @@ static int aPT_CheckMailBoxVac(void) {
     return mMl_chk_mail_free_space(home->mailbox, HOME_MAILBOX_SIZE);
 }
 
+static void aPT_InitVar(PTERMINAL_ACTOR* actor, GAME_PLAY* play) {
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)actor)) {
+        mSM_Set_unable_shutter_label(play, (u32)actor);
+    }
+
+    mGcgba_InitVar();
+}
+
+static void aPT_EndComm(PTERMINAL_ACTOR* actor, GAME_PLAY* play) {
+    if (mSM_CheckOwner_unable_shutter_label(play, (u32)actor)) {
+        mSM_Set_unable_shutter_label(play, 0);
+    }
+
+    mGcgba_EndComm();
+}
+
+static u8* aPT_get_old_npc_name_p_for_pterminal(mActor_name_t npc_name) {
+    int idx = -1;
+    u8* name_p = mNpc_GetNpcWorldNameP(npc_name);
+
+    switch (npc_name) {
+        case SP_NPC_MAJIN:
+            idx = 0x785;
+            break;
+        case SP_NPC_MAJIN_BROTHER:
+            idx = 0x786;
+            break;
+        case SP_NPC_STATION_MASTER:
+            idx = 0x787;
+            break;
+        case SP_NPC_POLICE:
+        case SP_NPC_POLICE2:
+            idx = 0x788;
+            break;
+    }
+
+    if (idx != -1) {
+        static u8 sp_npc_name[ANIMAL_NAME_LEN];
+
+        mString_Load_StringFromRom(sp_npc_name, sizeof(sp_npc_name), idx);
+        name_p = sp_npc_name;
+    }
+
+    if (name_p == NULL) {
+        name_p = mNpc_GetNpcWorldNameP(NPC_START);
+    }
+
+    return name_p;
+}
+
 static int aPT_SendMail(GAME* game) {
-    static u8 header[MAIL_HEADER_LEN];
-    static u8 body[MAIL_BODY_LEN];
-    static u8 footer[MAIL_FOOTER_LEN];
     static Mail_c mail;
     static u8 submenu_name_str[ANIMAL_NAME_LEN];
 
-    u8* src_p;
-    mActor_name_t present;
-    mActor_name_t npc_id;
-    u8 paper_type;
-    u8 header_back_start;
-    u16 card_no;
-    Mail_ct_c* content;
-    int npc_type;
-    int idx;
+    u16 card_info;
+    mActor_name_t npc_no;
+    int letter_no;
+    int save_idx;
+    int mailbox_idx;
+    int house_idx;
+    int header_back_start;
     int i;
-    int ret = FALSE;
+    Mail_ct_c* content;
+    u8* name_src;
+    u8* src_p;
 
-    src_p = &aPT_receive_buf[aPT_MAIL_HEADER_OFS];
-    for (i = 0; i < sizeof(header); i++) {
-        header[i] = src_p[i];
-    }
+    (void)game;
 
-    src_p = &aPT_receive_buf[aPT_MAIL_BODY_OFS];
-    for (i = 0; i < sizeof(body); i++) {
-        body[i] = src_p[i];
-    }
+    card_info = (u16)((aPT_receive_buf[0] << 8) | aPT_receive_buf[1]);
+    letter_no = mEA_animal_carde_info_to_letter_no(card_info);
+    save_idx = mEA_animal_carde_info_to_save_idx(card_info);
 
-    src_p = &aPT_receive_buf[aPT_MAIL_FOOTER_OFS];
-    for (i = 0; i < sizeof(footer); i++) {
-        footer[i] = src_p[i];
-    }
+    if (mEA_CheckLetterCardE(save_idx) == 0) {
+        Mail_c* mail_p = &mail;
+        content = &mail_p->content;
 
-    paper_type = (u32)aPT_receive_buf[aPT_MAIL_PAPER_TYPE_OFS] % PAPER_UNIQUE_NUM;
-    present =
-        (mActor_name_t)((aPT_receive_buf[aPT_MAIL_PRESENT_OFS] << 8) | (aPT_receive_buf[aPT_MAIL_PRESENT_OFS + 1]));
-    npc_id = (mActor_name_t)((aPT_receive_buf[aPT_MAIL_NPC_ID_OFS] << 8) | (aPT_receive_buf[aPT_MAIL_NPC_ID_OFS + 1]));
-    header_back_start = aPT_receive_buf[aPT_MAIL_HEADER_BACK_START_OFS];
-    if (header_back_start >= MAIL_HEADER_LEN) {
-        header_back_start = MAIL_HEADER_LEN - 1;
-    }
+        mMl_clear_mail(&mail);
+        mailbox_idx = aPT_CheckMailBoxVac();
 
-    card_no = (u16)((aPT_receive_buf[aPT_MAIL_CARD_NO_OFS] << 8) | (aPT_receive_buf[aPT_MAIL_CARD_NO_OFS + 1]));
-    if (!mEA_CheckLetterCardE(card_no)) {
-        npc_type = ITEM_NAME_GET_TYPE(npc_id);
-        if (npc_type == NAME_TYPE_SPNPC || npc_type == NAME_TYPE_NPC) {
-            content = &mail.content;
-            mMl_clear_mail(&mail);
-            mem_clear(submenu_name_str, sizeof(submenu_name_str), CHAR_SPACE);
-            if (npc_type == NAME_TYPE_SPNPC) {
-                mNpc_GetActorWorldName(submenu_name_str, npc_id);
-            } else {
-                mNpc_GetNpcWorldNameTableNo(submenu_name_str, npc_id);
-            }
+        if (mailbox_idx != -1 && letter_no != mEA_CARD_LETTER_NO_INVALID) {
+            house_idx = mHS_get_arrange_idx(Common_Get(player_no) & 3);
 
-            for (i = 0; i < MAIL_HEADER_LEN; i++) {
-                content->text.split.header[i] = header[i];
-            }
+            if (letter_no != mEA_CARD_LETTER_NO_EMBEDDED) {
+                npc_no = mEA_animal_carde_info_to_npc_no(card_info);
+                name_src = aPT_get_old_npc_name_p_for_pterminal(npc_no);
 
-            for (i = 0; i < MAIL_BODY_LEN; i++) {
-                content->text.split.body[i] = body[i];
-            }
+                bcopy(name_src, submenu_name_str, PLAYER_NAME_LEN);
+                mHandbill_Load_HandbillFromRom(content->text.split.header, &header_back_start,
+                                               content->text.split.footer, content->text.split.body,
+                                               letter_no + aPT_ECARD_HANDBILL_NO_START);
+                mail.content.font = mMl_FONT_RECV;
+                mail.content.header_back_start = (u8)header_back_start;
+                mail.content.mail_type = mMl_TYPE_MAIL;
+                mail.content.paper_type = mEA_animal_carde_info_to_paper_idx(card_info) & 0x3F;
+                mail.present = mEA_animal_carde_info_to_present(card_info);
 
-            for (i = 0; i < MAIL_FOOTER_LEN; i++) {
-                content->text.split.footer[i] = footer[i];
-            }
-
-            mail.content.paper_type = paper_type;
-            mail.present = present;
-            mail.content.header_back_start = header_back_start;
-            mail.content.font = mMl_FONT_RECV;
-
-            // @BUG - the '== NAME_TYPE_SPNPC' should not be in the macro call
+                            // @BUG - the '== NAME_TYPE_SPNPC' should not be in the macro call
 #ifndef BUGFIXES
-            if (ITEM_NAME_GET_TYPE(npc_id == NAME_TYPE_SPNPC)) {
+                if (ITEM_NAME_GET_TYPE(npc_no == NAME_TYPE_SPNPC)) {
 #else
-            if (ITEM_NAME_GET_TYPE(npc_id) == NAME_TYPE_SPNPC) {
+                if (ITEM_NAME_GET_TYPE(npc_no) == NAME_TYPE_SPNPC) {
 #endif
-                mail.content.mail_type = mMl_TYPE_SPNPC_PASSWORD;
+                    mail.content.mail_type = mMl_TYPE_SPNPC_PASSWORD;
+                }
+
+                mail.header.recipient.personalID = Now_Private->player_ID;
+                mail.header.recipient.type = mMl_NAME_TYPE_PLAYER;
+                bcopy(submenu_name_str, mail.header.sender.personalID.player_name, PLAYER_NAME_LEN);
+                mail.header.sender.type = mMl_NAME_TYPE_NPC;
+            } else {
+                u8* header = &aPT_receive_buf[aPT_EMBEDDED_HEADER_OFS];
+                u8* body = &aPT_receive_buf[aPT_EMBEDDED_BODY_OFS];
+                u8* footer = &aPT_receive_buf[aPT_EMBEDDED_FOOTER_OFS];
+
+                for (i = 0; i < MAIL_HEADER_LEN; i++) {
+                    content->text.split.header[i] = header[i];
+                }
+                for (i = 0; i < MAIL_BODY_LEN; i++) {
+                    content->text.split.body[i] = body[i];
+                }
+                for (i = 0; i < MAIL_FOOTER_LEN; i++) {
+                    content->text.split.footer[i] = footer[i];
+                }
+                mail.content.paper_type = aPT_receive_buf[aPT_EMBEDDED_PAPER_TYPE_OFS];
+                mail.present =
+                    (mActor_name_t)((aPT_receive_buf[aPT_EMBEDDED_PRESENT_OFS] << 8) |
+                                    aPT_receive_buf[aPT_EMBEDDED_PRESENT_OFS + 1]);
+                mail.content.header_back_start = aPT_receive_buf[aPT_EMBEDDED_HEADER_BACK_START_OFS];
+                mail.content.font = mMl_FONT_RECV;
+                mail.header.recipient.personalID = Now_Private->player_ID;
+                mail.header.recipient.type = mMl_NAME_TYPE_PLAYER;
+                bcopy(&aPT_receive_buf[aPT_EMBEDDED_SENDER_OFS], mail.header.sender.personalID.player_name,
+                      PLAYER_NAME_LEN);
+                mail.header.sender.type = mMl_NAME_TYPE_NPC;
             }
 
-            mail.header.recipient.personalID = Now_Private->player_ID;
-            mail.header.recipient.type = mMl_NAME_TYPE_PLAYER;
-            bcopy(submenu_name_str, mail.header.sender.personalID.player_name, sizeof(submenu_name_str));
-            mail.header.sender.type = mMl_NAME_TYPE_NPC;
-
-            idx = aPT_CheckMailBoxVac();
-            if (idx != -1) {
-                mMl_copy_mail(&Save_GetPointer(homes[mHS_get_arrange_idx(Common_Get(player_no) & 3)])->mailbox[idx],
-                              &mail);
-                ret = TRUE;
-            }
+            mMl_copy_mail(&Save_Get(homes[house_idx]).mailbox[mailbox_idx], &mail);
+            mEA_SetLetterCardE(save_idx);
+            return 2;
         }
-
-        mEA_SetLetterCardE(card_no);
-        return ret;
     }
 
-    return FALSE;
+    return 0;
 }
 
 static void Pterminal_Actor_ct(ACTOR* actorx, GAME* game) {
@@ -260,7 +309,7 @@ static void aPT_Wait_Init(PTERMINAL_ACTOR* actor, GAME* game) {
 }
 
 static void aPT_Wait(PTERMINAL_ACTOR* actor, GAME* game) {
-    mGcgba_EndComm();
+    aPT_EndComm(actor, (GAME_PLAY*)game);
 }
 
 static void aPT_First_Question_Init(PTERMINAL_ACTOR* actor, GAME* game) {
@@ -272,19 +321,19 @@ static void aPT_First_Question(PTERMINAL_ACTOR* actor, GAME* game) {
         switch (mChoice_GET_CHOSENUM()) {
             case mChoice_CHOICE0:
                 if (aPT_CheckMailBoxVac() != -1) {
-                    mMsg_SET_CONTINUE_MSG_NUM(0x3DEF);
+                    mMsg_SET_CONTINUE_MSG_NUM(MSG_15865);
                     aPT_Setup(actor, game, aPT_PROC_CONNECT_AGB_TO_RCV);
                 } else {
-                    mMsg_SET_CONTINUE_MSG_NUM(0x3DED);
+                    mMsg_SET_CONTINUE_MSG_NUM(MSG_15853);
                     aPT_Setup(actor, game, aPT_PROC_WAIT);
                 }
                 break;
             case mChoice_CHOICE1:
-                mMsg_SET_CONTINUE_MSG_NUM(0x3DF2);
+                mMsg_SET_CONTINUE_MSG_NUM(MSG_15858);
                 aPT_Setup(actor, game, aPT_PROC_CONNECT_AGB_TO_SND);
                 break;
             case mChoice_CHOICE2:
-                mMsg_SET_CONTINUE_MSG_NUM(0x3DEC);
+                mMsg_SET_CONTINUE_MSG_NUM(MSG_15852);
                 aPT_Setup(actor, game, aPT_PROC_WAIT);
                 break;
         }
@@ -293,14 +342,13 @@ static void aPT_First_Question(PTERMINAL_ACTOR* actor, GAME* game) {
 
 static void aPT_Connect_AGB_to_Rcv_Init(PTERMINAL_ACTOR* actor, GAME* game) {
     actor->counter = 0;
-    mGcgba_InitVar();
-    mGcgba_EndComm();
+    aPT_EndComm(actor, (GAME_PLAY*)game);
+    aPT_InitVar(actor, (GAME_PLAY*)game);
 }
 
-// Aus version sets the force next flag upon fail
 static void aPT_Connect_AGB_to_Rcv(PTERMINAL_ACTOR* actor, GAME* game) {
     if (mMsg_CHECK_MAINNORMALCONTINUE()) {
-        if (mMsg_GET_MSG_NUM() == 0x3DEF) {
+        if (mMsg_GET_MSG_NUM() == MSG_15855) {
             int res = mGcgba_ConnectEnabled();
 
             mMsg_SET_LOCKCONTINUE();
@@ -313,10 +361,8 @@ static void aPT_Connect_AGB_to_Rcv(PTERMINAL_ACTOR* actor, GAME* game) {
                 default:
                     if (actor->counter >= 60) {
                         mMsg_UNSET_LOCKCONTINUE();
-                        mMsg_SET_CONTINUE_MSG_NUM(0x3DF3);
-#if VERSION >= VER_GAFU01_00
+                        mMsg_SET_CONTINUE_MSG_NUM(MSG_15859);
                         mMsg_SET_FORCENEXT();
-#endif
                         aPT_Setup(actor, game, aPT_PROC_WAIT);
                     }
                     break;
@@ -330,14 +376,13 @@ static void aPT_Connect_AGB_to_Rcv(PTERMINAL_ACTOR* actor, GAME* game) {
 
 static void aPT_Connect_AGB_to_Snd_Init(PTERMINAL_ACTOR* actor, GAME* game) {
     actor->counter = 0;
-    mGcgba_InitVar();
-    mGcgba_EndComm();
+    aPT_EndComm(actor, (GAME_PLAY*)game);
+    aPT_InitVar(actor, (GAME_PLAY*)game);
 }
 
-// Aus version sets the force next flag upon fail
 static void aPT_Connect_AGB_to_Snd(PTERMINAL_ACTOR* actor, GAME* game) {
     if (mMsg_CHECK_MAINNORMALCONTINUE()) {
-        if (mMsg_GET_MSG_NUM() == 0x3DF2) {
+        if (mMsg_GET_MSG_NUM() == MSG_15858) {
             int res = mGcgba_ConnectEnabled();
 
             mMsg_SET_LOCKCONTINUE();
@@ -350,11 +395,9 @@ static void aPT_Connect_AGB_to_Snd(PTERMINAL_ACTOR* actor, GAME* game) {
                 default:
                     if (actor->counter >= 60) {
                         mMsg_UNSET_LOCKCONTINUE();
-                        mMsg_SET_CONTINUE_MSG_NUM(0x3DF3);
-#if VERSION >= VER_GAFU01_00
-                        mMsg_SET_FORCENEXT();
-#endif
+                        mMsg_SET_CONTINUE_MSG_NUM(MSG_15859);
                         aPT_Setup(actor, game, aPT_PROC_WAIT);
+                        mMsg_SET_FORCENEXT();
                     }
                     break;
             }
@@ -366,7 +409,7 @@ static void aPT_Connect_AGB_to_Snd(PTERMINAL_ACTOR* actor, GAME* game) {
 }
 
 static void aPT_Send_Init(PTERMINAL_ACTOR* actor, GAME* game) {
-    mGcgba_InitVar();
+    aPT_InitVar(actor, (GAME_PLAY*)game);
 }
 
 static void aPT_Send(PTERMINAL_ACTOR* actor, GAME* game) {
@@ -376,19 +419,18 @@ static void aPT_Send(PTERMINAL_ACTOR* actor, GAME* game) {
     switch (mGcgba_send_eAppri(eappli_p, eappli_size)) {
         case GBA2_EAPPLI_SUCCESS:
             mMsg_UNSET_LOCKCONTINUE();
-            mMsg_SET_CONTINUE_MSG_NUM(0x3DF4);
+            mMsg_SET_CONTINUE_MSG_NUM(MSG_15860);
             aPT_Setup(actor, game, aPT_PROC_READ_QUESTION);
             mMsg_SET_FORCENEXT();
-            mGcgba_InitVar();
-            mGcgba_EndComm();
+            aPT_EndComm(actor, (GAME_PLAY*)game);
             break;
         case GBA2_EAPPLI_FAILURE_XFER_ERROR:
         case GBA2_EAPPLI_FAILURE_NO_GBA:
             mMsg_UNSET_LOCKCONTINUE();
-            mMsg_SET_CONTINUE_MSG_NUM(0x3DF1);
+            mMsg_SET_CONTINUE_MSG_NUM(MSG_15857);
             aPT_Setup(actor, game, aPT_PROC_WAIT);
             mMsg_SET_FORCENEXT();
-            mGcgba_EndComm();
+            aPT_EndComm(actor, (GAME_PLAY*)game);
             break;
         default:
             aPT_SetTransSE(actor);
@@ -428,7 +470,7 @@ static void aPT_Receive(PTERMINAL_ACTOR* actor, GAME* game) {
 
     switch (mGcgba_Read(aPT_receive_buf, sizeof(aPT_receive_buf), GBA2_EAPPLI_TYPE_PTERMINAL)) {
         case GBA2_GBA_STATE_SUCCESS:
-            mGcgba_EndComm();
+            aPT_EndComm(actor, (GAME_PLAY*)game);
 
             res = aPT_SendMail(game);
             if (res != FALSE) {
@@ -436,16 +478,16 @@ static void aPT_Receive(PTERMINAL_ACTOR* actor, GAME* game) {
 
                 // what is the point of this?? maybe there were extra checks on card validation before
                 if (res == TRUE) {
-                    mMsg_SET_CONTINUE_MSG_NUM(0x3DF5);
+                    mMsg_SET_CONTINUE_MSG_NUM(MSG_15861);
                 } else {
-                    mMsg_SET_CONTINUE_MSG_NUM(0x3DF5);
+                    mMsg_SET_CONTINUE_MSG_NUM(MSG_15861);
                 }
 
                 mMsg_SET_FORCENEXT();
                 aPT_Setup(actor, game, aPT_PROC_WAIT);
             } else {
                 mMsg_UNSET_LOCKCONTINUE();
-                mMsg_SET_CONTINUE_MSG_NUM(0x3DF7);
+                mMsg_SET_CONTINUE_MSG_NUM(MSG_15863);
                 mMsg_SET_FORCENEXT();
                 aPT_Setup(actor, game, aPT_PROC_WAIT);
             }
@@ -454,9 +496,9 @@ static void aPT_Receive(PTERMINAL_ACTOR* actor, GAME* game) {
             aPT_SetTransSE(actor);
             break;
         default:
-            mGcgba_EndComm();
+            aPT_EndComm(actor, (GAME_PLAY*)game);
             mMsg_UNSET_LOCKCONTINUE();
-            mMsg_SET_CONTINUE_MSG_NUM(0x3DF0);
+            mMsg_SET_CONTINUE_MSG_NUM(MSG_15856);
             mMsg_SET_FORCENEXT();
             aPT_Setup(actor, game, aPT_PROC_WAIT);
             break;
