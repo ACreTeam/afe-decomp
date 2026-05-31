@@ -201,7 +201,8 @@ typedef struct island_s {
     /* 0x15FA */ u8 last_song_from_island; /* last song kapp'n sang leaving the island */
     /* 0x15FB */ struct {
         u8 unlocked : 1;
-        u8 pad : 7;
+        u8 _1 : 1;
+        u8 pad : 6;
     } flags;
     /* 0x15FC */ int house_idx;
     /* 0x1600 */ lbRTC_ymd_c islander_spawn_date; // date the islander spawned via e-Reader card

@@ -4,7 +4,11 @@
 #include "types.h"
 #include "ac_npc.h"
 #include "m_private.h"
+
+// Wrap for proper action enums
+#define aNSC_MAMEDANUKI
 #include "ac_npc_shop_common.h"
+#undef aNSC_MAMEDANUKI
 
 #ifdef __cplusplus
 extern "C" {

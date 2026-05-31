@@ -275,6 +275,7 @@ extern void mNT_present_new_music_live_version(int idx);
 #define ITEM_IS_CARPET(n) ((n) >= ITM_CARPET_START && (n) < ITM_CARPET_END)
 #define ITEM_IS_REG_WALL(n) ((n) >= ITM_WALL_START && (n) <= ITM_WALL69)
 #define ITEM_IS_WALL(n) ((n) >= ITM_WALL_START && (n) < ITM_WALL_END)
+#define ITEM_IS_TICKET(n) ((n) >= ITM_TICKET_START && (n) <= ITM_TICKET_END)
 
 #define GET_NAME_ITEM0_CATEGORY(f) (((f) & 0x0800) >> 11) /* enviornmental or static background objects */
 #define GET_NAME_ITEM1_CATEGORY(f) (((f) & 0x0F00) >> 8)

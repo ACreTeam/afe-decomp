@@ -9,6 +9,8 @@ extern "C" {
 #endif
 
 #define mMM_MONUMENT_MAX 5
+#define mMM_MONUMENT_MAX_PER_ACRE 3
+#define mMM_MONUMENT_SET_COUNT 3
 
 enum {
     mMM_MONUMENT_SET_A,

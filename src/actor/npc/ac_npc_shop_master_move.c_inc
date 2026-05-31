@@ -1,3 +1,40 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_shop_master.h"
+
+#include "m_shop.h"
+#include "m_common_data.h"
+#include "m_font.h"
+#include "m_msg.h"
+#include "m_private.h"
+#include "m_string.h"
+#include "m_actor_type.h"
+#include "m_player_lib.h"
+#include "m_mail_password_check.h"
+#include "m_actor.h"
+#include "m_actor_type.h"
+#include "m_camera2.h"
+#include "m_house.h"
+#include "m_melody.h"
+#include "m_scene.h"
+#include "m_collision_bg.h"
+#include "m_demo.h"
+#include "m_player.h"
+#include "m_bgm.h"
+#include "ac_npc.h"
+#include "ac_uki.h"
+#include "ac_npc_anim_def.h"
+
+static void aNSC_setupAction(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* play, int p3);
+static int aNSC_check_buy_item_sub(u32* p1, mActor_name_t itm_name);
+static int aNSC_check_buy_paper(u32* p1, mActor_name_t itm_name);
+static void aNSC_init_proc(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* play, int p3);
+static void aNSC_BGcheck(ACTOR* actorx);
+static void aNSC_set_zone_data(NPC_SHOP_MASTER_ACTOR* shop_master, ACTOR* actor);
+static void aNSC_set_player_angl(NPC_SHOP_MASTER_ACTOR* shop_master);
+static void aNSC_talk_demo_proc(ACTOR* actorx, GAME* game);
+static void aNSC_sell_camera(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* play);
+#endif
+
 static u8 aNSM_get_zone(xyz_t wpos) {
     if (wpos.x < 120.0f) {
         if (wpos.z < 180.0f) {
@@ -31,7 +68,7 @@ static void aNSM_search_player(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* pl
     if (player != NULL) {
         s16 angle = actorx->shape_info.rotation.y - shop_master->player_angle;
         if (ABS(angle) > DEG2SHORT_ANGLE(90.0f)) {
-            aNSC_setupAction(shop_master, play, 66);
+            aNSC_setupAction(shop_master, play, aNSC_ACTION_TURN);
         } else {
             chase_angle(&actorx->shape_info.rotation.y, shop_master->player_angle, DEG2SHORT_ANGLE(11.25f));
             actorx->world.angle.y = actorx->shape_info.rotation.y;
@@ -42,17 +79,27 @@ static void aNSM_search_player(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* pl
 static void aNSM_search_player2(NPC_SHOP_MASTER_ACTOR* shop_master, GAME_PLAY* play) {
     static f32 posX[4] = { 220.0, 100.0, 100.0, 220.0 };
     static f32 posZ[4] = { 140.0, 140.0, 220.0, 220.0 };
+    static float chk_dist[2] = { 200.0f, 10.0f };
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
     if (player != NULL) {
-        f32 dx = posX[shop_master->next_zone] - shop_master->npc_class.actor_class.world.position.x;
-        f32 dz = posZ[shop_master->next_zone] - shop_master->npc_class.actor_class.world.position.z;
+        int next_zone = shop_master->next_zone;
+        int chk_dist_idx = 0;
+        f32 dx;
+        f32 dz;
+        s16 angle;
 
-        s16 angle = atans_table(dz, dx);
+        if (mSP_force_opend()) {
+            chk_dist_idx = 1;
+        }
+
+        dx = posX[next_zone] - shop_master->npc_class.actor_class.world.position.x;
+        dz = posZ[next_zone] - shop_master->npc_class.actor_class.world.position.z;
+        angle = atans_table(dz, dx);
         chase_angle(&shop_master->npc_class.actor_class.shape_info.rotation.y, angle, DEG2SHORT_ANGLE(11.25f));
 
         shop_master->npc_class.actor_class.world.angle.y = shop_master->npc_class.actor_class.shape_info.rotation.y;
 
-        if (SQ(dx) + SQ(dz) < 200.0f) {
+        if (SQ(dx) + SQ(dz) < chk_dist[chk_dist_idx]) {
             shop_master->next_zone = aNSM_get_next_zone(shop_master->player_zone, shop_master->zone);
         }
     }
