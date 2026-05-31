@@ -238,6 +238,8 @@ typedef enum audio_sound_effects {
 
     NA_SE_ZASSOU_NUKU = 0x15F,
     NA_SE_HACHI_SASARERU,
+    NA_SE_161 = 0x161,
+    NA_SE_162 = 0x162,
 
     NA_SE_166 = 0x166,
     NA_SE_UCHIWA = 0x167,

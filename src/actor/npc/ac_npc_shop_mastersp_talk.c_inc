@@ -57,7 +57,7 @@ static int check_null_lottery(void) {
 static int search_lottery_ticket(int idx, int month) {
     mActor_name_t item = Now_Private->inventory.pockets[idx];
 
-    if (NowPrivate_GetItemCond(idx) == mPr_ITEM_COND_NORMAL && ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 &&
+    if (mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, idx) == mPr_ITEM_COND_NORMAL && ITEM_NAME_GET_TYPE(item) == NAME_TYPE_ITEM1 &&
         ITEM_NAME_GET_CAT(item - ITEM1_NO_START) == ITEM1_CAT_TICKET && TICKET_MONTH(item) == month) {
         return TICKET_COUNT(item);
     }
@@ -234,7 +234,18 @@ static void aSHM_stop_player(NPC_SHOP_MASTERSP_ACTOR* shop_mastersp, GAME_PLAY* 
 
     if (order == 1) {
         mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-        sAdo_OngenTrgStart(NA_SE_7F, &actorx->world.position);
+
+        switch (shop_mastersp->result) {
+            case aSHM_WON_FIRST_PLACE:
+                sAdo_SysTrgStart(NA_SE_7F);
+                break;
+            case aSHM_WON_SECOND_PLACE:
+                sAdo_SysTrgStart(NA_SE_161);
+                break;
+            case aSHM_WON_THIRD_PLACE:
+                sAdo_SysTrgStart(NA_SE_162);
+                break;
+        }
     }
 
     if (!mDemo_Check(mDemo_TYPE_TALK, actorx) && !mDemo_Check(mDemo_TYPE_SPEAK, actorx)) {

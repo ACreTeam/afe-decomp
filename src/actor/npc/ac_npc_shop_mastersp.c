@@ -104,11 +104,11 @@ static void aSHM_actor_ct(ACTOR* actorx, GAME* game) {
     };
     // clang-format on
 
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         NPC_SHOP_MASTERSP_ACTOR* shop_mastersp = (NPC_SHOP_MASTERSP_ACTOR*)actorx;
 
         shop_mastersp->npc_class.schedule.schedule_proc = &aSHM_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         aSHM_set_base_position(actorx, (GAME_PLAY*)game);
         shop_mastersp->melody_bak = 0;
     }
@@ -119,15 +119,15 @@ static void aSHM_actor_save(ACTOR* actorx, GAME* game) {
 }
 
 static void aSHM_actor_dt(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
 static void aSHM_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aSHM_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/ac_npc_shop_mastersp_move.c_inc"

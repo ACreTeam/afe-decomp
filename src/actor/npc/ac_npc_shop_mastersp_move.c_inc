@@ -1,5 +1,5 @@
 static s16 aSHM_ftr_revise_x(mActor_name_t item) {
-    if (mRmTp_ItemNo2FtrSize(item) == mRmTp_FTRSIZE_1x1) {
+    if (aMR_GetFurnitureUnit(item) == mRmTp_FTRSIZE_1x1) {
         return -(mFI_UT_WORLDSIZE_X / 2);
     }
 
@@ -7,7 +7,7 @@ static s16 aSHM_ftr_revise_x(mActor_name_t item) {
 }
 
 static s16 aSHM_ftr_revise_z(mActor_name_t item) {
-    if (mRmTp_ItemNo2FtrSize(item) == mRmTp_FTRSIZE_2x2) {
+    if (aMR_GetFurnitureUnit(item) == mRmTp_FTRSIZE_2x2) {
         return 0;
     }
 
