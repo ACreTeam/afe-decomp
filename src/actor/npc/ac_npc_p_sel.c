@@ -21,6 +21,7 @@ enum {
     aNPS_TALK_CONFIRM_INPUT_DATA,
     aNPS_TALK_CONFIRM_INPUT_DATA2,
     aNPS_TALK_SETUP_YURE,
+    aNPS_TALK_KANJI_LV,
     aNPS_TALK_WAIT,
 
     aNPS_TALK_NUM
@@ -79,9 +80,9 @@ static void aNPS_actor_ct(ACTOR* actorx, GAME* game) {
     xyz_t center;
     xyz_t eye;
 
-    if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actorx, game) == TRUE) {
         p_sel->npc_class.schedule.schedule_proc = &aNPS_schedule_proc;
-        CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
+        NPC_CLIP->ct_proc(actorx, game, &ct_data);
         actorx->status_data.weight = MASSTYPE_IMMOVABLE;
         mPlib_request_main_demo_wait_type1(game, FALSE, NULL);
 
@@ -112,19 +113,22 @@ static void aNPS_actor_ct(ACTOR* actorx, GAME* game) {
 
         p_sel->npc_class.condition_info.hide_request = FALSE;
         p_sel->npc_class.talk_info.default_act = aNPC_ACT_INTO_HOUSE;
+        Common_Set(kanji_level_unset, TRUE);
+        Common_Set(cur_kanji_lv, 0);
     }
 }
 
 static void aNPS_actor_save(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->save_proc(actorx, game);
+    NPC_CLIP->save_proc(actorx, game);
 }
 
 static void aNPS_actor_dt(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->dt_proc(actorx, game);
+    Common_Set(kanji_level_unset, FALSE);
+    NPC_CLIP->dt_proc(actorx, game);
 }
 
 static void aNPS_actor_init(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->init_proc(actorx, game);
+    NPC_CLIP->init_proc(actorx, game);
 }
 
 static void aNPS_actor_move(ACTOR* actorx, GAME* game) {
@@ -151,12 +155,12 @@ static void aNPS_actor_move(ACTOR* actorx, GAME* game) {
 
     fc_p->speed = speed;
     sAdos_TTKK_ARM(arm_flag);
-    CLIP(npc_clip)->move_proc(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
     mSC_change_player_freeze((GAME_PLAY*)game); // TODO: mSC_change_player_freeze almost certainly takes a GAME*
 }
 
 static void aNPS_actor_draw(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->draw_proc(actorx, game);
+    NPC_CLIP->draw_proc(actorx, game);
 }
 
 #include "../src/actor/npc/ac_npc_p_sel_schedule.c_inc"

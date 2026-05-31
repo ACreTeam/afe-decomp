@@ -137,7 +137,7 @@ static void aNPS_confirm_input_data(NPC_P_SEL_ACTOR* p_sel, GAME_PLAY* play) {
     if (mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
         switch (mChoice_GET_CHOSENUM()) {
             case mChoice_CHOICE0:
-                aNPS_change_talk_proc(p_sel, aNPS_TALK_CONFIRM_INPUT_DATA2);
+                aNPS_change_talk_proc(p_sel, aNPS_TALK_KANJI_LV);
                 break;
             default:
                 aNPS_change_talk_proc(p_sel, aNPS_TALK_SETUP_VOICE);
@@ -147,7 +147,10 @@ static void aNPS_confirm_input_data(NPC_P_SEL_ACTOR* p_sel, GAME_PLAY* play) {
 }
 
 static void aNPS_confirm_input_data2(NPC_P_SEL_ACTOR* p_sel, GAME_PLAY* play) {
-    if (mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order != 0 && mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
         switch (mChoice_GET_CHOSENUM()) {
             case mChoice_CHOICE0:
                 aNPS_change_talk_proc(p_sel, aNPS_TALK_WAIT);
@@ -159,10 +162,20 @@ static void aNPS_confirm_input_data2(NPC_P_SEL_ACTOR* p_sel, GAME_PLAY* play) {
     }
 }
 
+static void aNPS_kanji_lv(NPC_P_SEL_ACTOR* p_sel, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        Common_Set(cur_kanji_lv, 5 - mChoice_GET_CHOSENUM());
+        aNPS_change_talk_proc(p_sel, aNPS_TALK_CONFIRM_INPUT_DATA2);
+    }
+}
+
 static void aNPS_change_talk_proc(NPC_P_SEL_ACTOR* p_sel, int talk_idx) {
     static aNPS_TALK_PROC process[] = {
         &aNPS_chk_setup_sound,     &aNPS_setup_sound, &aNPS_setup_voice,           &aNPS_confirm_input_data,
-        &aNPS_confirm_input_data2, &aNPS_setup_yure,  (aNPS_TALK_PROC)&none_proc1,
+        &aNPS_confirm_input_data2, &aNPS_setup_yure,   &aNPS_kanji_lv,             (aNPS_TALK_PROC)&none_proc1,
     };
 
     p_sel->talk_idx = talk_idx;
