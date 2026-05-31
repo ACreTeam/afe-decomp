@@ -1,3 +1,42 @@
+#include "audio_defs.h"
+#include "m_demo.h"
+#ifdef __INTELLISENSE__
+#include "ac_npc_post_man.h"
+
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_house.h"
+#include "ac_mailbox.h"
+#include "m_melody.h"
+#include "m_msg.h"
+
+enum {
+    aPMAN_ACT_ENTER,
+    aPMAN_ACT_BREAK,
+    aPMAN_ACT_HOVER,
+    aPMAN_ACT_LANDING,
+    aPMAN_ACT_KYORO,
+    aPMAN_ACT_TURN,
+    aPMAN_ACT_WALK,
+    aPMAN_ACT_DELIVERY_TURN,
+    aPMAN_ACT_DELIVERY,
+    aPMAN_ACT_TALK_TURN,
+    aPMAN_ACT_TALK_END_WAIT,
+    aPMAN_ACT_FLY_UP,
+    aPMAN_ACT_EXIT,
+    aPMAN_ACT_EXIT2,
+    aPMAN_ACT_PRESENT_START_WAIT,
+    aPMAN_ACT_PRESENT_TRANS_TAKEOUT,
+    aPMAN_ACT_PRESENT_TRANS_WAIT,
+
+    aPMAN_ACT_NUM
+};
+
+static void aPMAN_setupAction(NPC_POST_MAN* actor, GAME_PLAY* play, u8 action);
+static s8 aPMAN_set_delivery_idx(NPC_POST_MAN* actor);
+static s8 aPMAN_set_move_idx(NPC_POST_MAN* actor);
+#endif
+
 // clang-format off
 static xyz_t aPMAN_move_pos[7] = {
     {2172.0f, 0.0f, 1452.0f},
@@ -24,6 +63,14 @@ static void aPMAN_BGcheck(ACTOR* actorx) {
 
     mCoBG_BgCheckControll(NULL, actorx, 8.0f, 0.0f, TRUE, mCoBG_REVERSE_TYPE_REVERSE, mCoBG_CHECK_TYPE_NORMAL);
     actor->ground_y = mCoBG_GetBgY_AngleS_FromWpos(NULL, actorx->world.position, 0.0f);
+}
+
+static void aPMAN_set_music_str(NPC_POST_MAN* actor) {
+    u8 str[mIN_ITEM_NAME_LEN];
+    mActor_name_t music_item = actor->live_music;
+
+    mIN_copy_name_str(str, music_item);
+    mMsg_SET_ITEM_STR_ART(mMsg_ITEM_STR0, str, sizeof(str), music_item);
 }
 
 static void aPMAN_check_culling(NPC_POST_MAN* actor, GAME_PLAY* play) {
@@ -55,15 +102,21 @@ static void aPMAN_talk_check(NPC_POST_MAN* actor, GAME_PLAY* play) {
 static void aPMAN_set_talk_info_talk_check(ACTOR* actorx) {
     static f32 rnd_base[] = { 12.0f, 4.0f };
     static int msg_no_base[] = { 0x08BF, 0x08CB };
-    NPC_POST_MAN* actor = (NPC_POST_MAN*)actorx;
     int type;
     int msg_no;
-
+    
     if (CLIP(aprilfool_control_clip) != NULL && !CLIP(aprilfool_control_clip)->talk_chk_proc(SP_NPC_POST_MAN)) {
         msg_no = CLIP(aprilfool_control_clip)->get_msg_num_proc(SP_NPC_POST_MAN, TRUE);
     } else {
-        type = actor->talk_type;
-        msg_no = msg_no_base[type] + RANDOM(rnd_base[type]);
+        NPC_POST_MAN* actor = (NPC_POST_MAN*)actorx;
+
+        if (actor->live_music != EMPTY_NO && mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+            aPMAN_set_music_str(actor);
+            msg_no = 0x027B;
+        } else {
+            type = actor->talk_type;
+            msg_no = msg_no_base[type] + RANDOM(rnd_base[type]);
+        }
     }
 
     mDemo_Set_msg_num(msg_no);
@@ -291,7 +344,17 @@ static void aPMAN_talk_turn(NPC_POST_MAN* actor, GAME_PLAY* play) {
     s16* angle_p = &actor->npc_class.actor_class.shape_info.rotation.y;
 
     if (chase_angle(angle_p, actor->npc_class.actor_class.player_angle_y, DEG2SHORT_ANGLE2(5.625f)) == TRUE) {
-        aPMAN_setupAction(actor, play, aPMAN_ACT_TALK_END_WAIT);
+        u8 talk_act = aPMAN_ACT_TALK_END_WAIT;
+
+        if (actor->live_music != EMPTY_NO && mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+            talk_act = aPMAN_ACT_PRESENT_START_WAIT;
+        } else {
+            actor->talk_type = 1;
+        }
+
+        mMld_ActorMakeMelody((ACTOR*)actor);
+        mDemo_Set_ListenAble();
+        aPMAN_setupAction(actor, play, talk_act);
     }
 
     actor->npc_class.actor_class.world.angle.y = *angle_p;
@@ -370,6 +433,40 @@ static void aPMAN_exit(NPC_POST_MAN* actor, GAME_PLAY* play) {
     }
 }
 
+static void aPMAN_present_start_wait(NPC_POST_MAN* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
+    
+    if (order == 2) {
+        aPMAN_setupAction(actor, play, aPMAN_ACT_PRESENT_TRANS_TAKEOUT);
+    }
+}
+
+static void aPMAN_present_trans_takeout(NPC_POST_MAN* actor, GAME_PLAY* play) {
+    if (actor->npc_class.left_hand.item_actor_p == NULL) {
+        ACTOR* item_actor = CLIP(handOverItem_clip)->birth_proc(actor->live_music, aHOI_REQUEST_PUTAWAY, FALSE, (ACTOR*)actor);
+
+        if (item_actor != NULL) {
+            CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)actor, aHOI_REQUEST_TRANSFER);
+            actor->npc_class.left_hand.item_actor_p = item_actor;
+            actor->live_music = EMPTY_NO;
+        }
+    }
+
+    if (actor->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
+        if (CLIP(handOverItem_clip)->master_actor == (ACTOR*)actor) {
+            CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)actor, aHOI_REQUEST_TRANS_WAIT);
+            aPMAN_setupAction(actor, play, aPMAN_ACT_PRESENT_TRANS_WAIT);
+        }
+    }
+}
+
+static void aPMAN_present_trans_wait(NPC_POST_MAN* actor, GAME_PLAY* play) {
+    if (CLIP(handOverItem_clip)->master_actor != (ACTOR*)actor) {
+        actor->npc_class.left_hand.item_actor_p = NULL;
+        aPMAN_setupAction(actor, play, aPMAN_ACT_TALK_END_WAIT);
+    }
+}
+
 static void aPMAN_clear_xz_spd(NPC_POST_MAN* actor) {
     actor->npc_class.actor_class.speed = 0.0f;
     actor->npc_class.movement.speed.max_speed = 0.0f;
@@ -430,12 +527,6 @@ static void aPMAN_delivery_init(NPC_POST_MAN* actor, GAME_PLAY* play) {
     }
 }
 
-static void aPMAN_talk_end_wait_init(NPC_POST_MAN* actor, GAME_PLAY* play) {
-    actor->talk_type = 1;
-    mMld_ActorMakeMelody((ACTOR*)actor);
-    mDemo_Set_ListenAble();
-}
-
 static void aPMAN_fly_up_init(NPC_POST_MAN* actor, GAME_PLAY* play) {
     mEnv_regist_nature(&play->kankyo, aPMAN_eff_wings, actor);
     aPMAN_clear_xz_spd(actor);
@@ -460,10 +551,13 @@ static void aPMAN_init_proc(NPC_POST_MAN* actor, GAME_PLAY* play, u8 action) {
         (aPMAN_PROC)aPMAN_clear_xz_spd,
         aPMAN_delivery_init,
         (aPMAN_PROC)aPMAN_clear_xz_spd,
-        aPMAN_talk_end_wait_init,
+        (aPMAN_PROC)none_proc1,
         aPMAN_fly_up_init,
         aPMAN_exit_init,
         aPMAN_exit_init,
+        (aPMAN_PROC)none_proc1,
+        (aPMAN_PROC)none_proc1,
+        (aPMAN_PROC)none_proc1,
     };
     // clang-format on
 
@@ -487,6 +581,9 @@ static void aPMAN_set_talk_permit(NPC_POST_MAN* actor, u8 action) {
         FALSE, // aPMAN_ACT_FLY_UP
         FALSE, // aPMAN_ACT_EXIT
         FALSE, // aPMAN_ACT_EXIT2
+        FALSE, // aPMAN_ACT_PRESENT_START_WAIT
+        FALSE, // aPMAN_ACT_PRESENT_TRANS_TAKEOUT
+        FALSE, // aPMAN_ACT_PRESENT_TRANS_WAIT
     };
     // clang-format on
 
@@ -510,11 +607,25 @@ static void aPMAN_setupAction(NPC_POST_MAN* actor, GAME_PLAY* play, u8 action) {
         aPMAN_fly_up,
         aPMAN_exit,
         (aPMAN_PROC)none_proc1,
+        aPMAN_present_start_wait,
+        aPMAN_present_trans_takeout,
+        aPMAN_present_trans_wait,
     };
     // clang-format on
     
     actor->action = action;
     actor->act_proc = process[action];
+
+    switch (action) {
+        case aPMAN_ACT_PRESENT_TRANS_TAKEOUT:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 0);
+            mPr_SetFreePossessionItem(Now_Private, actor->live_music, mPr_ITEM_COND_NORMAL);
+            mNT_present_new_music_live_version(11);
+            mMsg_SET_LOCKCONTINUE();
+            sAdo_OngenTrgStart(NA_SE_GASAGOSO, &actor->npc_class.actor_class.world.position);
+            break;
+    }
+
     aPMAN_set_animation(actor, action);
     aPMAN_init_proc(actor, play, action);
     aPMAN_set_talk_permit(actor, action);

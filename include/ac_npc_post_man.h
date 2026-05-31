@@ -31,6 +31,7 @@ struct npc_post_man_actor_s {
     u8 talk_permit;
     u8 talk_type;
     f32 ground_y;
+    mActor_name_t live_music;
 };
 
 extern ACTOR_PROFILE Npc_Post_Man_Profile;

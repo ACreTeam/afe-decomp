@@ -5,6 +5,7 @@
 #include "m_house.h"
 #include "ac_mailbox.h"
 #include "m_melody.h"
+#include "m_msg.h"
 
 enum {
     aPMAN_ACT_ENTER,
@@ -21,6 +22,9 @@ enum {
     aPMAN_ACT_FLY_UP,
     aPMAN_ACT_EXIT,
     aPMAN_ACT_EXIT2,
+    aPMAN_ACT_PRESENT_START_WAIT,
+    aPMAN_ACT_PRESENT_TRANS_TAKEOUT,
+    aPMAN_ACT_PRESENT_TRANS_WAIT,
 
     aPMAN_ACT_NUM
 };
@@ -83,6 +87,8 @@ static void aPMAN_actor_ct(ACTOR* actorx, GAME* game) {
         actorx->status_data.weight = MASSTYPE_HEAVY;
         actorx->world.position.y = start_Ypos[type] + mCoBG_GetBgY_AngleS_FromWpos(NULL, actorx->world.position, 0.0f);
         actorx->shape_info.draw_shadow = TRUE;
+        actor->live_music = mNT_get_new_music_live_version(11);
+
         if (type == aPMAN_BIRTH_PLAYER_HOUSE) {
             int bx;
             int bz;
