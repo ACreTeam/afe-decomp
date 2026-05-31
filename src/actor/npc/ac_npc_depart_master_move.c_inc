@@ -15,37 +15,52 @@ static u8 aNDM_get_zone_sub(f32 pos, f32* chk_p, int count) {
 static u8 aNDM_get_zone(xyz_t wpos) {
     static f32 chk0[] = { 200.0f, 320.0f, 440.0f };
     static f32 chk1[] = { 280.0f, 400.0f, 440.0f };
-
     u8 zone;
 
     if (wpos.x < 220.0f) {
         zone = aNDM_get_zone_sub(wpos.z, chk0, ARRAY_COUNT(chk0));
-    } else {
-        zone = aNDM_get_zone_sub(wpos.z, chk1, ARRAY_COUNT(chk1));
 
-        if (zone == 2) {
-            if (wpos.x >= 360.0f) {
-                zone = 4;
+        if (zone == 3) {
+            if (wpos.x > 200.0f) {
+                zone = 10;
+            } else if (wpos.x > 160.0f) {
+                zone = 9;
             }
         }
-
+    } else {
+        zone = aNDM_get_zone_sub(wpos.z, chk1, ARRAY_COUNT(chk1));
         zone += 4;
+
+        if (zone == 7) {
+            if (wpos.x < 240.0f) {
+                zone = 10;
+            } else if (wpos.x < 280.0f) {
+                zone = 11;
+            }
+        } else if (zone == 6) {
+            if (wpos.x >= 360.0f) {
+                zone = 8;
+            }
+        }
     }
 
     return zone;
 }
 
 static u8 aNDM_get_next_zone(u8 p1, u8 p2) {
-    static u8 next_zone[9][9] = {
-        { 0x00, 0x01, 0x01, 0x01, 0x04, 0x04, 0x04, 0x04, 0x04 },
-        { 0x00, 0x01, 0x02, 0x02, 0x00, 0x00, 0x02, 0x02, 0x02 },
-        { 0x01, 0x01, 0x02, 0x03, 0x01, 0x01, 0x03, 0x03, 0x03 },
-        { 0x02, 0x02, 0x02, 0x03, 0x07, 0x07, 0x07, 0x07, 0x07 },
-        { 0x00, 0x00, 0x00, 0x00, 0x04, 0x05, 0x05, 0x05, 0x05 },
-        { 0x04, 0x04, 0x06, 0x06, 0x04, 0x05, 0x06, 0x06, 0x06 },
-        { 0x05, 0x05, 0x07, 0x07, 0x05, 0x05, 0x06, 0x07, 0x08 },
-        { 0x03, 0x03, 0x03, 0x03, 0x06, 0x06, 0x06, 0x07, 0x06 },
-        { 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x08 },
+    static u8 next_zone[12][12] = {
+        { 0x00, 0x01, 0x01, 0x01, 0x04, 0x04, 0x04, 0x04, 0x04, 0x01, 0x01, 0x04 },
+        { 0x00, 0x01, 0x02, 0x02, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 },
+        { 0x01, 0x01, 0x02, 0x03, 0x01, 0x01, 0x03, 0x03, 0x03, 0x09, 0x09, 0x09 },
+        { 0x02, 0x02, 0x02, 0x03, 0x07, 0x07, 0x07, 0x07, 0x07, 0x09, 0x09, 0x09 },
+        { 0x00, 0x00, 0x00, 0x00, 0x04, 0x05, 0x05, 0x05, 0x05, 0x00, 0x05, 0x05 },
+        { 0x04, 0x04, 0x06, 0x06, 0x04, 0x05, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06 },
+        { 0x05, 0x05, 0x07, 0x07, 0x05, 0x05, 0x06, 0x07, 0x08, 0x0B, 0x0B, 0x0B },
+        { 0x03, 0x03, 0x03, 0x03, 0x06, 0x06, 0x06, 0x07, 0x06, 0x0B, 0x0B, 0x0B },
+        { 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x08, 0x06, 0x06, 0x06 },
+        { 0x02, 0x02, 0x02, 0x03, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x09, 0x0A, 0x0A },
+        { 0x09, 0x09, 0x09, 0x09, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B, 0x09, 0x0A, 0x0B },
+        { 0x0A, 0x0A, 0x0A, 0x0A, 0x06, 0x06, 0x06, 0x07, 0x07, 0x0A, 0x0A, 0x0B },
     };
 
     return next_zone[p2][p1];
@@ -58,7 +73,7 @@ static void aNDM_search_player(NPC_DEPART_MASTER_ACTOR* depart_master, GAME_PLAY
     if (player != NULL) {
         s16 angle = actorx->shape_info.rotation.y - depart_master->player_angle;
         if (ABS(angle) > DEG2SHORT_ANGLE(90.0f)) {
-            aNSC_setupAction(depart_master, play, 66);
+            aNSC_setupAction(depart_master, play, aNSC_ACTION_TURN);
         } else {
             chase_angle(&actorx->shape_info.rotation.y, depart_master->player_angle, DEG2SHORT_ANGLE(11.25f));
             actorx->world.angle.y = actorx->shape_info.rotation.y;
@@ -67,25 +82,35 @@ static void aNDM_search_player(NPC_DEPART_MASTER_ACTOR* depart_master, GAME_PLAY
 }
 
 static void aNDM_search_player2(NPC_DEPART_MASTER_ACTOR* depart_master, GAME_PLAY* play) {
-    static float posX[9] = {
-        140.0f, 140.0f, 140.0f, 140.0f, 300.0f, 300.0f, 300.0f, 300.0f, 400.0f,
+    static float posX[12] = {
+        140.0f, 140.0f, 140.0f, 140.0f, 300.0f, 300.0f, 300.0f, 300.0f, 400.0f, 180.0f, 220.0f, 260.0f,
     };
 
-    static float posZ[9] = {
-        180.0f, 260.0f, 380.0f, 480.0f, 180.0f, 340.0f, 420.0f, 480.0f, 420.0f,
+    static float posZ[12] = {
+        180.0f, 260.0f, 380.0f, 480.0f, 180.0f, 340.0f, 420.0f, 480.0f, 420.0f, 500.0f, 500.0f, 500.0f,
     };
 
+    static float chk_dist[2] = { 200.0f, 10.0f };
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
     if (player != NULL) {
-        f32 dx = posX[depart_master->next_zone] - depart_master->npc_class.actor_class.world.position.x;
-        f32 dz = posZ[depart_master->next_zone] - depart_master->npc_class.actor_class.world.position.z;
+        int next_zone = depart_master->next_zone;
+        int chk_dist_idx = 0;
+        f32 dx;
+        f32 dz;
+        s16 angle;
 
-        s16 angle = atans_table(dz, dx);
+        if (mSP_force_opend()) {
+            chk_dist_idx = 1;
+        }
+
+        dx = posX[next_zone] - depart_master->npc_class.actor_class.world.position.x;
+        dz = posZ[next_zone] - depart_master->npc_class.actor_class.world.position.z;
+        angle = atans_table(dz, dx);
         chase_angle(&depart_master->npc_class.actor_class.shape_info.rotation.y, angle, DEG2SHORT_ANGLE(11.25f));
 
         depart_master->npc_class.actor_class.world.angle.y = depart_master->npc_class.actor_class.shape_info.rotation.y;
 
-        if (SQ(dx) + SQ(dz) < 200.0f) {
+        if (SQ(dx) + SQ(dz) < chk_dist[chk_dist_idx]) {
             depart_master->next_zone = aNDM_get_next_zone(depart_master->player_zone, depart_master->zone);
         }
     }

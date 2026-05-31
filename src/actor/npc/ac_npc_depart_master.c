@@ -71,15 +71,20 @@ void aNDM_actor_ct(ACTOR* actorx, GAME* game) {
     depart_master->sell_item = EMPTY_NO;
     depart_master->npc_class.condition_info.hide_flg = FALSE;
     depart_master->talk_start_tim = -1;
+    
+    if (mSP_force_opend()) {
+        depart_master->npc_class.movement.speed_percent = 0.4f;
+    }
+
     actorx->shape_info.draw_shadow = TRUE;
 
-    action = 0;
+    action = aNSC_ACTION_START_WAIT;
     if (Common_Get(door_data).door_actor_name == RSV_NO) {
         depart_master->npc_class.talk_info.melody_inst = 0;
-        action = 61;
+        action = aNSC_ACTION_WAIT;
     } else if (Common_Get(last_scene_no) == SCENE_DEPART_2) {
         depart_master->npc_class.talk_info.melody_inst = 0;
-        action = 61;
+        action = aNSC_ACTION_WAIT;
 
         actorx->world.position.x = 320.0f;
         actorx->world.position.z = 200.0f;
