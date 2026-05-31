@@ -944,7 +944,7 @@ static void aNMD_search_player(NPC_MAMEDANUKI_ACTOR* mamedanuki, GAME_PLAY* play
     if (player != NULL) {
         s16 angle = actorx->shape_info.rotation.y - mamedanuki->player_angle;
         if (ABS(angle) > DEG2SHORT_ANGLE(90.0f)) {
-            aNSC_setupAction(mamedanuki, play, 66);
+            aNSC_setupAction(mamedanuki, play, aNSC_ACTION_TURN);
         } else {
             chase_angle(&actorx->shape_info.rotation.y, mamedanuki->player_angle, DEG2SHORT_ANGLE(11.25f));
             actorx->world.angle.y = actorx->shape_info.rotation.y;
@@ -1025,21 +1025,31 @@ static void aNMD_search_player2(NPC_MAMEDANUKI_ACTOR* mamedanuki, GAME_PLAY* pla
         posZ_sale_normal, posZ_sale_ftr, posZ_sale_cloth, posZ_sale_carpet,
     };
 
+    static float chk_dist[2] = { 200.0f, 10.0f };
 
     int sale_type = mamedanuki->sale_type;
     float* posX_p = posX_table[sale_type];
     float* posZ_p = posZ_table[sale_type];
     ACTOR* player = GET_PLAYER_ACTOR_ACTOR(play);
     if (player != NULL) {
-        f32 dx = posX_p[mamedanuki->next_zone] - mamedanuki->npc_class.actor_class.world.position.x;
-        f32 dz = posZ_p[mamedanuki->next_zone] - mamedanuki->npc_class.actor_class.world.position.z;
+        int next_zone = mamedanuki->next_zone;
+        int chk_dist_idx = 0;
+        f32 dx;
+        f32 dz;
+        s16 angle;
 
-        s16 angle = atans_table(dz, dx);
+        if (mSP_force_opend()) {
+            chk_dist_idx = 1;
+        }
+
+        dx = posX_p[next_zone] - mamedanuki->npc_class.actor_class.world.position.x;
+        dz = posZ_p[next_zone] - mamedanuki->npc_class.actor_class.world.position.z;
+        angle = atans_table(dz, dx);
         chase_angle(&mamedanuki->npc_class.actor_class.shape_info.rotation.y, angle, DEG2SHORT_ANGLE(11.25f));
 
         mamedanuki->npc_class.actor_class.world.angle.y = mamedanuki->npc_class.actor_class.shape_info.rotation.y;
 
-        if (SQ(dx) + SQ(dz) < 200.0f) {
+        if (SQ(dx) + SQ(dz) < chk_dist[chk_dist_idx]) {
             mamedanuki->next_zone = aNMD_get_next_zone(mamedanuki, mamedanuki->player_zone, mamedanuki->zone);
         }
     }
@@ -1054,7 +1064,15 @@ static void aNMD_weight_ctrl(ACTOR* actorx) {
     if (talk_actor != NULL && talk_actor != actorx) {
         idx = 2;
     } else {
-        idx = actorx->npc_id == SP_NPC_MAMEDANUKI1;
+        switch (actorx->npc_id) {
+            case SP_NPC_MAMEDANUKI1:
+            case SP_NPC_MAMEDANUKI1_NIGHT:
+                idx = 1;
+                break;
+            default:
+                idx = 0;
+                break;
+        }
     }
 
     actorx->status_data.weight = weight[idx];

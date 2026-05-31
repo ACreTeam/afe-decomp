@@ -84,7 +84,10 @@ void aNMD_actor_ct(ACTOR* actorx, GAME* game) {
     };
     // clang-format on
 
-    static int start_act_idx[] = { 0, 1 }; // TODO: figure out how the hell to define this with enums
+    static int start_act_idx[][2] = {
+        { aNSC_ACTION_START_WAIT, aNSC_ACTION_SAY_HELLO_APPROACH },
+        { aNSC_ACTION_START_WAIT, aNSC_ACTION_SAY_HELLO_END_WAIT },
+    };
     // clang-format off
     static u8 special_sale_type[mSP_KIND_MAX] = {
         aNMD_SALE_TYPE_FTR,
@@ -97,12 +100,19 @@ void aNMD_actor_ct(ACTOR* actorx, GAME* game) {
 
     NPC_MAMEDANUKI_ACTOR* mamedanuki = (NPC_MAMEDANUKI_ACTOR*)actorx;
     int action;
+    int idx = 0;
+
     CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
 
     mamedanuki->npc_class.draw.main_animation.keyframe.morph_counter = 0.0f;
     mamedanuki->sell_item = EMPTY_NO;
     mamedanuki->npc_class.condition_info.hide_flg = FALSE;
     mamedanuki->talk_start_tim = -1;
+
+    if (mSP_force_opend()) {
+        mamedanuki->npc_class.movement.speed_percent = 0.5f;
+    }
+
     actorx->shape_info.draw_shadow = TRUE;
     actorx->shape_info.rotation.y = DEG2SHORT_ANGLE2(180.0f);
     actorx->world.angle.y = DEG2SHORT_ANGLE2(180.0f);
@@ -122,26 +132,29 @@ void aNMD_actor_ct(ACTOR* actorx, GAME* game) {
         mamedanuki->sale_type = sale_type;
     }
 
+    switch (actorx->npc_id) {
+        case SP_NPC_MAMEDANUKI1:
+        case SP_NPC_MAMEDANUKI1_NIGHT:
+            idx = 1;
+            break;
+    }
+
     if (Common_Get(door_data).door_actor_name == RSV_NO) {
         mamedanuki->npc_class.talk_info.melody_inst = 0;
-        action = 61;
+        action = aNSC_ACTION_WAIT;
     } else {
-        action = start_act_idx[actorx->npc_id != SP_NPC_MAMEDANUKI0];
-    }
+        int force_opend = FALSE;
 
-    {
-        int idx;
-
-        if (actorx->npc_id == SP_NPC_MAMEDANUKI1) {
-            idx = 1;
-        } else {
-            idx = 0;
+        if (mSP_force_opend()) {
+            force_opend = 1;
         }
 
-        aNMD_actor_p[idx] = actorx;
-        aNSC_setupAction(mamedanuki, (GAME_PLAY*)game, action);
-        aNMD_selectIdx = 0;
-    }
+        action = start_act_idx[force_opend][idx];
+    }   
+
+    aNMD_actor_p[idx] = actorx;
+    aNSC_setupAction(mamedanuki, (GAME_PLAY*)game, action);
+    aNMD_selectIdx = 0;
 }
 
 void aNMD_actor_save(ACTOR* actorx, GAME* game) {

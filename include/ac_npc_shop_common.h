@@ -381,6 +381,8 @@ enum aNSC_request_show_type {
 enum {
     aNSC_DAY_NORMAL,
     aNSC_DAY_FUKUBIKI,
+    aNSC_DAY_MIDNIGHT,
+    aNSC_DAY_LIVE_MUSIC,
 
     aNSC_DAY_NUM
 };

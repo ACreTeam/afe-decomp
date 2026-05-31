@@ -559,9 +559,11 @@ static void aNSC_set_last_day_str() {
     mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR5, buff, sizeof(buff));
 }
 
+#ifndef aNSC_MAMEDANUKI
 static void aNSC_set_island_name_str(void) {
     mMsg_SET_FREE_STR(mMsg_FREE_STR0, Common_Get(now_home)->island.name, mISL_ISLAND_NAME_LEN);
 }
+#endif
 
 static void aNSC_set_pw_name_str(NPC_SHOP_COMMON_ACTOR* shop_common) {
     mMsg_Window_c* msg_win = mMsg_Get_base_window_p();
@@ -1099,14 +1101,14 @@ static int aNSC_decide_next_move_act(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PL
                 shop_common->next_zone = aNSC_get_next_zone(shop_common, shop_common->player_zone, shop_common->zone);
             }
 
-            if (dist < 110.0f) {
+            if (dist < 110.0f || mSP_force_opend()) {
                 res = aNSC_ACTION_WALK_PL_OTHER_ZONE;
             } else {
                 res = aNSC_ACTION_0x41_WALK_PL_OTHER_ZONE;
             }
         } else {
             shop_common->next_zone = shop_common->zone;
-            if (dist < 110.0f) {
+            if (dist < 110.0f || mSP_force_opend()) {
                 res = aNSC_ACTION_0x3e_WAIT;
             } else {
                 res = aNSC_ACTION_0x40_WAIT;
@@ -1404,7 +1406,11 @@ static void aNSC_set_talk_info_show_item(ACTOR* actorx) {
     aNSC_set_item_str(actorx);
     aNSC_set_player_angle();
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
+#ifndef aNSC_MAMEDANUKI
     mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_SHOW_ITEM));
+#else
+    mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_SHOW_CLOTH));
+#endif
 }
 
 static void aNSC_set_talk_info_show_cloth(ACTOR* actorx) {
@@ -1414,7 +1420,7 @@ static void aNSC_set_talk_info_show_cloth(ACTOR* actorx) {
 #ifndef aNSC_MAMEDANUKI
     mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_SHOW_CLOTH));
 #else
-    mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_ACTION_WAIT));
+    mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_ACTION_SELL_CHECK));
 #endif
 }
 
@@ -1422,7 +1428,11 @@ static void aNSC_set_talk_info_sell_item(ACTOR* actorx) {
     NPC_SHOP_COMMON_ACTOR* shop_common = (NPC_SHOP_COMMON_ACTOR*)actorx;
     mActor_name_t item = shop_common->sell_item;
     u8 camera_type;
+#ifndef aNSC_MAMEDANUKI
     int msg_no = mSP_force_opend() ? aNSC_MSG_GRP_MIDNIGHT_BUY_ONE_OFFER : aNSC_MSG_BUY_ONE_OFFER;
+#else
+    int msg_no = mSP_force_opend() ? aNSC_MSG_GRP_MIDNIGHT_BUY_ONE_OFFER : 8;
+#endif
 
     aNSC_set_item_str(actorx);
     aNSC_set_player_angle();
@@ -1460,11 +1470,11 @@ static void aNSC_set_talk_info_sell_item(ACTOR* actorx) {
     mDemo_Set_msg_num(aNSC_get_msg_no(msg_no));
 }
 
+#ifndef aNSC_MAMEDANUKI
+
 static void aNSC_set_talk_info_message_ctrl(ACTOR* actorx) {
     mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_INTERACT_START));
 }
-
-#ifndef aNSC_MAMEDANUKI
 
 static void aNSC_set_talk_info_message_ctrl_aprilfool(ACTOR* actorx) {
     int msg_num = Common_Get(clip).aprilfool_control_clip->get_msg_num_proc(SP_NPC_SHOP_MASTER, 0);
@@ -1491,9 +1501,31 @@ static void aNSC_set_talk_info_message_ctrl_midnight(ACTOR* actorx) {
 
 #ifdef aNSC_MAMEDANUKI
 
-static void aNSC_set_talk_info_fukubiki(ACTOR* actorx) {
+static void aNSC_message_ctrl_set_norm_talk_info_normal_day(ACTOR* actorx) {
+    mDemo_Set_msg_num(aNSC_get_msg_no(1));
+}
+
+static void aNSC_message_ctrl_set_norm_talk_info_fukubiki_day(ACTOR* actorx) {
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
     mDemo_Set_msg_num(0x10E2);
+}
+
+static void aNSC_message_ctrl_set_norm_talk_info_midnight(ACTOR* actorx) {
+    mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_GREET));
+}
+
+static void aNSC_message_ctrl_set_norm_talk_info_tk_music(ACTOR* actorx) {
+    NPC_SHOP_COMMON_ACTOR* shop_common = (NPC_SHOP_COMMON_ACTOR*)actorx;
+    int msg_no;
+
+    if (actorx->npc_id == SP_NPC_MAMEDANUKI0) {
+        msg_no = MSG_626;
+    } else {
+        msg_no = MSG_625;
+    }
+
+    mDemo_Set_msg_num(msg_no);
+    aNSC_set_item_name_str(shop_common->live_music, mMsg_ITEM_STR0);
 }
 
 static void aNSC_message_ctrl_force_talk_start_normal_day(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
@@ -1525,6 +1557,12 @@ static void aNSC_message_ctrl_force_talk_start_fukubiki_day(NPC_SHOP_COMMON_ACTO
     aNSC_setupAction(shop_common, play, aNSC_ACTION_SAY_HELLO_END_WAIT);
 }
 
+static void aNSC_message_ctrl_force_talk_start_midnight(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+    if (shop_common->sell_item != EMPTY_NO) {
+        aNSC_setupAction(shop_common, play, aNSC_ACTION_SELL_CHECK_BEFORE);
+    }
+}
+
 static void aNSC_message_ctrl_norm_talk_start_normal_day(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
     aNSC_setupAction(shop_common, play, aNSC_ACTION_REQUEST_Q_ANSWER_WAIT);
 }
@@ -1533,7 +1571,15 @@ static void aNSC_message_ctrl_norm_talk_start_fukubiki_day(NPC_SHOP_COMMON_ACTOR
     aNSC_setupAction(shop_common, play, aNSC_ACTION_SAY_HELLO_END_WAIT);
 }
 
-static void aNSC_message_ctrl_talk_request_normal_day(NPC_SHOP_COMMON_ACTOR* shop_common, PLAYER_ACTOR* player) {
+static void aNSC_message_ctrl_norm_talk_start_midnight(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+    aNSC_setupAction(shop_common, play, aNSC_ACTION_REQUEST_Q_ANSWER_WAIT);
+}
+
+static void aNSC_message_ctrl_norm_talk_start_tk_music(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+    aNSC_setupAction(shop_common, play, aNSC_ACTION_MS_PRESENT_START_WAIT);
+}
+
+static void aNSC_message_ctrl_force_talk_request_normal_day(NPC_SHOP_COMMON_ACTOR* shop_common, PLAYER_ACTOR* player) {
     shop_common->sell_item = EMPTY_NO;
 
     if (player->a_btn_pressed == TRUE) {
@@ -1560,13 +1606,13 @@ static void aNSC_message_ctrl_talk_request_normal_day(NPC_SHOP_COMMON_ACTOR* sho
                     switch (ITEM_NAME_GET_CAT(fg_item)) {
                         case ITEM1_CAT_CARPET:
                         case ITEM1_CAT_WALL:
-                            req_proc = aNSC_set_talk_info_show_item;
+                            req_proc = (mDemo_REQUEST_PROC)aNSC_set_talk_info_show_item;
                             break;
                         case ITEM1_CAT_CLOTH:
-                            req_proc = aNSC_set_talk_info_show_cloth;
+                            req_proc = (mDemo_REQUEST_PROC)aNSC_set_talk_info_show_cloth;
                             break;
                         default:
-                            req_proc = aNSC_set_talk_info_sell_item;
+                            req_proc = (mDemo_REQUEST_PROC)aNSC_set_talk_info_sell_item;
                             break;
                     }
                     break;
@@ -1578,7 +1624,8 @@ static void aNSC_message_ctrl_talk_request_normal_day(NPC_SHOP_COMMON_ACTOR* sho
     }
 }
 
-static void aNSC_message_ctrl_talk_request_fukubiki_day(NPC_SHOP_COMMON_ACTOR* shop_common, PLAYER_ACTOR* player) {
+static void aNSC_message_ctrl_force_talk_request_fukubiki_day(NPC_SHOP_COMMON_ACTOR* shop_common,
+                                                              PLAYER_ACTOR* player) {
     if (player->a_btn_pressed == TRUE) {
         mActor_name_t fg_item;
         int ux;
@@ -1588,7 +1635,30 @@ static void aNSC_message_ctrl_talk_request_fukubiki_day(NPC_SHOP_COMMON_ACTOR* s
         fg_item = CLIP(shop_design_clip)->unitNum2ItemNo_proc(ux, uz);
 
         if (fg_item != EMPTY_NO && fg_item != RSV_NO) {
-            mDemo_Request(mDemo_TYPE_SPEAK, (ACTOR*)shop_common, &aNSC_set_talk_info_fukubiki);
+            mDemo_Request(mDemo_TYPE_SPEAK, (ACTOR*)shop_common,
+                          (mDemo_REQUEST_PROC)&aNSC_message_ctrl_set_norm_talk_info_fukubiki_day);
+            shop_common->talk_start_tim = -1;
+        }
+    }
+}
+
+static void aNSC_message_ctrl_force_talk_request_midnight(NPC_SHOP_COMMON_ACTOR* shop_common, PLAYER_ACTOR* player) {
+    shop_common->sell_item = EMPTY_NO;
+
+    if (player->a_btn_pressed == TRUE) {
+        mActor_name_t fg_item;
+        int ux;
+        int uz;
+
+        mFI_Wpos2UtNum(&ux, &uz, player->forward_ut_pos);
+        fg_item = CLIP(shop_design_clip)->unitNum2ItemNo_proc(ux, uz);
+
+        if (fg_item != EMPTY_NO && fg_item != RSV_NO) {
+            shop_common->sell_item = fg_item;
+            shop_common->ut_x = ux;
+            shop_common->ut_z = uz;
+
+            mDemo_Request(mDemo_TYPE_SPEAK, (ACTOR*)shop_common, (mDemo_REQUEST_PROC)&aNSC_set_talk_info_sell_item);
             shop_common->talk_start_tim = -1;
         }
     }
@@ -1596,13 +1666,30 @@ static void aNSC_message_ctrl_talk_request_fukubiki_day(NPC_SHOP_COMMON_ACTOR* s
 
 static int aNSC_message_ctrl_sub(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play, PLAYER_ACTOR* player,
                                  int day_type) {
-    static aNSC_TALK_PROC force_talk_start_proc[] = { &aNSC_message_ctrl_force_talk_start_normal_day,
-                                                      &aNSC_message_ctrl_force_talk_start_fukubiki_day };
-    static aNSC_TALK_PROC norm_talk_start_proc[] = { &aNSC_message_ctrl_norm_talk_start_normal_day,
-                                                     &aNSC_message_ctrl_norm_talk_start_fukubiki_day };
-    static aNSC_TALK_REQ_PROC request_proc[] = { &aNSC_message_ctrl_talk_request_normal_day,
-                                                 &aNSC_message_ctrl_talk_request_fukubiki_day };
-    static mDemo_REQUEST_PROC set_talk_info_proc[] = { &aNSC_set_talk_info_message_ctrl, &aNSC_set_talk_info_fukubiki };
+    static aNSC_TALK_PROC force_talk_start_proc[] = {
+        &aNSC_message_ctrl_force_talk_start_normal_day,
+        &aNSC_message_ctrl_force_talk_start_fukubiki_day,
+        &aNSC_message_ctrl_force_talk_start_midnight,
+        &aNSC_message_ctrl_force_talk_start_normal_day,
+    };
+    static aNSC_TALK_PROC norm_talk_start_proc[] = {
+        &aNSC_message_ctrl_norm_talk_start_normal_day,
+        &aNSC_message_ctrl_norm_talk_start_fukubiki_day,
+        &aNSC_message_ctrl_norm_talk_start_midnight,
+        &aNSC_message_ctrl_norm_talk_start_tk_music,
+    };
+    static aNSC_TALK_REQ_PROC force_request_proc[] = {
+        &aNSC_message_ctrl_force_talk_request_normal_day,
+        &aNSC_message_ctrl_force_talk_request_fukubiki_day,
+        &aNSC_message_ctrl_force_talk_request_midnight,
+        &aNSC_message_ctrl_force_talk_request_normal_day,
+    };
+    static mDemo_REQUEST_PROC set_norm_talk_info_proc[] = {
+        &aNSC_message_ctrl_set_norm_talk_info_normal_day,
+        &aNSC_message_ctrl_set_norm_talk_info_fukubiki_day,
+        &aNSC_message_ctrl_set_norm_talk_info_midnight,
+        &aNSC_message_ctrl_set_norm_talk_info_tk_music,
+    };
 
     ACTOR* actorx = (ACTOR*)shop_common;
     int ret = FALSE;
@@ -1612,7 +1699,7 @@ static int aNSC_message_ctrl_sub(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* 
             aNSC_calc_talk_start_tim(shop_common);
 
             if (actorx->player_distance_xz < 85.0f || shop_common->talk_start_tim == 0) {
-                if (chase_angle(&actorx->shape_info.rotation.y, shop_common->player_angle, DEG2SHORT_ANGLE2(11.25f)) ==
+                if (chase_angle(&actorx->shape_info.rotation.y, shop_common->player_angle, DEG2SHORT_ANGLE(11.25f)) ==
                     TRUE) {
                     (*force_talk_start_proc[day_type])(shop_common, play);
                     shop_common->talk_start_tim = -1;
@@ -1626,7 +1713,7 @@ static int aNSC_message_ctrl_sub(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* 
         }
     } else if (mDemo_Check(mDemo_TYPE_TALK, actorx) == TRUE) {
         if (!mDemo_Check_ListenAble()) {
-            if (chase_angle(&actorx->shape_info.rotation.y, shop_common->player_angle, DEG2SHORT_ANGLE2(11.25f)) ==
+            if (chase_angle(&actorx->shape_info.rotation.y, shop_common->player_angle, DEG2SHORT_ANGLE(11.25f)) ==
                 TRUE) {
                 (*norm_talk_start_proc[day_type])(shop_common, play);
                 aNSC_Set_ListenAble(shop_common);
@@ -1641,12 +1728,12 @@ static int aNSC_message_ctrl_sub(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* 
         }
 
         if (actorx == aNMD_actor_p[aNMD_selectIdx]) {
-            (*request_proc[day_type])(shop_common, player);
+            (*force_request_proc[day_type])(shop_common, player);
         } else {
             shop_common->talk_start_tim = -1;
         }
 
-        mDemo_Request(mDemo_TYPE_TALK, actorx, set_talk_info_proc[day_type]);
+        mDemo_Request(mDemo_TYPE_TALK, actorx, set_norm_talk_info_proc[day_type]);
     }
 
     return ret;
@@ -1658,22 +1745,34 @@ static int aNSC_message_ctrl(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play
 
     if (player_actorx != NULL && CLIP(shop_design_clip) != NULL) {
         PLAYER_ACTOR* player = (PLAYER_ACTOR*)player_actorx;
+        mActor_name_t door_item = player->item_in_front;
 
-        if (player->item_in_front == EXIT_DOOR1) {
+        if (mDemo_CAN_ACTOR_TALK((ACTOR*)shop_common) && door_item == EXIT_DOOR1) {
             int next_act_idx;
 
             if ((ACTOR*)shop_common == aNMD_actor_p[aNMD_selectIdx]) {
                 next_act_idx = aNSC_ACTION_GOODBYE_WAIT;
             } else {
-                next_act_idx = aNSC_ACTION_GOODBYE_WAIT;
+                next_act_idx = aNSC_ACTION_GOODBYE_WAIT2;
             }
 
             aNSC_setupAction(shop_common, play, next_act_idx);
             ret = TRUE;
-        } else if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
-            ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_FUKUBIKI);
+        } else if (mSP_force_opend()) {
+            ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_MIDNIGHT);
         } else {
-            ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_NORMAL);
+            switch (Common_Get(tanuki_shop_status)) {
+                case mSP_TANUKI_SHOP_STATUS_FUKUBIKI:
+                    ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_FUKUBIKI);
+                    break;
+                default:
+                    if (shop_common->live_music != EMPTY_NO && mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+                        ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_LIVE_MUSIC);
+                    } else {
+                        ret = aNSC_message_ctrl_sub(shop_common, play, player, aNSC_DAY_NORMAL);
+                    }
+                    break;
+            }
         }
     }
 
@@ -1986,12 +2085,20 @@ static int aNSC_buy_item_only_one(u32* bells, mActor_name_t itm, u8* p3, int sel
 static void aNSC_set_talk_info_start_wait(ACTOR* actorx) {
     int msg_no;
 
-    if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_EVENT) {
-        msg_no = 0x1722;
-    } else if (Common_Get(tanuki_shop_status) == mSP_TANUKI_SHOP_STATUS_FUKUBIKI) {
-        msg_no = 0x10E1;
+    if (mSP_force_opend()) {
+        msg_no = MSG_9160;
     } else {
-        msg_no = 0x1713;
+        switch (Common_Get(tanuki_shop_status)) {
+            case mSP_TANUKI_SHOP_STATUS_EVENT:
+                msg_no = 0x1722;
+                break;
+            case mSP_TANUKI_SHOP_STATUS_FUKUBIKI:
+                msg_no = 0x10E1;
+                break;
+            default:
+                msg_no = 0x1713;
+                break;
+        }
     }
 
     mDemo_Set_msg_num(msg_no);
@@ -2002,8 +2109,17 @@ static void aNSC_start_wait(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play)
 
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == TRUE) {
         if (!mDemo_Check_ListenAble()) {
+            int action;
+
             aNSC_Set_ListenAble(shop_common);
-            aNSC_setupAction(shop_common, play, aNSC_ACTION_SAY_HELLO_APPROACH);
+
+            if (mSP_force_opend()) {
+                action = aNSC_ACTION_SAY_HELLO_END_WAIT;
+            } else {
+                action = aNSC_ACTION_SAY_HELLO_APPROACH;
+            }
+
+            aNSC_setupAction(shop_common, play, action);
         }
     } else {
         mDemo_Request(mDemo_TYPE_SPEAK, actorx, &aNSC_set_talk_info_start_wait);
@@ -2509,7 +2625,11 @@ static void aNSC_present_balloon_end_wait(NPC_SHOP_COMMON_ACTOR* shop_common, GA
 #endif
 
 static void aNSC_set_talk_info_request_Q_start_wait(ACTOR* actor) {
+#ifndef aNSC_MAMEDANUKI
     mDemo_Set_msg_num(aNSC_get_msg_no(aNSC_MSG_INTERACT_START));
+#else
+    mDemo_Set_msg_num(aNSC_get_msg_no(1));
+#endif
     mDemo_Set_talk_turn(0x0);
 }
 
@@ -2526,11 +2646,17 @@ static void aNSC_request_Q_start_wait(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_P
 }
 
 static void aNSC_request_Q_answer_wait_normal(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+#ifndef aNSC_MAMEDANUKI
     static int msg_no[9] = {
         aNSC_MSG_KABU_ON_SUNDAY,  aNSC_MSG_KABU_INFO, aNSC_MSG_SELL_START,       aNSC_MSG_ORDER_FULL,
         aNSC_MSG_SHOW_CATALOGUE,  aNSC_MSG_MM_ORDER,  aNSC_MSG_MM_ORDER_FOREIGN, aNSC_MSG_ORDER_FURNITURE_ONLY,
         aNSC_MSG_INTERACT_CANCEL,
     };
+#else
+    static int msg_no[9] = {
+        14, 3, 4, 27, 21, aNSC_MSG_MM_ORDER, aNSC_MSG_MM_ORDER_FOREIGN, 28, 2,
+    };
+#endif
 
     static int next_act_idx[9] = {
         aNSC_ACTION_REQUEST_Q_END_WAIT,    aNSC_ACTION_REQUEST_Q_END_WAIT,
@@ -2663,10 +2789,16 @@ static void aNSC_buy_menu_close_wait(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PL
 }
 
 static void aNSC_msg_win_open_wait(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+#ifndef aNSC_MAMEDANUKI
     static int msg_no_table[] = {
         aNSC_MSG_SELL_OFFER, aNSC_MSG_SELL_CANCEL,    aNSC_MSG_KABU_ON_SUNDAY, aNSC_MSG_JUNK_ACCEPT,
         aNSC_MSG_SELL_QUEST, aNSC_MSG_OFFER_SELL_ALL, aNSC_MSG_BUY_MANY_OFFER, aNSC_MSG_BUY_REFUSE_PLURAL,
     };
+#else
+    static int msg_no_table[] = {
+        5, 7, 14, 35, 34, 42, 215, 217
+    };
+#endif
 
     static int msg_no_table_mid[] = {
         aNSC_MSG_GRP_MIDNIGHT_SELL_CONFIRM,     aNSC_MSG_GRP_MIDNIGHT_SELL_DECLINE, aNSC_MSG_GRP_MIDNIGHT_KABU_INFO,
@@ -2720,17 +2852,27 @@ static void aNSC_buy_sum_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* pl
                 *item = PAPEROFQUANT(*item - ITM_PAPER_START, 1);
             }
             mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0x9, 0x0);
+#ifndef aNSC_MAMEDANUKI
             aNSC_Set_continue_msg_num(
                 mMsg_Get_base_window_p(), shop_common,
                 aNSC_get_msg_no(mSP_force_opend() ? aNSC_MSG_GRP_MIDNIGHT_SELL_CONFIRM : aNSC_MSG_SELL_OFFER));
+#else
+            aNSC_Set_continue_msg_num(
+                mMsg_Get_base_window_p(), shop_common,
+                aNSC_get_msg_no(mSP_force_opend() ? aNSC_MSG_GRP_MIDNIGHT_SELL_CONFIRM : 5));
+#endif
             aNSC_setupAction(shop_common, play, aNSC_ACTION_BUY_CHECK);
         }
     }
 }
 
 static void aNSC_buy_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+#ifndef aNSC_MAMEDANUKI
     static int msg_no_table[4] = { aNSC_MSG_BREAK_BAG, aNSC_MSG_SELL_NORMAL, aNSC_MSG_SELL_CANCEL,
                                    aNSC_MSG_MONEY_OVERFLOW };
+#else
+    static int msg_no_table[4] = { 16, 6, 7, 201 };
+#endif
     static int msg_no_table_mid[] = {
         aNSC_MSG_GRP_MIDNIGHT_SELL_WALLET_FULL,
         aNSC_MSG_GRP_MIDNIGHT_SELL_COMPLETE,
@@ -2755,9 +2897,15 @@ static void aNSC_buy_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) 
         n2 = aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_SELL_ALL_CONFIRM);
         n3 = aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_SELL_FREE2);
     } else {
+#ifndef aNSC_MAMEDANUKI
         n1 = aNSC_get_msg_no(aNSC_MSG_SELL_OFFER);
         n2 = aNSC_get_msg_no(aNSC_MSG_BUY_MANY_OFFER);
         n3 = aNSC_get_msg_no(aNSC_MSG_BUY_REFUSE_PLURAL);
+#else
+        n1 = aNSC_get_msg_no(5);
+        n2 = aNSC_get_msg_no(215);
+        n3 = aNSC_get_msg_no(217);
+#endif
     }
 
     if (num == n1 || num == n2 || num == n3) {
@@ -2842,8 +2990,13 @@ static void aNSC_buy_continue_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLA
         n1 = aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_SELL_DECLINE);
         n2 = aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_SELL_COMPLETE);
     } else {
+#ifndef aNSC_MAMEDANUKI
         n1 = aNSC_get_msg_no(aNSC_MSG_SELL_NORMAL);
         n2 = aNSC_get_msg_no(aNSC_MSG_SELL_CANCEL);
+#else
+        n1 = aNSC_get_msg_no(6);
+        n2 = aNSC_get_msg_no(7);
+#endif
     }
 
     if (num == n1 || num == n2) {
@@ -2855,7 +3008,12 @@ static void aNSC_buy_continue_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLA
                     break;
                 case mChoice_CHOICE1:
 #ifdef aNSC_MAMEDANUKI
-                    aNSC_Set_continue_msg_num(msg_p, shop_common, aNSC_get_msg_no(aNSC_MSG_3C));
+                    if (mSP_force_opend()) {
+                        aNSC_Set_continue_msg_num(msg_p, shop_common,
+                                                aNSC_get_msg_no(aNSC_MSG_GRP_MIDNIGHT_REQUEST_Q_END));
+                    } else {
+                        aNSC_Set_continue_msg_num(msg_p, shop_common, aNSC_get_msg_no(38));
+                    }
 #else
                     if (mSP_force_opend()) {
                         aNSC_Set_continue_msg_num(msg_p, shop_common,
@@ -2891,7 +3049,11 @@ static void aNSC_receive_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* pl
 }
 
 static void aNSC_msg_win_open_wait2(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+#ifndef aNSC_MAMEDANUKI
     static int msg_no[3] = { aNSC_MSG_ORDER_CANCEL, aNSC_MSG_ORDER_UNAVAILABLE, aNSC_MSG_ORDER_OFFER };
+#else
+    static int msg_no[3] = { 24, 23, 22 };
+#endif
     static int next_act_idx[3] = { aNSC_ACTION_REQUEST_Q_ANSWER_WAIT, aNSC_ACTION_REQUEST_Q_ANSWER_WAIT,
                                    aNSC_ACTION_ORDER_CHECK };
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
@@ -2923,16 +3085,28 @@ static void aNSC_order_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play
                 case mChoice_CHOICE0:
                     price = mSP_ItemNo2ItemPrice(shop_common->order_item);
                     if (aNSC_money_check(price) == FALSE) {
+#ifndef aNSC_MAMEDANUKI
                         msg_no = aNSC_MSG_ORDER_INSUFFICIENT_FUNDS;
+#else
+                        msg_no = 26;
+#endif
                     } else {
+#ifndef aNSC_MAMEDANUKI
                         msg_no = aNSC_MSG_ORDER_CONFIRM;
+#else
+                        msg_no = 25;
+#endif
                         aNSC_set_ftr_order(shop_common);
                         aNSC_get_sell_price(price);
                         mSP_PlusSales(price);
                     }
                     break;
                 case mChoice_CHOICE1:
+#ifndef aNSC_MAMEDANUKI
                     msg_no = aNSC_MSG_ORDER_CANCEL;
+#else
+                    msg_no = 24;
+#endif
                     break;
             }
             if (msg_no != aNSC_MSG_WAIT) {
@@ -2974,11 +3148,17 @@ static void aNSC_sell_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play)
 }
 
 static void aNSC_sell_answer0(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
+#ifndef aNSC_MAMEDANUKI
     static int msg_no_table[11] = {
         aNSC_MSG_BUY_NORMAL,   aNSC_MSG_GIVE_TICKET,        aNSC_MSG_MAIL_TICKET, aNSC_MSG_INSUFFICIENT_FUNDS,
         aNSC_MSG_POCKETS_FULL, aNSC_MSG_SELL_NET,           aNSC_MSG_SELL_AXE,    aNSC_MSG_SELL_SHOVEL,
         aNSC_MSG_SELL_ROD,     aNSC_MSG_SELL_PAINT_CONFIRM, aNSC_MSG_SELL_SIGN,
     };
+#else
+    static int msg_no_table[11] = {
+        12, 29, 30, 11, 17, 101, 103, 100, 102, 203, 104
+    };
+#endif
     static int msg_no_table_mid[11] = {
         aNSC_MSG_GRP_MIDNIGHT_BUY_COMPLETE,
         aNSC_MSG_GRP_MIDNIGHT_BUY_COMPLETE,
@@ -3103,7 +3283,11 @@ static void aNSC_sell_item_with_ticket(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_
     if (val) {
         if (mMsg_Check_MainNormalContinue(msg_p)) {
             aNSC_set_last_day_str();
+#ifndef aNSC_MAMEDANUKI
             aNSC_Set_continue_msg_num(msg_p, shop_common, aNSC_get_msg_no(RANDOM(3) + aNSC_MSG_TICKET_1));
+#else
+            aNSC_Set_continue_msg_num(msg_p, shop_common, aNSC_get_msg_no(RANDOM(3) + 31));
+#endif
             mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 0x9, 0x0);
             aNSC_setupAction(shop_common, play, aNSC_ACTION_REQUEST_Q_END_WAIT);
         }
@@ -3148,8 +3332,12 @@ static void aNSC_show_item_check(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* 
         }
 
         if (idx != -1) {
+#ifndef aNSC_MAMEDANUKI
             static int msg_no[] = { aNSC_MSG_THANKS, aNSC_MSG_SHOW_CARPET_OFFER, aNSC_MSG_CONFIRM_CLOTH,
                                     aNSC_MSG_BUY_CANCEL };
+#else
+            static int msg_no[] = { 10, 19, 40, 9 };
+#endif
             static int next_act_idx[] = { aNSC_ACTION_SELL_ANSWER0, aNSC_ACTION_SELL_CHECK_BEFORE,
                                           aNSC_ACTION_CHG_CLOTH_START_WAIT, aNSC_ACTION_21_REQUEST_Q_END_WAIT };
 
@@ -3777,7 +3965,11 @@ static void aNSC_turn(NPC_SHOP_COMMON_ACTOR* shop_common, GAME_PLAY* play) {
 }
 
 static void aNSC_set_talk_info_goodbye_wait(ACTOR* actor) {
+#ifndef aNSC_MAMEDANUKI
     mDemo_Set_msg_num(aNSC_get_msg_no(mSP_force_opend() ? aNSC_MSG_GRP_MIDNIGHT_27 : aNSC_MSG_SAY_GOODBYE));
+#else
+    mDemo_Set_msg_num(aNSC_get_msg_no(mSP_force_opend() ? 524 : 13));
+#endif
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
 }
 
