@@ -1,5 +1,5 @@
 static void aNRTC_set_slot_name(int slot_id, int str_no) {
-    u8 name[mIN_ITEM_NAME_LEN];
+    u8 name[mMsg_FREE_STRING_LEN];
 
     mString_Load_StringFromRom(name, sizeof(name), 0x06CD + slot_id);
     mMsg_SET_FREE_STR(str_no, name, sizeof(name));
@@ -220,7 +220,11 @@ static void aNRTC_set_talk_info_talk_request(ACTOR* actor) {
             msg = 0x09DA;
             break;
         case mFRm_ERROR_MEMCARD_NO_SPACE:
-            msg = 0x09D8;
+            if (mCD_CheckLoadOldData(NULL)) {
+                msg = 0x09EB;
+            } else {
+                msg = 0x09D8;
+            }
             break;
         case mFRm_ERROR_NO_MEMCARD:
             msg = 0x09D4;

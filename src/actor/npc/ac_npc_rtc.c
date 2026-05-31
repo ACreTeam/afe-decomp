@@ -93,9 +93,9 @@ static void aNRTC_actor_ct(ACTOR* actor, GAME* game) {
     PLAYER_ACTOR* player;
     xyz_t center;
     xyz_t eye;
-    if (Common_Get(clip.npc_clip)->birth_check_proc(actor, game) == TRUE) {
+    if (NPC_CLIP->birth_check_proc(actor, game) == TRUE) {
         rtc->npc_class.schedule.schedule_proc = &aNRTC_schedule_proc;
-        Common_Get(clip.npc_clip)->ct_proc(actor, game, &ct_data);
+        NPC_CLIP->ct_proc(actor, game, &ct_data);
         actor->status_data.weight = MASSTYPE_IMMOVABLE;
         mPlib_request_main_demo_wait_type1(game, 0, NULL);
         player = GET_PLAYER_ACTOR(play);
@@ -119,19 +119,22 @@ static void aNRTC_actor_ct(ACTOR* actor, GAME* game) {
         rtc->npc_class.talk_info.default_act = 9;
         rtc->npc_class.talk_info.melody_inst = 0;
         rtc->talk_flag = FALSE;
+        Common_Set(kanji_level_unset, TRUE);
+        Common_Set(cur_kanji_lv, 0);
     }
 }
 
 static void aNRTC_actor_save(ACTOR* actor, GAME* game) {
-    Common_Get(clip.npc_clip)->save_proc(actor, game);
+    NPC_CLIP->save_proc(actor, game);
 }
 
 static void aNRTC_actor_dt(ACTOR* actor, GAME* game) {
-    Common_Get(clip.npc_clip)->dt_proc(actor, game);
+    Common_Set(kanji_level_unset, FALSE);
+    NPC_CLIP->dt_proc(actor, game);
 }
 
 static void aNRTC_actor_init(ACTOR* actor, GAME* game) {
-    Common_Get(clip.npc_clip)->init_proc(actor, game);
+    NPC_CLIP->init_proc(actor, game);
 }
 
 static void aNRTC_actor_move(ACTOR* actor, GAME* game) {
@@ -153,12 +156,12 @@ static void aNRTC_actor_move(ACTOR* actor, GAME* game) {
 
     rtc->npc_class.draw.main_animation.keyframe.frame_control.speed = val;
     sAdos_TTKK_ARM(arm_flag);
-    Common_Get(clip.npc_clip)->move_proc(actor, game);
+    NPC_CLIP->move_proc(actor, game);
     mSC_change_player_freeze(play);
 }
 
 static void aNRTC_actor_draw(ACTOR* actor, GAME* game) {
-    Common_Get(clip.npc_clip)->draw_proc(actor, game);
+    NPC_CLIP->draw_proc(actor, game);
 }
 
 #include "../src/actor/npc/ac_npc_rtc_think.c.inc"
