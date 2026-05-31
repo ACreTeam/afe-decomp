@@ -30,6 +30,8 @@
 #include "m_vibctl.h"
 #include "types.h"
 #include "ac_train_door.h"
+#include "m_string.h"
+
 static void aNM2_actor_ct(ACTOR* actorx, GAME* game);
 static void aNM2_actor_save(ACTOR* actorx, GAME* game);
 static void aNM2_actor_dt(ACTOR* actorx, GAME* game);

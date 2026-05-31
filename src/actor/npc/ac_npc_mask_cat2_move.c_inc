@@ -1,3 +1,41 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_mask_cat2.h"
+
+#include "ac_npc.h"
+#include "ac_quest_manager.h"
+#include "audio.h"
+#include "dolphin/os/OSRtc.h"
+#include "game.h"
+#include "libc64/qrand.h"
+#include "libultra/libultra.h"
+#include "m_actor.h"
+#include "m_actor_type.h"
+#include "m_bgm.h"
+#include "m_card.h"
+#include "m_choice.h"
+#include "m_common_data.h"
+#include "m_config.h"
+#include "m_demo.h"
+#include "m_event.h"
+#include "m_land.h"
+#include "m_lib.h"
+#include "m_msg.h"
+#include "m_npc.h"
+#include "m_play.h"
+#include "m_play_h.h"
+#include "m_player_lib.h"
+#include "m_private.h"
+#include "m_quest.h"
+#include "m_soncho.h"
+#include "m_submenu.h"
+#include "m_vibctl.h"
+#include "types.h"
+#include "ac_train_door.h"
+#include "m_string.h"
+
+static void aNM2_setupAction(ACTOR* actorx, GAME* game, int process_idx);
+#endif
+
 typedef struct npc_mask_cat2_animation_s {
     int anim_id;
     int talk_flag;
@@ -227,6 +265,28 @@ static void aNM2_set_free_str(void) {
     mMsg_Set_free_str(msg_p, mMsg_FREE_STR4, str_p, PLAYER_NAME_LEN);
 }
 
+static void aNM2_set_slot_no_str(int slot_no, int str_no) {
+    u8 str[mMsg_FREE_STRING_LEN];
+
+    if (slot_no != mCD_SLOT_B) {
+        slot_no = mCD_SLOT_A;
+    }
+
+    mString_Load_StringFromRom(str, sizeof(str), 0x6CD + slot_no);
+    mMsg_SET_FREE_STR(str_no, str, sizeof(str));
+}
+
+static void aNM2_set_media_str(int media_type, int str_no) {
+    u8 str[mMsg_FREE_STRING_LEN];
+    int idx = 0x756;
+    if (media_type == mCD_MEDIA_TYPE_SD) {
+        idx = 0x757;
+    }
+
+    mString_Load_StringFromRom(str, sizeof(str), idx);
+    mMsg_SET_FREE_STR(str_no, str, sizeof(str));
+}
+
 static int aNM2_GetBeforePrivateIdx(Private_c* now_priv) {
     int res = -1;
     PersonalID_c* pid;
@@ -306,29 +366,36 @@ static BOOL aNM2_chk_mask_texture() {
 }
 
 static void aNM2_set_next_village_map() {
-    if (mLd_PlayerManKindCheck() == FALSE) {
+    if (mLd_PlayerManKindCheck() == NATIVE) {
         if (mEv_CheckFirstJob() == TRUE) {
-            switch (mQst_GetFirstJobData()->base.quest_kind) {
-                case mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH:
-                case mQst_ERRAND_FIRSTJOB_PLANT_FLOWER:
-                case mQst_ERRAND_FIRSTJOB_DELIVER_FTR:
-                case mQst_ERRAND_FIRSTJOB_INTRODUCTIONS:
-                case mQst_ERRAND_FIRSTJOB_START:
-                    Common_Set(map_flag, FALSE);
-                    return;
-                case mQst_ERRAND_FIRSTJOB_SEND_LETTER:
-                case mQst_ERRAND_FIRSTJOB_DELIVER_CARPET:
-                case mQst_ERRAND_FIRSTJOB_DELIVER_AXE:
-                case mQst_ERRAND_FIRSTJOB_POST_NOTICE:
-                case mQst_ERRAND_FIRSTJOB_SEND_LETTER2:
-                case mQst_ERRAND_FIRSTJOB_DELIVER_AXE2:
-                case mQst_ERRAND_FIRSTJOB_OPEN:
-                default:
-                    Common_Set(map_flag, TRUE);
-                    return;
+            mQst_errand_c* first_job_data = mQst_GetFirstJobData();
+
+            if (Now_Private->moved_from_plus == TRUE) {
+                switch (first_job_data->base.quest_kind) {
+                    case mQst_ERRAND_FIRSTJOB_START:
+                        Common_Set(map_flag, FALSE);
+                        break;
+                    default:
+                        Common_Set(map_flag, TRUE);
+                        break;
+                }
+            } else {
+                switch (first_job_data->base.quest_kind) {
+                    case mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH:
+                    case mQst_ERRAND_FIRSTJOB_PLANT_FLOWER:
+                    case mQst_ERRAND_FIRSTJOB_DELIVER_FTR:
+                    case mQst_ERRAND_FIRSTJOB_INTRODUCTIONS:
+                    case mQst_ERRAND_FIRSTJOB_START:
+                        Common_Set(map_flag, FALSE);
+                        break;
+                    default:
+                        Common_Set(map_flag, TRUE);
+                        break;
+                }
             }
+        } else {
+            Common_Set(map_flag, TRUE);
         }
-        Common_Set(map_flag, TRUE);
     } else {
         if (mPr_GetThisLandMapIdx(Now_Private->maps, mPr_FOREIGN_MAP_COUNT) != -1) {
             Common_Set(map_flag, TRUE);
@@ -340,8 +407,35 @@ static void aNM2_set_next_village_map() {
 
 static void aNM2_set_talk_info_announce_start_wait(ACTOR* actorx) {
     rgba_t color;
+    int media_type;
+    int slot;
+    int picked_slot;
 
     mMsg_SET_FREE_STR(mMsg_FREE_STR1, Save_Get(land_info.name), LAND_NAME_SIZE);
+    media_type = mCD_MEDIA_TYPE_CARD;
+    switch (mCD_movingInfo_get()) {
+        case 2:
+            media_type = mCD_MEDIA_TYPE_SD;
+            break;
+    }
+
+    aNM2_set_media_str(media_type, mMsg_FREE_STR6);
+
+    slot = mCD_GetThisLandSlotNo();
+    picked_slot = mCD_SLOT_A;
+    if (slot == mCD_SLOT_A || slot == mCD_SLOT_B) {
+        picked_slot = slot;
+    } else if (Common_Get(memcard_slot) == mCD_SLOT_A || Common_Get(memcard_slot) == mCD_SLOT_B) {
+        picked_slot = Common_Get(memcard_slot);
+    }
+    aNM2_set_slot_no_str(picked_slot, mMsg_FREE_STR3);
+
+    if (picked_slot == mCD_SLOT_A) {
+        aNM2_set_slot_no_str(mCD_SLOT_B, mMsg_FREE_STR5);
+    } else {
+        aNM2_set_slot_no_str(mCD_SLOT_A, mMsg_FREE_STR5);
+    }
+
     mDemo_Set_msg_num(0x35af);
     mDemo_Set_talk_display_name(FALSE);
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
@@ -385,29 +479,82 @@ static void aNM2_save_start_wait(ACTOR* actorx, GAME* game) {
 static void aNM2_save_end_wait(ACTOR* actorx, GAME* game) {
     NPC_MASK_CAT2_ACTOR* mask_cat2_actor = (NPC_MASK_CAT2_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
-    static s32 next_act_idx[] = { 3, 1, 1, 1 };
-    static s32 msg_no[] = { 0x35B4, 0x35B0, 0x35B1, 0x35B5 };
+    static s32 next_act_idx[] = { 3, 1, 1, 1, 1, 1, 1, 1, 1 };
+    static s32 msg_no[] = { 0x35B4, 0x35B0, 0x35B1, 0x35B5, 0x35B2, 0x35B6, 0x35B7, 0x35BD, 0x35BE };
 
     mMsg_Window_c* msg_p;
-    int msg_no_idx = -1;
     s32 chan;
-    switch (mCD_InitGameStart_bg(Common_Get(player_no), 0, 4, &chan)) {
-        case 0:
+    int media_type = 0;
+    int msg_no_idx = -1;
+    int moving_info = mCD_movingInfo_get();
+    int ret;
+
+    if (moving_info == 2 || moving_info == 3) {
+        ret = mCD_SD_InitGameStart_bg(Common_Get(player_no), 0, 5, &chan, &media_type);
+    } else {
+        ret = mCD_InitGameStart_bg(Common_Get(player_no), 0, 4, &chan);
+    }
+
+    switch (ret) {
+        case mCD_TRANS_ERR_NONE:
             msg_no_idx = 0;
             aNM2_set_next_village_map();
             break;
-        case 22:
+
+        case mCD_TRANS_ERR_NOCARD:
+        case 34:
             msg_no_idx = 1;
             break;
-        case 2:
+
+        case mCD_TRANS_ERR_NO_SPACE:
+        case 35:
+        case 36:
+        case 41:
             msg_no_idx = 2;
             break;
-        case 7:
+
+        case mCD_TRANS_ERR_WRONG_LAND:
             msg_no_idx = 3;
+            break;
+
+
+
+        case 46:
+        case 50:
+            msg_no_idx = 5;
+            break;
+
+        case mCD_TRANS_ERR_IOERROR:
+        case mCD_TRANS_ERR_BROKEN_WRONGENCODING:
+            msg_no_idx = 7;
+            break;
+
+        case mCD_TRANS_ERR_TOWN_INVALID:
+        case mCD_TRANS_ERR_OTHER_TOWN:
+        case mCD_TRANS_ERR_GENERIC:
+        case 42:
+            msg_no_idx = 4;
+            break;
+
+        case 37:
+            msg_no_idx = 6;
+            break;
+
+        case 51:
+            msg_no_idx = 8;
+            break;
+
+        case mCD_TRANS_ERR_BUSY:
+            break;
+
+        default:
+            msg_no_idx = 4;
             break;
     }
     if (msg_no_idx != -1) {
         msg_p = mMsg_Get_base_window_p();
+        aNM2_set_slot_no_str(chan, mMsg_FREE_STR4);
+        aNM2_set_media_str(media_type, mMsg_FREE_STR6);
         mMsg_Unset_LockContinue(msg_p);
         mMsg_Set_continue_msg_num(msg_p, msg_no[msg_no_idx]);
         aNM2_setupAction(actorx, game, mask_cat2_actor->action + next_act_idx[msg_no_idx] - 2);
@@ -523,7 +670,7 @@ static void aNM2_set_talk_info_talk_start_wait(ACTOR* actorx) {
         Now_Private->state_flags |= mPr_FLAG_1;
     }
     mDemo_Set_msg_num(msg_no);
-    mDemo_Set_camera(0xD); // Does not exist just yet.
+    mDemo_Set_camera(CAMERA2_PROCESS_NUM);
     mDemo_Set_talk_change_player(FALSE);
     mDemo_Set_use_zoom_sound(TRUE);
     mask_cat2_actor->obj_look_type = 1;
@@ -548,7 +695,7 @@ static void aNM2_set_talk_info_talk_start_wait2(ACTOR* actorx) {
 
     aNM2_set_free_str();
     mDemo_Set_msg_num(aNM2_get_msg_no_mishiranuneko_talk_start());
-    mDemo_Set_camera(0xD); // Does not exist just yet.
+    mDemo_Set_camera(CAMERA2_PROCESS_NUM);
     mDemo_Set_talk_change_player(FALSE);
     mDemo_Set_use_zoom_sound(TRUE);
     mask_cat2_actor->obj_look_type = 1;

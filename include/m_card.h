@@ -38,6 +38,13 @@ enum {
 };
 
 enum {
+    mCD_MEDIA_TYPE_CARD,
+    mCD_MEDIA_TYPE_SD,
+
+    mCD_MEDIA_TYPE_NUM
+};
+
+enum {
     mCD_START_COND_0,
     mCD_START_COND_1,
     mCD_START_COND_2,
@@ -378,6 +385,8 @@ extern int mCD_save_data_main_to_aram(void* src, u32 size, u32 idx);
 extern void mCsd_Set_EfbTextureBuffer_p(u8* buf_p, size_t size);
 extern void mCD_SD_static_clear(void);
 extern int mCD_castingoff_mura_chk(void);
+extern int mCD_SD_InitGameStart_bg(int player_no, s32 card_private_idx, s32 start_cond, s32* mounted_chan,
+    int* sd_exists);
 
 extern int mCD_movingInfo_get(void);
 extern int mCD_CheckLoadOldData(PlusConvData_c* plus_data);
