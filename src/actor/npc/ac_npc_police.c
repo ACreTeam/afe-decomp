@@ -17,6 +17,9 @@ enum {
     aPOL_TALK_END_WAIT,
     aPOL_TALK_CHECK_SELECT,
     aPOL_TALK_CHECK_SELECT2,
+    aPOL_TALK_PRESENT_START_WAIT,
+    aPOL_TALK_PRESENT_TRANS_TAKEOUT,
+    aPOL_TALK_PRESENT_TRANS_WAIT,
 
     aPOL_TALK_NUM
 };
@@ -75,6 +78,7 @@ static void aPOL_actor_ct(ACTOR* actorx, GAME* game) {
         actorx->status_data.weight = MASSTYPE_HEAVY;
         actor->setup_action_proc = aPOL_setupAction;
         actor->exit_greeting = FALSE;
+        actor->live_music = mNT_get_new_music_live_version(7);
         mPB_keep_item(*mFI_GetUnitFG(actorx->home.position));
         mFI_SetFG_common(RSV_NO, actorx->home.position, TRUE);
     }

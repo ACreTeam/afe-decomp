@@ -15,7 +15,7 @@ static void aPOL_set_animation(NPC_ACTOR* nactorx) {
     static f32 morph_counter[] = { -16.0f, -2.0f };
     int step = nactorx->action.step;
 
-    CLIP(npc_clip)->animation_init_proc((ACTOR*)nactorx, animeSeqNo[step], FALSE);
+    NPC_CLIP->animation_init_proc((ACTOR*)nactorx, animeSeqNo[step], FALSE);
     nactorx->draw.loop_flag = 5;
     nactorx->draw.main_animation.keyframe.morph_counter = morph_counter[step];
 }
@@ -28,7 +28,7 @@ static void aPOL_taisou_act_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->draw.loop_flag = anm_loop[idx];
     nactorx->action.step = 0;
     nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_HEAD_LOOKAT;
-    CLIP(npc_clip)->animation_init_proc((ACTOR*)nactorx, animeSeqNo[idx], FALSE);
+    NPC_CLIP->animation_init_proc((ACTOR*)nactorx, animeSeqNo[idx], FALSE);
     nactorx->draw.main_animation.keyframe.morph_counter = -8.0f;
 }
 
@@ -141,12 +141,12 @@ static void aPOL_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int idx) {
 
 static void aPOL_schedule_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     nactorx->think.think_proc = aPOL_think_proc;
-    CLIP(npc_clip)->think_proc(nactorx, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
+    NPC_CLIP->think_proc(nactorx, play, aNPC_THINK_SPECIAL, aNPC_THINK_TYPE_INIT);
 }
 
 static void aPOL_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
-    if (CLIP(npc_clip)->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
-        CLIP(npc_clip)->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
+    if (NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_CHK_INTERRUPT) == FALSE) {
+        NPC_CLIP->think_proc(nactorx, play, -1, aNPC_THINK_TYPE_MAIN);
     }
 }
 
@@ -166,31 +166,46 @@ static int aPOL_check_player(void) {
     return ret;
 }
 
+static void aPOL_set_music_str(NPC_POLICE_ACTOR* actor) {
+    u8 music_str[mIN_ITEM_NAME_LEN];
+    mActor_name_t music_item = actor->live_music;
+
+    mIN_copy_name_str(music_str, music_item);
+    mMsg_SET_ITEM_STR_ART(mMsg_ITEM_STR0, music_str, sizeof(music_str), music_item);
+}
+
 static void aPOL_set_force_talk_info_talk_request(ACTOR* actorx) {
     mDemo_Set_msg_num(0x0771);
     mDemo_Set_talk_turn(FALSE);
 }
 
 static void aPOL_set_norm_talk_info_talk_request(ACTOR* actorx) {
-    static int msg_table[] = { 0x0772, 0x0773, 0x0774, 0x0775, 0x18C6, 0x18C7, 0x18C8, 0x18C9 };
+    static int msg_table[] = { 0x0772, 0x0773, 0x0774, 0x0775, 0x18C6, 0x18C7, 0x18C8, 0x18C9, 0x0277 };
     int now_sec = Common_Get(time.now_sec);
     int idx = 0;
-
+    
     if (CLIP(aprilfool_control_clip) != NULL && CLIP(aprilfool_control_clip)->talk_chk_proc(SP_NPC_POLICE) == FALSE) {
         mDemo_Set_msg_num(CLIP(aprilfool_control_clip)->get_msg_num_proc(SP_NPC_POLICE, TRUE));
     } else {
-        if (now_sec < mTM_TIME2SEC(5, 0, 0)) {
-            idx = 3;
-        } else if (now_sec < mTM_TIME2SEC(10, 0, 0)) {
-            idx = 0;
-        } else if (now_sec < mTM_TIME2SEC(17, 0, 0)) {
-            idx = 1;
-        } else {
-            idx = 2;
-        }
+        NPC_POLICE_ACTOR* actor = (NPC_POLICE_ACTOR*)actorx;
 
-        if (aPOL_check_player() == TRUE) {
-            idx += 4;
+        if (actor->live_music != EMPTY_NO && mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+            idx = 8;
+            aPOL_set_music_str(actor); 
+        } else {
+            if (now_sec < mTM_TIME2SEC(5, 0, 0)) {
+                idx = 3;
+            } else if (now_sec < mTM_TIME2SEC(10, 0, 0)) {
+                idx = 0;
+            } else if (now_sec < mTM_TIME2SEC(17, 0, 0)) {
+                idx = 1;
+            } else {
+                idx = 2;
+            }
+
+            if (aPOL_check_player() == TRUE) {
+                idx += 4;
+            }
         }
 
         mDemo_Set_msg_num(msg_table[idx]);
@@ -220,6 +235,8 @@ static int aPOL_talk_init(ACTOR* actorx, GAME* game) {
 
     if (actor->exit_greeting == FALSE && Common_Get(last_scene_no) == SCENE_POLICE_BOX && Common_Get(in_initial_block) == TRUE) {
         actor->exit_greeting = TRUE;
+    } else if (actor->live_music != EMPTY_NO && mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+        next_act_idx = aPOL_TALK_PRESENT_START_WAIT;
     } else if (aPOL_check_player() == TRUE) {
         next_act_idx = aPOL_TALK_CHECK_SELECT2;
     } else {
@@ -245,7 +262,6 @@ static int aPOL_talk_end_chk(ACTOR* actorx, GAME* game) {
 }
 
 static int aPOL_set_npc_block_no_str(int event) {
-    static u8 choume_str[] = { 'Q', 'A', 'B', 'C', 'D', 'E', 'F' };
     int bx;
     int bz;
     int ret = FALSE;
@@ -254,8 +270,9 @@ static int aPOL_set_npc_block_no_str(int event) {
         mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
         u8 str[5];
 
-        mMsg_Set_free_str(msg_p, mMsg_FREE_STR2, &choume_str[bz], 1);
-        mFont_UnintToString(str, sizeof(str), bx, sizeof(str), TRUE, FALSE, TRUE);
+        mFont_UnintToString(str, sizeof(str), bz, sizeof(str), TRUE, FALSE, FALSE);
+        mMsg_Set_free_str(msg_p, mMsg_FREE_STR2, str, sizeof(str));
+        mFont_UnintToString(str, sizeof(str), bx, sizeof(str), TRUE, FALSE, FALSE);
         mMsg_Set_free_str(msg_p, mMsg_FREE_STR3, str, sizeof(str));
         ret = TRUE;
     }
@@ -268,16 +285,15 @@ static void aPOL_set_event_day_str(void) {
 
     if (day != 0) {
         mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-        u8 str[9];
+        u8 str[5];
         int v;
+        int i;
 
-        v = day & 0xFF;
-        mString_Load_DayStringFromRom(str, v);
-        mMsg_Set_free_str(msg_p, mMsg_FREE_STR4, str, 4);
-
-        v = (day >> 8) & 0xFF;
-        mString_Load_MonthStringFromRom(str, v);
-        mMsg_Set_free_str(msg_p, mMsg_FREE_STR5, str, 9);
+        for (i = mMsg_FREE_STR4; i < mMsg_FREE_STR6; i++) {
+            mFont_UnintToString(str, sizeof(str), day & 0xFF, sizeof(str), TRUE, FALSE, FALSE);
+            mMsg_Set_free_str(msg_p, i, str, sizeof(str));
+            day >>= 8;
+        }
     }
 }
 
@@ -350,7 +366,7 @@ static void aPOL_set_select_after_msg(int type) {
             if (sum != 0) {
                 u8 str[5];
 
-                mFont_UnintToString(str, sizeof(str), sum, sizeof(str), TRUE, FALSE, TRUE);
+                mFont_UnintToString(str, sizeof(str), sum, sizeof(str), TRUE, FALSE, FALSE);
                 mMsg_Set_free_str(msg_p, mMsg_FREE_STR0, str, sizeof(str));
                 msg_no = 0x0782;
             } else {
@@ -395,12 +411,74 @@ static void aPOL_check_select2(NPC_POLICE_ACTOR* actor, GAME_PLAY* play) {
     }
 }
 
+static void aPOL_present_start_wait(NPC_POLICE_ACTOR* actor, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
+
+    if (order == 2) {
+        actor->setup_action_proc(actor, play, aPOL_TALK_PRESENT_TRANS_TAKEOUT);
+    }
+}
+
+static void aPOL_present_trans_takeout(NPC_POLICE_ACTOR* actor, GAME_PLAY* play) {
+    if (actor->npc_class.left_hand.item_actor_p == NULL) {
+        ACTOR* item_actor = CLIP(handOverItem_clip)->birth_proc(actor->live_music, aHOI_REQUEST_PUTAWAY, FALSE, (ACTOR*)actor);
+
+        if (item_actor != NULL) {
+            CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)actor, aHOI_REQUEST_TRANSFER);
+            actor->npc_class.left_hand.item_actor_p = item_actor;
+            actor->live_music = EMPTY_NO;
+        }
+    }
+
+    if (actor->npc_class.draw.main_animation_state == cKF_STATE_STOPPED) {
+        if (CLIP(handOverItem_clip)->master_actor == (ACTOR*)actor) {
+            CLIP(handOverItem_clip)->chg_request_mode_proc((ACTOR*)actor, aHOI_REQUEST_TRANS_WAIT);
+            actor->setup_action_proc(actor, play, aPOL_TALK_PRESENT_TRANS_WAIT);
+        }
+    }
+}
+
+static void aPOL_present_trans_wait(NPC_POLICE_ACTOR* actor, GAME_PLAY* play) {
+    if (CLIP(handOverItem_clip)->master_actor != (ACTOR*)actor) {
+        actor->npc_class.left_hand.item_actor_p = NULL;
+        actor->setup_action_proc(actor, play, aPOL_TALK_END_WAIT);
+    }
+}
+
 static void aPOL_setupAction(NPC_POLICE_ACTOR* actor, GAME_PLAY* play, int idx) {
-    static aPOL_TALK_PROC process[] = { (aPOL_TALK_PROC)none_proc1, aPOL_check_select, aPOL_check_select2 };
+    static aPOL_TALK_PROC process[] = {
+        (aPOL_TALK_PROC)none_proc1,
+        aPOL_check_select,
+        aPOL_check_select2,
+        aPOL_present_start_wait,
+        aPOL_present_trans_takeout,
+        aPOL_present_trans_wait,
+    };
+
+    static int anime_table[] = {
+        aNPC_ANIM_WAIT1,
+        aNPC_ANIM_WAIT1,
+        aNPC_ANIM_WAIT1,
+        aNPC_ANIM_WAIT1,
+        aNPC_ANIM_TRANSFER1,
+        aNPC_ANIM_TRANS_WAIT1,
+    };
     
     actor->talk_proc = process[idx];
+
+    switch (idx) {
+        case aPOL_TALK_PRESENT_TRANS_TAKEOUT:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 0);
+            mPr_SetFreePossessionItem(Now_Private, actor->live_music, mPr_ITEM_COND_NORMAL);
+            mNT_present_new_music_live_version(7);
+            mMsg_SET_LOCKCONTINUE();
+            sAdo_OngenTrgStart(NA_SE_GASAGOSO, &actor->npc_class.actor_class.world.position);
+            break;
+    }
+
+    NPC_CLIP->animation_init_proc((ACTOR*)actor, anime_table[idx], TRUE);
 }
 
 static void aPOL_actor_move(ACTOR* actorx, GAME* game) {
-    CLIP(npc_clip)->move_proc(actorx, game);
+    NPC_CLIP->move_proc(actorx, game);
 }

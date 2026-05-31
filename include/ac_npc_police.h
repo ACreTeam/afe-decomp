@@ -21,6 +21,7 @@ struct npc_police_actor_s {
     aPOL_TALK_PROC talk_proc;
     aPOL_SETUP_ACTION_PROC setup_action_proc;
     int exit_greeting;
+    mActor_name_t live_music;
 };
 
 extern ACTOR_PROFILE Npc_Police_Profile;
