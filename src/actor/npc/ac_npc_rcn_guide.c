@@ -20,47 +20,6 @@ typedef struct rcn_guide_talk_data_s {
     /* 0x08 */ aNRG_TALK_PROC talk_proc;
 } aNRG_talk_data_c;
 
-enum {
-    aNRC_THINK_CALL,
-    aNRC_THINK_APPROACH,
-    aNRG_THINK_INTRODUCE,
-    aNRC_THINK_TURN,
-    aNRC_THINK_TAKE_WITH,
-    aNRC_THINK_EXPLAIN,
-    aNRC_THINK_DECIDE_HOUSE_WAIT,
-    aNRC_THINK_STOP_WADE,
-    aNRC_THINK_BEFORE_OPEN_DOOR_TALK,
-    aNRC_THINK_BEFORE_OPEN_DOOR_TALK2,
-    aNRC_THINK_ENTER_WAIT,
-    aNRC_THINK_RESTART_WAIT,
-    aNRC_THINK_RESTART_TALK,
-    aNRC_THINK_DECIDE_HOUSE,
-    aNRC_THINK_EXIT_TURN,
-    aNRC_THINK_EXIT,
-    aNRC_THINK_WAIT,
-
-    aNRC_THINK_NUM
-};
-
-enum {
-    aNRG_FORCE_TALK_CALL,
-    aNRG_FORCE_TALK_INTRODUCE,
-    aNRG_FORCE_TALK_EXPLAIN,
-    aNRG_FORCE_TALK_STOP_WADE,
-    aNRG_FORCE_TALK_BEFORE_OPEN_DOOR_TALK,
-    aNRG_FORCE_TALK_BEFORE_OPEN_DOOR2_TALK,
-    aNRG_FORCE_TALK_HOUSE_TAKEN,
-    aNRG_FORCE_TALK_HOUSE_VACANT,
-
-    aNRG_FORCE_TALK_NUM
-};
-
-enum {
-    aNRG_NORM_TALK_DECIDE_HOUSE,
-
-    aNRG_NORM_TALK_NUM
-};
-
 static void aNRG_actor_ct(ACTOR* actorx, GAME* game);
 static void aNRG_actor_save(ACTOR* actorx, GAME* game);
 static void aNRG_actor_dt(ACTOR* actorx, GAME* game);
@@ -96,7 +55,7 @@ static void aNRG_actor_ct(ACTOR* actorx, GAME* game) {
     static aNPC_ct_data_c ct_data = {
         &aNRG_actor_move,
         &aNRG_actor_draw,
-        5,
+        aNPC_CT_SCHED_TYPE_SPECIAL,
         &aNRG_force_talk_request,
         &aNRG_talk_init,
         &aNRG_talk_end_chk,

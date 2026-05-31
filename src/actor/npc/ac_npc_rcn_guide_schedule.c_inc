@@ -1,3 +1,34 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_rcn_guide.h"
+
+#include "m_play.h"
+#include "m_name_table.h"
+#include "libultra/libultra.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_bgm.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_house.h"
+#include "ac_intro_demo.h"
+
+/* sizeof(aNRG_talk_data_c) == 0x0C */
+typedef struct rcn_guide_talk_data_s {
+    /* 0x00 */ int msg_no;
+    /* 0x04 */ u8 turn_flag;
+    /* 0x05 */ u8 camera_type;
+    /* 0x06 */ u8 melody_flag;
+    /* 0x08 */ aNRG_TALK_PROC talk_proc;
+} aNRG_talk_data_c;
+
+static void aNRG_setup_think_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play, int think_idx);
+static int aNRG_set_request_act(NPC_RCN_GUIDE_ACTOR* rcn_guide, u8 act_prio, u8 act_idx, u8 act_type, u16 obj, int x,
+    int z);
+static void aNRG_norm_talk_request(ACTOR* actorx, GAME* game);
+static void aNRG_force_talk_request(ACTOR* actorx, GAME* game);
+#endif
+
+
 typedef void (*aNRG_THINK_INIT_PROC)(NPC_RCN_GUIDE_ACTOR*, GAME_PLAY*);
 
 typedef struct npc_rcn_guide_setup_think_s {
@@ -9,8 +40,18 @@ typedef struct npc_rcn_guide_setup_think_s {
 } aNRG_setup_think_c;
 
 static void aNRG_approach(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
+    int action;
+
     if (rcn_guide->npc_class.action.step == aNPC_ACTION_END_STEP && rcn_guide->npc_class.action.idx == 2) {
-        aNRG_setup_think_proc(rcn_guide, play, aNRG_THINK_INTRODUCE);
+        switch (Now_Private->moved_from_plus) {
+            case FALSE:
+                action = aNRG_THINK_INTRODUCE;
+                break;
+                case TRUE:
+                action = aNRG_THINK_INTRODUCE_PLUS;
+                break;
+        }
+        aNRG_setup_think_proc(rcn_guide, play, action);
     }
 }
 
@@ -128,7 +169,14 @@ static void aNRG_restart_wait(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
     if (mPlib_check_player_actor_main_index_OutDoorMove2(&play->game) == FALSE) {
         switch (rcn_guide->npc_class.actor_class.actor_specific) {
             case 1:
-                think_idx = aNRC_THINK_DECIDE_HOUSE;
+                switch (Now_Private->moved_from_plus) {
+                    case FALSE:
+                        think_idx = aNRC_THINK_DECIDE_HOUSE;
+                        break;
+                    case TRUE:
+                        think_idx = aNRC_THINK_DECIDE_HOUSE_PLUS;
+                        break;
+                }
                 break;
             default:
                 think_idx = aNRC_THINK_RESTART_TALK;
@@ -155,7 +203,14 @@ static void aNRG_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             think_idx = aNRC_THINK_RESTART_WAIT;
             break;
         default:
-            think_idx = aNRC_THINK_CALL;
+            switch (Now_Private->moved_from_plus) {
+                case FALSE:
+                    think_idx = aNRC_THINK_CALL;
+                    break;
+                case TRUE:
+                    think_idx = aNRC_THINK_CALL_PLUS;
+                    break;
+            }
             break;
     }
 
@@ -224,6 +279,14 @@ static void aNRG_before_open_door_talk2_init(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAM
     aNRG_set_house_master_name(intro_demo->house_idx);
 }
 
+#if VERSION >= VER_GAEJ01_01
+static void aNRG_restart_talk_init(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
+    INTRO_DEMO_ACTOR* intro_demo = (INTRO_DEMO_ACTOR*)Common_Get(clip).demo_clip->demo_class;
+
+    aNRG_set_house_master_name(intro_demo->house_idx);
+}
+#endif
+
 static void aNRG_exit_turn_init(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
     static s16 moveX[] = { 2240, 2240 };
     static s16 moveZ[] = { 1900, 1300 };
@@ -258,6 +321,13 @@ static void aNRG_setup_think_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* pla
             aNRC_THINK_APPROACH,
         },
         {
+            (aNRG_THINK_PROC)&none_proc1,
+            &aNRG_call_init,
+            &aNRG_force_talk_request,
+            aNRG_FORCE_TALK_CALL_PLUS,
+            aNRC_THINK_APPROACH,
+        },
+        {
             &aNRG_approach,
             &aNRG_approach_init,
             (aNPC_TALK_REQUEST_PROC)&none_proc1,
@@ -269,6 +339,13 @@ static void aNRG_setup_think_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* pla
             &aNRG_introduce_init,
             &aNRG_force_talk_request,
             aNRG_FORCE_TALK_INTRODUCE,
+            aNRC_THINK_TURN,
+        },
+        {
+            (aNRG_THINK_PROC)&none_proc1,
+            &aNRG_introduce_init,
+            &aNRG_force_talk_request,
+            aNRG_FORCE_TALK_INTRODUCE_PLUS,
             aNRC_THINK_TURN,
         },
         {
@@ -336,7 +413,11 @@ static void aNRG_setup_think_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* pla
         },
         {
             (aNRG_THINK_PROC)&none_proc1,
+#if VERSION == VER_GAEJ01_00
             (aNRG_THINK_INIT_PROC)&none_proc1,
+#else
+            &aNRG_restart_talk_init,
+#endif
             &aNRG_force_talk_request,
             aNRG_FORCE_TALK_HOUSE_TAKEN,
             aNRC_THINK_DECIDE_HOUSE_WAIT,
@@ -346,6 +427,13 @@ static void aNRG_setup_think_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* pla
             (aNRG_THINK_INIT_PROC)&none_proc1,
             &aNRG_force_talk_request,
             aNRG_FORCE_TALK_HOUSE_VACANT,
+            aNRC_THINK_DECIDE_HOUSE_WAIT,
+        },
+        {
+            (aNRG_THINK_PROC)&none_proc1,
+            (aNRG_THINK_INIT_PROC)&none_proc1,
+            &aNRG_force_talk_request,
+            aNRG_FORCE_TALK_HOUSE_VACANT_PLUS,
             aNRC_THINK_DECIDE_HOUSE_WAIT,
         },
         {

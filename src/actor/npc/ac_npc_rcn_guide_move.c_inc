@@ -19,18 +19,23 @@ static int aNRG_set_request_act(NPC_RCN_GUIDE_ACTOR* rcn_guide, u8 act_prio, u8 
 }
 
 static void aNRG_set_house_master_name(int house_idx) {
+#if VERSION == VER_GAEJ01_00
     mMsg_SET_FREE_STR(mMsg_FREE_STR0, Save_Get(private_data[mHS_get_pl_no(house_idx)]).player_ID.player_name,
                       PLAYER_NAME_LEN);
+#else
+    mMsg_SET_FREE_STR(mMsg_FREE_STR6, Save_Get(private_data[mHS_get_pl_no(house_idx)]).player_ID.player_name,
+                      PLAYER_NAME_LEN);
+#endif
 }
 
 static void aNRG_set_shop_address(NPC_RCN_GUIDE_ACTOR* rcn_guide) {
-    static u8 choume_str[] = { 'Q', 'A', 'B', 'C', 'D', 'E', 'F' };
     u8 str[1];
 
     /* Set the row (Z) string */
-    mMsg_SET_FREE_STR(mMsg_FREE_STR1, &choume_str[rcn_guide->shop_bz], 1);
+    mFont_UnintToString(str, sizeof(str), rcn_guide->shop_bz, sizeof(str), TRUE, FALSE, FALSE);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR1, str, sizeof(str));
     /* Set the column (X) string */
-    mFont_UnintToString(str, sizeof(str), rcn_guide->shop_bx, sizeof(str), TRUE, FALSE, TRUE);
+    mFont_UnintToString(str, sizeof(str), rcn_guide->shop_bx, sizeof(str), TRUE, FALSE, FALSE);
     mMsg_SET_FREE_STR(mMsg_FREE_STR2, str, sizeof(str));
 }
 

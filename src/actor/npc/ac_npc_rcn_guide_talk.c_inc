@@ -1,15 +1,40 @@
-enum {
-    aNRG_TALK_DEMAND_PAYMENT,
-    aNRG_TALK_MENU_OPEN_WAIT,
-    aNRG_TALK_MENU_CLOSE_WAIT,
-    aNRG_TALK_DEMO_START_WAIT,
-    aNRG_TALK_DEMO_END_WAIT,
-    aNRG_TALK_FINISHED,
+#ifdef __INTELLISENSE__
+#include "ac_npc_rcn_guide.h"
 
-    aNRG_TALK_NUM
-};
+#include "m_play.h"
+#include "m_name_table.h"
+#include "libultra/libultra.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "m_bgm.h"
+#include "m_msg.h"
+#include "m_font.h"
+#include "m_house.h"
+#include "ac_intro_demo.h"
+
+/* sizeof(aNRG_talk_data_c) == 0x0C */
+typedef struct rcn_guide_talk_data_s {
+    /* 0x00 */ int msg_no;
+    /* 0x04 */ u8 turn_flag;
+    /* 0x05 */ u8 camera_type;
+    /* 0x06 */ u8 melody_flag;
+    /* 0x08 */ aNRG_TALK_PROC talk_proc;
+} aNRG_talk_data_c;
+
+#endif
 
 static void aNRG_demand_payment_change_talk_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, int talk_proc_idx);
+
+static void aNRG_demand_payment_talk_p_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+
+    if (mMsg_Get_msg_num(msg_p) == MSG_2024 && mMsg_Check_MainNormalContinue(msg_p)) {
+        if (mChoice_GET_CHOSENUM() == mChoice_CHOICE0) {
+            mMsg_Set_continue_msg_num(msg_p, MSG_5089);
+            aNRG_demand_payment_change_talk_proc(rcn_guide, aNRG_TALK_DEMAND_PAYMENT);
+        }
+    }
+}
 
 static void aNRG_demand_payment_talk_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PLAY* play) {
     u16 order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
@@ -72,6 +97,7 @@ static void aNRG_demo_end_wait_talk_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, GAME_PL
 static void aNRG_demand_payment_change_talk_proc(NPC_RCN_GUIDE_ACTOR* rcn_guide, int talk_proc_idx) {
     // clang-format off
     static aNRG_TALK_PROC talk_proc[] = {
+        &aNRG_demand_payment_talk_p_proc,
         &aNRG_demand_payment_talk_proc,
         &aNRG_menu_open_wait_talk_proc,
         &aNRG_menu_close_wait_talk_proc,
@@ -88,13 +114,16 @@ static void aNRG_set_force_talk_info(ACTOR* actorx) {
     // clang-format off
     static aNRG_talk_data_c dt_tbl[] = {
         { 0x07DE,  TRUE, CAMERA2_PROCESS_NORMAL,  TRUE,    (aNRG_TALK_PROC)&none_proc1 }, /* Step down from train station */
-        { 0x07DF,  TRUE,   CAMERA2_PROCESS_TALK, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Ask about call from Rover */
-        { 0x07E1,  TRUE,   CAMERA2_PROCESS_TALK, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Show houses */
+        { 0x13DE,  TRUE, CAMERA2_PROCESS_NORMAL,  TRUE,    (aNRG_TALK_PROC)&none_proc1 }, /* Ask about call from Rover */
+        { 0x07DF,  TRUE,   CAMERA2_PROCESS_TALK, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Show houses */
+        { 0x13DF,  TRUE,   CAMERA2_PROCESS_TALK, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player steps down from train station moving from DnM+ */
+        { 0x07E1,  TRUE,   CAMERA2_PROCESS_TALK, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player steps down from train station moving from DnM+ */
         { 0x07E2,  TRUE, CAMERA2_PROCESS_NORMAL, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player tries leaving acre */
         { 0x07E4, FALSE, CAMERA2_PROCESS_NORMAL, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player enters empty house */
         { 0x07E3, FALSE, CAMERA2_PROCESS_NORMAL, FALSE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player enters taken house */
         { 0x07E5,  TRUE,   CAMERA2_PROCESS_TALK,  TRUE,    (aNRG_TALK_PROC)&none_proc1 }, /* Player exits taken house */
         { 0x07E6,  TRUE,   CAMERA2_PROCESS_TALK,  TRUE, &aNRG_demand_payment_talk_proc }, /* Player exits empty house */
+        { 0x07E6,  TRUE,   CAMERA2_PROCESS_TALK,  TRUE, &aNRG_demand_payment_talk_p_proc }, /* Player exits from empty house, DnM+ transfer */
     };
     // clang-format on
 
@@ -105,7 +134,7 @@ static void aNRG_set_force_talk_info(ACTOR* actorx) {
     mDemo_Set_msg_num(data->msg_no);
     mDemo_Set_talk_turn(data->turn_flag);
     mDemo_Set_camera(data->camera_type);
-    rcn_guide->talk_proc_idx = aNRG_TALK_DEMAND_PAYMENT;
+    rcn_guide->talk_proc_idx = aNRG_TALK_DEMAND_PAYMENT_TALK_P;
     rcn_guide->talk_proc = data->talk_proc;
     if (data->melody_flag == TRUE) {
         rcn_guide->npc_class.talk_info.melody_inst = rcn_guide->melody_copy;
@@ -133,7 +162,7 @@ static void aNRG_set_norm_talk_info(ACTOR* actorx) {
     mDemo_Set_msg_num(data->msg_no);
     mDemo_Set_talk_turn(data->turn_flag);
     mDemo_Set_camera(data->camera_type);
-    rcn_guide->talk_proc_idx = aNRG_TALK_DEMAND_PAYMENT;
+    rcn_guide->talk_proc_idx = aNRG_TALK_DEMAND_PAYMENT_TALK_P;
     rcn_guide->talk_proc = data->talk_proc;
     if (data->melody_flag == TRUE) {
         rcn_guide->npc_class.talk_info.melody_inst = rcn_guide->melody_copy;
