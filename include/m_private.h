@@ -55,11 +55,11 @@ enum {
 };
 
 enum {
-    mPr_ITEM_COND_NORMAL,
-    mPr_ITEM_COND_PRESENT,
-    mPr_ITEM_COND_QUEST,
-    mPr_ITEM_COND_4 = 4,
-    mPr_ITEM_COND_LOST_ITEM = 8,
+    mPr_ITEM_COND_NORMAL = 0,
+    mPr_ITEM_COND_PRESENT = (1 << 0), // 1
+    mPr_ITEM_COND_QUEST = (1 << 1), // 2
+    mPr_ITEM_COND_QBOX = (1 << 2), // 4
+    mPr_ITEM_COND_LOST_ITEM = (1 << 3), // 8
 
     mPr_ITEM_COND_NUM
 };

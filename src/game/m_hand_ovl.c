@@ -77,7 +77,7 @@ static void mHD_hand_pos_get(Submenu* submenu, f32* pos, int table_type, int tab
         pos[1] += 5.0f;
     }
 
-    if (table_type == mTG_TABLE_NEEDLEWORK && item != EMPTY_NO && !(item >= RSV_CLOTH && item <= RSV_CLOTH7) &&
+    if (table_type == mTG_TABLE_NEEDLEWORK && item != EMPTY_NO && !(item == RSV_CLOTH) &&
         !(item >= ITM_MY_ORG_UMBRELLA0 && item <= ITM_MY_ORG_UMBRELLA7)) {
         if (submenu->overlay->menu_info[mSM_OVL_NEEDLEWORK].data0 == mNW_OPEN_DESIGN) {
             pos[0] += -11.0f;
@@ -91,7 +91,7 @@ static void mHD_hand_pos_get(Submenu* submenu, f32* pos, int table_type, int tab
                item != EMPTY_NO) {
         pos[0] += -2.0f;
         pos[1] += 17.0f;
-    } else if (((item != EMPTY_NO && !(item >= RSV_CLOTH && item <= RSV_CLOTH7) &&
+    } else if (((item != EMPTY_NO && !(item == RSV_CLOTH) &&
                  !(item >= ITM_MY_ORG_UMBRELLA0 && item <= ITM_MY_ORG_UMBRELLA7)) ||
                 mMl_check_not_used_mail(&hand_ovl->info.mail) == FALSE) &&
                table_type != mTG_TABLE_CPMAIL_WC && table_type != mTG_TABLE_CPORIGINAL_WC) {
@@ -185,29 +185,31 @@ static void mHD_drop_item(Submenu* submenu, mTG_tag_c* tag, mActor_name_t* item,
 
         /* Duplicate check */
         if ((table != mTG_TABLE_NEEDLEWORK || table != mTG_TABLE_NEEDLEWORK ||
-             (hand_ovl->info.item != EMPTY_NO && !(hand_ovl->info.item >= 0xFE31 && hand_ovl->info.item <= 0xFE38) &&
-              !(hand_ovl->info.item >= 0xFE39 && hand_ovl->info.item <= 0xFE98) &&
-              !(hand_ovl->info.item >= 0xFE99 && hand_ovl->info.item <= 0xFEA0))) &&
+             (hand_ovl->info.item != EMPTY_NO && !(hand_ovl->info.item >= RSV_NW_ORIGINAL0 && hand_ovl->info.item <= RSV_NW_ORIGINAL7) &&
+              !(hand_ovl->info.item >= RSV_CPORIGINAL_FLD0_00 && hand_ovl->info.item <= RSV_CPORIGINAL_FLD7_11) &&
+              !(hand_ovl->info.item >= RSV_GBAORIGINAL0 && hand_ovl->info.item <= RSV_GBAORIGINAL7))) &&
             table != mTG_TABLE_CPORIGINAL && table != mTG_TABLE_CPORIGINAL_NW && table != mTG_TABLE_CARD &&
             table != mTG_TABLE_GBA) {
             *item = hand_ovl->info.item;
         }
 
-        if (!(now_item >= RSV_CLOTH && now_item <= RSV_CLOTH7) &&
+        if (!(now_item == RSV_CLOTH) &&
             !(now_item >= ITM_MY_ORG_UMBRELLA0 && now_item <= ITM_MY_ORG_UMBRELLA7) &&
-            !(*item >= 0xFE99 && *item <= 0xFEA0)) {
+            !(now_item >= ITM_FLOWER0 && now_item <= ITM_FLOWER8) &&
+            !(now_item == ITM_FLOWER9) &&
+            !(*item >= RSV_GBAORIGINAL0 && *item <= RSV_GBAORIGINAL7)) {
             if (table != mTG_TABLE_PLAYER && table != mTG_TABLE_BG &&
                 (table != mTG_TABLE_NEEDLEWORK ||
                  (table == mTG_TABLE_NEEDLEWORK &&
-                  (*item == EMPTY_NO || (*item >= 0xFE31 && *item <= 0xFE38) || (*item >= 0xFE39 && *item <= 0xFE98) ||
-                   (*item >= 0xFE99 && *item <= 0xFEA0))))) {
+                  (*item == EMPTY_NO || (*item >= RSV_NW_ORIGINAL0 && *item <= RSV_NW_ORIGINAL7) || (*item >= RSV_CPORIGINAL_FLD0_00 && *item <= RSV_CPORIGINAL_FLD7_11) ||
+                   (*item >= RSV_GBAORIGINAL0 && *item <= RSV_GBAORIGINAL7))))) {
                 switch (table) {
                     case mTG_TABLE_NEEDLEWORK:
                     case mTG_TABLE_CPORIGINAL:
                     case mTG_TABLE_CPORIGINAL_NW: {
                         if ((*item == EMPTY_NO ||
-                             ((*item >= 0xFE31 && *item <= 0xFE38) || (*item >= 0xFE39 && *item <= 0xFE98) ||
-                              (*item >= 0xFE99 && *item <= 0xFEA0)))) {
+                             ((*item >= RSV_NW_ORIGINAL0 && *item <= RSV_NW_ORIGINAL7) || (*item >= RSV_CPORIGINAL_FLD0_00 && *item <= RSV_CPORIGINAL_FLD7_11) ||
+                              (*item >= RSV_GBAORIGINAL0 && *item <= RSV_GBAORIGINAL7)))) {
                             mCO_swap_image(submenu, hand_ovl->info.item, *item);
                         } else {
                             hand_ovl->info.item = now_item;
@@ -320,15 +322,13 @@ static void mHD_drop_item(Submenu* submenu, mTG_tag_c* tag, mActor_name_t* item,
 #define mHD_TICKET_COUNT(item) ((item) & 7)
 
 static void mHD_prepare_drop_ticket(mHD_Ovl_c* hand_ovl, mActor_name_t* item, int idx) {
-    u32 cond = hand_ovl->info.item_cond;
-
+    u32 player_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, idx);
     /* Both are ITEM1 type */
     if (ITEM_IS_ITEM1(hand_ovl->info.item) && ITEM_IS_ITEM1(*item)) {
         /* both are tickets */
         if (ITEM_NAME_GET_CAT(hand_ovl->info.item) == ITEM1_CAT_TICKET &&
             ITEM_NAME_GET_CAT(*item) == ITEM1_CAT_TICKET) {
-            /* @BUG - only the hand item has a condition */
-            if (cond == mPr_ITEM_COND_NORMAL && cond == mPr_ITEM_COND_NORMAL) {
+            if (hand_ovl->info.item_cond == mPr_ITEM_COND_NORMAL && player_cond == mPr_ITEM_COND_NORMAL) {
                 /* from same month */
                 int month = mHD_TICKET_MONTH(hand_ovl->info.item);
                 if (month == mHD_TICKET_MONTH(*item)) {
@@ -358,15 +358,16 @@ static void mHD_prepare_drop_ticket(mHD_Ovl_c* hand_ovl, mActor_name_t* item, in
 
 #define mHD_WISP2NUM(wisp) (1 + wisp - ITM_SPIRIT0)
 static void mHD_prepare_drop_wisp(mHD_Ovl_c* hand_ovl, mActor_name_t* item, int idx) {
-    u32 cond = hand_ovl->info.item_cond;
+    u32 player_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, idx);
+    mActor_name_t hand_item = hand_ovl->info.item;
 
     /* Held item must be a spirit */
-    if (ITEM_IS_WISP(hand_ovl->info.item)) {
+    if (ITEM_IS_WISP(hand_item)) {
         /* Target item must be a spirit */
         if (ITEM_IS_WISP(*item)) {
             /* Held item must not have any condition */
-            if (cond == mPr_ITEM_COND_NORMAL && cond == mPr_ITEM_COND_NORMAL) {
-                int held_num = ITEM_IS_WISP(hand_ovl->info.item) ? mHD_WISP2NUM(hand_ovl->info.item) : 0;
+            if (hand_ovl->info.item_cond == mPr_ITEM_COND_NORMAL && player_cond == mPr_ITEM_COND_NORMAL) {
+                int held_num = ITEM_IS_WISP(hand_item) ? mHD_WISP2NUM(hand_item) : 0;
                 int target_num = ITEM_IS_WISP(*item) ? mHD_WISP2NUM(*item) : 0;
 
                 if (held_num != WISP_STACK_MAX && target_num != WISP_STACK_MAX) {
@@ -387,22 +388,25 @@ static void mHD_prepare_drop_wisp(mHD_Ovl_c* hand_ovl, mActor_name_t* item, int 
 }
 
 static void mHD_prepare_drop_paper(mHD_Ovl_c* hand_ovl, mActor_name_t* item, int idx) {
-    u32 cond = hand_ovl->info.item_cond;
+    int paper_idx;
+    int paper_idx2;
+    u32 player_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, idx);
+    mActor_name_t hand_item = hand_ovl->info.item;
     int type;
 
     /* Held item must be stationery */
-    if (ITEM_IS_PAPER(hand_ovl->info.item)) {
+    if (ITEM_IS_PAPER(hand_item)) {
         /* Target item must be stationery */
         if (ITEM_IS_PAPER(*item)) {
-            int paper_idx = hand_ovl->info.item - ITM_PAPER_START;
-            int paper_idx2 = *item - ITM_PAPER_START;
+            paper_idx = hand_item - ITM_PAPER_START;
+            paper_idx2 = *item - ITM_PAPER_START;
 
             type = PAPER2TYPE(paper_idx);
 
             /* Stationery must be the same type */
             if (type == PAPER2TYPE(paper_idx2)) {
                 /* Held item must not have any condition */
-                if (cond == mPr_ITEM_COND_NORMAL && cond == mPr_ITEM_COND_NORMAL) {
+                if (hand_ovl->info.item_cond == mPr_ITEM_COND_NORMAL && player_cond == mPr_ITEM_COND_NORMAL) {
                     int held_num = 1 + PAPER2STACK(paper_idx);
                     int target_num = 1 + PAPER2STACK(paper_idx2);
 
@@ -430,12 +434,12 @@ static void mHD_drop_item2(Submenu* submenu, mTG_tag_c* tag, mActor_name_t* item
     int cond = hand_ovl->info.item_cond;
 
     if (*item != EMPTY_NO) {
-        hand_ovl->info.item_cond = mPr_GET_ITEM_COND(Now_Private->inventory.item_conditions, idx);
+        hand_ovl->info.item_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, idx);
     } else {
         hand_ovl->info.item_cond = mPr_ITEM_COND_NORMAL;
     }
 
-    // Now_Private->inventory.item_conditions = mPr_SET_ITEM_COND(Now_Private->inventory.item_conditions, idx, cond);
+    mPr_SET_ITEM_COND(Now_Private->inventory.item_conditions, idx, cond & 0xFF);
     mHD_prepare_drop_ticket(hand_ovl, item, idx);
     mHD_prepare_drop_wisp(hand_ovl, item, idx);
     mHD_prepare_drop_paper(hand_ovl, item, idx);
@@ -515,7 +519,7 @@ static void mHD_open_end_proc_item_type3(Submenu* submenu, int idx, int table) {
     mActor_name_t item = hand_ovl->info.item;
     int category = ITEM_NAME_GET_CAT(item);
 
-    if (item == RSV_CLOTH || ITEM_IS_CLOTH(item)) {
+    if (item == RSV_CLOTH || ITEM_IS_CLOTH(item) || item == RSV_CLOTH1) {
         if (cKF_FrameControl_passCheck_now(&submenu->overlay->inventory_ovl->player_main_keyframe.frame_control,
                                            36.0f)) {
             cloth_p = &Now_Private->cloth;
@@ -529,6 +533,13 @@ static void mHD_open_end_proc_item_type3(Submenu* submenu, int idx, int table) {
 
             cloth_p->idx = cloth_idx;
             mPlib_change_player_cloth(gamePT, Now_Private->cloth.idx);
+        }
+    } else if (item == ITM_MEDICINE) {
+        if (cKF_FrameControl_passCheck_now(&submenu->overlay->inventory_ovl->player_main_keyframe.frame_control, 36.0f)) {
+            Common_Set(player_bee_swell_flag, FALSE);
+            mPlib_change_player_face(gamePT);
+            mNpc_ClearTalkBee();
+            mHD_drop_item(submenu, tag, EMPTY_NO, NULL);
         }
     } else if (category == ITEM1_CAT_FRUIT) {
         submenu->overlay->inventory_ovl->food_idx = (u8)(item - ITM_FOOD_START);
@@ -769,7 +780,7 @@ static void mHD_sasu2_move(Submenu* submenu) {
     mTG_tag_c* tag = &submenu->overlay->tag_ovl->tags[0];
     int category = ITEM_NAME_GET_CAT(hand_ovl->info.item);
 
-    if (hand_ovl->info.item == RSV_CLOTH || ITEM_IS_CLOTH(hand_ovl->info.item)) {
+    if (hand_ovl->info.item == RSV_CLOTH || ITEM_IS_CLOTH(hand_ovl->info.item) || hand_ovl->info.item == RSV_CLOTH1) {
         if (cKF_FrameControl_passCheck_now(&submenu->overlay->inventory_ovl->player_main_keyframe.frame_control,
                                            36.0f)) {
             mPr_cloth_c* cloth_p = &Now_Private->cloth;
@@ -833,32 +844,37 @@ extern Gfx inv_item_mode[];
 
 static void mHD_draw_item(Submenu* submenu, GRAPH* graph, f32* pos) {
     mHD_Ovl_c* hand_ovl = submenu->overlay->hand_ovl;
+    int present_flag;
 
     if (hand_ovl->info.item != EMPTY_NO &&
-        (!ITEM_IS_RSVCLOTH(hand_ovl->info.item) &&
+        (!(hand_ovl->info.item == RSV_CLOTH) &&
          !(hand_ovl->info.item >= ITM_MY_ORG_UMBRELLA0 && hand_ovl->info.item <= ITM_MY_ORG_UMBRELLA7) &&
+         !(hand_ovl->info.item >= ITM_FLOWER0 && hand_ovl->info.item <= ITM_FLOWER8) &&
+         !(hand_ovl->info.item == ITM_FLOWER9) &&
          !ITEM_IS_RSVNWORG(hand_ovl->info.item) && /* Needlework designs */
          !ITEM_IS_RSVCPORG(hand_ovl->info.item) && /* Stored original designs */
          !ITEM_IS_RSVGBAORG(hand_ovl->info.item)   /* GBA designs */
          )) {
-        int present_flag = hand_ovl->info.item_cond & mPr_ITEM_COND_PRESENT;
-        Gfx* gfx;
+
+        if (hand_ovl->info.item_cond & mPr_ITEM_COND_PRESENT) {
+            present_flag = 1;
+        } else if (hand_ovl->info.item_cond & mPr_ITEM_COND_QBOX) {
+            present_flag = 2;
+        } else {
+            present_flag = 0;
+        }
 
         /* Draw item shadow */
-        OPEN_DISP(graph);
-        gfx = NOW_POLY_OPA_DISP;
-        gSPDisplayList(gfx++, inv_item_shadow_mode);
-        SET_POLY_OPA_DISP(gfx);
-        CLOSE_DISP(graph);
+        OPEN_POLY_OPA_DISP(graph);
+        gSPDisplayList(POLY_OPA_DISP++, inv_item_shadow_mode);
+        CLOSE_POLY_OPA_DISP(graph);
         submenu->overlay->draw_item_proc(graph, pos[0] + 4.0f, pos[1] - 4.0f, 1.0f, hand_ovl->info.item, present_flag,
                                          TRUE, 0, TRUE, FALSE);
 
         /* Draw item icon */
-        OPEN_DISP(graph);
-        gfx = NOW_POLY_OPA_DISP;
-        gSPDisplayList(gfx++, inv_item_mode);
-        SET_POLY_OPA_DISP(gfx);
-        CLOSE_DISP(graph);
+        OPEN_POLY_OPA_DISP(graph);
+        gSPDisplayList(POLY_OPA_DISP++, inv_item_mode);
+        CLOSE_POLY_OPA_DISP(graph);
         submenu->overlay->draw_item_proc(graph, pos[0], pos[1], 1.0f, hand_ovl->info.item, present_flag, TRUE, 0, FALSE,
                                          FALSE);
     }
@@ -1099,7 +1115,11 @@ extern void mHD_hand_ovl_construct(Submenu* submenu) {
                 break;
             default:
                 item = (mActor_name_t)menu_info->data1;
-                item_cond = hand_ovl->info.item_cond;
+                if (IS_ITEM_LOST_ITEM(item)) {
+                    item_cond = mPr_ITEM_COND_LOST_ITEM;
+                } else {
+                    item_cond = hand_ovl->info.item_cond;
+                }
                 break;
         }
 
