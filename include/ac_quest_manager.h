@@ -34,6 +34,8 @@ enum {
     aQMgr_TALK_SUB_STATE_NPC_HAND_WAIT_MSG_WAIT,
     aQMgr_TALK_SUB_STATE_ITEM_WAIT_END,
     aQMgr_TALK_SUB_STATE_ITEM_PLAYER_WAIT,
+    aQMgr_TALK_SUB_STATE_OPEN_QBOX_WAIT,
+    aQMgr_TALK_SUB_STATE_WAIT_CHOICE,
 
     aQMgr_TALK_SUB_STATE_NUM
 };
@@ -122,8 +124,17 @@ enum {
     aQMgr_QUEST_REWARD_MONEY,
     aQMgr_QUEST_REWARD_WORN_CLOTH,
     aQMgr_QUEST_REWARD_7,
+    aQMgr_QUEST_REWARD_8,
+    aQMgr_QUEST_REWARD_9,
 
     aQMgr_QUEST_REWARD_NUM
+};
+
+enum {
+    aQMgr_GET_COMMON_MSG_TYPE_SELECT,
+    aQMgr_GET_COMMON_MSG_TYPE_CANCEL_ITEM,
+
+    aQMgr_GET_COMMON_MSG_TYPE_NUM
 };
 
 typedef struct quest_manager_actor QUEST_MANAGER_ACTOR;
@@ -146,10 +157,11 @@ typedef struct quest_manager_set_data_s {
     u32 last_step : 4;
     u32 handover_item : 1;
     u32 src_item_type : 3;
+    u32 unk : 1;
     mActor_name_t item;
     u8 reward_percentages[aQMgr_QUEST_REWARD_NUM];
     u32 max_pay;
-    int msg_start[aQMgr_MSG_KIND_NUM];
+    int* msg_start[aQMgr_MSG_KIND_NUM];
 } aQMgr_set_data_c;
 
 typedef struct quest_manager_flower_work_data_s {
@@ -168,6 +180,7 @@ typedef struct quest_manager_target_s {
     AnmPersonalID_c* to_id;
     int quest_inv_item_idx;
     mActor_name_t quest_item;
+    u8 _1A;
     int reward_kind;
     mActor_name_t reward_item;
     u32 pay;
@@ -216,7 +229,7 @@ typedef struct quest_manager_choice_s {
     int talk_action;
 } aQMgr_choice_c;
 
-#define aQMgr_LAST_STR_NUM 7
+#define aQMgr_LAST_STR_NUM 13
 
 typedef int (*aQMgr_TALK_COMMON_PROC)(QUEST_MANAGER_ACTOR*, int);
 typedef void (*aQMgr_ACTOR_CLEAR_REGIST_PROC)(aQMgr_regist_c*, int);
@@ -224,7 +237,10 @@ typedef void (*aQMgr_ACTOR_REGIST_QUEST_PROC)(QUEST_MANAGER_ACTOR*, int*, aQMgr_
 typedef int (*aQMgr_GET_TIME_KIND_PROC)(int);
 typedef void (*aQMgr_TALK_INIT_PROC)(QUEST_MANAGER_ACTOR*);
 
-/* sizeof(struct quest_manager_actor) == 0xAA0 */
+typedef int (*aQMgr_COMMON_GET_COMMON_MSG_PROC)(QUEST_MANAGER_ACTOR* actor, int type);
+typedef int (*aQMgr_COMMON_CHECK_SELECT_MSG_PROC)(QUEST_MANAGER_ACTOR* actor);
+
+/* sizeof(struct quest_manager_actor) == 0xBF0 */
 struct quest_manager_actor {
     /* 0x000 */ ACTOR actor_class;
     /* 0x174 */ Submenu* submenu;
@@ -243,25 +259,31 @@ struct quest_manager_actor {
     /* 0x1C4 */ mActor_name_t handover_item;
     /* 0x1C8 */ aQMgr_target_c target;
     /* 0x214 */ aQMgr_regist_c regist[aQMgr_REGIST_NUM];
-    /* 0x930 */ int regist_idx;
-    /* 0x934 */ int regist_use_no;
-    /* 0x938 */ int _938;
-    /* 0x93C */ int _93C;
-    /* 0x940 */ aQMgr_Clip_c* clip;
-    /* 0x944 */ aQMgr_TALK_INIT_PROC talk_init_proc;
-    /* 0x948 */ aQMgr_TALK_COMMON_PROC talk_common_proc;
-    /* 0x94C */ aQMgr_ACTOR_CLEAR_REGIST_PROC clear_regist_proc;
-    /* 0x950 */ aQMgr_ACTOR_REGIST_QUEST_PROC regist_quest_proc;
-    /* 0x954 */ aQMgr_GET_TIME_KIND_PROC get_time_kind_proc;
-    /* 0x958 */ mActor_name_t cloth;
-    /* 0x95A */ u8 talk_type;
-    /* 0x95B */ u8 talk_change_type;
-    /* 0x95C */ u8 errand_next[mPr_ERRAND_QUEST_NUM];
-    /* 0x962 */ Mail_c mail;
-    /* 0xA8C */ Anmmem_c* mail_memory;
-    /* 0xA90 */ u8 last_strings[aQMgr_LAST_STR_NUM];
-    /* 0xA98 */ mActor_name_t give_item;
-    /* 0xA9C */ int _A9C;
+    /* 0xAD4 */ int regist_idx;
+    /* 0xAD8 */ int regist_use_no;
+    /* 0xADC */ int _ADC;
+    /* 0xAE0 */ int _AE0;
+    /* 0xAE4 */ int _AE4;
+    /* 0xAE8 */ aQMgr_Clip_c* clip;
+    /* 0xAEC */ aQMgr_TALK_INIT_PROC talk_init_proc;
+    /* 0xAF0 */ aQMgr_TALK_COMMON_PROC talk_common_proc;
+    /* 0xAF4 */ aQMgr_ACTOR_CLEAR_REGIST_PROC clear_regist_proc;
+    /* 0xAF8 */ aQMgr_ACTOR_REGIST_QUEST_PROC regist_quest_proc;
+    /* 0xAFC */ aQMgr_GET_TIME_KIND_PROC get_time_kind_proc;
+    /* 0xB00 */ aQMgr_COMMON_GET_COMMON_MSG_PROC get_common_msg_proc;
+    /* 0xB04 */ aQMgr_COMMON_CHECK_SELECT_MSG_PROC check_select_msg_proc;
+    /* 0xB08 */ mActor_name_t cloth;
+    /* 0xB0A */ u8 talk_type;
+    /* 0xB0B */ u8 talk_change_type;
+    /* 0xB0C */ u8 errand_next[mPr_ERRAND_QUEST_NUM];
+    /* 0xB12 */ Mail_c mail;
+    /* 0xBCC */ Anmmem_c* mail_memory;
+    /* 0xBD0 */ u8 last_strings[aQMgr_LAST_STR_NUM];
+    /* 0xBDE */ mActor_name_t give_item;
+    /* 0xBE0 */ int talk_about_animal_idx;
+    /* 0xBE4 */ int still_reward_but_field_quest_cancel;
+    /* 0xBE8 */ u8 aitekara_msg_flag;
+    /* 0xBEC */ int _BEC;
 };
 
 #define aQMgr_GET_CLIENT(manager) ((NPC_ACTOR*)*manager->client)

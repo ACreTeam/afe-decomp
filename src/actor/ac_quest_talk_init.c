@@ -1851,7 +1851,7 @@ static void aQMgr_talk_quest_giveup_item(QUEST_MANAGER_ACTOR* manager) {
         manager->sub_talk_state = aQMgr_TALK_SUB_STATE_MSG_APPEAR_WAIT;
 
         if (set_data != NULL && *manager->memory != NULL) {
-            base_msg = set_data->msg_start[aQMgr_MSG_KIND_FAILURE_END];
+            base_msg = *set_data->msg_start[aQMgr_MSG_KIND_FAILURE_END];
 
             switch (base_msg) {
                 case 0x2B8:

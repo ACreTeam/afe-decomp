@@ -30,7 +30,8 @@ static int aQMgr_fj_get_my_msg(int base_msg, int looks) {
 static int aQMgr_actor_decide_fj_message_no(aQMgr_target_c* target, int msg_type) {
     aQMgr_set_data_c* set_data_p = target->set_data_p;
 
-    return set_data_p->msg_start[msg_type];
+
+    return *set_data_p->msg_start[msg_type];
 }
 
 static void aQMgr_fj_set_msg_no(QUEST_MANAGER_ACTOR* manager) {

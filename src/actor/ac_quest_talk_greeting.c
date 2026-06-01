@@ -640,7 +640,7 @@ static int aQMgr_get_hello_msg_no_island(NPC_ACTOR* client, aQMgr_GET_TIME_KIND_
     return msg_no;
 }
 
-extern int aQMgr_get_hello_msg_no(ACTOR* client, aQMgr_GET_TIME_KIND_PROC get_time_kind_proc, mActor_name_t give_item) {
+extern int aQMgr_get_hello_msg_no(QUEST_MANAGER_ACTOR* mgr, ACTOR* client, aQMgr_GET_TIME_KIND_PROC get_time_kind_proc, mActor_name_t give_item) {
     Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
     int msg_no;
     int weeks = -1;

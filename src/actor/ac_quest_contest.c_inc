@@ -1,3 +1,41 @@
+#ifdef __INTELLISENSE__
+#include "ac_quest_manager.h"
+
+#include "m_common_data.h"
+#include "m_msg.h"
+#include "m_melody.h"
+#include "ac_quest_talk_greeting.h"
+#include "ac_quest_talk_init.h"
+#include "ac_quest_talk_fj_init.h"
+#include "ac_quest_talk_normal_init.h"
+#include "ac_quest_talk_island.h"
+#include "m_soncho.h"
+#include "gfxalloc.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "m_malloc.h"
+#include "zurumode.h"
+#include "m_flashrom.h"
+#include "m_debug.h"
+#include "padmgr.h"
+
+enum {
+    aQMgr_MODE_NORMAL,                      /* 0 */
+    aQMgr_MODE_SELECT_TALK,                 /* 1 - default talk */
+    aQMgr_MODE_MOVE_TALK,                   /* 2 */
+    aQMgr_MODE_TALK_FIN,                    /* 3 */
+    aQMgr_MODE_TALK_START_KAMAKURA_HELLO,   /* 4 - SP_NPC_EV_KAMAKURA_0 + hello */
+    aQMgr_MODE_TALK_START_KAMAKURA,         /* 5 - SP_NPC_EV_KAMAKURA_0 */
+    aQMgr_MODE_TALK_START_GROUP_HELLO,      /* 6 - chk_group_talk + hello */
+    aQMgr_MODE_TALK_START_GROUP,            /* 7 - chk_group_talk */
+    aQMgr_MODE_TALK_START_SUMMERCAMP_HELLO, /* 8 - SP_NPC_EV_SUMMERCAMP_0 + hello */
+    aQMgr_MODE_TALK_START_SUMMERCAMP,       /* 9 - SP_NPC_EV_SUMMERCAMP_0 */
+    aQMgr_MODE_TALK_START_AITEKARA_MSG,     /* 10 - aitekara_msg_flag */
+
+    aQMgr_MODE_NUM /* 11 */
+};
+#endif
+
 static void aQMgr_actor_check_limit_and_clear_quest(mQst_contest_c* contest) {
     if (mQst_CheckLimitOver(&contest->base) == TRUE) {
         mQst_ClearContest(contest);
@@ -5,59 +43,19 @@ static void aQMgr_actor_check_limit_and_clear_quest(mQst_contest_c* contest) {
 }
 
 static void aQMgr_actor_contest_check_limit(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    aQMgr_actor_check_limit_and_clear_quest((mQst_contest_c*)regist->quest_info);
-}
-
-static int aQMgr_actor_check_fin_fruit(mQst_base_c* quest_info, Animal_c* animal) {
-    int res = FALSE;
-
-    if (quest_info->progress == 1 && aQMgr_actor_check_fin_item(quest_info, animal) == TRUE) {
-        res = TRUE;
+    if (regist->quest_info != NULL) {
+        aQMgr_actor_check_limit_and_clear_quest((mQst_contest_c*)regist->quest_info);
     }
-
-    return res;
 }
 
 static int aQMgr_actor_check_fin_soccer(mQst_base_c* quest_info, Animal_c* animal) {
+    mQst_contest_c* contest = (mQst_contest_c*)quest_info;
     int res = FALSE;
 
-    if (quest_info->progress == 1) {
+    if (quest_info->progress == 1 && mPr_CheckCmpPersonalID(&contest->player_id, &Now_Private->player_ID) == TRUE) {
         res = TRUE;
     }
-
-    return res;
-}
-
-static void aQMgr_actor_contest_snowman_clear(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    lbRTC_time_c* rtc_time = Common_GetPointer(time.rtc_time);
     
-    if (regist != NULL && regist->quest_info != NULL) {
-        mQst_base_c* quest_info = regist->quest_info;
-        
-        if (
-            (rtc_time->month == lbRTC_FEBRUARY && rtc_time->day > 17) ||
-            (rtc_time->month >= lbRTC_MARCH && rtc_time->month <= lbRTC_NOVEMBER) ||
-            (rtc_time->month == lbRTC_DECEMBER && rtc_time->day < 25) ||
-            (mQst_CheckLimitOver(quest_info) == TRUE)
-        ) {
-            mQst_ClearContest((mQst_contest_c*)quest_info);
-        }
-    }
-}
-
-static int aQMgr_actor_check_fin_snowman(mQst_base_c* quest_info, Animal_c* animal) {
-    int res = FALSE;
-    
-    if (animal != NULL && quest_info != NULL) {
-        mQst_contest_c* contest = (mQst_contest_c*)quest_info;
-        
-        if (quest_info->progress == 1 &&
-            mPr_NullCheckPersonalID(&contest->player_id) == FALSE &&
-            mPr_CheckCmpPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID) == TRUE) {
-            res = TRUE;
-        }
-    }
-
     return res;
 }
 
@@ -84,7 +82,7 @@ static int aQMgr_actor_check_flower(mQst_contest_c* contest, int bx, int bz) {
 
     if (contest->base.progress == 1) {
         if (contest->info.flower_data.flowers_requested <= flower_num) {
-            if (mPr_NullCheckPersonalID(&contest->player_id) == TRUE || mPr_CheckCmpPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID) == TRUE) {
+            if (mPr_NullCheckPersonalID(&contest->player_id) == TRUE || mPr_CheckCmpPersonalID(&contest->player_id, &Now_Private->player_ID) == TRUE) {
                 res = TRUE;
             }
         }
@@ -102,10 +100,10 @@ static int aQMgr_actor_check_fin_flower(mQst_base_c* quest_info, Animal_c* anima
     return aQMgr_actor_check_flower(contest, animal->home_info.bx, animal->home_info.bz);
 }
 
-static int aQMgr_actor_check_fin_quest_have_item1(mQst_contest_c* contest, u8 item1_category) {
+static int aQMgr_actor_check_fin_quest_have_item(mQst_contest_c* contest) {
     int res = FALSE;
 
-    if (contest->base.progress == 1 && mPr_NullCheckPersonalID(&contest->player_id) == TRUE && mPr_GetPossessionItemIdxItem1Category(Common_Get(now_private), item1_category) != -1) {
+    if (mPr_NullCheckPersonalID(&contest->player_id) == TRUE && mPr_GetPossessionItemIdxWithCond(Now_Private, contest->requested_item, mPr_ITEM_COND_NORMAL) != -1) {
         res = TRUE;
     }
 
@@ -114,8 +112,13 @@ static int aQMgr_actor_check_fin_quest_have_item1(mQst_contest_c* contest, u8 it
 
 static int aQMgr_actor_check_fin_fish(mQst_base_c* quest_info, Animal_c* animal) {
     mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
 
-    return aQMgr_actor_check_fin_quest_have_item1(contest, ITEM1_CAT_FISH);
+    if (quest_info->progress == 1) {
+        ret = aQMgr_actor_check_fin_quest_have_item(contest);
+    }
+
+    return ret;
 }
 
 static void aQMgr_actor_contest_insect_clear(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
@@ -137,28 +140,92 @@ static void aQMgr_actor_contest_insect_clear(QUEST_MANAGER_ACTOR* manager, aQMgr
 
 static int aQMgr_actor_check_fin_insect(mQst_base_c* quest_info, Animal_c* animal) {
     mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
 
-    return aQMgr_actor_check_fin_quest_have_item1(contest, ITEM1_CAT_INSECT);
+    if (quest_info->progress == 1) {
+        ret = aQMgr_actor_check_fin_quest_have_item(contest);
+    }
+
+    return ret;
 }
 
 static int aQMgr_actor_check_fin_contest_letter(mQst_base_c* quest_info, Animal_c* animal) {
     mQst_contest_c* contest = (mQst_contest_c*)quest_info;
     int res = FALSE;
 
-    if (contest->base.progress == 1) {
+    if (contest->base.progress == 1 && mPr_CheckCmpPersonalID(&contest->player_id, &Now_Private->player_ID) == TRUE) {
         res = TRUE;
     }
 
     return res;
 }
 
+static int aQMgr_actor_check_fin_contest_ftr(mQst_base_c* quest_info, Animal_c* animal) {
+    mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
+
+    if (quest_info->progress == 1 && aQMgr_actor_check_fin_item(quest_info, animal) == TRUE) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static int aQMgr_actor_check_fin_contest_shop(mQst_base_c* quest_info, Animal_c* animal) {
+    mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
+
+    if (quest_info->progress == 1 && aQMgr_actor_check_fin_item(quest_info, animal) == TRUE) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static int aQMgr_actor_check_fin_grass(mQst_base_c* quest_info, Animal_c* animal) {
+    mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
+
+    if (contest != NULL && contest->base.progress == 1 && mQst_GetGrassNum(animal->home_info.bx, animal->home_info.bz) == 0 && mPr_NullCheckPersonalID(&contest->player_id) == TRUE) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static int aQMgr_actor_check_fin_contest_sick(mQst_base_c* quest_info, Animal_c* animal) {
+    mQst_contest_c* contest = (mQst_contest_c*)quest_info;
+    int ret = FALSE;
+
+    if (contest->base.progress == 1 && mPr_CheckCmpPersonalID(&contest->player_id, &Now_Private->player_ID) == TRUE) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static void aQMgr_actor_contest_sick_clear(void) {
+    int idx = mQst_GetOccuredContestIdx(mQst_CONTEST_KIND_SICK);
+
+    if (idx != -1) {
+        Animal_c* animal = Save_GetPointer(animals[idx]);
+
+        if (mQst_CheckLimitOver(&animal->contest_quest.base) == TRUE) {
+            mNpc_HealSick(Save_GetPointer(sick_info));
+        }
+    }
+}
+
 static void aQMgr_save_contest_flower(aQMgr_regist_c* regist) {
     mQst_contest_c* contest = (mQst_contest_c*)regist->quest_info;
-    Anmhome_c* home = &Save_Get(animals[regist->animal_idx]).home_info;
+    
+    if (regist->animal_idx != -1) {
+        Anmhome_c* home = &Save_Get(animals[regist->animal_idx]).home_info;
 
-    if (aQMgr_actor_check_flower(contest, home->bx, home->bz) == TRUE) {
-        mPr_ClearPersonalID(&contest->player_id);
-        mPr_CopyPersonalID(&contest->player_id, &Common_Get(now_private)->player_ID);
+        if (aQMgr_actor_check_flower(contest, home->bx, home->bz) == TRUE) {
+            mPr_ClearPersonalID(&contest->player_id);
+            mPr_CopyPersonalID(&contest->player_id, &Now_Private->player_ID);
+        }
     }
 }
 
@@ -168,13 +235,17 @@ static void aQMgr_save_contest(aQMgr_regist_c* regist) {
     int contest_kind = regist->quest_info->quest_kind;
     static aQMgr_CONTEST_SAVE_PROC save_proc[mQst_CONTEST_KIND_NUM] = {
         (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
-        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
-        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
         &aQMgr_save_contest_flower,
         (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
         (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
-        (aQMgr_CONTEST_SAVE_PROC)&none_proc1
+        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
+        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
+        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
+        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
+        (aQMgr_CONTEST_SAVE_PROC)&none_proc1,
     };
 
-    (*save_proc[contest_kind])(regist);
+    if (contest_kind >= 0 && contest_kind < mQst_CONTEST_KIND_NUM) {
+        (*save_proc[contest_kind])(regist);
+    }
 }

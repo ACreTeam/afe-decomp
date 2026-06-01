@@ -15,18 +15,23 @@
 #include "m_malloc.h"
 #include "zurumode.h"
 #include "m_flashrom.h"
+#include "m_debug.h"
+#include "padmgr.h"
 
 enum {
-    aQMgr_MODE_NORMAL,
-    aQMgr_MODE_SELECT_TALK,
-    aQMgr_MODE_MOVE_TALK,
-    aQMgr_MODE_TALK_FIN,
-    aQMgr_MODE_TALK_START_KAMAKURA_HELLO,
-    aQMgr_MODE_TALK_START_KAMAKURA,
-    aQMgr_MODE_TALK_START_SUMMERCAMP_HELLO,
-    aQMgr_MODE_TALK_START_SUMMERCAMP,
+    aQMgr_MODE_NORMAL,                      /* 0 */
+    aQMgr_MODE_SELECT_TALK,                 /* 1 - default talk */
+    aQMgr_MODE_MOVE_TALK,                   /* 2 */
+    aQMgr_MODE_TALK_FIN,                    /* 3 */
+    aQMgr_MODE_TALK_START_KAMAKURA_HELLO,   /* 4 - SP_NPC_EV_KAMAKURA_0 + hello */
+    aQMgr_MODE_TALK_START_KAMAKURA,         /* 5 - SP_NPC_EV_KAMAKURA_0 */
+    aQMgr_MODE_TALK_START_GROUP_HELLO,      /* 6 - chk_group_talk + hello */
+    aQMgr_MODE_TALK_START_GROUP,            /* 7 - chk_group_talk */
+    aQMgr_MODE_TALK_START_SUMMERCAMP_HELLO, /* 8 - SP_NPC_EV_SUMMERCAMP_0 + hello */
+    aQMgr_MODE_TALK_START_SUMMERCAMP,       /* 9 - SP_NPC_EV_SUMMERCAMP_0 */
+    aQMgr_MODE_TALK_START_AITEKARA_MSG,     /* 10 - aitekara_msg_flag */
 
-    aQMgr_MODE_NUM
+    aQMgr_MODE_NUM /* 11 */
 };
 
 static ACTOR* l_client_p = NULL;
@@ -36,300 +41,113 @@ static QUEST_MANAGER_ACTOR* l_quest_actor_p = NULL;
 static int l_quest_manager_hello = FALSE;
 static int l_aQMgr_hand_start = FALSE;
 
+static int l_msg_quest_irai_end[mNpc_LOOKS_NUM] = {0x024C, 0x024F, 0x0252, 0x0255, 0x0258, 0x025B};
+static int l_msg_quest_kyohi[mNpc_LOOKS_NUM] = {0x025E, 0x0261, 0x0264, 0x0267, 0x026A, 0x026D};
+static int l_msg_quest_uchikiri_end[mNpc_LOOKS_NUM] = {0x02B8, 0x02BB, 0x02BE, 0x02C1, 0x02C4, 0x02C7};
+static int l_msg_quest_uchikiri_end_soft[mNpc_LOOKS_NUM] = {0x02CA, 0x02CD, 0x02D0, 0x02D3, 0x02D6, 0x02D9};
+static int l_msg_q001_irai1[mNpc_LOOKS_NUM] = {0x0151, 0x0154, 0x0157, 0x015A, 0x015D, 0x0160};
+static int l_msg_q001_kakunin1[mNpc_LOOKS_NUM] = {0x0163, 0x0166, 0x0169, 0x016C, 0x016F, 0x0172};
+static int l_msg_q001_orei1[mNpc_LOOKS_NUM] = {0x0175, 0x0178, 0x017B, 0x017E, 0x0181, 0x0184};
+static int l_msg_q001_uchikiri1[mNpc_LOOKS_NUM] = {0x0187, 0x018A, 0x018D, 0x0190, 0x0193, 0x0196};
+static int l_msg_q002_irai1[mNpc_LOOKS_NUM] = {0x0199, 0x019C, 0x019F, 0x01A2, 0x01A5, 0x01A8};
+static int l_msg_q002_kakunin1[mNpc_LOOKS_NUM] = {0x01AB, 0x01AE, 0x01B1, 0x01B4, 0x01B7, 0x01BA};
+static int l_msg_q002_orei1[mNpc_LOOKS_NUM] = {0x01BD, 0x01C0, 0x01C3, 0x01C6, 0x01C9, 0x01CC};
+static int l_msg_q002_uchikiri1[mNpc_LOOKS_NUM] = {0x01CF, 0x01D2, 0x01D5, 0x01D8, 0x01DB, 0x01DE};
+static int l_msg_q003_irai1[mNpc_LOOKS_NUM] = {0x01E1, 0x01E4, 0x01E7, 0x01EA, 0x01ED, 0x01F0};
+static int l_msg_q003_kakunin1[mNpc_LOOKS_NUM] = {0x005B, 0x005E, 0x0061, 0x0064, 0x0067, 0x006A};
+static int l_msg_q003_orei1[mNpc_LOOKS_NUM] = {0x01F3, 0x01F6, 0x01F9, 0x01FC, 0x01FF, 0x0202};
+static int l_msg_q003_uchikiri1[mNpc_LOOKS_NUM] = {0x034C, 0x034F, 0x0352, 0x0355, 0x0358, 0x035B};
+static int l_msg_q004_irai1[mNpc_LOOKS_NUM] = {0x0205, 0x0208, 0x020B, 0x020E, 0x0211, 0x0214};
+static int l_msg_q004_kakunin1[mNpc_LOOKS_NUM] = {0x0217, 0x021A, 0x021D, 0x0220, 0x0223, 0x0226};
+static int l_msg_q004_orei1[mNpc_LOOKS_NUM] = {0x10BF, 0x10C2, 0x10C5, 0x10C8, 0x10CB, 0x10CE};
+static int l_msg_q004_orei_end[mNpc_LOOKS_NUM] = {0x0EB1, 0x0EB4, 0x0EB7, 0x0EBA, 0x0EBD, 0x0EC0};
+static int l_msg_q004_uchikiri1[mNpc_LOOKS_NUM] = {0x023A, 0x023D, 0x0240, 0x0243, 0x0246, 0x0249};
+static int l_msg_q005_orei1[mNpc_LOOKS_NUM] = {0x03F8, 0x03FB, 0x03FE, 0x0401, 0x0404, 0x0407};
+static int l_msg_q005_orei_end[mNpc_LOOKS_NUM] = {0x03E6, 0x03E9, 0x03EC, 0x03EF, 0x03F2, 0x03F5};
+static int l_msg_q005_motenaiyo[mNpc_LOOKS_NUM] = {0x035E, 0x0361, 0x0364, 0x0367, 0x036A, 0x036D};
+static int l_msg_q005_watashitenai[mNpc_LOOKS_NUM] = {0x0370, 0x0373, 0x0376, 0x0379, 0x037C, 0x037F};
+static int l_msg_q005_akitsukure[mNpc_LOOKS_NUM] = {0x0382, 0x0385, 0x0388, 0x038B, 0x038E, 0x0391};
+static int l_msg_q008_irai1[mNpc_LOOKS_NUM] = {0x0E33, 0x0E36, 0x0E39, 0x0E3C, 0x0E3F, 0x0E42};
+static int l_msg_q008_irai2[mNpc_LOOKS_NUM] = {0x5726, 0x5729, 0x572C, 0x572F, 0x5732, 0x5735};
+static int l_msg_q008_orei1[mNpc_LOOKS_NUM] = {0x0E45, 0x0E48, 0x0E4B, 0x0E4E, 0x0E51, 0x0E54};
+static int l_msg_q008_hokanohito[mNpc_LOOKS_NUM] = {0x0ED5, 0x0ED8, 0x0EDB, 0x0EDE, 0x0EE1, 0x0EE4};
+static int l_msg_q008_orei_end[mNpc_LOOKS_NUM] = {0x0E8D, 0x0E90, 0x0E93, 0x0E96, 0x0E99, 0x0E9C};\
+static int l_msg_arubaito_ftr_orei[mNpc_LOOKS_NUM] = {0x08EF, 0x08F1, 0x08F3, 0x08F5, 0x08F7, 0x08F9};
+static int l_msg_arubaito_ftr_orei_end[mNpc_LOOKS_NUM] = {0x08F0, 0x08F2, 0x08F4, 0x08F6, 0x08F8, 0x08FA};
+static int l_msg_arubaito_cpt_orei[mNpc_LOOKS_NUM] = {0x08FB, 0x08FD, 0x08FF, 0x0901, 0x0903, 0x0905};
+static int l_msg_arubaito_cpt_orei_end[mNpc_LOOKS_NUM] = {0x08FC, 0x08FE, 0x0900, 0x0902, 0x0904, 0x0906};
+static int l_msg_arubaito_axe_orei[mNpc_LOOKS_NUM] = {0x0907, 0x0909, 0x090B, 0x090D, 0x090F, 0x0911};
+static int l_msg_arubaito_axe_orei_end[mNpc_LOOKS_NUM] = {0x0908, 0x090A, 0x090C, 0x090E, 0x0910, 0x0912};
+static int l_msg_q007_irai1[mNpc_LOOKS_NUM] = {0x0D79, 0x0D7C, 0x0D7F, 0x0D82, 0x0D85, 0x0D88};
+static int l_msg_q007_orei1[mNpc_LOOKS_NUM] = {0x0D91, 0x0D94, 0x0D97, 0x0D9A, 0x0D9D, 0x0DA0};
+static int l_msg_q007_orei_end[mNpc_LOOKS_NUM] = {0x0DD9, 0x0DDC, 0x0DDF, 0x0DE2, 0x0DE5, 0x0DE8};
+static int l_msg_q007_watashitenai[mNpc_LOOKS_NUM] = {0x0DFD, 0x0E00, 0x0E03, 0x0E06, 0x0E09, 0x0E0C};
+static int l_msg_q007_motenaiyo[mNpc_LOOKS_NUM] = {0x0DEB, 0x0DEE, 0x0DF1, 0x0DF4, 0x0DF7, 0x0DFA};
+static int l_msg_q007_akitsukure[mNpc_LOOKS_NUM] = {0x0E0F, 0x0E12, 0x0E15, 0x0E18, 0x0E1B, 0x0E1E};
+static int l_msg_q009_irai1[mNpc_LOOKS_NUM] = {0x0FB5, 0x0FB8, 0x0FBB, 0x0FBE, 0x0FC1, 0x0FC4};
+static int l_msg_q009_orei1[mNpc_LOOKS_NUM] = {0x0FC7, 0x0FCA, 0x0FCD, 0x0FD0, 0x0FD3, 0x0FD6};
+static int l_msg_q009_orei_end[mNpc_LOOKS_NUM] = {0x100F, 0x1012, 0x1015, 0x1018, 0x101B, 0x101E};
+static int l_msg_q009_watashitenai[mNpc_LOOKS_NUM] = {0x1033, 0x1036, 0x1039, 0x103C, 0x103F, 0x1042};
+static int l_msg_q009_motenaiyo[mNpc_LOOKS_NUM] = {0x1021, 0x1024, 0x1027, 0x102A, 0x102D, 0x1030};
+static int l_msg_q009_akitsukure[mNpc_LOOKS_NUM] = {0x1045, 0x1048, 0x104B, 0x104E, 0x1051, 0x1054};
+static int l_msg_q010_irai1[mNpc_LOOKS_NUM] = {0x1AE1, 0x1AE4, 0x1AE7, 0x1AEA, 0x1AED, 0x1AF0};
+static int l_msg_q010_okuttayo[mNpc_LOOKS_NUM] = {0x1B17, 0x1B1A, 0x1B1D, 0x1B20, 0x1B23, 0x1B26};
+static int l_msg_q011_irai1[mNpc_LOOKS_NUM] = {0x158C, 0x158F, 0x1592, 0x1595, 0x1598, 0x159B};\
+static int l_msg_q011_irai2[mNpc_LOOKS_NUM] = {0x5166, 0x5169, 0x516C, 0x516F, 0x5172, 0x5175};
+static int l_msg_q011_orei1[mNpc_LOOKS_NUM] = {0x159E, 0x15A1, 0x15A4, 0x15A7, 0x15AA, 0x15AD};
+static int l_msg_q011_orei_end[mNpc_LOOKS_NUM] = {0x15B0, 0x15B3, 0x15B6, 0x15B9, 0x15BC, 0x15BF};
+static int l_msg_q012_irai1[mNpc_LOOKS_NUM] = {0x160A, 0x160D, 0x1610, 0x1613, 0x1616, 0x1619};
+static int l_msg_q012_irai2[mNpc_LOOKS_NUM] = {0x5178, 0x517B, 0x517E, 0x5181, 0x5184, 0x5187};
+static int l_msg_q012_orei1[mNpc_LOOKS_NUM] = {0x161C, 0x161F, 0x1622, 0x1625, 0x1628, 0x162B};
+static int l_msg_q012_orei_end[mNpc_LOOKS_NUM] = {0x162E, 0x1631, 0x1634, 0x1637, 0x163A, 0x163D};
+static int l_msg_q013_irai2[mNpc_LOOKS_NUM] = {0x0F92, 0x0F95, 0x0F98, 0x0F9B, 0x0F9E, 0x0FA1};
+static int l_msg_q013_orei1[mNpc_LOOKS_NUM] = {0x241F, 0x2422, 0x2425, 0x2428, 0x242B, 0x242E};
+static int l_msg_q013_orei_end[mNpc_LOOKS_NUM] = {0x2455, 0x2458, 0x245B, 0x245E, 0x2461, 0x2464};
+static int l_msg_q014_irai2[mNpc_LOOKS_NUM] = {0x249D, 0x24A0, 0x24A3, 0x24A6, 0x24A9, 0x24AC};
+static int l_msg_q014_orei1[mNpc_LOOKS_NUM] = {0x24AF, 0x24B2, 0x24B5, 0x24B8, 0x24BB, 0x24BE};
+static int l_msg_q014_orei_end[mNpc_LOOKS_NUM] = {0x24E5, 0x24E8, 0x24EB, 0x24EE, 0x24F1, 0x24F4};
+static int l_msg_q006_irai1[mNpc_LOOKS_NUM] = {0x0A74, 0x0A77, 0x0A7A, 0x0A7D, 0x0A80, 0x0A83};
+static int l_msg_q006_orei1[mNpc_LOOKS_NUM] = {0x0A98, 0x0A9B, 0x0A9E, 0x0AA1, 0x0AA4, 0x0AA7};
+static int l_msg_q006_orei_end[mNpc_LOOKS_NUM] = {0x2020, 0x2023, 0x2026, 0x2029, 0x202C, 0x202F};
+static int l_msg_q006_watashitenai[mNpc_LOOKS_NUM] = {0x0AAA, 0x0AAD, 0x0AB0, 0x0AB3, 0x0AB6, 0x0AB9};
+static int l_msg_q006_motenaiyo[mNpc_LOOKS_NUM] = {0x0A86, 0x0A89, 0x0A8C, 0x0A8F, 0x0A92, 0x0A95};
+static int l_msg_q006_akitsukure[mNpc_LOOKS_NUM] = {0x1F55, 0x1F58, 0x1F5B, 0x1F5E, 0x1F61, 0x1F64};
+
+
 // clang-format off
-static aQMgr_set_data_c l_set_delivery_data[] = {
-    {
-        aQMgr_QUEST_TARGET_RANDOM,
-        2,
-        0,
-        TRUE,
-        aQMgr_QUEST_ITEM_CLOTH,
-        EMPTY_NO,
-        40, 0, 0, 0, 0, 30, 30, 0,
-        200,
-        0x0151, 0x024C, 0x0163, 0x025E, 0x0175, 0x0294, 0x0187, 0x02B8, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_FOREIGN,
-        2,
-        0,
-        TRUE,
-        aQMgr_QUEST_ITEM_RANDOM,
-        EMPTY_NO,
-        40, 0, 0, 10, 10, 40, 0, 0,
-        1000,
-        0x0199, 0x024C, 0x01AB, 0x025E, 0x01BD, 0x0294, 0x01CF, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_LAST_REMOVE,
-        2,
-        0,
-        TRUE,
-        aQMgr_QUEST_ITEM_RANDOM,
-        EMPTY_NO,
-        20, 0, 0, 20, 20, 40, 0, 0,
-        1000,
-        0x0205, 0x024C, 0x0217, 0x025E, 0x10BF, 0x0294, 0x023A, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_RANDOM,
-        2,
-        0,
-        TRUE,
-        aQMgr_QUEST_ITEM_RANDOM,
-        EMPTY_NO,
-        40, 0, 40, 10, 10, 0, 0, 0,
-        0,
-        0x0A74, 0x024C, 0x0A86, 0x025E, 0x0A98, 0x0294, 0x0AAA, 0x02B8, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
+static aQMgr_set_data_c l_set_delivery_data[mQst_DELIVERY_KIND_NUM] = {
+    {0x06, 0x02, 0x02, 0x01, 0x00, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q001_irai1, l_msg_quest_irai_end, l_msg_q001_kakunin1, l_msg_quest_kyohi, l_msg_q001_orei1, NULL, l_msg_q001_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {0x06, 0x02, 0x02, 0x01, 0x02, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q002_irai1, l_msg_quest_irai_end, l_msg_q002_kakunin1, l_msg_quest_kyohi, l_msg_q002_orei1, NULL, l_msg_q002_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {0x06, 0x02, 0x02, 0x01, 0x02, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q003_irai1, l_msg_quest_irai_end, l_msg_q003_kakunin1, l_msg_quest_kyohi, l_msg_q003_orei1, NULL, l_msg_q003_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {0x04, 0x04, 0x00, 0x01, 0x01, 0, 0x2500, {0x02, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 1000, {l_msg_q004_irai1, l_msg_quest_irai_end, l_msg_q004_kakunin1, l_msg_quest_kyohi, l_msg_q004_orei1, l_msg_q004_orei_end, l_msg_q004_uchikiri1, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x01, 0x03, 0x00, 0x02, 0, 0x0000, {0x00, 0x23, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x19}, 300, {l_msg_q008_irai1, l_msg_quest_irai_end, l_msg_q008_irai2, NULL, l_msg_q008_orei1, l_msg_q008_orei_end, l_msg_q008_hokanohito, NULL, NULL, NULL, NULL, NULL, NULL}},
 };
 
-static aQMgr_set_data_c l_set_errand_data[] = {
-    {
-        aQMgr_QUEST_TARGET_RANDOM_EXCLUDED,
-        2,
-        4,
-        FALSE,
-        aQMgr_QUEST_ITEM_RANDOM,
-        EMPTY_NO,
-        50, 0, 0, 0, 0, 0, 0, 0,
-        500,
-        0x038C, 0x024C, 0x03D4, 0x025E, 0x03F8, 0x0294, 0x2B73, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_RANDOM_EXCLUDED,
-        2,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        50, 0, 0, 0, 0, 0, 0, 0,
-        500,
-        0x03B0, 0x024C, 0x03E6, 0x025E, 0x03F8, 0x0294, 0x041C, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_ORIGINAL_TARGET,
-        2,
-        0,
-        TRUE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        50, 0, 0, 0, 0, 0, 0, 0,
-        500,
-        0x039E, 0x024C, 0x03C2, 0x025E, 0x03F8, 0x0294, 0x040A, 0x0452, 0x17B8, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x08EF, 0x08F0, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x08FB, 0x08FC, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0907, 0x0908, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0907, 0x0908, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        0,
-        0,
-        FALSE,
-        aQMgr_QUEST_ITEM_CURRENT_ITEM,
-        EMPTY_NO,
-        0, 0, 0, 0, 0, 0, 0, 100,
-        0,
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
+static aQMgr_set_data_c l_set_errand_data[mQst_ERRAND_NUM] = {
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_ftr_orei, l_msg_arubaito_ftr_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_cpt_orei, l_msg_arubaito_cpt_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
 };
 
-static aQMgr_set_data_c l_set_contest_data[] = {
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        1,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_FRUIT,
-        EMPTY_NO,
-        0, 0, 0, 30, 30, 40, 0, 0,
-        500,
-        0x01E1, 0x0000, 0x01E1, 0x025E, 0x01F3, 0x117C, 0x0000, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        1,
-        2,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        40, 0, 0, 30, 30, 0, 0, 0,
-        0,
-        0x0D79, 0x0000, 0x0D79, 0x025E, 0x0D91, 0x0DD9, 0x0000, 0x02CA, 0x0440, 0x0DFD, 0x0DD9, 0x0DEB, 0x0E0F
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        1,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        60, 0, 0, 20, 20, 0, 0, 0,
-        0,
-        0x0E33, 0x0000, 0x0E33, 0x025E, 0x0E45, 0x0E8D, 0x0000, 0x02CA, 0x0440, 0x0EB1, 0x0E8D, 0x0E9F, 0x0EC3
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        3,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        60, 0, 0, 20, 20, 0, 0, 0,
-        0,
-        0x0FB5, 0x0000, 0x0FB5, 0x025E, 0x0FC7, 0x100F, 0x0000, 0x02CA, 0x0440, 0x1033, 0x100F, 0x1021, 0x1045
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        3,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        80, 0, 0, 10, 10, 0, 0, 0,
-        0,
-        0x158C, 0x0000, 0x158C, 0x025E, 0x159E, 0x15B0, 0x0000, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        3,
-        1,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        80, 0, 0, 10, 10, 0, 0, 0,
-        0,
-        0x160A, 0x0000, 0x160A, 0x025E, 0x161C, 0x162E, 0x0000, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
-    {
-        aQMgr_QUEST_TARGET_CLIENT,
-        2,
-        2,
-        FALSE,
-        aQMgr_QUEST_ITEM_NONE,
-        EMPTY_NO,
-        80, 0, 0, 10, 10, 0, 0, 0,
-        0,
-        0x1AE1, 0x0000, 0x1AE1, 0x025E, 0x1B17, 0x0294, 0x0000, 0x02CA, 0x0440, 0x035E, 0x034C, 0x0370, 0x033A
-    },
+static aQMgr_set_data_c l_set_contest_data[mQst_CONTEST_KIND_NUM] = {
+    {0x05, 0x01, 0x02, 0x00, 0x02, 0, 0x0000, {0x00, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q007_irai1, NULL, l_msg_q007_irai1, l_msg_quest_kyohi, l_msg_q007_orei1, l_msg_q007_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q007_watashitenai, l_msg_q007_orei_end, l_msg_q007_motenaiyo, l_msg_q007_akitsukure}},
+    {0x05, 0x03, 0x01, 0x00, 0x02, 0, 0x0000, {0x00, 0x3C, 0x00, 0x00, 0x14, 0x14, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q009_irai1, NULL, l_msg_q009_irai1, l_msg_quest_kyohi, l_msg_q009_orei1, l_msg_q009_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q009_watashitenai, l_msg_q009_orei_end, l_msg_q009_motenaiyo, l_msg_q009_akitsukure}},
+    {0x05, 0x03, 0x01, 0x00, 0x04, 1, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q011_irai1, NULL, l_msg_q011_irai2, l_msg_quest_kyohi, l_msg_q011_orei1, l_msg_q011_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x03, 0x01, 0x00, 0x04, 0, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q012_irai1, NULL, l_msg_q012_irai2, l_msg_quest_kyohi, l_msg_q012_orei1, l_msg_q012_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, l_msg_q012_orei_end, NULL, NULL}},
+    {0x05, 0x02, 0x02, 0x00, 0x02, 0, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q010_irai1, NULL, l_msg_q010_irai1, l_msg_quest_kyohi, l_msg_q010_okuttayo, NULL, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x03, 0x01, 0x00, 0x03, 0, 0x0000, {0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q013_irai2, l_msg_quest_kyohi, l_msg_q013_orei1, l_msg_q013_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x01, 0x01, 0x00, 0x03, 1, 0x0000, {0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q014_irai2, l_msg_quest_kyohi, l_msg_q014_orei1, l_msg_q014_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {0x05, 0x01, 0x01, 0x00, 0x02, 0, 0x0000, {0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00}, 300, {l_msg_q006_irai1, NULL, l_msg_q006_irai1, l_msg_quest_kyohi, l_msg_q006_orei1, l_msg_q006_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q006_watashitenai, l_msg_q006_orei_end, l_msg_q006_motenaiyo, l_msg_q006_akitsukure}},
+    {0x05, 0x0A, 0x01, 0x00, 0x01, 0, 0x2267, {0x00, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 300, {NULL, NULL, NULL, NULL, l_msg_q005_orei1, l_msg_q005_orei_end, NULL, NULL, NULL, l_msg_q005_watashitenai, NULL, l_msg_q005_motenaiyo, l_msg_q005_akitsukure}},
 };
 //clang-format on
 
@@ -337,6 +155,27 @@ static aQMgr_set_data_c* l_set_data[mQst_QUEST_TYPE_NUM] = {
     l_set_delivery_data,
     l_set_errand_data,
     l_set_contest_data
+};
+
+static void aQMgr_move_own_delvery_qbox(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist);
+static void aQMgr_move_own_delivery_lost(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist);
+
+static int aQMgr_actor_check_fin_qbox(mQst_base_c* quest_info, Animal_c* animal);
+
+static aQMgr_CHECK_LIMIT_PROC l_delivery_proc[mQst_DELIVERY_KIND_NUM] = {
+    &aQMgr_move_own_delvery_qbox,
+    &aQMgr_move_own_delvery_qbox,
+    &aQMgr_move_own_delvery_qbox,
+    NULL,
+    &aQMgr_move_own_delivery_lost,
+};
+
+static aQMgr_CHECK_FINISH_PROC l_delivery_check[mQst_DELIVERY_KIND_NUM] = {
+    &aQMgr_actor_check_fin_qbox,
+    &aQMgr_actor_check_fin_qbox,
+    &aQMgr_actor_check_fin_qbox,
+    NULL,
+    NULL,
 };
 
 static void aQMgr_move_own_errand_cloth(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist);
@@ -356,14 +195,16 @@ static int aQMgr_actor_check_fin_fish(mQst_base_c* quest_info, Animal_c* animal)
 static void aQMgr_actor_contest_insect_clear(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist);
 static int aQMgr_actor_check_fin_insect(mQst_base_c* quest_info, Animal_c* animal);
 static int aQMgr_actor_check_fin_contest_letter(mQst_base_c* quest_info, Animal_c* animal);
+static int aQMgr_actor_check_fin_contest_ftr(mQst_base_c* quest_info, Animal_c* animal);
+static int aQMgr_actor_check_fin_contest_shop(mQst_base_c* quest_info, Animal_c* animal);
+static int aQMgr_actor_check_fin_grass(mQst_base_c* quest_info, Animal_c* animal);
+static int aQMgr_actor_check_fin_contest_sick(mQst_base_c* quest_info, Animal_c* animal);
 
 static void aQMgr_save_contest_flower(aQMgr_regist_c* regist);
 static void aQMgr_save_contest(aQMgr_regist_c* regist);
 
 static aQMgr_CHECK_LIMIT_PROC l_errand_proc[mQst_ERRAND_NUM] = {
-    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
-    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
-    // (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
+    (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
     &aQMgr_move_own_errand_cloth,
     &aQMgr_move_own_errand_seed,
     (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
@@ -375,36 +216,84 @@ static aQMgr_CHECK_LIMIT_PROC l_errand_proc[mQst_ERRAND_NUM] = {
     (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
     &aQMgr_move_own_errand_hello,
     (aQMgr_CHECK_LIMIT_PROC)&none_proc1,
-    (aQMgr_CHECK_LIMIT_PROC)&none_proc1
 };
 
 static aQMgr_CHECK_LIMIT_PROC l_contest_proc[mQst_CONTEST_KIND_NUM] = {
     &aQMgr_actor_contest_check_limit,
-    &aQMgr_actor_contest_check_limit,
-    &aQMgr_actor_contest_snowman_clear,
     &aQMgr_actor_contest_flower_clear,
     &aQMgr_actor_contest_check_limit,
     &aQMgr_actor_contest_insect_clear,
-    &aQMgr_actor_contest_check_limit
+    &aQMgr_actor_contest_check_limit,
+    &aQMgr_actor_contest_check_limit,
+    &aQMgr_actor_contest_check_limit,
+    &aQMgr_actor_contest_check_limit,
+    NULL,
 };
 
 static aQMgr_CHECK_FINISH_PROC l_contest_check[mQst_CONTEST_KIND_NUM] = {
-    &aQMgr_actor_check_fin_fruit,
     &aQMgr_actor_check_fin_soccer,
-    &aQMgr_actor_check_fin_snowman,
     &aQMgr_actor_check_fin_flower,
     &aQMgr_actor_check_fin_fish,
     &aQMgr_actor_check_fin_insect,
-    &aQMgr_actor_check_fin_contest_letter
+    &aQMgr_actor_check_fin_contest_letter,
+    &aQMgr_actor_check_fin_contest_ftr,
+    &aQMgr_actor_check_fin_contest_shop,
+    &aQMgr_actor_check_fin_grass,
+    &aQMgr_actor_check_fin_contest_sick,
 };
 
 static int l_proc_max[mQst_QUEST_TYPE_NUM] = { mQst_DELIVERY_KIND_NUM, mQst_ERRAND_NUM, mQst_CONTEST_KIND_NUM };
+
+static int aQMgr_check_quest_target(mQst_delivery_c* delivery_info, mQst_delivery_c* lost_info, AnmPersonalID_c* anm_id) {
+    int i;
+    int ret = FALSE;
+    
+    if (mQst_CheckFreeQuest(&lost_info->base) == FALSE &&
+        (mNpc_CheckCmpAnimalPersonalID(&lost_info->recipient, anm_id) == TRUE ||
+        mNpc_CheckCmpAnimalPersonalID(&lost_info->sender, anm_id) == TRUE)) {
+        ret = TRUE;
+    }
+
+    if (ret == FALSE) {
+        for (i = 0; i < mPr_DELIVERY_QUEST_NUM; i++) {
+            if (mQst_CheckFreeQuest(&delivery_info->base) == FALSE &&
+                (mNpc_CheckCmpAnimalPersonalID(&delivery_info->recipient, anm_id) == TRUE ||
+                mNpc_CheckCmpAnimalPersonalID(&delivery_info->sender, anm_id) == TRUE)) {
+                ret = TRUE;
+                break;
+            }
+
+            delivery_info++;
+        }
+    }
+
+    return ret;
+}
+
+static void aQMgr_actor_force_set_memory(Animal_c* animal) {
+    Private_c* priv = Now_Private;
+
+    if (animal != NULL && priv != NULL && mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE && mNpc_CheckIslandAnimalID(&animal->id) == FALSE) {
+        Anmmem_c* memory = animal->memories;
+        int mem_idx = mNpc_GetAnimalMemoryIdx(&priv->player_ID, memory, ANIMAL_MEMORY_NUM);
+
+        if (mem_idx == -1 && aQMgr_check_quest_target(priv->deliveries, &priv->lost_item_quest, &animal->id) == TRUE) {
+            mem_idx = mNpc_ForceGetFreeAnimalMemoryIdx(animal, memory, ANIMAL_MEMORY_NUM);
+
+            if (mem_idx != -1) {
+                memory += mem_idx;
+                mNpc_SetAnimalMemory(&priv->player_ID, &animal->id, memory);
+                lbRTC_Sub_DD(&memory->last_speak_time, 1);
+            }
+        }
+    }
+}
 
 static void aQMgr_actor_set_memory(ACTOR* client) {
     Animal_c* animal;
 
     if (client != NULL && client->part == ACTOR_PART_NPC) {
-        animal = ((NPC_ACTOR*)client)->npc_info.animal;
+        animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
     }
     else {
         animal = NULL;
@@ -412,7 +301,7 @@ static void aQMgr_actor_set_memory(ACTOR* client) {
 
     if (animal != NULL) {
         Anmmem_c* memory = animal->memories;
-        int memory_idx = mNpc_GetAnimalMemoryIdx(&Common_Get(now_private)->player_ID, memory, ANIMAL_MEMORY_NUM);
+        int memory_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, memory, ANIMAL_MEMORY_NUM);
 
         if (memory_idx != -1) {
             memory += memory_idx;
@@ -425,23 +314,37 @@ static void aQMgr_actor_set_memory(ACTOR* client) {
 }
 
 static void aQMgr_actor_set_hello_free_str(Animal_c* animal) {
-    int mem_idx = mNpc_GetAnimalMemoryIdx(&Common_Get(now_private)->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+    int mem_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
 
     if (mem_idx != -1 && mNpc_CheckIslandAnimal(animal) == FALSE) {
         mLd_SetFreeStrLandMuraName(animal->memories[mem_idx].memuni.land.name, mMsg_FREE_STR6);
     }
 
     if (mNpc_CheckIslandAnimal(animal) == FALSE) {
-        // mLd_SetFreeStrLandMuraName(animal->anmuni.previous_land_name, mMsg_FREE_STR10);
+        mLd_SetFreeStrLandMuraName(animal->anmuni.previous_land_name, mMsg_FREE_STR10);
     }
 
     mLd_SetFreeStrLandMuraName(animal->id.land_name, mMsg_FREE_STR11);
 }
 
+static void aQMgr_relation_add_random(void) {
+    AnmPersonalID_c* from_id;
+    AnmPersonalID_c* to_id;
+
+    from_id = mNpc_GetOtherAnimalPersonalID(NULL, 0);
+    if (from_id != NULL) {
+        to_id = mNpc_GetOtherAnimalPersonalID(from_id, 1);
+        if (to_id != NULL) {
+            static int add_tbl[] = { 0, 0, 1, -1 };
+            mNpc_AddRelationPoint_id(from_id, to_id, add_tbl[RANDOM(ARRAY_COUNT(add_tbl)) % ARRAY_COUNT(add_tbl)]);
+        }
+    }
+}
+
 static int aQMgr_take_hello_msg_no(QUEST_MANAGER_ACTOR* manager) {
     ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
-    PersonalID_c* pid = &Common_Get(now_private)->player_ID;
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
+    PersonalID_c* pid = &Now_Private->player_ID;
 
     if (animal != NULL) {
         if (mNpc_GetAnimalMemoryIdx(pid, animal->memories, ANIMAL_MEMORY_NUM) == -1) {
@@ -455,15 +358,28 @@ static int aQMgr_take_hello_msg_no(QUEST_MANAGER_ACTOR* manager) {
         l_quest_manager_hello = TRUE;
     }
 
-    return aQMgr_get_hello_msg_no(client, manager->get_time_kind_proc, manager->give_item);
+    return aQMgr_get_hello_msg_no(manager, client, manager->get_time_kind_proc, manager->give_item);
 }
 
 static void aQMgr_set_talk_info(ACTOR* client) {
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
     QUEST_MANAGER_ACTOR* manager = l_quest_actor_p;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+    NPC_ACTOR* pal_actor = NULL;
     int msg_no;
 
     l_client_p = client;
+
+    if (aNPC_IS_NRM_NPC(((NPC_ACTOR*)client))) {
+        ACTOR* pal_actorx = ((NPC_ACTOR*)client)->palActor;
+
+        if (pal_actorx != NULL && aNPC_IS_NRM_NPC((NPC_ACTOR*)pal_actorx)) {
+            pal_actor = (NPC_ACTOR*)pal_actorx;
+        }
+    }
+
+    NPC_CLIP->regist_talk_actor_list_proc(((NPC_ACTOR*)client), pal_actor);
+    aQMgr_actor_force_set_memory(animal);
+    aQMgr_actor_set_hello_free_str(animal);
     msg_no = aQMgr_take_hello_msg_no(manager);
     mDemo_Set_msg_num(msg_no);
 
@@ -472,11 +388,11 @@ static void aQMgr_set_talk_info(ACTOR* client) {
         ((NPC_ACTOR*)client)->condition_info.feel_tim = 0;
     }
 
-    ((NPC_ACTOR*)client)->talk_info.feel = animal->mood;
-    aQMgr_actor_set_hello_free_str(animal);
     if (animal != NULL) {
         manager->cloth = animal->cloth;
     }
+
+    aQMgr_relation_add_random();
 
     if (ZURUMODE2_ENABLED()) {
         mNpc_SetTalkAnimalIdx_fdebug(&animal->id);
@@ -499,6 +415,7 @@ static int aQMgr_actor_talk_request(ACTOR* client) {
 }
 
 static int aQMgr_actor_talk_start(ACTOR* client) {
+    QUEST_MANAGER_ACTOR* manager = l_quest_actor_p;
     int res = FALSE;
 
     if (client != NULL && l_quest_manager_mode == aQMgr_MODE_NORMAL && mDemo_Check(mDemo_TYPE_TALK, client) == TRUE &&
@@ -508,21 +425,26 @@ static int aQMgr_actor_talk_start(ACTOR* client) {
         if (client->npc_id == SP_NPC_EV_KAMAKURA_0) {
             if (l_quest_manager_hello == TRUE) {
                 l_quest_manager_mode = aQMgr_MODE_TALK_START_KAMAKURA_HELLO;
-            }
-            else {
+            } else {
                 l_quest_manager_mode = aQMgr_MODE_TALK_START_KAMAKURA;
             }
-        }
-        else if (client->npc_id == SP_NPC_EV_SUMMERCAMP_0) {
+        } else if (client->npc_id == SP_NPC_EV_SUMMERCAMP_0) {
             if (l_quest_manager_hello == TRUE) {
                 l_quest_manager_mode = aQMgr_MODE_TALK_START_SUMMERCAMP_HELLO;
                 Common_Set(npc_is_summercamper, TRUE);
-            }
-            else {
+            } else {
                 l_quest_manager_mode = aQMgr_MODE_TALK_START_SUMMERCAMP;
             }
-        }
-        else {
+        } else if (NPC_CLIP->chk_group_talk_proc((NPC_ACTOR*)client) == TRUE) {
+            if (l_quest_manager_hello == TRUE) {
+                l_quest_manager_mode = aQMgr_MODE_TALK_START_GROUP_HELLO;
+            } else {
+                l_quest_manager_mode = aQMgr_MODE_TALK_START_GROUP;
+            }
+        } else if (manager != NULL && manager->aitekara_msg_flag == TRUE) {
+            l_quest_manager_mode = aQMgr_MODE_TALK_START_AITEKARA_MSG;
+            manager->aitekara_msg_flag = FALSE;
+        } else {
             l_quest_manager_mode = aQMgr_MODE_SELECT_TALK;
         }
 
@@ -546,10 +468,58 @@ static int aQMgr_actor_talk_check(ACTOR* client) {
     return res;
 }
 
+static int aQMgr_actor_looks2name(u8* buf, u8 looks) {
+    QUEST_MANAGER_ACTOR* manager = l_quest_actor_p;
+    int ret = FALSE;
+
+    if (buf != NULL && manager != NULL) {
+        int idx = mNpc_GetLooks2Name_idx(buf, looks);
+
+        if (idx != -1) {
+            manager->talk_about_animal_idx = idx;
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static int aQMgr_actor_race2name(u8* buf, u8 race) {
+    QUEST_MANAGER_ACTOR* manager = l_quest_actor_p;
+    int ret = FALSE;
+    
+    if (buf != NULL && manager != NULL) {
+        int idx = mNpc_GetRace2Name_idx(buf, race);
+
+        if (idx != -1) {
+            manager->talk_about_animal_idx = idx;
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static int aQMgr_actor_add_relation(ACTOR* client, int amount) {
+    QUEST_MANAGER_ACTOR* manager = l_quest_actor_p;
+    int ret = FALSE;
+
+    if (client != NULL && manager != NULL && manager->talk_about_animal_idx != -1) {
+        Animal_c* client_animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
+        Animal_c* talk_animal = Save_GetPointer(animals[manager->talk_about_animal_idx]);
+
+        if (client_animal != NULL && talk_animal != NULL) {
+            ret = mNpc_AddRelationPoint(client_animal, talk_animal, amount);
+        }
+    }
+
+    return ret;
+}
+
 static int aQMgr_get_time_kind(int hour) {
     int res = aQMgr_TIME_MORNING;
     
-    if (hour >= 12 && hour < 17) {
+    if (hour >= 10 && hour < 17) {
         res = aQMgr_TIME_DAY;
     }
     else if (hour >= 17 && hour < 24) {
@@ -611,7 +581,7 @@ static int aQMgr_actor_check_fin_item(mQst_base_c* quest_info, Animal_c* animal)
     mQst_contest_c* contest = (mQst_contest_c*)quest_info;
     int res = FALSE;
 
-    if (mPr_GetPossessionItemIdx(Common_Get(now_private), contest->requested_item) != -1) {
+    if (mPr_GetPossessionItemIdxWithCond(Now_Private, contest->requested_item, mPr_ITEM_COND_NORMAL) != -1) {
         res = TRUE;
     }
 
@@ -666,11 +636,14 @@ static void aQMgr_actor_regist_quest(QUEST_MANAGER_ACTOR* manager, int* idx, aQM
                 else {
                     if (type == mQst_QUEST_TYPE_ERRAND) {
                         regist->check_limit_proc = l_errand_proc[kind];
+                    } else {
+                        regist->check_limit_proc = l_delivery_proc[kind];
+                        regist->check_finish_proc = l_delivery_check[kind];
                     }
 
                     from_id = &quest->delivery.sender;
                     to_id = &quest->delivery.recipient;
-                    regist->pid = &Common_Get(now_private)->player_ID;
+                    regist->pid = &Now_Private->player_ID;
                 }
 
                 mNpc_CopyAnimalPersonalID(&regist->from_id, from_id);
@@ -680,7 +653,11 @@ static void aQMgr_actor_regist_quest(QUEST_MANAGER_ACTOR* manager, int* idx, aQM
 
                 switch (type) {
                     case mQst_QUEST_TYPE_DELIVERY:
-                        regist->item = Common_Get(now_private)->inventory.pockets[animal_idx];
+                        if (animal_idx != -1) {
+                            regist->item = Now_Private->inventory.pockets[animal_idx];
+                        } else if (kind == mQst_DELIVERY_KIND_LOST_ITEM) {
+                            regist->item = quest->delivery.item;
+                        }
                         break;
                     case mQst_QUEST_TYPE_ERRAND:
                         regist->item = quest->errand.item;
@@ -720,6 +697,7 @@ static int aQMgr_talk_common_clear_talk_info(QUEST_MANAGER_ACTOR* manager) {
     target_p->to_id = NULL;
     target_p->quest_inv_item_idx = -1;
     target_p->quest_item = EMPTY_NO;
+    target_p->_1A = 0;
     target_p->reward_kind = -1;
     target_p->reward_item = EMPTY_NO;
     target_p->pay = 0;
@@ -739,6 +717,8 @@ static int aQMgr_talk_common_clear_talk_info(QUEST_MANAGER_ACTOR* manager) {
     manager->regist_idx = -1;
     manager->talk_type = aQMgr_TALK_KIND_QUEST;
     manager->talk_change_type = aQMgr_TALK_KIND_NUM;
+    manager->talk_about_animal_idx = -1;
+    manager->still_reward_but_field_quest_cancel = FALSE;
     aQMgr_talk_clear_talk_order(&manager->demo_order);
     return TRUE;
 }
@@ -752,28 +732,21 @@ static int aQMgr_talk_common_get_item_idx(QUEST_MANAGER_ACTOR* manager) {
     if (quest_info != NULL) {
         int type = quest_info->quest_type;
         int kind = quest_info->quest_kind;
+        mActor_name_t item;
+        Private_c* priv;
 
-        if (type == mQst_QUEST_TYPE_DELIVERY) {
-            idx = regist->animal_idx; // reused here I guess
-        }
-        else if (type == mQst_QUEST_TYPE_ERRAND) {
-            idx = ((mQst_errand_c*)quest_info)->pockets_idx;
-        }
-        else if (type == mQst_QUEST_TYPE_CONTEST) {
-            mActor_name_t item = ((mQst_contest_c*)quest_info)->requested_item;
-            Private_c* priv = Common_Get(now_private);
-
-            switch (kind) {
-                case mQst_CONTEST_KIND_FISH:
-                    idx = mPr_GetPossessionItemIdxItem1Category(priv, ITEM1_CAT_FISH);
-                    break;
-                case mQst_CONTEST_KIND_INSECT:
-                    idx = mPr_GetPossessionItemIdxItem1Category(priv, ITEM1_CAT_INSECT);
-                    break;
-                default:
-                    idx = mPr_GetPossessionItemIdx(priv, item);
-                    break;
-            }
+        switch (type) {
+            case mQst_QUEST_TYPE_DELIVERY:
+                idx = regist->animal_idx; // reused here I guess
+                break;
+            case mQst_QUEST_TYPE_ERRAND:
+                idx = ((mQst_errand_c*)quest_info)->pockets_idx;
+                break;
+            case mQst_QUEST_TYPE_CONTEST:
+                item = ((mQst_contest_c*)quest_info)->requested_item;
+                priv = Now_Private;
+                idx = mPr_GetPossessionItemIdxWithCond(priv, item, mPr_ITEM_COND_NORMAL);
+                break;
         }
     }
 
@@ -786,30 +759,32 @@ static int aQMgr_talk_common_set_choice_str(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_choice_c* choice_p = &manager->choice;
     int i;
 
-    for (i = 0; i < mChoice_CHOICE_NUM; i++) {
-        str_p_tbl[i] = NULL;
-    }
-
-    for (i = 0; i < choice_p->choice_num; i++) {
-        if (i >= mChoice_CHOICE_NUM) {
-            break;
+    if (choice_p->choice_num > 0) {
+        for (i = 0; i < mChoice_CHOICE_NUM; i++) {
+            str_p_tbl[i] = NULL;
         }
 
-        mChoice_Load_ChoseStringFromRom(mChoice_Get_base_window_p(), str[i], choice_p->choice_ids[i], NULL);
-        str_p_tbl[i] = str[i];
-    }
+        for (i = 0; i < choice_p->choice_num; i++) {
+            if (i >= mChoice_CHOICE_NUM) {
+                break;
+            }
 
-    //clang-format off
-    mChoice_Set_choice_data(
-        mChoice_Get_base_window_p(),
-        str_p_tbl[0], mChoice_CHOICE_STRING_LEN,
-        str_p_tbl[1], mChoice_CHOICE_STRING_LEN,
-        str_p_tbl[2], mChoice_CHOICE_STRING_LEN,
-        str_p_tbl[3], mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN,
-                NULL, mChoice_CHOICE_STRING_LEN
-    );
-    //clang-format on
+            mChoice_Load_ChoseStringFromRom(mChoice_Get_base_window_p(), str[i], choice_p->choice_ids[i], NULL);
+            str_p_tbl[i] = str[i];
+        }
+
+        //clang-format off
+        mChoice_Set_choice_data(
+            mChoice_Get_base_window_p(),
+            str_p_tbl[0], mChoice_CHOICE_STRING_LEN,
+            str_p_tbl[1], mChoice_CHOICE_STRING_LEN,
+            str_p_tbl[2], mChoice_CHOICE_STRING_LEN,
+            str_p_tbl[3], mChoice_CHOICE_STRING_LEN,
+                    NULL, mChoice_CHOICE_STRING_LEN,
+                    NULL, mChoice_CHOICE_STRING_LEN
+        );
+        //clang-format on
+    }
 
     return TRUE;
 }
@@ -831,10 +806,12 @@ static int aQMgr_talk_common_get_set_data_p(QUEST_MANAGER_ACTOR* manager) {
 }
 
 static void aQMgr_actor_init_quest(QUEST_MANAGER_ACTOR* manager) {
-    mQst_delivery_c* delivery = Common_Get(now_private)->deliveries;
-    mQst_errand_c* errand = Common_Get(now_private)->errands;
+    mQst_delivery_c* delivery = Now_Private->deliveries;
+    mQst_delivery_c* lost_item_quest = &Now_Private->lost_item_quest;
+    mQst_errand_c* errand = Now_Private->errands;
     Animal_c* animal = Save_Get(animals);
     int free_idx = 0;
+    int lost_item_idx = -1;
     int i;
 
     for (i = 0; i < mPr_DELIVERY_QUEST_NUM; i++) {
@@ -862,6 +839,25 @@ static void aQMgr_actor_init_quest(QUEST_MANAGER_ACTOR* manager) {
 
         aQMgr_actor_regist_quest(manager, &free_idx, (aQMgr_quest_c*)&animal->contest_quest, i);
         animal++;
+    }
+
+    if (free_idx != -1 && Now_Private != NULL) {        
+        if (lost_item_quest->base.progress == 0) {
+            mActor_name_t* pockets_p = Now_Private->inventory.pockets;
+            u8* cond_p = Now_Private->inventory.item_conditions;
+
+            for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+                if (IS_ITEM_LOST_ITEM(*pockets_p) && (*cond_p & 0xF) == mPr_ITEM_COND_LOST_ITEM) {
+                    lost_item_idx = i;
+                    break;
+                }
+
+                pockets_p++;
+                cond_p++;
+            }
+        }
+
+        aQMgr_actor_regist_quest(manager, &free_idx, (aQMgr_quest_c*)lost_item_quest, lost_item_idx);
     }
 }
 
@@ -897,17 +893,23 @@ static void aQMgr_actor_move_talk_fin(QUEST_MANAGER_ACTOR* manager) {
     manager->regist_use_no = 0;
 }
 
-static int aQMgr_actor_get_my_msg(int base_msg, int looks) {
-    int msg_no = base_msg + looks * 3;
+static int aQMgr_actor_get_my_msg(int base_msg) {
+    int msg_no = base_msg;
     msg_no += mQst_GetRandom(3);
     
     return msg_no;
 }
 
-static int aQMgr_actor_decide_quest_message_no(aQMgr_target_c* target, int msg_type) {
+static int aQMgr_actor_decide_quest_message_no(aQMgr_target_c* target, int msg_type, int looks) {
     aQMgr_set_data_c* set_data_p = target->set_data_p;
+    int* msg_start_p = set_data_p->msg_start[msg_type];
+    int msg_no = 0;
+    
+    if (msg_start_p != NULL) {
+        msg_no = msg_start_p[looks];
+    }
 
-    return set_data_p->msg_start[msg_type];
+    return msg_no;
 }
 
 static int aQMgr_talk_common_set_msg_no(QUEST_MANAGER_ACTOR* manager) {
@@ -915,14 +917,14 @@ static int aQMgr_talk_common_set_msg_no(QUEST_MANAGER_ACTOR* manager) {
     int msg_no;
 
     if (manager->msg_category != aQMgr_MSG_KIND_NONE) {
-        manager->category_msg_no_start = aQMgr_actor_decide_quest_message_no(&manager->target, manager->msg_category);
+        int looks = mNpc_GetNpcLooks(*manager->client);
+        manager->category_msg_no_start = aQMgr_actor_decide_quest_message_no(&manager->target, manager->msg_category, looks);
     }
 
     base_msg = manager->category_msg_no_start;
     if (base_msg != 15 && base_msg != 0) {
-        int looks = mNpc_GetNpcLooks(*manager->client);
         
-        msg_no = aQMgr_actor_get_my_msg(base_msg, looks);
+        msg_no = aQMgr_actor_get_my_msg(base_msg);
     }
     else {
         msg_no = base_msg;
@@ -969,49 +971,88 @@ static int aQMgr_talk_common_change_talk_island(QUEST_MANAGER_ACTOR* manager) {
     return TRUE;
 }
 
-static int aQMgr_set_npc_putaway() {
+static int aQMgr_set_npc_putaway(QUEST_MANAGER_ACTOR* manager) {
     int res = FALSE;
 
-    if (Common_Get(clip).handOverItem_clip->request_mode == aHOI_REQUEST_TRANS_WAIT) {
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 3, 3);
+    if (CLIP(handOverItem_clip)->request_mode == aHOI_REQUEST_TRANS_WAIT) {
+        int order = NPC_CLIP->get_demo_kind_proc(*manager->client);
+
+        mDemo_Set_OrderValue(order, 3, 3);
         res = TRUE;
     }
 
     return res;
 }
 
-static int aQMgr_talk_common_set_npc_takeout(mActor_name_t item) {
-    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 3, 2);
+static int aQMgr_talk_common_set_npc_takeout(QUEST_MANAGER_ACTOR* manager, mActor_name_t item) {
+    int order = NPC_CLIP->get_demo_kind_proc(*manager->client);
+
+    mDemo_Set_OrderValue(order, 3, 2);
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, item);
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 1, 7);
-    mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);
+
+    if (manager->target._1A == 4) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 3);
+    } else {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);
+    }
     return TRUE;
 }
 
 static int aQMgr_talk_common_set_npc_takeout_item(QUEST_MANAGER_ACTOR* manager) {
-    aQMgr_talk_common_set_npc_takeout(manager->target.quest_item);
+    aQMgr_talk_common_set_npc_takeout(manager, manager->target.quest_item);
     return TRUE;
 }
 
 static int aQMgr_talk_common_set_npc_takeout_reward(QUEST_MANAGER_ACTOR* manager) {
-    aQMgr_talk_common_set_npc_takeout(manager->target.reward_item);
+    aQMgr_talk_common_set_npc_takeout(manager, manager->target.reward_item);
     return TRUE;
 }
 
 static int aQMgr_check_npc_hand_item() {
     int res = FALSE;
 
-    if (l_aQMgr_hand_start == FALSE && Common_Get(clip).handOverItem_clip->master_actor != NULL) {
+    if (l_aQMgr_hand_start == FALSE && CLIP(handOverItem_clip)->master_actor != NULL) {
         l_aQMgr_hand_start = TRUE;
     }
 
-    if (l_aQMgr_hand_start && Common_Get(clip).handOverItem_clip->master_actor == NULL) {
+    if (l_aQMgr_hand_start && CLIP(handOverItem_clip)->master_actor == NULL) {
         mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
         l_aQMgr_hand_start = FALSE;
         res = TRUE;
     }
 
     return res;
+}
+
+static int l_aqmgr_select_msg[] = {0x02A6, 0x02A9, 0x02AC, 0x02AF, 0x02B2, 0x02B5};
+static int l_aqmgr_cancel_item_msg[] = {0x04AB, 0x04AE, 0x04B1, 0x04B4, 0x04B7, 0x04BA};
+
+static int aQMgr_talk_common_get_common_msg(QUEST_MANAGER_ACTOR* mgr, int type) {
+    static int* msg_table_p[aQMgr_GET_COMMON_MSG_TYPE_NUM] = { l_aqmgr_select_msg, l_aqmgr_cancel_item_msg };
+    int looks = mNpc_GetNpcLooks(*mgr->client);
+    int msg_no;
+
+    if (!(type >= 0 && type < aQMgr_GET_COMMON_MSG_TYPE_NUM)) {
+        type = 0;
+    } 
+    
+    msg_no = msg_table_p[type][looks];
+    return msg_no;
+}
+
+static int aQMgr_actor_common_check_select_msg(QUEST_MANAGER_ACTOR* manager) {
+    int ret = FALSE;
+    int i;
+
+    for (i = 0; i < ARRAY_COUNT(l_aqmgr_select_msg); i++) {
+        if (manager->category_msg_no_start == l_aqmgr_select_msg[i]) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    return ret;
 }
 
 typedef int (*aQMgr_COMMON_PROC)(QUEST_MANAGER_ACTOR*);
@@ -1032,6 +1073,51 @@ static int aQMgr_talk_common_proc(QUEST_MANAGER_ACTOR* manager, int proc) {
     };
 
     return (*common_proc[proc])(manager);
+}
+
+static void aQMgr_move_own_delvery_qbox(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
+    if (regist != NULL && regist->quest_info != NULL) {
+        mQst_delivery_c* delivery = (mQst_delivery_c*)regist->quest_info;
+        switch (delivery->base.progress) {
+            case 0:
+            case 1:
+                if (mLd_PlayerManKindCheck() == NATIVE && mQst_CheckLimitOver(&delivery->base) == TRUE && mNpc_SearchAnimalPersonalID(&delivery->sender) == -1) {
+                    mQst_ClearDelivery(delivery, 1);
+                }
+                break;
+        }
+    }
+}
+
+static void aQMgr_move_own_delivery_lost(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
+    int bx = 1;
+    int bz = 1;
+
+    if (regist != NULL && regist->quest_info != NULL) {
+        mQst_delivery_c* delivery = (mQst_delivery_c*)regist->quest_info;
+        switch (delivery->base.progress) {
+            case 3:
+                if (mQst_CheckLostClearTime(&delivery->base.time_limit, Common_GetPointer(time.rtc_time)) == TRUE &&
+                    mQst_GetLostBkNum(&bx, &bz) == TRUE && (mFI_GET_TYPE(mFI_GetFieldId()) != mFI_FIELDTYPE2_FG || mFI_CheckBgDma(bx, bz) == FALSE)) {
+                    mQst_ClearLostQuest();
+                }
+                break;
+
+            case 1:
+                if (mQst_CheckLimitOver(&delivery->base) == TRUE) {
+                    mQst_ClearDelivery(delivery, 1);
+                }
+                break;
+        }
+    }
+}
+
+static int aQMgr_actor_check_fin_qbox(mQst_base_c* quest_info, Animal_c* animal) {
+    int ret = FALSE;
+    if (quest_info->progress == 2) {
+        ret = TRUE;
+    }
+    return ret;
 }
 
 #include "../src/actor/ac_quest_errand.c_inc"
@@ -1081,9 +1167,7 @@ static int aQMgr_actor_move_talk_sub_msg_appear_wait(QUEST_MANAGER_ACTOR* manage
     return res;
 }
 
-static int aQMgr_actor_move_talk_sub_check_button(QUEST_MANAGER_ACTOR* manager) {
-    int res = FALSE;
-
+static int aQMgr_actor_move_talk_sub_button_wait(QUEST_MANAGER_ACTOR* manager) {int res = FALSE;
     if (mMsg_Check_MainNormal(mMsg_Get_base_window_p()) == FALSE) {
         res = TRUE;
     }
@@ -1108,8 +1192,8 @@ static int aQMgr_actor_move_talk_sub_hand_item_wait(QUEST_MANAGER_ACTOR* manager
     return res;
 }
 
-static int aQMgr_actor_move_talk_sub_npc_hand_wait(QUEST_MANAGER_ACTOR* manager) {
-    return aQMgr_set_npc_putaway();
+static int aQMgr_actor_move_talk_sub_npc_hand_item_wait(QUEST_MANAGER_ACTOR* manager) {
+    return aQMgr_set_npc_putaway(manager);
 }
 
 static int aQMgr_actor_move_talk_sub_item_wait(QUEST_MANAGER_ACTOR* manager) {
@@ -1136,11 +1220,11 @@ static int aQMgr_actor_move_talk_sub_demo_order_wait(QUEST_MANAGER_ACTOR* manage
     return res;
 }
 
-static int aQMgr_actor_move_talk_sub_npc_hand_wait_msg_wait(QUEST_MANAGER_ACTOR* manager) {
+static int aQMgr_actor_move_talk_sub_npc_hand_item_wait_msg_wait(QUEST_MANAGER_ACTOR* manager) {
     int res = FALSE;
     
     if (manager->wait_info.flags[0] == FALSE) {
-        manager->wait_info.flags[0] = aQMgr_set_npc_putaway();
+        manager->wait_info.flags[0] = aQMgr_set_npc_putaway(manager);
         mMsg_Set_LockContinue(mMsg_Get_base_window_p());
     }
 
@@ -1163,7 +1247,7 @@ static int aQMgr_actor_move_talk_sub_item_wait_end(QUEST_MANAGER_ACTOR* manager)
     int res = FALSE;
     
     if (manager->wait_info.flags[0] == FALSE) {
-        manager->wait_info.flags[0] = aQMgr_set_npc_putaway();
+        manager->wait_info.flags[0] = aQMgr_set_npc_putaway(manager);
     }
 
     if (manager->wait_info.flags[0] == TRUE) {
@@ -1196,9 +1280,42 @@ static int aQMgr_actor_move_talk_sub_item_player_wait(QUEST_MANAGER_ACTOR* manag
     return res;
 }
 
+static int aQMgr_actor_move_talk_sub_open_qbox_wait(QUEST_MANAGER_ACTOR* manager) {
+    int res = FALSE;
+    
+    if (manager->wait_info.flags[0] == FALSE && mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 7) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 7, 0);
+        manager->wait_info.flags[0] = TRUE;
+    }
+
+    if (manager->wait_info.flags[1] == FALSE && mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
+        mMsg_SET_LOCKCONTINUE();
+        manager->wait_info.flags[1] = TRUE;
+    }
+
+    if (manager->wait_info.flags[0] == TRUE && manager->wait_info.flags[1] == TRUE) {
+        manager->wait_info.flags[0] = FALSE;
+        manager->wait_info.flags[1] = FALSE;
+        res = TRUE;
+    }
+
+    return res;
+}
+
+static int aQMgr_actor_move_talk_sub_wait_choice(QUEST_MANAGER_ACTOR* manager) {
+    int ret = FALSE;
+    int choice = mChoice_GET_CHOSENUM();
+
+    if (choice != -1) {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
 static void aQMgr_select_talk(QUEST_MANAGER_ACTOR* manager) {
     u32 event_id;
-    Animal_c* animal = ((NPC_ACTOR*)*manager->client)->npc_info.animal;
+    Animal_c* animal = ((NPC_ACTOR*)*manager->client)->npc_info.animal_orig;
 
     event_id = mEv_SAVED_FJOPENQUEST_PLR0 + Common_Get(player_no);
     aQMgr_actor_init_quest(manager);
@@ -1233,19 +1350,21 @@ typedef int (*aQMgr_TALK_SUB_PROC)(QUEST_MANAGER_ACTOR*);
 
 static int aQMgr_talk_sub(QUEST_MANAGER_ACTOR* manager) {
     int sub_mode = manager->sub_talk_state;
-    static aQMgr_TALK_SUB_PROC talk_sub_proc[] = { 
+    static aQMgr_TALK_SUB_PROC talk_sub_proc[aQMgr_TALK_SUB_STATE_NUM] = { 
         &aQMgr_actor_move_talk_sub_wait,
         &aQMgr_actor_move_talk_sub_msg_disappear_wait,
         &aQMgr_actor_move_talk_sub_msg_appear_wait,
-        &aQMgr_actor_move_talk_sub_check_button,
+        &aQMgr_actor_move_talk_sub_button_wait,
         &aQMgr_actor_move_talk_sub_hand_item_wait,
-        &aQMgr_actor_move_talk_sub_npc_hand_wait,
+        &aQMgr_actor_move_talk_sub_npc_hand_item_wait,
         &aQMgr_actor_move_talk_sub_item_wait,
         &aQMgr_actor_move_talk_sub_demo_order_wait,
         &aQMgr_actor_move_talk_sub_no_wait,
-        &aQMgr_actor_move_talk_sub_npc_hand_wait_msg_wait,
+        &aQMgr_actor_move_talk_sub_npc_hand_item_wait_msg_wait,
         &aQMgr_actor_move_talk_sub_item_wait_end,
-        &aQMgr_actor_move_talk_sub_item_player_wait
+        &aQMgr_actor_move_talk_sub_item_player_wait,
+        &aQMgr_actor_move_talk_sub_open_qbox_wait,
+        &aQMgr_actor_move_talk_sub_wait_choice,
     };
 
     int res = (*talk_sub_proc[sub_mode])(manager);
@@ -1265,7 +1384,7 @@ static void aQMgr_move_talk(QUEST_MANAGER_ACTOR* manager) {
     if (mDemo_Get_talk_actor() == client) {
         static aQMgr_TALK_PROC talk_proc[aQMgr_TALK_STATE_NUM] = {
             &aQMgr_talk_init,
-            &aQMgr_talk_sub
+            &aQMgr_talk_sub,
         };
         int sub_res;
 
@@ -1283,14 +1402,15 @@ static void aQMgr_move_talk(QUEST_MANAGER_ACTOR* manager) {
     if (mDemo_CheckDemo() == FALSE || mDemo_Check(mDemo_TYPE_TALK, client) == FALSE) {
         (*manager->talk_common_proc)(manager, aQMgr_TALK_COMMON_CLEAR_TALK_INFO);
         *manager->mode = aQMgr_MODE_TALK_FIN;
+        manager->aitekara_msg_flag = FALSE;
         aQMgr_clear_talk_init_ovl(manager);
 
         if (client != NULL && client->part == ACTOR_PART_NPC) {
-            Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+            Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
 
             if (animal != NULL) {
                 Anmmem_c* memory;
-                int memory_idx = mNpc_GetAnimalMemoryIdx(&Common_Get(now_private)->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
+                int memory_idx = mNpc_GetAnimalMemoryIdx(&Now_Private->player_ID, animal->memories, ANIMAL_MEMORY_NUM);
 
                 if (memory_idx != -1) {
                     memory = animal->memories + memory_idx;
@@ -1307,7 +1427,7 @@ static void aQMgr_move_talk(QUEST_MANAGER_ACTOR* manager) {
         }
 
         {
-            Animal_c* animal = ((NPC_ACTOR*)*manager->client)->npc_info.animal;
+            Animal_c* animal = ((NPC_ACTOR*)*manager->client)->npc_info.animal_orig;
             int animal_idx = mNpc_SearchAnimalPersonalID(&animal->id);
 
             if (mNpc_CheckIslandAnimal(animal) == TRUE) {
@@ -1338,11 +1458,23 @@ static void aQMgr_talk_start_kamakura(QUEST_MANAGER_ACTOR* manager) {
 }
 
 static void aQMgr_talk_start_summercamp_hello(QUEST_MANAGER_ACTOR* manager) {
-    aQMgr_talk_start_kamakura_common(manager, 10);
+    aQMgr_talk_start_kamakura_common(manager, 13);
 }
 
 static void aQMgr_talk_start_summercamp(QUEST_MANAGER_ACTOR* manager) {
+    aQMgr_talk_start_kamakura_common(manager, 14);
+}
+
+static void aQMgr_talk_start_group_hello(QUEST_MANAGER_ACTOR* manager) {
+    aQMgr_talk_start_kamakura_common(manager, 10);
+}
+
+static void aQMgr_talk_start_group(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_talk_start_kamakura_common(manager, 11);
+}
+
+static void aQMgr_talk_start_aitekara(QUEST_MANAGER_ACTOR* manager) {
+    aQMgr_talk_start_kamakura_common(manager, 15);
 }
 
 typedef void (*aQMgr_MOVE_PROC)(QUEST_MANAGER_ACTOR*);
@@ -1355,8 +1487,11 @@ static void aQMgr_actor_move_main(ACTOR* actorx, GAME* game) {
         &aQMgr_actor_move_talk_fin,
         &aQMgr_talk_start_kamakura_hello,
         &aQMgr_talk_start_kamakura,
+        &aQMgr_talk_start_group_hello,
+        &aQMgr_talk_start_group,
         &aQMgr_talk_start_summercamp_hello,
-        &aQMgr_talk_start_summercamp
+        &aQMgr_talk_start_summercamp,
+        &aQMgr_talk_start_aitekara,
     };
 
     u8 mode = *manager->mode;
@@ -1387,20 +1522,81 @@ static void aQMgr_actor_move_main(ACTOR* actorx, GAME* game) {
             gfxprint_locate8x8(gfxprint_p, 30, 3);
             gfxprint_printf(gfxprint_p, "%5d", mFRm_get_msg_idx());
 
-            {
-            mEv_gst_common_c* ghost_common = (mEv_gst_common_c*)mEv_get_common_area(mEv_EVENT_GHOST, 55);
-
-            if (ghost_common != NULL) {
-                int i;
+            if (REGADDR(GENREG, 49) == 0 && REGADDR(mREG, 29) > 0) {
+                gfxprint_color(gfxprint_p, 245, 50, 50, 255);
+                gfxprint_locate8x8(gfxprint_p, 25, 4);
+                gfxprint_printf(gfxprint_p, "kanji : %d", REGADDR(mREG, 29) - 1);
+            }
                 
-                gfxprint_color(gfxprint_p, 45, 250, 50, 255);
+            if (mNpc_GetSickAnimalIdx() != -1) {
+                int sick_idx = mNpc_GetSickAnimalIdx();
+                Animal_c* sick_animal = Save_GetPointer(animals[sick_idx]);
 
-                for (i = 0; i < mEv_GHOST_HITODAMA_NUM; i++) {
-                    gfxprint_locate8x8(gfxprint_p, 30, 19 + i);
-                    gfxprint_printf(gfxprint_p, "%3d,%3d", ghost_common->hitodama_block_data.block_x[i], ghost_common->hitodama_block_data.block_z[i]);
+                gfxprint_color(gfxprint_p, 240, 255, 240, 255);
+                gfxprint_locate8x8(gfxprint_p, 30, 5);
+                gfxprint_printf(gfxprint_p, "%d %d", sick_animal->home_info.bx, sick_animal->home_info.bz);
+            }
+
+            {
+                mEv_gst_common_c* ghost_common = (mEv_gst_common_c*)mEv_get_common_area(mEv_EVENT_GHOST, 55);
+
+                if (ghost_common != NULL) {
+                    int i;
+                    
+                    gfxprint_color(gfxprint_p, 45, 250, 50, 255);
+
+                    for (i = 0; i < mEv_GHOST_HITODAMA_NUM; i++) {
+                        gfxprint_locate8x8(gfxprint_p, 30, 19 + i);
+                        gfxprint_printf(gfxprint_p, "%3d,%3d", ghost_common->hitodama_block_data.block_x[i], ghost_common->hitodama_block_data.block_z[i]);
+                    }
                 }
             }
+
+            {
+                mAGrw_AllGrow_c* allgrow = Save_GetPointer(allgrow_ss_pos_info);
+                mAGrw_SSPosInfo_c* reset_stone_pos = &Save_Get(allgrow_ss_pos_info).reset_stone_pos;
+                lbRTC_ymd_c ymd;
+
+                ymd.year = Common_Get(time.rtc_time.year);
+                ymd.month = Common_Get(time.rtc_time.month);
+                ymd.day = Common_Get(time.rtc_time.day);
+                if (lbRTC_GetIntervalDays2(&ymd, &allgrow->reset_stone_date) == 0 && mAGrw_CheckFreeSSPosInfo_com(reset_stone_pos) == FALSE) {
+                    gfxprint_color(gfxprint_p, 250, 250, 250, 255);
+                    gfxprint_locate8x8(gfxprint_p, 30, 25);
+                    gfxprint_printf(gfxprint_p, "%3d,%3d", reset_stone_pos->block_x, reset_stone_pos->block_z);
+                }
             }
+
+#if VERSION >= VER_GAEJ01_01
+            {
+                int bx = 0;
+                int bz = 0;
+
+                gfxprint_color(gfxprint_p, 250, 250, 250, 255);
+                gfxprint_locate8x8(gfxprint_p, 28, 26);
+                
+                if (mQst_GetLostBkNum(&bx, &bz) == TRUE) {
+                    mActor_name_t* fg_p = Save_Get(fg[bz - 1][bx - 1]).items[0];
+                    int ux = 0;
+                    int uz = 0;
+                    int i;
+
+                    for (i = 0; i < UT_TOTAL_NUM; i++) {
+                        if (IS_ITEM_LOST_ITEM(*fg_p)) {
+                            ux = i & 0xF;
+                            uz = (i >> 4) & 0xF;
+                            break;
+                        }
+
+                        fg_p++;
+                    }
+
+                    gfxprint_printf(gfxprint_p, "%1d,%1d,%02d,%02d", bx, bz, ux, uz);
+                } else {
+                    gfxprint_printf(gfxprint_p, "-,-,--,--");
+                }
+            }
+#endif
 
             gfx_work = gfxprint_close(gfxprint_p);
             gSPEndDisplayList(gfx_work++);
@@ -1409,6 +1605,12 @@ static void aQMgr_actor_move_main(ACTOR* actorx, GAME* game) {
             CLOSE_DISP(graph);
 
             gfxprint_cleanup(gfxprint_p);
+
+            if ((gamePT->pads[PAD2].on.button & BUTTON_Z) == BUTTON_Z) {
+                int prev_remove_idx = Save_Get(remove_animal_idx);
+                Save_Set(remove_animal_idx, 0xFF);
+                mNpc_SetRemoveAnimalNo(Save_GetPointer(remove_animal_idx), Save_Get(animals), prev_remove_idx);
+            }
         }
     }
 }
@@ -1417,13 +1619,16 @@ static void aQMgr_actor_ct(ACTOR* actorx, GAME* game) {
     GAME_PLAY* play = (GAME_PLAY*)game;
     QUEST_MANAGER_ACTOR* manager = (QUEST_MANAGER_ACTOR*)actorx;
 
-    if (Common_Get(clip).quest_manager_clip == NULL) {
-        Common_Get(clip).quest_manager_clip = (aQMgr_Clip_c*)zelda_malloc(sizeof(aQMgr_Clip_c));
+    if (CLIP(quest_manager_clip) == NULL) {
+        CLIP(quest_manager_clip) = (aQMgr_Clip_c*)zelda_malloc(sizeof(aQMgr_Clip_c));
     }
 
-    Common_Get(clip).quest_manager_clip->talk_request_proc = &aQMgr_actor_talk_request;
-    Common_Get(clip).quest_manager_clip->talk_start_proc = &aQMgr_actor_talk_start;
-    Common_Get(clip).quest_manager_clip->talk_check_proc = &aQMgr_actor_talk_check;
+    CLIP(quest_manager_clip)->talk_request_proc = &aQMgr_actor_talk_request;
+    CLIP(quest_manager_clip)->talk_start_proc = &aQMgr_actor_talk_start;
+    CLIP(quest_manager_clip)->talk_check_proc = &aQMgr_actor_talk_check;
+    CLIP(quest_manager_clip)->looks2name_proc = &aQMgr_actor_looks2name;
+    CLIP(quest_manager_clip)->race2name_proc = &aQMgr_actor_race2name;
+    CLIP(quest_manager_clip)->add_relation_proc = &aQMgr_actor_add_relation;
 
     l_client_p = NULL;
     l_quest_manager_mode = aQMgr_MODE_NORMAL;
@@ -1442,27 +1647,33 @@ static void aQMgr_actor_ct(ACTOR* actorx, GAME* game) {
     aQMgr_actor_clear_regist(manager->regist, aQMgr_REGIST_NUM);
     manager->regist_idx = -1;
     manager->regist_use_no = 0;
+    aQMgr_actor_contest_sick_clear();
     aQMgr_actor_init_quest(manager);
     manager->talk_common_proc = &aQMgr_talk_common_proc;
     manager->clear_regist_proc = &aQMgr_actor_clear_regist;
     manager->regist_quest_proc = &aQMgr_actor_regist_quest;
     manager->get_time_kind_proc = &aQMgr_get_time_kind;
+    manager->get_common_msg_proc = &aQMgr_talk_common_get_common_msg;
+    manager->check_select_msg_proc = &aQMgr_actor_common_check_select_msg;
     bzero(manager->errand_next, sizeof(manager->errand_next));
     manager->clip = NULL;
     aQMgr_clear_talk_init_ovl(manager);
     aQMgr_clear_talk_wait_info(&manager->wait_info);
     l_aQMgr_hand_start = FALSE;
     l_quest_actor_p = (QUEST_MANAGER_ACTOR*)actorx; // l_quest_actor_p is probably just ACTOR*
-    mem_clear(manager->last_strings, 7, 0xFF);
+    mem_clear(manager->last_strings, sizeof(manager->last_strings), 0xFF);
     manager->give_item = EMPTY_NO;
+    manager->talk_about_animal_idx = -1;
+    manager->still_reward_but_field_quest_cancel = FALSE;
+    manager->aitekara_msg_flag = FALSE;
 }
 
 static void aQMgr_actor_dt(ACTOR* actorx, GAME* game) {
     QUEST_MANAGER_ACTOR* manager = (QUEST_MANAGER_ACTOR*)actorx;
 
-    if (Common_Get(clip).quest_manager_clip != NULL) {
-        zelda_free(Common_Get(clip).quest_manager_clip);
-        Common_Get(clip).quest_manager_clip = NULL;
+    if (CLIP(quest_manager_clip) != NULL) {
+        zelda_free(CLIP(quest_manager_clip));
+        CLIP(quest_manager_clip) = NULL;
     }
 
     if (manager->clip != NULL) {

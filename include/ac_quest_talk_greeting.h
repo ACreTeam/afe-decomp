@@ -14,7 +14,7 @@ extern "C" {
 
 #define aQMgr_GREETING_GAME_BELL_MIN 3000
 
-extern int aQMgr_get_hello_msg_no(ACTOR* client, aQMgr_GET_TIME_KIND_PROC time_proc, mActor_name_t give_item);
+extern int aQMgr_get_hello_msg_no(QUEST_MANAGER_ACTOR* mgr, ACTOR* client, aQMgr_GET_TIME_KIND_PROC time_proc, mActor_name_t give_item);
 
 #ifdef __cplusplus
 }

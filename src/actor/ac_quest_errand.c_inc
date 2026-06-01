@@ -1,85 +1,136 @@
+#ifdef __INTELLISENSE__
+#include "ac_quest_manager.h"
+
+#include "m_common_data.h"
+#include "m_msg.h"
+#include "m_melody.h"
+#include "ac_quest_talk_greeting.h"
+#include "ac_quest_talk_init.h"
+#include "ac_quest_talk_fj_init.h"
+#include "ac_quest_talk_normal_init.h"
+#include "ac_quest_talk_island.h"
+#include "m_soncho.h"
+#include "gfxalloc.h"
+#include "m_player_lib.h"
+#include "libultra/libultra.h"
+#include "m_malloc.h"
+#include "zurumode.h"
+#include "m_flashrom.h"
+#include "m_debug.h"
+#include "padmgr.h"
+
+enum {
+    aQMgr_MODE_NORMAL,                      /* 0 */
+    aQMgr_MODE_SELECT_TALK,                 /* 1 - default talk */
+    aQMgr_MODE_MOVE_TALK,                   /* 2 */
+    aQMgr_MODE_TALK_FIN,                    /* 3 */
+    aQMgr_MODE_TALK_START_KAMAKURA_HELLO,   /* 4 - SP_NPC_EV_KAMAKURA_0 + hello */
+    aQMgr_MODE_TALK_START_KAMAKURA,         /* 5 - SP_NPC_EV_KAMAKURA_0 */
+    aQMgr_MODE_TALK_START_GROUP_HELLO,      /* 6 - chk_group_talk + hello */
+    aQMgr_MODE_TALK_START_GROUP,            /* 7 - chk_group_talk */
+    aQMgr_MODE_TALK_START_SUMMERCAMP_HELLO, /* 8 - SP_NPC_EV_SUMMERCAMP_0 + hello */
+    aQMgr_MODE_TALK_START_SUMMERCAMP,       /* 9 - SP_NPC_EV_SUMMERCAMP_0 */
+    aQMgr_MODE_TALK_START_AITEKARA_MSG,     /* 10 - aitekara_msg_flag */
+
+    aQMgr_MODE_NUM /* 11 */
+};
+#endif
+
 static void aQMgr_move_own_errand_cloth(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    mActor_name_t player_cloth = Common_Get(now_private)->cloth.item;
-    mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
-    mActor_name_t cloth = errand->item;
+    if (Now_Private->moved_from_plus != TRUE) {
+        mActor_name_t player_cloth = Now_Private->cloth.item;
 
-    switch (errand->base.progress) {
-        case 2:
-            if (cloth == player_cloth) {
-                errand->base.progress = 0;
+        if (regist != NULL && regist->quest_info != NULL) {
+            mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
+            mActor_name_t cloth = errand->item;
+
+            switch (errand->base.progress) {
+                case 2:
+                    if (cloth == player_cloth) {
+                        errand->base.progress = 0;
+                    }
+
+                    break;
+
+                case 0:
+                    if (cloth != player_cloth) {
+                        errand->base.progress = 2;
+                    }
+
+                    break;
             }
-
-            break;
-
-        case 0:
-            if (cloth != player_cloth) {
-                errand->base.progress = 2;
-            }
-
-            break;
+        }
     }
 }
 
 static void aQMgr_move_own_errand_seed(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    mActor_name_t* item_p = Common_Get(now_private)->inventory.pockets;
-    mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
+    mActor_name_t* item_p = Now_Private->inventory.pockets;
 
-    if (errand->base.progress == 2) {
-        int i;
+    if (regist != NULL && regist->quest_info != NULL) {
+        mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
 
-        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-            if (ITEM_NAME_GET_TYPE(*item_p) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(*item_p) == ITEM1_CAT_PLANT) {
-                break;
+        if (errand->base.progress == 2) {
+            int i;
+
+            for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+                if (ITEM_NAME_GET_TYPE(*item_p) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(*item_p) == ITEM1_CAT_PLANT) {
+                    break;
+                }
+
+                item_p++;
             }
 
-            item_p++;
-        }
-
-        // Reset progress if no plants in inventory
-        if (i >= mPr_POCKETS_SLOT_COUNT) {
-            errand->base.progress = 0;
+            // Reset progress if no plants in inventory
+            if (i >= mPr_POCKETS_SLOT_COUNT) {
+                errand->base.progress = 0;
+            }
         }
     }
 }
 
 static void aQMgr_move_own_errand_letter(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
-    PersonalID_c* pid = &Common_Get(now_private)->player_ID;
+    PersonalID_c* pid = &Now_Private->player_ID;
     AnmPersonalID_c* to_id;
     Animal_c* animal = Save_Get(animals);
     Anmmem_c* memory;
 
-    if (errand->base.progress == 2 || errand->base.progress == 3) {
-        int i;
+    if (regist != NULL && regist->quest_info != NULL) {
+        mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
 
-        to_id = &errand->recipient;
-        for (i = 0; i < ANIMAL_NUM_MAX; i++) {
-            if (mNpc_CheckCmpAnimalPersonalID(to_id, &animal->id) == TRUE) {
-                int idx;
+        if (errand->base.progress == 2 || errand->base.progress == 3) {
+            int i;
 
-                memory = animal->memories;
-                idx = mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM);
+            to_id = &errand->recipient;
+            for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+                if (mNpc_CheckCmpAnimalPersonalID(to_id, &animal->id) == TRUE) {
+                    int idx;
 
-                if (idx != -1) {
-                    memory += idx;
-                    if (memory->letter_info.exists == TRUE) {
-                        errand->base.progress = 0;
-                        break;
+                    memory = animal->memories;
+                    idx = mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM);
+
+                    if (idx != -1) {
+                        memory += idx;
+                        if (memory->letter_info.exists == TRUE) {
+                            errand->base.progress = 0;
+                            break;
+                        }
                     }
                 }
-            }
 
-            animal++;
+                animal++;
+            }
         }
     }
 }
 
 static void aQMgr_move_own_errand_hello(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist) {
-    mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
+    if (regist != NULL && regist->quest_info != NULL) {
+        mQst_errand_c* errand = (mQst_errand_c*)regist->quest_info;
 
-    if (errand->base.progress == 2) {
-        if (mNpc_CheckFriendAllAnimal(&Common_Get(now_private)->player_ID) == TRUE && mSC_check_ArbeitPlayer()) {
-            errand->base.progress = 0;
+        if (errand->base.progress == 2) {
+            if (mNpc_CheckFriendAllAnimal(&Now_Private->player_ID) == TRUE && mSC_check_ArbeitPlayer()) {
+                errand->base.progress = 0;
+            }
         }
     }
 }
