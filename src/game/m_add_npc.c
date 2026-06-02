@@ -204,7 +204,7 @@ static void mAN_set_add_npc(Animal_c* animal, u8* name, u8 id, int add_idx, Pers
     mLd_land_info_c* land_info = Save_GetPointer(land_info);
     
     mAN_set_def_animalInfo(animal, NPC_ADD_START + add_idx);
-    animal->moved_in = 2; // invited
+    animal->moved_in = mNpc_MOVE_IN_TYPE_INVITED; // invited
     animal->id.land_id = land_info->id;
     mLd_CopyLandName(animal->id.land_name, land_info->name);
     mem_copy(animal->id.name, name, ANIMAL_NAME_LEN);
@@ -352,7 +352,7 @@ static void mAN_regist_add_npc_live_in(Animal_c* animal, AddNpcSave_c* add_npc_p
         mNpc_SetDefAnimal_name(animal, new_comer->new_comer_npc_id);
         mNpc_SetNpcNameID(animal, 1);
         mNpc_SetHaveAppeared(animal->id.npc_id);
-        animal->moved_in = 2; // invited
+        animal->moved_in = mNpc_MOVE_IN_TYPE_INVITED; // invited
         mNpc_SetParentName(animal, &new_comer->new_comer_inviter_pid);
         if (is_islander == FALSE) {
             mNpc_AddNowNpcMax(Save_GetPointer(now_npc_max));

@@ -1015,7 +1015,7 @@ config.libs = [
             Object(Matching, "actor/ac_pterminal.c"),
             Object(Matching, "actor/ac_quest_manager.c"),
             Object(Matching, "actor/ac_quest_talk_fj_init.c"),
-            Object(NonMatching, "actor/ac_quest_talk_greeting.c"),
+            Object(Matching, "actor/ac_quest_talk_greeting.c"),
             Object(NonMatching, "actor/ac_quest_talk_init.c"),
             Object(NonMatching, "actor/ac_quest_talk_island.c"),
             Object(NonMatching, "actor/ac_quest_talk_normal_init.c"),

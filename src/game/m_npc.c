@@ -5178,7 +5178,7 @@ static int mNpc_SetGrowNpc(u8 looks) {
         if (npc_idx != -1) {
             mNpc_SetAnimalInfoNpcIdx(animal, npc_idx);
             mNpc_SetHaveAppeared(animal->id.npc_id);
-            animal->moved_in = TRUE;
+            animal->moved_in = mNpc_MOVE_IN_TYPE_GROW;
         } else {
             idx = -1;
         }

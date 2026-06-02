@@ -40,6 +40,14 @@ extern "C" {
 #define mNpc_ISLANDER_NO ANIMAL_NUM_MAX
 
 enum {
+    mNpc_MOVE_IN_TYPE_INITIAL, // started in town upon creation
+    mNpc_MOVE_IN_TYPE_GROW, // moved in from 'grow'
+    mNpc_MOVE_IN_TYPE_INVITED, // invited via e-Reader
+
+    mNpc_MOVE_IN_TYPE_NUM
+};
+
+enum {
     mNpc_LETTER_RANK_BAD,
     mNpc_LETTER_RANK_OK,
 
