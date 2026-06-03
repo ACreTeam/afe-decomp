@@ -287,7 +287,7 @@ struct quest_manager_actor {
 };
 
 #define aQMgr_GET_CLIENT(manager) ((NPC_ACTOR*)*manager->client)
-#define aQMgr_GET_CLIENT_ANIMAL(manager) aQMgr_GET_CLIENT(manager)->npc_info.animal
+#define aQMgr_GET_CLIENT_ANIMAL(manager) aQMgr_GET_CLIENT(manager)->npc_info.animal_orig
 
 extern ACTOR_PROFILE Quest_Manager_Profile;
 

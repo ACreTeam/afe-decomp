@@ -78,8 +78,11 @@ enum {
 
 static aQMgr_normal_info_c l_normal_info;
 
+static u8 l_aqmgr_str[mMsg_FREE_STRING_LEN];
+static u8 l_aqmgr_str_item[mMsg_FREE_STRING_LEN];
+
 static int l_quest_category_0[] = { mSP_KIND_FURNITURE, mSP_KIND_CARPET, mSP_KIND_WALLPAPER };
-static int l_quest_category_1[] = { mSP_KIND_CLOTH, mSP_KIND_PAPER, mSP_KIND_DIARY };
+static int l_quest_category_1[] = { mSP_KIND_CLOTH, mSP_KIND_PAPER, mSP_KIND_MAX };
 
 /* @unused */
 static int aQMgr_decide_idx_prob_table(u8* prob_table, int count) {
@@ -136,66 +139,57 @@ static void aQMgr_init_normal_info(aQMgr_normal_info_c* normal_info) {
     }
 }
 
-static u8 l_aqmgr_str[16];
+static u8 l_aqmgr_str_free[mMsg_FREE_STRING_LEN];
 
 static void aQMgr_set_number_free_str(u32 number, int str_no) {
-    mFont_UnintToString(l_aqmgr_str, sizeof(l_aqmgr_str), number, 10, TRUE, FALSE, TRUE);
-    mMsg_SET_FREE_STR(str_no, l_aqmgr_str, sizeof(l_aqmgr_str));
+    mFont_UnintToString(l_aqmgr_str_free, sizeof(l_aqmgr_str_free), number, 10, TRUE, FALSE, FALSE);
+    mMsg_SET_FREE_STR(str_no, l_aqmgr_str_free, sizeof(l_aqmgr_str_free));
 }
 
 static void aQMgr_set_number_item_str(u8* str_p, u32 number, int str_no) {
-    mFont_UnintToString(str_p, 16, number, 10, TRUE, FALSE, TRUE);
-    mMsg_SET_ITEM_STR(str_no, str_p, 16);
+    mFont_UnintToString(str_p, mMsg_FREE_STRING_LEN, number, 10, TRUE, FALSE, FALSE);
+    mMsg_SET_ITEM_STR(str_no, str_p, mMsg_FREE_STRING_LEN);
 }
 
 /* @unused */
 static void aQMgr_set_number_free_str_add_nen(u32 year, int str_no) {
     int len;
 
-    mem_clear(l_aqmgr_str, sizeof(l_aqmgr_str), CHAR_SPACE);
-    len = mString_Load_YearStringFromRom(l_aqmgr_str, year);
-    mMsg_SET_FREE_STR(str_no, l_aqmgr_str, len);
+    mem_clear(l_aqmgr_str_free, sizeof(l_aqmgr_str_free), CHAR_SPACE);
+    len = mString_Load_YearStringFromRom(l_aqmgr_str_free, year);
+    mMsg_SET_FREE_STR(str_no, l_aqmgr_str_free, len);
 }
 
 static void aQMgr_set_number_free_str_add_gatu(u32 month, int str_no) {
     int len;
 
-    mem_clear(l_aqmgr_str, sizeof(l_aqmgr_str), CHAR_SPACE);
-
-    if (month < lbRTC_JANUARY || month > lbRTC_DECEMBER) {
-        month = lbRTC_JANUARY;
-    }
-
-    mString_Load_StringFromRom(l_aqmgr_str, sizeof(l_aqmgr_str), mString_MONTH_START + (month - 1));
-    mMsg_SET_FREE_STR(str_no, l_aqmgr_str, sizeof(l_aqmgr_str));
+    mem_clear(l_aqmgr_str_free, sizeof(l_aqmgr_str_free), CHAR_SPACE);
+    len = mString_Load_MonthStringFromRom(l_aqmgr_str_free, month);
+    mMsg_SET_FREE_STR(str_no, l_aqmgr_str_free, len);
 }
 
 static void aQMgr_set_number_free_str_add_nichi(u32 day, int str_no) {
     int len;
 
-    mem_clear(l_aqmgr_str, sizeof(l_aqmgr_str), CHAR_SPACE);
-
-    if (day < 1 || day > 31) {
-        day = 1;
-    }
-
-    mString_Load_StringFromRom(l_aqmgr_str, sizeof(l_aqmgr_str), mString_DAY_START + (day - 1));
-    mMsg_SET_FREE_STR(str_no, l_aqmgr_str, sizeof(l_aqmgr_str));
+    mem_clear(l_aqmgr_str_free, sizeof(l_aqmgr_str_free), CHAR_SPACE);
+    len = mString_Load_DayStringFromRom(l_aqmgr_str_free, day);
+    mMsg_SET_FREE_STR(str_no, l_aqmgr_str_free, len);
 }
 
 static void aQMgr_normal_set_free_str(QUEST_MANAGER_ACTOR* manager) {
     ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
 
     mQst_SetItemNameFreeStr(Save_Get(fruit), mMsg_FREE_STR10);
     mLd_SetFreeStrLandMuraName(animal->id.land_name, mMsg_FREE_STR11);
-    // mMsg_SET_FREE_STR(mMsg_FREE_STR12, animal->parent_name, LAND_NAME_SIZE);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR12, animal->parent_id.player_name, LAND_NAME_SIZE);
 }
 
 typedef int (*aQMgr_CALENDAR_CONV_PROC)(lbRTC_ymd_c*, lbRTC_ymd_c*);
 
 static void aQMgr_set_calendar_free_str(aQMgr_CALENDAR_CONV_PROC conv_proc, int month_str_no, int day_str_no, u8 month, u8 day) {
-    static u8 uru_tuki[10] = "leap month";
+    // うるうつき
+    static u8 uru_tuki[] = { CHAR_PP_002, CHAR_PP_125, CHAR_PP_002, CHAR_PP_017, CHAR_PP_006 };
     lbRTC_ymd_c src_date;
     lbRTC_ymd_c dst_date;
     int ret;
@@ -241,7 +235,7 @@ static u32 aQMgr_GetPossessionItemSumFGTypeWithCond_cancelSPFamicom(Private_c* p
 
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets) == fg_type &&
-                cond == mPr_GET_ITEM_COND(priv->inventory.item_conditions, i) && !mSP_SearchItemCategoryPriority(*pockets, mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL)) {
+                mPr_CHK_ITEM_COND(priv->inventory.item_conditions, i) == cond && !mSP_SearchItemCategoryPriority(*pockets, mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL)) {
                 sum++;
             }
             pockets++;
@@ -254,9 +248,9 @@ static u32 aQMgr_GetPossessionItemSumFGTypeWithCond_cancelSPFamicom(Private_c* p
 static int aQMgr_get_possession_ftr_cpt_wl_rnd(mActor_name_t* item_p) {
     u32 item_cnt;
     int sel_idx;
+    int i;
     mActor_name_t* pockets_p = Now_Private->inventory.pockets;
     int ret_idx = -1;
-    int i;
 
     item_cnt = aQMgr_GetPossessionItemSumFGTypeWithCond_cancelSPFamicom(Now_Private, NAME_TYPE_FTR0, mPr_ITEM_COND_NORMAL);
     item_cnt += aQMgr_GetPossessionItemSumFGTypeWithCond_cancelSPFamicom(Now_Private, NAME_TYPE_FTR1, mPr_ITEM_COND_NORMAL);
@@ -266,7 +260,7 @@ static int aQMgr_get_possession_ftr_cpt_wl_rnd(mActor_name_t* item_p) {
     if (item_cnt > 0) {
         sel_idx = RANDOM(item_cnt);
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-            if (mPr_GET_ITEM_COND(Now_Private->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL && !mSP_SearchItemCategoryPriority(*pockets_p, mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL) && (ITEM_IS_FTR(*pockets_p) || (ITEM_NAME_GET_TYPE(*pockets_p) == NAME_TYPE_ITEM1 && (ITEM_NAME_GET_CAT(*pockets_p) == ITEM1_CAT_CARPET || ITEM_NAME_GET_CAT(*pockets_p) == ITEM1_CAT_WALL)))) {
+            if (mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL && !mSP_SearchItemCategoryPriority(*pockets_p, mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL) && (ITEM_IS_FTR(*pockets_p) || (ITEM_NAME_GET_TYPE(*pockets_p) == NAME_TYPE_ITEM1 && (ITEM_NAME_GET_CAT(*pockets_p) == ITEM1_CAT_CARPET || ITEM_NAME_GET_CAT(*pockets_p) == ITEM1_CAT_WALL)))) {
                 if (sel_idx <= 0) {
                     ret_idx = i;
                     *item_p = *pockets_p;
@@ -296,7 +290,7 @@ static int aQMgr_get_possession_item_rnd(mActor_name_t* item_p) {
     if (item_cnt > 0) {
         sel_idx = RANDOM(item_cnt);
         for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-            if (mPr_GET_ITEM_COND(Now_Private->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL && (ITEM_IS_FISH(*pockets_p) || ITEM_IS_INSECT(*pockets_p))) {
+            if (mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL && (ITEM_IS_FISH(*pockets_p) || ITEM_IS_INSECT(*pockets_p))) {
                 if (sel_idx <= 0) {
                     ret_idx = i;
                     *item_p = *pockets_p;
@@ -313,53 +307,55 @@ static int aQMgr_get_possession_item_rnd(mActor_name_t* item_p) {
     return ret_idx;
 }
 
-static int aQMgr_check_item_cond(u32 cond, u32 check, int idx) {
+static int aQMgr_check_item_cond(u8 cond, u32 check) {
     int res = FALSE;
 
-    // if (check == mPr_GET_ITEM_COND(cond, idx)) {
-    //     res = TRUE;
-    // }
+    if ((cond & 0xF) == check) {
+        res = TRUE;
+    }
 
     return res;
 }
 
 static int aQMgr_get_best_ftr_idx(mActor_name_t* item_p, Private_c* priv) {
     mActor_name_t* pockets_p = priv->inventory.pockets;
-    // u32 cond = priv->inventory.item_conditions;
+    u8* cond = priv->inventory.item_conditions;
     mActor_name_t present_ftr = mNpc_GetIslandPresentFtr();
-    int sel_idx;
     int count = 0;
+    int sel_idx;
     int ret_idx = -1;
     int i;
 
-    // *item_p = EMPTY_NO;
-    // for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-    //     if (mNpc_CheckFtrIsIslandBestFtr(pockets_p[i]) == TRUE &&
-    //         mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE &&
-    //         !aMR_CorrespondFurniture(present_ftr, pockets_p[i]) &&
-    //         aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //         count++;
-    //     }
-    // }
+    *item_p = EMPTY_NO;
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (mNpc_CheckFtrIsIslandBestFtr(pockets_p[i]) == TRUE &&
+            mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE &&
+            !aMR_CorrespondFurniture(present_ftr, pockets_p[i]) &&
+            aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE) {
+            count++;
+        }
+    }
 
-    // if (count > 0) {
-    //     sel_idx = RANDOM(count);
+    if (count > 0) {
+        sel_idx = RANDOM(count);
 
-    //     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++, pockets_p++) {
-    //         if (mNpc_CheckFtrIsIslandBestFtr(*pockets_p) == TRUE &&
-    //             mNpc_CheckIslandNpcRoomFtrItemNo_keep(*pockets_p) == TRUE &&
-    //             !aMR_CorrespondFurniture(present_ftr, *pockets_p) &&
-    //             aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //             if (sel_idx == 0) {
-    //                 *item_p = *pockets_p;
-    //                 ret_idx = i;
-    //                 break;
-    //             }
+        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+            if (mNpc_CheckFtrIsIslandBestFtr(*pockets_p) == TRUE &&
+                mNpc_CheckIslandNpcRoomFtrItemNo_keep(*pockets_p) == TRUE &&
+                !aMR_CorrespondFurniture(present_ftr, *pockets_p) &&
+                aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE) {
+                if (sel_idx == 0) {
+                    *item_p = *pockets_p;
+                    ret_idx = i;
+                    break;
+                }
 
-    //             sel_idx--;
-    //         }
-    //     }
-    // }
+                sel_idx--;
+            }
+
+            pockets_p++;
+        }
+    }
 
     return ret_idx;
 }
@@ -367,45 +363,47 @@ static int aQMgr_get_best_ftr_idx(mActor_name_t* item_p, Private_c* priv) {
 static int aQMgr_get_normal_ftr_idx(mActor_name_t* item_p, Private_c* priv) {
     mActor_name_t* pockets_p = priv->inventory.pockets;
     mActor_name_t present_ftr;
-    // u32 cond = priv->inventory.item_conditions;
-    int sel_idx;
+    u8* cond = priv->inventory.item_conditions;
     int count = 0;
+    int sel_idx;
     int ret_idx = -1;
     int i;
 
-    // present_ftr = mNpc_GetIslandPresentFtr();
-    // for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-    //     if (!aMR_CorrespondFurniture(pockets_p[i], present_ftr) &&
-    //         mNpc_CheckFtrIsIslandNormalFtr(pockets_p[i]) == TRUE &&
-    //         mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE &&
-    //         aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //         count++;
-    //     }
-    // }
+    present_ftr = mNpc_GetIslandPresentFtr();
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (!aMR_CorrespondFurniture(pockets_p[i], present_ftr) &&
+            mNpc_CheckFtrIsIslandNormalFtr(pockets_p[i]) == TRUE &&
+            mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE &&
+            aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE) {
+            count++;
+        }
+    }
 
-    // if (count > 0) {
-    //     sel_idx = RANDOM(count);
+    if (count > 0) {
+        sel_idx = RANDOM(count);
 
-    //     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++, pockets_p++) {
-    //         if (!aMR_CorrespondFurniture(*pockets_p, present_ftr) &&
-    //             mNpc_CheckFtrIsIslandNormalFtr(*pockets_p) == TRUE &&
-    //             mNpc_CheckIslandNpcRoomFtrItemNo_keep(*pockets_p) == TRUE &&
-    //             aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //             if (sel_idx == 0) {
-    //                 *item_p = *pockets_p;
-    //                 ret_idx = i;
-    //                 break;
-    //             }
+        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+            if (!aMR_CorrespondFurniture(*pockets_p, present_ftr) &&
+                mNpc_CheckFtrIsIslandNormalFtr(*pockets_p) == TRUE &&
+                mNpc_CheckIslandNpcRoomFtrItemNo_keep(*pockets_p) == TRUE &&
+                aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE) {
+                if (sel_idx == 0) {
+                    *item_p = *pockets_p;
+                    ret_idx = i;
+                    break;
+                }
 
-    //             sel_idx--;
-    //         }
-    //     }
-    // }
+                sel_idx--;
+            }
+
+            pockets_p++;
+        }
+    }
 
     return ret_idx;
 }
 
-static int aQMgr_get_cloth(mActor_name_t* item_p, mActor_name_t* pockets_p, u32 cond, mActor_name_t cancel_item) {
+static int aQMgr_get_cloth(mActor_name_t* item_p, mActor_name_t* pockets_p, u8* cond, mActor_name_t cancel_item) {
     int ret_idx = -1;
     int count = 0;
     int sel_idx;
@@ -415,7 +413,7 @@ static int aQMgr_get_cloth(mActor_name_t* item_p, mActor_name_t* pockets_p, u32 
     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
         if (ITEM_NAME_GET_TYPE(pockets_p[i]) == NAME_TYPE_ITEM1 &&
             ITEM_NAME_GET_CAT(pockets_p[i]) == ITEM1_CAT_CLOTH &&
-            aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE &&
+            aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE &&
             cancel_item != pockets_p[i]) {
             count++;
         }
@@ -424,10 +422,10 @@ static int aQMgr_get_cloth(mActor_name_t* item_p, mActor_name_t* pockets_p, u32 
     if (count > 0) {
         sel_idx = RANDOM(count);
 
-        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++, pockets_p++) {
+        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
             if (ITEM_NAME_GET_TYPE(*pockets_p) == NAME_TYPE_ITEM1 &&
                 ITEM_NAME_GET_CAT(*pockets_p) == ITEM1_CAT_CLOTH &&
-                aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE &&
+                aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE &&
                 *pockets_p != cancel_item) {
                 if (sel_idx == 0) {
                     *item_p = *pockets_p;
@@ -437,6 +435,8 @@ static int aQMgr_get_cloth(mActor_name_t* item_p, mActor_name_t* pockets_p, u32 
 
                 sel_idx--;
             }
+
+            pockets_p++;
         }
     }
 
@@ -467,7 +467,7 @@ static void aQMgr_order_decide_trade_common_item(aQMgr_SELECT_RND_ITEM_PROC sel_
 
     for (i = 0; i < cat_table_cnt; i++) {
         cat = *cat_table;
-        if (cat == mSP_KIND_DIARY) {
+        if (cat == mSP_KIND_MAX) {
             itemNo = mFI_GetOtherFruit();
         } else if (cat == mSP_KIND_CLOTH) {
             bzero(other_itemNo, sizeof(other_itemNo));
@@ -505,7 +505,8 @@ static void aQMgr_order_decide_trade_common(aQMgr_SELECT_RND_ITEM_PROC sel_rnd_i
     aQMgr_order_decide_trade_common_pay(pay_min, pay_max, round_tens);
 }
 
-static void aQMgr_trade_give_item(int trade_idx, int pockets_idx) {
+static void aQMgr_trade_give_item(QUEST_MANAGER_ACTOR* manager,int trade_idx, int pockets_idx) {
+    Anmmem_c* memory = *manager->memory;
     if (pockets_idx != -1) {
         mActor_name_t item = l_normal_info.trade_items[trade_idx];
         mActor_name_t present_ftr = mNpc_GetIslandPresentFtr();
@@ -520,6 +521,9 @@ static void aQMgr_trade_give_item(int trade_idx, int pockets_idx) {
         }
 
         mPr_SetPossessionItem(Now_Private, pockets_idx, item, mPr_ITEM_COND_NORMAL);
+        if (memory != NULL && ITEM_IS_MINIDISK_LIVE(item)) {
+            memory->letter_info.given_live_music = TRUE;
+        }
     }
 }
 
@@ -622,7 +626,7 @@ static void aQMgr_set_give_and_take_mode_TAKE(QUEST_MANAGER_ACTOR* manager, int 
     (*manager->talk_common_proc)(manager, aQMgr_TALK_COMMON_SET_NPC_TAKEOUT_ITEM);
     manager->sub_talk_state = aQMgr_TALK_SUB_STATE_ITEM_PLAYER_WAIT;
     mMsg_SET_LOCKCONTINUE();
-    aQMgr_trade_give_item(trade_type, idx);
+    aQMgr_trade_give_item(manager, trade_type, idx);
     manager->talk_step = aQMgr_TALK_STEP_TO_WAIT_ORDER;
 }
 
@@ -843,7 +847,7 @@ static void aQMgr_order_decide_trade_20(Animal_c* animal) {
     Private_c* priv = Now_Private;
     mActor_name_t ftr;
 
-    // l_normal_info.item_idx = aQMgr_get_cloth(&info_p->trade_items[0], priv->inventory.pockets, priv->inventory.item_conditions, animal->cloth);
+    l_normal_info.item_idx = aQMgr_get_cloth(&info_p->trade_items[0], priv->inventory.pockets, priv->inventory.item_conditions, animal->cloth);
     if (info_p->trade_items[0] != EMPTY_NO && info_p->item_idx != -1) {
         mQst_SetItemNameStr(info_p->trade_items[0], mMsg_ITEM_STR0);
     } else {
@@ -910,6 +914,39 @@ static void aQMgr_order_decide_trade_21(Animal_c* animal) {
     aQMgr_order_decide_trade_common_pay(100, 3000, TRUE);
 }
 
+static void aQMgr_order_decide_trade_22(Animal_c* animal) {
+    int md_idx = mNpc_GetMDIdx(animal->id.npc_id);
+
+    if (md_idx == -1) {
+        md_idx = 0;
+    }
+
+    l_normal_info.trade_items[1] = ITM_MINIDISK_LIVE_START + md_idx;
+    mQst_SetItemNameStr(l_normal_info.trade_items[1], mMsg_ITEM_STR1);
+}
+
+static void aQMgr_order_decide_trade_23(Animal_c* animal) {
+    aQMgr_normal_info_c* info_p = &l_normal_info;
+
+    info_p->item_idx = aQMgr_get_best_ftr_idx(&info_p->trade_items[0], Now_Private);
+    if (info_p->item_idx != -1 && ITEM_IS_FTR(info_p->trade_items[0])) {
+        mQst_SetItemNameStr(info_p->trade_items[0], mMsg_ITEM_STR0);
+    } else {
+        info_p->item_idx = -1;
+        info_p->trade_items[0] = EMPTY_NO;
+    }
+
+    if (mNpc_GetIslandFurniture() != EMPTY_NO) {
+        info_p->trade_items[1] = mNpc_GetIslandFurniture();
+    } else {
+        mSP_SelectRandomItem(&info_p->trade_items[1], 1, NULL, 0, mSP_KIND_FURNITURE, mSP_LISTTYPE_ISLAND, FALSE);
+    }
+
+    if (info_p->trade_items[1] != EMPTY_NO) {
+        mQst_SetItemNameStr(info_p->trade_items[1], mMsg_ITEM_STR1);
+    }
+}
+
 typedef void (*aQMgr_DECIDE_TRADE_PROC)(Animal_c*);
 
 static void aQMgr_order_decide_trade(QUEST_MANAGER_ACTOR* manager) {
@@ -935,18 +972,22 @@ static void aQMgr_order_decide_trade(QUEST_MANAGER_ACTOR* manager) {
         &aQMgr_order_decide_trade_19,
         &aQMgr_order_decide_trade_20,
         &aQMgr_order_decide_trade_21,
+        &aQMgr_order_decide_trade_22,
+        &aQMgr_order_decide_trade_23,
     };
 
     aQMgr_order_c* order_p = &manager->demo_order;
     Animal_c* animal = aQMgr_GET_CLIENT_ANIMAL(manager);
     int val = order_p->value;
 
-    val--;
-    (*decide_proc[val])(animal);
+    if (val > 0 && val <= ARRAY_COUNT(decide_proc)) {
+        val--;
+        (*decide_proc[val])(animal);
+    }
 }
 
 static void aQMgr_order_move_trade_no_term(QUEST_MANAGER_ACTOR* manager, int idx) {
-    aQMgr_trade_give_item(idx, l_normal_info.free_idx);
+    aQMgr_trade_give_item(manager, idx, l_normal_info.free_idx);
     manager->target.quest_item = l_normal_info.trade_items[idx];
     (*manager->talk_common_proc)(manager, aQMgr_TALK_COMMON_SET_NPC_TAKEOUT_ITEM);
     mMsg_SET_LOCKCONTINUE();
@@ -956,6 +997,9 @@ static void aQMgr_order_move_trade_no_term(QUEST_MANAGER_ACTOR* manager, int idx
 
 static void aQMgr_order_move_trade_1(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_order_move_trade_no_term(manager, 1);
+    if (mNpc_GetIslandFurniture() == l_normal_info.trade_items[1]) {
+        mNpc_ClearIslandFurniture();
+    }
 }
 
 
@@ -973,6 +1017,9 @@ static void aQMgr_order_move_trade_4(QUEST_MANAGER_ACTOR* manager) {
 
 static void aQMgr_order_move_trade_5(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_set_give_and_take_mode_GIVE(manager, 1);
+    if (mNpc_GetIslandFurniture() == l_normal_info.trade_items[1]) {
+        mNpc_ClearIslandFurniture();
+    }
 }
 
 static void aQMgr_order_move_trade_6(QUEST_MANAGER_ACTOR* manager) {
@@ -989,6 +1036,9 @@ static void aQMgr_order_move_trade_8(QUEST_MANAGER_ACTOR* manager) {
 
 static void aQMgr_order_move_trade_9(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_set_give_item_and_take_money_mode_GIVE(manager);
+    if (mNpc_GetIslandFurniture() == l_normal_info.trade_items[1]) {
+        mNpc_ClearIslandFurniture();
+    }
 }
 
 static void aQMgr_order_move_trade_10(QUEST_MANAGER_ACTOR* manager) {
@@ -1025,6 +1075,9 @@ static void aQMgr_order_move_trade_17(QUEST_MANAGER_ACTOR* manager) {
 
 static void aQMgr_order_move_trade_18(QUEST_MANAGER_ACTOR* manager) {
     aQMgr_set_give_and_take_mode_TAKE(manager, 1, l_normal_info.free_idx);
+    if (mNpc_GetIslandFurniture() == l_normal_info.trade_items[1]) {
+        mNpc_ClearIslandFurniture();
+    }
 }
 
 static void aQMgr_order_move_trade_19(QUEST_MANAGER_ACTOR* manager) {
@@ -1058,10 +1111,12 @@ static void aQMgr_order_move_trade_24(QUEST_MANAGER_ACTOR* manager) {
     int item_idx;
     int after_mode;
     mActor_name_t item;
+    u8 item_cond;
 
     item = l_normal_info.trade_items[0];
     item_idx = l_normal_info.item_idx;
-    present = NowPrivate_GetItemCond(item_idx) & mPr_ITEM_COND_PRESENT;
+    item_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, item_idx);
+    present = item_cond & mPr_ITEM_COND_PRESENT;
     after_mode = aHOI_REQUEST_PUTAWAY;
     if (ITEM_IS_CLOTH(item)) {
         Common_Set(npc_chg_cloth, item);
@@ -1200,8 +1255,8 @@ static int aQMgr_set_random_string(u8* str, int item_str_no, int base_str, f32 s
         idx++;
     }
 
-    mString_Load_StringFromRom(str, 16, base_str + idx);
-    mMsg_SET_ITEM_STR(item_str_no, str, 16);
+    mString_Load_StringFromRom(str, mMsg_FREE_STRING_LEN, base_str + idx);
+    mMsg_SET_ITEM_STR(item_str_no, str, mMsg_FREE_STRING_LEN);
     return idx;
 }
 
@@ -1212,7 +1267,7 @@ static void aQMgr_order_set_string_1(u8* last_str_tbl) {
     int i;
 
     last_str_tbl += 2;
-    for (i = 0; i < (aQMgr_LAST_STR_NUM - 2); i++) {
+    for (i = 0; i < ARRAY_COUNT(base_str_no); i++) {
         if (*last_str_tbl < (u8)rand_max_table[i]) {
             last_str_no = aQMgr_set_random_string(l_aqmgr_str, i, base_str_no[i], rand_max_table[i] - 1.0f, *last_str_tbl);
         } else {
@@ -1230,12 +1285,12 @@ static void aQMgr_set_random_number_item_str(u8* str, int item_str_no, u32 min, 
 }
 
 static void aQMgr_order_set_string_2(u8* last_str_tbl) {
-    u8 str[16];
+    u8 str[mMsg_FREE_STRING_LEN];
     int shop_level;
 
-    aQMgr_set_random_number_item_str(l_aqmgr_str, mMsg_ITEM_STR0, 1, 10);
-    aQMgr_set_random_number_item_str(l_aqmgr_str, mMsg_ITEM_STR1, 10, 99);
-    aQMgr_set_random_number_item_str(l_aqmgr_str, mMsg_ITEM_STR2, 0, 9);
+    aQMgr_set_random_number_item_str(l_aqmgr_str_item, mMsg_ITEM_STR0, 1, 10);
+    aQMgr_set_random_number_item_str(l_aqmgr_str_item, mMsg_ITEM_STR1, 10, 99);
+    aQMgr_set_random_number_item_str(l_aqmgr_str_item, mMsg_ITEM_STR2, 0, 9);
     shop_level = mSP_GetShopLevel();
     mString_Load_StringFromRom(str, sizeof(str), 0x454 + shop_level);
     mMsg_SET_ITEM_STR(mMsg_ITEM_STR3, str, sizeof(str));
@@ -1280,8 +1335,6 @@ static void aQMgr_order_set_string_4(u8* last_str_tbl) {
     int constellation;
     int i;
     int str_idx;
-    u8 birthday_month = birthday_p->month;
-    u8 birthday_day = birthday_p->day;
 
     for (i = 0; i < 2; i++) {
         if (*last_str_tbl < 12) {
@@ -1310,22 +1363,8 @@ static void aQMgr_order_set_string_4(u8* last_str_tbl) {
 
     mString_Load_StringFromRom(l_aqmgr_str, sizeof(l_aqmgr_str), 0x494 + constellation);
     mMsg_SET_ITEM_STR(mMsg_ITEM_STR2, l_aqmgr_str, sizeof(l_aqmgr_str));
-
-    mem_clear(l_aqmgr_str, sizeof(l_aqmgr_str), CHAR_SPACE);
-    if (birthday_month < lbRTC_JANUARY || birthday_month > lbRTC_DECEMBER) {
-        birthday_month = lbRTC_JANUARY;
-    }
-    birthday_month--;
-    mString_Load_StringFromRom(l_aqmgr_str, sizeof(l_aqmgr_str), mString_MONTH_START + birthday_month);
-    mMsg_SET_ITEM_STR(mMsg_ITEM_STR3, l_aqmgr_str, sizeof(l_aqmgr_str));
-
-    mem_clear(l_aqmgr_str, sizeof(l_aqmgr_str), CHAR_SPACE);
-    if (birthday_day < 1 || birthday_day > 31) {
-        birthday_day = 1;
-    }
-    birthday_day--;
-    mString_Load_StringFromRom(l_aqmgr_str, sizeof(l_aqmgr_str), mString_DAY_START + birthday_day);
-    mMsg_SET_ITEM_STR(mMsg_ITEM_STR4, l_aqmgr_str, sizeof(l_aqmgr_str));
+    aQMgr_set_number_item_str(l_aqmgr_str_item, birthday_p->month, mMsg_ITEM_STR3);
+    aQMgr_set_number_item_str(l_aqmgr_str_item, birthday_p->day, mMsg_ITEM_STR4);
 }
 
 typedef void (*aQMgr_SET_STRING_PROC)(u8*);
@@ -1371,18 +1410,21 @@ static int aQMgr_decide_normal_msg_no_island(QUEST_MANAGER_ACTOR* manager, int l
 static int aQMgr_check_trade_0(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
     mActor_name_t* pockets_p = priv->inventory.pockets;
     mActor_name_t ftr = mNpc_GetIslandPresentFtr();
-    // u32 cond = priv->inventory.item_conditions;
+    u8* cond = priv->inventory.item_conditions;
     int ret = FALSE;
     int i;
 
-    // for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-    //     if (ITEM_IS_FTR(pockets_p[i]) && !aMR_CorrespondFurniture(pockets_p[i], ftr) &&
-    //         mNpc_CheckFtrIsIslandBestFtr(pockets_p[i]) == TRUE && mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE &&
-    //         aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //         ret = TRUE;
-    //         break;
-    //     }
-    // }
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (ITEM_IS_FTR(*pockets_p) && !aMR_CorrespondFurniture(*pockets_p, ftr) &&
+            mNpc_CheckFtrIsIslandBestFtr(*pockets_p) == TRUE && mNpc_CheckIslandNpcRoomFtrItemNo_keep(*pockets_p) == TRUE &&
+            aQMgr_check_item_cond(*cond, mPr_ITEM_COND_NORMAL) == TRUE) {
+            ret = TRUE;
+            break;
+        }
+
+        pockets_p++;
+        cond++;
+    }
 
     return ret;
 }
@@ -1390,82 +1432,94 @@ static int aQMgr_check_trade_0(QUEST_MANAGER_ACTOR* manager, Private_c* priv, in
 static int aQMgr_check_trade_1(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
     mActor_name_t* pockets_p = priv->inventory.pockets;
     mActor_name_t ftr;
-    // u32 cond = priv->inventory.item_conditions;
+    u8* cond = priv->inventory.item_conditions;
     int ret = FALSE;
     int i;
 
-    // ftr = mNpc_GetIslandPresentFtr();
-    // for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-    //     if (ITEM_IS_FTR(pockets_p[i]) && !mSP_SearchItemCategoryPriority(pockets_p[i], mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL) &&
-    //         !aMR_CorrespondFurniture(pockets_p[i], ftr) && mNpc_CheckFtrIsIslandNormalFtr(pockets_p[i]) == TRUE &&
-    //         mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE && aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE) {
-    //         ret = TRUE;
-    //         break;
-    //     }
-    // }
+    ftr = mNpc_GetIslandPresentFtr();
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (ITEM_IS_FTR(pockets_p[i]) && !mSP_SearchItemCategoryPriority(pockets_p[i], mSP_KIND_FURNITURE, mSP_LISTTYPE_SPECIALPRESENT, NULL) &&
+            !aMR_CorrespondFurniture(pockets_p[i], ftr) && mNpc_CheckFtrIsIslandNormalFtr(pockets_p[i]) == TRUE &&
+            mNpc_CheckIslandNpcRoomFtrItemNo_keep(pockets_p[i]) == TRUE && aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE) {
+            ret = TRUE;
+            break;
+        }
+    }
 
     return ret;
 }
 
 static int aQMgr_check_trade_2(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
-    // Anmmem_c* memory = Save_Get(island).animal.memories;
+    Anmmem_c* memory = NULL;
     PersonalID_c* pid;
     int free_idx;
     int ret = FALSE;
 
-    // if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
-    //     free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
-    //     pid = mNpc_GetIslandPresentFtrPersonalID();
+    if (Common_Get(cur_island_house_p) != NULL) {
+        memory = Common_Get(cur_island_house_p)->island.animal.memories;
+    }
 
-    //     if (free_idx != -1 && priv->inventory.wallet > 3000 && pid != NULL &&
-    //         !mPr_CheckCmpPersonalID(&priv->player_ID, pid) &&
-    //         mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
-    //         *free_idx_p = free_idx;
-    //         ret = TRUE;
-    //     }
-    // }
+    if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
+        pid = mNpc_GetIslandPresentFtrPersonalID();
+
+        if (free_idx != -1 && priv->inventory.wallet > 3000 && pid != NULL &&
+            !mPr_CheckCmpPersonalID(&priv->player_ID, pid) &&
+            mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
+            *free_idx_p = free_idx;
+            ret = TRUE;
+        }
+    }
 
     return ret;
 }
 
 static int aQMgr_check_trade_3(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
     PersonalID_c* pid;
-    // Anmmem_c* memory = Save_Get(island).animal.memories;
+    Anmmem_c* memory = NULL;    
     int free_idx;
     int ret = FALSE;
 
-    // if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
-    //     free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
-    //     pid = mNpc_GetIslandPresentFtrPersonalID();
+    if (Common_Get(cur_island_house_p) != NULL) {
+        memory = Common_Get(cur_island_house_p)->island.animal.memories;
+    }
 
-    //     if (free_idx != -1 && pid != NULL &&
-    //         !mPr_CheckCmpPersonalID(&priv->player_ID, pid) &&
-    //         mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
-    //         *free_idx_p = free_idx;
-    //         ret = TRUE;
-    //     }
-    // }
+    if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
+        pid = mNpc_GetIslandPresentFtrPersonalID();
+
+        if (free_idx != -1 && pid != NULL &&
+            !mPr_CheckCmpPersonalID(&priv->player_ID, pid) &&
+            mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
+            *free_idx_p = free_idx;
+            ret = TRUE;
+        }
+    }
 
     return ret;
 }
 
 static int aQMgr_check_trade_4(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
     PersonalID_c* pid;
-    // Anmmem_c* memory = Save_Get(island).animal.memories;
+    Anmmem_c* memory = NULL;
     int free_idx;
     int ret = FALSE;
 
-    // if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
-    //     free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
-    //     pid = mNpc_GetIslandPresentFtrPersonalID();
+    if (Common_Get(cur_island_house_p) != NULL) {
+        memory = Common_Get(cur_island_house_p)->island.animal.memories;
+    }
 
-    //     if (free_idx != -1 && pid != NULL &&
-    //         mPr_CheckCmpPersonalID(&priv->player_ID, pid) == TRUE &&
-    //         mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
-    //         *free_idx_p = free_idx;
-    //         ret = TRUE;
-    //     }
-    // }
+    if (memory != NULL && mNpc_CheckIslandPresentFtrIs() == TRUE) {
+        free_idx = mPr_GetPossessionItemIdx(priv, EMPTY_NO);
+        pid = mNpc_GetIslandPresentFtrPersonalID();
+
+        if (free_idx != -1 && pid != NULL &&
+            mPr_CheckCmpPersonalID(&priv->player_ID, pid) == TRUE &&
+            mNpc_GetAnimalMemoryIdx(pid, memory, ANIMAL_MEMORY_NUM) != -1) {
+            *free_idx_p = free_idx;
+            ret = TRUE;
+        }
+    }
 
     return ret;
 }
@@ -1496,30 +1550,52 @@ static int aQMgr_check_trade_6(QUEST_MANAGER_ACTOR* manager, Private_c* priv, in
 }
 
 static int aQMgr_check_trade_7(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
-    // Anmmem_c* memory = Save_Get(island).animal.memories;
+    Anmmem_c* memory = NULL;
     int ret = FALSE;
-    mActor_name_t present_ftr = mNpc_GetIslandPresentFtr();
-    mActor_name_t best_ftr = mNpc_GetPlayerBestFtr(&priv->player_ID, present_ftr);
+    mActor_name_t present_ftr;
+    mActor_name_t best_ftr;
 
-    // if (best_ftr != EMPTY_NO && ITEM_IS_FTR(best_ftr) && memory != NULL && mNpc_GetAnimalMemoryIdx(&priv->player_ID, memory, ANIMAL_MEMORY_NUM) != -1) {
-    //     ret = TRUE;
-    // }
+    if (Common_Get(cur_island_house_p) != NULL) {
+        memory = Common_Get(cur_island_house_p)->island.animal.memories;
+    }
+
+    present_ftr = mNpc_GetIslandPresentFtr();
+    best_ftr = mNpc_GetPlayerBestFtr(&priv->player_ID, present_ftr);
+    
+
+    if (best_ftr != EMPTY_NO && ITEM_IS_FTR(best_ftr) && memory != NULL && mNpc_GetAnimalMemoryIdx(&priv->player_ID, memory, ANIMAL_MEMORY_NUM) != -1) {
+        ret = TRUE;
+    }
 
     return ret;
 }
 
 static int aQMgr_check_trade_8(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
     mActor_name_t* pockets_p = priv->inventory.pockets;
-    // u32 cond = priv->inventory.item_conditions;
+    mHm_hs_c* island_home;
+    u8* cond = priv->inventory.item_conditions;
     int ret = FALSE;
     int i;
 
-    // for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
-    //     if (ITEM_NAME_GET_TYPE(pockets_p[i]) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(pockets_p[i]) == ITEM1_CAT_CLOTH &&
-    //         aQMgr_check_item_cond(cond, mPr_ITEM_COND_NORMAL, i) == TRUE && Save_Get(island).animal.cloth != pockets_p[i]) {
-    //         ret = TRUE;
-    //     }
-    // }
+    if (Common_Get(cur_island_house_p) != NULL) {
+        island_home = Common_Get(cur_island_house_p);
+        for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+            if (ITEM_NAME_GET_TYPE(pockets_p[i]) == NAME_TYPE_ITEM1 && ITEM_NAME_GET_CAT(pockets_p[i]) == ITEM1_CAT_CLOTH &&
+                aQMgr_check_item_cond(cond[i], mPr_ITEM_COND_NORMAL) == TRUE && island_home->island.animal.cloth != pockets_p[i]) {
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int aQMgr_check_trade_9(QUEST_MANAGER_ACTOR* manager, Private_c* priv, int* free_idx_p) {
+    int ret = FALSE;
+
+    if (mNpc_GetIslandFurniture() != EMPTY_NO) {
+        ret = aQMgr_check_trade_0(manager, priv, free_idx_p);
+    }
 
     return ret;
 }
@@ -1537,7 +1613,9 @@ static int aQMgr_decide_ftr_msg_no(QUEST_MANAGER_ACTOR* manager, int looks) {
         &aQMgr_check_trade_6,
         &aQMgr_check_trade_7,
         &aQMgr_check_trade_8,
+        &aQMgr_check_trade_9,
     };
+    static u8 idx_table[] = { 0, 1, 2, 3, 4, 9, 5, 6, 7, 8 };
     static int msg_table[] = { 0x35E0, 0x35FB, 0x382F, 0x3844, 0x3616, 0x381A };
     int check_idx;
     int check_ret;
@@ -1548,12 +1626,14 @@ static int aQMgr_decide_ftr_msg_no(QUEST_MANAGER_ACTOR* manager, int looks) {
             check_idx = 0;
             mNpc_SetIslandCheckFtrMsg(TRUE);
         } else {
-            check_idx = RANDOM(5);
+            check_idx = RANDOM(6);
+            check_idx = idx_table[check_idx];
         }
 
         check_ret = (*check_proc[check_idx])(manager, Now_Private, &l_normal_info.free_idx);
         if (!check_ret) {
-            check_idx = 5 + RANDOM(4);
+            check_idx = 6 + RANDOM(4);
+            check_idx = idx_table[check_idx];
             check_ret = (*check_proc[check_idx])(manager, Now_Private, &l_normal_info.free_idx);
 
             if (check_ret == TRUE && check_idx == 5) {
@@ -1638,8 +1718,8 @@ static int aQMgr_decide_other_player_msg_no(QUEST_MANAGER_ACTOR* manager, int lo
     int action_type;
     int i;
 
-    if (Now_Private != NULL) {
-        // memory = aQMgr_get_other_memory(Save_Get(island).animal.memories, ANIMAL_MEMORY_NUM, &Now_Private->player_ID, FALSE);
+    if (Now_Private != NULL && Common_Get(cur_island_house_p) != NULL) {
+        memory = aQMgr_get_other_memory(Common_Get(cur_island_house_p)->island.animal.memories, ANIMAL_MEMORY_NUM, &Now_Private->player_ID, FALSE);
     }
 
     if (memory != NULL) {
@@ -1687,14 +1767,14 @@ static int aQMgr_decide_mail_msg_no(QUEST_MANAGER_ACTOR* manager, int looks) {
                 }
                 break;
             case 2:
-                if (Now_Private != NULL) {
-                    // Anmmem_c* mem = aQMgr_get_other_memory(Save_Get(island).animal.memories, ANIMAL_MEMORY_NUM, &Now_Private->player_ID, TRUE);
+                if (Now_Private != NULL && Common_Get(cur_island_house_p) != NULL) {
+                    Anmmem_c* mem = aQMgr_get_other_memory(Common_Get(cur_island_house_p)->island.animal.memories, ANIMAL_MEMORY_NUM, &Now_Private->player_ID, TRUE);
 
-                    // if (mem != NULL && mem->letter_info.exists == TRUE) {
-                    //     l_normal_info.memory = mem;
-                    //     l_normal_info.mail = &mem->letter;
-                    //     ret_msg = msg_table[looks] + 2;
-                    // }
+                    if (mem != NULL && mem->letter_info.exists == TRUE) {
+                        l_normal_info.memory = mem;
+                        l_normal_info.mail = &mem->letter;
+                        ret_msg = msg_table[looks] + 2;
+                    }
                 }
                 break;
         }
@@ -1719,26 +1799,19 @@ static void aQMgr_talk_island_select_talk(QUEST_MANAGER_ACTOR* manager) {
     };
     static int prob_table[aQMgr_DECIDE_MSG_NUM] = { 10, 50, 85, 100 };
 
+    int looks = mNpc_GetNpcLooks(*manager->client);
     int sel_idx;
-    ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
     int msg_no = -1;
-    int looks;
     int sel_percent;
     int i;
 
     sel_idx = aQMgr_DECIDE_MSG_FTR;
-    looks = mNpc_LOOKS_GIRL;
     manager->mail_memory = NULL;
     mMsg_UNSET_LOCKCONTINUE();
     aQMgr_init_normal_info(&l_normal_info);
     manager->sub_talk_state = aQMgr_TALK_SUB_STATE_DEMO_ORDER_WAIT;
     manager->talk_step = aQMgr_TALK_STEP_DEMO_ORDER;
     aQMgr_normal_set_free_str(manager);
-    
-    if (animal != NULL) {
-        looks = animal->id.looks;
-    }
 
     if (!mNpc_GetIslandCheckFtrMsg()) {
         msg_no = aQMgr_decide_ftr_msg_no(manager, looks);
@@ -1801,7 +1874,7 @@ static void aQMgr_talk_island_demo_order(QUEST_MANAGER_ACTOR* manager) {
 static void aQMgr_talk_normal_open_letter(QUEST_MANAGER_ACTOR* manager) {
     Submenu* submenu = manager->submenu;
     ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
     Mail_c* mail = &manager->mail;
 
     mMl_clear_mail(mail);
@@ -1820,12 +1893,13 @@ static void aQMgr_talk_normal_open_letter(QUEST_MANAGER_ACTOR* manager) {
     mMsg_SET_LOCKCONTINUE();
 }
 
-static u8 l_aqmgr_sakubunn[4] = "NOTE";
+// ｢さくぶん｣
+u8 l_aqmgr_sakubunn[] = { CHAR_PP_130, CHAR_PP_010, CHAR_PP_007, CHAR_PP_248, CHAR_PP_195, CHAR_PP_131 };
 
 static void aQMgr_talk_normal_open_letter_to_write(QUEST_MANAGER_ACTOR* manager) {
     Submenu* submenu = manager->submenu;
     ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
     Mail_c* mail = &manager->mail;
     Private_c* priv = Now_Private;
     mActor_name_t stationery;
@@ -1839,7 +1913,7 @@ static void aQMgr_talk_normal_open_letter_to_write(QUEST_MANAGER_ACTOR* manager)
     mail->header.sender.type = mMl_NAME_TYPE_PLAYER;
     len = mMsg_Get_Length_String(priv->player_ID.player_name, PLAYER_NAME_LEN);
     bcopy(priv->player_ID.player_name, mail->content.text.split.footer, len);
-    bcopy(l_aqmgr_sakubunn, mail->content.text.split.footer, sizeof(l_aqmgr_sakubunn));
+    bcopy(l_aqmgr_sakubunn, mail->content.text.split.header, sizeof(l_aqmgr_sakubunn));
     mNpc_SetIslandGetLetter(TRUE);
     mMl_set_mail_name_npcinfo(&mail->header.recipient, &animal->id);
     mail->content.header_back_start = 0;
@@ -1862,7 +1936,7 @@ static void aQMgr_talk_normal_open_birthday(QUEST_MANAGER_ACTOR* manager) {
 static void aQMgr_talk_normal_open_gobi(QUEST_MANAGER_ACTOR* manager) {
     Submenu* submenu = manager->submenu;
     ACTOR* client = *manager->client;
-    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal;
+    Animal_c* animal = ((NPC_ACTOR*)client)->npc_info.animal_orig;
 
     mSM_open_submenu_new(submenu, mSM_OVL_LEDIT, mLE_TYPE_EPHRASE, 0, animal->catchphrase);
     manager->sub_talk_state = aQMgr_TALK_SUB_STATE_HAND_ITEM_WAIT;

@@ -196,7 +196,8 @@ typedef struct animal_letter_info_s {
     u8 send_reply : 1;            /* set when the villager should reply */
     u8 has_present_cloth : 1;     /* set when the villager's held present shirt is from this letter */
     u8 wearing_present_cloth : 1; /* set when a villager is wearing the shirt sent with the saved letter */
-    u8 bit5_7 : 3;                /* seemingly unused */
+    u8 given_live_music : 1;      /* set when the villager has given the player a live music disk */
+    u8 bit6_7 : 2;                /* seemingly unused */
 } Anmlet_c;
 
 /* sizeof(Anmlnd_c) == 0x8 */
