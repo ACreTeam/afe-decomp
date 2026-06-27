@@ -211,17 +211,6 @@ struct quest_manager_regist_s {
     int animal_idx;
 };
 
-#define aQMgr_NORMAL_TRADE_ITEM_NUM 5
-
-typedef struct {
-    Anmmem_c* memory;
-    Anmplmail_c* mail;
-    int pay;
-    int item_idx;
-    int free_idx;
-    mActor_name_t trade_items[aQMgr_NORMAL_TRADE_ITEM_NUM];
-} aQMgr_normal_info_c;
-
 typedef struct quest_manager_talk_wait_s {
     int flags[3];
 } aQMgr_talk_wait_info_c;

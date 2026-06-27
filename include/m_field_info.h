@@ -368,6 +368,7 @@ extern int mFI_CheckBeforeScenePerpetual();
 extern void mFI_ChangeClimate_ForEventNotice();
 extern void mFI_PullTanukiPathTrees();
 extern void mFI_InitClimate(void);
+extern mActor_name_t mFI_GetOtherFruit_cancel(mActor_name_t ignore_fruit);
 
 #ifdef __cplusplus
 }

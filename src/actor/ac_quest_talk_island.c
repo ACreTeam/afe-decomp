@@ -76,6 +76,17 @@ enum {
     aQMgr_DECIDE_MSG_NUM
 };
 
+#define aQMgr_NORMAL_TRADE_ITEM_NUM 5
+
+typedef struct {
+    Anmmem_c* memory;
+    Anmplmail_c* mail;
+    int pay;
+    int item_idx;
+    int free_idx;
+    mActor_name_t trade_items[aQMgr_NORMAL_TRADE_ITEM_NUM];
+} aQMgr_normal_info_c;
+
 static aQMgr_normal_info_c l_normal_info;
 
 static u8 l_aqmgr_str[mMsg_FREE_STRING_LEN];
