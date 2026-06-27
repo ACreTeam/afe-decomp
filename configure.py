@@ -1489,6 +1489,7 @@ config.libs = [
             Object(Matching, "game/m_scene_table.c"),
             Object(Matching, "game/m_select.c"),
             Object(Matching, "game/m_shop.c"),
+            Object(Matching, "game/m_shutter_ovl.c"),
             Object(Matching, "game/m_skin_matrix.c"),
             Object(Matching, "game/m_snowman.c"),
             Object(Matching, "game/m_soncho.c"),

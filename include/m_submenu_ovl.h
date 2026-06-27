@@ -40,6 +40,7 @@
 #include "m_mscore_ovl_h.h"
 #include "m_calendar_ovl_h.h"
 #include "m_design_ovl_h.h"
+#include "m_shutter_ovl_h.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -209,7 +210,7 @@ struct submenu_overlay_s {
     /* 0xAC8 */ mPM_Ovl_c* passwordMake_ovl;
     /* 0xACC */ mPC_Ovl_c* passwordChk_ovl;
     /* 0xAD0 */ void* alarmIn_ovl;
-    /* 0xAD4 */ void* shutter_ovl;
+    /* 0xAD4 */ mST_Ovl_c* shutter_ovl;
     /* 0xAD8 */ void* film_ovl;
     /* 0xADC */ u8 hboard_exists;
     /* 0xADD */ u8 le_exists;
