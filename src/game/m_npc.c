@@ -680,7 +680,7 @@ extern int mNpc_AddRelationPoint(Animal_c* from_animal, Animal_c* to_animal, int
     return ret;
 }
 
-extern int mNpc_GetRelation(Animal_c* from_animal, Animal_c* to_animal) {
+extern int mNpc_GetRelation(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id) {
     int from_idx;
     int to_idx;
     int matching_point;
@@ -689,15 +689,15 @@ extern int mNpc_GetRelation(Animal_c* from_animal, Animal_c* to_animal) {
     int ret = mNpc_RELATION_NORMAL;
     int i;
 
-    if (from_animal != NULL && to_animal != NULL && mNpc_CheckFreeAnimalPersonalID(&from_animal->id) == FALSE &&
-        mNpc_CheckFreeAnimalPersonalID(&to_animal->id) == FALSE) {
-        from_idx = mNpc_SearchAnimalPersonalID(&from_animal->id);
-        to_idx = mNpc_SearchAnimalPersonalID(&to_animal->id);
+    if (from_id != NULL && to_id != NULL && mNpc_CheckFreeAnimalPersonalID(from_id) == FALSE &&
+        mNpc_CheckFreeAnimalPersonalID(to_id) == FALSE) {
+        from_idx = mNpc_SearchAnimalPersonalID(from_id);
+        to_idx = mNpc_SearchAnimalPersonalID(to_id);
 
         if (from_idx != -1 && to_idx != -1) {
             static int point_table[mNpc_RELATION_NUM - 1] = { 400, 270, 50, -60 };
 
-            matching_point = mNpc_GetMatchingPoint(from_animal, to_animal);
+            matching_point = mNpc_GetMatchingPoint(from_id, to_id);
             relation_point = Save_Get(animals[from_idx]).animal_relations[to_idx] * 2.5f;
             points = matching_point + relation_point;
             ret = mNpc_RELATION_HATE; // default since if we transit the entire points table, it will be
@@ -718,13 +718,13 @@ extern int mNpc_GetRelationAnimal(Animal_c* from_animal, Animal_c* to_animal) {
     int ret = mNpc_RELATION_NORMAL;
 
     if (from_animal != NULL && to_animal != NULL) {
-        ret = mNpc_GetRelation(from_animal, to_animal);
+        ret = mNpc_GetRelation(&from_animal->id, &to_animal->id);
     }
 
     return ret;
 }
 
-extern int mNpc_GetNextRelationPoint(Animal_c* from_animal, Animal_c* to_animal) {
+extern int mNpc_GetNextRelationPoint(AnmPersonalID_c* from_id, AnmPersonalID_c* to_id) {
     int cur_relation;
     int from_idx;
     int to_idx;
@@ -735,14 +735,14 @@ extern int mNpc_GetNextRelationPoint(Animal_c* from_animal, Animal_c* to_animal)
     int ret = 0;
     int i;
 
-    if (from_animal != NULL && to_animal != NULL && mNpc_CheckFreeAnimalPersonalID(&from_animal->id) == FALSE &&
-        mNpc_CheckFreeAnimalPersonalID(&to_animal->id) == FALSE &&
-        mNpc_CheckCmpAnimalPersonalID(&from_animal->id, &to_animal->id) == FALSE) {
-        cur_relation = mNpc_GetRelation(from_animal, to_animal);
+    if (from_id != NULL && to_id != NULL && mNpc_CheckFreeAnimalPersonalID(from_id) == FALSE &&
+        mNpc_CheckFreeAnimalPersonalID(to_id) == FALSE &&
+        mNpc_CheckCmpAnimalPersonalID(from_id, to_id) == FALSE) {
+        cur_relation = mNpc_GetRelation(from_id, to_id);
 
         if (cur_relation > mNpc_RELATION_LOVE && cur_relation < mNpc_RELATION_NUM) {
-            from_idx = mNpc_SearchAnimalPersonalID(&from_animal->id);
-            to_idx = mNpc_SearchAnimalPersonalID(&to_animal->id);
+            from_idx = mNpc_SearchAnimalPersonalID(from_id);
+            to_idx = mNpc_SearchAnimalPersonalID(to_id);
 
             if (from_idx != -1 && to_idx != -1) {
                 static int point_table[mNpc_RELATION_NUM - 1] = { 400, 270, 50, -60 };
@@ -750,7 +750,7 @@ extern int mNpc_GetNextRelationPoint(Animal_c* from_animal, Animal_c* to_animal)
 
                 animal = Save_Get(animals) + from_idx;
                 relation_point = animal->animal_relations[to_idx];
-                matching_point = mNpc_GetMatchingPoint(from_animal, to_animal);
+                matching_point = mNpc_GetMatchingPoint(from_id, to_id);
                 cur_points = point_table[cur_relation - 1];
                 points = matching_point + (int)(relation_point * 2.5f);
                 ret = ((cur_points - points) * 2 + 4) / 5;
@@ -766,16 +766,16 @@ static int mNpc_GetPrevRelationPoint(Animal_c* from_animal, Animal_c* to_animal)
     static int point_table[mNpc_RELATION_NUM - 1] = { 240, 170, 120, 70 };
 }
 
-extern int mNpc_GetMatchingPoint(Animal_c* animal0, Animal_c* animal1) {
+extern int mNpc_GetMatchingPoint(AnmPersonalID_c* id0, AnmPersonalID_c* id1) {
     int ret = 0;
 
-    if (animal0 != NULL && animal1 != NULL && mNpc_CheckFreeAnimalPersonalID(&animal0->id) == FALSE &&
-        mNpc_CheckFreeAnimalPersonalID(&animal1->id) == FALSE) {
+    if (id0 != NULL && id1 != NULL && mNpc_CheckFreeAnimalPersonalID(id0) == FALSE &&
+        mNpc_CheckFreeAnimalPersonalID(id1) == FALSE) {
         u8 parmas0[12];
         u8 parmas1[12];
 
-        if (mNpc_get_npc_param(parmas0, animal0->id.npc_id) == TRUE &&
-            mNpc_get_npc_param(parmas1, animal1->id.npc_id) == TRUE) {
+        if (mNpc_get_npc_param(parmas0, id0->npc_id) == TRUE &&
+            mNpc_get_npc_param(parmas1, id1->npc_id) == TRUE) {
             ret = mMG_paramC_matching_point(parmas0, parmas1);
         }
     }
@@ -798,7 +798,7 @@ extern int mNpc_GetAnimal_relation(Animal_c* src_animal, int desired_relation) {
         if (src_idx != -1) {
             for (i = 0; i < ANIMAL_NUM_MAX; i++) {
                 if (i != src_idx && mNpc_CheckFreeAnimalPersonalID(&animal->id) == FALSE &&
-                    mNpc_GetRelation(animal, src_animal) == desired_relation) {
+                    mNpc_GetRelation(&animal->id, &src_animal->id) == desired_relation) {
                     count++;
                     mask |= 1 << i;
                 }
@@ -6603,11 +6603,11 @@ extern void mNpc_PrintRelation_fdebug(gfxprint_t* gfxprint) {
                 if (IS_NPC_ADD_NPC(animal2->id.npc_id)) {
                     gfxprint_color(gfxprint, 250, 250, 250, 255);
                     gfxprint_printf(gfxprint, "%2d %3d %3d %3d %1d", animal_idx, animal2->id.add_npc_id,
-                        mNpc_GetMatchingPoint(animal, animal2), (int)*relations, mNpc_GetRelation(animal, animal2));
+                        mNpc_GetMatchingPoint(&animal->id, &animal2->id), (int)*relations, mNpc_GetRelation(&animal->id, &animal2->id));
                 } else {
                     gfxprint_color(gfxprint, 60, 60, 250, 255);
                     gfxprint_printf(gfxprint, "%2d %3d %3d %3d %1d", animal_idx, animal2->id.npc_id & 0xFFF,
-                        mNpc_GetMatchingPoint(animal, animal2), (int)*relations, mNpc_GetRelation(animal, animal2));
+                        mNpc_GetMatchingPoint(&animal->id, &animal2->id), (int)*relations, mNpc_GetRelation(&animal->id, &animal2->id));
                 }
 
                 disp_count++;

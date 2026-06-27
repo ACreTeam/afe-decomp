@@ -576,7 +576,7 @@ extern int mQst_GetToFromName(u8* to_name, u8* from_name, int idx) {
     return res;
 }
 
-extern int mQst_GetOccuredContestIdx(int kind) {
+extern int mQst_GetOccuredContestIdx(u32 kind) {
     Animal_c* animal = Save_Get(animals);
     int res = -1;
     int i;

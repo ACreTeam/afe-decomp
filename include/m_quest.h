@@ -114,7 +114,7 @@ typedef struct quest_contest_s {
     /* 0x00 */ mQst_base_c base;             /* quest base struct */
     /* 0x0C */ mActor_name_t requested_item; /* item (if any) requested by the villager */
     /* 0x0E */ PersonalID_c player_id;       /* personal id of the player */
-    /* 0x22 */ s8 type;                      /* type of quest, seems to be repeat of data in quest base */
+    /* 0x1E */ s8 type;                      /* type of quest, seems to be repeat of data in quest base */
     /* 0x24 */ mQst_contest_info_u info;     /* contest info for flower & letter quests */
 } mQst_contest_c;
 
@@ -147,8 +147,10 @@ typedef struct quest_delivery_s {
 #define mQst_ERRAND_CHAIN_ANIMAL_NUM 3
 
 enum {
-    mQst_ERRAND_FIRSTJOB_START,
-    mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH,
+    mQst_ERRAND_REQUEST,
+    mQst_ERRAND_FIRSTJOB_START = mQst_ERRAND_REQUEST,
+    mQst_ERRAND_REQUEST_CONTINUE,
+    mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH = mQst_ERRAND_REQUEST_CONTINUE,
     mQst_ERRAND_FIRSTJOB_PLANT_FLOWER,
     mQst_ERRAND_FIRSTJOB_DELIVER_FTR,
     mQst_ERRAND_FIRSTJOB_SEND_LETTER,
@@ -162,8 +164,6 @@ enum {
     // TODO: remove when references are cleared
     // errand quests removed in e+
 #if 1
-    mQst_ERRAND_REQUEST = 11,
-    mQst_ERRAND_REQUEST_CONTINUE = 11,
     mQst_ERRAND_REQUEST_FINAL = 11,
     mQst_ERRAND_FIRSTJOB_OPEN = 11,
 #endif
@@ -236,7 +236,7 @@ extern void mQst_CheckPutItem(mActor_name_t item, int pocket_idx);
 extern void mQst_PutItem_menu_end(void);
 extern int mQst_CheckNpcExistbyItemIdx(int idx, int sender_or_receipient);
 extern int mQst_GetToFromName(u8* to_name, u8* from_name, int idx);
-extern int mQst_GetOccuredContestIdx(int kind);
+extern int mQst_GetOccuredContestIdx(u32 kind);
 extern int mQst_GetFlowerSeedNum(int block_x, int block_z);
 extern int mQst_GetFlowerNum(int block_x, int block_z);
 extern int mQst_GetGrassNum(int block_x, int block_z);

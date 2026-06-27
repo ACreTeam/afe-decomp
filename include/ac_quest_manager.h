@@ -106,11 +106,15 @@ enum {
 
 enum {
     aQMgr_QUEST_ITEM_RANDOM,
-    aQMgr_QUEST_ITEM_FRUIT,
     aQMgr_QUEST_ITEM_CLOTH,
     aQMgr_QUEST_ITEM_FROM_DATA,
     aQMgr_QUEST_ITEM_CURRENT_ITEM,
     aQMgr_QUEST_ITEM_NONE,
+    aQMgr_QUEST_ITEM_QBOX,
+    aQMgr_QUEST_ITEM_Q013,
+    aQMgr_QUEST_ITEM_SHOP,
+    aQMgr_QUEST_ITEM_INSECT_NOW,
+    aQMgr_QUEST_ITEM_FISH_NOW,
 
     aQMgr_QUEST_ITEM_NUM
 };
@@ -124,8 +128,7 @@ enum {
     aQMgr_QUEST_REWARD_MONEY,
     aQMgr_QUEST_REWARD_WORN_CLOTH,
     aQMgr_QUEST_REWARD_7,
-    aQMgr_QUEST_REWARD_8,
-    aQMgr_QUEST_REWARD_9,
+    aQMgr_QUEST_REWARD_HANIWA,
 
     aQMgr_QUEST_REWARD_NUM
 };
@@ -156,9 +159,9 @@ typedef struct quest_manager_set_data_s {
     u32 day_limit : 6;
     u32 last_step : 4;
     u32 handover_item : 1;
-    u32 src_item_type : 3;
-    u32 unk : 1;
+    u32 src_item_type : 4;
     mActor_name_t item;
+    u8 item_cond;
     u8 reward_percentages[aQMgr_QUEST_REWARD_NUM];
     u32 max_pay;
     int* msg_start[aQMgr_MSG_KIND_NUM];
@@ -180,7 +183,7 @@ typedef struct quest_manager_target_s {
     AnmPersonalID_c* to_id;
     int quest_inv_item_idx;
     mActor_name_t quest_item;
-    u8 _1A;
+    u8 quest_item_cond;
     int reward_kind;
     mActor_name_t reward_item;
     u32 pay;

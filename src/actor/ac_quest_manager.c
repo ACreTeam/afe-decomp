@@ -116,45 +116,45 @@ static int l_msg_q006_akitsukure[mNpc_LOOKS_NUM] = {0x1F55, 0x1F58, 0x1F5B, 0x1F
 
 // clang-format off
 static aQMgr_set_data_c l_set_delivery_data[mQst_DELIVERY_KIND_NUM] = {
-    {0x06, 0x02, 0x02, 0x01, 0x00, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q001_irai1, l_msg_quest_irai_end, l_msg_q001_kakunin1, l_msg_quest_kyohi, l_msg_q001_orei1, NULL, l_msg_q001_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
-    {0x06, 0x02, 0x02, 0x01, 0x02, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q002_irai1, l_msg_quest_irai_end, l_msg_q002_kakunin1, l_msg_quest_kyohi, l_msg_q002_orei1, NULL, l_msg_q002_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
-    {0x06, 0x02, 0x02, 0x01, 0x02, 1, 0x0000, {0x04, 0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q003_irai1, l_msg_quest_irai_end, l_msg_q003_kakunin1, l_msg_quest_kyohi, l_msg_q003_orei1, NULL, l_msg_q003_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
-    {0x04, 0x04, 0x00, 0x01, 0x01, 0, 0x2500, {0x02, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 1000, {l_msg_q004_irai1, l_msg_quest_irai_end, l_msg_q004_kakunin1, l_msg_quest_kyohi, l_msg_q004_orei1, l_msg_q004_orei_end, l_msg_q004_uchikiri1, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x01, 0x03, 0x00, 0x02, 0, 0x0000, {0x00, 0x23, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x19}, 300, {l_msg_q008_irai1, l_msg_quest_irai_end, l_msg_q008_irai2, NULL, l_msg_q008_orei1, l_msg_q008_orei_end, l_msg_q008_hokanohito, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_NUM        , 2, 2, TRUE , aQMgr_QUEST_ITEM_CLOTH    , EMPTY_NO      , mPr_ITEM_COND_QBOX  , {0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q001_irai1, l_msg_quest_irai_end, l_msg_q001_kakunin1, l_msg_quest_kyohi, l_msg_q001_orei1, NULL, l_msg_q001_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_NUM        , 2, 2, TRUE , aQMgr_QUEST_ITEM_QBOX     , EMPTY_NO      , mPr_ITEM_COND_QBOX  , {0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q002_irai1, l_msg_quest_irai_end, l_msg_q002_kakunin1, l_msg_quest_kyohi, l_msg_q002_orei1, NULL, l_msg_q002_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_NUM        , 2, 2, TRUE , aQMgr_QUEST_ITEM_QBOX     , EMPTY_NO      , mPr_ITEM_COND_QBOX  , {0x28, 0x00, 0x28, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q003_irai1, l_msg_quest_irai_end, l_msg_q003_kakunin1, l_msg_quest_kyohi, l_msg_q003_orei1, NULL, l_msg_q003_uchikiri1, l_msg_quest_uchikiri_end, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_LAST_REMOVE, 4, 0, TRUE , aQMgr_QUEST_ITEM_FROM_DATA, ITM_QST_LETTER, mPr_ITEM_COND_QUEST , {0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 1000, {l_msg_q004_irai1, l_msg_quest_irai_end, l_msg_q004_kakunin1, l_msg_quest_kyohi, l_msg_q004_orei1, l_msg_q004_orei_end, l_msg_q004_uchikiri1, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT     , 1, 3, FALSE, aQMgr_QUEST_ITEM_NONE     , EMPTY_NO      , mPr_ITEM_COND_NORMAL, {0x23, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x19}, 300, {l_msg_q008_irai1, l_msg_quest_irai_end, l_msg_q008_irai2, NULL, l_msg_q008_orei1, l_msg_q008_orei_end, l_msg_q008_hokanohito, NULL, NULL, NULL, NULL, NULL, NULL}},
 };
 
 static aQMgr_set_data_c l_set_errand_data[mQst_ERRAND_NUM] = {
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_ftr_orei, l_msg_arubaito_ftr_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_cpt_orei, l_msg_arubaito_cpt_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x00, 0x00, 0x00, 0x01, 1, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_ftr_orei, l_msg_arubaito_ftr_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_cpt_orei, l_msg_arubaito_cpt_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, l_msg_arubaito_axe_orei, l_msg_arubaito_axe_orei_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
+    {aQMgr_QUEST_TARGET_CLIENT, 0, 0, FALSE, aQMgr_QUEST_ITEM_CURRENT_ITEM, EMPTY_NO, mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0x00}, 0, {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
 };
 
 static aQMgr_set_data_c l_set_contest_data[mQst_CONTEST_KIND_NUM] = {
-    {0x05, 0x01, 0x02, 0x00, 0x02, 0, 0x0000, {0x00, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q007_irai1, NULL, l_msg_q007_irai1, l_msg_quest_kyohi, l_msg_q007_orei1, l_msg_q007_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q007_watashitenai, l_msg_q007_orei_end, l_msg_q007_motenaiyo, l_msg_q007_akitsukure}},
-    {0x05, 0x03, 0x01, 0x00, 0x02, 0, 0x0000, {0x00, 0x3C, 0x00, 0x00, 0x14, 0x14, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q009_irai1, NULL, l_msg_q009_irai1, l_msg_quest_kyohi, l_msg_q009_orei1, l_msg_q009_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q009_watashitenai, l_msg_q009_orei_end, l_msg_q009_motenaiyo, l_msg_q009_akitsukure}},
-    {0x05, 0x03, 0x01, 0x00, 0x04, 1, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q011_irai1, NULL, l_msg_q011_irai2, l_msg_quest_kyohi, l_msg_q011_orei1, l_msg_q011_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x03, 0x01, 0x00, 0x04, 0, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q012_irai1, NULL, l_msg_q012_irai2, l_msg_quest_kyohi, l_msg_q012_orei1, l_msg_q012_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, l_msg_q012_orei_end, NULL, NULL}},
-    {0x05, 0x02, 0x02, 0x00, 0x02, 0, 0x0000, {0x00, 0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q010_irai1, NULL, l_msg_q010_irai1, l_msg_quest_kyohi, l_msg_q010_okuttayo, NULL, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x03, 0x01, 0x00, 0x03, 0, 0x0000, {0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q013_irai2, l_msg_quest_kyohi, l_msg_q013_orei1, l_msg_q013_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x01, 0x01, 0x00, 0x03, 1, 0x0000, {0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q014_irai2, l_msg_quest_kyohi, l_msg_q014_orei1, l_msg_q014_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
-    {0x05, 0x01, 0x01, 0x00, 0x02, 0, 0x0000, {0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00}, 300, {l_msg_q006_irai1, NULL, l_msg_q006_irai1, l_msg_quest_kyohi, l_msg_q006_orei1, l_msg_q006_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q006_watashitenai, l_msg_q006_orei_end, l_msg_q006_motenaiyo, l_msg_q006_akitsukure}},
-    {0x05, 0x0A, 0x01, 0x00, 0x01, 0, 0x2267, {0x00, 0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 300, {NULL, NULL, NULL, NULL, l_msg_q005_orei1, l_msg_q005_orei_end, NULL, NULL, NULL, l_msg_q005_watashitenai, NULL, l_msg_q005_motenaiyo, l_msg_q005_akitsukure}},
+    /* mQst_CONTEST_KIND_SOCCER */ {aQMgr_QUEST_TARGET_CLIENT,  1, 2, FALSE, aQMgr_QUEST_ITEM_NONE      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q007_irai1, NULL, l_msg_q007_irai1, l_msg_quest_kyohi, l_msg_q007_orei1, l_msg_q007_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q007_watashitenai, l_msg_q007_orei_end, l_msg_q007_motenaiyo, l_msg_q007_akitsukure}},
+    /* mQst_CONTEST_KIND_FLOWER */ {aQMgr_QUEST_TARGET_CLIENT,  3, 1, FALSE, aQMgr_QUEST_ITEM_NONE      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x3C, 0x00, 0x00, 0x14, 0x14, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q009_irai1, NULL, l_msg_q009_irai1, l_msg_quest_kyohi, l_msg_q009_orei1, l_msg_q009_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q009_watashitenai, l_msg_q009_orei_end, l_msg_q009_motenaiyo, l_msg_q009_akitsukure}},
+    /* mQst_CONTEST_KIND_FISH   */ {aQMgr_QUEST_TARGET_CLIENT,  3, 1, FALSE, aQMgr_QUEST_ITEM_FISH_NOW  , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q011_irai1, NULL, l_msg_q011_irai2, l_msg_quest_kyohi, l_msg_q011_orei1, l_msg_q011_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    /* mQst_CONTEST_KIND_INSECT */ {aQMgr_QUEST_TARGET_CLIENT,  3, 1, FALSE, aQMgr_QUEST_ITEM_INSECT_NOW, EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q012_irai1, NULL, l_msg_q012_irai2, l_msg_quest_kyohi, l_msg_q012_orei1, l_msg_q012_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, l_msg_q012_orei_end, NULL, NULL}},
+    /* mQst_CONTEST_KIND_LETTER */ {aQMgr_QUEST_TARGET_CLIENT,  2, 2, FALSE, aQMgr_QUEST_ITEM_NONE      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x50, 0x00, 0x00, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00}, 0, {l_msg_q010_irai1, NULL, l_msg_q010_irai1, l_msg_quest_kyohi, l_msg_q010_okuttayo, NULL, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    /* mQst_CONTEST_KIND_FTR    */ {aQMgr_QUEST_TARGET_CLIENT,  3, 1, FALSE, aQMgr_QUEST_ITEM_Q013      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q013_irai2, l_msg_quest_kyohi, l_msg_q013_orei1, l_msg_q013_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    /* mQst_CONTEST_KIND_SHOP   */ {aQMgr_QUEST_TARGET_CLIENT,  1, 1, FALSE, aQMgr_QUEST_ITEM_SHOP      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 0, {NULL, NULL, l_msg_q014_irai2, l_msg_quest_kyohi, l_msg_q014_orei1, l_msg_q014_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, NULL, NULL, NULL, NULL}},
+    /* mQst_CONTEST_KIND_GRASS  */ {aQMgr_QUEST_TARGET_CLIENT,  1, 1, FALSE, aQMgr_QUEST_ITEM_NONE      , EMPTY_NO    , mPr_ITEM_COND_NORMAL, {0x00, 0x00, 0x32, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00}, 300, {l_msg_q006_irai1, NULL, l_msg_q006_irai1, l_msg_quest_kyohi, l_msg_q006_orei1, l_msg_q006_orei_end, NULL, l_msg_quest_uchikiri_end_soft, NULL, l_msg_q006_watashitenai, l_msg_q006_orei_end, l_msg_q006_motenaiyo, l_msg_q006_akitsukure}},
+    /* mQst_CONTEST_KIND_SICK   */ {aQMgr_QUEST_TARGET_CLIENT, 10, 1, FALSE, aQMgr_QUEST_ITEM_FROM_DATA , ITM_MEDICINE, mPr_ITEM_COND_NORMAL, {0x28, 0x00, 0x00, 0x1E, 0x1E, 0x00, 0x00, 0x00, 0x00}, 300, {NULL, NULL, NULL, NULL, l_msg_q005_orei1, l_msg_q005_orei_end, NULL, NULL, NULL, l_msg_q005_watashitenai, NULL, l_msg_q005_motenaiyo, l_msg_q005_akitsukure}},
 };
 //clang-format on
 
 static aQMgr_set_data_c* l_set_data[mQst_QUEST_TYPE_NUM] = {
     l_set_delivery_data,
     l_set_errand_data,
-    l_set_contest_data
+    l_set_contest_data,
 };
 
 static void aQMgr_move_own_delvery_qbox(QUEST_MANAGER_ACTOR* manager, aQMgr_regist_c* regist);
@@ -697,7 +697,7 @@ static int aQMgr_talk_common_clear_talk_info(QUEST_MANAGER_ACTOR* manager) {
     target_p->to_id = NULL;
     target_p->quest_inv_item_idx = -1;
     target_p->quest_item = EMPTY_NO;
-    target_p->_1A = 0;
+    target_p->quest_item_cond = mPr_ITEM_COND_NORMAL;
     target_p->reward_kind = -1;
     target_p->reward_item = EMPTY_NO;
     target_p->pay = 0;
@@ -991,7 +991,7 @@ static int aQMgr_talk_common_set_npc_takeout(QUEST_MANAGER_ACTOR* manager, mActo
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, item);
     mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 1, 7);
 
-    if (manager->target._1A == 4) {
+    if (manager->target.quest_item_cond == mPr_ITEM_COND_QBOX) {
         mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 3);
     } else {
         mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);

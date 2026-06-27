@@ -104,6 +104,7 @@ enum insect_term {
 };
 
 extern int aSOI_insect_set(SET_MANAGER* set_manager, GAME_PLAY* play);
+extern mActor_name_t aSOI_get_insect_now(void);
 
 #ifdef __cplusplus
 }
