@@ -41,6 +41,7 @@
 #include "m_calendar_ovl_h.h"
 #include "m_design_ovl_h.h"
 #include "m_shutter_ovl_h.h"
+#include "m_alarmIn_ovl_h.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -180,7 +181,7 @@ struct submenu_overlay_s {
     /* 0xA50 */ void* _A50;
     /* 0xA54 */ mTG_Ovl_c* tag_ovl;
     /* 0xA58 */ mHD_Ovl_c* hand_ovl;
-    /* 0xA5C */ mHP_Ovl_c* hanwiaPortrait_ovl;
+    /* 0xA5C */ mHP_Ovl_c* haniwaPortrait_ovl;
     /* 0xA60 */ mIV_Ovl_c* inventory_ovl;
     /* 0xA64 */ mED_Ovl_c* editor_ovl;
     /* 0xA68 */ mBD_Ovl_c* board_ovl;
@@ -209,7 +210,7 @@ struct submenu_overlay_s {
     /* 0xAC4 */ mCD_Ovl_c* calendar_ovl;
     /* 0xAC8 */ mPM_Ovl_c* passwordMake_ovl;
     /* 0xACC */ mPC_Ovl_c* passwordChk_ovl;
-    /* 0xAD0 */ void* alarmIn_ovl;
+    /* 0xAD0 */ mAL_Ovl_c* alarmIn_ovl;
     /* 0xAD4 */ mST_Ovl_c* shutter_ovl;
     /* 0xAD8 */ void* film_ovl;
     /* 0xADC */ u8 hboard_exists;

@@ -1365,6 +1365,7 @@ config.libs = [
             Object(Matching, "game/m_add_npc.c"),
             Object(Matching, "game/m_address_ovl.c"),
             Object(Matching, "game/m_agb_pp.c"),
+            Object(Matching, "game/m_alarmIn_ovl.c"),
             Object(Matching, "game/m_all_grow.c"),
             Object(Matching, "game/m_all_grow_ovl.c"),
             Object(Matching, "game/m_bank_ovl.c"),

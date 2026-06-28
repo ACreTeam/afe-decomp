@@ -9,14 +9,14 @@ extern cKF_Animation_R_c cKF_ba_r_hnw_move;
 static mHP_Ovl_c hp_ovl_data;
 
 static void mHP_haniwaPortrait_shape_init(Submenu* submenu) {
-  mHP_Ovl_c* haniwaPortrait_ovl = submenu->overlay->hanwiaPortrait_ovl;
+  mHP_Ovl_c* haniwaPortrait_ovl = submenu->overlay->haniwaPortrait_ovl;
 
   cKF_SkeletonInfo_R_ct(&haniwaPortrait_ovl->keyframe, &cKF_bs_r_hnw, NULL, haniwaPortrait_ovl->keyframe_work, haniwaPortrait_ovl->keyframe_morph);
   cKF_SkeletonInfo_R_init(&haniwaPortrait_ovl->keyframe, haniwaPortrait_ovl->keyframe.skeleton, &cKF_ba_r_hnw_move, 1.0f, 9.0f, 1.0f, 0.3f, 0.0f, cKF_FRAMECONTROL_REPEAT, NULL);
 }
 
 static void mHP_haniwaPortrait_shape_move(Submenu* submenu) {
-  cKF_SkeletonInfo_R_play(&submenu->overlay->hanwiaPortrait_ovl->keyframe);
+  cKF_SkeletonInfo_R_play(&submenu->overlay->haniwaPortrait_ovl->keyframe);
 }
 
 extern u8 hnw_tmem_txt[];
@@ -24,7 +24,7 @@ extern u16 hnw_face[];
 
 static void mHP_haniwaPortrait_shape_draw(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) {
   GRAPH* graph = game->graph;
-  Mtx* mtx = GRAPH_ALLOC_TYPE(graph, Mtx, submenu->overlay->hanwiaPortrait_ovl->keyframe.skeleton->num_shown_joints);
+  Mtx* mtx = GRAPH_ALLOC_TYPE(graph, Mtx, submenu->overlay->haniwaPortrait_ovl->keyframe.skeleton->num_shown_joints);
 
   if (mtx != NULL) {
     _texture_z_light_fog_prim(game->graph);
@@ -46,7 +46,7 @@ static void mHP_haniwaPortrait_shape_draw(Submenu* submenu, mSM_MenuInfo_c* menu
 
     CLOSE_DISP(graph);
 
-    cKF_Si3_draw_R_SV(game, &submenu->overlay->hanwiaPortrait_ovl->keyframe, mtx, NULL, NULL, NULL);
+    cKF_Si3_draw_R_SV(game, &submenu->overlay->haniwaPortrait_ovl->keyframe, mtx, NULL, NULL, NULL);
   }
 }
 
@@ -73,12 +73,12 @@ static void mHP_set_haniwaPortrait(Submenu* submenu, mSM_MenuInfo_c* menu_info, 
 extern void mHP_haniwaPortrait_ovl_construct(Submenu* submenu) {
   Submenu_Overlay_c* overlay = submenu->overlay;
 
-  if (overlay->hanwiaPortrait_ovl == NULL) {
+  if (overlay->haniwaPortrait_ovl == NULL) {
     mem_clear((u8*)&hp_ovl_data, sizeof(mHP_Ovl_c), 0);
-    overlay->hanwiaPortrait_ovl = &hp_ovl_data;
+    overlay->haniwaPortrait_ovl = &hp_ovl_data;
 
-    submenu->overlay->hanwiaPortrait_ovl->set_haniwaPortrait_proc = &mHP_set_haniwaPortrait;
-    submenu->overlay->hanwiaPortrait_ovl->haniwaPortrait_shape_move_proc = &mHP_haniwaPortrait_shape_move;
+    submenu->overlay->haniwaPortrait_ovl->set_haniwaPortrait_proc = &mHP_set_haniwaPortrait;
+    submenu->overlay->haniwaPortrait_ovl->haniwaPortrait_shape_move_proc = &mHP_haniwaPortrait_shape_move;
     mHP_haniwaPortrait_shape_init(submenu);
     mHP_haniwaPortrait_shape_move(submenu);
   }
@@ -87,6 +87,6 @@ extern void mHP_haniwaPortrait_ovl_construct(Submenu* submenu) {
 extern void mHP_haniwaPortrait_ovl_destruct(Submenu* submenu) {
   Submenu_Overlay_c* overlay = submenu->overlay;
 
-  cKF_SkeletonInfo_R_dt(&overlay->hanwiaPortrait_ovl->keyframe);
-  submenu->overlay->hanwiaPortrait_ovl = NULL;
+  cKF_SkeletonInfo_R_dt(&overlay->haniwaPortrait_ovl->keyframe);
+  submenu->overlay->haniwaPortrait_ovl = NULL;
 }

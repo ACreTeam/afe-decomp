@@ -2,19 +2,30 @@
 #define M_ALARMIN_OVL_H
 
 #include "types.h"
-#include "m_submenu.h"
+#include "m_submenu_ovl.h"
+#include "m_alarmIn_ovl_h.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct alarmIn_ovl_s mAI_Ovl_c;
+enum {
+    mAL_IDX_HOUR,
+    mAL_IDX_MIN,
 
-// TODO: finish
+    mAL_IDX_NUM
+};
 
-static void mAL_alarmIn_ovl_construct(Submenu* submenu);
-static void mAL_alarmIn_ovl_destruct(Submenu* submenu);
-static void mAL_alarmIn_ovl_set_proc(Submenu* submenu);
+struct alarmIn_ovl_s {
+    s16 delay_values[mAL_IDX_NUM];
+    s16 at_values[mAL_IDX_NUM];
+    int field;
+    u8 _0C[0x10];
+};
+
+extern void mAL_alarmIn_ovl_construct(Submenu* submenu);
+extern void mAL_alarmIn_ovl_destruct(Submenu* submenu);
+extern void mAL_alarmIn_ovl_set_proc(Submenu* submenu);
 
 #ifdef __cplusplus
 }

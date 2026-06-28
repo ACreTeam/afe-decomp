@@ -245,7 +245,7 @@ static void mHW_haniwa_ovl_move(Submenu* submenu) {
 
     switch (menu_info->proc_status) {
         case mSM_OVL_PROC_PLAY:
-            submenu->overlay->hanwiaPortrait_ovl->haniwaPortrait_shape_move_proc(submenu);
+            submenu->overlay->haniwaPortrait_ovl->haniwaPortrait_shape_move_proc(submenu);
             submenu->overlay->menu_control.animation_flag = TRUE;
             break;
         case mSM_OVL_PROC_MOVE:
@@ -325,7 +325,7 @@ static void mHW_set_dl(mSM_MenuInfo_c* menu_info, Submenu* submenu, GAME* game) 
 
     mHW_set_frame_dl(submenu, graph, pos_x, pos_y);
     mHW_set_item(submenu, graph, menu_info, pos_x, pos_y);
-    submenu->overlay->hanwiaPortrait_ovl->set_haniwaPortrait_proc(submenu, menu_info, graph, game, 39.0f + pos_x, 19.0f - pos_y);
+    submenu->overlay->haniwaPortrait_ovl->set_haniwaPortrait_proc(submenu, menu_info, graph, game, 39.0f + pos_x, 19.0f - pos_y);
     mHW_set_message(submenu, game, menu_info);
     submenu->overlay->menu_control.tag_draw_func(submenu, game, mSM_OVL_HANIWA);
 }

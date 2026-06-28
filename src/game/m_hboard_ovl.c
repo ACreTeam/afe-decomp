@@ -66,7 +66,7 @@ static void mHB_hboard_ovl_move(Submenu* submenu) {
   switch (menu_info->proc_status) {
     case mSM_OVL_PROC_WAIT:
     {
-      (*submenu->overlay->hanwiaPortrait_ovl->haniwaPortrait_shape_move_proc)(submenu);
+      (*submenu->overlay->haniwaPortrait_ovl->haniwaPortrait_shape_move_proc)(submenu);
       control->animation_flag = TRUE;
       break;
     }
@@ -194,7 +194,7 @@ static void mHB_set_dl(Submenu* submenu, GRAPH* graph, GAME* game, mSM_MenuInfo_
   mHB_set_frame_dl(graph, menu_info, x, y);
 
   /* Draw haniwa */
-  (*submenu->overlay->hanwiaPortrait_ovl->set_haniwaPortrait_proc)(submenu, menu_info, graph, game, x + 230.0f, -y + 6.0f);
+  (*submenu->overlay->haniwaPortrait_ovl->set_haniwaPortrait_proc)(submenu, menu_info, graph, game, x + 230.0f, -y + 6.0f);
 
   if (submenu->overlay->editor_ovl != NULL) {
     /* Draw text, cursor, & end code */
