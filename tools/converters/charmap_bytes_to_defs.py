@@ -2,6 +2,7 @@ import argparse
 import pathlib
 import re
 import sys
+from dataclasses import dataclass
 
 
 DEFAULT_TEST_SOURCE = "src/game/m_mark_room_ovl.c"
@@ -9,21 +10,27 @@ DEFAULT_TEST_ARRAY = "mMkRm_series_name"
 DEFAULT_CHARMAP = "include/charmap.h"
 
 
-def load_char_pp_map(charmap_path: pathlib.Path) -> dict[int, str]:
-    value_to_name: dict[int, str] = {}
-    pattern = re.compile(r"^\s*#define\s+(CHAR_PP_\d{3})\s+(\d+)\b")
+@dataclass(frozen=True)
+class CharPPEntry:
+    name: str
+    text: str
+
+
+def load_char_pp_map(charmap_path: pathlib.Path) -> dict[int, CharPPEntry]:
+    value_to_entry: dict[int, CharPPEntry] = {}
+    pattern = re.compile(r"^\s*#define\s+(CHAR_PP_\d{3})\s+(\d+)\b(?:\s*//\s*(.*))?")
 
     for line in charmap_path.read_text(encoding="utf-8").splitlines():
         match = pattern.match(line)
         if not match:
             continue
-        name, value = match.groups()
-        value_to_name[int(value)] = name
+        name, value, text = match.groups()
+        value_to_entry[int(value)] = CharPPEntry(name, text or name)
 
-    if not value_to_name:
+    if not value_to_entry:
         raise ValueError(f"No CHAR_PP_* defines found in {charmap_path}")
 
-    return value_to_name
+    return value_to_entry
 
 
 def extract_initializer_block(source_text: str, array_name: str) -> str:
@@ -76,29 +83,60 @@ def extract_rows(initializer_text: str) -> list[str]:
 
 def parse_byte_tokens(row_text: str) -> list[int]:
     values: list[int] = []
+    symbol_pattern = re.compile(r"CHAR_PP_(\d{3})$")
+
     for token in row_text.split(","):
         token = token.strip()
         if not token:
             continue
-        values.append(int(token, 0))
+        match = symbol_pattern.match(token)
+        if match:
+            values.append(int(match.group(1), 10))
+        else:
+            values.append(int(token, 0))
     return values
 
 
-def convert_row(values: list[int], char_pp_map: dict[int, str]) -> str:
-    symbols = [char_pp_map.get(value, f"0x{value:02X}") for value in values]
+def symbols_for_values(values: list[int], char_pp_map: dict[int, CharPPEntry]) -> list[str]:
+    return [char_pp_map[value].name if value in char_pp_map else f"0x{value:02X}" for value in values]
+
+
+def convert_row(values: list[int], char_pp_map: dict[int, CharPPEntry]) -> str:
+    symbols = symbols_for_values(values, char_pp_map)
     return "{ " + ", ".join(symbols) + " }"
 
 
-def convert_1d_initializer(initializer_text: str, char_pp_map: dict[int, str]) -> str:
+def text_for_value(value: int, char_pp_map: dict[int, CharPPEntry]) -> str:
+    text = char_pp_map[value].text if value in char_pp_map else f"0x{value:02X}"
+    if text == "(space)":
+        return " "
+    if text == "\\n":
+        return "\\n"
+    if len(text) == 1:
+        return text
+    return f"<{text}>"
+
+
+def decode_text(values: list[int], char_pp_map: dict[int, CharPPEntry]) -> str:
+    return "".join(text_for_value(value, char_pp_map) for value in values)
+
+
+def convert_1d_initializer(initializer_text: str, char_pp_map: dict[int, CharPPEntry]) -> str:
     inner = initializer_text.strip()
     if not (inner.startswith("{") and inner.endswith("}")):
         raise ValueError("Expected brace-wrapped initializer")
 
     values = parse_byte_tokens(inner[1:-1])
-    return convert_row(values, char_pp_map)
+    symbols = symbols_for_values(values, char_pp_map)
+    single_line = "{ " + ", ".join(symbols) + " }"
+    if len(single_line) <= 120:
+        return single_line
+
+    rows = [", ".join(symbols[i : i + 8]) for i in range(0, len(symbols), 8)]
+    return "{\n    " + ",\n    ".join(rows) + "\n}"
 
 
-def convert_array(source_text: str, array_name: str, char_pp_map: dict[int, str]) -> str:
+def convert_array(source_text: str, array_name: str, char_pp_map: dict[int, CharPPEntry]) -> str:
     initializer = extract_initializer_block(source_text, array_name)
 
     try:
@@ -108,6 +146,60 @@ def convert_array(source_text: str, array_name: str, char_pp_map: dict[int, str]
 
     converted_rows = [convert_row(parse_byte_tokens(row), char_pp_map) for row in rows]
     return "{\n    " + ",\n    ".join(converted_rows) + "\n};"
+
+
+def convert_array_with_text_comment(source_text: str, array_name: str, char_pp_map: dict[int, CharPPEntry]) -> str:
+    initializer = extract_initializer_block(source_text, array_name)
+    values = parse_byte_tokens(initializer.strip()[1:-1])
+    return f"// JP: {decode_text(values, char_pp_map)}\n{convert_array(source_text, array_name, char_pp_map)}"
+
+
+def find_u8_arrays(source_text: str) -> list[tuple[str, int, int, str]]:
+    arrays: list[tuple[str, int, int, str]] = []
+    pattern = re.compile(
+        r"(?m)^(?P<decl>[ \t]*(?:static[ \t]+)?(?:const[ \t]+)?u8[ \t]+(?P<name>\w+)[ \t]*\[[^\]]*\][ \t]*=[ \t]*)"
+    )
+
+    for match in pattern.finditer(source_text):
+        initializer = extract_initializer_block(source_text[match.start() :], match.group("name"))
+        initializer_start = source_text.find("{", match.end() - 1)
+        initializer_end = initializer_start + len(initializer)
+        arrays.append((match.group("name"), match.start(), initializer_end, source_text[match.start() : initializer_end]))
+
+    return arrays
+
+
+def convert_u8_array_declaration(
+    declaration_text: str, array_name: str, char_pp_map: dict[int, CharPPEntry]
+) -> str:
+    initializer = extract_initializer_block(declaration_text, array_name)
+    values = parse_byte_tokens(initializer.strip()[1:-1])
+    converted = convert_array(declaration_text, array_name, char_pp_map)
+    converted_initializer = converted[:-1] if converted.endswith(";") else converted
+    declaration_prefix = declaration_text[: declaration_text.find("{")]
+    return f"// JP: {decode_text(values, char_pp_map)}\n{declaration_prefix}{converted_initializer}"
+
+
+def convert_all_u8_arrays(source_text: str, char_pp_map: dict[int, CharPPEntry]) -> str:
+    converted_text = source_text
+
+    for array_name, start, end, declaration_text in reversed(find_u8_arrays(source_text)):
+        preceding_end = start
+        while preceding_end > 0:
+            preceding_line_start = source_text.rfind("\n", 0, preceding_end - 1) + 1
+            preceding_line = source_text[preceding_line_start:preceding_end].strip()
+            if preceding_line:
+                if preceding_line.startswith("// JP: "):
+                    start = preceding_line_start
+                break
+            preceding_end = preceding_line_start
+        converted_text = (
+            converted_text[:start]
+            + convert_u8_array_declaration(declaration_text, array_name, char_pp_map)
+            + converted_text[end:]
+        )
+
+    return converted_text
 
 
 def main() -> int:
@@ -130,6 +222,21 @@ def main() -> int:
         default=DEFAULT_CHARMAP,
         help=f"Path to charmap header (default: {DEFAULT_CHARMAP})",
     )
+    parser.add_argument(
+        "--text-comment",
+        action="store_true",
+        help="Print the decoded JP text as a comment before the converted array.",
+    )
+    parser.add_argument(
+        "--all-u8-arrays",
+        action="store_true",
+        help="Convert every u8 array initializer in the source.",
+    )
+    parser.add_argument(
+        "--rewrite",
+        action="store_true",
+        help="Rewrite the source file in place. Implies --all-u8-arrays.",
+    )
     args = parser.parse_args()
 
     source_path = pathlib.Path(args.source)
@@ -138,7 +245,15 @@ def main() -> int:
     try:
         source_text = source_path.read_text(encoding="utf-8")
         char_pp_map = load_char_pp_map(charmap_path)
-        print(convert_array(source_text, args.array, char_pp_map))
+        if args.rewrite:
+            converted_text = convert_all_u8_arrays(source_text, char_pp_map)
+            source_path.write_text(converted_text, encoding="utf-8")
+        elif args.all_u8_arrays:
+            print(convert_all_u8_arrays(source_text, char_pp_map), end="")
+        elif args.text_comment:
+            print(convert_array_with_text_comment(source_text, args.array, char_pp_map))
+        else:
+            print(convert_array(source_text, args.array, char_pp_map))
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

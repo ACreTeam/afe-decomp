@@ -42,6 +42,7 @@
 #include "m_design_ovl_h.h"
 #include "m_shutter_ovl_h.h"
 #include "m_alarmIn_ovl_h.h"
+#include "m_film_ovl_h.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -212,7 +213,7 @@ struct submenu_overlay_s {
     /* 0xACC */ mPC_Ovl_c* passwordChk_ovl;
     /* 0xAD0 */ mAL_Ovl_c* alarmIn_ovl;
     /* 0xAD4 */ mST_Ovl_c* shutter_ovl;
-    /* 0xAD8 */ void* film_ovl;
+    /* 0xAD8 */ mFL_Ovl_c* film_ovl;
     /* 0xADC */ u8 hboard_exists;
     /* 0xADD */ u8 le_exists;
     /* 0xADE */ u8 _ADE;

@@ -1,0 +1,905 @@
+#ifdef __INTELLISENSE__
+#include "types.h"
+#include "charmap.h"
+typedef struct {
+    u8* text;
+    int length;
+} mFL_Line_c;
+typedef struct {
+    mFL_Line_c* lines;
+    int line_count;
+    int next_type;
+    int next0;
+    int next1;
+    int next2;
+    int next3;
+} mFL_StrbString_c;
+
+typedef struct {
+    mFL_Line_c* lines;
+    int line_count;
+} mFL_SelbString_c;
+#endif
+
+#define STR(x) { x, sizeof(x) }
+#define NULL_LINE { NULL, 0 }
+
+/* Data tables for the film overlay. */
+// JP: このしゃしんを、
+u8 fl_strb_save_select_str00[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_132 };
+// JP: SDカードに ほぞんしますか?
+u8 fl_strb_save_select_str01[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_032, CHAR_PP_029,
+    CHAR_PP_240, CHAR_PP_195, CHAR_PP_011, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_save_select_line[] = {
+    STR(fl_strb_save_select_str00),
+    STR(fl_strb_save_select_str01),
+};
+// JP: SDカードに かきこんでいます
+u8 fl_strb_now_save_str00[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_032, CHAR_PP_005,
+    CHAR_PP_006, CHAR_PP_009, CHAR_PP_195, CHAR_PP_244, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012
+};
+// JP: しばらく おまちください
+u8 fl_strb_now_save_str01[] = {
+    CHAR_PP_011, CHAR_PP_246, CHAR_PP_123, CHAR_PP_007, CHAR_PP_032, CHAR_PP_004, CHAR_PP_030, CHAR_PP_016,
+    CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001
+};
+
+mFL_Line_c fl_strb_now_save_line[] = {
+    STR(fl_strb_now_save_str00),
+    STR(fl_strb_now_save_str01),
+};
+// JP: ほぞんしました。
+u8 fl_strb_save_success_str00[] = { CHAR_PP_029, CHAR_PP_240, CHAR_PP_195, CHAR_PP_011, CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_save_success_line[] = {
+    STR(fl_strb_save_success_str00),
+};
+// JP: SDカードが みつかりません。
+u8 fl_strb_cannot_mount_str00[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_231, CHAR_PP_032, CHAR_PP_031,
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_124, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+// JP: SDカードがはいっている
+u8 fl_strb_cannot_mount_str10[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_231, CHAR_PP_025, CHAR_PP_001,
+    CHAR_PP_204, CHAR_PP_018, CHAR_PP_001, CHAR_PP_125
+};
+// JP: SDカードアダプタを
+u8 fl_strb_cannot_mount_str11[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_145, CHAR_PP_216, CHAR_PP_228,
+    CHAR_PP_160, CHAR_PP_194
+};
+
+mFL_Line_c fl_strb_cannot_mount_line[] = {
+    STR(fl_strb_cannot_mount_str00),
+    NULL_LINE,
+    STR(fl_strb_cannot_mount_str10),
+    STR(fl_strb_cannot_mount_str11),
+};
+// JP: ライトプロテクトが
+u8 fl_strb_err_write_protect_str00[] = { CHAR_PP_183, CHAR_PP_146, CHAR_PP_164, CHAR_PP_228, CHAR_PP_187, CHAR_PP_163, CHAR_PP_152, CHAR_PP_164, CHAR_PP_231 };
+// JP: かかっています。
+u8 fl_strb_err_write_protect_str01[] = { CHAR_PP_005, CHAR_PP_005, CHAR_PP_204, CHAR_PP_018, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012, CHAR_PP_129 };
+// JP: SDカードの ライトプロテクトを
+u8 fl_strb_err_write_protect_str10[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_024, CHAR_PP_032, CHAR_PP_183,
+    CHAR_PP_146, CHAR_PP_164, CHAR_PP_228, CHAR_PP_187, CHAR_PP_163, CHAR_PP_152, CHAR_PP_164, CHAR_PP_194
+};
+// JP: かいじょしてください。
+u8 fl_strb_err_write_protect_str11[] = {
+    CHAR_PP_005, CHAR_PP_001, CHAR_PP_237, CHAR_PP_203, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_err_write_protect_line[] = {
+    STR(fl_strb_err_write_protect_str00),
+    STR(fl_strb_err_write_protect_str01),
+    STR(fl_strb_err_write_protect_str10),
+    STR(fl_strb_err_write_protect_str11),
+};
+// JP: しょきかが ひつようです。
+u8 fl_strb_initialize_select_str00[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_231, CHAR_PP_032, CHAR_PP_026, CHAR_PP_017,
+    CHAR_PP_096, CHAR_PP_002, CHAR_PP_244, CHAR_PP_012, CHAR_PP_129
+};
+// JP: しょきかすると、このゲームに
+u8 fl_strb_initialize_select_str10[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_012, CHAR_PP_125, CHAR_PP_019, CHAR_PP_132,
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_209, CHAR_PP_144, CHAR_PP_177, CHAR_PP_021
+};
+// JP: かんけいのないデータも、
+u8 fl_strb_initialize_select_str11[] = {
+    CHAR_PP_005, CHAR_PP_195, CHAR_PP_008, CHAR_PP_001, CHAR_PP_024, CHAR_PP_020, CHAR_PP_001, CHAR_PP_219,
+    CHAR_PP_144, CHAR_PP_160, CHAR_PP_091, CHAR_PP_132
+};
+// JP: すべて きえてしまいます。
+u8 fl_strb_initialize_select_str20[] = {
+    CHAR_PP_012, CHAR_PP_249, CHAR_PP_018, CHAR_PP_032, CHAR_PP_006, CHAR_PP_003, CHAR_PP_018, CHAR_PP_011,
+    CHAR_PP_030, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012, CHAR_PP_129
+};
+// JP: SDカードを しょきかしますか?
+u8 fl_strb_initialize_select_str30[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194, CHAR_PP_032, CHAR_PP_011,
+    CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_011, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_initialize_select_line[] = {
+    STR(fl_strb_initialize_select_str00),
+    NULL_LINE,
+    STR(fl_strb_initialize_select_str10),
+    STR(fl_strb_initialize_select_str11),
+    STR(fl_strb_initialize_select_str20),
+    NULL_LINE,
+    STR(fl_strb_initialize_select_str30),
+};
+// JP: しょきかちゅうは
+u8 fl_strb_now_initialize_str00[] = { CHAR_PP_011, CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_016, CHAR_PP_202, CHAR_PP_002, CHAR_PP_025 };
+// JP: SDカードアダプタや
+u8 fl_strb_now_initialize_str01[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_145, CHAR_PP_216, CHAR_PP_228,
+    CHAR_PP_160, CHAR_PP_093
+};
+// JP: パワーボタンに
+u8 fl_strb_now_initialize_str10[] = { CHAR_PP_226, CHAR_PP_188, CHAR_PP_144, CHAR_PP_225, CHAR_PP_160, CHAR_PP_189, CHAR_PP_021 };
+// JP: さわらないでください。
+u8 fl_strb_now_initialize_str11[] = {
+    CHAR_PP_010, CHAR_PP_193, CHAR_PP_123, CHAR_PP_020, CHAR_PP_001, CHAR_PP_244, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+// JP: SDカードをしょきかしています
+u8 fl_strb_now_initialize_str20[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194, CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_006, CHAR_PP_005, CHAR_PP_011, CHAR_PP_018, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012
+};
+// JP: しばらく おまちください
+u8 fl_strb_now_initialize_str21[] = {
+    CHAR_PP_011, CHAR_PP_246, CHAR_PP_123, CHAR_PP_007, CHAR_PP_032, CHAR_PP_004, CHAR_PP_030, CHAR_PP_016,
+    CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001
+};
+
+mFL_Line_c fl_strb_now_initialize_line[] = {
+    STR(fl_strb_now_initialize_str00),
+    STR(fl_strb_now_initialize_str01),
+    STR(fl_strb_now_initialize_str10),
+    STR(fl_strb_now_initialize_str11),
+    STR(fl_strb_now_initialize_str20),
+    STR(fl_strb_now_initialize_str21),
+};
+// JP: しょきかが おわりました。
+u8 fl_strb_initialize_success_str00[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_231, CHAR_PP_032, CHAR_PP_004, CHAR_PP_193,
+    CHAR_PP_124, CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_initialize_success_line[] = {
+    STR(fl_strb_initialize_success_str00),
+};
+// JP: もういちど、しょきかを
+u8 fl_strb_initialize_retry_select_str00[] = {
+    CHAR_PP_091, CHAR_PP_002, CHAR_PP_001, CHAR_PP_016, CHAR_PP_245, CHAR_PP_132, CHAR_PP_011, CHAR_PP_203,
+    CHAR_PP_006, CHAR_PP_005, CHAR_PP_194
+};
+// JP: おこないますか?
+u8 fl_strb_initialize_retry_select_str01[] = { CHAR_PP_004, CHAR_PP_009, CHAR_PP_020, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063 };
+
+mFL_Line_c fl_strb_initialize_retry_select_line[] = {
+    STR(fl_strb_initialize_retry_select_str00),
+    STR(fl_strb_initialize_retry_select_str01),
+};
+// JP: このファイルを ほぞんするには、
+u8 fl_strb_no_space_area_str00[] = {
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_029, CHAR_PP_240, CHAR_PP_195, CHAR_PP_012, CHAR_PP_125, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132
+};
+// JP: 0.9メガバイトの
+u8 fl_strb_no_space_area_str10[] = { CHAR_PP_048, CHAR_PP_046, CHAR_PP_057, CHAR_PP_178, CHAR_PP_206, CHAR_PP_221, CHAR_PP_146, CHAR_PP_164, CHAR_PP_024 };
+// JP: あきようりょうが ひつようです。
+u8 fl_strb_no_space_area_str11[] = {
+    CHAR_PP_000, CHAR_PP_006, CHAR_PP_096, CHAR_PP_002, CHAR_PP_124, CHAR_PP_203, CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_032, CHAR_PP_026, CHAR_PP_017, CHAR_PP_096, CHAR_PP_002, CHAR_PP_244, CHAR_PP_012, CHAR_PP_129
+};
+// JP: あきようりょうがあるSDカードを
+u8 fl_strb_no_space_area_str20[] = {
+    CHAR_PP_000, CHAR_PP_006, CHAR_PP_096, CHAR_PP_002, CHAR_PP_124, CHAR_PP_203, CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_000, CHAR_PP_125, CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194
+};
+// JP: せつぞくしてください。
+u8 fl_strb_no_space_area_str21[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_no_space_area_line[] = {
+    STR(fl_strb_no_space_area_str00),
+    NULL_LINE,
+    STR(fl_strb_no_space_area_str10),
+    STR(fl_strb_no_space_area_str11),
+    STR(fl_strb_no_space_area_str20),
+    STR(fl_strb_no_space_area_str21),
+};
+// JP: しゃしんを ほぞんすることが
+u8 fl_strb_save_failure_str00[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_029, CHAR_PP_240,
+    CHAR_PP_195, CHAR_PP_012, CHAR_PP_125, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231
+};
+// JP: できませんでした。
+u8 fl_strb_save_failure_str01[] = { CHAR_PP_244, CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_244, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_save_failure_line[] = {
+    STR(fl_strb_save_failure_str00),
+    STR(fl_strb_save_failure_str01),
+};
+// JP: このしゃしんを ほぞんするには、
+u8 fl_strb_need_sdc_for_save_str00[] = {
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_029, CHAR_PP_240, CHAR_PP_195, CHAR_PP_012, CHAR_PP_125, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132
+};
+// JP: SDカードが ひつようです。
+u8 fl_strb_need_sdc_for_save_str01[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_231, CHAR_PP_032, CHAR_PP_026,
+    CHAR_PP_017, CHAR_PP_096, CHAR_PP_002, CHAR_PP_244, CHAR_PP_012, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_need_sdc_for_save_line[] = {
+    STR(fl_strb_need_sdc_for_save_str00),
+    STR(fl_strb_need_sdc_for_save_str01),
+};
+// JP: ファイルめいに つける
+u8 fl_strb_err_num_full_str00[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_036, CHAR_PP_001, CHAR_PP_021, CHAR_PP_032,
+    CHAR_PP_017, CHAR_PP_008, CHAR_PP_125
+};
+// JP: ばんごうに あきがないので、
+u8 fl_strb_err_num_full_str01[] = {
+    CHAR_PP_246, CHAR_PP_195, CHAR_PP_235, CHAR_PP_002, CHAR_PP_021, CHAR_PP_032, CHAR_PP_000, CHAR_PP_006,
+    CHAR_PP_231, CHAR_PP_020, CHAR_PP_001, CHAR_PP_024, CHAR_PP_244, CHAR_PP_132
+};
+// JP: これいじょう、あたらしい
+u8 fl_strb_err_num_full_str10[] = {
+    CHAR_PP_009, CHAR_PP_126, CHAR_PP_001, CHAR_PP_237, CHAR_PP_203, CHAR_PP_002, CHAR_PP_132, CHAR_PP_000,
+    CHAR_PP_015, CHAR_PP_123, CHAR_PP_011, CHAR_PP_001
+};
+// JP: しゃしんを かきこめません。
+u8 fl_strb_err_num_full_str11[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_005, CHAR_PP_006,
+    CHAR_PP_009, CHAR_PP_036, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+// JP: ファイルを せいりした
+u8 fl_strb_err_num_full_str20[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032, CHAR_PP_013, CHAR_PP_001,
+    CHAR_PP_124, CHAR_PP_011, CHAR_PP_015
+};
+// JP: SDカードを
+u8 fl_strb_err_num_full_str21[] = { CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194 };
+// JP: せつぞくしてください。
+u8 fl_strb_err_num_full_str30[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_err_num_full_line[] = {
+    STR(fl_strb_err_num_full_str00),
+    STR(fl_strb_err_num_full_str01),
+    STR(fl_strb_err_num_full_str10),
+    STR(fl_strb_err_num_full_str11),
+    STR(fl_strb_err_num_full_str20),
+    STR(fl_strb_err_num_full_str21),
+    STR(fl_strb_err_num_full_str30),
+};
+// JP: ディレクトリめいに つける
+u8 fl_strb_err_dir_full_str00[] = {
+    CHAR_PP_219, CHAR_PP_136, CHAR_PP_186, CHAR_PP_152, CHAR_PP_164, CHAR_PP_184, CHAR_PP_036, CHAR_PP_001,
+    CHAR_PP_021, CHAR_PP_032, CHAR_PP_017, CHAR_PP_008, CHAR_PP_125
+};
+// JP: ばんごうに あきがないので、
+u8 fl_strb_err_dir_full_str01[] = {
+    CHAR_PP_246, CHAR_PP_195, CHAR_PP_235, CHAR_PP_002, CHAR_PP_021, CHAR_PP_032, CHAR_PP_000, CHAR_PP_006,
+    CHAR_PP_231, CHAR_PP_020, CHAR_PP_001, CHAR_PP_024, CHAR_PP_244, CHAR_PP_132
+};
+// JP: あたらしい ディレクトリを
+u8 fl_strb_err_dir_full_str10[] = {
+    CHAR_PP_000, CHAR_PP_015, CHAR_PP_123, CHAR_PP_011, CHAR_PP_001, CHAR_PP_032, CHAR_PP_219, CHAR_PP_136,
+    CHAR_PP_186, CHAR_PP_152, CHAR_PP_164, CHAR_PP_184, CHAR_PP_194
+};
+// JP: つくることができません。
+u8 fl_strb_err_dir_full_str11[] = {
+    CHAR_PP_017, CHAR_PP_007, CHAR_PP_125, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_244, CHAR_PP_006,
+    CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+// JP: ディレクトリを せいりした
+u8 fl_strb_err_dir_full_str20[] = {
+    CHAR_PP_219, CHAR_PP_136, CHAR_PP_186, CHAR_PP_152, CHAR_PP_164, CHAR_PP_184, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_013, CHAR_PP_001, CHAR_PP_124, CHAR_PP_011, CHAR_PP_015
+};
+// JP: SDカードを
+u8 fl_strb_err_dir_full_str21[] = { CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194 };
+// JP: せつぞくしてください。
+u8 fl_strb_err_dir_full_str30[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_err_dir_full_line[] = {
+    STR(fl_strb_err_dir_full_str00),
+    STR(fl_strb_err_dir_full_str01),
+    STR(fl_strb_err_dir_full_str10),
+    STR(fl_strb_err_dir_full_str11),
+    STR(fl_strb_err_dir_full_str20),
+    STR(fl_strb_err_dir_full_str21),
+    STR(fl_strb_err_dir_full_str30),
+};
+// JP: スロットAの SDカードは
+u8 fl_strb_broken_slot_a_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_025
+};
+// JP: データがこわれているので、
+u8 fl_strb_broken_slot_a_str01[] = {
+    CHAR_PP_219, CHAR_PP_144, CHAR_PP_160, CHAR_PP_231, CHAR_PP_009, CHAR_PP_193, CHAR_PP_126, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_125, CHAR_PP_024, CHAR_PP_244, CHAR_PP_132
+};
+
+mFL_Line_c fl_strb_broken_slot_a_line[] = {
+    STR(fl_strb_broken_slot_a_str00),
+    STR(fl_strb_broken_slot_a_str01),
+};
+// JP: スロットBの SDカードは
+u8 fl_strb_broken_slot_b_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_025
+};
+// JP: データがこわれているので、
+u8 fl_strb_broken_slot_b_str01[] = {
+    CHAR_PP_219, CHAR_PP_144, CHAR_PP_160, CHAR_PP_231, CHAR_PP_009, CHAR_PP_193, CHAR_PP_126, CHAR_PP_018,
+    CHAR_PP_001, CHAR_PP_125, CHAR_PP_024, CHAR_PP_244, CHAR_PP_132
+};
+
+mFL_Line_c fl_strb_broken_slot_b_line[] = {
+    STR(fl_strb_broken_slot_b_str00),
+    STR(fl_strb_broken_slot_b_str01),
+};
+// JP: スロットAの SDカードには
+u8 fl_strb_no_space_slot_a_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_025
+};
+// JP: あきようりょうが たりません。
+u8 fl_strb_no_space_slot_a_sdc_str01[] = {
+    CHAR_PP_000, CHAR_PP_006, CHAR_PP_096, CHAR_PP_002, CHAR_PP_124, CHAR_PP_203, CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_032, CHAR_PP_015, CHAR_PP_124, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_no_space_slot_a_sdc_line[] = {
+    STR(fl_strb_no_space_slot_a_sdc_str00),
+    STR(fl_strb_no_space_slot_a_sdc_str01),
+};
+// JP: スロットBの SDカードには
+u8 fl_strb_no_space_slot_b_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_025
+};
+// JP: あきようりょうが たりません。
+u8 fl_strb_no_space_slot_b_sdc_str01[] = {
+    CHAR_PP_000, CHAR_PP_006, CHAR_PP_096, CHAR_PP_002, CHAR_PP_124, CHAR_PP_203, CHAR_PP_002, CHAR_PP_231,
+    CHAR_PP_032, CHAR_PP_015, CHAR_PP_124, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_no_space_slot_b_sdc_line[] = {
+    STR(fl_strb_no_space_slot_b_sdc_str00),
+    STR(fl_strb_no_space_slot_b_sdc_str01),
+};
+// JP: しょきかに しっぱいしました。
+u8 fl_strb_initialize_failure_str00[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_006, CHAR_PP_005, CHAR_PP_021, CHAR_PP_032, CHAR_PP_011, CHAR_PP_204,
+    CHAR_PP_251, CHAR_PP_001, CHAR_PP_011, CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_initialize_failure_line[] = {
+    STR(fl_strb_initialize_failure_str00),
+};
+// JP: スロットAの SDカードは
+u8 fl_strb_cannot_use_slot_a_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_025
+};
+// JP: つかうことが できません。
+u8 fl_strb_cannot_use_slot_a_sdc_str01[] = {
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_002, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_032, CHAR_PP_244,
+    CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_cannot_use_slot_a_sdc_line[] = {
+    STR(fl_strb_cannot_use_slot_a_sdc_str00),
+    STR(fl_strb_cannot_use_slot_a_sdc_str01),
+};
+// JP: スロットBの SDカードは
+u8 fl_strb_cannot_use_slot_b_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_025
+};
+// JP: つかうことが できません。
+u8 fl_strb_cannot_use_slot_b_sdc_str01[] = {
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_002, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_032, CHAR_PP_244,
+    CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_cannot_use_slot_b_sdc_line[] = {
+    STR(fl_strb_cannot_use_slot_b_sdc_str00),
+    STR(fl_strb_cannot_use_slot_b_sdc_str01),
+};
+// JP: スロットAの SDカードには
+u8 fl_strb_slot_a_sdc_is_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_025
+};
+
+mFL_Line_c fl_strb_slot_a_sdc_is_line[] = {
+    STR(fl_strb_slot_a_sdc_is_str00),
+};
+// JP: スロットBの SDカードには
+u8 fl_strb_slot_b_sdc_is_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_025
+};
+
+mFL_Line_c fl_strb_slot_b_sdc_is_line[] = {
+    STR(fl_strb_slot_b_sdc_is_str00),
+};
+// JP: スロットAに ささっているものは
+u8 fl_strb_cannot_use_slot_a_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_021, CHAR_PP_032, CHAR_PP_010,
+    CHAR_PP_010, CHAR_PP_204, CHAR_PP_018, CHAR_PP_001, CHAR_PP_125, CHAR_PP_091, CHAR_PP_024, CHAR_PP_025
+};
+// JP: つかうことが できません。
+u8 fl_strb_cannot_use_slot_a_str01[] = {
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_002, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_032, CHAR_PP_244,
+    CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_cannot_use_slot_a_line[] = {
+    STR(fl_strb_cannot_use_slot_a_str00),
+    STR(fl_strb_cannot_use_slot_a_str01),
+};
+// JP: スロットBに ささっているものは
+u8 fl_strb_cannot_use_slot_b_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_021, CHAR_PP_032, CHAR_PP_010,
+    CHAR_PP_010, CHAR_PP_204, CHAR_PP_018, CHAR_PP_001, CHAR_PP_125, CHAR_PP_091, CHAR_PP_024, CHAR_PP_025
+};
+// JP: つかうことが できません。
+u8 fl_strb_cannot_use_slot_b_str01[] = {
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_002, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_032, CHAR_PP_244,
+    CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_cannot_use_slot_b_line[] = {
+    STR(fl_strb_cannot_use_slot_b_str00),
+    STR(fl_strb_cannot_use_slot_b_str01),
+};
+// JP: SDカードを
+u8 fl_strb_please_set_sdc_str00[] = { CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194 };
+// JP: せつぞくしてください。
+u8 fl_strb_please_set_sdc_str01[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_please_set_sdc_line[] = {
+    STR(fl_strb_please_set_sdc_str00),
+    STR(fl_strb_please_set_sdc_str01),
+};
+// JP: スロットAの SDカードに
+u8 fl_strb_to_write_slot_a_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021
+};
+// JP: かきこむための、
+u8 fl_strb_to_write_slot_a_sdc_str01[] = { CHAR_PP_005, CHAR_PP_006, CHAR_PP_009, CHAR_PP_035, CHAR_PP_015, CHAR_PP_036, CHAR_PP_024, CHAR_PP_132 };
+
+mFL_Line_c fl_strb_to_write_slot_a_sdc_line[] = {
+    STR(fl_strb_to_write_slot_a_sdc_str00),
+    STR(fl_strb_to_write_slot_a_sdc_str01),
+};
+// JP: スロットBの SDカードに
+u8 fl_strb_to_write_slot_b_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021
+};
+// JP: かきこむための、
+u8 fl_strb_to_write_slot_b_sdc_str01[] = { CHAR_PP_005, CHAR_PP_006, CHAR_PP_009, CHAR_PP_035, CHAR_PP_015, CHAR_PP_036, CHAR_PP_024, CHAR_PP_132 };
+
+mFL_Line_c fl_strb_to_write_slot_b_sdc_line[] = {
+    STR(fl_strb_to_write_slot_b_sdc_str00),
+    STR(fl_strb_to_write_slot_b_sdc_str01),
+};
+// JP: スロットAの SDカードの
+u8 fl_strb_fail_proc_slot_a_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_024
+};
+// JP: しょりに しっぱいしました。
+u8 fl_strb_fail_proc_slot_a_sdc_str01[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_124, CHAR_PP_021, CHAR_PP_032, CHAR_PP_011, CHAR_PP_204, CHAR_PP_251,
+    CHAR_PP_001, CHAR_PP_011, CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_fail_proc_slot_a_sdc_line[] = {
+    STR(fl_strb_fail_proc_slot_a_sdc_str00),
+    STR(fl_strb_fail_proc_slot_a_sdc_str01),
+};
+// JP: スロットBの SDカードの
+u8 fl_strb_fail_proc_slot_b_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_024
+};
+// JP: しょりに しっぱいしました。
+u8 fl_strb_fail_proc_slot_b_sdc_str01[] = {
+    CHAR_PP_011, CHAR_PP_203, CHAR_PP_124, CHAR_PP_021, CHAR_PP_032, CHAR_PP_011, CHAR_PP_204, CHAR_PP_251,
+    CHAR_PP_001, CHAR_PP_011, CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_fail_proc_slot_b_sdc_line[] = {
+    STR(fl_strb_fail_proc_slot_b_sdc_str00),
+    STR(fl_strb_fail_proc_slot_b_sdc_str01),
+};
+// JP: じゅんびが できたら
+u8 fl_strb_please_push_a_button_str00[] = {
+    CHAR_PP_237, CHAR_PP_202, CHAR_PP_195, CHAR_PP_247, CHAR_PP_231, CHAR_PP_032, CHAR_PP_244, CHAR_PP_006,
+    CHAR_PP_015, CHAR_PP_123
+};
+// JP: Aボタンを おしてください。
+u8 fl_strb_please_push_a_button_str01[] = {
+    CHAR_PP_065, CHAR_PP_225, CHAR_PP_160, CHAR_PP_189, CHAR_PP_194, CHAR_PP_032, CHAR_PP_004, CHAR_PP_011,
+    CHAR_PP_018, CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_please_push_a_button_line[] = {
+    STR(fl_strb_please_push_a_button_str00),
+    STR(fl_strb_please_push_a_button_str01),
+};
+// JP: もういちど、このしゃしんを
+u8 fl_strb_save_retry_select_str00[] = {
+    CHAR_PP_091, CHAR_PP_002, CHAR_PP_001, CHAR_PP_016, CHAR_PP_245, CHAR_PP_132, CHAR_PP_009, CHAR_PP_024,
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194
+};
+// JP: SDカードに ほぞんしますか?
+u8 fl_strb_save_retry_select_str01[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_021, CHAR_PP_032, CHAR_PP_029,
+    CHAR_PP_240, CHAR_PP_195, CHAR_PP_011, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_save_retry_select_line[] = {
+    STR(fl_strb_save_retry_select_str00),
+    STR(fl_strb_save_retry_select_str01),
+};
+// JP: スロットAに
+u8 fl_strb_please_set_slot_a_str00[] = { CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_021 };
+// JP: せつぞくしてください。
+u8 fl_strb_please_set_slot_a_str01[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_please_set_slot_a_line[] = {
+    STR(fl_strb_please_set_slot_a_str00),
+    STR(fl_strb_please_set_slot_a_str01),
+};
+// JP: スロットBに
+u8 fl_strb_please_set_slot_b_str00[] = { CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_021 };
+// JP: せつぞくしてください。
+u8 fl_strb_please_set_slot_b_str01[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_please_set_slot_b_line[] = {
+    STR(fl_strb_please_set_slot_b_str00),
+    STR(fl_strb_please_set_slot_b_str01),
+};
+// JP: べつの SDカードを
+u8 fl_strb_please_set_other_sdc_str00[] = {
+    CHAR_PP_249, CHAR_PP_017, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144,
+    CHAR_PP_220, CHAR_PP_194
+};
+// JP: せつぞくしてください。
+u8 fl_strb_please_set_other_sdc_str01[] = {
+    CHAR_PP_013, CHAR_PP_017, CHAR_PP_240, CHAR_PP_007, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_please_set_other_sdc_line[] = {
+    STR(fl_strb_please_set_other_sdc_str00),
+    STR(fl_strb_please_set_other_sdc_str01),
+};
+// JP: おなじなまえのディレクトリや
+u8 fl_strb_cannot_make_dir_or_file_str00[] = {
+    CHAR_PP_004, CHAR_PP_020, CHAR_PP_237, CHAR_PP_020, CHAR_PP_030, CHAR_PP_003, CHAR_PP_024, CHAR_PP_219,
+    CHAR_PP_136, CHAR_PP_186, CHAR_PP_152, CHAR_PP_164, CHAR_PP_184, CHAR_PP_093
+};
+// JP: ファイルがあるため、
+u8 fl_strb_cannot_make_dir_or_file_str01[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_231, CHAR_PP_000, CHAR_PP_125, CHAR_PP_015,
+    CHAR_PP_036, CHAR_PP_132
+};
+// JP: ひつようなディレクトリや
+u8 fl_strb_cannot_make_dir_or_file_str10[] = {
+    CHAR_PP_026, CHAR_PP_017, CHAR_PP_096, CHAR_PP_002, CHAR_PP_020, CHAR_PP_219, CHAR_PP_136, CHAR_PP_186,
+    CHAR_PP_152, CHAR_PP_164, CHAR_PP_184, CHAR_PP_093
+};
+// JP: ファイルを つくれません。
+u8 fl_strb_cannot_make_dir_or_file_str11[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032, CHAR_PP_017, CHAR_PP_007,
+    CHAR_PP_126, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_cannot_make_dir_or_file_line[] = {
+    STR(fl_strb_cannot_make_dir_or_file_str00),
+    STR(fl_strb_cannot_make_dir_or_file_str01),
+    STR(fl_strb_cannot_make_dir_or_file_str10),
+    STR(fl_strb_cannot_make_dir_or_file_str11),
+};
+// JP: スロットAの SDカードの
+u8 fl_strb_check_contents_slot_a_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_065, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_024
+};
+// JP: ないようをかくにんしてください。
+u8 fl_strb_check_contents_slot_a_sdc_str01[] = {
+    CHAR_PP_020, CHAR_PP_001, CHAR_PP_096, CHAR_PP_002, CHAR_PP_194, CHAR_PP_005, CHAR_PP_007, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_check_contents_slot_a_sdc_line[] = {
+    STR(fl_strb_check_contents_slot_a_sdc_str00),
+    STR(fl_strb_check_contents_slot_a_sdc_str01),
+};
+// JP: スロットBの SDカードの
+u8 fl_strb_check_contents_slot_b_sdc_str00[] = {
+    CHAR_PP_157, CHAR_PP_187, CHAR_PP_143, CHAR_PP_164, CHAR_PP_066, CHAR_PP_024, CHAR_PP_032, CHAR_PP_083,
+    CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_024
+};
+// JP: ないようをかくにんしてください。
+u8 fl_strb_check_contents_slot_b_sdc_str01[] = {
+    CHAR_PP_020, CHAR_PP_001, CHAR_PP_096, CHAR_PP_002, CHAR_PP_194, CHAR_PP_005, CHAR_PP_007, CHAR_PP_021,
+    CHAR_PP_195, CHAR_PP_011, CHAR_PP_018, CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_check_contents_slot_b_sdc_line[] = {
+    STR(fl_strb_check_contents_slot_b_sdc_str00),
+    STR(fl_strb_check_contents_slot_b_sdc_str01),
+};
+// JP: どうぶつのもりe+では、
+u8 fl_strb_not_disp_film_str00[] = {
+    CHAR_PP_245, CHAR_PP_002, CHAR_PP_248, CHAR_PP_017, CHAR_PP_024, CHAR_PP_091, CHAR_PP_124, CHAR_PP_101,
+    CHAR_PP_061, CHAR_PP_244, CHAR_PP_025, CHAR_PP_132
+};
+// JP: このファイルを あつかえません。
+u8 fl_strb_not_disp_film_str01[] = {
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_000, CHAR_PP_017, CHAR_PP_005, CHAR_PP_003, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+// JP: しゃしんを ひょうじすることが
+u8 fl_strb_not_disp_film_str10[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_026, CHAR_PP_203,
+    CHAR_PP_002, CHAR_PP_237, CHAR_PP_012, CHAR_PP_125, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231
+};
+// JP: できません。
+u8 fl_strb_not_disp_film_str11[] = { CHAR_PP_244, CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_not_disp_film_line[] = {
+    STR(fl_strb_not_disp_film_str00),
+    STR(fl_strb_not_disp_film_str01),
+    STR(fl_strb_not_disp_film_str10),
+    STR(fl_strb_not_disp_film_str11),
+};
+// JP: つぎのしゃしんを みますか?
+u8 fl_strb_disp_next_select_str00[] = {
+    CHAR_PP_017, CHAR_PP_232, CHAR_PP_024, CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194,
+    CHAR_PP_032, CHAR_PP_031, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_disp_next_select_line[] = {
+    STR(fl_strb_disp_next_select_str00),
+};
+// JP: ファイルを よむことが
+u8 fl_strb_cannot_read_str00[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032, CHAR_PP_096, CHAR_PP_035,
+    CHAR_PP_009, CHAR_PP_019, CHAR_PP_231
+};
+// JP: できませんでした。
+u8 fl_strb_cannot_read_str01[] = { CHAR_PP_244, CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_244, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_cannot_read_line[] = {
+    STR(fl_strb_cannot_read_str00),
+    STR(fl_strb_cannot_read_str01),
+};
+// JP: このしゃしんを けしますか?
+u8 fl_strb_erase_film_select_str00[] = {
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_008, CHAR_PP_011, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_erase_film_select_line[] = {
+    STR(fl_strb_erase_film_select_str00),
+};
+// JP: しゃしんを けしているあいだは
+u8 fl_strb_now_erase_str00[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_008, CHAR_PP_011,
+    CHAR_PP_018, CHAR_PP_001, CHAR_PP_125, CHAR_PP_000, CHAR_PP_001, CHAR_PP_241, CHAR_PP_025
+};
+// JP: SDカードアダプタや
+u8 fl_strb_now_erase_str01[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_145, CHAR_PP_216, CHAR_PP_228,
+    CHAR_PP_160, CHAR_PP_093
+};
+// JP: パワーボタンに
+u8 fl_strb_now_erase_str10[] = { CHAR_PP_226, CHAR_PP_188, CHAR_PP_144, CHAR_PP_225, CHAR_PP_160, CHAR_PP_189, CHAR_PP_021 };
+// JP: さわらないでください。
+u8 fl_strb_now_erase_str11[] = {
+    CHAR_PP_010, CHAR_PP_193, CHAR_PP_123, CHAR_PP_020, CHAR_PP_001, CHAR_PP_244, CHAR_PP_007, CHAR_PP_241,
+    CHAR_PP_010, CHAR_PP_001, CHAR_PP_129
+};
+// JP: しゃしんを けしています
+u8 fl_strb_now_erase_str20[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_008, CHAR_PP_011,
+    CHAR_PP_018, CHAR_PP_001, CHAR_PP_030, CHAR_PP_012
+};
+// JP: SDカードをぬかないでください
+u8 fl_strb_now_erase_str21[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_194, CHAR_PP_022, CHAR_PP_005,
+    CHAR_PP_020, CHAR_PP_001, CHAR_PP_244, CHAR_PP_007, CHAR_PP_241, CHAR_PP_010, CHAR_PP_001
+};
+
+mFL_Line_c fl_strb_now_erase_line[] = {
+    STR(fl_strb_now_erase_str00),
+    STR(fl_strb_now_erase_str01),
+    STR(fl_strb_now_erase_str10),
+    STR(fl_strb_now_erase_str11),
+    STR(fl_strb_now_erase_str20),
+    STR(fl_strb_now_erase_str21),
+};
+// JP: しゃしんを けしました。
+u8 fl_strb_erase_success_str00[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_008, CHAR_PP_011,
+    CHAR_PP_030, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_erase_success_line[] = {
+    STR(fl_strb_erase_success_str00),
+};
+// JP: SDカードが みつかりません。
+u8 fl_strb_not_found_sdc_str00[] = {
+    CHAR_PP_083, CHAR_PP_068, CHAR_PP_150, CHAR_PP_144, CHAR_PP_220, CHAR_PP_231, CHAR_PP_032, CHAR_PP_031,
+    CHAR_PP_017, CHAR_PP_005, CHAR_PP_124, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_129
+};
+
+mFL_Line_c fl_strb_not_found_sdc_line[] = {
+    STR(fl_strb_not_found_sdc_str00),
+};
+// JP: しゃしんを けすことが
+u8 fl_strb_cannot_erase_film_str00[] = {
+    CHAR_PP_011, CHAR_PP_201, CHAR_PP_011, CHAR_PP_195, CHAR_PP_194, CHAR_PP_032, CHAR_PP_008, CHAR_PP_012,
+    CHAR_PP_009, CHAR_PP_019, CHAR_PP_231
+};
+// JP: できませんでした。
+u8 fl_strb_cannot_erase_film_str01[] = { CHAR_PP_244, CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_244, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_cannot_erase_film_line[] = {
+    STR(fl_strb_cannot_erase_film_str00),
+    STR(fl_strb_cannot_erase_film_str01),
+};
+// JP: ファイルを よむことが
+u8 fl_strb_cannot_read_erase_str00[] = {
+    CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032, CHAR_PP_096, CHAR_PP_035,
+    CHAR_PP_009, CHAR_PP_019, CHAR_PP_231
+};
+// JP: できませんでした。
+u8 fl_strb_cannot_read_erase_str01[] = { CHAR_PP_244, CHAR_PP_006, CHAR_PP_030, CHAR_PP_013, CHAR_PP_195, CHAR_PP_244, CHAR_PP_011, CHAR_PP_015, CHAR_PP_129 };
+
+mFL_Line_c fl_strb_cannot_read_erase_line[] = {
+    STR(fl_strb_cannot_read_erase_str00),
+    STR(fl_strb_cannot_read_erase_str01),
+};
+// JP: このファイルを けしますか?
+u8 fl_strb_erase_file_select_str00[] = {
+    CHAR_PP_009, CHAR_PP_024, CHAR_PP_172, CHAR_PP_135, CHAR_PP_146, CHAR_PP_185, CHAR_PP_194, CHAR_PP_032,
+    CHAR_PP_008, CHAR_PP_011, CHAR_PP_030, CHAR_PP_012, CHAR_PP_005, CHAR_PP_063
+};
+
+mFL_Line_c fl_strb_erase_file_select_line[] = {
+    STR(fl_strb_erase_file_select_str00),
+};
+
+mFL_StrbString_c fl_strb_str_data[] = {
+    { fl_strb_save_select_line, 2, 1, 0, 1, -1, 0 },
+    { fl_strb_now_save_line, 2, 0, 7, 0, 0, 0 },
+    { fl_strb_save_success_line, 1, 7, 0, 0, 0, 0 },
+    { fl_strb_cannot_mount_line, 4, 4, 0x20, 0x21, 0, 0 },
+    { fl_strb_err_write_protect_line, 4, 6, 0x1E, 0x2D, 0, 0 },
+    { fl_strb_initialize_select_line, 7, 1, 1, 0x1F, 6, 0 },
+    { fl_strb_now_initialize_line, 6, 0, 8, 0, 0, 0 },
+    { fl_strb_initialize_success_line, 1, 8, 0x1F, 0, 0, 0 },
+    { fl_strb_initialize_retry_select_line, 2, 1, 0, 6, 0x1F, 0 },
+    { fl_strb_no_space_area_line, 6, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_save_failure_line, 2, 7, 0, 0, 0, 0 },
+    { fl_strb_need_sdc_for_save_line, 2, 7, 0, 0, 0, 0 },
+    { fl_strb_err_num_full_line, 7, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_err_dir_full_line, 7, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_broken_slot_a_line, 2, 8, 5, 0, 0, 0 },
+    { fl_strb_broken_slot_b_line, 2, 8, 5, 0, 0, 0 },
+    { fl_strb_no_space_slot_a_sdc_line, 2, 8, 9, 0, 0, 0 },
+    { fl_strb_no_space_slot_b_sdc_line, 2, 8, 9, 0, 0, 0 },
+    { fl_strb_initialize_failure_line, 1, 4, 0x13, 0x14, 0, 0 },
+    { fl_strb_cannot_use_slot_a_sdc_line, 2, 8, 0x22, 0, 0, 0 },
+    { fl_strb_cannot_use_slot_b_sdc_line, 2, 8, 0x22, 0, 0, 0 },
+    { fl_strb_slot_a_sdc_is_line, 1, 8, 4, 0, 0, 0 },
+    { fl_strb_slot_b_sdc_is_line, 1, 8, 4, 0, 0, 0 },
+    { fl_strb_cannot_use_slot_a_line, 2, 6, 0x19, 0x2D, 0, 0 },
+    { fl_strb_cannot_use_slot_b_line, 2, 6, 0x19, 0x2D, 0, 0 },
+    { fl_strb_please_set_sdc_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_to_write_slot_a_sdc_line, 2, 4, 0xD, 0xC, 0, 0 },
+    { fl_strb_to_write_slot_b_sdc_line, 2, 4, 0xD, 0xC, 0, 0 },
+    { fl_strb_fail_proc_slot_a_sdc_line, 2, 6, 0x1F, 0x2D, 0, 0 },
+    { fl_strb_fail_proc_slot_b_sdc_line, 2, 6, 0x1F, 0x2D, 0, 0 },
+    { fl_strb_please_push_a_button_line, 2, 5, 0x1F, 8, 0, 0 },
+    { fl_strb_save_retry_select_line, 2, 1, 0, 1, 0xA, 0 },
+    { fl_strb_please_set_slot_a_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_please_set_slot_b_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_please_set_other_sdc_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_cannot_make_dir_or_file_line, 4, 4, 0x24, 0x25, 0, 0 },
+    { fl_strb_check_contents_slot_a_sdc_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_check_contents_slot_b_sdc_line, 2, 8, 0x1E, 0, 0, 0 },
+    { fl_strb_not_disp_film_line, 4, 6, 0x27, 0x2F, 0, 0 },
+    { fl_strb_disp_next_select_line, 1, 2, 2, -1, -1, 0 },
+    { fl_strb_cannot_read_line, 2, 8, 0x27, 0, 0, 0 },
+    { fl_strb_erase_film_select_line, 1, 3, 3, 0x2A, -1, -1 },
+    { fl_strb_now_erase_line, 6, 0, 9, 0, 0, 0 },
+    { fl_strb_erase_success_line, 1, 7, 0, 0, 0, 0 },
+    { fl_strb_not_found_sdc_line, 1, 8, 0x2D, 0, 0, 0 },
+    { fl_strb_cannot_erase_film_line, 2, 7, 0, 0, 0, 0 },
+    { fl_strb_cannot_read_erase_line, 2, 8, 0x2F, 0, 0, 0 },
+    { fl_strb_erase_file_select_line, 1, 3, 3, 0x2A, -1, -1 },
+};
+// JP: はい
+u8 fl_selb_yes_str[] = { CHAR_PP_025, CHAR_PP_001 };
+// JP: いいえ
+u8 fl_selb_no_str[] = { CHAR_PP_001, CHAR_PP_001, CHAR_PP_003 };
+// JP: みる
+u8 fl_selb_preview_str[] = { CHAR_PP_031, CHAR_PP_125 };
+// JP: つぎをみる
+u8 fl_selb_next_preview_str[] = { CHAR_PP_017, CHAR_PP_232, CHAR_PP_194, CHAR_PP_031, CHAR_PP_125 };
+// JP: もういい
+u8 fl_selb_quit_str[] = { CHAR_PP_091, CHAR_PP_002, CHAR_PP_001, CHAR_PP_001 };
+// JP: けす
+u8 fl_selb_erase_str[] = { CHAR_PP_008, CHAR_PP_012 };
+
+mFL_Line_c fl_selb_yes_no_line[] = {
+    { fl_selb_yes_str, 2 },
+    { fl_selb_no_str, 3 },
+};
+
+mFL_Line_c fl_selb_no_yes_line[] = {
+    { fl_selb_no_str, 3 },
+    { fl_selb_yes_str, 2 },
+};
+
+mFL_Line_c fl_selb_preview_quit_line[] = {
+    { fl_selb_preview_str, 2 },
+    { fl_selb_quit_str, 4 },
+};
+
+mFL_Line_c fl_selb_yes_next_preview_quit_line[] = {
+    { fl_selb_erase_str, 2 },
+    { fl_selb_next_preview_str, 5 },
+    { fl_selb_quit_str, 4 },
+};
+
+mFL_SelbString_c fl_selb_str_data[] = {
+    { fl_selb_yes_no_line, 2 },
+    { fl_selb_no_yes_line, 2 },
+    { fl_selb_preview_quit_line, 2 },
+    { fl_selb_yes_next_preview_quit_line, 3 },
+};
