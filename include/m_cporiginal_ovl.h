@@ -12,7 +12,7 @@ extern "C" {
 
 #define mCO_PAGE_NUM 8
 #define mCO_ORIGINAL_NUM 12
-#define mCO_FOLDER_NAME_LEN 12
+#define mCO_FOLDER_NAME_LEN 10
 #define mCO_FOLDER_NAME_MAX_WIDTH 120
 
 /* TODO: find a better place for this */
@@ -30,6 +30,7 @@ struct cporiginal_s {
     u8 up_folder;
     u8 change_flg;
     int _10;
+    int _14;
     u16 mark_flg;
     u16 hide_flg[mCO_PAGE_NUM];
     u8 _26;

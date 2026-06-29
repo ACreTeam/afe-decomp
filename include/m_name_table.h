@@ -594,6 +594,7 @@ extern void mNT_present_new_music_live_version(int idx);
 #define ITEM_IS_MINIDISK_AIRCHECK(item) ((item) >= ITM_MINIDISK_AIRCHECK_START && (item) <= ITM_MINIDISK_AIRCHECK_END)
 #define ITEM_IS_MINIDISK_LIVE(item) ((item) >= ITM_MINIDISK_LIVE_START && (item) <= ITM_MINIDISK_LIVE_END)
 #define ITEM_IS_DUST(item) ((item) >= ITM_DUST0_EMPTY_CAN && (item) <= ITM_DUST2_OLD_TIRE)
+#define ITEM_IS_TOOL_FLOWER(item) (((item) >= ITM_FLOWER0 && (item) <= ITM_FLOWER8) || (item) == ITM_FLOWER9)
 
 #define ITEM_IS_DUMMY_MAILBOX(item) ((item) >= DUMMY_MAILBOX0 && (item) <= DUMMY_MAILBOX3)
 #define ITEM_IS_DUMMY_HANIWA(item) ((item) >= DUMMY_HANIWA0 && (item) <= DUMMY_HANIWA3)

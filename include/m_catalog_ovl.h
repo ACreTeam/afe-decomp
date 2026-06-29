@@ -11,10 +11,10 @@
 extern "C" {
 #endif
 
-#define mCL_MENU_ITEM_MAX 742
+#define mCL_MENU_ITEM_MAX 764
 #define mCL_MENU_PAGE_SIZE 7
 #define mCL_ITEM_DATA_NUM 2
-#define mCL_TAG_STR_SIZE 10
+#define mCL_TAG_STR_SIZE 6
 
 enum {
     mCL_MENU_FTR,
@@ -63,7 +63,7 @@ struct catalog_ovl_s {
     int _0004;
     mCL_Item_c item_data[mCL_ITEM_DATA_NUM];
     mCL_Menu_c menu_data[mCL_MENU_NUM];
-    u8 _D9AC[72];
+    u8 _D9AC[74];
     u8 page_order[mCL_MENU_NUM];
     u8 change_flag;
     u8 counter;

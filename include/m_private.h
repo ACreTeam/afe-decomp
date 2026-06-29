@@ -108,7 +108,7 @@ enum {
 
 #define mPr_GET_ITEM_COND(all_cond, slot_no) ((all_cond)[slot_no])
 // #define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (cond))
-#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = (all_cond)[slot_no] & ~0xF | (cond))
+#define mPr_SET_ITEM_COND(all_cond, slot_no, cond) ((all_cond)[slot_no] = ((all_cond)[slot_no] & ~0xF) | (cond))
 #define mPr_CHK_ITEM_COND(cond, slot_no) ((cond)[slot_no] & (0xF))
 
 enum {

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define mTG_TAG_NUM 4
-#define mTG_TAG_STR_LEN 16
+#define mTG_TAG_STR_LEN 8
 #define mTG_TAG_SEL_STRING_LEN 35
 
 #define mTG_TAG_FLAG_EDGE_FOOT_SELECT (1 << 0)
@@ -43,6 +43,7 @@ enum {
     mTG_MARK_TYPE_MUSIC,
     mTG_MARK_TYPE_NEEDLEWORK_ORIGINAL,
     mTG_MARK_TYPE_CPORIGINAL_ORIGINAL,
+    mTG_MARK_TYPE_INV_MULTI_MAIL,
 
     mTG_MARK_TYPE_NUM
 };
@@ -141,6 +142,7 @@ enum {
     mTG_TYPE_TAG_NW_SELECT_PUT,
     mTG_TYPE_76,
     mTG_TYPE_TAG_PASSWORD_ITEM,
+    mTG_TYPE_TAG_SEND_MAIL_MARK,
 
     mTG_TYPE_NUM
 };
@@ -181,6 +183,7 @@ enum {
     mTG_WIN_ITEM,
     mTG_WIN_QITEM,
     mTG_WIN_SELECT,
+    mTG_WIN_QITEM_LOST,
 
     mTG_WIN_NUM  
 };
@@ -204,13 +207,13 @@ typedef struct tag_s {
     u8 arrow_dir;
     u8 str2_type;
     u8 flags;
-    f32 _04[2];
+    f32 open_rate[2];
     f32 base_pos[2];
     f32 body_scale[2];
     f32 arrow_scale[2];
     f32 body_ofs[2];
     f32 text_ofs[2];
-    f32 _34;
+    f32 body_base_scale;
     int table;
     int tag_col;
     int tag_row;
@@ -225,7 +228,7 @@ typedef void (*mTG_INIT_TAG_DATA_ITEM_WIN_PROC)(Submenu*);
 typedef void (*mTG_CHG_TAG_FUNC_PROC)(Submenu*, int, int, int, f32, f32);
 typedef void (*mTG_SET_HAND_POS_PROC)(Submenu*, f32*, int, int);
 typedef void (*mTG_EXCHANGE_PROC)(Submenu*, mSM_MenuInfo_c*);
-typedef Mail_c* (*mTG_GET_MAIL_POINTER_PROC)(Submenu*, mHD_Ovl_c*);
+typedef Mail_c* (*mTG_GET_MAIL_POINTER_PROC)(const Submenu*, mHD_Ovl_c*);
 typedef int (*mTG_GET_TABLE_IDX_PROC)(mTG_tag_c*);
 
 typedef struct tag_cpmail_mark_pos_s {

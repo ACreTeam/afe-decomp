@@ -69,13 +69,13 @@ static void Player_actor_setup_main_Pickup(ACTOR* actorx, GAME* game) {
         }
     } else {
         mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_ITEM);
-        mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_9);
+        mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PUT_ITEM);
 
         if (item == ITM_PRESENT) {
             mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_PRESENT);
         } else if (mFAs_CheckDust(item) == TRUE) {
             mISL_SetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PICKUP_DUST);
-            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_19);
+            mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_PUT_DUST);
             mISL_UnsetNowPlayerAction(mISL_VILLAGE_PLAYER_ACTION_BURY_DUST);
         }
     }
