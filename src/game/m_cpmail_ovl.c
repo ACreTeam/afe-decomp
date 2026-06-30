@@ -111,23 +111,30 @@ static void mCM_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     mSM_MenuInfo_c* next_menu_info = &submenu->overlay->menu_info[menu_info->next_menu_type];
 
     if (next_menu_info->proc_status == mSM_OVL_PROC_MOVE && next_menu_info->next_proc_status == mSM_OVL_PROC_END) {
-        if (next_menu_info->menu_type == mSM_OVL_EDITENDCHK) {
-            if (next_menu_info->data1 == 0) {
-                mCD_save_data_main_to_aram(cpmail_ovl->card_mail, mCD_KEEP_MAIL_SIZE, mCD_ARAM_DATA_MAIL);
-                submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
-            } else if (next_menu_info->data1 == 1) {
+        switch (next_menu_info->menu_type) {
+            case mSM_OVL_EDITENDCHK:
+                switch (next_menu_info->data1) {
+                    case 0:
+                        submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
+                        break;
+                    case 1:
+                        menu_info->proc_status = mSM_OVL_PROC_PLAY;
+                        break;
+                    default:
+                        cpmail_ovl->_BB3 = 1;
+                        submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
+                        break;
+                }
+                break;
+            case mSM_OVL_EDITOR:
                 menu_info->proc_status = mSM_OVL_PROC_PLAY;
-            } else {
-                cpmail_ovl->_BB3 = 1;
-                submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
-            }
-        } else if (next_menu_info->menu_type == mSM_OVL_EDITOR) {
-            menu_info->proc_status = mSM_OVL_PROC_PLAY;
-            menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
-        } else if (next_menu_info->menu_type == mSM_OVL_BOARD) {
-            menu_info->proc_status = mSM_OVL_PROC_MOVE;
-            menu_info->move_drt = mSM_MOVE_IN_LEFT;
-            menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
+                menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
+                break;
+            case mSM_OVL_BOARD:
+                menu_info->proc_status = mSM_OVL_PROC_MOVE;
+                menu_info->move_drt = mSM_MOVE_IN_LEFT;
+                menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
+                break;
         }
     }
 }
@@ -220,6 +227,54 @@ static float mCM_get_page_posY(Submenu* submenu, mSM_MenuInfo_c* menu_info, int 
     }
 }
 
+extern Gfx lat_sousa_spT_model[];
+
+static void mCM_set_space_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GRAPH* graph, int page) {
+    mCD_keep_mail_c* card_mail = submenu->overlay->cpmail_ovl->card_mail;
+    mCM_disp_data_c* disp_data_p = &mCM_disp_data[page];
+    u8* folder_name = card_mail->folder_names[page];
+    mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
+    int i;
+
+    if (menu_info->proc_status == mSM_OVL_PROC_WAIT) {
+        switch (menu_info->next_menu_type) {
+            case mSM_OVL_EDITOR:
+                if (editor_ovl != NULL) {
+                    float page_posX;
+                    float page_posY;
+
+                    OPEN_POLY_OPA_DISP(graph);
+
+                    gDPSetCycleType(POLY_OPA_DISP++, G_CYC_1CYCLE);
+                    gDPSetRenderMode(POLY_OPA_DISP++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+
+                    page_posX = menu_info->position[0];
+                    page_posY = mCM_get_page_posY(submenu, menu_info, page);
+                    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+                    Matrix_translate(page_posX, page_posY, 140.0f, MTX_MULT);
+
+                    for (i = 0; i < editor_ovl->now_str_len; i++) {
+                        if (folder_name[i] == CHAR_SPACE) {
+                            Matrix_push();
+                            Matrix_translate(i * 12.0f + -31.0f, 71.0f, 0.0f, MTX_MULT);
+                            Matrix_scale(0.625f, 1.0f, 1.0f, MTX_MULT);
+
+                            gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, disp_data_p->title_color.r,
+                                            disp_data_p->title_color.g, disp_data_p->title_color.b, 255);
+                            gSPDisplayList(POLY_OPA_DISP++, lat_sousa_spT_model);
+
+                            Matrix_pull();
+                        }
+                    }
+
+                    CLOSE_POLY_OPA_DISP(graph);
+                }
+                break;
+        }
+    }
+}
+
 extern Gfx ctl_tag_mode[];
 extern Gfx ctl_win_mode[];
 extern Gfx ctl_win_model[];
@@ -299,7 +354,7 @@ static void mCM_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
             cpmail_ovl->card_mail->folder_names[page_num], len,
             str_x, str_y,
             disp_data_p->title_color.r, disp_data_p->title_color.g, disp_data_p->title_color.b, 255,
-            FALSE, TRUE,
+            FALSE, FALSE,
             1.0f, 1.0f,
             mFont_MODE_POLY
             // clang-format on
@@ -309,7 +364,7 @@ static void mCM_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
             mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
             
             if (editor_ovl != NULL) {
-                editor_ovl->cursol_draw(submenu, game, str_x + editor_ovl->_26 + -6.0f, str_y);
+                editor_ovl->cursol_draw(submenu, game, str_x + editor_ovl->_26 - 7.0f, str_y);
             }
         }
     }
@@ -332,6 +387,8 @@ static void mCM_set_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) 
         mCM_set_page_dl(submenu, menu_info, game, graph, *page_order_p, flag);
     }
 
+    mCM_set_space_dl(submenu, menu_info, graph, cpmail_ovl->page_order[0]);
+
     if (cpmail_ovl->page_move_timer == 0) {
         submenu->overlay->menu_control.tag_draw_func(submenu, game, mSM_OVL_CPMAIL);
     }
@@ -346,20 +403,6 @@ static void mCM_cpmail_ovl_draw(Submenu* submenu, GAME* game) {
     }
 }
 
-static void mCM_cpmail_draw_init(mSM_MenuInfo_c* menu_info) {
-#if VERSION < VER_GAFU01_00
-    mCM_disp_data_c* disp_data_p = &mCM_disp_data[0];
-    int i;
-
-    for (i = 0; i < mCD_KEEP_MAIL_PAGE_COUNT; i++) {
-        disp_data_p->color_gfx = (Gfx*)disp_data_p->color_gfx;
-        disp_data_p->pal_p = (u16*)disp_data_p->pal_p;
-        disp_data_p->tex_p = (u8*)disp_data_p->tex_p;
-        disp_data_p++;
-    }
-#endif
-}
-
 extern void mCM_cpmail_ovl_set_proc(Submenu* submenu) {
     Submenu_Overlay_c* ovl = submenu->overlay;
     mSM_Control_c* ctrl = &ovl->menu_control;
@@ -369,12 +412,6 @@ extern void mCM_cpmail_ovl_set_proc(Submenu* submenu) {
     if (ovl->hand_ovl != NULL && ovl->menu_info[mSM_OVL_CPMAIL].next_proc_status != mSM_OVL_PROC_END) {
         submenu->overlay->hand_ovl->set_hand_func(submenu);
     }
-}
-
-static void mCM_cpmail_load_memory(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
-    mCM_Ovl_c* cpmail_ovl = submenu->overlay->cpmail_ovl;
-    
-    mCD_save_data_aram_to_main(cpmail_ovl->card_mail, mCD_KEEP_MAIL_SIZE, mCD_ARAM_DATA_MAIL);
 }
 
 static void mCM_cpmail_ovl_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
@@ -396,20 +433,7 @@ static void mCM_cpmail_ovl_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         *page_order_p = i;
     }
 
-    mail = cpmail_ovl->card_mail->mail[0];
-    for (i = 0; i < mCD_KEEP_MAIL_COUNT * mCD_KEEP_MAIL_PAGE_COUNT; i++) {
-        mMl_clear_mail(mail);
-        mail++;
-    }
-
-    title_p = cpmail_ovl->card_mail->folder_names[0];
-    for (i = 0; i < mCD_KEEP_MAIL_PAGE_COUNT; i++) {
-        mem_clear(title_p, mCD_KEEP_MAIL_FOLDER_NAME_LEN, CHAR_SPACE);
-        title_p += mCD_KEEP_MAIL_FOLDER_NAME_LEN;
-    }
-
     cpmail_ovl->_BB3 = 0;
-    mCM_cpmail_load_memory(submenu, menu_info);
     submenu->item_p->slot_no = 1;
     submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_IN_RIGHT);
 }
@@ -417,13 +441,21 @@ static void mCM_cpmail_ovl_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 extern void mCM_cpmail_ovl_construct(Submenu* submenu) {
     Submenu_Overlay_c* ovl = submenu->overlay;
     mSM_MenuInfo_c* menu_info = &ovl->menu_info[mSM_OVL_CPMAIL];
+    mCD_keep_mail_c* keep_mail;
 
     if (ovl->cpmail_ovl == NULL) {
         mem_clear((u8*)&cpmail_ovl_data, sizeof(cpmail_ovl_data), 0);
         ovl->cpmail_ovl = &cpmail_ovl_data;
+    }
+
+    keep_mail = (mCD_keep_mail_c*)menu_info->data2;
+    if (keep_mail != NULL) {
+        cpmail_ovl_data.card_mail = keep_mail;
+        cpmail_ovl_data.alloc_flag = FALSE;
+    } else {
         cpmail_ovl_data.card_mail = (mCD_keep_mail_c*)zelda_malloc_align(mCD_KEEP_MAIL_SIZE, 32);
         mem_clear((u8*)cpmail_ovl_data.card_mail, mCD_KEEP_MAIL_SIZE, 0);
-        mCM_cpmail_draw_init(menu_info);
+        cpmail_ovl_data.alloc_flag = TRUE;
     }
 
     mCM_cpmail_ovl_init(submenu, menu_info);
@@ -436,17 +468,18 @@ extern void mCM_cpmail_ovl_destruct(Submenu* submenu) {
     Mail_c* mail;
     int i;
 
-    if (cpmail_ovl->_BB3 != 0) {
+    if (cpmail_ovl->_BB3 == TRUE) {
         mail = Now_Private->mail;
         player_mail = cpmail_ovl->player_mail;
         for (i = 0; i < mPr_INVENTORY_MAIL_COUNT; i++) {
             mMl_copy_mail(mail, player_mail);
-            player_mail++;
             mail++;
+            player_mail++;
         }
     }
 
-    if (cpmail_ovl_data.card_mail != NULL) {
+    submenu->param3 = cpmail_ovl->_BB3;
+    if (cpmail_ovl->alloc_flag == TRUE && cpmail_ovl_data.card_mail != NULL) {
         zelda_free(cpmail_ovl_data.card_mail);
         cpmail_ovl_data.card_mail = NULL;
     }

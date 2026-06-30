@@ -128,6 +128,7 @@ struct editor_ovl_s {
   s16 _24;
   s16 _26;
   u8* input_str;
+  int _pad;
   mED_ENDCODE_DRAW_PROC end_code_draw;
   mED_CURSOL_DRAW_PROC cursol_draw;
   u8 _34;
