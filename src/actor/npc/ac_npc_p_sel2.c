@@ -13,40 +13,16 @@
 #include "m_timeIn_ovl.h"
 #include "dolphin/os/OSRtc.h"
 #include "m_mail_password_check.h"
+#include "lb_rtc.h"
+#include "m_sdcard.h"
+#include "m_birthday_msg.h"
 
-enum {
-    aNPS2_TALK_SETUP_YURE,
-    aNPS2_TALK_SETUP_SOUND,
-    aNPS2_TALK_SETUP_VOICE,
-    aNPS2_TALK_SETUP_VOICE_OK,
-    aNPS2_TALK_WHATS_HAPPEN,
-    aNPS2_TALK_CHK_OPTION,
-    aNPS2_TALK_CHK_OPTION2,
-    aNPS2_TALK_CHK_CLR_VILLAGE_DATA_CARTRIDGE,
-    aNPS2_TALK_CLR_VILLAGE_DATA_CARTRIDGE,
-    aNPS2_TALK_CHK_CLR_PL_DATA,
-    aNPS2_TALK_CHK_CLR_PL_DATA2,
-    aNPS2_TALK_CHK_CLR_PL_DATA3,
-    aNPS2_TALK_CHK_CLR_PL_DATA4,
-    aNPS2_TALK_CHK_CLR_PASSPORT_FILE,
-    aNPS2_TALK_CLR_PASSPORT_FILE,
-    aNPS2_TALK_CLR_PL_DATA,
-    aNPS2_TALK_TI_MENU_OPEN_MSG_WAIT,
-    aNPS2_TALK_TI_MENU_OPEN_WAIT,
-    aNPS2_TALK_TI_MENU_CLOSE_WAIT,
-    aNPS2_TALK_SELECT_PLAYER,
-    aNPS2_TALK_SELECT_CARD_PLAYER,
-    aNPS2_TALK_CHK_FUZAI_PLAYER,
-    aNPS2_TALK_CHK_KITAKU_PLAYER,
-    aNPS2_TALK_START_TYPE0,
-    aNPS2_TALK_START_TYPE1,
-    aNPS2_TALK_START_TYPE2,
-    aNPS2_TALK_START_TYPE3,
-    aNPS2_TALK_RETURN_TITLE,
-    aNPS2_TALK_WAIT,
-
-    aNPS2_TALK_NUM
-};
+#define aNPS2_MSG_GRP0 0
+#define aNPS2_MSG_GRP1 100
+#define aNPS2_MSG_GRP2 200
+#define aNPS2_MSG_GRP3 300
+#define aNPS2_MSG_GRP4 400
+#define aNPS2_MSG_GRP5 500
 
 static void aNPS2_actor_ct(ACTOR* actorx, GAME* game);
 static void aNPS2_actor_dt(ACTOR* actorx, GAME* game);
@@ -81,10 +57,13 @@ static int aNPS2_talk_end_chk(ACTOR*, GAME*);
 static void aNPS2_schedule_proc(NPC_ACTOR*, GAME_PLAY*, int);
 
 static int aNPS2_count_player_sum(void);
+static u8 aNPS2_get_common_kanji_level(void);
 static int aNPS2_setup_game_start(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play);
 
 static void aNPS2_change_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int talk_idx);
+static void aNPS2_next_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play);
 
+static u8 aNPS2_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
 static u8 static_str[mChoice_CHOICE_STRING_LEN * mChoice_CHOICE_NUM];
 
 static void aNPS2_actor_ct(ACTOR* actorx, GAME* game) {
@@ -104,6 +83,7 @@ static void aNPS2_actor_ct(ACTOR* actorx, GAME* game) {
 
     if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
         NPC_P_SEL2_ACTOR* p_sel2 = (NPC_P_SEL2_ACTOR*)actorx;
+        int looks;
 
         p_sel2->npc_class.schedule.schedule_proc = &aNPS2_schedule_proc;
         CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
@@ -143,19 +123,44 @@ static void aNPS2_actor_ct(ACTOR* actorx, GAME* game) {
         p_sel2->npc_class.condition_info.hide_request = FALSE;
         p_sel2->npc_class.condition_info.demo_flg = aNPC_COND_DEMO_SKIP_FEEL_CHECK;
 
+        looks = mNpc_GetNpcLooks(actorx);
+
         {
             static int base_msg_table[] = { MSG_5106, MSG_5146, MSG_5186, MSG_5226, MSG_5266, MSG_5306 };
 
-            p_sel2->base_message = base_msg_table[mNpc_GetNpcLooks(actorx)];
+            p_sel2->base_message = base_msg_table[looks];
         }
 
         {
             static int base_msg_table2[] = { MSG_14830, MSG_14840, MSG_14850, MSG_14860, MSG_14870, MSG_14880 };
 
-            p_sel2->base_message2 = base_msg_table2[mNpc_GetNpcLooks(actorx)];
+            p_sel2->base_message2 = base_msg_table2[looks];
+        }
+
+        {
+            static int base_msg_table3[6] = { 0x257E, 0x2592, 0x25A6, 0x25BA, 0x25CE, 0x25E2 };
+            p_sel2->base_message3 = base_msg_table3[looks];
+        }
+
+        {
+            static int base_msg_table4[6] = { 0x266B, 0x267F, 0x2693, 0x26A7, 0x26BB, 0x26CF };
+            p_sel2->base_message4 = base_msg_table4[looks];
+        }
+
+        {
+            static int base_msg_table5[6] = { 0x011B, 0x011E, 0x0121, 0x0124, 0x0127, 0x012A };
+            p_sel2->base_message5 = base_msg_table5[looks];
+        }
+
+        {
+            static int base_msg_table6[6] = { 0x50D1, 0x50E5, 0x50F9, 0x510D, 0x5121, 0x5135 };
+            p_sel2->base_message6 = base_msg_table6[looks];
         }
 
         p_sel2->start_flag = FALSE;
+        p_sel2->flags = 0;
+        Common_Set(kanji_level_unset, TRUE);
+        Common_Set(cur_kanji_lv, aNPS2_get_common_kanji_level());
     }
 }
 
@@ -165,6 +170,7 @@ static void aNPS2_actor_save(ACTOR* actorx, GAME* game) {
 
 static void aNPS2_actor_dt(ACTOR* actorx, GAME* game) {
     CLIP(npc_clip)->dt_proc(actorx, game);
+    Common_Set(kanji_level_unset, FALSE);
 }
 
 static void aNPS2_actor_init(ACTOR* actorx, GAME* game) {

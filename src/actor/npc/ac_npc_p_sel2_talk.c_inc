@@ -1,3 +1,720 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc_p_sel2.h"
+#include "m_common_data.h"
+#include "m_string.h"
+#include "m_msg.h"
+#include "m_vibctl.h"
+#include "m_soncho.h"
+#include "m_font.h"
+#include "m_sdcard.h"
+#include "m_mail_password_check.h"
+#include "m_birthday_msg.h"
+#include "m_bgm.h"
+#include <dolphin/os.h>
+
+#define aNPS2_MSG_GRP0 0
+#define aNPS2_MSG_GRP1 100
+#define aNPS2_MSG_GRP2 200
+#define aNPS2_MSG_GRP3 300
+#define aNPS2_MSG_GRP4 400
+#define aNPS2_MSG_GRP5 500
+
+static void aNPS2_change_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int talk_idx);
+
+static u8 aNPS2_eng_name[mCD_SD_FILE_NAME_SAVE_SIZE];
+static u8 static_str[mChoice_CHOICE_STRING_LEN * mChoice_CHOICE_NUM];
+#endif
+
+static void aNPC2_set_nukegara_time(void) {
+    lbRTC_time_c time;
+    u8 str[mMsg_FREE_STRING_LEN];
+    int len;
+
+    lbRTC_GetNukegaraTime(&time);
+
+    // year
+    len = mFont_UnintToString(str, 4, time.year, 4, TRUE, FALSE, FALSE);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR5, str, len);
+
+    // month
+    len = mFont_UnintToString(str, 2, time.month, 2, TRUE, FALSE, FALSE);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR6, str, len);
+
+    // day
+    len = mFont_UnintToString(str, 2, time.day, 2, TRUE, FALSE, FALSE);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR7, str, len);
+}
+
+static void aNPS2_set_free_str(int str_no, int free_str_no) {
+    u8 str[mString_DEFAULT_STR_SIZE];
+    mString_Load_StringFromRom(str, mString_DEFAULT_STR_SIZE, str_no);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), free_str_no, str, mString_DEFAULT_STR_SIZE);
+}
+
+static void aNPS2_set_slot_name(int slot, int str_no) {
+    aNPS2_set_free_str(0x6CD + slot, str_no);
+}
+
+static int aNPS2_make_msg(NPC_P_SEL2_ACTOR* p_sel2, int idx) {
+    int msg_no;
+
+    if (idx < aNPS2_MSG_GRP1) {
+        msg_no = p_sel2->base_message + idx;
+        msg_no -= aNPS2_MSG_GRP0;
+    } else if (idx < aNPS2_MSG_GRP2) {
+        msg_no = p_sel2->base_message2 + idx;
+        msg_no -= aNPS2_MSG_GRP1;
+    } else if (idx < aNPS2_MSG_GRP3) {
+        msg_no = p_sel2->base_message3 + idx;
+        msg_no -= aNPS2_MSG_GRP2;
+    } else if (idx < aNPS2_MSG_GRP4) {
+        msg_no = p_sel2->base_message4 + idx;
+        msg_no -= aNPS2_MSG_GRP3;
+    } else if (idx < aNPS2_MSG_GRP5) {
+        msg_no = p_sel2->base_message5 + idx;
+        msg_no -= aNPS2_MSG_GRP4;
+    } else {
+        msg_no = p_sel2->base_message6 + idx;
+        msg_no -= aNPS2_MSG_GRP5;
+    }
+
+    return msg_no;
+}
+
+static int aNPS2_now_sd_drive(void) {
+    int drive;
+    
+    drive = mCsd_nowdrive_get();
+    if (drive == mCD_SLOT_A) {
+        aNPS2_set_slot_name(mCD_SLOT_A, mMsg_FREE_STR3);
+    } else {
+        aNPS2_set_slot_name(mCD_SLOT_B, mMsg_FREE_STR3);
+    }
+    return drive;
+}
+
+static int aNPS2_search_sd_drive(void) {
+    int drive;
+
+    drive = mCsd_sdcard_slot_chk();
+    if (drive >= 0) {
+        mCsd_nowdrive_set(drive);
+    } else {
+        drive = mCsd_nowdrive_get();
+    }
+
+    if (drive == mCD_SLOT_A) {
+        aNPS2_set_slot_name(mCD_SLOT_A, mMsg_FREE_STR3);
+    } else {
+        aNPS2_set_slot_name(mCD_SLOT_B, mMsg_FREE_STR3);
+    }
+
+    return drive;
+}
+
+static int aNPS2_chk_off_skin(void) {
+    return mCD_castingoff_mura_chk();
+}
+
+static int aNPS2_make_sdcard_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    mCD_sd_card_info_c sd_info;
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        if (p_sel2->flags & 2) {
+            ret = mCD_SaveLand_sdcard_bg(&sd_info);
+        } else {
+            ret = mCD_SaveLand_sdcard_pileup_bg(&sd_info);
+        }
+
+        switch (ret) {
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 8:
+            case 14:
+            case 21:
+            case 22:
+                p_sel2->sd_result = 3;
+                break;
+            case 7:
+                p_sel2->sd_result = 4;
+                break;
+            case 2:
+            case 4:
+            case 5:
+            case 6:
+            case 11:
+            case 24:
+                p_sel2->sd_result = 2;
+                break;
+            case 25:
+                break;
+            case 41:
+            case 42:
+            case 46:
+            case 50:
+                p_sel2->sd_result = 5;
+                break;
+            case 34:
+                p_sel2->sd_result = 6;
+                break;
+            case 12:
+            case 36:
+                p_sel2->sd_result = 7;
+                break;
+            case 37:
+                p_sel2->sd_result = 8;
+                break;
+            case 35:
+                p_sel2->sd_result = 9;
+                break;
+            case 45:
+                p_sel2->flags &= ~2;
+                p_sel2->sd_result = 10;
+                break;
+            case 13:
+                p_sel2->sd_result = 5;
+                break;
+            case 51:
+                p_sel2->sd_result = 11;
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+
+        if (p_sel2->sd_result >= 2) {
+            if (sd_info.exist) {
+                aNPS2_set_slot_name(sd_info.chan, mMsg_FREE_STR3);
+                aNPS2_set_slot_name(sd_info.chan == mCD_SLOT_A ? mCD_SLOT_B : mCD_SLOT_A, mMsg_FREE_STR4);
+            } else {
+                aNPS2_set_slot_name(sd_info.chan == mCD_SLOT_A ? mCD_SLOT_B : mCD_SLOT_A, mMsg_FREE_STR3);
+                aNPS2_set_slot_name(sd_info.chan, mMsg_FREE_STR4);
+            }
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_breaking_2_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    mCD_sd_card_info_c sd_info;
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        ret = mCD_abandonment_SDmura(&sd_info);
+
+        switch (ret) {
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 8:
+            case 21:
+            case 22:
+                p_sel2->sd_result = 3;
+                break;
+            case 7:
+                p_sel2->sd_result = 4;
+                break;
+            case 2:
+            case 4:
+            case 5:
+            case 6:
+            case 11:
+                p_sel2->sd_result = 2;
+                break;
+            case mCD_TRANS_ERR_BUSY:
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_sdcard_format_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    int ret;
+
+    if (p_sel2->sd_action_timer == 112) {
+        mCsd_sd_format_start();
+    }
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        ret = mCsd_sd_format_wait();
+
+        switch (ret) {
+            case 38:
+                return 0;
+            case 37:
+                p_sel2->sd_result = 3;
+                break;
+            case 34:
+                p_sel2->sd_result = 4;
+                break;
+            case 41:
+            case 46:
+                p_sel2->sd_result = 2;
+                break;
+            case 33:
+                p_sel2->sd_result = 1;
+                break;
+            case 50:
+                p_sel2->sd_result = 5;
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_delete_all_vp_local(NPC_P_SEL2_ACTOR* p_sel2, int context) {
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        if (context != aNPS2_SD_CONTEXT_TIFF) {
+            ret = mSD_mura_remove_all();
+        } else {
+            ret = mSD_tiff_remove_all();
+        }
+
+        switch (ret) {
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 38:
+                break;
+            case 34:
+                p_sel2->sd_result = 3;
+                break;
+            case 35:
+                p_sel2->sd_result = 5;
+                break;
+            case 36:
+            case 41:
+            case 46:
+            case 50:
+                p_sel2->sd_result = 2;
+                break;
+            case 37:
+                p_sel2->sd_result = 4;
+                break;
+            case 42:
+                p_sel2->sd_result = 6;
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_delete_all_p_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    return aNPS2_delete_all_vp_local(p_sel2, aNPS2_SD_CONTEXT_TIFF);
+}
+
+static int aNPS2_delete_all_v_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    return aNPS2_delete_all_vp_local(p_sel2, aNPS2_SD_CONTEXT_MURA);
+}
+
+static int aNPS2_delete_sel_v_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        ret = mSD_mura_specification_remove(aNPS2_eng_name);
+
+        switch (ret) {
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 38:
+                break;
+            case 34:
+                p_sel2->sd_result = 3;
+                break;
+            case 35:
+                p_sel2->sd_result = 5;
+                break;
+            case 36:
+            case 41:
+            case 46:
+            case 50:
+                p_sel2->sd_result = 2;
+                break;
+            case 37:
+                p_sel2->sd_result = 4;
+                break;
+            case 42:
+                p_sel2->sd_result = 6;
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_chk_sdcard_village(NPC_P_SEL2_ACTOR* p_sel2) {
+    mMsg_Window_c* msg_p;
+    int slot_no;
+    int ret;
+
+    slot_no = p_sel2->sd_slot_no;
+    ret = mSD_mura_nextname_get(aNPS2_eng_name, &p_sel2->sd_slot_no);
+
+    switch (ret) {
+        case mCD_TRANS_ERR_NONE:
+            if (p_sel2->sd_slot_no == -1) {
+                if (slot_no == mCD_SLOT_A) {
+                    return 2;
+                }
+                return 3;
+            } else {
+                msg_p = mMsg_Get_base_window_p();
+                mMsg_Set_item_str(msg_p, mMsg_ITEM_STR0, aNPS2_eng_name, mCD_SD_FILE_NAME_SAVE_SIZE);
+                return 1;
+            }
+        case 36:
+        case 41:
+        case 46:
+        case 50:
+            return 4;
+        case 34:
+            return 5;
+        case 35:
+            return 7;
+        case 37:
+            return 6;
+        case 44:
+            if (slot_no == mCD_SLOT_A) {
+                return 2;
+            }
+            return 3;
+        case 25:
+            return 0;
+        default:
+            return 5;
+    }
+}
+
+static int aNPS2_chk_sdcard_photograph(NPC_P_SEL2_ACTOR* p_sel2) {
+    int ret;
+
+    ret = mSD_tiff_nextnumber_get(&p_sel2->sd_tiff_number, &p_sel2->sd_file_count);
+    switch (ret) {
+        case mCD_TRANS_ERR_NONE:
+            if (p_sel2->sd_tiff_number == -1) {
+                aNPS2_set_slot_name(mCsd_nowdrive_get(), mMsg_FREE_STR3);
+                ret = 2;
+            } else {
+                ret = 1;
+            }
+            break;
+        case 36:
+        case 41:
+        case 46:
+        case 50:
+            ret = 3;
+            break;
+        case 34:
+            ret = 4;
+            break;
+        case 35:
+            ret = 5;
+            break;
+        case 37:
+            ret = 6;
+            break;
+        default:
+            ret = 2;
+            break;
+    }
+
+    return ret;
+}
+
+static int aNPS2_chk_repayment_bg_local(int* chan) {
+    mCD_sd_card_info_c sd_info;
+    int ret;
+
+    ret = mCD_SD_CheckReten_SDmura(&sd_info);
+    switch (ret) {
+        case mCD_TRANS_ERR_NONE:
+            ret = 2;
+            break;
+        case 25:
+            return 0;
+        case 47:
+            ret = 3;
+            break;
+        case 27:
+            ret = 4;
+            aNPS2_set_slot_name(sd_info.chan, mMsg_FREE_STR3);
+            aNPS2_set_slot_name(sd_info.chan == mCD_SLOT_A, mMsg_FREE_STR4);
+            break;
+        case 49:
+            ret = 6;
+            aNPS2_set_slot_name(sd_info.chan, mMsg_FREE_STR3);
+            aNPS2_set_slot_name(sd_info.chan == mCD_SLOT_A, mMsg_FREE_STR4);
+            break;
+        case 21:
+        case 34:
+            ret = 5;
+            break;
+        case 28:
+        case 29:
+            ret = 1;
+            break;
+        case 50:
+        default:
+            ret = 7;
+            break;
+    }
+
+    *chan = sd_info.chan;
+    return ret;
+}
+
+static int aNPS2_repayment_village_local(NPC_P_SEL2_ACTOR* p_sel2, int param) {
+    mCD_sd_card_info_c sd_info;
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        ret = mCD_SD_repayment_SDmura(&sd_info, param);
+        switch (ret) {
+            case 25:
+                return 0;
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 2:
+            case 4:
+            case 5:
+            case 6:
+            case 11:
+            case 36:
+                p_sel2->sd_result = 2;
+                break;
+            case 21:
+            case 22:
+            case 23:
+                p_sel2->sd_result = 3;
+                break;
+            case 41:
+            case 46:
+            case 50:
+                p_sel2->sd_result = 5;
+                break;
+            case 34:
+                p_sel2->sd_result = 6;
+                break;
+            case 27:
+            case 28:
+            case 29:
+            case 42:
+            case 47:
+                p_sel2->sd_result = 8;
+                break;
+            case 37:
+                p_sel2->sd_result = 9;
+                break;
+            case 35:
+                p_sel2->sd_result = 10;
+                break;
+            default:
+                p_sel2->sd_result = 6;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static int aNPS2_reserve_sdcard_local(NPC_P_SEL2_ACTOR* p_sel2) {
+    int ret;
+
+    if (p_sel2->sd_action_timer != 0) {
+        p_sel2->sd_action_timer--;
+    }
+
+    if (p_sel2->sd_result == 0xFF) {
+        ret = mSD_mura_make_directory();
+        switch (ret) {
+            case mCD_TRANS_ERR_NONE:
+                p_sel2->sd_result = 1;
+                break;
+            case 25:
+                break;
+            case 34:
+            case 41:
+            case 46:
+                p_sel2->sd_result = 3;
+                break;
+            case 35:
+                p_sel2->sd_result = 4;
+                break;
+            case 37:
+                p_sel2->sd_result = 5;
+                break;
+            case 50:
+                p_sel2->sd_result = 2;
+                break;
+            case 36:
+                p_sel2->sd_result = 6;
+                break;
+            case 51:
+                p_sel2->sd_result = 7;
+                break;
+            default:
+                p_sel2->sd_result = 2;
+                break;
+        }
+    }
+
+    if (p_sel2->sd_action_timer == 0 && p_sel2->sd_result != 0xFF) {
+        ret = p_sel2->sd_result;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+static void aNPS2_common_chk_return(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int talk_idx) {
+    int order;
+    int chose_num;
+
+    order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        switch (mChoice_GET_CHOSENUM()) {
+            case mChoice_CHOICE0:
+                aNPS2_next_talk_proc(p_sel2, play);
+                break;
+            case mChoice_CHOICE1:
+                aNPS2_change_talk_proc(p_sel2, play, talk_idx);
+                break;
+        }
+    }
+}
+
+static void aNPS2_common_message_wait(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int order;
+
+    order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+        aNPS2_next_talk_proc(p_sel2, play);
+        sAdo_SysLevStart(0x47);
+    }
+}
+
+static void aNPS2_common_message_wait_no_sound(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int order;
+
+    order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+        aNPS2_next_talk_proc(p_sel2, play);
+    }
+}
+
+static void aNPS2_common_sdcard(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int sd_act, int sd_act_max,
+                                int* msg_tbl, int* idx_tbl, int stop_audio) {
+    mMsg_Window_c* msg_p;
+    int msg_no;
+
+    if (sd_act != 0) {
+        msg_p = mMsg_Get_base_window_p();
+        mMsg_Unset_LockContinue(msg_p);
+
+        if (idx_tbl[sd_act] != -1) {
+            aNPS2_change_talk_proc(p_sel2, play, idx_tbl[sd_act]);
+        }
+
+        if (msg_tbl[sd_act] != -1) {
+            msg_no = aNPS2_make_msg(p_sel2, msg_tbl[sd_act]);
+            msg_p = mMsg_Get_base_window_p();
+            mMsg_Set_continue_msg_num(msg_p, msg_no);
+        }
+
+        if (stop_audio != 0) {
+            sAdo_SysLevStop(0x47);
+        }
+    }
+}
+
 static void aNPS2_set_str_ct_player_name(int player_no) {
     Common_Set(player_no, player_no);
     Common_Set(now_private, Save_GetPointer(private_data[player_no]));
@@ -7,15 +724,8 @@ static int aNPS2_GetCardPrivateNameCopy(u8* name, int idx) {
     return mCD_GetCardPrivateNameCopy(name, idx);
 }
 
-static void aNPS2_set_slot_name(int slot, int str_no) {
-    u8 str[mMsg_FREE_STRING_LEN];
-
-    mString_Load_StringFromRom(str, sizeof(str), 0x6CD + slot);
-    mMsg_SET_FREE_STR(str_no, str, mMsg_FREE_STRING_LEN);
-}
-
 static void aNPS2_set_str_cpak_name(u8* cpak_name) {
-    mMsg_SET_FREE_STR_CL(mMsg_FREE_STR2, cpak_name, 8, 3);
+    mMsg_SET_FREE_STR_CL(mMsg_FREE_STR2, cpak_name, PLAYER_NAME_LEN, 3);
 }
 
 static int aNPS2_card_player_idx(NPC_P_SEL2_ACTOR* p_sel2) {
@@ -46,14 +756,6 @@ static int aNPS2_card_player_idx(NPC_P_SEL2_ACTOR* p_sel2) {
     }
 
     return res;
-}
-
-static int aNPS2_make_msg(NPC_P_SEL2_ACTOR* p_sel2, int idx) {
-    if (idx < 0) {
-        return p_sel2->base_message2 + -1 + -idx;
-    } else {
-        return p_sel2->base_message + idx;
-    }
 }
 
 static void aNPS2_Sub_Date(lbRTC_time_c* dst, lbRTC_time_c* src) {
@@ -251,14 +953,31 @@ static int aNPS2_count_player_sum(void) {
     return player_sum;
 }
 
+static u8 aNPS2_get_common_kanji_level(void) {
+    Private_c* priv = Save_Get(private_data);
+    u8 kanji_level = 5;
+    int i;
+
+    // Find the lowest kanji level among all players
+    for (i = 0; i < PLAYER_NUM; i++) {
+        if (mPr_NullCheckPersonalID(&priv->player_ID) == FALSE && kanji_level > priv->kanji_pl_lv) {
+            kanji_level = priv->kanji_pl_lv;
+        }
+
+        priv++;
+    }
+
+    return kanji_level;
+}
+
 static void aNPS2_copy_player_name(u8* str, u8** names_pp, int count) {
     Private_c* priv = Save_GetPointer(private_data[0]);
     int i = 0;
 
     while (count != 0) {
         if (mPr_NullCheckPersonalID(&priv->player_ID) == FALSE) {
-            mem_copy(str + (i * 16), priv->player_ID.player_name, PLAYER_NAME_LEN);
-            names_pp[i] = str + (i * 16);
+            mem_copy(str + (i * mMsg_FREE_STRING_LEN), priv->player_ID.player_name, PLAYER_NAME_LEN);
+            names_pp[i] = str + (i * mMsg_FREE_STRING_LEN);
             i++;
             count--;
         }
@@ -291,7 +1010,9 @@ static void aNPS2_copy_hokanohito(NPC_P_SEL2_ACTOR* p_sel2, u8* str) {
 }
 
 static void aNPS2_set_choice_str(NPC_P_SEL2_ACTOR* p_sel2, int type) {
-    static u8 new_player_str[7] = "I'm new";
+    // はじめて
+    static u8 new_player_str[] = { CHAR_PP_025, CHAR_PP_237, CHAR_PP_036, CHAR_PP_018 };
+
     mChoice_c* choice_win = mChoice_Get_base_window_p();
     u8* str_p[mChoice_CHOICE_NUM];
     u8* str = static_str;
@@ -419,14 +1140,17 @@ static mActor_name_t aNPS2_decide_birthday_npc(void) {
     Animal_c* animal = Save_Get(animals);
     int friendship_tbl[ANIMAL_NUM_MAX];
     int anm_idx_tbl[ANIMAL_NUM_MAX];
-    int friend_count = 0;
+    int friend_count;
+    int sick_animal_idx;
     mActor_name_t npc_name;
     int i;
 
+    friend_count = 0;
+    sick_animal_idx = mNpc_GetSickAnimalIdx();
     for (i = 0; i < ANIMAL_NUM_MAX; i++) {
         int idx = mNpc_CheckFriendship(pid, animal);
 
-        if (idx != -1) {
+        if (idx != -1 && i != sick_animal_idx) {
             friendship_tbl[friend_count] = animal->memories[idx].friendship;
             anm_idx_tbl[friend_count] = i;
             friend_count++;
@@ -458,8 +1182,7 @@ static mActor_name_t aNPS2_decide_birthday_npc(void) {
 
 static int aNPS2_chk_setup_birthday_demo(void) {
     return !Save_Get(cheated_flag) && !mEv_ArbeitPlayer(Common_Get(player_no)) &&
-           Common_Get(time.rtc_time).month == Now_Private->birthday.month &&
-           Common_Get(time.rtc_time).day == Now_Private->birthday.day &&
+           mBm_check_birthday(-1) &&
            Common_Get(time.rtc_time).year != Now_Private->celebrated_birthday_year &&
            mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1 && aNPS2_chk_friendship_npc() == TRUE;
 }
@@ -544,7 +1267,7 @@ static void aNPS2_make_door_data(Door_data_c* door_data, int type, NPC_P_SEL2_AC
 }
 
 static int aNPS2_setup_game_start(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
-    int type = p_sel2->talk_idx - 23;
+    int type = p_sel2->talk_idx - aNPS2_TALK_START_TYPE0;
     Door_data_c door_data;
     u8 has_map;
 
@@ -556,27 +1279,35 @@ static int aNPS2_setup_game_start(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     mBGMPsComp_make_ps_wipe(0x11C2);
     has_map = FALSE;
     switch (p_sel2->talk_idx) {
-        case 23:
+        case aNPS2_TALK_START_TYPE0:
             has_map = TRUE;
             if (mEv_CheckFirstJob() == TRUE) {
                 mQst_errand_c* fj_p = mQst_GetFirstJobData();
 
-                switch (fj_p->base.quest_kind) {
-                    case mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH:
-                    case mQst_ERRAND_FIRSTJOB_PLANT_FLOWER:
-                    case mQst_ERRAND_FIRSTJOB_DELIVER_FTR:
-                    case mQst_ERRAND_FIRSTJOB_INTRODUCTIONS:
-                    case mQst_ERRAND_FIRSTJOB_START:
-                        has_map = FALSE;
-                        break;
+                if (Now_Private->moved_from_plus == TRUE) {
+                    switch (fj_p->base.quest_kind) {
+                        case mQst_ERRAND_FIRSTJOB_START:
+                            has_map = FALSE;
+                            break;
+                    }
+                } else {
+                    switch (fj_p->base.quest_kind) {
+                        case mQst_ERRAND_FIRSTJOB_CHANGE_CLOTH:
+                        case mQst_ERRAND_FIRSTJOB_PLANT_FLOWER:
+                        case mQst_ERRAND_FIRSTJOB_DELIVER_FTR:
+                        case mQst_ERRAND_FIRSTJOB_INTRODUCTIONS:
+                        case mQst_ERRAND_FIRSTJOB_START:
+                            has_map = FALSE;
+                            break;
+                    }
                 }
             }
             break;
-        case 24:
+        case aNPS2_TALK_START_TYPE1:
             Common_Set(submenu_disabled, TRUE);
             has_map = TRUE;
             break;
-        case 25:
+        case aNPS2_TALK_START_TYPE2:
             Common_Set(submenu_disabled, TRUE);
             if (mPr_GetThisLandMapIdx(Now_Private->maps, mPr_FOREIGN_MAP_COUNT) != -1) {
                 has_map = TRUE;
@@ -584,7 +1315,7 @@ static int aNPS2_setup_game_start(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                 has_map = FALSE;
             }
             break;
-        case 26:
+        case aNPS2_TALK_START_TYPE3:
             has_map = FALSE;
             break;
     }
@@ -603,11 +1334,18 @@ static int aNPS2_setup_load_data(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     static aNPS2_start_data_c start_data_2 = { mCD_START_COND_INCOMING_FOREIGNER };
     static aNPS2_start_data_c start_data_3 = { mCD_START_COND_2 };
     static aNPS2_start_data_c* start_data[] = { &start_data_0, &start_data_1, &start_data_2, &start_data_3 };
-    int type = p_sel2->talk_idx - 23;
+    int type = p_sel2->talk_idx - aNPS2_TALK_START_TYPE0;
     aNPS2_start_data_c* data_p = start_data[type];
     s32 result;
+    int ret;
 
-    return mCD_InitGameStart_bg(p_sel2->player_no, p_sel2->card_file_idx, data_p->type, &result);
+    ret = mCD_InitGameStart_bg(p_sel2->player_no, p_sel2->card_file_idx, data_p->type, &result);
+
+    if (ret != mCD_TRANS_ERR_BUSY) {
+        aNPS2_set_slot_name(result, mMsg_FREE_STR4);
+    }
+
+    return ret;
 }
 
 static void aNPS2_setup_yure(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
@@ -641,10 +1379,9 @@ static void aNPS2_setup_voice_ok(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     }
 }
 
-static void aNPS2_whats_happen(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
-    // clang-format off
+static void aNPS2_whats_happen_play(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     static int next_talk_idx[] = {
-        aNPS2_TALK_CHK_OPTION,
+        -1,
         aNPS2_TALK_SELECT_PLAYER,
         aNPS2_TALK_START_TYPE1,
         aNPS2_TALK_START_TYPE2,
@@ -652,68 +1389,95 @@ static void aNPS2_whats_happen(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
         aNPS2_TALK_RETURN_TITLE,
         aNPS2_TALK_SELECT_CARD_PLAYER,
         aNPS2_TALK_CHK_CLR_PASSPORT_FILE,
+        -1,
+        aNPS2_TALK_SELECT_PLAYER,
     };
-    // clang-format on
-
-    // clang-format off
+    
     static int msg_no[] = {
-         3, // aNPS2_TALK_CHK_OPTION
-        17, // aNPS2_TALK_SELECT_PLAYER
-        22, // aNPS2_TALK_START_TYPE1
-        24, // aNPS2_TALK_START_TYPE2
-        35, // aNPS2_TALK_CHK_KITAKU_PLAYER
-        38, // aNPS2_TALK_RETURN_TITLE
-        17, // aNPS2_TALK_SELECT_CARD_PLAYER
-        -2, // aNPS2_TALK_CHK_CLR_PASSPORT_FILE
+        -1,
+        aNPS2_MSG_GRP0 + 17,
+        aNPS2_MSG_GRP0 + 22,
+        aNPS2_MSG_GRP0 + 24,
+        aNPS2_MSG_GRP0 + 35,
+        aNPS2_MSG_GRP0 + 38,
+        aNPS2_MSG_GRP0 + 17,
+        aNPS2_MSG_GRP1 + 1,
+        -1,
+        aNPS2_MSG_GRP1 + 8,
     };
-    // clang-format on
 
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-    int idx = -1;
+    mMsg_Window_c* msg_p;
     int passport_slot;
     int player_num;
+    int idx;
 
-    if (order != 0) {
-        if (mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
-            switch (mChoice_GET_CHOSENUM()) {
+    p_sel2->card_file_idx = -1;
+    passport_slot = mCD_CheckPassportFile();
+    p_sel2->passport_slot = passport_slot;
+
+    if (passport_slot != -1) {
+        aNPS2_set_slot_name(passport_slot, mMsg_FREE_STR3);
+
+        if (mCD_CheckBrokenPassportFile(passport_slot) == TRUE) {
+            idx = 7;
+        } else {
+            player_num = mCD_GetPlayerNum();
+            p_sel2->card_player_num = player_num;
+
+            if (player_num < 1) {
+                idx = 5;
+            } else if (player_num == 1) {
+                p_sel2->card_file_idx = 0;
+                idx = aNPS2_card_player_idx(p_sel2) + 2;
+            } else {
+                idx = 6;
+                p_sel2->card_player_idx = 0;
+            }
+        }
+    } else {
+        idx = 1;
+        p_sel2->card_file_idx = -1;
+
+        if (aNPS2_chk_off_skin() != 0) {
+            idx = 9;
+        }
+    }
+
+    if (msg_no[idx] != -1 && next_talk_idx[idx] != -1) {
+        mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), aNPS2_make_msg(p_sel2, msg_no[idx]));
+        aNPS2_change_talk_proc(p_sel2, play, next_talk_idx[idx]);
+    }
+}
+
+static void aNPS2_whats_happen(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    mMsg_Window_c* msg_p;
+    mChoice_c* choice_win;
+    int chose_num;
+    int msg_no;
+
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        msg_p = mMsg_Get_base_window_p();
+        if (mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            choice_win = mChoice_Get_base_window_p();
+            chose_num = mChoice_Get_ChoseNum(choice_win);
+
+            switch (chose_num) {
                 case mChoice_CHOICE0:
-                    p_sel2->card_file_idx = -1;
-                    passport_slot = mCD_CheckPassportFile();
-                    p_sel2->passport_slot = passport_slot;
-
-                    if (passport_slot != -1) {
-                        aNPS2_set_slot_name(passport_slot, mMsg_FREE_STR3);
-
-                        if (mCD_CheckBrokenPassportFile(passport_slot) == TRUE) {
-                            idx = 7;
-                        } else {
-                            player_num = mCD_GetPlayerNum();
-                            p_sel2->card_player_num = player_num;
-
-                            if (player_num < 1) {
-                                idx = 5;
-                            } else if (player_num == 1) {
-                                p_sel2->card_file_idx = 0;
-                                idx = 2 + aNPS2_card_player_idx(p_sel2);
-                            } else {
-                                p_sel2->card_player_idx = 0;
-                                idx = 6;
-                            }
-                        }
-                    } else {
-                        p_sel2->card_file_idx = -1;
-                        idx = 1;
-                    }
+                    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_REPAYMENT_BG);
                     break;
                 case mChoice_CHOICE1:
-                    idx = 0;
+                    msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP0 + 3);
+                    msg_p = mMsg_Get_base_window_p();
+                    mMsg_Set_continue_msg_num(msg_p, msg_no);
+                    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION);
                     break;
-            }
-
-            if (idx != -1) {
-                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, msg_no[idx]));
-                aNPS2_change_talk_proc(p_sel2, play, next_talk_idx[idx]);
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+                case mChoice_CHOICE2:
+                    msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP0 + 0x20);
+                    msg_p = mMsg_Get_base_window_p();
+                    mMsg_Set_continue_msg_num(msg_p, msg_no);
+                    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION2);
+                    break;
             }
         }
     }
@@ -722,27 +1486,38 @@ static void aNPS2_whats_happen(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
 static void aNPS2_chk_option(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
 
-    if (order == 3 && mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
-        int next_talk_idx = -1;
+    if (order == 3) {
+        if (mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
+            int next_talk_idx = -1;
 
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-        switch (mChoice_GET_CHOSENUM()) {
-            case mChoice_CHOICE0:
-                next_talk_idx = aNPS2_TALK_SETUP_SOUND;
-                break;
-            case mChoice_CHOICE1:
-                next_talk_idx = aNPS2_TALK_SETUP_YURE;
-                break;
-            case mChoice_CHOICE2:
-                next_talk_idx = aNPS2_TALK_CHK_OPTION2;
-                break;
-            case mChoice_CHOICE3:
-                next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
-                break;
-        }
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
 
-        if (next_talk_idx != -1) {
-            aNPS2_change_talk_proc(p_sel2, play, next_talk_idx);
+            switch (mChoice_GET_CHOSENUM()) {
+                case mChoice_CHOICE0:
+                    if (aNPS2_chk_off_skin()) {
+                        next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                        mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP1 + 9));
+                    } else {
+                        next_talk_idx = aNPS2_TALK_TI_MENU_OPEN_MSG_WAIT;
+                    }
+                    break;
+                case mChoice_CHOICE1:
+                    next_talk_idx = aNPS2_TALK_SETUP_SOUND;
+                    break;
+                case mChoice_CHOICE2:
+                    next_talk_idx = aNPS2_TALK_SETUP_YURE;
+                    break;
+                case mChoice_CHOICE3:
+                    next_talk_idx = aNPS2_TALK_CHK_KANJI;
+                    break;
+                case mChoice_CHOICE4:
+                    next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                    break;
+            }
+
+            if (next_talk_idx != -1) {
+                aNPS2_change_talk_proc(p_sel2, play, next_talk_idx);
+            }
         }
     }
 }
@@ -750,7 +1525,6 @@ static void aNPS2_chk_option(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
 static void aNPS2_chk_option2(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
     int msg_no;
-    int pl_no;
 
     if (order == 3 && mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
         int next_talk_idx = -1;
@@ -758,36 +1532,57 @@ static void aNPS2_chk_option2(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
         mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
         switch (mChoice_GET_CHOSENUM()) {
             case mChoice_CHOICE0:
-                switch (p_sel2->player_sum) {
-                    case 1:
-                        pl_no = aNPS2_get_only_one_pl_no();
-                        aNPS2_set_str_ct_player_name(pl_no);
-                        msg_no = aNPS2_make_msg(p_sel2, 25);
-                        next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
-                        break;
-                    case 4:
-                        aNPS2_set_choice_str2(p_sel2, 0);
-                        msg_no = aNPS2_make_msg(p_sel2, 7);
-                        next_talk_idx = aNPS2_TALK_CHK_CLR_PL_DATA3;
-                        break;
-                    default:
-                        aNPS2_set_choice_str(p_sel2, 0);
-                        msg_no = aNPS2_make_msg(p_sel2, 7);
-                        next_talk_idx = aNPS2_TALK_CHK_CLR_PL_DATA;
-                        break;
+                if (aNPS2_chk_off_skin() == FALSE) {
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 1));
                 }
-
-                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+                next_talk_idx = aNPS2_TALK_CHK_MAKE_SDCARD;
+                p_sel2->flags |= 2;
+                mMsg_SET_ITEM_STR(mMsg_ITEM_STR0, Save_Get(sd_eng_name), mCD_SD_FILE_NAME_SAVE_SIZE);
+                aNPC2_set_nukegara_time();
                 break;
             case mChoice_CHOICE1:
-                next_talk_idx = aNPS2_TALK_CHK_CLR_VILLAGE_DATA_CARTRIDGE;
-                msg_no = aNPS2_make_msg(p_sel2, 13);
-                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+                if (aNPS2_chk_off_skin()) {
+                    next_talk_idx = aNPS2_TALK_CHK_BREAKING_1;
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5));
+                } else {
+                    next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 12));
+                }
                 break;
             case mChoice_CHOICE2:
-                next_talk_idx = aNPS2_TALK_TI_MENU_OPEN_MSG_WAIT;
+                if (aNPS2_chk_off_skin()) {
+                    msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP4 + 2);
+                    next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                } else {
+                    switch (p_sel2->player_sum) {
+                        case 1:
+                            aNPS2_set_str_ct_player_name(aNPS2_get_only_one_pl_no());
+                            msg_no = aNPS2_make_msg(p_sel2, 25);
+                            next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                            break;
+                        case 4:
+                            aNPS2_set_choice_str2(p_sel2, 0);
+                            msg_no = aNPS2_make_msg(p_sel2, 7);
+                            next_talk_idx = aNPS2_TALK_CHK_CLR_PL_DATA3;
+                            break;
+                        default:
+                            aNPS2_set_choice_str(p_sel2, 0);
+                            msg_no = aNPS2_make_msg(p_sel2, 7);
+                            next_talk_idx = aNPS2_TALK_CHK_CLR_PL_DATA;
+                            break;
+                    }
+                }
+                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
                 break;
             case mChoice_CHOICE3:
+                next_talk_idx = aNPS2_TALK_CHK_CLR_VILLAGE_DATA_CARTRIDGE;
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 13));
+                break;
+            case mChoice_CHOICE4:
+                next_talk_idx = aNPS2_TALK_CHK_OPTION_SDCARD;
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3));
+                break;
+            case mChoice_CHOICE5:
                 next_talk_idx = aNPS2_TALK_WHATS_HAPPEN;
                 break;
         }
@@ -860,7 +1655,7 @@ static void aNPS2_chk_clr_pl_data(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     int player_sum;
     int chose_num;
     static int next_talk_idx[] = { aNPS2_TALK_CHK_CLR_PL_DATA2, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN };
-    static int msg_no[] = { 8, 9, 12 };
+    static int msg_no[] = { aNPS2_MSG_GRP0 + 8, aNPS2_MSG_GRP0 + 9, aNPS2_MSG_GRP0 + 12 };
     int idx;
 
     if (order == 4 && mMsg_CHECK_MAINNORMALCONTINUE() == TRUE) {
@@ -916,11 +1711,11 @@ static void aNPS2_chk_clr_pl_data3(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     };
     static int msg_no[] = {
         // clang-format off
-        8, // aNPS2_TALK_CHK_CLR_PL_DATA2
-        9, // aNPS2_TALK_WHATS_HAPPEN
-        12, // aNPS2_TALK_WHATS_HAPPEN
-        34, // aNPS2_TALK_CHK_CLR_PL_DATA3
-        34, // aNPS2_TALK_CHK_CLR_PL_DATA4
+        aNPS2_MSG_GRP0 + 8, // aNPS2_TALK_CHK_CLR_PL_DATA2
+        aNPS2_MSG_GRP0 + 9, // aNPS2_TALK_WHATS_HAPPEN
+        aNPS2_MSG_GRP0 + 12, // aNPS2_TALK_WHATS_HAPPEN
+        aNPS2_MSG_GRP0 + 34, // aNPS2_TALK_CHK_CLR_PL_DATA3
+        aNPS2_MSG_GRP0 + 34, // aNPS2_TALK_CHK_CLR_PL_DATA4
         // clang-format on
     };
     int chose_num;
@@ -988,13 +1783,13 @@ static void aNPS2_clr_passport_file(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
                     aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
                     mMsg_Unset_LockContinue(msg_p);
-                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, -6));
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP1 + 5));
                     break;
                 case mCD_RESULT_ERROR:
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
                     aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_RETURN_TITLE);
                     mMsg_Unset_LockContinue(msg_p);
-                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, -4));
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP1 + 3));
                     break;
             }
             break;
@@ -1028,6 +1823,13 @@ static void aNPS2_clr_pl_data(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                     aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_RETURN_TITLE);
                     break;
                 case mCD_TRANS_ERR_IOERROR:
+                    aNPS2_set_slot_name(slot, mMsg_FREE_STR4);
+                    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 33));
+                    mMsg_UNSET_LOCKCONTINUE();
+                    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_RETURN_TITLE);
+                    break;
+                default:
                     aNPS2_set_slot_name(slot, mMsg_FREE_STR4);
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
                     mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 33));
@@ -1077,9 +1879,18 @@ static void aNPS2_select_player(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
 
         if (chose_num == p_sel2->player_sum) {
             // create new player
-            p_sel2->player_no = aNPS2_get_free_pl_no();
-            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 19));
-            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_START_TYPE3);
+            if (aNPS2_chk_off_skin()) {
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP4 + 2));
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+            } else {
+                p_sel2->player_no = aNPS2_get_free_pl_no();
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 19));
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_START_TYPE3);
+
+                if ((p_sel2->flags & 1) == 0) {
+                    Common_Set(cur_kanji_lv, 0);
+                }
+            }
         } else {
             // load player
             p_sel2->player_no = aNPS2_get_pl_no(chose_num);
@@ -1089,6 +1900,10 @@ static void aNPS2_select_player(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                 // load player which is not travelling
                 aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_START_TYPE0);
                 mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 18));
+
+                if ((p_sel2->flags & 1) == 0) {
+                    Common_Set(cur_kanji_lv, Save_Get(private_data[p_sel2->player_no]).kanji_pl_lv);
+                }
             } else {
                 // load player which is travelling
                 aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_FUZAI_PLAYER);
@@ -1113,11 +1928,11 @@ static void aNPS2_select_card_player(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) 
     };
     static int msg_no[] = {
         // clang-format off
-        22,
-        24,
-        35,
-        38,
-        -1,
+        aNPS2_MSG_GRP0 + 22,
+        aNPS2_MSG_GRP0 + 24,
+        aNPS2_MSG_GRP0 + 35,
+        aNPS2_MSG_GRP0 + 38,
+        aNPS2_MSG_GRP1,
         // clang-format on
     };
 
@@ -1153,6 +1968,9 @@ static void aNPS2_chk_fuzai_player(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
         switch (mChoice_GET_CHOSENUM()) {
             case mChoice_CHOICE0:
                 aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_START_TYPE0);
+                if ((p_sel2->flags & 1) == 0) {
+                    Common_Set(cur_kanji_lv, Save_Get(private_data[p_sel2->player_no]).kanji_pl_lv);
+                }
                 break;
             case mChoice_CHOICE1:
                 aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_SELECT_PLAYER);
@@ -1199,15 +2017,23 @@ static void aNPS2_game_start_wait(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                     Now_Private->state_flags &= ~mPr_FLAG_BIRTHDAY_ACTIVE;
                 }
             }
+
+            if (p_sel2->talk_idx != aNPS2_TALK_START_TYPE3 && (p_sel2->flags & 1) != 0) {
+                Now_Private->kanji_pl_lv = Common_Get(cur_kanji_lv);
+            }
         // fallthrough 1 -> 2, is this a mistake??
         case 2:
             switch (aNPS2_setup_load_data(p_sel2, play)) {
                 case mCD_TRANS_ERR_NONE:
                     mMsg_UNSET_LOCKCONTINUE();
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+                    if ((p_sel2->flags & 1) != 0) {
+                        Now_Private->kanji_pl_lv = Common_Get(cur_kanji_lv);
+                    }
                     break;
-                case mCD_TRANS_ERR_NOCARD:
                 case mCD_TRANS_ERR_IOERROR:
+                case mCD_TRANS_ERR_NOCARD:
+                case 41:
                     mMsg_UNSET_LOCKCONTINUE();
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
                     mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 33));
@@ -1216,10 +2042,16 @@ static void aNPS2_game_start_wait(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
                 case mCD_TRANS_ERR_WRONG_LAND:
                     mMsg_UNSET_LOCKCONTINUE();
                     mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, -7));
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP1 + 6));
                     aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_RETURN_TITLE);
                     break;
                 case mCD_TRANS_ERR_BUSY:
+                    break;
+                default:
+                    mMsg_UNSET_LOCKCONTINUE();
+                    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, 33));
+                    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_RETURN_TITLE);
                     break;
             }
             break;
@@ -1239,6 +2071,478 @@ static void aNPS2_return_title(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     }
 }
 
+static void aNPS2_chk_make_sdcard(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+}
+
+static void aNPS2_make_sdcard(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, -1, aNPS2_MSG_GRP0 + 33, aNPS2_MSG_GRP0 + 38, aNPS2_MSG_GRP1 + 6,
+                               aNPS2_MSG_GRP2 + 5, aNPS2_MSG_GRP2 + 6, aNPS2_MSG_GRP2 + 7,
+                               aNPS2_MSG_GRP2 + 17, aNPS2_MSG_GRP2 + 18, aNPS2_MSG_GRP5 + 4,
+                               aNPS2_MSG_GRP5 + 10 };
+    static int idx_table[] = { -1, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE,
+                               aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_CHK_MAKE_SDCARD,
+                               aNPS2_TALK_WHATS_HAPPEN };
+    int sd_act;
+
+    sd_act = aNPS2_make_sdcard_local(p_sel2);
+    aNPS2_common_sdcard(p_sel2, play, sd_act, 12, msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_breaking_1(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int chose_num;
+
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        chose_num = mChoice_GET_CHOSENUM();
+        switch (chose_num) {
+            case mChoice_CHOICE0:
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_MSG_WAIT_BREAKING_1);
+                aNPS2_search_sd_drive();
+                break;
+            case mChoice_CHOICE1:
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_BREAKING_2);
+                break;
+            case mChoice_CHOICE2:
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 14));
+                break;
+        }
+    }
+}
+
+static void aNPS2_breaking_1_0(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int ret;
+    int chan;
+    int msg_no;
+
+    ret = aNPS2_chk_repayment_bg_local(&chan);
+    switch (ret) {
+        case 0:
+            return;
+        case 2:
+        case 4:
+        case 7:
+            aNPS2_next_talk_proc(p_sel2, play);
+            return;
+        case 3:
+            msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5 + 2);
+            mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            break;
+        case 1:
+            msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5 + 3);
+            mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            break;
+        case 5:
+            msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 6);
+            mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            break;
+        case 6:
+            msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5 + 7);
+            mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            break;
+        default:
+            msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 6);
+            mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            break;
+    }
+
+    sAdo_SysLevStop(0x47);
+    mMsg_UNSET_LOCKCONTINUE();
+    aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+}
+
+static void aNPS2_breaking_1_1(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP2 + 16, aNPS2_MSG_GRP0 + 33, aNPS2_MSG_GRP0 + 38,
+                               aNPS2_MSG_GRP1 + 6,  aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,
+                               aNPS2_MSG_GRP2 + 7,  aNPS2_MSG_GRP2 + 11, aNPS2_MSG_GRP2 + 17,
+                               aNPS2_MSG_GRP2 + 18 };
+    static int idx_table[] = { -1, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE,
+                               aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD };
+    int sd_act;
+
+    sd_act = aNPS2_repayment_village_local(p_sel2, FALSE);
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_breaking_2(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+}
+
+static void aNPS2_breaking_2(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, -1, aNPS2_MSG_GRP0 + 33, aNPS2_MSG_GRP0 + 38, aNPS2_MSG_GRP1 + 6 };
+    static int idx_table[] = { -1, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE,
+                               aNPS2_TALK_RETURN_TITLE };
+    int sd_act;
+
+    sd_act = aNPS2_breaking_2_local(p_sel2);
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_kanji(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int chose_num;
+    u8 kanji_lv;
+
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        p_sel2->flags |= 1;
+        chose_num = mChoice_GET_CHOSENUM();
+        kanji_lv = 5 - chose_num;
+        Common_Set(cur_kanji_lv, kanji_lv);
+        aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+    }
+}
+
+static void aNPS2_chk_option_sdcard(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    int talk_idx = -1;
+
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        switch (mChoice_GET_CHOSENUM()) {
+            case mChoice_CHOICE0:
+                talk_idx = aNPS2_TALK_MSG_WAIT_RESERVE_SDCARD;
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP4));
+                aNPS2_search_sd_drive();
+                break;
+            case mChoice_CHOICE1:
+                p_sel2->sd_file_count = 0;
+                talk_idx = aNPS2_TALK_DELETE_SEL_P_FIRST;
+                p_sel2->sd_action = 2;
+                break;
+            case mChoice_CHOICE2:
+                talk_idx = aNPS2_TALK_CHK_SDCARD_DELETE;
+                break;
+            case mChoice_CHOICE3:
+                talk_idx = aNPS2_TALK_CHK_SDCARD_FORMAT;
+                break;
+            case mChoice_CHOICE4:
+                talk_idx = aNPS2_TALK_WHATS_HAPPEN;
+                break;
+        }
+
+        if (talk_idx != -1) {
+            aNPS2_change_talk_proc(p_sel2, play, talk_idx);
+        }
+    }
+}
+
+static void aNPS2_chk_sdcard_delete(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    int talk_idx = -1;
+
+    if (order != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        switch (mChoice_GET_CHOSENUM()) {
+            case mChoice_CHOICE0:
+                talk_idx = aNPS2_TALK_CHK_DELETE_ALL_V;
+                aNPS2_search_sd_drive();
+                break;
+            case mChoice_CHOICE1:
+                talk_idx = aNPS2_TALK_CHK_DELETE_ALL_P;
+                aNPS2_search_sd_drive();
+                break;
+            case mChoice_CHOICE2:
+                talk_idx = aNPS2_TALK_COMMON_MESSAGE_WAIT_NO_SOUND;
+                p_sel2->sd_slot_no = 0;
+                aNPS2_search_sd_drive();
+                break;
+            case mChoice_CHOICE3:
+                p_sel2->sd_file_count = 0;
+                talk_idx = aNPS2_TALK_DELETE_SEL_P_FIRST;
+                p_sel2->sd_action = 1;
+                mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3 + 10));
+                break;
+            case mChoice_CHOICE4:
+                talk_idx = aNPS2_TALK_CHK_OPTION_SDCARD;
+                break;
+        }
+
+        if (talk_idx != -1) {
+            aNPS2_change_talk_proc(p_sel2, play, talk_idx);
+        }
+    }
+}
+
+static void aNPS2_chk_sdcard_format(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+}
+
+static void aNPS2_sdcard_format(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP3 + 4, aNPS2_MSG_GRP3 + 5, aNPS2_MSG_GRP2 + 17,
+                               aNPS2_MSG_GRP2 + 6, aNPS2_MSG_GRP2 + 5 };
+    static int idx_table[] = { -1, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_CHK_OPTION_SDCARD,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN };
+    int sd_act;
+
+    sd_act = aNPS2_sdcard_format_local(p_sel2);
+    if (sd_act == 2 || sd_act == 5) {
+        aNPS2_set_slot_name(mCsd_nowdrive_get(), mMsg_FREE_STR3);
+    }
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_delete_all_v(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+}
+
+static void aNPS2_delete_all_v(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP3 + 9,  aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,
+                               aNPS2_MSG_GRP2 + 17, aNPS2_MSG_GRP2 + 18, aNPS2_MSG_GRP3 + 12 };
+    static int idx_table[] = { -1, aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_CHK_OPTION_SDCARD };
+    int sd_act;
+
+    // @BUG: devs forgot to initialize this in the event talk_idx is invalid
+#ifdef BUGFIXES
+    sd_act = 0;
+#endif
+
+    switch (p_sel2->talk_idx) {
+        case aNPS2_TALK_DELETE_ALL_V:
+            sd_act = aNPS2_delete_all_v_local(p_sel2);
+            break;
+        case aNPS2_TALK_DELETE_ALL_P:
+            sd_act = aNPS2_delete_all_p_local(p_sel2);
+            break;
+    }
+
+    if (sd_act != 0) {
+        aNPS2_now_sd_drive();
+    }
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_delete_all_p(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+}
+
+static void aNPS2_delete_sel_v_first(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP3 + 11, aNPS2_MSG_GRP3 + 12, aNPS2_MSG_GRP3 + 19,
+                               aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,  aNPS2_MSG_GRP2 + 17,
+                               aNPS2_MSG_GRP2 + 18 };
+    static int idx_table[] = { -1, aNPS2_TALK_CHK_DELETE_SEL_V, aNPS2_TALK_CHK_OPTION_SDCARD,
+                               aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD };
+    int sd_act;
+
+    sd_act = aNPS2_chk_sdcard_village(p_sel2);
+    if (sd_act != 0) {
+        aNPS2_now_sd_drive();
+    }
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, FALSE);
+}
+
+static void aNPS2_chk_delete_sel_v(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int chose_num;
+
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        chose_num = mChoice_GET_CHOSENUM();
+        switch (chose_num) {
+            case mChoice_CHOICE0:
+                aNPS2_next_talk_proc(p_sel2, play);
+                break;
+            case mChoice_CHOICE1:
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_DELETE_SEL_V_FIRST);
+                mMsg_SET_LOCKCONTINUE();
+                break;
+            case mChoice_CHOICE2:
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+                break;
+        }
+    }
+}
+
+static void aNPS2_delete_sel_v(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP3 + 14, aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,
+                               aNPS2_MSG_GRP2 + 17, aNPS2_MSG_GRP2 + 18, aNPS2_MSG_GRP3 + 12 };
+    static int idx_table[] = { -1, aNPS2_TALK_COMMON_MESSAGE_WAIT_NO_SOUND, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_CHK_OPTION_SDCARD };
+    int sd_act;
+
+    sd_act = aNPS2_delete_sel_v_local(p_sel2);
+    if (sd_act == 1 && p_sel2->sd_slot_no > 0) {
+        p_sel2->sd_slot_no--;
+    }
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_delete_sel_p_first_local(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int wait_msg) {
+    int ret;
+    int msg_no;
+
+    ret = aNPS2_chk_sdcard_photograph(p_sel2);
+    switch (ret) {
+        case 1:
+            if (wait_msg != 0) {
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_DELETE_SEL_P_SBMN_W);
+            } else {
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_DELETE_SEL_P_SBMN_E);
+            }
+            break;
+        case 2:
+            if (wait_msg != 0) {
+                msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3 + 12);
+                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            } else {
+                msg_no = aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3 + 19);
+                mMsg_SET_CONTINUE_MSG_NUM(msg_no);
+            }
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+            break;
+        case 3:
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 5));
+            break;
+        case 4:
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 6));
+            break;
+        case 5:
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 18));
+            break;
+        case 6:
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_WHATS_HAPPEN);
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 17));
+            break;
+    }
+
+    if (ret != 1 && wait_msg == 0) {
+        mMsg_REQUEST_MAIN_APPEAR_WAIT_TYPE1();
+        mMsg_SET_FORCENEXT();
+    }
+}
+
+static void aNPS2_delete_sel_p_first(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        aNPS2_delete_sel_p_first_local(p_sel2, play, TRUE);
+    }
+}
+
+static void aNPS2_delete_sel_p_sbmn_w(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    if (mMsg_CHECK_MAIN_WAIT() == TRUE) {
+        aNPS2_next_talk_proc(p_sel2, play);
+    }
+}
+
+static void aNPS2_delete_sel_p_sbmn_e(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    Submenu* submenu = &play->submenu;
+    int result;
+
+    if (submenu->open_flag == FALSE) {
+        aNPS2_now_sd_drive();
+        result = submenu->param3;
+        switch (result) {
+            case 0:
+                mMsg_REQUEST_MAIN_APPEAR_WAIT_TYPE1();
+                mMsg_SET_FORCENEXT();
+                if (p_sel2->sd_action == 2) {
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3 + 17));
+                } else {
+                    mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP3 + 8));
+                }
+                aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_OPTION_SDCARD);
+                break;
+            case 1:
+                aNPS2_delete_sel_p_first_local(p_sel2, play, FALSE);
+                break;
+            case 2:
+                if (p_sel2->sd_file_count > 0 && p_sel2->sd_action == 1) {
+                    p_sel2->sd_file_count--;
+                }
+                aNPS2_delete_sel_p_first_local(p_sel2, play, FALSE);
+                break;
+        }
+    }
+}
+
+static void aNPS2_chk_repayment_village(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_common_chk_return(p_sel2, play, aNPS2_TALK_CANNOT_REPAYMENT_VILLAGE);
+}
+
+static void aNPS2_repayment_village(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP2 + 10, aNPS2_MSG_GRP0 + 33, aNPS2_MSG_GRP0 + 38,
+                               aNPS2_MSG_GRP1 + 6,  aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,
+                               aNPS2_MSG_GRP2 + 7,  aNPS2_MSG_GRP2 + 11, aNPS2_MSG_GRP2 + 17,
+                               aNPS2_MSG_GRP2 + 18 };
+    static int idx_table[] = { -1, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_RETURN_TITLE,
+                               aNPS2_TALK_RETURN_TITLE, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_CHK_OPTION_SDCARD };
+    int sd_act;
+
+    sd_act = aNPS2_repayment_village_local(p_sel2, TRUE);
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_cannot_repayment_village(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        aNPS2_whats_happen_play(p_sel2, play);
+    }
+}
+
+static void aNPS2_reserve_sdcard(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    static int msg_table[] = { -1, aNPS2_MSG_GRP4 + 1, aNPS2_MSG_GRP2 + 5,  aNPS2_MSG_GRP2 + 6,
+                               aNPS2_MSG_GRP2 + 18, aNPS2_MSG_GRP2 + 17, aNPS2_MSG_GRP2 + 7,
+                               aNPS2_MSG_GRP5 + 10 };
+    static int idx_table[] = { -1, aNPS2_TALK_CHK_OPTION_SDCARD, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_CHK_OPTION_SDCARD,
+                               aNPS2_TALK_WHATS_HAPPEN, aNPS2_TALK_WHATS_HAPPEN,
+                               aNPS2_TALK_WHATS_HAPPEN };
+    int sd_act;
+
+    sd_act = aNPS2_reserve_sdcard_local(p_sel2);
+    if (sd_act != 0) {
+        aNPS2_now_sd_drive();
+    }
+    aNPS2_common_sdcard(p_sel2, play, sd_act, ARRAY_COUNT(msg_table), msg_table, idx_table, TRUE);
+}
+
+static void aNPS2_chk_repayment_bg(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int ret;
+    int chan;
+
+    ret = aNPS2_chk_repayment_bg_local(&chan);
+    switch (ret) {
+        case 0:
+            return;
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+            aNPS2_whats_happen_play(p_sel2, play);
+            break;
+        case 2:
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5 + 8));
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CHK_REPAYMENT_VILLAGE);
+            break;
+        case 4:
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP2 + 9));
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CANNOT_REPAYMENT_VILLAGE);
+            break;
+        case 6:
+            mMsg_SET_CONTINUE_MSG_NUM(aNPS2_make_msg(p_sel2, aNPS2_MSG_GRP5 + 6));
+            aNPS2_change_talk_proc(p_sel2, play, aNPS2_TALK_CANNOT_REPAYMENT_VILLAGE);
+            break;
+        default:
+            aNPS2_whats_happen_play(p_sel2, play);
+            break;
+    }
+
+    mMsg_UNSET_LOCKCONTINUE();
+}
+
 static void aNPS2_clr_pl_data_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     int pl_no = p_sel2->player_no;
 
@@ -1251,6 +2555,7 @@ static void aNPS2_clr_pl_data_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
     mSC_LightHouse_Delete_Player(pl_no);
     mMpswd_AllClearHPMailPlayerIdx(pl_no);
     mNW_InitPrivateOriginalData(pl_no);
+    mPr_ClearMotherMailInfo(Save_GetPointer(mother_mail[pl_no]));
 }
 
 static void aNPS2_ti_menu_open_wait_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
@@ -1322,40 +2627,182 @@ static void aNPS2_select_card_player_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* p
     // clang-format on
 }
 
+static void aNPS2_make_sdcard_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_breaking_1_0_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_breaking_2_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_make_sdcard_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_search_sd_drive();
+}
+
+static void aNPS2_chk_sdcard_format_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_search_sd_drive();
+}
+
+static void aNPS2_sdcard_format_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    // nothing
+}
+
+static void aNPS2_sdcard_format_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_chk_delete_all_v_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_set_free_str(0x1E4, mMsg_FREE_STR5);
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_delete_all_v_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_search_sd_drive();
+}
+
+static void aNPS2_chk_delete_all_p_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_set_free_str(0x758, mMsg_FREE_STR5);
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_delete_all_p_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_search_sd_drive();
+}
+
+static void aNPS2_delete_sel_v_first_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_set_free_str(0x1E4, mMsg_FREE_STR5);
+}
+
+static void aNPS2_delete_sel_v_first_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_delete_sel_p_first_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_search_sd_drive();
+    aNPS2_set_free_str(0x758, mMsg_FREE_STR5);
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+    p_sel2->_BBB_sd = 0x1E;
+}
+
+static void aNPS2_delete_sel_p_sbmn_w_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    mMsg_REQUEST_MAIN_DISAPPEAR_WAIT_TYPE1();
+}
+
+static void aNPS2_delete_sel_p_sbmn_e_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    mSM_open_submenu(&play->submenu, mSM_OVL_FILM, p_sel2->sd_action, p_sel2->sd_tiff_number);
+}
+
+static void aNPS2_reserve_sdcard_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_chk_repayment_bg_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    mMsg_SET_LOCKCONTINUE();
+}
+
+static void aNPS2_chk_repayment_village_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    int drive;
+
+    drive = mCsd_nowdrive_get();
+    if (drive == mCD_SLOT_A) {
+        aNPS2_set_slot_name(mCD_SLOT_A, mMsg_FREE_STR3);
+        aNPS2_set_slot_name(mCD_SLOT_B, mMsg_FREE_STR4);
+    } else {
+        aNPS2_set_slot_name(mCD_SLOT_B, mMsg_FREE_STR3);
+        aNPS2_set_slot_name(mCD_SLOT_A, mMsg_FREE_STR4);
+    }
+
+    p_sel2->sd_action_timer = 0x70;
+    p_sel2->sd_result = 0xFF;
+}
+
+static void aNPS2_repayment_village_bf_init(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+}
+
 typedef void (*aNPS2_TALK_INIT_PROC)(NPC_P_SEL2_ACTOR*, GAME_PLAY*);
 
 static void aNPS2_talk_init_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int talk_idx) {
     // clang-format off
     static aNPS2_TALK_INIT_PROC init_proc[] = {
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        &aNPS2_clr_pl_data_init,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        &aNPS2_ti_menu_open_wait_init,
-        &aNPS2_ti_menu_close_wait_init,
-        &aNPS2_select_player_init,
-        &aNPS2_select_card_player_init,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
-        (aNPS2_TALK_INIT_PROC)&none_proc1,
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_SETUP_YURE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_SETUP_SOUND
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_SETUP_VOICE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_SETUP_VOICE_OK
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_WHATS_HAPPEN
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_OPTION
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_OPTION2
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_VILLAGE_DATA_CARTRIDGE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CLR_VILLAGE_DATA_CARTRIDGE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_PL_DATA
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_PL_DATA2
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_PL_DATA3
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_PL_DATA4
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_CLR_PASSPORT_FILE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CLR_PASSPORT_FILE
+        &aNPS2_clr_pl_data_init, // aNPS2_TALK_CLR_PL_DATA
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_TI_MENU_OPEN_MSG_WAIT
+        &aNPS2_ti_menu_open_wait_init, // aNPS2_TALK_TI_MENU_OPEN_WAIT
+        &aNPS2_ti_menu_close_wait_init, // aNPS2_TALK_TI_MENU_CLOSE_WAIT
+        &aNPS2_select_player_init, // aNPS2_TALK_SELECT_PLAYER
+        &aNPS2_select_card_player_init, // aNPS2_TALK_SELECT_CARD_PLAYER
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_FUZAI_PLAYER
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_KITAKU_PLAYER
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_START_TYPE0
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_START_TYPE1
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_START_TYPE2
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_START_TYPE3
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_RETURN_TITLE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_MAKE_SDCARD
+        &aNPS2_make_sdcard_bf_init, // aNPS2_TALK_COMMON_MESSAGE_WAIT
+        &aNPS2_make_sdcard_init, // aNPS2_TALK_MAKE_SDCARD
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_BREAKING_1
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_MSG_WAIT_BREAKING_1
+        &aNPS2_breaking_1_0_init, // aNPS2_TALK_BREAKING_1_0
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_BREAKING_1_1
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_BREAKING_2
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_MSG_WAIT_BREAKING_2
+        &aNPS2_breaking_2_init, // aNPS2_TALK_BREAKING_2
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_KANJI
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_OPTION_SDCARD
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_SDCARD_DELETE
+        &aNPS2_chk_sdcard_format_init, // aNPS2_TALK_CHK_SDCARD_FORMAT
+        &aNPS2_sdcard_format_bf_init, // aNPS2_TALK_MSG_WAIT_SDCARD_FORMAT
+        &aNPS2_sdcard_format_init, // aNPS2_TALK_SDCARD_FORMAT
+        &aNPS2_chk_delete_all_v_init, // aNPS2_TALK_CHK_DELETE_ALL_V
+        &aNPS2_delete_all_v_bf_init, // aNPS2_TALK_MSG_WAIT_DELETE_ALL_V
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_DELETE_ALL_V
+        &aNPS2_chk_delete_all_p_init, // aNPS2_TALK_CHK_DELETE_ALL_P
+        &aNPS2_delete_all_p_bf_init, // aNPS2_TALK_MSG_WAIT_DELETE_ALL_P
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_DELETE_ALL_P
+        &aNPS2_delete_sel_v_first_bf_init, // aNPS2_TALK_COMMON_MESSAGE_WAIT_NO_SOUND
+        &aNPS2_delete_sel_v_first_init, // aNPS2_TALK_DELETE_SEL_V_FIRST
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CHK_DELETE_SEL_V
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_MSG_WAIT_DELETE_SEL_V
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_DELETE_SEL_V
+        &aNPS2_delete_sel_p_first_init, // aNPS2_TALK_DELETE_SEL_P_FIRST
+        &aNPS2_delete_sel_p_sbmn_w_init, // aNPS2_TALK_DELETE_SEL_P_SBMN_W
+        &aNPS2_delete_sel_p_sbmn_e_init, // aNPS2_TALK_DELETE_SEL_P_SBMN_E
+        &aNPS2_reserve_sdcard_bf_init, // aNPS2_TALK_MSG_WAIT_RESERVE_SDCARD
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_RESERVE_SDCARD
+        &aNPS2_chk_repayment_bg_init, // aNPS2_TALK_CHK_REPAYMENT_BG
+        &aNPS2_chk_repayment_village_init, // aNPS2_TALK_CHK_REPAYMENT_VILLAGE
+        &aNPS2_repayment_village_bf_init, // aNPS2_TALK_MSG_WAIT_REPAYMENT_VILLAGE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_REPAYMENT_VILLAGE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_CANNOT_REPAYMENT_VILLAGE
+        (aNPS2_TALK_INIT_PROC)&none_proc1, // aNPS2_TALK_WAIT
     };
     // clang-foramt on
 
@@ -1365,35 +2812,72 @@ static void aNPS2_talk_init_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int 
 static void aNPS2_change_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, int talk_idx) {
     // clang-format off
     static aNPS2_TALK_PROC process[] = {
-        &aNPS2_setup_yure,
-        &aNPS2_setup_sound,
-        &aNPS2_setup_voice,
-        &aNPS2_setup_voice_ok,
-        &aNPS2_whats_happen,
-        &aNPS2_chk_option,
-        &aNPS2_chk_option2,
-        &aNPS2_chk_clr_village_data_cartridge,
-        &aNPS2_clr_village_data_cartridge,
-        &aNPS2_chk_clr_pl_data,
-        &aNPS2_chk_clr_pl_data2,
-        &aNPS2_chk_clr_pl_data3,
-        &aNPS2_chk_clr_pl_data3,
-        &aNPS2_chk_clr_passport_file,
-        &aNPS2_clr_passport_file,
-        &aNPS2_clr_pl_data,
-        &aNPS2_ti_menu_open_msg_wait,
-        &aNPS2_ti_menu_open_wait,
-        &aNPS2_ti_menu_close_wait,
-        &aNPS2_select_player,
-        &aNPS2_select_card_player,
-        &aNPS2_chk_fuzai_player,
-        &aNPS2_chk_kitaku_player,
-        &aNPS2_game_start_wait,
-        &aNPS2_game_start_wait,
-        &aNPS2_game_start_wait,
-        &aNPS2_game_start_wait,
-        &aNPS2_return_title,
-        (aNPS2_TALK_PROC)&none_proc1,
+        &aNPS2_setup_yure, // aNPS2_TALK_SETUP_YURE
+        &aNPS2_setup_sound, // aNPS2_TALK_SETUP_SOUND
+        &aNPS2_setup_voice, // aNPS2_TALK_SETUP_VOICE
+        &aNPS2_setup_voice_ok, // aNPS2_TALK_SETUP_VOICE_OK
+        &aNPS2_whats_happen, // aNPS2_TALK_WHATS_HAPPEN
+        &aNPS2_chk_option, // aNPS2_TALK_CHK_OPTION
+        &aNPS2_chk_option2, // aNPS2_TALK_CHK_OPTION2
+        &aNPS2_chk_clr_village_data_cartridge, // aNPS2_TALK_CHK_CLR_VILLAGE_DATA_CARTRIDGE
+        &aNPS2_clr_village_data_cartridge, // aNPS2_TALK_CLR_VILLAGE_DATA_CARTRIDGE
+        &aNPS2_chk_clr_pl_data, // aNPS2_TALK_CHK_CLR_PL_DATA
+        &aNPS2_chk_clr_pl_data2, // aNPS2_TALK_CHK_CLR_PL_DATA2
+        &aNPS2_chk_clr_pl_data3, // aNPS2_TALK_CHK_CLR_PL_DATA3
+        &aNPS2_chk_clr_pl_data3, // aNPS2_TALK_CHK_CLR_PL_DATA4
+        &aNPS2_chk_clr_passport_file, // aNPS2_TALK_CHK_CLR_PASSPORT_FILE
+        &aNPS2_clr_passport_file, // aNPS2_TALK_CLR_PASSPORT_FILE
+        &aNPS2_clr_pl_data, // aNPS2_TALK_CLR_PL_DATA
+        &aNPS2_ti_menu_open_msg_wait, // aNPS2_TALK_TI_MENU_OPEN_MSG_WAIT
+        &aNPS2_ti_menu_open_wait, // aNPS2_TALK_TI_MENU_OPEN_WAIT
+        &aNPS2_ti_menu_close_wait, // aNPS2_TALK_TI_MENU_CLOSE_WAIT
+        &aNPS2_select_player, // aNPS2_TALK_SELECT_PLAYER
+        &aNPS2_select_card_player, // aNPS2_TALK_SELECT_CARD_PLAYER
+        &aNPS2_chk_fuzai_player, // aNPS2_TALK_CHK_FUZAI_PLAYER
+        &aNPS2_chk_kitaku_player, // aNPS2_TALK_CHK_KITAKU_PLAYER
+        &aNPS2_game_start_wait, // aNPS2_TALK_START_TYPE0
+        &aNPS2_game_start_wait, // aNPS2_TALK_START_TYPE1
+        &aNPS2_game_start_wait, // aNPS2_TALK_START_TYPE2
+        &aNPS2_game_start_wait, // aNPS2_TALK_START_TYPE3
+        &aNPS2_return_title, // aNPS2_TALK_RETURN_TITLE
+        &aNPS2_chk_make_sdcard, // aNPS2_TALK_CHK_MAKE_SDCARD
+        &aNPS2_common_message_wait, // aNPS2_TALK_COMMON_MESSAGE_WAIT
+        &aNPS2_make_sdcard, // aNPS2_TALK_MAKE_SDCARD
+        &aNPS2_chk_breaking_1, // aNPS2_TALK_CHK_BREAKING_1
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_BREAKING_1
+        &aNPS2_breaking_1_0, // aNPS2_TALK_BREAKING_1_0
+        &aNPS2_breaking_1_1, // aNPS2_TALK_BREAKING_1_1
+        &aNPS2_chk_breaking_2, // aNPS2_TALK_CHK_BREAKING_2
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_BREAKING_2
+        &aNPS2_breaking_2, // aNPS2_TALK_BREAKING_2
+        &aNPS2_chk_kanji, // aNPS2_TALK_CHK_KANJI
+        &aNPS2_chk_option_sdcard, // aNPS2_TALK_CHK_OPTION_SDCARD
+        &aNPS2_chk_sdcard_delete, // aNPS2_TALK_CHK_SDCARD_DELETE
+        &aNPS2_chk_sdcard_format, // aNPS2_TALK_CHK_SDCARD_FORMAT
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_SDCARD_FORMAT
+        &aNPS2_sdcard_format, // aNPS2_TALK_SDCARD_FORMAT
+        &aNPS2_chk_delete_all_v, // aNPS2_TALK_CHK_DELETE_ALL_V
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_DELETE_ALL_V
+        &aNPS2_delete_all_v, // aNPS2_TALK_DELETE_ALL_V
+        &aNPS2_chk_delete_all_p, // aNPS2_TALK_CHK_DELETE_ALL_P
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_DELETE_ALL_P
+        &aNPS2_delete_all_v, // aNPS2_TALK_DELETE_ALL_P
+        &aNPS2_common_message_wait_no_sound, // aNPS2_TALK_COMMON_MESSAGE_WAIT_NO_SOUND
+        &aNPS2_delete_sel_v_first, // aNPS2_TALK_DELETE_SEL_V_FIRST
+        &aNPS2_chk_delete_sel_v, // aNPS2_TALK_CHK_DELETE_SEL_V
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_DELETE_SEL_V
+        &aNPS2_delete_sel_v, // aNPS2_TALK_DELETE_SEL_V
+        &aNPS2_delete_sel_p_first, // aNPS2_TALK_DELETE_SEL_P_FIRST
+        &aNPS2_delete_sel_p_sbmn_w, // aNPS2_TALK_DELETE_SEL_P_SBMN_W
+        &aNPS2_delete_sel_p_sbmn_e, // aNPS2_TALK_DELETE_SEL_P_SBMN_E
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_RESERVE_SDCARD
+        &aNPS2_reserve_sdcard, // aNPS2_TALK_RESERVE_SDCARD
+        &aNPS2_chk_repayment_bg, // aNPS2_TALK_CHK_REPAYMENT_BG
+        &aNPS2_chk_repayment_village, // aNPS2_TALK_CHK_REPAYMENT_VILLAGE
+        &aNPS2_common_message_wait, // aNPS2_TALK_MSG_WAIT_REPAYMENT_VILLAGE
+        &aNPS2_repayment_village, // aNPS2_TALK_REPAYMENT_VILLAGE
+        &aNPS2_cannot_repayment_village, // aNPS2_TALK_CANNOT_REPAYMENT_VILLAGE
+        (aNPS2_TALK_PROC)&none_proc1, // aNPS2_TALK_WAIT
     };
     // clang-format on
 
@@ -1402,8 +2886,20 @@ static void aNPS2_change_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play, in
     aNPS2_talk_init_proc(p_sel2, play, talk_idx);
 }
 
+static void aNPS2_next_talk_proc(NPC_P_SEL2_ACTOR* p_sel2, GAME_PLAY* play) {
+    aNPS2_change_talk_proc(p_sel2, play, p_sel2->talk_idx + 1);
+}
+
 static void aNPS2_set_talk_info_talk_request(ACTOR* actorx) {
-    mDemo_Set_msg_num(aNPS2_make_msg((NPC_P_SEL2_ACTOR*)actorx, 0));
+    int msg_no;
+
+    if (aNPS2_chk_off_skin()) {
+        msg_no = aNPS2_MSG_GRP1 + 7;
+    } else {
+        msg_no = aNPS2_MSG_GRP0 + 0;
+    }
+
+    mDemo_Set_msg_num(aNPS2_make_msg((NPC_P_SEL2_ACTOR*)actorx, msg_no));
     mDemo_Set_camera(CAMERA2_PROCESS_NORMAL);
 }
 
@@ -1431,6 +2927,14 @@ static int aNPS2_talk_init(ACTOR* actorx, GAME* game) {
     }
 
     aNPS2_set_slot_name(slot, mMsg_FREE_STR4);
+
+    if (slot == mCD_SLOT_A) {
+        aNPS2_set_slot_name(mCD_SLOT_B, mMsg_FREE_STR3);
+        mCsd_nowdrive_set(mCD_SLOT_B);
+    } else {
+        aNPS2_set_slot_name(mCD_SLOT_A, mMsg_FREE_STR3);
+        mCsd_nowdrive_set(mCD_SLOT_A);
+    }
     return TRUE;
 }
 

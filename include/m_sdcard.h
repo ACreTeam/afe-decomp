@@ -22,7 +22,14 @@ extern void mCsd_sd_mura_allcount_get_start(void);
 extern void mCsd_sd_mura_nextname_get_start(void);
 extern int mCsd_sd_format_wait(void);
 extern int mCsd_thread_result_chk(void);
+extern int mCsd_nowdrive_get(void);
 extern void mCsd_nowdrive_set(int nowdrive);
+extern int mCsd_sdcard_slot_chk(void);
+extern int mSD_tiff_remove_all(void);
+extern int mSD_tiff_nextnumber_get(int* number, int* count);
+extern int mSD_mura_remove_all(void);
+extern int mSD_mura_make_directory(void);
+extern int mSD_mura_specification_remove(const u8* eng_name);
 
 #ifdef __cplusplus
 }

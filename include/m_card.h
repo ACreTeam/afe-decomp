@@ -391,6 +391,13 @@ extern int mCD_SD_InitGameStart_bg(int player_no, s32 card_private_idx, s32 star
 extern int mCD_movingInfo_get(void);
 extern int mCD_CheckLoadOldData(PlusConvData_c* plus_data);
 
+extern int mCD_SaveLand_sdcard_pileup_bg(mCD_sd_card_info_c* sd_info);
+extern int mCD_SaveLand_sdcard_bg(mCD_sd_card_info_c* sd_info);
+extern int mCD_SD_CheckReten_SDmura(mCD_sd_card_info_c* sd_info);
+extern int mCD_SD_repayment_SDmura(mCD_sd_card_info_c* sd_info, int param);
+extern int mCD_abandonment_SDmura(mCD_sd_card_info_c* sd_info);
+extern int mSD_mura_nextname_get(u8* name, int* count);
+
 extern void mCD_ClearErrInfo(void);
 extern void mCD_OnErrInfo(int err);
 extern void mCD_OffErrInfo(int err);

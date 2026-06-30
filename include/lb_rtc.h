@@ -113,6 +113,7 @@ extern int lbRTC_IsAbnormal();
 extern void lbRTC_Sampling();
 extern void lbRTC_SetTime(lbRTC_time_c* time);
 extern void lbRTC_GetTime(lbRTC_time_c* time);
+extern void lbRTC_GetNukegaraTime(lbRTC_time_c* time);
 extern lbRTC_day_t lbRTC_GetDaysByMonth(lbRTC_year_t year, lbRTC_month_t month);
 extern int lbRTC_IsEqualDate(
     lbRTC_year_t y0, lbRTC_month_t m0, lbRTC_day_t d0,

@@ -777,11 +777,11 @@ extern int mCD_SaveLand_sdcard_bg(mCD_sd_card_info_c* sd_info) {
     return ret;
 }
 
-extern void mCD_SaveLand_sdcard_pileup_bg(mCD_sd_card_info_c* sd_info) {
+extern int mCD_SaveLand_sdcard_pileup_bg(mCD_sd_card_info_c* sd_info) {
     mCD_memMgr_c* mgr = &l_memMgr;
 
     mgr->save_home_info._20 = 1;
-    mCD_SaveLand_sdcard_bg(sd_info);
+    return mCD_SaveLand_sdcard_bg(sd_info);
 }
 
 extern void mCsd_exitence_chk_start(void) {
