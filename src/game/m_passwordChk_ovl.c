@@ -17,7 +17,6 @@ static void mPC_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
   if (submenu->overlay->menu_info[mSM_OVL_EDITOR].next_proc_status == mSM_PROCESS_END) {
     (*submenu->overlay->move_chg_base_proc)(menu_info, mSM_PROCESS_END); // close this submenu overlay too
-    sAdo_SysTrgStart(NA_SE_MENU_EXIT);
     passwordChk_ovl = submenu->overlay->passwordChk_ovl;
     mem_copy(               (u8*)menu_info->data2, passwordChk_ovl->line0, mPC_STR_SIZE);
     mem_copy((u8*)menu_info->data2 + mPC_STR_SIZE, passwordChk_ovl->line1, mPC_STR_SIZE);
@@ -36,7 +35,7 @@ static void mPC_passwordChk_ovl_move(Submenu* submenu) {
     &mPC_move_Obey,
     &mPC_move_End
   };
-  
+
   Submenu_Overlay_c* overlay = submenu->overlay;
   mSM_MenuInfo_c* menu_info = &overlay->menu_info[mSM_OVL_PASSWORDCHK];
 
@@ -78,8 +77,9 @@ static void mPC_set_frame_dl(Submenu* submenu, GRAPH* graph, f32 x, f32 y) {
 }
 
 static void mPC_set_character(Submenu* submenu, GAME* game, f32 x, f32 y) {
-  static u8 title_str[20] = "Enter a secret code.";
-  static f32 cursol_baseX[mPC_LINE_COUNT] = { 77.0f, 77.0f };
+  static u16 title_str[5] = { 0x0001, 0x0913, 0xF6C2, 0x017E, 0x1217 };
+  static u8 str_key[3] = { 0x7f, 0x7C, 0x05 };
+  static f32 cursol_baseX[mPC_LINE_COUNT] = { 65.0f, 65.0f };
   static f32 cursol_baseY[mPC_LINE_COUNT] = { 81.0f, 99.0f };
 
   mPC_Ovl_c* passwordChk_ovl = submenu->overlay->passwordChk_ovl;
@@ -94,16 +94,28 @@ static void mPC_set_character(Submenu* submenu, GAME* game, f32 x, f32 y) {
   /* Draw title text */
   mFont_SetLineStrings(
     game,
-    title_str, sizeof(title_str),
-    131.0f + x, 34.0f - y,
+    (u8*)title_str, sizeof(title_str),
+    123.0f + x, 33.0f - y,
     255, 255, 255, 255,
     FALSE,
-    TRUE,
-    0.875f, 0.875f,
+    FALSE,
+    1.0f, 1.0f,
     mFont_MODE_POLY
   );
 
-  text_x = 77.0f + x;
+  text_x = 65.0f + x;
+
+  /* Draw title text */
+  mFont_SetLineStrings(
+    game,
+    str_key, sizeof(str_key),
+    text_x, 63.0f - y,
+    135, 135, 80, 255,
+    FALSE,
+    FALSE,
+    1.0f, 1.0f,
+    mFont_MODE_POLY
+  );
 
   /* Draw first line */
   mFont_SetLineStrings(
@@ -178,7 +190,7 @@ static void mPC_passwordChk_ovl_init(Submenu* submenu) {
   menu_info->move_drt = mSM_MOVE_IN_TOP;
 
   /* Open the editor overlay on top of this submenu */
-  mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_PASSWORDCHK, 0, passwordChk_ovl->line0, 168);
+  mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_PASSWORDCHK, 0, passwordChk_ovl->line0, 192);
 }
 
 extern void mPC_passwordChk_ovl_construct(Submenu* submenu) {

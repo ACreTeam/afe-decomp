@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define mPC_STR_SIZE 14
+#define mPC_STR_SIZE 16
 #define mPC_LINE_COUNT 2
 
 struct passwordChk_ovl_s {
