@@ -573,7 +573,7 @@ config.libs = [
     JSystemLib(
         "JSupport",
         [
-            
+
             Object(Matching, "JSystem/JSupport/JSUFileStream.cpp"),
             Object(Matching, "JSystem/JSupport/JSUInputStream.cpp"),
             Object(Matching, "JSystem/JSupport/JSUList.cpp"),
@@ -1467,7 +1467,7 @@ config.libs = [
             Object(Matching, "game/m_npc_schedule.c"),
             Object(Matching, "game/m_npc_walk.c"),
             Object(Matching, "game/m_olib.c"),
-            Object(NonMatching, "game/m_passwordChk_ovl.c"),
+            Object(Matching, "game/m_passwordChk_ovl.c"),
             Object(NonMatching, "game/m_passwordMake_ovl.c"),
             Object(Matching, "game/m_pause.c"),
             Object(Matching, "game/m_play.c"),
