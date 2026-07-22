@@ -1,6 +1,7 @@
 #include "m_passwordChk_ovl.h"
 
 #include "audio.h"
+#include "charmap.h"
 #include "libultra/libultra.h"
 #include "m_editor_ovl.h"
 #include "m_font.h"
@@ -77,8 +78,10 @@ static void mPC_set_frame_dl(Submenu* submenu, GRAPH* graph, f32 x, f32 y) {
 }
 
 static void mPC_set_character(Submenu* submenu, GAME* game, f32 x, f32 y) {
-  static u16 title_str[5] = { 0x0001, 0x0913, 0xF6C2, 0x017E, 0x1217 };
-  static u8 str_key[3] = { 0x7f, 0x7C, 0x05 };
+  // あいことばをいれてね
+  static u8 title_str[] = { CHAR_PP_000, CHAR_PP_001, CHAR_PP_009, CHAR_PP_019, CHAR_PP_246, CHAR_PP_194, CHAR_PP_001, CHAR_PP_126, CHAR_PP_018, CHAR_PP_023 };
+  // control codeりか
+  static u8 str_key[] = { CHAR_PP_127, CHAR_PP_124, CHAR_PP_005 };
   static f32 cursol_baseX[mPC_LINE_COUNT] = { 65.0f, 65.0f };
   static f32 cursol_baseY[mPC_LINE_COUNT] = { 81.0f, 99.0f };
 
