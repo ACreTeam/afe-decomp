@@ -47,7 +47,7 @@ static void aMKBC_clip_roll_draw(GAME_PLAY* play, int timer, int page_idx);
 static void aMKBC_clip_think_init(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int init_idx);
 static void aMKBC_clip_sound_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int idx);
 static int aMKBC_clip_section_chk(int section);
-static u8 aMKBC_clip_bgm_no(NPC_TOTAKEKE_ACTOR* totakeke);
+static u16 aMKBC_clip_bgm_no(NPC_TOTAKEKE_ACTOR* totakeke);
 static void aMKBC_clip_roll_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play);
 static void aMKBC_clip_head_up(ACTOR* actorx);
 static void aMKBC_clip_set_itemstr(int str_no, u8 md_no);

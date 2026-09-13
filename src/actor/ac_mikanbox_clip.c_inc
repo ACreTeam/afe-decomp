@@ -153,13 +153,13 @@ static void aNTT_roll_init(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
     kk_save->bitfield &= ~aNTT_FLAG_SP_ROLL_END;
     kk->_9a0 = 255;
     kk->show_timer = 0;
-    kk_save->_00 = 120;
+    Common_Get(event_common).mikanbox_light_radius = 120;
     kk->_9aa = 0;
     kk->npc_class.condition_info.demo_flg = aNPC_COND_DEMO_SKIP_HEAD_LOOKAT;
 }
 
 static void aNTT_roll1_init(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
-    u8 bgm_no = CLIP(mikanbox_clip)->bgm_no_proc(kk);
+    u16 bgm_no = CLIP(mikanbox_clip)->bgm_no_proc(kk);
 
     mBGMPsComp_make_ps_demo(bgm_no, 0x168);
     mBGMPsComp_delete_ps_quiet();
@@ -179,7 +179,7 @@ static void aNTT_roll3_init(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
 }
 
 static void aNTT_roll_end_init(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
-    u8 bgm_no = CLIP(mikanbox_clip)->bgm_no_proc(kk);
+    u16 bgm_no = CLIP(mikanbox_clip)->bgm_no_proc(kk);
 
     mBGMPsComp_delete_ps_demo(bgm_no, 0x168);
     play->draw_chk_proc = (DRAW_CHK_PROC)&none_proc1;
@@ -282,7 +282,7 @@ static int aMKBC_clip_section_chk(int section) {
     return staffroll_info.staffroll_part == section;
 }
 
-static u8 aMKBC_clip_bgm_no(NPC_TOTAKEKE_ACTOR* kk) {
+static u16 aMKBC_clip_bgm_no(NPC_TOTAKEKE_ACTOR* kk) {
     return BGM_TOTAKEKE_LIVE0 + kk->song;
 }
 
@@ -297,7 +297,7 @@ static void aMKBC_clip_roll_proc(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
 
     kk->show_timer++;
     if (kk->majin_flag) {
-        kk_save->_00 = 550;
+        Common_Get(event_common).mikanbox_light_radius = 550;
     }
 
     if (kk->show_timer >= FRAMERATE_TIMER(4800)) {
@@ -306,7 +306,7 @@ static void aMKBC_clip_roll_proc(NPC_TOTAKEKE_ACTOR* kk, GAME_PLAY* play) {
             kk->majin_flag = FALSE;
         }
 
-        kk_save->_00 = 120;
+        Common_Get(event_common).mikanbox_light_radius = 120;
     } else if (now_sec >= mTM_TIME2SEC(20, 45, 0) && now_sec <= mTM_TIME2SEC(20, 55, 0)) {
         if (kk->majin_flag == FALSE) {
             if (kk->show_timer >= FRAMERATE_TIMER(3600) && kk->show_timer < FRAMERATE_SELECT(3610, 3010)) {

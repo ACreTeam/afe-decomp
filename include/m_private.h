@@ -216,6 +216,8 @@ typedef struct private_birthday_msg_s {
     /* 0x95 */ u8 footer[MAIL_FOOTER_LEN + 4];
 } mPr_birthday_msg_c;
 
+#define mPr_BIRTHDAY_MSG_SUNG (1 << 15)
+
 /* sizeof(mPr_birthday_msg_info_c) == 0x2AA */
 typedef struct private_birthday_msg_info_s {
     /* 0x000 */ mPr_birthday_msg_c msgs[PLAYER_NUM];

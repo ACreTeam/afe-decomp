@@ -38,6 +38,31 @@ enum {
     mBD_HEADER_POS_NUM
 };
 
+typedef struct {
+    u16 header[MAIL_HEADER_LEN];
+    u16 body[MAIL_BODY_LEN];
+    u16 footer[MAIL_FOOTER_LEN];
+} MailW_text_content_c;
+
+typedef union {
+    MailW_text_content_c split;
+    u16 all[MAIL_HEADER_LEN + MAIL_BODY_LEN + MAIL_FOOTER_LEN];
+} MailW_text_u;
+
+typedef struct {
+    u8 font;
+    u8 header_back_start;
+    u8 mail_type;
+    u8 paper_type;
+    MailW_text_u text;
+} MailW_ct_c;
+
+typedef struct {
+    Mail_hdr_c header;
+    mActor_name_t present;
+    MailW_ct_c content;
+} MailW_c;
+
 struct board_ovl_s {
     u8 field;
     u8 center_line;
@@ -45,14 +70,12 @@ struct board_ovl_s {
     u8 header_name_len;
     u8 first;
     u8 lengths[mBD_FIELD_NUM];
-    u8 _08[4]; // temp
-    Mail_c mail;
     Mail_c* dst_p;
-    u8 _tmp[0x60];
+    MailW_c mail;
     f32 ofs_x;
     f32 ofs_y;
-    int _140;
-    int _144;
+    int _134;
+    int _138;
 };
 
 extern void mBD_board_ovl_set_proc(Submenu* submenu);

@@ -9,19 +9,24 @@
 #include "m_player_lib.h"
 #include "m_string_data.h"
 #include "m_ledit_ovl.h"
+#include "m_birthday_msg.h"
+#include "m_string.h"
+#include "m_font.h"
+#include "ac_mikanbox.h"
+#include "jaudio_NES/staff.h"
 
-void aNTT_schedule_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int schedule_id);
-int aNTT_change_talk_proc(NPC_TOTAKEKE_ACTOR*, int);
-void aNTT_setup_think_proc(NPC_TOTAKEKE_ACTOR*, GAME_PLAY*, u8);
-int aNTT_enso_init(NPC_TOTAKEKE_ACTOR*);
-void aNTT_actor_ct(ACTOR* actorx, GAME* game);
-void aNTT_actor_dt(ACTOR* actorx, GAME* game);
-void aNTT_actor_init(ACTOR* actorx, GAME* game);
-void aNTT_actor_save(ACTOR* actorx, GAME* game);
-void aNTT_actor_move(ACTOR* actorx, GAME* game);
-void aNTT_actor_draw(ACTOR* actorx, GAME* game);
-int aNTT_talk_init(ACTOR* actorx, GAME* game);
-int aNTT_talk_end_chk(ACTOR* actorx, GAME* game);
+static void aNTT_schedule_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int schedule_id);
+static int aNTT_change_talk_proc(NPC_TOTAKEKE_ACTOR*, int);
+static void aNTT_setup_think_proc(NPC_TOTAKEKE_ACTOR*, GAME_PLAY*, u8);
+static int aNTT_enso_init(NPC_TOTAKEKE_ACTOR*);
+static void aNTT_actor_ct(ACTOR* actorx, GAME* game);
+static void aNTT_actor_dt(ACTOR* actorx, GAME* game);
+static void aNTT_actor_init(ACTOR* actorx, GAME* game);
+static void aNTT_actor_save(ACTOR* actorx, GAME* game);
+static void aNTT_actor_move(ACTOR* actorx, GAME* game);
+static void aNTT_actor_draw(ACTOR* actorx, GAME* game);
+static int aNTT_talk_init(ACTOR* actorx, GAME* game);
+static int aNTT_talk_end_chk(ACTOR* actorx, GAME* game);
 
 // clang-format off
 ACTOR_PROFILE Npc_Totakeke_Profile = {
@@ -37,19 +42,18 @@ ACTOR_PROFILE Npc_Totakeke_Profile = {
     (mActor_proc)none_proc1,
     &aNTT_actor_save,
 };
+// clang-format on
 
-static void aNTT_actor_ct(ACTOR *actorx, GAME *game) {
-    static aNPC_ct_data_c ct_data = {
-        &aNTT_actor_move,
-        &aNTT_actor_draw,
-        aNPC_CT_SCHED_TYPE_SPECIAL,
-        (mActor_proc)none_proc1,
-        &aNTT_talk_init,
-        &aNTT_talk_end_chk,
-        0x0
-    };
-    aNTT_event_save_c *save = (aNTT_event_save_c *)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 0xa);
-    aNTT_event_common_c *common = (aNTT_event_common_c *)mEv_get_common_area(mEv_EVENT_KK_SLIDER, 0x10);
+static void aNTT_actor_ct(ACTOR* actorx, GAME* game) {
+    static aNPC_ct_data_c ct_data = { &aNTT_actor_move,
+                                      &aNTT_actor_draw,
+                                      aNPC_CT_SCHED_TYPE_SPECIAL,
+                                      (mActor_proc)none_proc1,
+                                      &aNTT_talk_init,
+                                      &aNTT_talk_end_chk,
+                                      0x0 };
+    aNTT_event_save_c* save = (aNTT_event_save_c*)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 0xa);
+    aNTT_event_common_c* common = (aNTT_event_common_c*)mEv_get_common_area(mEv_EVENT_KK_SLIDER, 0x10);
 
     if (Common_Get(reset_flag) == TRUE) {
         Actor_delete(actorx);
@@ -59,7 +63,7 @@ static void aNTT_actor_ct(ACTOR *actorx, GAME *game) {
         mEv_actor_dying_message(mEv_EVENT_KK_SLIDER, actorx);
     } else if (CLIP(npc_clip)->birth_check_proc(actorx, game) == TRUE) {
         xyz_t wpos;
-        NPC_TOTAKEKE_ACTOR *totakeke = (NPC_TOTAKEKE_ACTOR *)actorx;
+        NPC_TOTAKEKE_ACTOR* totakeke = (NPC_TOTAKEKE_ACTOR*)actorx;
 
         totakeke->npc_class.schedule.schedule_proc = (aNPC_SCHEDULE_PROC)aNTT_schedule_proc;
         CLIP(npc_clip)->ct_proc(actorx, game, &ct_data);
@@ -77,51 +81,55 @@ static void aNTT_actor_ct(ACTOR *actorx, GAME *game) {
         aNTT_enso_init(totakeke);
         totakeke->_9a1 = FALSE;
 
-        if (save == NULL) {
-            save = (aNTT_event_save_c *)mEv_reserve_save_area(mEv_EVENT_KK_SLIDER, 0xa);
-            save->bitfield = 0;
-        }
-
-        save->bitfield &= ~(aNTT_FLAG_SP_ROLL_END | aNTT_FLAG_SP_ROLL_DRAW);
-
-        {
-            int i;
-            for (i = 0; i < aNTT_REQUEST_STR_LEN; i++) {
-                save->request_str[i] = 0;
+        if (actorx->npc_id != SP_NPC_TOTAKEKE_BIRTHDAY) {
+            if (save == NULL) {
+                save = (aNTT_event_save_c*)mEv_reserve_save_area(mEv_EVENT_KK_SLIDER, 10);
+                save->bitfield = 0;
+            }
+            {
+                int i;
+                for (i = 0; i < aNTT_REQUEST_STR_LEN; i++) {
+                    save->request_str[i] = 0;
+                }
+            }
+            save->roll_flag = FALSE;
+            if (common == NULL) {
+                common = (aNTT_event_common_c*)mEv_reserve_common_area(mEv_EVENT_KK_SLIDER, 16);
+                common->foreigner_bitfield = 0;
             }
         }
-
-        save->roll_flag = FALSE;
-        save->copyright_alpha = 0;
-
-        if (common == NULL) {
-            common = (aNTT_event_common_c *)mEv_reserve_common_area(mEv_EVENT_KK_SLIDER, 0x10);
-            common->foreigner_bitfield = 0;
-        }
+        Common_Get(event_common).mikanbox_light_radius = 0;
+        Common_Get(event_common).exist_flags1 = 0;
         totakeke->npc_class.collision.pipe.attribute.pipe.radius = 30;
         totakeke->melody_inst = 0;
         totakeke->majin_flag = 0;
         totakeke->_99f = 0xff;
         mCoBG_SetPlussOffset(actorx->world.position, 3, mCoBG_ATTRIBUTE_NONE);
+        totakeke->birthday_msg = NULL;
+        totakeke->birthday_player_no = -1;
     }
 }
 
-static void aNTT_actor_save(ACTOR *actorx, GAME *game) {
+static void aNTT_actor_save(ACTOR* actorx, GAME* game) {
     mNpc_RenewalSetNpc(actorx);
 }
 
-static void aNTT_actor_dt(ACTOR *actorx, GAME *game) {
-    mEv_actor_dying_message(mEv_EVENT_KK_SLIDER, actorx);
+static void aNTT_actor_dt(ACTOR* actorx, GAME* game) {
+    if (actorx->npc_id == SP_NPC_TOTAKEKE_BIRTHDAY) {
+        mEv_actor_dying_message(mEv_EVENT_PLAYER_BIRTHDAY, actorx);
+    } else {
+        mEv_actor_dying_message(mEv_EVENT_KK_SLIDER, actorx);
+    }
     CLIP(npc_clip)->dt_proc(actorx, game);
     mCoBG_SetPlussOffset(actorx->world.position, 0x0, 0x64);
 }
 
-static void aNTT_actor_init(ACTOR *actorx, GAME *game) {
+static void aNTT_actor_init(ACTOR* actorx, GAME* game) {
     CLIP(npc_clip)->init_proc(actorx, game);
 }
 
-static void aNTT_actor_move(ACTOR *actorx, GAME *game) {
-    NPC_TOTAKEKE_ACTOR *totakeke = (NPC_TOTAKEKE_ACTOR *)actorx;
+static void aNTT_actor_move(ACTOR* actorx, GAME* game) {
+    NPC_TOTAKEKE_ACTOR* totakeke = (NPC_TOTAKEKE_ACTOR*)actorx;
 
     CLIP(npc_clip)->move_proc(actorx, game);
     if (totakeke->npc_class.draw.animation_id == aNPC_ANIM_ENSOU_E1) {
@@ -129,13 +137,14 @@ static void aNTT_actor_move(ACTOR *actorx, GAME *game) {
     }
 }
 
-static void aNTT_actor_draw(ACTOR *actorx, GAME *game) {
-    NPC_TOTAKEKE_ACTOR *totakeke = (NPC_TOTAKEKE_ACTOR *)actorx;
-    aNTT_event_save_c *save = (aNTT_event_save_c *)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 0xa);
+static void aNTT_actor_draw(ACTOR* actorx, GAME* game) {
+    NPC_TOTAKEKE_ACTOR* totakeke = (NPC_TOTAKEKE_ACTOR*)actorx;
     GAME_PLAY* play = (GAME_PLAY*)game;
-    
     CLIP(npc_clip)->draw_proc(actorx, game);
-    if (save == NULL || (save->bitfield & 0x4000) == 0 || CLIP(mikanbox_clip) == NULL) {
+    aMKBC_header_draw(play, totakeke->roll2_count);
+    aMKBC_body_draw(play, totakeke->roll2_count);
+    aMKBC_footer_draw(play, totakeke->roll2_count);
+    if ((Common_Get(event_common).exist_flags1 & aNTT_FLAG_SP_ROLL_DRAW) == 0 || CLIP(mikanbox_clip) == NULL) {
         return;
     }
     CLIP(mikanbox_clip)->roll_draw_proc(play, totakeke->roll2_count, totakeke->_9a2);

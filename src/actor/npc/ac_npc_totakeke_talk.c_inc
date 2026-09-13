@@ -1,3 +1,22 @@
+static void aNTT_to_birthday_demo(NPC_TOTAKEKE_ACTOR* totakeke) {
+    totakeke->post_roll_think = aNTT_THINK_BIRTHDAY_FINISHED;
+    totakeke->song = MINIDISK_AIRCHECK_NUM;
+    aNTT_change_talk_proc(totakeke, aNTT_TALK_STOP_PLAYER);
+    totakeke->pre_roll_think = aNTT_THINK_BIRTHDAY_ROLL;
+}
+
+static void aNTT_ban_shutter(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)totakeke)) {
+        mSM_Set_unable_shutter_label(play, (u32)totakeke);
+    }
+}
+
+static void aNTT_release_shutter(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    if (mSM_CheckOwner_unable_shutter_label(play, (u32)totakeke)) {
+        mSM_Set_unable_shutter_label(play, 0);
+    }
+}
+
 static u16 aNTT_bitset_func(u16 field, int flag) {
     u32 player_no = Common_Get(player_no);
     aNTT_event_common_c* common = (aNTT_event_common_c*)mEv_get_common_area(mEv_EVENT_KK_SLIDER, 0x10);
@@ -36,6 +55,39 @@ static void aTTN_give_merody(NPC_TOTAKEKE_ACTOR* totakeke) {
         save->bitfield = aNTT_bitset_func(save->bitfield, aNTT_FLAG_AIRCHECK_RECEIVED);
         CLIP(mikanbox_clip)->check_merody_proc(totakeke->song);
     }
+}
+
+static void aNTT_birthday_init(NPC_TOTAKEKE_ACTOR* totakeke, int player_no) {
+    mPr_birthday_msg_c* birthday_msg;
+    Mail_c* mail;
+    mPr_birthday_c birthday;
+    int month_len;
+    int day_len;
+    u8 str[mString_DEFAULT_STR_SIZE];
+
+    totakeke->birthday_player_no = player_no;
+    if (mBm_chk_send_birthday_msg(player_no)) {
+        mDemo_Set_msg_num(MSG_7362);
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_BIRTHDAY_2_CHK);
+    } else {
+        mDemo_Set_msg_num(MSG_7358);
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_BIRTHDAY_1_CHK);
+    }
+    birthday_msg = mBm_get_receive_are(player_no);
+    mail = mBm_work_area_Mail();
+    totakeke->birthday_msg = birthday_msg;
+    mBm_bdmsg_to_mailc(birthday_msg, mail, player_no);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(private_data)[player_no].player_ID.player_name,
+                      PLAYER_NAME_LEN);
+    birthday = Save_Get(private_data)[player_no].birthday;
+    if (birthday.month == lbRTC_FEBRUARY && birthday.day == 29 &&
+        lbRTC_GetDaysByMonth(Common_Get(time).rtc_time.year, lbRTC_FEBRUARY) == 28) {
+        birthday.month = lbRTC_MARCH;
+        birthday.day = 1;
+    }
+    month_len = mString_Load_NumberStringAddUnitFromRom(str, birthday.month, 4);
+    day_len = mFont_UnintToString(str + month_len, 2, birthday.day, 2, TRUE, FALSE, FALSE);
+    mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR1, str, month_len + day_len);
 }
 
 static void aNTT_talk_select0(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
@@ -88,6 +140,20 @@ static void aNTT_talk_select1(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
     }
 }
 
+static void aNTT_talk_select2(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    aNTT_event_save_c* save = (aNTT_event_save_c*)mEv_get_save_area(mEv_EVENT_KK_SLIDER, 10);
+    if (mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p()) == TRUE) {
+        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
+            case mChoice_CHOICE0:
+                aNTT_to_birthday_demo(totakeke);
+                break;
+            case mChoice_CHOICE1:
+                aNTT_change_talk_proc(totakeke, aNTT_TALK_NONE);
+                break;
+        }
+    }
+}
+
 static void aNTT_talk_stop_player(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
     ACTOR* actorx = (ACTOR*)totakeke;
     GAME* game = (GAME*)play;
@@ -118,24 +184,36 @@ static void aNTT_talk_submenu(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
 }
 
 static void aNTT_talk_submenu2(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    int msg;
     if (play->submenu.open_flag == FALSE && mMsg_Check_not_series_main_wait(mMsg_Get_base_window_p()) == TRUE) {
         Submenu_Item_c* submenu_item = play->submenu.item_p;
         CLIP(mikanbox_clip)->set_itemstr3_proc();
         mMsg_Set_ForceNext(mMsg_Get_base_window_p());
         if (submenu_item->item == ITM_MINIDISK_END) {
-            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), MSG_TOTAKEKE_START + 6);
-            totakeke->post_roll_think = 0xc;
-            totakeke->song = 0x37 + (int)RANDOM_F(3);
+            msg = MSG_TOTAKEKE_START + 6;
+            totakeke->post_roll_think = aNTT_THINK_GIVE_LATER;
+            totakeke->song = MINIDISK_AIRCHECK_NUM + (int)RANDOM_F(3);
         } else {
             totakeke->song = submenu_item->item - ITM_MINIDISK_START;
-            if (totakeke->song >= 0x34) {
-                mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), MSG_TOTAKEKE_START + 8);
+            if (totakeke->song >= (ITM_MINIDISK58 - ITM_MINIDISK_START)) {
+                mActor_name_t item = ITM_MINIDISK_START + totakeke->song;
+                if ((Save_Get(song_cards_scanned) >> ((item - ITM_MINIDISK58) & 15)) & 1) {
+                    msg = MSG_TOTAKEKE_START + 14;
+                    CLIP(mikanbox_clip)->set_itemstr_proc(mMsg_ITEM_STR2, totakeke->song);
+                    aTTN_give_merody(totakeke);
+                } else {
+                    msg = MSG_TOTAKEKE_START + 15;
+                    totakeke->post_roll_think = aNTT_THINK_CARD_NOT_SCANNED;
+                    totakeke->song = MINIDISK_AIRCHECK_NUM + (int)RANDOM_F(3);
+                }
             } else {
-                mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), MSG_TOTAKEKE_START + 9);
+                msg = (totakeke->song >= (ITM_MINIDISK55 - ITM_MINIDISK_START)) ? MSG_TOTAKEKE_START + 8
+                                                                                : MSG_TOTAKEKE_START + 9;
+                CLIP(mikanbox_clip)->set_itemstr_proc(mMsg_ITEM_STR2, totakeke->song);
+                aTTN_give_merody(totakeke);
             }
-            CLIP(mikanbox_clip)->set_itemstr_proc(mMsg_ITEM_STR2, totakeke->song);
-            aTTN_give_merody(totakeke);
         }
+        mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), msg);
         aNTT_change_talk_proc(totakeke, aNTT_TALK_STOP_PLAYER);
         totakeke->pre_roll_think = aNTT_THINK_ROLL2;
     }
@@ -151,33 +229,107 @@ static void aNTT_talk_give(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
     }
 }
 
+static void aNTT_talk_birthday_1_chk(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    int quest = mDemo_Get_OrderValue(mDemo_ORDER_QUEST, 8);
+    u16 value = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    if (value != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+    }
+    if (quest == 2) {
+        mDemo_Set_OrderValue(mDemo_ORDER_QUEST, 8, 0);
+        mMsg_request_main_disappear_wait_type1(mMsg_Get_base_window_p());
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_BIRTHDAY_MSG_WAIT);
+    }
+}
+
+static void aNTT_talk_birthday_2_chk(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    int quest = mDemo_Get_OrderValue(mDemo_ORDER_QUEST, 8);
+    u16 value = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
+    if (value != 0) {
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
+            case mChoice_CHOICE0:
+                aNTT_change_talk_proc(totakeke, aNTT_TALK_BIRTHDAY_1_CHK);
+                break;
+            case mChoice_CHOICE1:
+                if (totakeke->npc_class.actor_class.npc_id == SP_NPC_TOTAKEKE_BIRTHDAY) {
+                    aNTT_change_talk_proc(totakeke, aNTT_TALK_NONE);
+                    mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), MSG_TOTAKEKE_START + 17);
+                } else {
+                    aNTT_change_talk_proc(totakeke, aNTT_TALK_SELECT0);
+                }
+                break;
+        }
+    }
+}
+
+static void aNTT_talk_birthday_msg_w(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    mMsg_Window_c* window = mMsg_Get_base_window_p();
+    Submenu* submenu = &play->submenu;
+    Mail_c* mail = mBm_work_area_Mail();
+    if (mMsg_Check_main_wait(window) == TRUE) {
+        mSM_open_submenu_new(submenu, mSM_OVL_BOARD, mSM_BD_OPEN_WRITE_BIRTHDAY, -1, mail);
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_BIRTHDAY_SUBMENU_WAIT);
+    }
+}
+
+static void aNTT_talk_birthday_submenu_w(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play) {
+    mMsg_Window_c* window = mMsg_Get_base_window_p();
+    Mail_c* mail = mBm_work_area_Mail();
+    if (play->submenu.open_flag == FALSE) {
+        mBm_mailc_to_bdmsg(mail, totakeke->birthday_msg);
+        if (totakeke->npc_class.actor_class.npc_id == SP_NPC_TOTAKEKE_BIRTHDAY) {
+            aNTT_change_talk_proc(totakeke, aNTT_TALK_NONE);
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), MSG_TOTAKEKE_START + 17);
+        } else {
+            aNTT_change_talk_proc(totakeke, aNTT_TALK_SELECT0);
+        }
+        mMsg_request_main_appear_wait_type1(window);
+        mMsg_Set_ForceNext(window);
+    }
+}
+
 static int aNTT_change_talk_proc(NPC_TOTAKEKE_ACTOR* totakeke, int talk) {
-    static aNTT_PROC proc[7] = { (aNTT_PROC)none_proc1, aNTT_talk_select0,  aNTT_talk_select1, aNTT_talk_stop_player,
-                                 aNTT_talk_submenu,     aNTT_talk_submenu2, aNTT_talk_give };
+    static aNTT_PROC proc[aNTT_TALK_NUM] = { (aNTT_PROC)none_proc1,
+                                             aNTT_talk_select0,
+                                             aNTT_talk_select1,
+                                             aNTT_talk_stop_player,
+                                             aNTT_talk_submenu,
+                                             aNTT_talk_submenu2,
+                                             aNTT_talk_give,
+                                             aNTT_talk_birthday_1_chk,
+                                             aNTT_talk_birthday_2_chk,
+                                             aNTT_talk_birthday_msg_w,
+                                             aNTT_talk_birthday_submenu_w,
+                                             aNTT_talk_select2 };
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
     totakeke->proc = proc[talk];
     if (talk == aNTT_TALK_STOP_PLAYER) {
         mEv_SetTitleDemo(mEv_TITLEDEMO_STAFFROLL);
         mDemo_Set_talk_return_demo_wait(TRUE);
         totakeke->_9ab = FALSE;
+        aNTT_ban_shutter(totakeke, play);
     }
     return TRUE;
 }
 
 static void aNTT_set_force_talk_info(ACTOR* actorx) {
     NPC_TOTAKEKE_ACTOR* totakeke = (NPC_TOTAKEKE_ACTOR*)actorx;
-    static u8 msg[3] = { 0xc, 0xb, 0x7 };
-    mDemo_Set_msg_num(MSG_TOTAKEKE_START + msg[totakeke->talk]);
+    static int msg[5] = { MSG_7071, MSG_7070, MSG_7066, MSG_7368, MSG_7075 };
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
+    mDemo_Set_msg_num(msg[totakeke->talk]);
     mDemo_Set_talk_turn(TRUE);
     mDemo_Set_camera(TRUE);
     if (totakeke->talk == 0) {
-        totakeke->proc = aNTT_talk_give;
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_GIVE);
     } else {
-        totakeke->proc = (void*)none_proc1;
+        aNTT_change_talk_proc(totakeke, aNTT_TALK_NONE);
     }
     if (totakeke->npc_class.talk_info.melody_inst) {
         totakeke->melody_inst = totakeke->npc_class.talk_info.melody_inst;
     }
     totakeke->npc_class.talk_info.melody_inst = 0;
+    aNTT_release_shutter(totakeke, play);
 }
 
 static void aNTT_force_talk_request(ACTOR* actorx, GAME* game) {
@@ -191,22 +343,58 @@ static void aNTT_force_talk_request(ACTOR* actorx, GAME* game) {
 
 static void aNTT_set_norm_talk_info(ACTOR* actorx) {
     NPC_TOTAKEKE_ACTOR* totakeke = (NPC_TOTAKEKE_ACTOR*)actorx;
-    static u8 msg[4] = { 0x0, 0x1, 0x2, 0xd };
-    mDemo_Set_msg_num(MSG_TOTAKEKE_START + msg[totakeke->talk]);
+    static int msg[4] = { MSG_7059, MSG_7060, MSG_7061, MSG_7072 };
+    mDemo_Set_msg_num(msg[totakeke->talk]);
     mDemo_Set_talk_turn(TRUE);
     mDemo_Set_camera(TRUE);
     switch (totakeke->talk) {
         case 0:
-            totakeke->proc = (void*)none_proc1;
+            aNTT_change_talk_proc(totakeke, aNTT_TALK_NONE);
             break;
         case 3:
             Now_Private->state_flags |= mPr_FLAG_TOTAKEKE_INTRODUCTION;
-            totakeke->proc = aNTT_talk_select0;
+            aNTT_change_talk_proc(totakeke, aNTT_TALK_SELECT0);
             break;
         default:
-            totakeke->proc = aNTT_talk_select0;
+            aNTT_change_talk_proc(totakeke, aNTT_TALK_SELECT0);
             break;
     }
+    if (totakeke->proc == aNTT_talk_select0) {
+        int player_no;
+        if (totakeke->npc_class.actor_class.npc_id == SP_NPC_TOTAKEKE_BIRTHDAY) {
+            if (Now_Private->birthday_msg_info.flags & mPr_BIRTHDAY_MSG_SUNG) {
+                if (Common_Get(event_common).exist_flags1 & aNTT_FLAG_BIRTHDAY_RECEIVE) {
+                    player_no = mBm_receive_msg(totakeke->birthday_player_no);
+                    if (player_no > totakeke->birthday_player_no) {
+                        aNTT_birthday_init(totakeke, player_no);
+                        return;
+                    }
+                    Common_Get(event_common).exist_flags1 &= ~aNTT_FLAG_BIRTHDAY_RECEIVE;
+                } else {
+                    totakeke->birthday_player_no = -1;
+                    player_no = mBm_receive_msg(totakeke->birthday_player_no);
+                    if (player_no != -1) {
+                        Common_Get(event_common).exist_flags1 = aNTT_FLAG_BIRTHDAY_RECEIVE;
+                        aNTT_birthday_init(totakeke, player_no);
+                        return;
+                    }
+                }
+                aNTT_change_talk_proc(totakeke, aNTT_TALK_SELECT2);
+                mDemo_Set_msg_num(MSG_7367);
+                return;
+            } else {
+                mDemo_Set_msg_num(MSG_7366);
+                Now_Private->birthday_msg_info.flags |= mPr_BIRTHDAY_MSG_SUNG;
+                aNTT_to_birthday_demo(totakeke);
+                return;
+            }
+        } else if (totakeke->talk != aNTT_TALK_STOP_PLAYER &&
+                   (player_no = mBm_receive_msg(totakeke->birthday_player_no)) != -1) {
+            aNTT_birthday_init(totakeke, player_no);
+            return;
+        }
+    }
+    mDemo_Set_msg_num(msg[totakeke->talk]);
 }
 
 static void aNTT_norm_talk_request(ACTOR* actorx, GAME* game) {
@@ -227,6 +415,8 @@ static int aNTT_talk_init(ACTOR* actorx, GAME* game) {
         case aNTT_THINK_GIVE_MERODY:
         case aNTT_THINK_POCKETS_FULL:
         case aNTT_THINK_GIVE_LATER:
+        case aNTT_THINK_BIRTHDAY_FINISHED:
+        case aNTT_THINK_CARD_NOT_SCANNED:
             mEv_SetTitleDemo(mEv_TITLEDEMO_NONE);
             break;
     }
