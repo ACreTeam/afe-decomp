@@ -145,6 +145,14 @@ static void aNRG2_talk_start_wait(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* p
     }
 }
 
+static void aNRG2_talk_start_wait_plus(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* play) {
+    if (mSC_check_ArbeitPlayer() == 0) {
+        rcn_guide2->talk_idx = aNRG2_NORM_TALK_AGAIN_PLUS;
+    } else {
+        rcn_guide2->talk_idx = aNRG2_NORM_TALK_ALL_JOB_END_PLUS;
+    }
+}
+
 static void aNRG2_job_start_wait(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* play) {
     // clang-format off
     static int job_start_talk_idx[] = {
@@ -221,16 +229,23 @@ static void aNRG2_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
         rcn_guide2->daily_speak_flag = TRUE;
 
         if (errand_p->base.quest_kind == mQst_ERRAND_FIRSTJOB_START) {
-            if (Now_Private->cloth.item == ITM_CLOTH016) {
+            if (Now_Private->moved_from_plus == TRUE) {
+                aNRG2_setup_job(aNRG2_JOB1);
+                think_idx = aNRG2_THINK_SAY_HELLO_PLUS;
+            } else if (Now_Private->cloth.item == ITM_CLOTH016) {
                 aNRG2_setup_job(aNRG2_JOB2);
                 think_idx = aNRG2_THINK_SAY_HELLO3;
             } else {
                 aNRG2_setup_job(aNRG2_JOB1);
                 think_idx = aNRG2_THINK_SAY_HELLO;
             }
+        } else if (Now_Private->moved_from_plus == TRUE) {
+            think_idx = aNRG2_THINK_SAY_HELLO_PLUS2;
         } else {
             think_idx = aNRG2_THINK_SAY_HELLO2;
         }
+    } else if (Now_Private->moved_from_plus == TRUE) {
+        think_idx = aNRG2_THINK_TALK_START_WAIT_PLUS;
     } else if (errand_p->base.progress == 1) {
         think_idx = aNRG2_THINK_JOB_START_WAIT;
     } else {
@@ -255,6 +270,10 @@ static void aNRG2_talk_start_wait_init(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PL
     aNRG2_talk_start_wait(rcn_guide2, play);
 }
 
+static void aNRG2_talk_start_wait_plus_init(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* play) {
+    aNRG2_talk_start_wait_plus(rcn_guide2, play);
+}
+
 static void aNRG2_job_start_wait_init(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* play) {
     aNRG2_job_start_wait(rcn_guide2, play);
 }
@@ -262,7 +281,6 @@ static void aNRG2_job_start_wait_init(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLA
 static void aNRG2_all_job_end_init(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* play) {
     INTRO_DEMO_ACTOR* intro_demo;
 
-    mPlib_request_main_demo_wait_type1(&play->game, 0, NULL);
     intro_demo =
         (INTRO_DEMO_ACTOR*)Actor_info_name_search(&play->actor_info, mAc_PROFILE_INTRO_DEMO, ACTOR_PART_CONTROL);
     intro_demo->_1A8 = TRUE;
@@ -304,6 +322,20 @@ static void aNRG2_setup_think_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* 
         },
         {
             (aNRG2_THINK_PROC)&none_proc1,
+            (aNRG2_THINK_INIT_PROC)&none_proc1,
+            &aNRG2_force_talk_request,
+            aNRG2_FORCE_TALK_SAY_HELLO_PLUS,
+            aNRG2_THINK_TALK_START_WAIT_PLUS,
+        },
+        {
+            (aNRG2_THINK_PROC)&none_proc1,
+            (aNRG2_THINK_INIT_PROC)&none_proc1,
+            &aNRG2_force_talk_request,
+            aNRG2_FORCE_TALK_SAY_HELLO_PLUS2,
+            aNRG2_THINK_TALK_START_WAIT_PLUS,
+        },
+        {
+            (aNRG2_THINK_PROC)&none_proc1,
             &aNRG2_send_away_init,
             (aNPC_TALK_REQUEST_PROC)&none_proc1,
             0,
@@ -315,6 +347,13 @@ static void aNRG2_setup_think_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, GAME_PLAY* 
             &aNRG2_norm_talk_request,
             aNRG2_NORM_TALK_JOB1_START,
             aNRG2_THINK_TALK_START_WAIT,
+        },
+        {
+            &aNRG2_talk_start_wait_plus,
+            &aNRG2_talk_start_wait_plus_init,
+            &aNRG2_norm_talk_request,
+            aNRG2_NORM_TALK_JOB1_START,
+            aNRG2_THINK_TALK_START_WAIT_PLUS,
         },
         {
             &aNRG2_job_start_wait,

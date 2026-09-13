@@ -1,17 +1,25 @@
+static void aNRG2_setup_present_map(void) {
+    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 2);
+    mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, ITM_TOWN_MAP);
+    mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 1, 7);
+    mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);
+    Common_Set(map_flag, TRUE);
+}
+
 static void aNRG2_set_str_j3(void) {
-    static u8 choume_str[] = { 'Q', 'A', 'B', 'C', 'D', 'E', 'F' };
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
     mQst_errand_c* errand_p = mQst_GetFirstJobData();
     AnmPersonalID_c* to_id_p = &errand_p->recipient;
-    int idx = mNpc_SearchAnimalinfo(Save_Get(animals), to_id_p->npc_id, ANIMAL_NUM_MAX);
+    int idx = mNpc_SearchAnimalPersonalID_com(to_id_p, Save_Get(animals), ANIMAL_NUM_MAX);
     u8 str[ANIMAL_NAME_LEN];
 
     if (idx != -1) {
         /* Set msg string 3 & 4 to acre Z & X respectively */
         Anmhome_c* home_p = &Save_Get(animals[idx]).home_info;
 
-        mMsg_Set_free_str(msg_p, mMsg_FREE_STR3, &choume_str[home_p->bz], 1);
-        mFont_UnintToString(str, sizeof(str), home_p->bx, sizeof(str), TRUE, FALSE, TRUE);
+        mFont_UnintToString(str, sizeof(str), home_p->bz, sizeof(str), TRUE, FALSE, FALSE);
+        mMsg_Set_free_str(msg_p, mMsg_FREE_STR3, str, sizeof(str));
+        mFont_UnintToString(str, sizeof(str), home_p->bx, sizeof(str), TRUE, FALSE, FALSE);
         mMsg_Set_free_str(msg_p, mMsg_FREE_STR4, str, sizeof(str));
     }
 
@@ -28,7 +36,7 @@ static void aNRG2_set_str_j4(void) {
     aNRG2_set_str_j3();
     /* Set post office acre string */
     mFI_BlockKind2BkNum(&bx, &bz, mRF_BLOCKKIND_POSTOFFICE);
-    mFont_UnintToString(str, sizeof(str), bx, sizeof(str), TRUE, FALSE, TRUE);
+    mFont_UnintToString(str, sizeof(str), bx, sizeof(str), TRUE, FALSE, FALSE);
     /* We only care about the X acre since the post office is always in the A row */
     mMsg_SET_FREE_STR(mMsg_FREE_STR6, str, sizeof(str));
 }
@@ -55,6 +63,10 @@ static void aNRG2_set_str_proc(void) {
 
     /* Set the current job strings, index is job quest idx relative to first job */
     (*process[idx])();
+}
+
+static int aNRG2_set_possession_binsen(void) {
+    return mPr_SetFreePossessionItem(Now_Private, ITM_PAPER55, mPr_ITEM_COND_NORMAL);
 }
 
 static void aNRG2_set_possession(void) {
@@ -97,11 +109,13 @@ static void aNRG2_set_possession(void) {
                 mPr_SetFreePossessionItem(Now_Private, errand_p->item, mPr_ITEM_COND_QUEST);
                 break;
             case aNRG2_JOB1:
-            case aNRG2_JOB4:
             case aNRG2_JOB7:
-            case aNRG2_JOB8:
                 /* Set the static job item with normal condition */
                 mPr_SetFreePossessionItem(Now_Private, set_itemNo[job_kind], mPr_ITEM_COND_NORMAL);
+                break;
+            case aNRG2_JOB4:
+            case aNRG2_JOB8:
+                aNRG2_set_possession_binsen();
                 break;
             case aNRG2_JOB2:
             case aNRG2_JOB6:
@@ -232,6 +246,7 @@ static void aNRG2_stepup_j5(u32 kind, NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     mSP_SelectRandomItem_New(NULL, &ftr, 1, NULL, 0, mSP_KIND_CARPET, mSP_LISTTYPE_ABC, FALSE);
 
     /* Job 5: deliver carpet */
+    mQst_SetFirstJobOpenQuest(errand_p);
     mQst_SetFirstJobCarpet(errand_p, anm_pid_p, ftr, free_idx);
 }
 
@@ -409,6 +424,45 @@ static void aNRG2_say_hello_sp2_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     }
 }
 
+static void aNRG2_say_hello_plus_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+    mQst_errand_c* errand_p = mQst_GetFirstJobData();
+    int msg_no = -1;
+    int talk_idx = aNRG2_TALK_TALK_END_WAIT;
+    if (errand_p->base.progress == 1) {
+        if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0) {
+            aNRG2_setup_present_map();
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+            if (mSC_check_ArbeitPlayer() == 0) {
+                msg_no = 0x13EA;
+                errand_p->base.progress = 2;
+            } else {
+                msg_no = 0x13E9;
+                talk_idx = aNRG2_TALK_ALL_JOB_END;
+            }
+        }
+    } else {
+        msg_no = 0x13ED;
+    }
+    if (msg_no != -1) {
+        mMsg_Set_continue_msg_num(msg_p, msg_no);
+        aNRG2_change_talk_proc(rcn_guide2, talk_idx);
+    }
+}
+
+static void aNRG2_say_hello_plus2_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+    int msg_no;
+    if (mSC_check_ArbeitPlayer() == 0) {
+        msg_no = 0x13ED;
+    } else {
+        msg_no = 0x13EC;
+        rcn_guide2->next_think_idx = aNRG2_THINK_ALL_JOB_END;
+    }
+    mMsg_Set_continue_msg_num(msg_p, msg_no);
+    aNRG2_change_talk_proc(rcn_guide2, aNRG2_TALK_TALK_END_WAIT);
+}
+
 static void aNRG2_cloth_chk_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     mQst_errand_c* errand_p = mQst_GetFirstJobData();
 
@@ -424,17 +478,17 @@ static void aNRG2_cloth_chk_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
 static void aNRG2_demo_start_wait_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     /* List of display items for each job */
     static mActor_name_t itemNo[] = {
-        ITM_CLOTH016,        /* work uniform */
-        ITM_WHITE_PANSY_BAG, /* flower bag */
+        ITM_CLOTH016,             /* work uniform */
+        ITM_WHITE_PANSY_BAG,      /* flower bag */
         FTR_START(FTR_NOG_FAN01), /* furniture */
-        ITM_PAPER55,         /* simple paper */
-        ITM_CARPET00,        /* carpet */
-        ITM_AXE,             /* axe */
-        EMPTY_NO,            /* no item */
-        ITM_PAPER55,         /* simple paper */
-        ITM_AXE,             /* axe */
-        EMPTY_NO,            /* no item */
-        EMPTY_NO,            /* no item */
+        ITM_PAPER55,              /* simple paper */
+        ITM_CARPET00,             /* carpet */
+        ITM_AXE,                  /* axe */
+        EMPTY_NO,                 /* no item */
+        ITM_PAPER55,              /* simple paper */
+        ITM_AXE,                  /* axe */
+        EMPTY_NO,                 /* no item */
+        EMPTY_NO,                 /* no item */
     };
 
     int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1);
@@ -491,8 +545,8 @@ static void aNRG2_job_start_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
 
 static void aNRG2_job_end_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     static int next_job_no[] = {
-        aNRG2_JOB2, aNRG2_JOB3, aNRG2_JOB4, aNRG2_JOB11, aNRG2_JOB6, aNRG2_JOB7,
-        aNRG2_JOB7, aNRG2_JOB9, aNRG2_JOB7, aNRG2_JOB3,  aNRG2_JOB5,
+        aNRG2_JOB2, aNRG2_JOB3, aNRG2_JOB4, aNRG2_JOB5, aNRG2_JOB6, aNRG2_JOB7,
+        aNRG2_JOB7, aNRG2_JOB9, aNRG2_JOB7, aNRG2_JOB3, aNRG2_JOB5,
     };
     mQst_errand_c* errand_p = mQst_GetFirstJobData();
     int next_job;
@@ -518,14 +572,7 @@ static void aNRG2_3rd_job_end_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     if (order != 0) {
         aNRG2_job_end_talk_proc(rcn_guide2);
 
-        /* Set params for hand over item */
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 2);
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 0, ITM_TOWN_MAP);
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 1, 7);
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC1, 2, 0);
-
-        /* Enable map flag */
-        Common_Set(map_flag, TRUE);
+        aNRG2_setup_present_map();
 
         /* Clear demo order */
         mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
@@ -668,12 +715,27 @@ static void aNRG2_all_job_end_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
     aNRG2_change_talk_proc(rcn_guide2, aNRG2_TALK_TALK_END_WAIT);
 }
 
+static void aNRG2_all_job_end_plus_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+    mMsg_Set_continue_msg_num(msg_p, 0x13EC);
+    rcn_guide2->next_think_idx = aNRG2_THINK_ALL_JOB_END;
+    aNRG2_change_talk_proc(rcn_guide2, aNRG2_TALK_TALK_END_WAIT);
+}
+
+static void aNRG2_matakai_plus_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2) {
+    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+    mMsg_Set_continue_msg_num(msg_p, 0x13ED);
+    aNRG2_change_talk_proc(rcn_guide2, aNRG2_TALK_TALK_END_WAIT);
+}
+
 static void aNRG2_change_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, int talk_proc_idx) {
     // clang-format off
     static aNRG2_TALK_PROC proc[] = {
         &aNRG2_say_hello_talk_proc,
         &aNRG2_say_hello_sp_talk_proc,
         &aNRG2_say_hello_sp2_talk_proc,
+        &aNRG2_say_hello_plus_talk_proc,
+        &aNRG2_say_hello_plus2_talk_proc,
         &aNRG2_cloth_chk_talk_proc,
         (aNRG2_TALK_PROC)&none_proc1,
         &aNRG2_demo_start_wait_talk_proc,
@@ -692,6 +754,8 @@ static void aNRG2_change_talk_proc(NPC_RCN_GUIDE2_ACTOR* rcn_guide2, int talk_pr
         &aNRG2_demo2_start_wait2_talk_proc,
         &aNRG2_demo2_end_wait_talk_proc,
         &aNRG2_all_job_end_talk_proc,
+        &aNRG2_all_job_end_plus_talk_proc,
+        &aNRG2_matakai_plus_talk_proc,
     };
     // clang-format on
 
@@ -768,8 +832,9 @@ static void aNRG2_set_force_talk_info(ACTOR* actorx) {
         { 0x07EE, &aNRG2_say_hello_talk_proc },    /* 'Well, finally you arrive!' */
         { 0x07EF, &aNRG2_say_hello_talk_proc },    /* 'So you're back again today?' */
         { 0x07EE, &aNRG2_say_hello_sp_talk_proc }, /* 'Well, finally you arrive!' (already wearing work uniform) */
-        { 0x0832, &aNRG2_cloth_chk_talk_proc },    /* 'Why did you change out of your uniform, hm?' */
-        { 0x0834, (aNRG2_TALK_PROC)&none_proc1 },  /* 'Stop right there!' (Going up to 2nd floor) */
+        { 0x13EF, &aNRG2_say_hello_plus_talk_proc }, { 0x13F0, &aNRG2_say_hello_plus2_talk_proc },
+        { 0x0832, &aNRG2_cloth_chk_talk_proc },   /* 'Why did you change out of your uniform, hm?' */
+        { 0x0834, (aNRG2_TALK_PROC)&none_proc1 }, /* 'Stop right there!' (Going up to 2nd floor) */
     };
 
     aNRG2_talk_info_c* data;
@@ -789,7 +854,7 @@ static void aNRG2_set_force_talk_info(ACTOR* actorx) {
     data = &dt_tbl[talk_idx];
 
     /* If assigning a new job then set the necessary text strings */
-    if (mQst_CheckFirstJobFin(errand_p) == FALSE) {
+    if (mQst_CheckFirstJobFin(errand_p) == FALSE && errand_p->base.progress > 1) {
         aNRG2_set_str_proc();
     }
 
@@ -853,6 +918,8 @@ static void aNRG2_set_norm_talk_info(ACTOR* actorx) {
         { 0x0828, &aNRG2_job_end_talk_proc },
         { 0x0830, &aNRG2_job_end_talk_proc },
         { 0x0836, (aNRG2_TALK_PROC)&none_proc1 },
+        { 0x13EB, &aNRG2_matakai_plus_talk_proc },
+        { 0x13EB, &aNRG2_all_job_end_plus_talk_proc },
     };
     // clang-format on
 
@@ -865,8 +932,12 @@ static void aNRG2_set_norm_talk_info(ACTOR* actorx) {
         rcn_guide2->can_ask_again_flag = TRUE;
     }
 
-    if (mQst_CheckFirstJobFin(errand_p) == FALSE) {
+    if (mQst_CheckFirstJobFin(errand_p) == FALSE && errand_p->base.progress > 1) {
         aNRG2_set_str_proc();
+    }
+
+    if (talk_idx == aNRG2_NORM_TALK_J7_END || talk_idx == aNRG2_NORM_TALK_ALL_JOB_END_PLUS) {
+        mDemo_Set_talk_return_demo_wait(TRUE);
     }
 
     mDemo_Set_msg_num(data->msg_no);
