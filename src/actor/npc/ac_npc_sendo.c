@@ -5,7 +5,12 @@
 #include "sys_matrix.h"
 #include "m_msg.h"
 #include "libultra/libultra.h"
-#include "GBA2/gba2.h"
+#include "m_house.h"
+#include "m_choice.h"
+#include "m_item_name.h"
+#include "ac_handOverItem.h"
+#include "_mem.h"
+#include "charmap.h"
 #include "m_ledit_ovl.h"
 
 static void aSEN_actor_ct(ACTOR* actorx, GAME* game);
@@ -37,6 +42,13 @@ static int aSEN_talk_end_chk(ACTOR*, GAME*);
 static void aSEN_schedule_proc(NPC_ACTOR*, GAME_PLAY*, int);
 static void aSEN_setup_think_proc(NPC_SENDO_ACTOR*, GAME_PLAY*, u8);
 
+static int aSEN_make_home_list(NPC_SENDO_ACTOR*);
+static int aSEN_chk_my_island(void);
+
+#define aSEN_LIVE_MUSIC_INDEX (ITM_MINIDISK_LIVE66 - ITM_MINIDISK_LIVE58)
+#define aSEN_MET_SENDO (1 << 13)
+#define aSEN_ISLAND_EXPLAINED (1 << 14)
+
 static MtxF aSEN_matrix;
 
 static void aSEN_actor_ct(ACTOR* actorx, GAME* game) {
@@ -56,6 +68,9 @@ static void aSEN_actor_ct(ACTOR* actorx, GAME* game) {
 
         npc_actor->schedule.schedule_proc = &aSEN_schedule_proc;
         NPC_CLIP->ct_proc(actorx, game, &ct_data);
+        ((NPC_SENDO_ACTOR*)actorx)->music = mNT_get_new_music_live_version(aSEN_LIVE_MUSIC_INDEX);
+        ((NPC_SENDO_ACTOR*)actorx)->island_count = aSEN_make_home_list((NPC_SENDO_ACTOR*)actorx);
+        ((NPC_SENDO_ACTOR*)actorx)->has_my_island = aSEN_chk_my_island();
     }
 }
 

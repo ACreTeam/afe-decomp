@@ -1,41 +1,67 @@
 enum {
     aSEN_TALK_END_WAIT,
+    aSEN_TALK_CHK_RIDE_ON_V,
+    aSEN_TALK_SELECT_ISLAND,
+    aSEN_TALK_CONFIRM_DESTINATION,
     aSEN_TALK_SING_END_WAIT,
-    aSEN_TALK_PL_RIDE_ON_CHECK,
-    aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_RAM,
-    aSEN_TALK_MSG_WIN_CLOSE_WAIT,
-    aSEN_TALK_GET_ISLAND_NAME_MENU_START_WAIT,
-    aSEN_TALK_GET_ISLAND_NAME_MENU_END_WAIT,
-    aSEN_TALK_MSG_WIN_OPEN_WAIT,
-    aSEN_TALK_PL_RIDE_ON_CHECK2,
-    aSEN_TALK_CHK_WRITE_FOR_AGB,
-    aSEN_TALK_CHK_REWRITE_FOR_AGB,
-    aSEN_TALK_TRANS_DATA_FOR_AGB_START_WAIT,
-    aSEN_TALK_TRANS_DATA_FOR_AGB_END_WAIT,
-    aSEN_TALK_TRANS_PRG_FOR_AGB_START_WAIT,
-    aSEN_TALK_TRANS_PRG_FOR_AGB_END_WAIT,
-    aSEN_TALK_TRANS_PRG2_FOR_AGB_END_WAIT,
-    aSEN_TALK_CHK_POWER_AGB,
-    aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB,
-    aSEN_TALK_CHK_READ_AGB,
-    aSEN_TALK_CHK_RETRY_READ_AGB,
-    aSEN_TALK_CHK_USE_ISLAND_DATA_IN_RAM,
-    aSEN_TALK_CHK_POWER_AGB2,
-    aSEN_TALK_CHK_TRANS_ISLAND_DATA_FROM_AGB2,
-    aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB2,
-    aSEN_TALK_CHK_READ_AGB2,
-    aSEN_TALK_CHK_POWER_AGB3,
-    aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB3,
-    aSEN_TALK_CHK_READ_AGB3,
-
-    aSEN_TALK_NUM
+    aSEN_TALK_CHK_RIDE_ON_I,
+    aSEN_TALK_PASSAGE_PERMISSION_CHECK,
+    aSEN_TALK_PRESENT_START_WAIT,
+    aSEN_TALK_PRESENT_TRANS_TAKEOUT,
+    aSEN_TALK_PRESENT_TRANS_WAIT,
+    aSEN_TALK_NUM,
+    aSEN_TALK_NONE = 0xFF
 };
 
 enum {
-    aSEN_ACTION_TALK_START_WAIT,
-    aSEN_ACTION_TALK_START_WAIT2,
+    aSEN_ACTION_NO_ISLAND,
+    aSEN_ACTION_MY_ISLAND,
+    aSEN_ACTION_OTHER_ISLAND,
+    aSEN_ACTION_SELECT_ISLAND,
+    aSEN_ACTION_FIRST_MEETING,
+    aSEN_ACTION_EXPLAIN_ISLAND,
+    aSEN_ACTION_APRILFOOL,
+    aSEN_ACTION_TALK_START_WAIT_I,
+    aSEN_ACTION_PL_RIDE_ON_END_WAIT,
+    aSEN_ACTION_START_CALL_V,
+    aSEN_ACTION_START_CALL_I,
+    aSEN_ACTION_SING_START_WAIT,
+    aSEN_ACTION_SING_V,
+    aSEN_ACTION_SING_I,
+    aSEN_ACTION_TOUCH_WHARF_START_WAIT,
+    aSEN_ACTION_TOUCH_WHARF_END_WAIT,
+    aSEN_ACTION_ARRIVE_V,
+    aSEN_ACTION_ARRIVE_MY_ISLAND,
+    aSEN_ACTION_ARRIVE_OTHER_ISLAND,
+    aSEN_ACTION_PL_RIDE_OFF_END_WAIT,
+    aSEN_ACTION_OUT_OF_SERVICE_V,
+    aSEN_ACTION_OUT_OF_SERVICE_I,
+    aSEN_ACTION_NUM
+};
 
-    /* TODO: finish */
+enum {
+    aSEN_NORM_TALK_NO_ISLAND,
+    aSEN_NORM_TALK_MY_ISLAND,
+    aSEN_NORM_TALK_OTHER_ISLAND,
+    aSEN_NORM_TALK_SELECT_ISLAND,
+    aSEN_NORM_TALK_FIRST_MEETING,
+    aSEN_NORM_TALK_EXPLAIN_ISLAND,
+    aSEN_NORM_TALK_APRILFOOL,
+    aSEN_NORM_TALK_RIDE_ON_I,
+    aSEN_NORM_TALK_OUT_OF_SERVICE_V,
+    aSEN_NORM_TALK_OUT_OF_SERVICE_I,
+    aSEN_NORM_TALK_NUM
+};
+
+enum {
+    aSEN_FORCE_TALK_START_CALL_V,
+    aSEN_FORCE_TALK_START_CALL_I,
+    aSEN_FORCE_TALK_SING_V,
+    aSEN_FORCE_TALK_SING_I,
+    aSEN_FORCE_TALK_ARRIVE_V,
+    aSEN_FORCE_TALK_ARRIVE_MY_ISLAND,
+    aSEN_FORCE_TALK_ARRIVE_OTHER_ISLAND,
+    aSEN_FORCE_TALK_NUM
 };
 
 typedef struct npc_sendo_think_setup_s {
@@ -74,25 +100,91 @@ static void aSEN_set_anime_current(NPC_SENDO_ACTOR* sendo_actor) {
 
 static void aSEN_set_request_act(NPC_SENDO_ACTOR* sendo) {
     sendo->npc_class.request.act_priority = 4;
-    sendo->npc_class.request.act_idx = 22;
-    sendo->npc_class.request.act_type = 2;
+    sendo->npc_class.request.act_idx = aNPC_ACT_SPECIAL;
+    sendo->npc_class.request.act_type = aNPC_ACT_TYPE_SEARCH;
+}
+
+static int aSEN_make_home_list(NPC_SENDO_ACTOR* sendo) {
+    mHm_hs_c* home = Save_Get(homes);
+    int i;
+    int count = 0;
+    for (i = 0; i < PLAYER_NUM; i++, home++) {
+        if (home->island.flags.unlocked == TRUE &&
+            (home->island.flags._1 == TRUE ||
+             mPr_CheckCmpPersonalID(&home->ownerID, &Now_Private->player_ID) == TRUE)) {
+            sendo->island_homes[count] = home;
+            count++;
+        }
+    }
+    return count;
+}
+
+static int aSEN_chk_my_island(void) {
+    int res = FALSE;
+    if (!mLd_PlayerManKindCheck() &&
+        Save_Get(homes[mHS_get_arrange_idx(Common_Get(player_no))]).size_info.next_size >= mHm_HOMESIZE_ISLAND) {
+        res = TRUE;
+    }
+    return res;
+}
+
+static int aSEN_chk_island_talk(void) {
+    int res = FALSE;
+    if (!mLd_PlayerManKindCheck()) {
+        int idx = mHS_get_arrange_idx(Common_Get(player_no));
+        if (Save_Get(homes[idx]).size_info.next_size >= mHm_HOMESIZE_ISLAND &&
+            !(Now_Private->state_flags & aSEN_ISLAND_EXPLAINED))
+            res = TRUE;
+    }
+    return res;
+}
+
+static u8 aSEN_get_talk_start_wait_v_think_idx_sub(NPC_SENDO_ACTOR* sendo) {
+    u8 act;
+    if (sendo->island_count == 0)
+        act = aSEN_ACTION_NO_ISLAND;
+    else if (sendo->island_count == 1) {
+        if (sendo->has_my_island == TRUE)
+            act = aSEN_ACTION_MY_ISLAND;
+        else
+            act = aSEN_ACTION_OTHER_ISLAND;
+    } else
+        act = aSEN_ACTION_SELECT_ISLAND;
+    return act;
+}
+
+static u8 aSEN_get_talk_start_wait_v_think_idx(NPC_SENDO_ACTOR* sendo) {
+    u8 act;
+    if (!mLd_PlayerManKindCheck()) {
+        if (!(Now_Private->state_flags & aSEN_MET_SENDO)) {
+            act = aSEN_ACTION_FIRST_MEETING;
+            Now_Private->state_flags |= aSEN_MET_SENDO;
+        } else if (aSEN_chk_island_talk() == TRUE) {
+            act = aSEN_ACTION_EXPLAIN_ISLAND;
+            Now_Private->state_flags |= aSEN_ISLAND_EXPLAINED;
+        } else if (CLIP(aprilfool_control_clip) != NULL &&
+                   CLIP(aprilfool_control_clip)->talk_chk_proc(SP_NPC_SENDO) == FALSE) {
+            act = aSEN_ACTION_APRILFOOL;
+        } else {
+            act = aSEN_get_talk_start_wait_v_think_idx_sub(sendo);
+        }
+    } else {
+        act = aSEN_get_talk_start_wait_v_think_idx_sub(sendo);
+    }
+    return act;
 }
 
 static void aSEN_pl_ride_on_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
     u8 act;
 
     if (boat_demo->action == aBTD_ACTION_START_CALL_END_WAIT) {
         if (boat_demo->at_island == FALSE) {
             mISL_ClearNowPlayerAction_island();
 
-            if (sendo->use_island_data_in_ram == TRUE) {
-                act = 5;
-            } else {
-                act = 4;
-            }
+            act = aSEN_ACTION_START_CALL_V;
         } else {
-            act = 6;
+            act = aSEN_ACTION_START_CALL_I;
         }
 
         aSEN_setup_think_proc(sendo, play, act);
@@ -100,14 +192,14 @@ static void aSEN_pl_ride_on_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 }
 
 static void aSEN_sing_start_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
     u8 act;
 
     if (boat_demo->action == aBTD_ACTION_SING_SENDO_MSG_SET_WAIT) {
         if (boat_demo->at_island == FALSE) {
-            act = 8;
+            act = aSEN_ACTION_SING_V;
         } else {
-            act = 9;
+            act = aSEN_ACTION_SING_I;
         }
 
         aSEN_setup_think_proc(sendo, play, act);
@@ -115,22 +207,24 @@ static void aSEN_sing_start_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 }
 
 static void aSEN_touch_wharf_start_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
 
     if (boat_demo->action == aBTD_ACTION_TOUCH_WHARF_END_WAIT) {
-        aSEN_setup_think_proc(sendo, play, 11);
+        aSEN_setup_think_proc(sendo, play, aSEN_ACTION_TOUCH_WHARF_END_WAIT);
     }
 }
 
 static void aSEN_touch_wharf_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
     u8 act;
 
     if (boat_demo->action == aBTD_ACTION_PL_RIDE_OFF_START_WAIT) {
         if (boat_demo->at_island == FALSE) {
-            act = 12;
+            act = aSEN_ACTION_ARRIVE_V;
+        } else if (mPr_CheckCmpPersonalID(&Common_Get(cur_island_house_p)->ownerID, &Now_Private->player_ID) == TRUE) {
+            act = aSEN_ACTION_ARRIVE_MY_ISLAND;
         } else {
-            act = 13;
+            act = aSEN_ACTION_ARRIVE_OTHER_ISLAND;
         }
 
         mMsg_sound_unset_voice_silent(mMsg_Get_base_window_p(), TRUE);
@@ -145,7 +239,7 @@ static void aSEN_pl_ride_off_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 
     static u32 sex_pact[] = { mISL_PLAYER_ACTION_SEX_MALE, mISL_PLAYER_ACTION_SEX_FEMALE };
 
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
     u8 act;
 
     if (boat_demo->action == aBTD_ACTION_ANCHOR_WAIT) {
@@ -153,19 +247,24 @@ static void aSEN_pl_ride_off_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
             u32 destiny = Common_Get(now_private)->destiny.type;
             u32 sex = Common_Get(now_private)->gender;
 
-            if (destiny != mPr_DESTINY_NORMAL) {
-                mISL_SetNowPlayerAction(destiny_pact[destiny - 1]);
-            }
+            if (mFI_CheckInIsland() == TRUE) {
+                if (destiny != mPr_DESTINY_NORMAL) {
+                    mISL_SetNowPlayerAction(destiny_pact[destiny - 1]);
+                }
 
-            if (sex < mPr_SEX_NUM) {
-                mISL_SetNowPlayerAction(sex_pact[sex]);
+                if (sex < mPr_SEX_NUM) {
+                    mISL_SetNowPlayerAction(sex_pact[sex]);
+                }
             }
-
-            act = 15;
+            act = aSEN_ACTION_OUT_OF_SERVICE_V;
         } else {
-            act = 16;
+            act = aSEN_ACTION_OUT_OF_SERVICE_I;
+            Common_Set(cur_island_house_p, NULL);
         }
 
+        if (mSM_CheckOwner_unable_shutter_label(play, (u32)sendo)) {
+            mSM_Set_unable_shutter_label(play, 0);
+        }
         aSEN_setup_think_proc(sendo, play, act);
     }
 }
@@ -173,7 +272,7 @@ static void aSEN_pl_ride_off_end_wait(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 static void aSEN_think_main_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     NPC_SENDO_ACTOR* sendo = (NPC_SENDO_ACTOR*)actorx;
 
-    if (sendo->npc_class.action.step == aNPC_ACTION_END_STEP && sendo->npc_class.action.idx != 22) {
+    if (sendo->npc_class.action.step == aNPC_ACTION_END_STEP && sendo->npc_class.action.idx != aNPC_ACT_SPECIAL) {
         aSEN_set_request_act(sendo);
     }
 
@@ -182,7 +281,7 @@ static void aSEN_think_main_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
 
 static void aSEN_think_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
     NPC_SENDO_ACTOR* sendo = (NPC_SENDO_ACTOR*)actorx;
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
     u8 act;
 
     actorx->think.interrupt_flags = 0;
@@ -190,13 +289,9 @@ static void aSEN_think_init_proc(NPC_ACTOR* actorx, GAME_PLAY* play) {
 
     aSEN_set_request_act(sendo);
     if (boat_demo->at_island == FALSE) {
-        if (mEnv_NowWeather() == mEnv_WEATHER_RAIN) {
-            act = 1;
-        } else {
-            act = 0;
-        }
+        act = aSEN_get_talk_start_wait_v_think_idx(sendo);
     } else {
-        act = 2;
+        act = aSEN_ACTION_TALK_START_WAIT_I;
     }
 
     aSEN_setup_think_proc(sendo, play, act);
@@ -211,7 +306,7 @@ static void aSEN_talk_start_wait_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 }
 
 static void aSEN_pl_ride_on_end_wait_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
 
     boat_demo->demo_act = aBTD_DEMO_PL_RIDE_ON_END;
 }
@@ -226,10 +321,10 @@ static void aSEN_start_call_v_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
 }
 
 static void aSEN_sing_start_wait_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
 
     boat_demo->demo_act = aBTD_DEMO_MOVE_BOAT_END;
-    sendo->npc_class.talk_info.default_animation = 123;
+    sendo->npc_class.talk_info.default_animation = aNPC_ANIM_WIPKOGU1;
     sendo->npc_class.draw.anim_speed_type = aNPC_ANIM_SPEED_TYPE_FREE;
 }
 
@@ -241,24 +336,24 @@ static void aSEN_touch_wharf_end_wait_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* pl
 static void aSEN_arrive_call_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
     sendo->npc_class.head.angle_add_x = 512;
     sendo->npc_class.head.angle_add_y = 1024;
-    sendo->npc_class.talk_info.default_animation = 124;
+    sendo->npc_class.talk_info.default_animation = aNPC_ANIM_WIPWAIT1;
     sendo->npc_class.draw.anim_speed_type = aNPC_ANIM_SPEED_TYPE_LOCKED;
 }
 
 static void aSEN_pl_ride_off_end_wait_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
+    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
 
     boat_demo->demo_act = aBTD_DEMO_PL_RIDE_OFF_END;
 }
 
-static void aSEN_out_of_service_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+static void aSEN_out_of_service_v_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
     sendo->npc_class.talk_info.melody_inst = 0x11A;
 }
 
-static void aSEN_out_of_service2_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    sendo->npc_class.talk_info.default_animation = 125;
+static void aSEN_out_of_service_i_init(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    sendo->npc_class.talk_info.default_animation = aNPC_ANIM_WIPWAIT2;
     mISL_RestoreIsland();
-    aSEN_out_of_service_init(sendo, play);
+    aSEN_out_of_service_v_init(sendo, play);
     sendo->npc_class.condition_info.demo_flg =
         aNPC_COND_DEMO_SKIP_LOVE_CHECK | aNPC_COND_DEMO_SKIP_FEEL_CHECK | aNPC_COND_DEMO_SKIP_FOOTSTEPS |
         aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK | aNPC_COND_DEMO_SKIP_ITEM | aNPC_COND_DEMO_SKIP_FORWARD_CHECK |
@@ -271,28 +366,50 @@ static void aSEN_force_talk_request(ACTOR*, GAME*);
 
 static void aSEN_setup_think_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play, u8 think_act) {
     static aSEN_think_setup_c dt_tbl[] = {
-        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, 0, 0, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, 1, 1, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, 2, 2, aNPC_ANIM_WIPWAIT1 },
-        { aSEN_pl_ride_on_end_wait, aSEN_pl_ride_on_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0, 3,
-          aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_start_call_v_init, aSEN_force_talk_request, 0, 7, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_start_call_v_init, aSEN_force_talk_request, 1, 7, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_start_call_v_init, aSEN_force_talk_request, 2, 7, aNPC_ANIM_WIPWAIT1 },
-        { aSEN_sing_start_wait, aSEN_sing_start_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0, 7,
-          aNPC_ANIM_WIPKOGU1 },
-        { (aSEN_PROC)&none_proc1, (aSEN_PROC)&none_proc1, aSEN_force_talk_request, 3, 10, aNPC_ANIM_WIPKOGU1 },
-        { (aSEN_PROC)&none_proc1, (aSEN_PROC)&none_proc1, aSEN_force_talk_request, 4, 10, aNPC_ANIM_WIPKOGU1 },
-        { aSEN_touch_wharf_start_wait, (aSEN_PROC)&none_proc1, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0, 10,
-          aNPC_ANIM_WIPKOGU1 },
-        { aSEN_touch_wharf_end_wait, aSEN_touch_wharf_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0, 11,
-          aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_arrive_call_init, aSEN_force_talk_request, 5, 14, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_arrive_call_init, aSEN_force_talk_request, 6, 14, aNPC_ANIM_WIPWAIT1 },
-        { aSEN_pl_ride_off_end_wait, aSEN_pl_ride_off_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0, 14,
-          aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_out_of_service_init, aSEN_norm_talk_request, 3, 15, aNPC_ANIM_WIPWAIT1 },
-        { (aSEN_PROC)&none_proc1, aSEN_out_of_service2_init, aSEN_norm_talk_request, 4, 16, aNPC_ANIM_WIPWAIT2 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_NO_ISLAND,
+          aSEN_ACTION_NO_ISLAND, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_MY_ISLAND,
+          aSEN_ACTION_MY_ISLAND, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_OTHER_ISLAND,
+          aSEN_ACTION_OTHER_ISLAND, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_SELECT_ISLAND,
+          aSEN_ACTION_SELECT_ISLAND, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_FIRST_MEETING,
+          aSEN_ACTION_FIRST_MEETING, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_EXPLAIN_ISLAND,
+          aSEN_ACTION_EXPLAIN_ISLAND, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_APRILFOOL,
+          aSEN_ACTION_APRILFOOL, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_talk_start_wait_init, aSEN_norm_talk_request, aSEN_NORM_TALK_RIDE_ON_I,
+          aSEN_ACTION_TALK_START_WAIT_I, aNPC_ANIM_WIPWAIT1 },
+        { aSEN_pl_ride_on_end_wait, aSEN_pl_ride_on_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0,
+          aSEN_ACTION_PL_RIDE_ON_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_start_call_v_init, aSEN_force_talk_request, aSEN_FORCE_TALK_START_CALL_V,
+          aSEN_ACTION_SING_START_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_start_call_v_init, aSEN_force_talk_request, aSEN_FORCE_TALK_START_CALL_I,
+          aSEN_ACTION_SING_START_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { aSEN_sing_start_wait, aSEN_sing_start_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0,
+          aSEN_ACTION_SING_START_WAIT, aNPC_ANIM_WIPKOGU1 },
+        { (aSEN_PROC)&none_proc1, (aSEN_PROC)&none_proc1, aSEN_force_talk_request, aSEN_FORCE_TALK_SING_V,
+          aSEN_ACTION_TOUCH_WHARF_START_WAIT, aNPC_ANIM_WIPKOGU1 },
+        { (aSEN_PROC)&none_proc1, (aSEN_PROC)&none_proc1, aSEN_force_talk_request, aSEN_FORCE_TALK_SING_I,
+          aSEN_ACTION_TOUCH_WHARF_START_WAIT, aNPC_ANIM_WIPKOGU1 },
+        { aSEN_touch_wharf_start_wait, (aSEN_PROC)&none_proc1, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0,
+          aSEN_ACTION_TOUCH_WHARF_START_WAIT, aNPC_ANIM_WIPKOGU1 },
+        { aSEN_touch_wharf_end_wait, aSEN_touch_wharf_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0,
+          aSEN_ACTION_TOUCH_WHARF_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_arrive_call_init, aSEN_force_talk_request, aSEN_FORCE_TALK_ARRIVE_V,
+          aSEN_ACTION_PL_RIDE_OFF_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_arrive_call_init, aSEN_force_talk_request, aSEN_FORCE_TALK_ARRIVE_MY_ISLAND,
+          aSEN_ACTION_PL_RIDE_OFF_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_arrive_call_init, aSEN_force_talk_request, aSEN_FORCE_TALK_ARRIVE_OTHER_ISLAND,
+          aSEN_ACTION_PL_RIDE_OFF_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { aSEN_pl_ride_off_end_wait, aSEN_pl_ride_off_end_wait_init, (aNPC_TALK_REQUEST_PROC)&none_proc1, 0,
+          aSEN_ACTION_PL_RIDE_OFF_END_WAIT, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_out_of_service_v_init, aSEN_norm_talk_request, aSEN_NORM_TALK_OUT_OF_SERVICE_V,
+          aSEN_ACTION_OUT_OF_SERVICE_V, aNPC_ANIM_WIPWAIT1 },
+        { (aSEN_PROC)&none_proc1, aSEN_out_of_service_i_init, aSEN_norm_talk_request, aSEN_NORM_TALK_OUT_OF_SERVICE_I,
+          aSEN_ACTION_OUT_OF_SERVICE_I, aNPC_ANIM_WIPWAIT2 },
     };
 
     aSEN_think_setup_c* data = &dt_tbl[think_act];
@@ -316,13 +433,14 @@ static void aSEN_schedule_init_proc(NPC_ACTOR* npc_actorx, GAME_PLAY* play) {
     npc_actorx->think.think_proc = &aSEN_think_proc;
     npc_actorx->condition_info.hide_request = FALSE;
     npc_actorx->palActorIgnoreTimer = -1;
-    npc_actorx->talk_info.default_animation = 124;
+    npc_actorx->talk_info.default_animation = aNPC_ANIM_WIPWAIT1;
     npc_actorx->actor_class.talk_distance = 60.0f;
     npc_actorx->collision.check_kind = aNPC_BG_CHECK_TYPE_ONLY_GROUND;
     npc_actorx->actor_class.shape_info.draw_shadow = FALSE;
     npc_actorx->actor_class.state_bitfield |= ACTOR_STATE_NO_MOVE_WHILE_CULLED;
     npc_actorx->actor_class.status_data.weight = MASSTYPE_HEAVY;
-    npc_actorx->draw.chn_base_type = aNPC_CHN_BASE_TYPE_WORLD; // base draw position is relative to world instead of actor position
+    npc_actorx->draw.chn_base_type =
+        aNPC_CHN_BASE_TYPE_WORLD; // base draw position is relative to world instead of actor position
     npc_actorx->actor_class.shape_info.rotation.y = DEG2SHORT_ANGLE(80.0f);
     npc_actorx->movement.mv_angl = DEG2SHORT_ANGLE(80.0f);
 
@@ -367,817 +485,236 @@ static int aSEN_get_msg_no(NPC_SENDO_ACTOR* sendo, int msg_no) {
     return msg;
 }
 
-static void aSEN_agb_trans_se_proc(NPC_SENDO_ACTOR* sendo, int enable) {
-    if (enable == TRUE) {
-        if (sendo->agb_trans_se == FALSE) {
-            sAdo_SysLevStart(NA_SE_47);
-            sendo->agb_trans_se = TRUE;
-        }
-    } else {
-        if (sendo->agb_trans_se == TRUE) {
-            sAdo_SysLevStop(NA_SE_47);
-            sendo->agb_trans_se = FALSE;
-        }
-    }
-}
-
-static int aSEN_compare_ram_island_and_village() {
-    int res = FALSE;
-    // int same_land_info = mLd_CheckCmpLand(Save_Get(land_info).name, Save_Get(land_info).id,
-    //                                       Save_Get(island).landinfo.name, Save_Get(island).landinfo.id);
-
-    // if (same_land_info == TRUE) {
-    //     res = TRUE;
-    // }
-
-    return res;
-}
-
-static int aSEN_compare_ram_island_and_agb_island() {
-    int res = FALSE;
-    // int agb_island_and_island_same_name = mLd_CheckCmpLandName(
-    //     Common_Get(transfer_island).name, Save_Get(island).name); // Why bother checking this lol...
-
-    // if (agb_island_and_island_same_name == TRUE) {
-    //     int agb_island_and_island_same_land =
-    //         mLd_CheckCmpLand(Common_Get(transfer_island).landinfo.name, Common_Get(transfer_island).landinfo.id,
-    //                          Save_Get(island).landinfo.name, Save_Get(island).landinfo.id);
-
-    //     if (agb_island_and_island_same_land == TRUE) {
-    //         res = TRUE;
-    //     }
-    // }
-
-    return res;
-}
-
-static int aSEN_chk_exist_island_data_in_ram() {
-    int res = TRUE;
-
-    // if (Save_Get(island).renew_time.year == 0) {
-    //     lbRTC_TimeCopy(&Save_Get(island).renew_time, Common_GetPointer(time.rtc_time));
-    //     res = FALSE;
-    // }
-
-    return res;
-}
-
-static void aSEN_set_island_info_for_agb(Island_c* dst, Island_c* src) {
-    bcopy(src, dst, sizeof(Island_c));
-    mAGrw_SpoilKabuIsland(dst);
-    // mISL_gc_to_agb(Common_GetPointer(agb_island), dst);
-}
-
-static void aSEN_setup_pl_ride_on(NPC_SENDO_ACTOR* sendo) {
-    sendo->next_action = 3;
-    mDemo_Set_talk_return_demo_wait(TRUE);
-}
-
 static void aSEN_change_talk_proc(NPC_SENDO_ACTOR*, u8);
 
-static void aSEN_sing_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
-
-    if (boat_demo->action == aBTD_ACTION_TOUCH_WHARF_END_WAIT && sendo->npc_class.draw.animation_id != 124) {
-        sendo->next_action = 11;
-        (*Common_Get(clip).npc_clip->animation_init_proc)((ACTOR*)sendo, 124, FALSE);
+static void aSEN_setup_pl_ride_on(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    sendo->next_action = aSEN_ACTION_PL_RIDE_ON_END_WAIT;
+    mDemo_Set_talk_return_demo_wait(TRUE);
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)sendo)) {
+        mSM_Set_unable_shutter_label(play, (u32)sendo);
     }
 }
 
-static void aSEN_pl_ride_on_check_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+static void aSEN_set_island_list_str(NPC_SENDO_ACTOR* sendo) {
+    typedef struct {
+        u8 str[mChoice_CHOICE_STRING_LEN];
+        int len;
+    } aSEN_choice_c;
+    aSEN_choice_c choices[PLAYER_NUM + 1];
+    aSEN_choice_c* choice = choices;
+    int count = sendo->island_count;
+    int i;
+    int len;
+    for (i = 0; i < PLAYER_NUM + 1; i++) {
+        mem_clear(choices[i].str, mChoice_CHOICE_STRING_LEN, CHAR_SPACE);
+        choices[i].len = 0;
+    }
+    for (i = 0; i < count; i++) {
+        mHm_hs_c* home = sendo->island_homes[i];
+        len = mMl_strlen(home->island.name, mISL_ISLAND_NAME_LEN, CHAR_SPACE);
+        memcpy(choice->str, home->island.name, len);
+        choice->len = len;
+        choice++;
+    }
+    mChoice_Load_ChoseStringFromRom(mChoice_Get_base_window_p(), choice->str, 41, (ACTOR*)sendo);
+    choice->len = mMl_strlen(choice->str, mChoice_CHOICE_STRING_LEN, CHAR_SPACE);
+    mChoice_Set_choice_data(mChoice_Get_base_window_p(), choices[0].str, choices[0].len, choices[1].str, choices[1].len,
+                            choices[2].str, choices[2].len, choices[3].str, choices[3].len, choices[4].str,
+                            choices[4].len, NULL, 0);
+}
 
-    if (mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                /* Player chose not to ride */
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                mMsg_Set_LockContinue(msg_p);
-                mGcgba_InitVar();
-                sendo->gba_comm_tries = 0;
-                aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_POWER_AGB);
+static void aSEN_set_sel_island_str(NPC_SENDO_ACTOR* sendo) {
+    mHm_hs_c* home = sendo->island_homes[sendo->selected_island];
+    mMsg_SET_FREE_STR(mMsg_FREE_STR0, home->island.name, mISL_ISLAND_NAME_LEN);
+    mMsg_SET_FREE_STR(mMsg_FREE_STR1, home->ownerID.player_name, PLAYER_NAME_LEN);
+}
+
+static void aSEN_set_music_str(NPC_SENDO_ACTOR* sendo) {
+    mActor_name_t music = sendo->music;
+    u8 str[mIN_ITEM_NAME_LEN];
+    u32 article;
+    mIN_copy_name_str(str, music);
+    article = mIN_get_item_article(music);
+    mMsg_Set_item_str_art(mMsg_Get_base_window_p(), 0, str, sizeof(str), article);
+}
+
+static void aSEN_chk_ride_on_v_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    mMsg_Window_c* msg = mMsg_Get_base_window_p();
+    if (mMsg_Check_MainNormalContinue(msg) == TRUE) {
+        switch (mChoice_GET_CHOSENUM()) {
+            case 0:
+                Common_Set(cur_island_house_p, sendo->island_homes[0]);
+                aSEN_setup_pl_ride_on(sendo, play);
                 break;
-            case mChoice_CHOICE1:
-                /* Player chose to ride */
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                mMsg_Set_continue_msg_num(msg_p, aSEN_get_msg_no(sendo, 0x3074));
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-
+            case 1:
                 break;
         }
-    }
-}
-
-static void aSEN_chk_exist_island_data_in_ram_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_MSG_WIN_CLOSE_WAIT, aSEN_TALK_END_WAIT };
-    static int msg_no[] = { 0x3079, 0x30BE };
-
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0) {
-        int keep_island = -1;
-
-        if (aSEN_chk_exist_island_data_in_ram() == FALSE) {
-            keep_island = 0;
-        } else {
-            keep_island = 1;
-            // mISL_KeepIsland(Save_GetPointer(island));
-        }
-
-        /* Why do they check against -1 here? */
-        if (keep_island != -1) {
-            mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-            aSEN_setup_pl_ride_on(sendo);
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, msg_no[keep_island]));
-            mMsg_Set_ForceNext(msg_p);
-            aSEN_change_talk_proc(sendo, next_talk_idx[keep_island]);
-        }
-    }
-}
-
-static void aSEN_msg_win_close_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0) {
-        mMsg_request_main_disappear_wait_type1(mMsg_Get_base_window_p());
-        aSEN_change_talk_proc(sendo, aSEN_TALK_GET_ISLAND_NAME_MENU_START_WAIT);
-    }
-}
-
-static void aSEN_get_island_name_menu_start_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    if (mMsg_Check_main_wait(mMsg_Get_base_window_p()) == TRUE) {
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-        // mSM_open_submenu_new(&play->submenu, mSM_OVL_LEDIT, mLE_TYPE_ISLAND_NAME, 0, Save_Get(island).name);
-        aSEN_change_talk_proc(sendo, aSEN_TALK_GET_ISLAND_NAME_MENU_END_WAIT);
-    }
-}
-
-static void aSEN_get_island_name_menu_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    if (play->submenu.open_flag == FALSE) {
-        // mISL_KeepIsland(Save_GetPointer(island));
-        mMsg_request_main_appear_wait_type1(mMsg_Get_base_window_p());
-        aSEN_change_talk_proc(sendo, aSEN_TALK_MSG_WIN_OPEN_WAIT);
-    }
-}
-
-static void aSEN_msg_win_open_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-    if (mMsg_Check_not_series_main_wait(msg_p) == TRUE) {
-        mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x30BE));
-        // mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(island).name, mISL_ISLAND_NAME_LEN);
         aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
     }
 }
 
-static void aSEN_pl_ride_on_check2_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-    if (mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                /* Player chose to ride */
-                if (aSEN_compare_ram_island_and_village() == FALSE) {
-                    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                    mMsg_Set_LockContinue(msg_p);
-                    mGcgba_InitVar();
-                    sendo->gba_comm_tries = 0;
-                    aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_POWER_AGB2);
-                } else {
-                    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                    mMsg_Set_continue_msg_num(msg_p, aSEN_get_msg_no(sendo, 0x3082));
-                    aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_WRITE_FOR_AGB);
-                }
-
-                mNpc_SetIslandGetFtrtoRoom();
-
-                break;
-            case mChoice_CHOICE1:
-                /* Player chose not to ride */
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                mMsg_Set_continue_msg_num(msg_p, aSEN_get_msg_no(sendo, 0x3081));
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-                break;
-        }
-    }
-}
-
-static void aSEN_chk_write_for_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0) {
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                /* Player chose to send a copy of the island to the GBA */
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                mMsg_Set_LockContinue(msg_p);
-                mMsg_Set_ForceNext(msg_p);
-                mGcgba_InitVar();
-                sendo->gba_comm_tries = 0;
-                aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_POWER_AGB3);
-                break;
-            case mChoice_CHOICE1:
-                /* Player chose not to send a copy of the island to the GBA */
-                aSEN_setup_pl_ride_on(sendo);
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                mMsg_Set_continue_msg_num(msg_p, aSEN_get_msg_no(sendo, 0x3083));
-                mMsg_Set_ForceNext(msg_p);
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-                break;
-        }
-    }
-}
-
-static void aSEN_chk_rewrite_for_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_TRANS_DATA_FOR_AGB_START_WAIT, aSEN_TALK_END_WAIT };
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0) {
-        int keep_island = -1;
-
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                keep_island = 0;
-                break;
-            case mChoice_CHOICE1:
-                keep_island = 1;
-                mGcgba_EndComm();
-                sendo->next_action = 2;
-                break;
-        }
-
-        if (keep_island != -1) {
-            mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-            mMsg_Set_ForceNext(msg_p);
-            aSEN_change_talk_proc(sendo, next_talk_idx[keep_island]);
-        }
-    }
-}
-
-static void aSEN_trans_data_for_agb_start_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0) {
-        u8 talk_act;
-
-        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
-
-        if (sendo->talk_action == aSEN_TALK_TRANS_DATA_FOR_AGB_START_WAIT) {
-            // aSEN_set_island_info_for_agb(Common_GetPointer(transfer_island), Save_GetPointer(island));
-            talk_act = aSEN_TALK_TRANS_DATA_FOR_AGB_END_WAIT;
+static void aSEN_select_island_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    mMsg_Window_c* msg = mMsg_Get_base_window_p();
+    if (mMsg_Check_MainNormalContinue(msg) == TRUE) {
+        int selected = mChoice_GET_CHOSENUM();
+        int msg_no = 0x3074;
+        u8 act;
+        if (selected == sendo->island_count) {
+            act = aSEN_TALK_END_WAIT;
         } else {
-            talk_act = aSEN_TALK_TRANS_PRG_FOR_AGB_END_WAIT;
+            mHm_hs_c* home;
+            sendo->selected_island = selected;
+            home = sendo->island_homes[selected];
+            aSEN_set_sel_island_str(sendo);
+            Common_Set(cur_island_house_p, home);
+            if (mPr_CheckCmpPersonalID(&home->ownerID, &Now_Private->player_ID) == TRUE)
+                msg_no = 0x3089;
+            else
+                msg_no = 0x308A;
+            act = aSEN_TALK_CONFIRM_DESTINATION;
         }
-
-        mGcgba_InitVar();
-        aSEN_change_talk_proc(sendo, talk_act);
+        mMsg_Set_continue_msg_num(msg, aSEN_get_msg_no(sendo, msg_no));
+        aSEN_change_talk_proc(sendo, act);
     }
 }
 
-static void aSEN_trans_data_for_agb_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-    // switch (mGcgba_Send((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
-    //     case GBA2_GBA_STATE_SUCCESS: {
-    //         /* Successfully sent to GBA */
-    //         aSEN_agb_trans_se_proc(sendo, FALSE);
-    //         mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3083));
-    //         mMsg_Unset_LockContinue(msg_p);
-    //         mMsg_Set_ForceNext(msg_p);
-    //         // bcopy(Common_GetPointer(transfer_island), Save_GetPointer(island), sizeof(Island_c));
-    //         aSEN_setup_pl_ride_on(sendo);
-    //         mGcgba_EndComm();
-    //         aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-    //         break;
-    //     }
-
-    //     case GBA2_GBA_STATE_TRANSMITTING: {
-    //         /* Sending data to GBA */
-    //         aSEN_agb_trans_se_proc(sendo, TRUE);
-    //         break;
-    //     }
-
-    //     default: {
-    //         /* Failed to send data to GBA */
-    //         aSEN_agb_trans_se_proc(sendo, FALSE);
-    //         mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x308A));
-    //         mMsg_Unset_LockContinue(msg_p);
-    //         mMsg_Set_ForceNext(msg_p);
-    //         // bcopy(Save_GetPointer(island), Common_GetPointer(transfer_island), sizeof(Island_c));
-    //         sendo->next_action = 2;
-    //         mGcgba_EndComm();
-    //         aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-    //         break;
-    //     }
-    // }
+static void aSEN_confirm_destination_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    mMsg_Window_c* msg = mMsg_Get_base_window_p();
+    if (mMsg_Check_MainNormalContinue(msg) == TRUE) {
+        u8 act = aSEN_TALK_NONE;
+        switch (mChoice_GET_CHOSENUM()) {
+            case 0:
+                act = aSEN_TALK_END_WAIT;
+                aSEN_setup_pl_ride_on(sendo, play);
+                break;
+            case 1:
+                act = aSEN_TALK_SELECT_ISLAND;
+                break;
+        }
+        if (act != aSEN_TALK_NONE)
+            aSEN_change_talk_proc(sendo, act);
+    }
 }
 
-static void aSEN_trans_prg_for_agb_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
+static void aSEN_sing_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
     BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
 
-    switch (mGcgba_Boot(boat_demo->island_gba_loader_p, aBTD_LOADER_SIZE)) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully sent to GBA */
-            aSEN_agb_trans_se_proc(sendo, TRUE);
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_TRANS_PRG2_FOR_AGB_END_WAIT);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Sending data to GBA */
-            aSEN_agb_trans_se_proc(sendo, TRUE);
-            break;
-        }
-
-        default: {
-            /* Failed to send data to GBA */
-            aSEN_agb_trans_se_proc(sendo, FALSE);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x308A));
-            sendo->next_action = 2;
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_Set_ForceNext(msg_p);
-            mGcgba_EndComm();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            break;
-        }
+    if (boat_demo->action == aBTD_ACTION_TOUCH_WHARF_END_WAIT &&
+        sendo->npc_class.draw.animation_id != aNPC_ANIM_WIPWAIT1) {
+        sendo->next_action = aSEN_ACTION_TOUCH_WHARF_END_WAIT;
+        (*Common_Get(clip).npc_clip->animation_init_proc)((ACTOR*)sendo, aNPC_ANIM_WIPWAIT1, FALSE);
     }
 }
 
-static void aSEN_trans_prg2_for_agb_end_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-    BOAT_DEMO_ACTOR* boat_demo = (BOAT_DEMO_ACTOR*)sendo->npc_class.actor_class.parent_actor;
-
-    switch (mGcgba_Send(boat_demo->island_gba_program_p, aBTD_PROGRAM_SIZE)) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully sent to GBA */
-            aSEN_agb_trans_se_proc(sendo, TRUE);
-            // aSEN_set_island_info_for_agb(Common_GetPointer(transfer_island), Save_GetPointer(island));
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_TRANS_DATA_FOR_AGB_END_WAIT);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Sending data to GBA */
-            aSEN_agb_trans_se_proc(sendo, TRUE);
-            break;
-        }
-
-        default: {
-            /* Failed to send data to GBA */
-            aSEN_agb_trans_se_proc(sendo, FALSE);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x308A));
-            sendo->next_action = 2;
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_Set_ForceNext(msg_p);
-            mGcgba_EndComm();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_power_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_ConnectEnabled()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully communicated with GBA */
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-
-            /* Try up to 5 times to connect with the GBA */
-            sendo->gba_comm_tries++;
-            if (sendo->gba_comm_tries >= 5) {
-                mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-                mMsg_Unset_LockContinue(msg_p);
-                mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3075));
-                mMsg_Set_ForceNext(msg_p);
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            } else {
-                mGcgba_InitVar();
-            }
-
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_exist_island_data_in_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_IsIsland()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Confirmed an island is loaded on the GBA */
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_READ_AGB);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-            sendo->use_island_data_in_ram = TRUE;
-            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 1);
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_RAM);
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_read_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_END_WAIT, aSEN_TALK_CHK_RETRY_READ_AGB,
-                                  aSEN_TALK_CHK_USE_ISLAND_DATA_IN_RAM };
-    static int msg_no[] = { 0x3076, 0x3078, 0x30C0 };
-    int talk_act = -1;
-
-    // switch (mGcgba_Recv((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
-    //     case GBA2_GBA_STATE_SUCCESS: {
-    //         /* Read the island from the GBA */
-    //         if (Common_Get(agb_island).in_use == TRUE) {
-    //             talk_act = 2;
-    //         } else {
-    //             // mISL_KeepIsland(Save_GetPointer(island));
-    //             // mISL_agb_to_gc(Common_GetPointer(transfer_island), Common_GetPointer(agb_island));
-    //             // bcopy(Common_GetPointer(transfer_island), Save_GetPointer(island), sizeof(Island_c));
-    //             aSEN_setup_pl_ride_on(sendo);
-    //             talk_act = 0;
-    //         }
-    //         break;
-    //     }
-
-    //     case GBA2_GBA_STATE_TRANSMITTING: {
-    //         /* Communication in progress */
-    //         break;
-    //     }
-
-    //     default: {
-    //         /* Failed to communicate with GBA */
-    //         talk_act = 1;
-    //         break;
-    //     }
-    // }
-
-    if (talk_act != -1) {
-        mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-        mMsg_Unset_LockContinue(msg_p);
-        mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, msg_no[talk_act]));
-        mMsg_Set_ForceNext(msg_p);
-        mGcgba_EndComm();
-        aSEN_change_talk_proc(sendo, next_talk_idx[talk_act]);
-    }
-}
-
-static void aSEN_chk_retry_read_agb_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_END_WAIT, aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_RAM };
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0 && mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
-        int keep_island = -1;
-
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                keep_island = 0;
+static void aSEN_chk_ride_on_i_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    mMsg_Window_c* msg = mMsg_Get_base_window_p();
+    if (mMsg_Check_MainNormalContinue(msg) == TRUE) {
+        int msg_no;
+        switch (mChoice_GET_CHOSENUM()) {
+            case 0:
+                msg_no = 0x3083;
+                mNpc_SetIslandGetFtrtoRoom();
+                aSEN_setup_pl_ride_on(sendo, play);
                 break;
-            case mChoice_CHOICE1:
-                keep_island = 1;
-                mMsg_Set_LockContinue(msg_p);
-                sendo->use_island_data_in_ram = TRUE;
+            case 1:
+                msg_no = 0x3081;
                 break;
         }
-
-        if (keep_island != -1) {
-            aSEN_change_talk_proc(sendo, next_talk_idx[keep_island]);
-        }
+        mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+        mMsg_Set_continue_msg_num(msg, aSEN_get_msg_no(sendo, msg_no));
+        aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
     }
 }
 
-static void aSEN_chk_use_island_data_in_ram_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_RAM, aSEN_TALK_END_WAIT };
-    mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0 && mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
-        int keep_island = -1;
-
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                keep_island = 0;
-                mMsg_Set_LockContinue(msg_p);
-                sendo->use_island_data_in_ram = TRUE;
+static void aSEN_passage_permission_check_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    mMsg_Window_c* msg = mMsg_Get_base_window_p();
+    if (mMsg_Check_MainNormalContinue(msg) == TRUE) {
+        switch (mChoice_GET_CHOSENUM()) {
+            case 0:
+                Common_Get(cur_island_house_p)->island.flags._1 = TRUE;
                 break;
-            case mChoice_CHOICE1:
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                keep_island = 1;
+            case 1:
+                Common_Get(cur_island_house_p)->island.flags._1 = FALSE;
                 break;
         }
-
-        if (keep_island != -1) {
-            aSEN_change_talk_proc(sendo, next_talk_idx[keep_island]);
-        }
+        aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
     }
 }
 
-static void aSEN_chk_power_agb2_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_ConnectEnabled()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully communicated with GBA */
-            // lbRTC_TimeCopy(&Save_Get(island).renew_time, Common_GetPointer(time.rtc_time));
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB2);
-            break;
+static void aSEN_present_start_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    if ((int)mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 1) == 2)
+        aSEN_change_talk_proc(sendo, aSEN_TALK_PRESENT_TRANS_TAKEOUT);
+}
+
+static void aSEN_present_trans_takeout_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    if (sendo->npc_class.left_hand.item_actor_p == NULL) {
+        ACTOR* item = aHOI_CLIP->birth_proc(sendo->music, aHOI_REQUEST_PUTAWAY, aHOI_NOT_PRESENT, (ACTOR*)sendo);
+        if (item != NULL) {
+            aHOI_CLIP->chg_request_mode_proc((ACTOR*)sendo, aHOI_REQUEST_TRANSFER);
+            sendo->npc_class.left_hand.item_actor_p = item;
+            sendo->music = EMPTY_NO;
         }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-
-            /* Try up to 5 times to connect with the GBA */
-            sendo->gba_comm_tries++;
-            if (sendo->gba_comm_tries >= 5) {
-                mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-                mMsg_Unset_LockContinue(msg_p);
-                mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3089));
-                mMsg_Set_ForceNext(msg_p);
-                mGcgba_EndComm();
-                aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_TRANS_ISLAND_DATA_FROM_AGB2);
-            } else {
-                mGcgba_InitVar();
-            }
-
-            break;
-        }
+    }
+    if (sendo->npc_class.draw.main_animation_state == cKF_STATE_STOPPED && aHOI_CLIP->master_actor == (ACTOR*)sendo) {
+        aHOI_CLIP->chg_request_mode_proc((ACTOR*)sendo, aHOI_REQUEST_TRANS_WAIT);
+        aSEN_change_talk_proc(sendo, aSEN_TALK_PRESENT_TRANS_WAIT);
+        NPC_CLIP->animation_init_proc((ACTOR*)sendo, aNPC_ANIM_TRANS_WAIT1, TRUE);
     }
 }
 
-static void aSEN_chk_trans_island_data_from_agb2_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    int order = mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9);
-
-    if (order != 0 && mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p()) == TRUE) {
-        switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
-            case mChoice_CHOICE0:
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                aSEN_setup_pl_ride_on(sendo);
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-                break;
-            case mChoice_CHOICE1:
-                mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-                break;
-        }
-    }
-}
-
-static void aSEN_chk_exist_island_data_in_agb2_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_IsIsland()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Confirmed an island is loaded on the GBA */
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_READ_AGB2);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-            mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3086));
-            mMsg_Set_ForceNext(msg_p);
-            aSEN_change_talk_proc(sendo, aSEN_TALK_TRANS_PRG_FOR_AGB_START_WAIT);
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_read_agb2_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = {
-        aSEN_TALK_CHK_REWRITE_FOR_AGB,
-        aSEN_TALK_TRANS_DATA_FOR_AGB_START_WAIT,
-        aSEN_TALK_END_WAIT,
-    };
-    static int msg_no[] = { 0x3087, 0x3086, 0x308A };
-    int talk_act = -1;
-
-    // switch (mGcgba_CheckRecv((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
-    //     case GBA2_GBA_STATE_SUCCESS: {
-    //         /* Read the island from the GBA */
-    //         mISL_agb_to_gc(Common_GetPointer(transfer_island), Common_GetPointer(agb_island));
-    //         if (aSEN_compare_ram_island_and_agb_island() == TRUE) {
-    //             talk_act = 1;
-    //         } else {
-    //             talk_act = 0;
-    //         }
-    //         break;
-    //     }
-
-    //     case GBA2_GBA_STATE_TRANSMITTING: {
-    //         /* Communication in progress */
-    //         break;
-    //     }
-
-    //     default: {
-    //         /* Failed to communicate with GBA */
-    //         talk_act = 2;
-    //         sendo->next_action = 2;
-    //         break;
-    //     }
-    // }
-
-    if (talk_act != -1) {
-        mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-        // mMsg_Set_free_str(msg_p, mMsg_FREE_STR1, Common_Get(agb_island).name, mISL_ISLAND_NAME_LEN);
-        mMsg_Unset_LockContinue(msg_p);
-        mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, msg_no[talk_act]));
-        mMsg_Set_ForceNext(msg_p);
-        aSEN_change_talk_proc(sendo, next_talk_idx[talk_act]);
-    }
-}
-
-static void aSEN_chk_power_agb3_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_ConnectEnabled()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Successfully communicated with GBA */
-            // lbRTC_TimeCopy(&Save_Get(island).renew_time, Common_GetPointer(time.rtc_time));
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_EXIST_ISLAND_DATA_IN_AGB3);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-
-            /* Try up to 5 times to connect with the GBA */
-            sendo->gba_comm_tries++;
-            if (sendo->gba_comm_tries >= 5) {
-                mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-                mMsg_Unset_LockContinue(msg_p);
-                mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3085));
-                mMsg_Set_ForceNext(msg_p);
-                mGcgba_EndComm();
-                aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-            } else {
-                mGcgba_InitVar();
-            }
-
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_exist_island_data_in_agb3_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    switch (mGcgba_IsIsland()) {
-        case GBA2_GBA_STATE_SUCCESS: {
-            /* Confirmed an island is loaded on the GBA */
-            mGcgba_InitVar();
-            aSEN_change_talk_proc(sendo, aSEN_TALK_CHK_READ_AGB3);
-            break;
-        }
-
-        case GBA2_GBA_STATE_TRANSMITTING: {
-            /* Communication in progress */
-            break;
-        }
-
-        default: {
-            /* Failed to communicate with GBA */
-            mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-            mMsg_Unset_LockContinue(msg_p);
-            mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, 0x3086));
-            mMsg_Set_ForceNext(msg_p);
-            aSEN_change_talk_proc(sendo, aSEN_TALK_TRANS_PRG_FOR_AGB_START_WAIT);
-            break;
-        }
-    }
-}
-
-static void aSEN_chk_read_agb3_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
-    static u8 next_talk_idx[] = { aSEN_TALK_CHK_REWRITE_FOR_AGB, aSEN_TALK_TRANS_DATA_FOR_AGB_START_WAIT,
-                                  aSEN_TALK_END_WAIT };
-    static int msg_no[] = { 0x30BA, 0x3086, 0x308A };
-    int talk_act = -1;
-
-    // switch (mGcgba_CheckRecv((u8*)Common_GetPointer(agb_island), sizeof(Common_Get(agb_island)))) {
-    //     case GBA2_GBA_STATE_SUCCESS: {
-    //         /* Read the island from the GBA */
-    //         mISL_agb_to_gc(Common_GetPointer(transfer_island), Common_GetPointer(agb_island));
-    //         if (aSEN_compare_ram_island_and_agb_island() == TRUE) {
-    //             talk_act = 1;
-    //         } else {
-    //             talk_act = 0;
-    //         }
-    //         break;
-    //     }
-
-    //     case GBA2_GBA_STATE_TRANSMITTING: {
-    //         /* Communication in progress */
-    //         break;
-    //     }
-
-    //     default: {
-    //         /* Failed to communicate with GBA */
-    //         talk_act = 2;
-    //         sendo->next_action = 2;
-    //         break;
-    //     }
-    // }
-
-    if (talk_act != -1) {
-        mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
-
-        // mMsg_Set_free_str(msg_p, mMsg_FREE_STR1, Common_Get(agb_island).name, mISL_ISLAND_NAME_LEN);
-        mMsg_Unset_LockContinue(msg_p);
-        mMsg_ChangeMsgData(msg_p, aSEN_get_msg_no(sendo, msg_no[talk_act]));
-        mMsg_Set_ForceNext(msg_p);
-        aSEN_change_talk_proc(sendo, next_talk_idx[talk_act]);
+static void aSEN_present_trans_wait_talk_proc(NPC_SENDO_ACTOR* sendo, GAME_PLAY* play) {
+    if (aHOI_CLIP->master_actor != (ACTOR*)sendo) {
+        sendo->npc_class.left_hand.item_actor_p = NULL;
+        aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
+        NPC_CLIP->animation_init_proc((ACTOR*)sendo, sendo->npc_class.talk_info.default_animation, TRUE);
     }
 }
 
 static void aSEN_change_talk_proc(NPC_SENDO_ACTOR* sendo, u8 talk_idx) {
     static aSEN_PROC talk_proc[aSEN_TALK_NUM] = {
         (aSEN_PROC)&none_proc1,
+        aSEN_chk_ride_on_v_talk_proc,
+        aSEN_select_island_talk_proc,
+        aSEN_confirm_destination_talk_proc,
         aSEN_sing_end_wait_talk_proc,
-        aSEN_pl_ride_on_check_talk_proc,
-        aSEN_chk_exist_island_data_in_ram_talk_proc,
-        aSEN_msg_win_close_wait_talk_proc,
-        aSEN_get_island_name_menu_start_wait_talk_proc,
-        aSEN_get_island_name_menu_end_wait_talk_proc,
-        aSEN_msg_win_open_wait_talk_proc,
-        aSEN_pl_ride_on_check2_talk_proc,
-        aSEN_chk_write_for_agb_talk_proc,
-        aSEN_chk_rewrite_for_agb_talk_proc,
-        aSEN_trans_data_for_agb_start_wait_talk_proc,
-        aSEN_trans_data_for_agb_end_wait_talk_proc,
-        aSEN_trans_data_for_agb_start_wait_talk_proc,
-        aSEN_trans_prg_for_agb_end_wait_talk_proc,
-        aSEN_trans_prg2_for_agb_end_wait_talk_proc,
-        aSEN_chk_power_agb_talk_proc,
-        aSEN_chk_exist_island_data_in_agb_talk_proc,
-        aSEN_chk_read_agb_talk_proc,
-        aSEN_chk_retry_read_agb_talk_proc,
-        aSEN_chk_use_island_data_in_ram_talk_proc,
-        aSEN_chk_power_agb2_talk_proc,
-        aSEN_chk_trans_island_data_from_agb2_talk_proc,
-        aSEN_chk_exist_island_data_in_agb2_talk_proc,
-        aSEN_chk_read_agb2_talk_proc,
-        aSEN_chk_power_agb3_talk_proc,
-        aSEN_chk_exist_island_data_in_agb3_talk_proc,
-        aSEN_chk_read_agb3_talk_proc,
+        aSEN_chk_ride_on_i_talk_proc,
+        aSEN_passage_permission_check_talk_proc,
+        aSEN_present_start_wait_talk_proc,
+        aSEN_present_trans_takeout_talk_proc,
+        aSEN_present_trans_wait_talk_proc,
     };
-
+    switch (talk_idx) {
+        case aSEN_TALK_CHK_RIDE_ON_V:
+            sendo->selected_island = 0;
+            Common_Set(cur_island_house_p, NULL);
+            aSEN_set_sel_island_str(sendo);
+            break;
+        case aSEN_TALK_SELECT_ISLAND:
+            sendo->selected_island = 0;
+            Common_Set(cur_island_house_p, NULL);
+            aSEN_set_island_list_str(sendo);
+            break;
+        case aSEN_TALK_PRESENT_TRANS_TAKEOUT:
+            mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 1, 0);
+            mPr_SetFreePossessionItem(Now_Private, sendo->music, mPr_ITEM_COND_NORMAL);
+            mNT_present_new_music_live_version(aSEN_LIVE_MUSIC_INDEX);
+            mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+            sAdo_OngenTrgStart(NA_SE_GASAGOSO, &sendo->npc_class.actor_class.world.position);
+            NPC_CLIP->animation_init_proc((ACTOR*)sendo, aNPC_ANIM_TRANSFER1, TRUE);
+            break;
+    }
     sendo->talk_action = talk_idx;
     sendo->talk_proc = talk_proc[talk_idx];
 }
 
 static void aSEN_set_force_talk_info(ACTOR* actorx) {
-    static aSEN_talk_request_c dt_tbl[7] = {
+    static aSEN_talk_request_c dt_tbl[] = {
         { 0x3077, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_END_WAIT },
-        { 0x30BF, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_END_WAIT },
         { 0x3084, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_END_WAIT },
         { 0x3091, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_SING_END_WAIT },
         { 0x3096, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_SING_END_WAIT },
         { 0x307A, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_END_WAIT },
+        { 0x30BB, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_PASSAGE_PERMISSION_CHECK },
         { 0x308B, 0, CAMERA2_PROCESS_NORMAL, 2, aSEN_TALK_END_WAIT },
     };
 
@@ -1187,8 +724,8 @@ static void aSEN_set_force_talk_info(ACTOR* actorx) {
     mDemo_Set_msg_num(aSEN_get_msg_no(sendo, talk_request->msg_no));
     mDemo_Set_talk_turn(talk_request->player_talk_turn);
     mDemo_Set_camera(talk_request->msg_camera_type);
-    mDemo_Set_talk_change_player(0);
-    // mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(island).name, mISL_ISLAND_NAME_LEN);
+    mDemo_Set_talk_change_player(FALSE);
+    aSEN_set_sel_island_str(sendo);
     sendo->npc_class.talk_info.turn = talk_request->sendo_talk_turn;
     aSEN_change_talk_proc(sendo, talk_request->talk_act);
 }
@@ -1198,37 +735,41 @@ static void aSEN_force_talk_request(ACTOR* actorx, GAME* game) {
 }
 
 static void aSEN_set_norm_talk_info(ACTOR* actorx) {
-    static aSEN_talk_request_c dt_tbl[7] = {
-        { 0x3073, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_PL_RIDE_ON_CHECK },
-        { 0x30B9, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_PL_RIDE_ON_CHECK },
-        { 0x3080, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_PL_RIDE_ON_CHECK2 },
+    static aSEN_talk_request_c dt_tbl[] = {
+        { 0x3079, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_END_WAIT },
+        { 0x3073, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_CHK_RIDE_ON_V },
+        { 0x3075, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_CHK_RIDE_ON_V },
+        { 0x3078, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_SELECT_ISLAND },
+        { 0x30B9, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_END_WAIT },
+        { 0x3085, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_END_WAIT },
+        { 0x3073, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_END_WAIT },
+        { 0x3080, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_CHK_RIDE_ON_I },
         { 0x307B, 1, CAMERA2_PROCESS_TALK, 1, aSEN_TALK_END_WAIT },
         { 0x308C, 1, CAMERA2_PROCESS_TALK, 0, aSEN_TALK_END_WAIT },
-        // unused
-        // unused
     };
 
+    static aSEN_talk_request_c md_present_dt_tbl = { 0x0278, 1, CAMERA2_PROCESS_TALK, 0, aSEN_TALK_PRESENT_START_WAIT };
     NPC_SENDO_ACTOR* sendo = (NPC_SENDO_ACTOR*)actorx;
-
-    if (Common_Get(clip).aprilfool_control_clip != NULL &&
-        (*Common_Get(clip).aprilfool_control_clip->talk_chk_proc)(SP_NPC_SENDO) == FALSE) {
-        int aprilfool_msg_no = (*Common_Get(clip).aprilfool_control_clip->get_msg_num_proc)(SP_NPC_SENDO, 1);
-
-        mDemo_Set_msg_num(aprilfool_msg_no);
-        mDemo_Set_talk_turn(1);
-        mDemo_Set_camera(CAMERA2_PROCESS_TALK);
-        sendo->npc_class.talk_info.turn = 0;
-        aSEN_change_talk_proc(sendo, aSEN_TALK_END_WAIT);
-    } else {
-        aSEN_talk_request_c* talk_request = &dt_tbl[sendo->talk_action];
-
-        mDemo_Set_msg_num(aSEN_get_msg_no(sendo, talk_request->msg_no));
-        mDemo_Set_talk_turn(talk_request->player_talk_turn);
-        mDemo_Set_camera(talk_request->msg_camera_type);
-        // mMsg_Set_free_str(mMsg_Get_base_window_p(), mMsg_FREE_STR0, Save_Get(island).name, mISL_ISLAND_NAME_LEN);
-        sendo->npc_class.talk_info.turn = talk_request->sendo_talk_turn;
-        aSEN_change_talk_proc(sendo, talk_request->talk_act);
+    aSEN_talk_request_c* talk_request = &dt_tbl[sendo->talk_action];
+    int msg_no = aSEN_get_msg_no(sendo, talk_request->msg_no);
+    if (sendo->talk_action == aSEN_NORM_TALK_APRILFOOL) {
+        msg_no = CLIP(aprilfool_control_clip)->get_msg_num_proc(SP_NPC_SENDO, 1);
     }
+    if (sendo->talk_action != aSEN_NORM_TALK_FIRST_MEETING && sendo->music != EMPTY_NO &&
+        mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) != -1) {
+        aSEN_set_music_str(sendo);
+        talk_request = &md_present_dt_tbl;
+        sendo->npc_class.condition_info.demo_flg =
+            aNPC_COND_DEMO_SKIP_LOVE_CHECK | aNPC_COND_DEMO_SKIP_FEEL_CHECK | aNPC_COND_DEMO_SKIP_FOOTSTEPS |
+            aNPC_COND_DEMO_SKIP_ENTRANCE_CHECK | aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_BGCHECK |
+            aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+        msg_no = 0x0278;
+    }
+    mDemo_Set_msg_num(msg_no);
+    mDemo_Set_talk_turn(talk_request->player_talk_turn);
+    mDemo_Set_camera(talk_request->msg_camera_type);
+    sendo->npc_class.talk_info.turn = talk_request->sendo_talk_turn;
+    aSEN_change_talk_proc(sendo, talk_request->talk_act);
 }
 
 static void aSEN_norm_talk_request(ACTOR* actorx, GAME* game) {
@@ -1248,7 +789,14 @@ static int aSEN_talk_end_chk(ACTOR* actorx, GAME* game) {
 
     (*sendo->talk_proc)(sendo, play);
     if (mDemo_Check(mDemo_TYPE_SPEAK, actorx) == FALSE && mDemo_Check(mDemo_TYPE_TALK, actorx) == FALSE) {
-        aSEN_setup_think_proc(sendo, play, sendo->next_action);
+        u8 act = sendo->next_action;
+        switch (act) {
+            case aSEN_ACTION_FIRST_MEETING:
+            case aSEN_ACTION_EXPLAIN_ISLAND:
+                act = aSEN_get_talk_start_wait_v_think_idx(sendo);
+                break;
+        }
+        aSEN_setup_think_proc(sendo, play, act);
         res = TRUE;
     }
 

@@ -1115,7 +1115,7 @@ config.libs = [
             Object(Matching, "actor/npc/ac_npc_reset.c"),
             Object(Matching, "actor/npc/ac_npc_restart.c"),
             Object(Matching, "actor/npc/ac_npc_rtc.c"),
-            Object(NonMatching, "actor/npc/ac_npc_sendo.c"),
+            Object(Matching, "actor/npc/ac_npc_sendo.c"),
             Object(Matching, "actor/npc/ac_npc_shasho.c"),
             Object(Matching, "actor/npc/ac_npc_shop_master.c"),
             Object(Matching, "actor/npc/ac_npc_shop_mastersp.c"),
