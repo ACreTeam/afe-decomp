@@ -5,13 +5,19 @@
 #include "m_actor.h"
 #include "ac_npc.h"
 #include "bg_post_item.h"
+#include "m_card.h"
+#include "m_choice.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define aPG_ADDR_STR_LEN 8
-#define aPG_LOAN_STR_LEN 7
+#define aPG_LOAN_STR_LEN 6
+#define aPG_DEPOSIT_STR_LEN 9
+#define aPG_CARD_FILE_NUM 6
+#define aPG_CARD_EXISTING_FILE_NUM (aPG_CARD_FILE_NUM - 1)
+#define aPG_MUSIC_PELLY 3
+#define aPG_MUSIC_PHYLLIS 4
 
 extern ACTOR_PROFILE Npc_Post_Girl_Profile;
 
@@ -28,17 +34,28 @@ typedef void (*aPG_INIT_PROC)(ACTOR*, GAME*);
 
 struct ac_npc_postgirl {
     NPC_ACTOR npc_class;
-    /* 0x994 */ int action;
-    /* 0x998 */ int next_action;
-    /* 0x99c */ aPG_PROC process;
-    /* 0x9a0 */ aPG_SETUP_PROC setup_action;
-    /* 0x9a4 */ u8 status;
-    /* 0x9a5 */ u8 dest;
-    /* 0x9a6 */ u8 is_desk_full;
-    /* 0x9a7 */ u8 has_bank_account;
-    /* 0x9a8 */ int loan;
-    /* 0x9ac */ BG_POST_ITEM_ACTOR* _9ac;
-    /* 0x9b0 */ int msg_no;
+    int action;
+    int next_action;
+    aPG_PROC process;
+    aPG_SETUP_PROC setup_action;
+    u8 status;
+    u8 dest;
+    u8 is_desk_full;
+    u8 has_bank_account;
+    int loan;
+    BG_POST_ITEM_ACTOR* bg_post_item;
+    int msg_no;
+    mActor_name_t music_item;
+    u16 _B8A;
+    u8 card_slot_status[mCD_SLOT_NUM];
+    u8 card_file_exists[mCD_SLOT_NUM][aPG_CARD_FILE_NUM];
+    int card_slot;
+    int card_file;
+    int error_slot;
+    mCD_keep_mail_c* card_mail;
+    u8 card_choices[mChoice_CHOICE_NUM];
+    u16 _BB2;
+    Mail_c saved_mail[mPr_INVENTORY_MAIL_COUNT];
 };
 
 enum ac_npc_action {
@@ -51,27 +68,38 @@ enum ac_npc_action {
     aPG_ACTION_REFUSE_DEMO_START_WAIT,
     aPG_ACTION_REFUSE_DEMO_STOP_WAIT,
     aPG_ACTION_REFUSE_MSG_END_WAIT,
+    aPG_ACTION_REFUSE_DEMO_ANIME_END_WAIT,
     aPG_ACTION_REFUSE_DEMO_AFTER,
     aPG_ACTION_REFUSE_AFTER_MSG_END_WAIT,
     aPG_ACTION_REPAY_BEFORE,
     aPG_ACTION_MSG_WIN_CLOSE_WAIT,
     aPG_ACTION_REPAY_MENU_CLOSE_WAIT,
-    aPG_ACTION_14,
+    aPG_ACTION_REPAY_AFTER_RECOVER,
     aPG_ACTION_REPAY_AFTER,
-    aPG_ACTION_CARD_ERR_OTHERLAND, // 0x10
-    aPG_ACTION_CARD_CHECK_CONDITION,
-    aPG_ACTION_18,
+    aPG_ACTION_CARD_REFUSE_MSG_END_WAIT,
+    aPG_ACTION_CARD_CHK_CONDITION_BEFORE,
+    aPG_ACTION_CARD_CHK_CONDITION,
+    aPG_ACTION_CARD_SELECT_SLOT,
+    aPG_ACTION_CARD_SELECT_FILE,
+    aPG_ACTION_CARD_LOAD_FILE,
+    aPG_ACTION_CARD_MENU_OPEN_WAIT,
     aPG_ACTION_CARD_SAVE_MENU_CLOSE_WAIT,
-    aPG_ACTION_20,
-    aPG_ACTION_21,
+    aPG_ACTION_CARD_SAVE_START_WAIT,
+    aPG_ACTION_CARD_SAVE,
+    aPG_ACTION_CARD_CHK_INITIALIZE,
+    aPG_ACTION_CARD_INITIALIZE_START_WAIT,
+    aPG_ACTION_CARD_INITIALIZE,
+    aPG_ACTION_RECEIVE_MENU_OPEN_WAIT,
     aPG_ACTION_RECEIVE_MENU_CLOSE_WAIT,
     aPG_ACTION_CHECK_RECEIVE_AFTER,
     aPG_ACTION_DEPOSIT_BEFORE,
-    aPG_ACTION_25,
+    aPG_ACTION_DEPOSIT_MENU_OPEN_WAIT,
     aPG_ACTION_DEPOSIT_MENU_CLOSE_WAIT,
-    aPG_ACTION_27,
+    aPG_ACTION_DEPOSIT_AFTER_RECOVER,
     aPG_ACTION_DEPOSIT_AFTER,
-    aPG_ACTION_29
+    aPG_ACTION_LOOP_CHECK,
+    aPG_ACTION_MS_PRESENT_START_WAIT,
+    aPG_ACTION_NUM
 };
 
 #ifdef __cplusplus
@@ -79,4 +107,3 @@ enum ac_npc_action {
 #endif
 
 #endif
-

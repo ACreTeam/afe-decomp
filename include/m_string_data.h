@@ -18,7 +18,9 @@ extern "C" {
 #define mString_DAY_START 0x64E
 #define mString_MONTH_START 0x66D
 #define mString_SONCHO_EVENT_NAME_START 0x6F8
+#define mString_SLOT_NAME_START 0x6CD
 #define mString_ARTICLE_START 0x737
+#define mString_CARD_MEDIA_START 0x756
 #define mString_HANIWA_MSG0 0x76A
 #define mString_HANIWA_MSG1 0x76B
 #define mString_HANIWA_MSG2 0x76C

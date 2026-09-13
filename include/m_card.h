@@ -45,6 +45,13 @@ enum {
 };
 
 enum {
+    mCD_MOVING_CARD_NATIVE,
+    mCD_MOVING_CARD_FOREIGNER,
+    mCD_MOVING_SD_NATIVE,
+    mCD_MOVING_SD_FOREIGNER
+};
+
+enum {
     mCD_START_COND_0,
     mCD_START_COND_1,
     mCD_START_COND_2,
@@ -127,7 +134,20 @@ enum {
     mCD_TRANS_ERR_NUM
 };
 
+#define mCD_TRANS_ERR_26 26
+#define mCD_TRANS_ERR_30 30
+#define mCD_TRANS_ERR_31 31
 #define mCD_TRANS_ERR_ORIGINAL_CHANGED 32
+#define mCD_TRANS_ERR_SD_NO_CARD 34
+#define mCD_TRANS_ERR_35 35
+#define mCD_TRANS_ERR_36 36
+#define mCD_TRANS_ERR_SD_WRITE_PROTECTED 37
+#define mCD_TRANS_ERR_41 41
+#define mCD_TRANS_ERR_42 42
+#define mCD_TRANS_ERR_SD_NO_MORE_TOWNS 44
+#define mCD_TRANS_ERR_46 46
+#define mCD_TRANS_ERR_50 50
+#define mCD_TRANS_ERR_51 51
 
 enum {
     mCD_HOME_SFX_NORMAL,
@@ -373,6 +393,9 @@ extern void mCD_LoadLand(void);
 extern int mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig, size_t size);
 extern int mCD_GetSpaceSlot_check_light_main_bg(u8* slot_ok, u8* slot_a_file_extence, u8* slot_b_file_extence);
 extern int mCD_SaveMydesign_bg(void* buf, s32 chan, s32 idx);
+extern int mCD_LET_GetSpaceSlot_check_light_main_bg(u8* slot_ok, u8* slot_a_file_extence, u8* slot_b_file_extence);
+extern int mCD_LoadLetter(s32 chan, s32 idx, mCD_keep_mail_c* keep_mail, size_t size);
+extern int mCD_SavePostOffice_bg(void* buf, s32 chan, s32 idx);
 extern void mCD_toNextLand();
 
 extern int mCD_EraseBrokenLand_bg(int* slot);
@@ -393,6 +416,7 @@ extern int mCD_SD_InitGameStart_bg(int player_no, s32 card_private_idx, s32 star
     int* sd_exists);
 
 extern int mCD_movingInfo_get(void);
+extern void mCD_movingInfo_set(void);
 extern int mCD_CheckLoadOldData(PlusConvData_c* plus_data);
 
 extern int mCD_SaveLand_sdcard_pileup_bg(mCD_sd_card_info_c* sd_info);
@@ -401,6 +425,9 @@ extern int mCD_SD_CheckReten_SDmura(mCD_sd_card_info_c* sd_info);
 extern int mCD_SD_repayment_SDmura(mCD_sd_card_info_c* sd_info, int param);
 extern int mCD_abandonment_SDmura(mCD_sd_card_info_c* sd_info);
 extern int mSD_mura_nextname_get(u8* name, int* count);
+extern int mSD_mura_allcount_get(s32* count);
+extern int mCD_SD_CheckStation_bg(mCD_sd_card_info_c* sd_info);
+extern int mCD_SD_SaveStation_NextLand_bg(mCD_sd_card_info_c* sd_info);
 
 extern void mCD_ClearErrInfo(void);
 extern void mCD_OnErrInfo(int err);

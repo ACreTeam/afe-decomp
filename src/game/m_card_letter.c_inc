@@ -476,7 +476,7 @@ extern int mCD_SavePostOffice_bg(void* buf, s32 chan, s32 idx) {
     return ret;
 }
 
-extern void mCD_LoadLetter(s32 chan, s32 idx, mCD_keep_mail_c* keep_mail) {
+extern int mCD_LoadLetter(s32 chan, s32 idx, mCD_keep_mail_c* keep_mail, size_t size) {
     mCD_memMgr_c* mgr = &l_memMgr;
     LetterSave_c* save;
     mCD_memMgr_fileInfo_c* fileInfo;
@@ -515,7 +515,7 @@ extern void mCD_LoadLetter(s32 chan, s32 idx, mCD_keep_mail_c* keep_mail) {
     }
 
     mCD_ClearMemMgr_com2(mgr);
-    mCD_TransErrorCode_nes(result);
+    return mCD_TransErrorCode_nes(result);
 }
 
 typedef struct {
