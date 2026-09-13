@@ -1,3 +1,18 @@
+#ifdef __INTELLISENSE__
+#include "ac_mikanbox.h"
+
+#include "m_string.h"
+#include "m_font.h"
+#include "m_msg.h"
+#include "m_bgm.h"
+#include "m_common_data.h"
+#include "m_player_lib.h"
+#include "sys_matrix.h"
+#include "m_rcp.h"
+#include "m_birthday_msg.h"
+#include "m_text.h"
+#endif
+
 // clang-format off
 static Vtx obj_e_mikanbox_v[] = {
     {{ {-2048,  128, 0}, 0, {  (0 << 5),  (0 << 5)}, {180, 180, 180, 180} }},

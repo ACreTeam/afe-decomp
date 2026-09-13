@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define aMKBC_NUM_GOOD_MD (ITM_MINIDISK52 - ITM_MINIDISK_START)
+#define aMKBC_NUM_GOOD_MD (ITM_MINIDISK55 - ITM_MINIDISK_START)
 
 typedef void (*aMKBC_SET_STRING_PROC)(int base);
 typedef void (*aMKBC_ROLL_DRAW_PROC)(GAME_PLAY* play, int timer, int page_idx);

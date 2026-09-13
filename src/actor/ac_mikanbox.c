@@ -8,9 +8,13 @@
 #include "m_player_lib.h"
 #include "sys_matrix.h"
 #include "m_rcp.h"
+#include "m_birthday_msg.h"
+#include "m_text.h"
 
 #define aMIK_STRING_NUM 10
-#define aMIK_STRING_LEN 25
+#define aMIK_STRING_LEN 71
+#define aMIK_BDMSG_LINE_LEN 16
+#define aMIK_BDMSG_LINE_NUM (MAIL_BODY_LEN / aMIK_BDMSG_LINE_LEN)
 
 enum {
     aMIK_ACTION_WAIT,
@@ -47,6 +51,7 @@ static void aMKBC_clip_roll_draw(GAME_PLAY* play, int timer, int page_idx);
 static void aMKBC_clip_think_init(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int init_idx);
 static void aMKBC_clip_sound_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play, int idx);
 static int aMKBC_clip_section_chk(int section);
+static int aMKBC_clip_section_get(int section);
 static u16 aMKBC_clip_bgm_no(NPC_TOTAKEKE_ACTOR* totakeke);
 static void aMKBC_clip_roll_proc(NPC_TOTAKEKE_ACTOR* totakeke, GAME_PLAY* play);
 static void aMKBC_clip_head_up(ACTOR* actorx);
@@ -61,6 +66,7 @@ static void aMIK_actor_ct(ACTOR* actorx, GAME* game) {
     aMKBC_clip.think_init_proc = &aMKBC_clip_think_init;
     aMKBC_clip.sound_proc = &aMKBC_clip_sound_proc;
     aMKBC_clip.section_chk_proc = &aMKBC_clip_section_chk;
+    aMKBC_clip.birthday_section_proc = &aMKBC_clip_section_get;
     aMKBC_clip.bgm_no_proc = &aMKBC_clip_bgm_no;
     aMKBC_clip.roll_proc = &aMKBC_clip_roll_proc;
     aMKBC_clip.head_up_proc = &aMKBC_clip_head_up;

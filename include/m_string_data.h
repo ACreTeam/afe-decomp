@@ -25,8 +25,8 @@ extern "C" {
 #define mString_HANIWA_MSG1 0x76B
 #define mString_HANIWA_MSG2 0x76C
 #define mString_HANIWA_MSG3 0x76D
-#define mString_MIKANBOX_START 0x77B
-#define mString_MIKANBOX_END 0x7FE
+#define mString_MIKANBOX_START 0x4EA
+#define mString_MIKANBOX_END 0x557
 
 // TODO: these should be in m_msg_data.h
 #define mString_CARPETPEDDLER_START 0x48a
