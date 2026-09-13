@@ -18,6 +18,7 @@
 #include "m_string.h"
 #include "m_card.h"
 #include "m_cpak.h"
+#include "m_sdcard.h"
 
 enum {
     aSTA_ACTION_WAIT,

@@ -11,33 +11,6 @@
 #include "ac_intro_demo.h"
 #include "ac_ride_off_demo.h"
 
-enum {
-    aSTM_THINK_GET_OFF_WAIT,
-    aSTM_THINK_TURN,
-    aSTM_THINK_2,
-    aSTM_THINK_3,
-    aSTM_THINK_4,
-    aSTM_THINK_5,
-    aSTM_THINK_INTERRUPT_TURN,
-    aSTM_THINK_INTERRUPT_MOVE,
-    aSTM_THINK_8,
-    aSTM_THINK_9,
-    aSTM_THINK_MAKE_TRAIN_BF,
-    aSTM_THINK_MAKE_TRAIN,
-    aSTM_THINK_TRAIN_ARRIVE_WAIT,
-    aSTM_THINK_MOVE_TURN_BF,
-    aSTM_THINK_14,
-    aSTM_THINK_MOVE,
-    aSTM_THINK_16,
-    aSTM_THINK_17,
-    aSTM_THINK_IN_TRAIN,
-    aSTM_THINK_IN_TRAIN2,
-    aSTM_THINK_SEE_OFF,
-    aSTM_THINK_GAME_END,
-
-    aSTM_THINK_NUM
-};
-
 static void aSTM_actor_ct(ACTOR* actorx, GAME* game);
 static void aSTM_actor_dt(ACTOR* actorx, GAME* game);
 static void aSTM_actor_init(ACTOR* actorx, GAME* game);
@@ -47,7 +20,7 @@ static void aSTM_actor_draw(ACTOR* actorx, GAME* game);
 static int aSTM_talk_init(ACTOR* actorx, GAME* game);
 static int aSTM_talk_end_chk(ACTOR* actorx, GAME* game);
 static void aSTM_schedule_proc(NPC_ACTOR*, GAME_PLAY*, int);
-static void aSTM_talk_request(ACTOR* actorx, GAME* game);
+static void aSTM_release_shutter(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play);
 static int aSTM_change_talk_proc(NPC_STATION_MASTER_ACTOR*, u8);
 static void aSTM_setup_think_proc(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play, u8 think_idx);
 

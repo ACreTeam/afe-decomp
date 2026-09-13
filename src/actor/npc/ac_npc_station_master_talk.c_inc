@@ -14,12 +14,14 @@ static void aSTM_set_force_talk_info(ACTOR* actorx) {
     static aSTM_talk_data_c dt_tbl[] = {
         {0x07DD, aSTM_TALK_END_WAIT, CAMERA2_PROCESS_NORMAL},
         {0x0966, aSTM_TALK_END_WAIT, CAMERA2_PROCESS_NORMAL},
+        {0x082F, aSTM_TALK_END_WAIT, CAMERA2_PROCESS_NORMAL},
         {0x0965, aSTM_TALK_SAYONARA,   CAMERA2_PROCESS_TALK},
     };
     // clang-format on
 
     NPC_STATION_MASTER_ACTOR* actor = (NPC_STATION_MASTER_ACTOR*)actorx;
     aSTM_talk_data_c* data_p = &dt_tbl[actor->talk_idx];
+    GAME_PLAY* play = (GAME_PLAY*)gamePT;
 
     if (CLIP(station_clip) != NULL) {
         CLIP(station_clip)->change_talk_proc((ACTOR*)actor, data_p->talk_idx);
@@ -32,7 +34,8 @@ static void aSTM_set_force_talk_info(ACTOR* actorx) {
     mDemo_Set_camera(data_p->cam_type);
     mDemo_Set_talk_return_demo_wait(TRUE);
 
-    if (actor->talk_idx == 2) {
+    aSTM_release_shutter(actor, play);
+    if (actor->talk_idx == 3) {
         if (actor->npc_class.talk_info.melody_inst != 0) {
             actor->melody_save = actor->npc_class.talk_info.melody_inst;
         }
@@ -57,12 +60,20 @@ static void aSTM_set_norm_talk_info(ACTOR* actorx) {
 
     NPC_STATION_MASTER_ACTOR* actor = (NPC_STATION_MASTER_ACTOR*)actorx;
     aSTM_talk_data_c* data_p = &dt_tbl[actor->talk_idx];
+    mActor_name_t item = mNT_get_new_music_live_version(aSTM_LIVE_MUSIC_INDEX);
+    u8 item_name[mIN_ITEM_NAME_LEN];
 
     if (CLIP(aprilfool_control_clip) != NULL && !CLIP(aprilfool_control_clip)->talk_chk_proc(SP_NPC_STATION_MASTER)) {
         mDemo_Set_msg_num(CLIP(aprilfool_control_clip)->get_msg_num_proc(SP_NPC_STATION_MASTER, TRUE));
         CLIP(station_clip)->change_talk_proc(actorx, aSTM_TALK_END_WAIT);
     } else {
-        if (actor->talk_idx == 2 && !Save_Get(save_exist)) {
+        if (item != EMPTY_NO) {
+            mDemo_Set_msg_num(MSG_634);
+            CLIP(station_clip)->change_talk_proc(actorx, aSTM_TALK_GIVE_LIVE_MD);
+            mIN_copy_name_str(item_name, item);
+            mMsg_Set_item_str_art(mMsg_Get_base_window_p(), mMsg_ITEM_STR0, item_name, mIN_ITEM_NAME_LEN,
+                                  mIN_get_item_article(item));
+        } else if (actor->talk_idx == 2 && !Save_Get(save_exist)) {
             mDemo_Set_msg_num(0x0945);
             actor->talk_proc = (aSTM_TALK_PROC)none_proc1;
         } else {
@@ -104,8 +115,8 @@ static int aSTM_talk_end_chk(ACTOR* actorx, GAME* game) {
     actor->talk_proc(actor, play);
     if (mDemo_CAN_ACTOR_TALK(actorx)) {
         switch (actor->next_think_idx) {
-            case aSTM_THINK_8:
-            case aSTM_THINK_9:
+            case aSTM_THINK_TALK_WAIT:
+            case aSTM_THINK_FOREIGNER_TALK_WAIT:
                 aSTM_train_go_ok();
                 break;
         }

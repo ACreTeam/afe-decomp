@@ -1,4 +1,4 @@
-static void aSTM_Change_sound(NPC_STATION_MASTER_ACTOR* actor, u8 sound) {
+static void aSTM_Change_sound(NPC_STATION_MASTER_ACTOR* actor, u16 sound) {
     if (actor->sound != sound) {
         mBGMPsComp_make_ps_demo(sound, 0x168);
         if (actor->sound == BGM_FIELD_00) {
@@ -6,6 +6,18 @@ static void aSTM_Change_sound(NPC_STATION_MASTER_ACTOR* actor, u8 sound) {
         }
 
         actor->sound = sound;
+    }
+}
+
+static void aSTM_ban_shutter(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
+    if (mSM_CheckAbleChange_unable_shutter_label(play, (u32)actor)) {
+        mSM_Set_unable_shutter_label(play, (u32)actor);
+    }
+}
+
+static void aSTM_release_shutter(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
+    if (mSM_CheckOwner_unable_shutter_label(play, (u32)actor)) {
+        mSM_Set_unable_shutter_label(play, 0);
     }
 }
 
@@ -48,7 +60,8 @@ static int aNPS2_setup_game_start(GAME_PLAY* play) {
 
 static void aSTM_look_player(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     if (actor->npc_class.action.step == aNPC_ACTION_END_STEP) {
-        s16 diff_angle = DIFF_SHORT_ANGLE(actor->npc_class.actor_class.player_angle_y, actor->npc_class.actor_class.shape_info.rotation.y);
+        s16 diff_angle = DIFF_SHORT_ANGLE(actor->npc_class.actor_class.player_angle_y,
+                                          actor->npc_class.actor_class.shape_info.rotation.y);
         u8 action = aNPC_ACT_TURN2;
 
         if (ABS(diff_angle) < DEG2SHORT_ANGLE2(67.5f)) {
@@ -100,7 +113,8 @@ static void aSTM_get_off_wait(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) 
                     INTRO_DEMO_ACTOR* demo_actor = (INTRO_DEMO_ACTOR*)demox;
 
                     // train1 arg0 is passenger flag
-                    if (mEv_CheckFirstIntro() && demo_actor->train1_actor_p != NULL && !demo_actor->train1_actor_p->arg0) {
+                    if (mEv_CheckFirstIntro() && demo_actor->train1_actor_p != NULL &&
+                        !demo_actor->train1_actor_p->arg0) {
                         if (mPlib_get_player_actor_main_index((GAME*)play) != mPlayer_INDEX_DEMO_GETOFF_TRAIN) {
                             aSTM_setup_think_proc(actor, play, aSTM_THINK_TURN);
                         }
@@ -120,7 +134,9 @@ static void aSTM_get_off_wait(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) 
                             mBGMPsComp_scene_mode(1);
 
                             if (Common_Get(player_no) != mPr_FOREIGNER) {
-                                actor->next_think_idx = aSTM_THINK_3;
+                                actor->next_think_idx = aSTM_THINK_GREET_RETURN;
+                            } else {
+                                actor->next_think_idx = aSTM_THINK_GREET_FOREIGNER;
                             }
                         }
                     }
@@ -141,13 +157,13 @@ static void aSTM_interrupt_turn(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play
 }
 
 static void aSTM_interrupt_move(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
-    u8 think_idx = aSTM_THINK_9;
+    u8 think_idx = aSTM_THINK_FOREIGNER_TALK_WAIT;
 
     mEv_UnSetGateway();
     if (mEv_CheckFirstIntro() == TRUE) {
-        think_idx = aSTM_THINK_4;
+        think_idx = aSTM_THINK_INTRO_WAIT;
     } else if (Common_Get(player_no) < mPr_FOREIGNER) {
-        think_idx = aSTM_THINK_8;
+        think_idx = aSTM_THINK_TALK_WAIT;
     }
 
     actor->npc_class.condition_info.demo_flg = 0;
@@ -188,7 +204,7 @@ static void aSTM_train_arrive_wait(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* p
     STRUCTURE_ACTOR* train1 = (STRUCTURE_ACTOR*)actor->train_actor_p;
 
     if (train1 != NULL && train1->action == 5) {
-        aSTM_setup_think_proc(actor, play, aSTM_THINK_14);
+        aSTM_setup_think_proc(actor, play, aSTM_THINK_MOVE_TURN);
     }
 
     if (Common_Get(train_approaching_flag) == TRUE) {
@@ -197,14 +213,16 @@ static void aSTM_train_arrive_wait(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* p
 }
 
 static void aSTM_move_turn_bf(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
-    aSTM_setup_think_proc(actor, play, aSTM_THINK_14);
+    aSTM_setup_think_proc(actor, play, aSTM_THINK_MOVE_TURN);
 }
 
 static void aSTM_move(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     if (mPlib_get_player_actor_main_index((GAME*)play) != mPlayer_INDEX_DEMO_WALK) {
-        mPlib_request_main_demo_walk_type1((GAME*)play, actor->npc_class.actor_class.home.position.x + mFI_UT_WORLDSIZE_X_F, actor->train_actor_p->world.position.z + 2 * mFI_UT_WORLDSIZE_Z_F, 2.0f, FALSE);
+        mPlib_request_main_demo_walk_type1(
+            (GAME*)play, actor->npc_class.actor_class.home.position.x + mFI_UT_WORLDSIZE_X_F,
+            actor->train_actor_p->world.position.z + 2 * mFI_UT_WORLDSIZE_Z_F, 2.0f, FALSE);
     } else {
-        aSTM_setup_think_proc(actor, play, aSTM_THINK_16);
+        aSTM_setup_think_proc(actor, play, aSTM_THINK_LOOK_PLAYER);
     }
 }
 
@@ -273,27 +291,33 @@ static void aSTM_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
     u8 think_idx;
     ACTOR* actorx = (ACTOR*)actor;
 
-    if (mEv_CheckFirstIntro() == TRUE || Actor_info_name_search(&play->actor_info, mAc_PROFILE_RIDE_OFF_DEMO, ACTOR_PART_CONTROL) != NULL) {
+    if (mEv_CheckFirstIntro() == TRUE ||
+        Actor_info_name_search(&play->actor_info, mAc_PROFILE_RIDE_OFF_DEMO, ACTOR_PART_CONTROL) != NULL) {
         think_idx = aSTM_THINK_GET_OFF_WAIT;
         actorx->shape_info.rotation.y += DEG2SHORT_ANGLE2(-90.0f);
         actorx->world.angle.y += DEG2SHORT_ANGLE2(-90.0f);
+        aSTM_ban_shutter(actor, play);
     } else if (mEv_CheckFirstJob() == TRUE) {
-        think_idx = aSTM_THINK_5;
+        think_idx = aSTM_THINK_FIRST_JOB_WAIT;
     } else {
         if (mEv_IsNotTitleDemo()) {
             actorx->world.position.x += mFI_UT_WORLDSIZE_X_F;
         }
 
         if (Common_Get(player_no) < mPr_FOREIGNER) {
-            think_idx = aSTM_THINK_8;
+            think_idx = aSTM_THINK_TALK_WAIT;
         } else {
-            think_idx = aSTM_THINK_9;
+            think_idx = aSTM_THINK_FOREIGNER_TALK_WAIT;
         }
     }
 
     actorx->status_data.weight = MASSTYPE_IMMOVABLE;
     nactorx->condition_info.hide_request = FALSE;
     aSTM_setup_think_proc(actor, play, think_idx);
+}
+
+static void aSTM_in_train_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
+    aSTM_ban_shutter(actor, play);
 }
 
 static void aSTM_get_off_wait_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
@@ -310,36 +334,47 @@ static void aSTM_intro_demo_wait_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY
 
 static void aSTM_interrupt_turn_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     actor->npc_class.condition_info.demo_flg |= aNPC_COND_DEMO_SKIP_FOOTSTEPS;
-    aSTM_set_request_act(actor, 4, aNPC_ACT_TURN2, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, actor->npc_class.actor_class.world.position.x + mFI_UT_WORLDSIZE_X_F, actor->npc_class.actor_class.world.position.z);
+    aSTM_set_request_act(actor, 4, aNPC_ACT_TURN2, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         actor->npc_class.actor_class.world.position.x + mFI_UT_WORLDSIZE_X_F,
+                         actor->npc_class.actor_class.world.position.z);
 }
 
 static void aSTM_interrupt_move_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     actor->npc_class.condition_info.demo_flg = aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_OBJ_COL_CHECK;
-    aSTM_set_request_act(actor, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, actor->npc_class.actor_class.world.position.x + mFI_UT_WORLDSIZE_X_F, actor->npc_class.actor_class.world.position.z);
+    aSTM_set_request_act(actor, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         actor->npc_class.actor_class.world.position.x + mFI_UT_WORLDSIZE_X_F,
+                         actor->npc_class.actor_class.world.position.z);
     actor->npc_class.condition_info.demo_flg &= ~aNPC_COND_DEMO_SKIP_FOOTSTEPS; // @unnecessary
 }
 
 static void aSTM_make_train_bf_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     actor->timer = 60;
     play->submenu.start_refuse = TRUE;
+    aSTM_ban_shutter(actor, play);
+    aSTM_set_request_act(actor, 4, aNPC_ACT_WAIT, aNPC_ACT_TYPE_DEFAULT, aNPC_ACT_OBJ_DEFAULT, 0, 0);
 }
 
 static void aSTM_make_train_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     play->submenu.start_refuse = TRUE;
+    aSTM_ban_shutter(actor, play);
     Common_Set(train_coming_flag, 2);
 }
 
 static void aSTM_move_turn_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
     play->submenu.start_refuse = TRUE;
+    aSTM_ban_shutter(actor, play);
     actor->move_ofs_x = player_x_drt(actor) * mFI_UNIT_BASE_SIZE_F;
-    actor->npc_class.movement.avoid_pos_x = actor->npc_class.actor_class.home.position.x + mFI_UT_WORLDSIZE_X_F + actor->move_ofs_x;
+    actor->npc_class.movement.avoid_pos_x =
+        actor->npc_class.actor_class.home.position.x + mFI_UT_WORLDSIZE_X_F + actor->move_ofs_x;
     actor->npc_class.movement.avoid_pos_z = actor->train_actor_p->world.position.z + 2 * mFI_UT_WORLDSIZE_Z_F;
 
-    aSTM_set_request_act(actor, 4, aNPC_ACT_TURN2, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, actor->npc_class.movement.avoid_pos_x, actor->npc_class.movement.avoid_pos_z);
+    aSTM_set_request_act(actor, 4, aNPC_ACT_TURN2, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         actor->npc_class.movement.avoid_pos_x, actor->npc_class.movement.avoid_pos_z);
 }
 
 static void aSTM_move_init(NPC_STATION_MASTER_ACTOR* actor, GAME_PLAY* play) {
-    aSTM_set_request_act(actor, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, actor->npc_class.movement.avoid_pos_x, actor->npc_class.movement.avoid_pos_z);
+    aSTM_set_request_act(actor, 4, aNPC_ACT_WALK, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         actor->npc_class.movement.avoid_pos_x, actor->npc_class.movement.avoid_pos_z);
     actor->npc_class.condition_info.demo_flg &= ~aNPC_COND_DEMO_SKIP_FOOTSTEPS;
 }
 
@@ -377,24 +412,25 @@ typedef struct {
 // clang-format off
 static aSTM_think_data_c dt_tbl[] = {
     {aSTM_THINK_PROC_GET_OFF_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_GET_OFF_WAIT},
-    {aSTM_THINK_PROC_TURN, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_2},
+    {aSTM_THINK_PROC_TURN, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_GREET_ARRIVAL},
     {aSTM_THINK_PROC_NONE, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_FORCE, 0x00, aSTM_THINK_INTERRUPT_TURN},
     {aSTM_THINK_PROC_NONE, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_FORCE, 0x01, aSTM_THINK_INTERRUPT_TURN},
-    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_INTRO_DEMO_WAIT, aSTM_TALK_REQUEST_NORM, 0x00, aSTM_THINK_4},
-    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x01, aSTM_THINK_5},
+    {aSTM_THINK_PROC_NONE, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_FORCE, 0x02, aSTM_THINK_INTERRUPT_TURN},
+    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_INTRO_DEMO_WAIT, aSTM_TALK_REQUEST_NORM, 0x00, aSTM_THINK_INTRO_WAIT},
+    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x01, aSTM_THINK_FIRST_JOB_WAIT},
     {aSTM_THINK_PROC_INTERRUPT_TURN, aSTM_THINK_INIT_INTERRUPT_TURN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_INTERRUPT_TURN},
     {aSTM_THINK_PROC_INTERRUPT_MOVE, aSTM_THINK_INIT_INTERRUPT_MOVE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_INTERRUPT_MOVE},
-    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x02, aSTM_THINK_8},
-    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x03, aSTM_THINK_9},
+    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x02, aSTM_THINK_TALK_WAIT},
+    {aSTM_THINK_PROC_TALK_WAIT, aSTM_THINK_INIT_GET_OFF_WAIT, aSTM_TALK_REQUEST_NORM, 0x03, aSTM_THINK_FOREIGNER_TALK_WAIT},
     {aSTM_THINK_PROC_MAKE_TRAIN_BF, aSTM_THINK_INIT_MAKE_TRAIN_BF, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_MAKE_TRAIN_BF},
     {aSTM_THINK_PROC_MAKE_TRAIN, aSTM_THINK_INIT_MAKE_TRAIN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_MAKE_TRAIN},
     {aSTM_THINK_PROC_TRAIN_ARRIVE_WAIT, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_TRAIN_ARRIVE_WAIT},
-    {aSTM_THINK_PROC_MOVE_TURN_BF, aSTM_THINK_INIT_MAKE_TRAIN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_14},
-    {aSTM_THINK_PROC_INTERRUPT_TURN, aSTM_THINK_INIT_MOVE_TURN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_14},
+    {aSTM_THINK_PROC_MOVE_TURN_BF, aSTM_THINK_INIT_MAKE_TRAIN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_MOVE_TURN},
+    {aSTM_THINK_PROC_INTERRUPT_TURN, aSTM_THINK_INIT_MOVE_TURN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_MOVE_TURN},
     {aSTM_THINK_PROC_MOVE, aSTM_THINK_INIT_MOVE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_MOVE},
-    {aSTM_THINK_PROC_INTERRUPT_TURN, aSTM_THINK_INIT_LOOK_P, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_16},
-    {aSTM_THINK_PROC_NONE, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_FORCE, 0x02, aSTM_THINK_IN_TRAIN},
-    {aSTM_THINK_PROC_IN_TRAIN, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_IN_TRAIN},
+    {aSTM_THINK_PROC_INTERRUPT_TURN, aSTM_THINK_INIT_LOOK_P, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_LOOK_PLAYER},
+    {aSTM_THINK_PROC_NONE, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_FORCE, 0x03, aSTM_THINK_IN_TRAIN},
+    {aSTM_THINK_PROC_IN_TRAIN, aSTM_THINK_INIT_IN_TRAIN, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_IN_TRAIN},
     {aSTM_THINK_PROC_IN_TRAIN2, aSTM_THINK_INIT_NONE, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_IN_TRAIN2},
     {aSTM_THINK_PROC_SEE_OFF, aSTM_THINK_INIT_SEE_OFF, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_SEE_OFF},
     {aSTM_THINK_PROC_LOOK_PLAYER, aSTM_THINK_INIT_GAME_END, aSTM_TALK_REQUEST_NONE, 0x00, aSTM_THINK_GAME_END},
@@ -417,6 +453,7 @@ static aSTM_THINK_INIT_PROC init_table[] = {
       aSTM_look_player,
       aSTM_see_off_init,
       aSTM_game_end_init,
+      aSTM_in_train_init,
 };
 // clang-format on
 
