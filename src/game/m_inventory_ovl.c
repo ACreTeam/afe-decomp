@@ -14,6 +14,7 @@
 #include "padmgr.h"
 #include "m_play.h"
 #include "m_font.h"
+#include "m_quest.h"
 
 enum {
     mIV_ITEM_KIND_AXE,
@@ -62,6 +63,18 @@ enum {
     mIV_ITEM_KIND_AXE_USE_6,
     mIV_ITEM_KIND_AXE_USE_7,
 
+    mIV_ITEM_KIND_CRACKER,
+    mIV_ITEM_KIND_FLOWER0,
+    mIV_ITEM_KIND_FLOWER1,
+    mIV_ITEM_KIND_FLOWER2,
+    mIV_ITEM_KIND_FLOWER3,
+    mIV_ITEM_KIND_FLOWER4,
+    mIV_ITEM_KIND_FLOWER5,
+    mIV_ITEM_KIND_FLOWER6,
+    mIV_ITEM_KIND_FLOWER7,
+    mIV_ITEM_KIND_FLOWER8,
+    mIV_ITEM_KIND_FLOWER9,
+
     mIV_ITEM_KIND_NUM
 };
 
@@ -72,11 +85,12 @@ static mIV_Ovl_c inv_ovl_data;
 
 /* Fish collection layout */
 static u8 mIV_fish_collect_list[] = {
-    F(CRUCIAN_CARP), F(BROOK_TROUT),     F(CARP),             F(KOI),       F(BARBEL_STEED),  F(DACE),          F(CATFISH),         F(GIANT_CATFISH),
-    F(PALE_CHUB),    F(BITTERLING),      F(LOACH),            F(BLUEGILL),  F(SMALL_BASS),    F(BASS),          F(LARGE_BASS),      F(GIANT_SNAKEHEAD),
-    F(EEL),          F(FRESHWATER_GOBY), F(POND_SMELT),       F(SWEETFISH), F(CHERRY_SALMON), F(RAINBOW_TROUT), F(LARGE_CHAR),      F(STRINGFISH),
-    F(SALMON),       F(GOLDFISH),        F(POPEYED_GOLDFISH), F(GUPPY),     F(ANGELFISH),     F(PIRANHA),       F(AROWANA),         F(COELACANTH),
-    F(CRAWFISH),     F(FROG),            F(KILLIFISH),        F(JELLYFISH), F(SEA_BASS),      F(RED_SNAPPER),   F(BARRED_KNIFEJAW), F(ARAPAIMA),
+    F(CRUCIAN_CARP), F(BROOK_TROUT), F(CARP), F(KOI), F(BARBEL_STEED), F(DACE), F(CATFISH), F(GIANT_CATFISH),
+    F(PALE_CHUB), F(BITTERLING), F(LOACH), F(BLUEGILL), F(SMALL_BASS), F(BASS), F(LARGE_BASS), F(GIANT_SNAKEHEAD),
+    F(EEL), F(FRESHWATER_GOBY), F(POND_SMELT), F(SWEETFISH), F(CHERRY_SALMON), F(RAINBOW_TROUT), F(LARGE_CHAR), F(STRINGFISH),
+    F(SALMON), F(GOLDFISH), F(POPEYED_GOLDFISH), F(GUPPY), F(ANGELFISH), F(PIRANHA), F(AROWANA), F(ARAPAIMA),
+    F(CRAWFISH), F(FROG), F(KILLIFISH), F(JELLYFISH), F(SEA_BASS), F(HORSE_MACKEREL), F(RED_SNAPPER), F(BARRED_KNIFEJAW),
+    F(PUFFER_FISH), F(DAB), F(FLOUNDER), F(SQUID), F(OCTOPUS), F(SEAHORSE), F(SWORDFISH), F(COELACANTH),
 };
 #undef F
 // clang-format on
@@ -86,11 +100,12 @@ static u8 mIV_fish_collect_list[] = {
 
 /* Insect collection layout */
 static u8 mIV_insect_collect_list[] = {
-    I(COMMON_BUTTERFLY), I(YELLOW_BUTTERFLY), I(TIGER_BUTTERFLY),  I(PURPLE_BUTTERFLY), I(BROWN_CICADA),     I(ROBUST_CICADA),  I(WALKER_CICADA),    I(EVENING_CICADA),
-    I(RED_DRAGONFLY),    I(COMMON_DRAGONFLY), I(DARNER_DRAGONFLY), I(BANDED_DRAGONFLY), I(CRICKET),          I(GRASSHOPPER),    I(PINE_CRICKET),     I(BELL_CRICKET),
-    I(LADYBUG),          I(SPOTTED_LADYBUG),  I(MANTIS),           I(LONG_LOCUST),      I(MIGRATORY_LOCUST), I(COCKROACH),      I(BEE),              I(FIREFLY),
-    I(DRONE_BEETLE),     I(LONGHORN_BEETLE),  I(JEWEL_BEETLE),     I(DYNASTID_BEETLE),  I(FLAT_STAG_BEETLE), I(SAW_STAG_BEETLE), I(MOUNTAIN_BEETLE), I(GIANT_BEETLE),
-    I(POND_SKATER),      I(ANT),              I(PILL_BUG),         I(MOSQUITO),         I(MOLE_CRICKET),     I(SPIDER),          I(SNAIL),           I(BAGWORM),
+    I(COMMON_BUTTERFLY), I(YELLOW_BUTTERFLY), I(TIGER_BUTTERFLY), I(PURPLE_BUTTERFLY), I(BIRDWING_BUTTERFLY), I(MANTIS), I(LONG_LOCUST), I(MIGRATORY_LOCUST),
+    I(RED_DRAGONFLY), I(COMMON_DRAGONFLY), I(DARNER_DRAGONFLY), I(BANDED_DRAGONFLY), I(BROWN_CICADA), I(ROBUST_CICADA), I(WALKER_CICADA), I(EVENING_CICADA),
+    I(CRICKET), I(GRASSHOPPER), I(PINE_CRICKET), I(BELL_CRICKET), I(LADYBUG), I(SPOTTED_LADYBUG), I(DRONE_BEETLE), I(FIREFLY),
+    I(LONGHORN_BEETLE), I(JEWEL_BEETLE), I(DYNASTID_BEETLE), I(HERCULES_BEETLE), I(FLAT_STAG_BEETLE), I(SAW_STAG_BEETLE), I(MOUNTAIN_BEETLE), I(GIANT_BEETLE),
+    I(MOLE_CRICKET), I(SNAIL), I(PILL_BUG), I(SPIDER), I(BAGWORM), I(FLEA), I(MOSQUITO), I(BEE),
+    I(POND_SKATER), I(DIVING_BEETLE), I(CRAB), I(HERMIT_CRAB), I(COCONUT_CRAB), I(ANT), I(DUNG_BEETLE), I(COCKROACH),
 };
 #undef I
 // clang-format on
@@ -113,18 +128,14 @@ static int mIV_Get_pl_main_anime_index(int type) {
 static mActor_name_t mIV_set_collect_itemNo(int type, int page) {
     if (page == mIV_PAGE_INSECT_COLLECTION) {
         int insect_no = mIV_insect_collect_list[type];
-        int bit = mRmTp_FtrItemNo2FtrIdx(FTR_INSECT_START + FTR_NO_2_IDX(insect_no));
-
-        if (Now_Private->furniture_collected_bitfield[bit >> 5] & (1 << (bit & 31))) {
+        if (mSM_COLLECT_INSECT_GET(insect_no)) {
             return ITM_INSECT_START + insect_no;
         } else {
             return EMPTY_NO;
         }
     } else {
         int fish_no = mIV_fish_collect_list[type];
-        int bit = FTR_IDX_2_NO(FTR_NO_2_IDX(FTR_SUM_FUNA) + (u32)FTR_NO_2_IDX(fish_no));
-
-        if (Now_Private->furniture_collected_bitfield[bit >> 5] & (1 << (bit & 31))) {
+        if (mSM_COLLECT_FISH_GET(fish_no)) {
             return mNT_FishIdx2FishItemNo(fish_no);
         } else {
             return EMPTY_NO;
@@ -218,6 +229,28 @@ static s16 mIV_get_player_item_anime_id(void) {
         res = mIV_ITEM_KIND_FLOWER_FAN;
     } else if (item == ITM_LEAF_FAN) {
         res = mIV_ITEM_KIND_LEAF_FAN;
+    } else if (item == ITM_CRACKER) {
+        res = mIV_ITEM_KIND_CRACKER;
+    } else if (item == ITM_FLOWER0) {
+        res = mIV_ITEM_KIND_FLOWER0;
+    } else if (item == ITM_FLOWER1) {
+        res = mIV_ITEM_KIND_FLOWER1;
+    } else if (item == ITM_FLOWER2) {
+        res = mIV_ITEM_KIND_FLOWER2;
+    } else if (item == ITM_FLOWER3) {
+        res = mIV_ITEM_KIND_FLOWER3;
+    } else if (item == ITM_FLOWER4) {
+        res = mIV_ITEM_KIND_FLOWER4;
+    } else if (item == ITM_FLOWER5) {
+        res = mIV_ITEM_KIND_FLOWER5;
+    } else if (item == ITM_FLOWER6) {
+        res = mIV_ITEM_KIND_FLOWER6;
+    } else if (item == ITM_FLOWER7) {
+        res = mIV_ITEM_KIND_FLOWER7;
+    } else if (item == ITM_FLOWER8) {
+        res = mIV_ITEM_KIND_FLOWER8;
+    } else if (item == ITM_FLOWER9) {
+        res = mIV_ITEM_KIND_FLOWER9;
     } else {
         res = mIV_ITEM_KIND_NUM; /* No animation */
     }
@@ -272,6 +305,18 @@ static int mIV_ChangeIndex_mIV_to_mPlib(s16 idx) {
         mPlayer_ITEM_KIND_AXE_USE_5,
         mPlayer_ITEM_KIND_AXE_USE_6,
         mPlayer_ITEM_KIND_AXE_USE_7,
+        mPlayer_ITEM_KIND_CRACKER,
+        mPlayer_ITEM_KIND_FLOWER03,
+        mPlayer_ITEM_KIND_FLOWER06,
+        mPlayer_ITEM_KIND_FLOWER09,
+        mPlayer_ITEM_KIND_FLOWER02,
+        mPlayer_ITEM_KIND_FLOWER05,
+        mPlayer_ITEM_KIND_FLOWER08,
+        mPlayer_ITEM_KIND_FLOWER01,
+        mPlayer_ITEM_KIND_FLOWER04,
+        mPlayer_ITEM_KIND_FLOWER07,
+        mPlayer_ITEM_KIND_FLOWER10,
+
     };
 
     if (idx >= 0 && idx < mIV_ITEM_KIND_NUM) {
@@ -862,30 +907,29 @@ static void mIV_pl_shape_item_draw_fan(Submenu* submenu, GAME* game) {
     }
 }
 
+static void mIV_pl_shape_item_draw_cracker(Submenu* submenu, GAME* game) {
+    mIV_pl_shape_item_draw_fan(submenu, game);
+}
+
+static void mIV_pl_shape_item_draw_bouquet(Submenu* submenu, GAME* game) {
+    if (mPlib_Set_ItemFlowerPalletFromItemNo(game, Now_Private->equipment)) {
+        mIV_pl_shape_item_draw_fan(submenu, game);
+    }
+}
+
 static int mIV_pl_shape_after_draw(GAME* game, cKF_SkeletonInfo_R_c* keyframe, int joint_idx, Gfx** joint_shape,
                                    u8* joint_flags, void* arg, s_xyz* joint_rot, xyz_t* joint_pos) {
-    switch (joint_idx) {
-        case 20: {
-            Submenu* submenu = (Submenu*)arg;
-
-            if (submenu->overlay->segment.player_item_anime_idx != mIV_ITEM_KIND_NUM) {
-                Matrix_get(&submenu->overlay->inventory_ovl->item_mtx);
-            }
-
-            break;
+    if (joint_idx == 20) {
+        Submenu* submenu = (Submenu*)arg;
+        if (submenu->overlay->segment.player_item_anime_idx != mIV_ITEM_KIND_NUM) {
+            Matrix_get(&submenu->overlay->inventory_ovl->item_mtx);
         }
-
-        case 16: {
-            Submenu* submenu = (Submenu*)arg;
-
-            if (submenu->overlay->segment.player_main_anime_idx == mIV_ANIM_EAT) {
-                Matrix_get(&submenu->overlay->inventory_ovl->food_mtx);
-            }
-
-            break;
+    } else if (joint_idx == 16) {
+        Submenu* submenu = (Submenu*)arg;
+        if (submenu->overlay->segment.player_main_anime_idx == mIV_ANIM_EAT) {
+            Matrix_get(&submenu->overlay->inventory_ovl->food_mtx);
         }
     }
-
     return TRUE;
 }
 
@@ -934,6 +978,17 @@ static void mIV_pl_equip_item_draw(Submenu* submenu, GAME* game) {
         &mIV_pl_shape_item_draw_axe,
         &mIV_pl_shape_item_draw_axe,
         &mIV_pl_shape_item_draw_axe,
+        &mIV_pl_shape_item_draw_cracker,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
+        &mIV_pl_shape_item_draw_bouquet,
     };
     // clang-format on
 
@@ -1121,7 +1176,6 @@ static void mIV_pl_shape_draw(Submenu* submenu, GAME* game) {
 
         gDPPipeSync(NEXT_POLY_OPA_DISP);
         gSPMatrix(NEXT_POLY_OPA_DISP, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        _texture_z_light_fog_prim(graph);
 
         /* Set dynamic player data */
         gSPSegment(NEXT_POLY_OPA_DISP, G_MWO_SEGMENT_8, eye_tex_p);
@@ -1189,8 +1243,8 @@ static void mIV_set_player(Submenu* submenu, GRAPH* graph, GAME_PLAY* play, f32 
     PLAYER_ACTOR* player = GET_PLAYER_ACTOR(play);
 
     if (player != NULL) {
-        int x = (int)pos_x + 20;
-        int y = (int)-pos_y + 9;
+        int x = (int)pos_x + 24;
+        int y = (int)-pos_y + 21;
         /* NOTE: 128.0 and 0.0 are doubles here */
         int draw_flag = (128.0 + x >= 0.0) && (x < 320);
 
@@ -1358,7 +1412,6 @@ static void mIV_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
             if (menu_info->data0 == mSM_IV_OPEN_CPMAIL) {
                 move_dir = mSM_MOVE_OUT_LEFT;
-                sAdo_SysTrgStart(NA_SE_31);
             } else {
                 move_dir = mSM_MOVE_OUT_RIGHT;
             }
@@ -1534,8 +1587,8 @@ extern Gfx inv_mwin_14bT_model[];
 extern Gfx inv_mwin_15bT_model[];
 
 extern Gfx inv_mwin_item_frame_mode[];
-extern Gfx inv_mwin_kuni_model[];
-extern Gfx inv_mwin_kuni2_model[];
+extern Gfx inv_mwin_kuniT_model[];
+extern Gfx inv_mwin_muraT_model[];
 
 static void mIV_set_normal_frame_dl(Submenu* submenu, GAME_PLAY* play, GRAPH* graph, f32 pos_x, f32 pos_y) {
     static Gfx* item_frame_disp[] = {
@@ -1587,8 +1640,12 @@ static void mIV_set_normal_frame_dl(Submenu* submenu, GAME_PLAY* play, GRAPH* gr
         frame_p++;
     }
 
-    gSPDisplayList(POLY_OPA_DISP++, inv_mwin_kuni_model);
-    gSPDisplayList(POLY_OPA_DISP++, inv_mwin_kuni2_model);
+    Matrix_push();
+    gSPDisplayList(POLY_OPA_DISP++, inv_mwin_kuniT_model);
+    Matrix_translate((f32)mMl_strlen(Now_Private->player_ID.land_name, LAND_NAME_SIZE, CHAR_SPACE) * 12.0f * 0.75f + -34.0f, 68.0f, 0.0f, MTX_MULT);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, inv_mwin_muraT_model);
+    Matrix_pull();
 
     CLOSE_POLY_OPA_DISP(graph);
 }
@@ -1613,6 +1670,8 @@ static void mIV_set_item(Submenu* submenu, mSM_MenuInfo_c* menu_info, GRAPH* gra
     f32 hand_pos[2];
     f32 scale;
     int no_wc_flag;
+    int present_flag;
+    u32 item_cond;
     
     tag = &submenu->overlay->tag_ovl->tags[0];
     inv_ovl = submenu->overlay->inventory_ovl;
@@ -1629,13 +1688,20 @@ static void mIV_set_item(Submenu* submenu, mSM_MenuInfo_c* menu_info, GRAPH* gra
     for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++, item++, scale_type++) {
         if (*item != EMPTY_NO) {
             submenu->overlay->tag_ovl->set_hand_pos_proc(submenu, hand_pos, mTG_TABLE_ITEM, i);
+            item_cond = mPr_CHK_ITEM_COND(Now_Private->inventory.item_conditions, i);
+            if (item_cond & mPr_ITEM_COND_PRESENT) {
+                present_flag = 1;
+            } else if (item_cond & mPr_ITEM_COND_QBOX) {
+                present_flag = 2;
+            } else {
+                present_flag = 0;
+            }
             if (tag->table == mTG_TABLE_ITEM) {
                 switch (*scale_type) {
                     case mIV_ITEM_SCALE_TYPE_PRESENT: {
                         scale = 1.0f;
 
-                        /* @fakematch -- why do I have to set this twice? */
-                        if (inv_ovl->remove_timer != 0) {
+                        if (inv_ovl->remove_timer > 0) {
                             anim_frame = 48 - inv_ovl->remove_timer;
                         } else {
                             anim_frame = 0;
@@ -1688,7 +1754,7 @@ static void mIV_set_item(Submenu* submenu, mSM_MenuInfo_c* menu_info, GRAPH* gra
 
             submenu->overlay->draw_item_proc(
                 graph, pos_x + hand_pos[0], pos_y + hand_pos[1], scale, *item,
-                (NowPrivate_GetItemCond(i) & mPr_ITEM_COND_PRESENT) != 0,
+                present_flag,
                 !no_wc_flag && (inv_ovl->selectable_item_bitfield & (1 << i)), anim_frame, FALSE,
                 mIV_is_mark_check(inv_ovl, i));
         }
@@ -1754,84 +1820,35 @@ static void mIV_set_mail(Submenu* submenu, mSM_MenuInfo_c* menu_info, GRAPH* gra
 }
 
 static void mIV_set_money(Submenu* submenu, GAME* game, f32 pos_x, f32 pos_y) {
-    u8 money_str[6];
-    f32 width;
-
-    mFont_UnintToString(money_str, sizeof(money_str), submenu->overlay->inventory_ovl->disp_money,
-                        sizeof(money_str) - 1, FALSE, FALSE, TRUE);
-
-    width = (f32)mFont_GetStringWidth(money_str, sizeof(money_str), TRUE) * 0.875f;
-    pos_x = (160.0f + pos_x + -22.0f + 38.5f) - width;
-    pos_y = 120.0f - (pos_y + 18.0f);
-
-    // clang-format off
-    mFont_SetLineStrings(
-        game,
-        money_str, sizeof(money_str),
-        pos_x, pos_y,
-        255, 60, 0, 255,
-        FALSE,
-        TRUE,
-        0.875f, 0.875f,
-        mFont_MODE_POLY
-    );
-    // clang-format on
+    u8 money_str[1];
+    u32 money = submenu->overlay->inventory_ovl->disp_money;
+    u32 digit;
+    u32 divisor;
+    u32 leading_zero;
+    int i;
+    leading_zero = TRUE;
+    divisor = 10000;
+    pos_x += 122.0f;
+    pos_y += 102.0f;
+    for (i = 0; i < 5; i++) {
+        digit = money / divisor;
+        if (digit == 0 && leading_zero == TRUE && divisor != 1) {
+            money_str[0] = digit + CHAR_SPACE;
+        } else {
+            money_str[0] = digit + CHAR_ZERO;
+            leading_zero = FALSE;
+        }
+        mFont_SetLineStrings(game, money_str, 1, pos_x, pos_y, 255, 60, 0, 255, FALSE, FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
+        money -= digit * divisor;
+        divisor /= 10;
+        pos_x += 12.0f;
+    }
 }
 
-typedef struct inventory_line_data_s {
-    int max_str_len;
-    f32 pos_x;
-    f32 pos_y;
-    f32 scale;
-    rgba_t color;
-    f32 max_width;
-} mIV_line_data_c;
-
-static void mIV_SetLineStrings_centering(GAME* game, u8* string, int type, f32 x, f32 y) {
-    // clang-format off
-    static mIV_line_data_c line_data[] = {
-        {
-            8,
-            105.0f, 52.0f,
-            0.875f,
-            { 60, 80, 110, 255 },
-            90.0f
-        },
-
-        {
-            8,
-            111.0f, 64.0f,
-            0.9375f,
-            { 70, 70, 100, 255 },
-            90.0f
-        },
-    };
-    // clang format on
-
-    mIV_line_data_c* line_data_p = &line_data[type];
-    f32 scale = line_data_p->scale;
-    int len = mMl_strlen(string, line_data_p->max_str_len, CHAR_SPACE);
-    f32 width = (f32)mFont_GetStringWidth(string, len, TRUE) * scale;
-    f32 max_width = line_data_p->max_width;
-
-    if (width > max_width) {
-        width = max_width;
-    }
-
-    x += (max_width - width) * 0.5f;
-
-    // clang-format off
-    mFont_SetLineStrings(
-        game,
-        string, line_data_p->max_str_len,
-        x + line_data_p->pos_x, -y + line_data_p->pos_y,
-        line_data_p->color.r, line_data_p->color.g, line_data_p->color.b, line_data_p->color.a,
-        FALSE,
-        TRUE,
-        scale, scale,
-        mFont_MODE_POLY
-    );
-    // clang-format on
+static void mIV_SetLineStrings_centering(GAME* game, u8* string, int length, f32 x, f32 y, f32 scale_x, f32 scale_y) {
+    int len = mMl_strlen(string, length, CHAR_NEW_LINE);
+    x += (f32)(length - len) * 12.0f * 0.5f * scale_x;
+    mFont_SetLineStrings(game, string, len, x, y, 255, 255, 255, 255, FALSE, FALSE, scale_x, scale_y, mFont_MODE_POLY);
 }
 
 static f32 mIV_get_win_posY(Submenu* submenu, mSM_MenuInfo_c* menu_info, int page) {
@@ -1896,7 +1913,7 @@ static void mIV_set_collect_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME
 
             if (item != EMPTY_NO) {
                 submenu->overlay->tag_ovl->set_hand_pos_proc(submenu, pos, mTG_TABLE_COLLECT, i);
-                submenu->overlay->draw_item_proc(graph, pos_x + pos[0], pos_y + pos[1], 1.0f, item, FALSE, TRUE, 1,
+                submenu->overlay->draw_item_proc(graph, pos_x + pos[0], pos_y + pos[1], 0.9f, item, FALSE, TRUE, 1,
                                                  FALSE, FALSE);
             }
         }
@@ -1905,6 +1922,8 @@ static void mIV_set_collect_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME
 
 static void mIV_set_normal_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) {
     GRAPH* graph = game->graph;
+    f32 y;
+    f32 x;
     f32 pos_x;
     f32 pos_y;
 
@@ -1926,9 +1945,12 @@ static void mIV_set_normal_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME*
         Matrix_pull();
 
         submenu->overlay->set_char_matrix_proc(graph);
-        mIV_SetLineStrings_centering(game, Now_Private->player_ID.land_name, mIV_STRING_LAND_NAME, pos_x, pos_y);
-        mIV_SetLineStrings_centering(game, Now_Private->player_ID.player_name, mIV_STRING_PLAYER_NAME, pos_x, pos_y);
-        mIV_set_money(submenu, game, pos_x, pos_y);
+        {
+            x = (pos_x + 160.0f) + -54.0f;
+            mFont_SetLineStrings(game, Now_Private->player_ID.land_name, LAND_NAME_SIZE, x + 8.0f, 120.0f - ((pos_y + 84.0f) + -10.0f), 255, 255, 255, 255, FALSE, FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
+            mIV_SetLineStrings_centering(game, Now_Private->player_ID.player_name, PLAYER_NAME_LEN, x + 16.0f, 120.0f - ((pos_y + 84.0f) - 24.0f), 1.0f, 1.0f);
+        }
+        mIV_set_money(submenu, game, pos_x, -pos_y);
     }
 }
 
@@ -2046,7 +2068,7 @@ static void mIV_inventory_ovl_init(Submenu* submenu, mSM_MenuInfo_c* menu_info, 
     menu_info->next_proc_status = mSM_OVL_PROC_OBEY;
 
     if (menu_info->data0 == mSM_IV_OPEN_CPMAIL) {
-        mSM_open_submenu(submenu, mSM_OVL_CPMAIL, 0, 0);
+        mSM_open_submenu_new(submenu, mSM_OVL_CPMAIL, 0, 0, menu_info->data2);
     } else if (menu_info->data0 == mSM_IV_OPEN_MAILBOX) {
         mSM_open_submenu(submenu, mSM_OVL_MAILBOX, 0, 0);
     } else if (menu_info->data0 == mSM_IV_OPEN_HANIWA_ENTRUST) {
@@ -2113,6 +2135,8 @@ extern void mIV_inventory_ovl_construct(Submenu* submenu) {
 extern void mIV_inventory_ovl_destruct(Submenu* submenu) {
     mIV_Ovl_c* inv_ovl = submenu->overlay->inventory_ovl;
 
+    mQst_SetLostCondition_menu();
+    mQst_PutItem_menu_end();
     cKF_SkeletonInfo_R_dt(&inv_ovl->player_main_keyframe);
     cKF_SkeletonInfo_R_dt(&inv_ovl->player_com_keyframe);
     cKF_SkeletonInfo_R_dt(&inv_ovl->item_keyframe);

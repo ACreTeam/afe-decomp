@@ -14,7 +14,7 @@ extern "C" {
 #define mIV_PLAYER_JOINT_NUM (mPlayer_JOINT_NUM + 1)
 #define mIV_ITEM_JOINT_NUM 8
 #define mIV_PLAYER_EFFECT_NUM 20
-#define mIV_COLLECT_NUM 40
+#define mIV_COLLECT_NUM 48
 #define mIV_ITEM_COLUMNS 5
 #define mIV_ITEM_ROWS 3
 #define mIV_MAIL_COLUMNS 2
