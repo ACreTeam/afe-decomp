@@ -1,20 +1,349 @@
+#ifdef __INTELLISENSE__
+#include "ac_shrine.h"
+
+#include "m_msg.h"
+#include "m_play.h"
+#include "sys_matrix.h"
+#include "GBA2/gba2.h"
+#include "m_agb_pp.h"
+#include "m_eappli.h"
+#include "m_handbill.h"
+#include "m_house.h"
+#include "m_island.h"
+#include "m_post_office.h"
+#include "m_string.h"
+#endif
+
+static void aSHR_actor_move(ACTOR* actorx, GAME* game);
+
+static int aSHR_npc_dist_to_add_npc_index(u16 distinguish) {
+    int i;
+
+    for (i = 0; i < mAN_ANIMAL_NUM; i++) {
+        if ((Common_Get(add_npc_info).compress_info_table >> i) & 1) {
+            if (Common_Get(add_npc_info).info[i].id == distinguish) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+static u16 aSHR_npc_dist_to_npc_no(u16 distinguish) {
+    if (ITEM_NAME_GET_TYPE(distinguish) == NAME_TYPE_NPC) {
+        return (u16)distinguish;
+    } else {
+        int idx = aSHR_npc_dist_to_add_npc_index(distinguish);
+        return idx != -1 ? (mActor_name_t)(NPC_ADD_START + idx) : (mActor_name_t)EMPTY_NO;
+    }
+}
+
+static int aSHR_npc_dist_to_npcID_in_village(u16 distinguish) {
+    mActor_name_t npc = aSHR_npc_dist_to_npc_no(distinguish);
+    int i;
+
+    for (i = 0; i < ANIMAL_NUM_MAX; i++) {
+        if (!mNpc_CheckFreeAnimalPersonalID(&Save_Get(animals[i]).id) && Save_Get(animals[i]).id.npc_id == npc) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int aSHR_npc_dist_to_exist_npc_in_village(u16 distinguish) {
+    return aSHR_npc_dist_to_npcID_in_village(distinguish) != -1;
+}
+
+static int aSHR_npc_dist_table_to_exist_npc_num(u16* distinguish, int count) {
+    int i;
+    int num = 0;
+
+    for (i = 0; i < count; i++) {
+        if (aSHR_npc_dist_to_exist_npc_in_village(distinguish[i])) {
+            num++;
+        }
+    }
+    return num;
+}
+
+static int aSHR_npc_dist_to_exist_name(u16 distinguish) {
+    if (ITEM_NAME_GET_TYPE(distinguish) == NAME_TYPE_NPC && !IS_NPC_ADD_NPC(distinguish)) {
+        if (mNpc_GetNpcWorldNameP(distinguish) != NULL) {
+            return TRUE;
+        }
+    } else if (aSHR_npc_dist_to_npc_no(distinguish) != EMPTY_NO) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static int aSHR_influence_friendship(PersonalID_c* pid, u16 distinguish, s8 friendship) {
+    mActor_name_t npc = aSHR_npc_dist_to_npc_no(distinguish);
+
+    if (npc != EMPTY_NO) {
+        return mNpc_AddFriendshipPlayer(pid, npc, friendship);
+    }
+    return FALSE;
+}
+
+static int aSHR_fg_to_village_npc_type(mActor_name_t npc) {
+    if (IS_NPC_ADD_NPC(npc)) {
+        int idx = npc - NPC_ADD_START;
+        if (Common_Get(add_npc_info).info[idx].is_islander == TRUE) {
+            return FALSE;
+        }
+    } else if (ITEM_NAME_GET_TYPE(npc) == NAME_TYPE_NPC) {
+        int permission = mNpc_GetDefGrowPermissionName(npc);
+        if (permission == mNpc_GROW_ISLANDER || permission == -1) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+static int aSHR_read_data_to_village_npc_type(u16 info, AnimalInfo_c* data) {
+    mActor_name_t npc = mEA_animal_carde_info_to_npc_no(info);
+
+    if (npc == EMPTY_NO) {
+        return data->is_islander == FALSE;
+    }
+    return aSHR_fg_to_village_npc_type(npc);
+}
+
+static int aSHR_npc_dist_to_looks(u16 distinguish) {
+    if (ITEM_NAME_GET_TYPE(distinguish) == NAME_TYPE_NPC) {
+        return mNpc_GetLooks(distinguish);
+    } else {
+        int idx = aSHR_npc_dist_to_add_npc_index(distinguish);
+        if (idx != -1) {
+            return Common_Get(add_npc_info).info[idx].looks;
+        }
+    }
+    return mNpc_LOOKS_GIRL;
+}
+
+static mActor_name_t aSHR_present_table[18] = {
+    FTR_OZA_APPLE_BOX_SOUTH, FTR_MUT_SCARECROW_SOUTH,    FTR_OZA_DOKI_SOUTH,       FTR_OZA_BATHTUB_SOUTH,
+    FTR_MUT_BASCKET_SOUTH,   FTR_OZA_COFFIN_SOUTH,       FTR_OZA_ORANGE_BOX_SOUTH, FTR_MUT_TOBIDASI_SOUTH,
+    FTR_OZA_HYDRANT_SOUTH,   FTR_OZA_IDOL_SOUTH,         FTR_OZA_PINBALL_SOUTH,    FTR_OZA_DRUM_SOUTH,
+    FTR_OZA_FRAGILE_SOUTH,   FTR_OZA_WOOD_HORSE_SOUTH,   FTR_OZA_SHOWER_SOUTH,     FTR_MUT_WHEEL_SOUTH,
+    FTR_OZA_DART_SOUTH,      FTR_MUT_PRINCESS_BED_SOUTH,
+};
+static int aSHR_looks_letter_start[6] = { 0x4E8, 0x4FA, 0x50C, 0x51E, 0x530, 0x542 };
+
+static int aSHR_make_mail_data(Mail_c* mail, PersonalID_c* pid, int npc_idx, u8 looks, u8* letter_npc, u8* topic_npc,
+                               u8* else_npc, int game_type, int result) {
+    static u8 tmp_header[MAIL_HEADER2_LEN];
+    static u8 tmp_footer[MAIL_FOOTER2_LEN];
+    u8 str0[mMsg_FREE_STRING_LEN];
+    u8 str1[mMsg_FREE_STRING_LEN];
+    u8 item_name[mIN_ITEM_NAME_LEN];
+    int header_back_start;
+    int present_idx = result + game_type * 6;
+    int letter_no = present_idx + aSHR_looks_letter_start[looks];
+    mActor_name_t present = aSHR_present_table[present_idx];
+
+    mMl_clear_mail(mail);
+    mFont_CopyStrings(mail->header.sender.personalID.player_name, letter_npc, ANIMAL_NAME_LEN);
+    mHandbill_Set_free_str(mMsg_FREE_STR0, pid->player_name, PLAYER_NAME_LEN);
+    mHandbill_Set_free_str(mMsg_FREE_STR1, letter_npc, ANIMAL_NAME_LEN);
+    mHandbill_Set_free_str(mMsg_FREE_STR2, topic_npc, ANIMAL_NAME_LEN);
+    mString_Load_StringFromRom(str0, sizeof(str0), RANDOM(32) + 0x3F4);
+    mHandbill_Set_free_str(mMsg_FREE_STR3, str0, sizeof(str0));
+    mString_Load_StringFromRom(str1, sizeof(str1), RANDOM(32) + 0x3B4);
+    mHandbill_Set_free_str(mMsg_FREE_STR4, str1, sizeof(str1));
+    mIN_copy_name_str(item_name, present);
+    mHandbill_Set_free_str(mMsg_FREE_STR5, item_name, sizeof(item_name));
+    mHandbill_Set_free_str(mMsg_FREE_STR6, else_npc, ANIMAL_NAME_LEN);
+    mHandbill_Load_HandbillFromRom2(tmp_header, sizeof(tmp_header), &header_back_start, tmp_footer, sizeof(tmp_footer),
+                                    mail->content.text.split.body, letter_no);
+    bcopy(tmp_header, mail->content.text.split.header, MAIL_HEADER_LEN);
+    bcopy(tmp_footer, mail->content.text.split.footer, MAIL_FOOTER_LEN);
+    mail->content.font = mMl_FONT_RECV;
+    mail->content.header_back_start = header_back_start;
+    mail->content.mail_type = mMl_TYPE_MAIL;
+    mail->content.paper_type = mNpc_GetPaperType();
+    mail->header.recipient.personalID = *pid;
+    mail->header.recipient.type = mMl_NAME_TYPE_PLAYER;
+    mMl_set_mail_name_npcinfo(&mail->header.sender, &Save_Get(animals[npc_idx]).id);
+    mail->header.sender.type = mMl_NAME_TYPE_NPC;
+    mail->present = present;
+    return TRUE;
+}
+
+static int aSHR_send_mail_to_down_load_player(PersonalID_c* pid, int npc_idx, u8 looks, u8* letter_npc, u8* topic_npc,
+                                              u8* else_npc, int game_type, int result) {
+    static Mail_c mail;
+    int i;
+
+    for (i = 0; i < PLAYER_NUM; i++) {
+        if (mPr_CheckCmpPersonalID(pid, &Save_Get(private_data[i]).player_ID) &&
+            aSHR_make_mail_data(&mail, pid, npc_idx, looks, letter_npc, topic_npc, else_npc, game_type, result) &&
+            mPO_get_keep_mail_sum() < mPO_MAIL_STORAGE_SIZE && mPO_receipt_proc(&mail, mPO_SENDTYPE_MAIL)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void aSHR_influence_updata(u8* data) {
+    static u8 letter_npc_str[ANIMAL_NAME_LEN];
+    static u8 topic_npc_str[ANIMAL_NAME_LEN];
+    static u8 else_npc_str[ANIMAL_NAME_LEN];
+    u16 distinguish[5];
+    PersonalID_c pid;
+    s8 friendship[5];
+    int game_type = mAP_receive_data_to_agb_game_type(data);
+    int result = mAP_receive_data_to_agb_game_result(data);
+    int already;
+    int topic;
+    int count;
+    int exist;
+    int i;
+    int npc_idx;
+    int letter_idx;
+    int else_idx;
+
+    mAP_receive_data_to_agb_friendship(&friendship[0], &friendship[1], &friendship[2], &friendship[3], &friendship[4],
+                                       data);
+    mAP_receive_data_to_agb_distinguish(&distinguish[0], &distinguish[1], &distinguish[2], &distinguish[3],
+                                        &distinguish[4], data);
+    mAP_receive_data_to_agb_personalID(&pid, data);
+    already = mAP_receive_data_to_update_already(data);
+    topic = mAP_receive_data_to_topic_npc_receive_index(data);
+    if (mLd_CheckCmpLand(pid.land_name, pid.land_id, Now_Private->player_ID.land_name,
+                         Now_Private->player_ID.land_id)) {
+        count = mAP_agb_game_type_to_npc_num(game_type);
+        if (already == FALSE) {
+            for (i = 0; i < count; i++) {
+                aSHR_influence_friendship(&pid, distinguish[i], friendship[i]);
+            }
+            exist = aSHR_npc_dist_table_to_exist_npc_num(distinguish, count);
+            if (exist > 0) {
+                int eligible;
+                int selected;
+                int n;
+                int i;
+                letter_idx = -1;
+                else_idx = -1;
+                eligible = aSHR_npc_dist_to_exist_npc_in_village(distinguish[topic]) ? exist - 1 : exist;
+                selected = RANDOM(eligible);
+                n = 0;
+                for (i = 0; i < count; i++) {
+                    if (i != topic && aSHR_npc_dist_to_exist_npc_in_village(distinguish[i])) {
+                        if (n == selected) {
+                            letter_idx = i;
+                            break;
+                        }
+                        n++;
+                    }
+                }
+                npc_idx = aSHR_npc_dist_to_npcID_in_village(distinguish[letter_idx]);
+                if (npc_idx != -1) {
+                    selected = RANDOM(count - 2);
+                    n = 0;
+                    for (i = 0; i < count; i++) {
+                        if (aSHR_npc_dist_to_exist_name(distinguish[i]) && i != letter_idx && i != topic) {
+                            if (n == selected) {
+                                else_idx = i;
+                                break;
+                            }
+                            n++;
+                        }
+                    }
+                    if (letter_idx != -1 && else_idx != -1) {
+                        u8 looks = aSHR_npc_dist_to_looks(distinguish[letter_idx]);
+                        mAP_receive_data_to_agb_npc_name(letter_npc_str, data, letter_idx);
+                        mAP_receive_data_to_agb_npc_name(topic_npc_str, data, topic);
+                        mAP_receive_data_to_agb_npc_name(else_npc_str, data, else_idx);
+                        aSHR_send_mail_to_down_load_player(&pid, npc_idx, looks, letter_npc_str, topic_npc_str,
+                                                           else_npc_str, game_type, result);
+                    }
+                }
+            }
+        }
+    }
+}
+
+static u8 aSHR_carde_receive[0x800];
+static u8 aSHR_decode_work_30k[30 * 1024];
+static u8 aSHR_trans_work_30k[30 * 1024];
+static u32 aSHR_agb_game_data_size;
+
+static void aSHR_request_reserve_add_npc(void) {
+    mActor_name_t npc = mEA_animal_carde_info_to_npc_no((aSHR_carde_receive[0] << 8) | aSHR_carde_receive[1]);
+    mAN_set_new_comer_compress_data(aSHR_carde_receive + 0x95, &Now_Private->player_ID, npc);
+}
+
+static int aSHR_exist_my_island(void) {
+    u8 idx = mHS_get_arrange_idx(Common_Get(player_no));
+    u32 size = Save_Get(homes[idx & 3]).size_info.next_size;
+    return size >= mHm_HOMESIZE_ISLAND;
+}
+
+static int aSHR_check_my_island_npc_exist(void) {
+    if (aSHR_exist_my_island() == TRUE) {
+        int idx = mHS_get_arrange_idx(Common_Get(player_no));
+        if (!mNpc_CheckFreeAnimalPersonalID(&Save_Get(homes[idx & 3]).island.animal.id)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static int aSHR_check_npc_live_in_this_world(u16 info, AnimalInfo_c* data) {
+    mActor_name_t npc = mEA_animal_carde_info_to_npc_no(info);
+
+    if (npc != EMPTY_NO) {
+        if (mNpc_SearchAnimalinfo(Save_Get(animals), npc, ANIMAL_NUM_MAX) != -1) {
+            return TRUE;
+        }
+        if (mNpc_SearchIslandAnimalinfo(npc, 0xFF) != -1) {
+            return TRUE;
+        }
+    } else if (aSHR_npc_dist_to_add_npc_index(data->id) != -1) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void aSHR_SetTransSE(SHRINE_ACTOR* shrine) {
+    shrine->structure_class.arg1_f = 1.0f;
+}
+
+static void aSHR_SetTransSE_move(SHRINE_ACTOR* shrine) {
+    if (shrine->structure_class.arg1_f == 1.0f) {
+        if (shrine->structure_class.arg2_f == 0.0f) {
+            sAdo_SysLevStart(0x47);
+        }
+    } else if (shrine->structure_class.arg2_f == 1.0f) {
+        sAdo_SysLevStop(0x47);
+    }
+    shrine->structure_class.arg2_f = shrine->structure_class.arg1_f;
+    shrine->structure_class.arg1_f = 0.0f;
+}
+
 /* @unused static void aSHR_OngenTrgStart(SHRINE_ACTOR*, int?) */
 
 static void aSHR_set_bgOffset(ACTOR* actorx, int table_idx) {
-    static mCoBG_OffsetTable_c height_table_ct[4][2] = { {
-                                                             { 100, 1, 1, 1, 1, 1, 0 }, // X
-                                                             { 100, 1, 1, 1, 1, 1, 0 }, // Z
-                                                         },
-                                                         {
-                                                             { 100, 2, 2, 1, 1, 4, 0 },
-                                                             { 100, 2, 4, 1, 1, 2, 0 },
-                                                         },
-                                                         {
-                                                             { 100, 11, 11, 11, 11, 11, 0 },
-                                                             { 100, 11, 11, 11, 11, 11, 0 },
-                                                         },
-                                                         { { 100, 11, 11, 11, 11, 11, 0 },
-                                                           { 100, 11, 11, 11, 11, 11, 0 } } };
+    static mCoBG_OffsetTable_c height_table_ct[4][2] = {
+        {
+            { mCoBG_ATTRIBUTE_NONE, 1, 1, 1, 1, 1, 0 }, // X
+            { mCoBG_ATTRIBUTE_NONE, 1, 1, 1, 1, 1, 0 }, // Z
+        },
+        {
+            { mCoBG_ATTRIBUTE_NONE, 2, 2, 1, 1, 4, 0 },
+            { mCoBG_ATTRIBUTE_NONE, 2, 4, 1, 1, 2, 0 },
+        },
+        {
+            { mCoBG_ATTRIBUTE_NONE, 11, 11, 11, 11, 11, 0 },
+            { mCoBG_ATTRIBUTE_NONE, 11, 11, 11, 11, 11, 0 },
+        },
+        {
+            { mCoBG_ATTRIBUTE_NONE, 11, 11, 11, 11, 11, 0 },
+            { mCoBG_ATTRIBUTE_NONE, 11, 11, 11, 11, 11, 0 },
+        },
+    };
 
     static mCoBG_OffsetTable_c* height_table[] = { (mCoBG_OffsetTable_c*)height_table_ct,
                                                    (mCoBG_OffsetTable_c*)height_table_ct };
@@ -28,21 +357,12 @@ static void aSHR_set_bgOffset(ACTOR* actorx, int table_idx) {
     for (i = 0; i < 4; i++) {
         xyz_t pos;
 
-#if VERSION >= VER_GAFU01_00
         pos.z = actorx->home.position.z + addZ[i];
         pos.x = actorx->home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[0], __FILE__, 241);
+        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[0], "ac_shrine_move_PP.c_inc", 1438);
 
         pos.x = actorx->home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[1], __FILE__, 245);
-#else
-        pos.z = actorx->home.position.z + addZ[i];
-        pos.x = actorx->home.position.x + addX[0];
-        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[0], __FILE__, 238);
-
-        pos.x = actorx->home.position.x + addX[1];
-        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[1], __FILE__, 242);
-#endif
+        mCoBG_SetPluss5PointOffset_file(pos, height_table_p[1], "ac_shrine_move_PP.c_inc", 1442);
 
         height_table_p += 2;
     }
@@ -94,56 +414,7 @@ static int aSHR_ctrl_light() {
     return res;
 }
 
-static void aSHR_Present_move_wait_init(aSHR_Present_c*);
-static void aSHR_Present_move_wait(aSHR_Present_c*);
-static void aSHR_Present_move_walk(aSHR_Present_c*);
-
-static void aSHR_Present_ct(aSHR_Present_c* present) {
-    bzero(present, sizeof(aSHR_Present_c));
-    aSHR_Present_move_wait_init(present);
-}
-
-static void aSHR_Present_move(aSHR_Present_c* present, SHRINE_ACTOR* shrine, GAME_PLAY* play) {
-    (*present->move_proc)(present);
-
-    if (present->move_proc == aSHR_Present_move_walk && present->finish_flag == FALSE) {
-        HANDOVERITEM_ACTOR* handOverItem =
-            (HANDOVERITEM_ACTOR*)Actor_info_name_search(&play->actor_info, mAc_PROFILE_HANDOVERITEM, ACTOR_PART_BG);
-
-        if (handOverItem != NULL) {
-            /* Move the 'handOverItem' actor's position to the location of our 'present' */
-            Matrix_push();
-            Matrix_translate(shrine->structure_class.actor_class.world.position.x + present->trans.x,
-                             shrine->structure_class.actor_class.world.position.y + present->trans.y,
-                             shrine->structure_class.actor_class.world.position.z + present->trans.z, MTX_LOAD);
-            Matrix_scale(0.01f, 0.01f, 0.01f, MTX_MULT);
-            Matrix_get(&handOverItem->tools_class.matrix_work);
-            Matrix_pull();
-            handOverItem->tools_class.init_matrix = TRUE;
-        }
-    }
-}
-
-static void aSHR_Present_move_wait_init(aSHR_Present_c* present) {
-    present->move_proc = &aSHR_Present_move_wait;
-}
-
-static void aSHR_Present_move_wait(aSHR_Present_c* present) {
-    /* Do nothing */
-}
-
-static const xyz_t aSHR_present_init_pos = { 2.0f, 40.0f, 10.0f }; // start
-static const xyz_t aSHR_present_aim_pos = { 2.0f, 40.0f, 33.0f };  // goal
-
-static void aSHR_Present_move_walk(aSHR_Present_c* present) {
-    f32 move = get_percent_forAccelBrake(present->percent, 0.0f, 1.0f, 0.15f, 0.15f);
-
-    present->percent += 0.012f;
-    Math3DInDivPos2(&aSHR_present_init_pos, &aSHR_present_aim_pos, &present->trans, move);
-
-    if (move >= 1.0f) {
-        present->finish_flag = TRUE;
-    }
+static void aSHR_init_no_proc(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
 }
 
 static void aSHR_wait(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
@@ -155,8 +426,27 @@ static void aSHR_wait(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
     }
 }
 
+static int aSHR_possession_have_Qitem_limit_out(void) {
+    int i;
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (mSM_check_item_for_shrine1(i) && mSM_check_item_for_shrine2(i)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static int aSHR_possession_have_Qitem_limit_in(void) {
+    int i;
+    for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++) {
+        if (mSM_check_item_for_shrine1(i)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static void aSHR_talk(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
-    static u8 choume_str[FG_BLOCK_Z_NUM + 1] = { 'Q', 'A', 'B', 'C', 'D', 'E', 'F' };
     mMsg_Window_c* msg_p = mMsg_Get_base_window_p();
     int msg_no = 0x1128;
     int action;
@@ -165,10 +455,29 @@ static void aSHR_talk(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
     int bx;
     int bz;
     int good_field;
-    u8 acre_str[mIN_ITEM_NAME_LEN];
+    u8 acre_str[66];
 
     if (mMsg_Check_MainNormalContinue(msg_p)) {
         switch (mChoice_Get_ChoseNum(mChoice_Get_base_window_p())) {
+            case mChoice_CHOICE3:
+                mMsg_Set_continue_msg_num(msg_p, 0x1130);
+                action = aSHR_ACTION_CONNECT_CHECK_TO_CHECK_EXIST;
+                break;
+
+            case mChoice_CHOICE1:
+                if (!mLd_PlayerManKindCheck()) {
+                    if (Save_Get(add_npc).new_comer.new_comer_set == TRUE) {
+                        action = aSHR_ACTION_TALK_END;
+                        mMsg_Set_continue_msg_num(msg_p, 0x2057);
+                    } else {
+                        action = aSHR_ACTION_QUESTION_CARDE;
+                        mMsg_Set_continue_msg_num(msg_p, 0x2058);
+                    }
+                } else {
+                    action = aSHR_ACTION_TALK_END;
+                    mMsg_Set_continue_msg_num(msg_p, 0x2056);
+                }
+                break;
             case mChoice_CHOICE0: /* How are things? */
             {
                 condition = mFAs_GetFieldRank_Condition(&field_rank, &bx, &bz);
@@ -178,36 +487,33 @@ static void aSHR_talk(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
                     good_field &&                                     /* Perfect town status achieved for long enough */
                     mSC_trophy_get(mSC_TROPHY_GOLDEN_AXE) == FALSE && /* Haven't already obtained the golden axe */
                     mLd_PlayerManKindCheck() == FALSE &&              /* Must be from this town */
-                    mPr_GetPossessionItemIdx(Common_Get(now_private), EMPTY_NO) >=
-                        0 &&                              /* Must have a free inventory slot */
-                    mEv_CheckFirstJob() == FALSE &&       /* Can't be doing the part-time job */
-                    condition != mFAs_CONDITION_DUST_OVER /* No trash */
+                    mPr_GetPossessionItemIdx(Now_Private, EMPTY_NO) >= 0 && /* Must have a free inventory slot */
+                    mEv_CheckFirstJob() == FALSE &&                         /* Can't be doing the part-time job */
+                    condition != mFAs_CONDITION_DUST_OVER                   /* No trash */
                 ) {
                     msg_no = 0x2C50;
                     action = aSHR_ACTION_MAKE_HEM;
                 } else if (condition != mFAs_CONDITION_NO_CASE) {
-                    switch (condition) {
-                        case mFAs_CONDITION_DUST_OVER:
-                            msg_no = 0x2C4F;
-                            break;
-                        case mFAs_CONDITION_TREE_LESS:
-                            msg_no = 0x2C45;
-                            break;
-                        case mFAs_CONDITION_TREE_OVER:
-                            msg_no = 0x2C46;
-                            break;
-                        // case mFAs_CONDITION_GRASS_OVER:
-                        default:
-                            msg_no = 0x2C47;
-                            break;
+                    if (condition == mFAs_CONDITION_DUST_OVER) {
+                        msg_no = 0x2C4F;
+                    } else if (condition == mFAs_CONDITION_TREE_LESS) {
+                        msg_no = 0x2C45;
+                    } else if (condition == mFAs_CONDITION_TREE_OVER) {
+                        msg_no = 0x2C46;
+                    } else {
+                        msg_no = 0x2C47;
                     }
 
-                    mFont_UnintToString(acre_str, sizeof(acre_str), bx, sizeof(acre_str), TRUE, FALSE, TRUE);
+                    mFont_UnintToString(acre_str, sizeof(acre_str), bx, sizeof(acre_str), TRUE, FALSE, FALSE);
                     mMsg_Set_free_str(msg_p, mMsg_FREE_STR1, acre_str, sizeof(acre_str));
-                    mMsg_Set_free_str(msg_p, mMsg_FREE_STR0, &choume_str[bz], 1);
+                    mFont_UnintToString(acre_str, sizeof(acre_str), bz, sizeof(acre_str), TRUE, FALSE, FALSE);
+                    mMsg_Set_free_str(msg_p, mMsg_FREE_STR0, acre_str, sizeof(acre_str));
+                    action = aSHR_ACTION_TALK_END;
+                } else if (field_rank == mFAs_FIELDRANK_SIX) {
+                    msg_no = 0x2C48;
                     action = aSHR_ACTION_TALK_END;
                 } else {
-                    msg_no = 0x2C4E - field_rank; /* Message is based on the field rank */
+                    msg_no = 0x2C49;
                     action = aSHR_ACTION_TALK_END;
                 }
 
@@ -215,13 +521,16 @@ static void aSHR_talk(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
                 break;
             }
 
-            case mChoice_CHOICE1: /* Apologize */
+            case mChoice_CHOICE2: /* Apologize */
             {
-                if (mSM_check_open_inventory_itemlist(mSM_IV_OPEN_SHRINE, 0)) {
+                if (aSHR_possession_have_Qitem_limit_out()) {
                     shrine->structure_class.arg0 = 0;
                     action = aSHR_ACTION_TALK_GOMEN;
-                } else {
+                } else if (aSHR_possession_have_Qitem_limit_in()) {
                     msg_no = 0x1127;
+                    action = aSHR_ACTION_TALK_END;
+                } else {
+                    msg_no = 0x1133;
                     action = aSHR_ACTION_TALK_END;
                 }
 
@@ -249,8 +558,6 @@ static void aSHR_talk_gomen(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
 
     /* TODO: enums for whatever this is */
     switch (shrine->structure_class.arg0) {
-            // default:
-
         case 0: {
             if (mMsg_Check_MainNormalContinue(msg_p) == TRUE) {
                 mMsg_request_main_disappear_wait_type1(msg_p);
@@ -289,7 +596,7 @@ static void aSHR_talk_gomen(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
                                       mIN_get_item_article(sm_item->item));
                 msg_no = 0x112B;
                 mQst_ClearQuestbyPossessionIdx(sm_item->slot_no);
-                mPr_SetPossessionItem(Common_Get(now_private), sm_item->slot_no, EMPTY_NO, mPr_ITEM_COND_NORMAL);
+                mPr_SetPossessionItem(Now_Private, sm_item->slot_no, EMPTY_NO, mPr_ITEM_COND_NORMAL);
             }
 
             if (msg_no != -1) {
@@ -328,8 +635,7 @@ static void aSHR_make_hem(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
                     aSHR_GET_CLIP()->hem_flag = TRUE;
                     Common_Set(hem_visible, FALSE);
                     pos.z += mFI_UT_WORLDSIZE_Z_F;
-                    (*Common_Get(clip).effect_clip->effect_make_proc)(eEC_EFFECT_MAKE_HEM, pos, 2, 0, (GAME*)play,
-                                                                      0xFFFF, 1, 0);
+                    eEC_CLIP->effect_make_proc(eEC_EFFECT_MAKE_HEM, pos, 2, 0, (GAME*)play, 0xFFFF, 1, 0);
                     mSC_trophy_set(mSC_TROPHY_GOLDEN_AXE);
                     mFAs_ClearGoodField(); /* Only one player can get it at a time */
                     aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
@@ -343,6 +649,404 @@ static void aSHR_make_hem(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
     }
 }
 
+static void aSHR_question_carde_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mChoice_Clear_ChoseNum(mChoice_Get_base_window_p());
+}
+
+static void aSHR_question_carde(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int choice;
+    mMsg_Get_base_window_p();
+    choice = mChoice_Get_ChoseNum(mChoice_Get_base_window_p());
+    if (mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p()) && choice != -1) {
+        switch (choice) {
+            case 0:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_READ_CARDE_S);
+                break;
+            case 1:
+                mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+                aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_CARDE_PROGRAM_S);
+                break;
+            default:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                break;
+        }
+    }
+}
+
+static void aSHR_send_carde_program_s_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mDemo_Set_OrderValue(mDemo_ORDER_NPC0, 9, 0);
+}
+
+static void aSHR_send_carde_program_s(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mMsg_Window_c* window = mMsg_Get_base_window_p();
+    if (mDemo_Get_OrderValue(mDemo_ORDER_NPC0, 9) != 0 && mMsg_Check_MainNormalContinue(window)) {
+        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+        aSHR_setup_action(shrine, play, aSHR_ACTION_CONNECT_CHECK_TO_SEND_CARDE);
+    }
+}
+
+static void aSHR_connect_check_to_send_carde_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_EndComm(shrine, play);
+    aSHR_InitVar(shrine, play);
+}
+
+static void aSHR_connect_check_to_send_carde(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int status = mGcgba_ConnectEnabled();
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_CARDE_PROGRAM);
+            break;
+        case GBA2_GBA_STATE_TRANSMITTING:
+            break;
+        default:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x205D);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+    }
+}
+
+static void aSHR_send_carde_program_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_InitVar(shrine, play);
+    aSHR_SetTransSE(shrine);
+}
+
+static void aSHR_send_carde_program(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    size_t size = mEA_dl_carde_program_size();
+    u8* data = mEA_dl_carde_program_p();
+    int status = mGcgba_send_eAppri(data, size);
+    switch (status) {
+        case GBA2_EAPPLI_SUCCESS:
+            aSHR_InitVar(shrine, play);
+            aSHR_EndComm(shrine, play);
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x205C);
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            aSHR_setup_action(shrine, play, aSHR_ACTION_QUESTION_READ);
+            break;
+        case GBA2_EAPPLI_FAILURE_XFER_ERROR:
+        case GBA2_EAPPLI_FAILURE_NO_GBA:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x205D);
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            aSHR_EndComm(shrine, play);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            break;
+        default:
+            aSHR_SetTransSE(shrine);
+            break;
+    }
+}
+
+static void aSHR_question_read_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mChoice_Clear_ChoseNum(mChoice_Get_base_window_p());
+}
+
+static void aSHR_question_read(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int choice;
+    mMsg_Get_base_window_p();
+    choice = mChoice_Get_ChoseNum(mChoice_Get_base_window_p());
+    if (choice != -1 && mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p())) {
+        switch (choice) {
+            case mChoice_CHOICE0:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_READ_CARDE_S);
+                break;
+            default:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                aSHR_EndComm(shrine, play);
+                break;
+        }
+    }
+}
+
+static void aSHR_read_carde_s_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+}
+
+static void aSHR_read_carde_s(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_setup_action(shrine, play, aSHR_ACTION_CONNECT_CHECK_TO_READ_CARDE);
+}
+
+static void aSHR_connect_check_to_read_carde_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_EndComm(shrine, play);
+    aSHR_InitVar(shrine, play);
+}
+
+static void aSHR_connect_check_to_read_carde(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    if (mMsg_Get_msg_num(mMsg_Get_base_window_p()) == 0x205F &&
+        mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p())) {
+        int status = mGcgba_ConnectEnabled();
+        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+        switch (status) {
+            case GBA2_GBA_STATE_SUCCESS:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_READ_CARDE);
+                break;
+            case GBA2_GBA_STATE_TRANSMITTING:
+                break;
+            default:
+                mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+                mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+                mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x2060);
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                aSHR_EndComm(shrine, play);
+                break;
+        }
+    }
+}
+
+static void aSHR_read_carde_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_InitVar(shrine, play);
+    aSHR_SetTransSE(shrine);
+}
+
+static void aSHR_read_carde(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int msg_no;
+    int status = mGcgba_Read(aSHR_carde_receive, sizeof(aSHR_carde_receive), GBA2_EAPPLI_TYPE_PTERMINAL);
+    int animal_num = mNpc_GetAnimalNum();
+    u16 info = (aSHR_carde_receive[0] << 8) | aSHR_carde_receive[1];
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_EndComm(shrine, play);
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            if (mEA_animal_carde_info_to_npc_no(info) == EMPTY_NO &&
+                !mEA_animal_carde_info_to_check_special_npc(info)) {
+                decode_szs(aSHR_carde_receive + 0x95, aSHR_decode_work_30k);
+            }
+            if (mEA_animal_carde_info_to_check_special_npc(info)) {
+                msg_no = 0x2067;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            } else if (aSHR_check_npc_live_in_this_world(info, (AnimalInfo_c*)aSHR_decode_work_30k)) {
+                msg_no = 0x2066;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            } else if (animal_num == ANIMAL_NUM_MAX &&
+                       aSHR_read_data_to_village_npc_type(info, (AnimalInfo_c*)aSHR_decode_work_30k) == TRUE) {
+                msg_no = 0x2062;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_QUESTION_NPC_OVERWRITE);
+            } else if (aSHR_exist_my_island() == FALSE &&
+                       aSHR_read_data_to_village_npc_type(info, (AnimalInfo_c*)aSHR_decode_work_30k) == FALSE) {
+                msg_no = 0x2065;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            } else if (aSHR_check_my_island_npc_exist() == TRUE &&
+                       aSHR_read_data_to_village_npc_type(info, (AnimalInfo_c*)aSHR_decode_work_30k) == FALSE) {
+                msg_no = 0x2064;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_QUESTION_ISLAND_NPC_OVERWRITE);
+            } else {
+                aSHR_request_reserve_add_npc();
+                msg_no = 0x2061;
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            }
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), msg_no);
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            break;
+        case GBA2_GBA_STATE_TRANSMITTING:
+            aSHR_SetTransSE(shrine);
+            break;
+        default:
+            aSHR_EndComm(shrine, play);
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x2060);
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            break;
+    }
+}
+
+static void aSHR_question_npc_overwrite_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mChoice_Clear_ChoseNum(mChoice_Get_base_window_p());
+}
+
+static void aSHR_question_npc_overwrite(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int choice = mChoice_Get_ChoseNum(mChoice_Get_base_window_p());
+    if (choice != -1 && mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p())) {
+        switch (choice) {
+            case mChoice_CHOICE0: {
+                aSHR_request_reserve_add_npc();
+                if (shrine->structure_class.action == aSHR_ACTION_QUESTION_ISLAND_NPC_OVERWRITE) {
+                    int idx = mHS_get_arrange_idx(Common_Get(player_no));
+                    Island_c* island = &Save_Get(homes[idx]).island;
+                    if (mISL_GetNpcDayType(island) == mISL_NPC_DAY_TYPE_NORMAL) {
+                        island->islander_spawn_date.year = 0x8000;
+                        island->islander_spawn_date.month = 0x80;
+                        island->islander_spawn_date.day = 0x80;
+                    }
+                }
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                aSHR_EndComm(shrine, play);
+                break;
+            }
+            default:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                aSHR_EndComm(shrine, play);
+                break;
+        }
+    }
+}
+
+static void aSHR_connect_check_to_check_exist_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_EndComm(shrine, play);
+    aSHR_InitVar(shrine, play);
+}
+
+static void aSHR_connect_check_to_check_exist(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    if (mMsg_Check_MainNormalContinue(mMsg_Get_base_window_p())) {
+        int status = mGcgba_ConnectEnabled();
+        mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+        switch (status) {
+            case GBA2_GBA_STATE_SUCCESS:
+                aSHR_setup_action(shrine, play, aSHR_ACTION_CHECK_EXIST_TO_TRANS);
+                break;
+            case GBA2_GBA_STATE_TRANSMITTING:
+                break;
+            default:
+                mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+                mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+                mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x112F);
+                aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+                aSHR_EndComm(shrine, play);
+                break;
+        }
+    }
+}
+
+static void aSHR_check_exist_to_trans_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_InitVar(shrine, play);
+}
+
+static void aSHR_check_exist_to_trans(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int status = mGcgba_IsGame();
+    mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_UPLOAD);
+            break;
+        case GBA2_GBA_STATE_ALREADY_EXIST:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_LOADER);
+            break;
+        case GBA2_GBA_STATE_ERROR:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_LOADER);
+            break;
+    }
+}
+
+static void aSHR_upload_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_InitVar(shrine, play);
+}
+
+static void aSHR_upload(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int status = mGcgba_Recv(aSHR_trans_work_30k, 0x48);
+    mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+    switch (status) {
+        case GBA2_GBA_STATE_TRANSMITTING:
+            break;
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_influence_updata(aSHR_trans_work_30k);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_PROGRAM);
+            break;
+        default:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x1131);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+    }
+}
+
+static void aSHR_send_loader_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    u8* data;
+    aSHR_InitVar(shrine, play);
+    aSHR_SetTransSE(shrine);
+    data = JW_Get_AgbTargetClient_InAgbArchiveFile1234_data_p();
+    mAP_set_world_info4(data + 0xD0);
+}
+
+static void aSHR_send_loader(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    size_t size = JW_Get_AgbTargetClient_InAgbArchiveFile1234_size();
+    u8* data = JW_Get_AgbTargetClient_InAgbArchiveFile1234_data_p();
+    int status = mGcgba_Boot(data, size);
+    mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_PROGRAM);
+            break;
+        case GBA2_GBA_STATE_TRANSMITTING:
+            aSHR_SetTransSE(shrine);
+            break;
+        default:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x1131);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+    }
+}
+
+static void aSHR_send_program_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    aSHR_InitVar(shrine, play);
+    aSHR_SetTransSE(shrine);
+}
+
+static void aSHR_send_program(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    size_t size;
+    u8* data;
+    int status;
+    int type = JW_Get_loaded_type_AgbProg() & 3;
+    size = JW_Get_AgbTargetChild_InAgbArchiveFile1234_size();
+    data = JW_Get_AgbTargetChild_InAgbArchiveFile1234_data_p();
+    status = mGcgba_SendGame(data, size, type);
+    mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            aSHR_setup_action(shrine, play, aSHR_ACTION_SEND_DATA);
+            break;
+        case GBA2_GBA_STATE_TRANSMITTING:
+            aSHR_SetTransSE(shrine);
+            break;
+        default:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x1131);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+    }
+}
+
+static void aSHR_send_data_init(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    mActor_name_t npc[5];
+    aSHR_InitVar(shrine, play);
+    aSHR_SetTransSE(shrine);
+    mAP_select_agb_game_npc(npc, 5);
+    aSHR_agb_game_data_size = mAP_make_send_data(aSHR_trans_work_30k, npc[0], npc[1], npc[2], npc[3], npc[4],
+                                                 Now_Private->gender, Now_Private->face, &Now_Private->player_ID);
+}
+
+static void aSHR_send_data(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
+    int status = mGcgba_Send(aSHR_trans_work_30k, aSHR_agb_game_data_size);
+    mMsg_Set_LockContinue(mMsg_Get_base_window_p());
+    switch (status) {
+        case GBA2_GBA_STATE_SUCCESS:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x1132);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+        case GBA2_GBA_STATE_TRANSMITTING:
+            aSHR_SetTransSE(shrine);
+            break;
+        default:
+            mMsg_Unset_LockContinue(mMsg_Get_base_window_p());
+            mMsg_Set_ForceNext(mMsg_Get_base_window_p());
+            mMsg_Set_continue_msg_num(mMsg_Get_base_window_p(), 0x1131);
+            aSHR_setup_action(shrine, play, aSHR_ACTION_TALK_END);
+            aSHR_EndComm(shrine, play);
+            break;
+    }
+}
+
 static void aSHR_talk_end(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
     if (mDemo_Check(mDemo_TYPE_TALK, (ACTOR*)shrine) == FALSE) {
         aSHR_setup_action(shrine, play, aSHR_ACTION_WAIT);
@@ -350,20 +1054,69 @@ static void aSHR_talk_end(SHRINE_ACTOR* shrine, GAME_PLAY* play) {
 }
 
 typedef void (*aSHR_PROC)(SHRINE_ACTOR*, GAME_PLAY*);
-typedef void (*aSHR_INIT_PROC)(SHRINE_ACTOR*);
+typedef void (*aSHR_INIT_PROC)(SHRINE_ACTOR*, GAME_PLAY*);
 
 static void aSHR_setup_action(SHRINE_ACTOR* shrine, GAME_PLAY* play, int action) {
-    static aSHR_INIT_PROC init_proc[aSHR_ACTION_NUM] = { NULL, NULL, NULL, &aSHR_make_hem_init, NULL };
+    static aSHR_INIT_PROC init_proc[aSHR_ACTION_NUM] = {
+        aSHR_init_no_proc,
+        aSHR_init_no_proc,
+        aSHR_init_no_proc,
+        (aSHR_INIT_PROC)aSHR_make_hem_init,
+        aSHR_init_no_proc,
+        aSHR_question_carde_init,
+        aSHR_send_carde_program_s_init,
+        aSHR_connect_check_to_send_carde_init,
+        aSHR_send_carde_program_init,
+        aSHR_question_read_init,
+        aSHR_read_carde_s_init,
+        aSHR_connect_check_to_read_carde_init,
+        aSHR_read_carde_init,
+        aSHR_question_npc_overwrite_init,
+        aSHR_question_npc_overwrite_init,
+        aSHR_connect_check_to_check_exist_init,
+        aSHR_check_exist_to_trans_init,
+        aSHR_upload_init,
+        aSHR_send_loader_init,
+        aSHR_send_program_init,
+        aSHR_send_data_init,
+    };
 
-    static aSHR_PROC process[aSHR_ACTION_NUM] = { &aSHR_wait, &aSHR_talk, &aSHR_talk_gomen, &aSHR_make_hem,
-                                                  &aSHR_talk_end };
+    static aSHR_PROC process[aSHR_ACTION_NUM] = {
+        aSHR_wait,
+        aSHR_talk,
+        aSHR_talk_gomen,
+        aSHR_make_hem,
+        aSHR_talk_end,
+        aSHR_question_carde,
+        aSHR_send_carde_program_s,
+        aSHR_connect_check_to_send_carde,
+        aSHR_send_carde_program,
+        aSHR_question_read,
+        aSHR_read_carde_s,
+        aSHR_connect_check_to_read_carde,
+        aSHR_read_carde,
+        aSHR_question_npc_overwrite,
+        aSHR_question_npc_overwrite,
+        aSHR_connect_check_to_check_exist,
+        aSHR_check_exist_to_trans,
+        aSHR_upload,
+        aSHR_send_loader,
+        aSHR_send_program,
+        aSHR_send_data,
+    };
 
     if (init_proc[action] != NULL) {
-        (*init_proc[action])(shrine);
+        (*init_proc[action])(shrine, play);
     }
 
     shrine->structure_class.action_proc = (aSTR_MOVE_PROC)process[action];
     shrine->structure_class.action = action;
+}
+
+static void aSHR_actor_init(ACTOR* actorx, GAME* game) {
+    mFI_SetFG_common(DUMMY_SHRINE, actorx->home.position, FALSE);
+    aSHR_actor_move(actorx, game);
+    actorx->mv_proc = &aSHR_actor_move;
 }
 
 static void aSHR_actor_move(ACTOR* actorx, GAME* game) {
@@ -371,12 +1124,6 @@ static void aSHR_actor_move(ACTOR* actorx, GAME* game) {
     SHRINE_ACTOR* shrine = (SHRINE_ACTOR*)actorx;
 
     (*(aSHR_PROC)shrine->structure_class.action_proc)(shrine, play);
-    aSHR_Present_move(&aSHR_present, shrine, play);
     sAdo_OngenPos((u32)actorx, 0x5A, &actorx->world.position);
-}
-
-static void aSHR_actor_init(ACTOR* actorx, GAME* game) {
-    mFI_SetFG_common(DUMMY_SHRINE, actorx->home.position, FALSE);
-    aSHR_actor_move(actorx, game);
-    actorx->mv_proc = &aSHR_actor_move;
+    aSHR_SetTransSE_move(shrine);
 }
