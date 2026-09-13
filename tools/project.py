@@ -463,6 +463,10 @@ def generate_build_ninja(
     n.variable("ninja_required_version", "1.3")
     n.newline()
 
+    n.comment("Keep Ninja's dependency database and command log separate for each version.")
+    n.variable("builddir", config.out_path())
+    n.newline()
+
     configure_script = Path(os.path.relpath(os.path.abspath(sys.argv[0])))
     python_lib = Path(os.path.relpath(__file__))
     python_lib_dir = python_lib.parent
