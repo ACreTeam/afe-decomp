@@ -5,6 +5,9 @@
 #include "m_editEndChk_ovl.h"
 #include "m_font.h"
 #include "m_tag_ovl.h"
+#include "m_text.h"
+#include "libultra/libultra.h"
+#include "_mem.h"
 #include "sys_matrix.h"
 
 static mBD_Ovl_c board_ovl_data;
@@ -707,27 +710,90 @@ static rgba_t letter_color[PAPER_NUM] = {
     { 0, 0, 0, 0 },         { 0, 0, 0, 0 },         { 0, 0, 0, 0 },         { 0, 0, 0, 0 }
 };
 
-static int mBD_strLineCheck(u8** str_pp, u8* str_end_p, int* width, int* line) {
-    u8* str_p = *str_pp;
-    int res = mBD_LINE_CHECK_OK;
+static void mMlW_clear_buf(u16* buf, int size, u16 clear_char) {
+    while (--size >= 0) {
+        *buf++ = clear_char;
+    }
+}
 
+static void mMlW_clear_mail(MailW_c* mail) {
+    bzero(mail, sizeof(MailW_c));
+    mMl_clear_mail_header(&mail->header);
+    mMlW_clear_buf(mail->content.text.all, MAIL_HEADER_LEN + MAIL_BODY_LEN + MAIL_FOOTER_LEN, CHAR_SPACE);
+    mail->content.font = 0xFF;
+}
+
+static void mMlW_set_playername_edit(MailW_c* mail, PersonalID_c* pid) {
+    mPr_CopyPersonalID(&mail->header.sender.personalID, pid);
+    mail->header.sender.type = mMl_NAME_TYPE_PLAYER;
+}
+
+static void mMlW_init_mail(MailW_c* mail, PersonalID_c* pid) {
+    mMlW_clear_mail(mail);
+    mMlW_set_playername_edit(mail, pid);
+    mail->content.font = mMl_FONT_SEND;
+    mail->content.mail_type = mMl_TYPE_MAIL;
+    mail->content.paper_type = 0;
+}
+
+static int mMlW_strlen(u16* str, int size, u16 end_char) {
+    u16* p = str + (size - 1);
+    int i = size;
+    while (i != 0) {
+        if (*p != end_char)
+            return size;
+        p--;
+        size--;
+        i--;
+    }
+    return 0;
+}
+
+static void mMl_conv_MlP2MlW(Mail_c* src, MailW_c* dst) {
+    memcpy(&dst->header, &src->header, sizeof(Mail_hdr_c));
+    dst->present = src->present;
+    dst->content.font = src->content.font;
+    dst->content.header_back_start = src->content.header_back_start;
+    dst->content.mail_type = src->content.mail_type;
+    dst->content.paper_type = src->content.paper_type;
+    mTxt_conv_16bit(src->content.text.split.header, dst->content.text.split.header, MAIL_HEADER_LEN);
+    mTxt_conv_16bit(src->content.text.split.body, dst->content.text.split.body, MAIL_BODY_LEN);
+    mTxt_conv_16bit(src->content.text.split.footer, dst->content.text.split.footer, MAIL_FOOTER_LEN);
+}
+
+static void mMl_conv_MlW2MlP(MailW_c* src, Mail_c* dst) {
+    memcpy(&dst->header, &src->header, sizeof(Mail_hdr_c));
+    dst->present = src->present;
+    dst->content.font = src->content.font;
+    dst->content.header_back_start = src->content.header_back_start;
+    dst->content.mail_type = src->content.mail_type;
+    dst->content.paper_type = src->content.paper_type;
+    mTxt_conv_9or8bit(src->content.text.split.header, dst->content.text.split.header, MAIL_HEADER_LEN);
+    mTxt_conv_9or8bit(src->content.text.split.body, dst->content.text.split.body, MAIL_BODY_LEN);
+    mTxt_conv_9or8bit(src->content.text.split.footer, dst->content.text.split.footer, MAIL_FOOTER_LEN);
+}
+
+static void mBD_chrCopyOneByteTwoByte(u16* dst, u8* src, int len) {
+    for (; len > 0; len--)
+        *dst++ = *src++;
+}
+
+static int mBD_strLineCheck(u16** str_pp, u16* str_end_p, int* width, int* line) {
+    u16* str_p = *str_pp;
+    int res = mBD_LINE_CHECK_OK;
     if (str_p >= str_end_p) {
         res = mBD_LINE_CHECK_OVERSTRING;
-    } else if (*str_p == CHAR_NEW_LINE) {
-        str_pp[0] = str_p + 1;
-        line[0]++;
-        res = mBD_LINE_CHECK_NEWLINE;
     } else {
-        width[0] += mFont_GetCodeWidth(*str_p, TRUE);
-
+        *width += mFont_GetCodeWidthWF(**str_pp, TRUE);
         if (*width > mBD_MAX_WIDTH) {
             res = mBD_LINE_CHECK_OVERLINE;
         } else {
-            str_pp[0]++;
-            line[0]++;
+            if (**str_pp == CHAR_NEW_LINE)
+                res = mBD_LINE_CHECK_NEWLINE;
+            (*str_pp)++;
+            (*line)++;
         }
     }
-
     return res;
 }
 
@@ -857,12 +923,13 @@ static void mBD_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     mSM_MenuInfo_c* editEndChk_menu = &submenu->overlay->menu_info[mSM_OVL_EDITENDCHK];
     mBD_Ovl_c* board_ovl = submenu->overlay->board_ovl;
     mED_Ovl_c* editor_ovl;
-    Mail_hs_c* mail_header;
     int footer_len;
+    Mail_hs_c* mail_header;
     int footer_len_diff;
     int t_footer_len;
-    u8 t_footer[48];
-    u8* t_footer_p;
+    u16 t_footer[MAIL_FOOTER_LEN];
+    u16* footer_p;
+    u16* t_footer_p;
     int i;
 
     mBD_roll_control2(menu_info);
@@ -873,11 +940,10 @@ static void mBD_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         /* Did they select the 'yes' option? */
         if (editEndChk_menu->data1 == 0) {
             mail_header = &Common_Get(now_private)->saved_mail_header;
-            mMl_copy_mail(board_ovl->dst_p, &board_ovl->mail); // copy over mail
-            footer_len = mMl_strlen(board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
+            footer_p = board_ovl->mail.content.text.split.footer;
+            t_footer_p = footer_p;
+            footer_len = mMlW_strlen(footer_p, MAIL_FOOTER_LEN, CHAR_SPACE);
             footer_len_diff = board_ovl->lengths[mBD_FIELD_FOOTER] - footer_len;
-            mem_copy(t_footer, board_ovl->dst_p->content.text.split.footer, MAIL_FOOTER_LEN);
-            t_footer_p = t_footer;
             t_footer_len = 0;
 
             for (i = 0; i < footer_len; i++) {
@@ -889,17 +955,20 @@ static void mBD_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
                 t_footer_p++;
             }
 
-            mem_clear(board_ovl->dst_p->content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
+            mFont_ClearStringsW(t_footer, MAIL_FOOTER_LEN, CHAR_SPACE);
 
             /* Check if we should copy part of the old footer back */
             if (footer_len_diff < MAIL_FOOTER_LEN) {
-                mem_copy(board_ovl->dst_p->content.text.split.footer + footer_len_diff, t_footer_p, footer_len - t_footer_len);
+                mFont_CopyStringsW(t_footer + footer_len_diff, t_footer_p, footer_len - t_footer_len);
             }
 
-            if (menu_info->data0 != mSM_BD_OPEN_WRITE_ISLAND) {
+            mFont_CopyStringsW(footer_p, t_footer, MAIL_FOOTER_LEN);
+            mMl_conv_MlW2MlP(&board_ovl->mail, board_ovl->dst_p);
+
+            if (menu_info->data0 != mSM_BD_OPEN_WRITE_ISLAND && menu_info->data0 != mSM_BD_OPEN_WRITE_BIRTHDAY) {
                 mail_header->header_back_start = board_ovl->mail.content.header_back_start;
-                mem_copy((u8*)mail_header->header, board_ovl->dst_p->content.text.split.header, MAIL_HEADER_LEN);
-                mem_copy((u8*)mail_header->footer, board_ovl->dst_p->content.text.split.footer, MAIL_FOOTER_LEN);
+                mFont_CopyStringsW(mail_header->header, board_ovl->mail.content.text.split.header, MAIL_HEADER_LEN);
+                mFont_CopyStringsW(mail_header->footer, board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN);
             }
 
             /* Decrement stationery count */
@@ -923,7 +992,7 @@ static void mBD_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         } else if (editEndChk_menu->data1 == 1) {
             /* 'No' option was selected */
             mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_BOARD, 0, board_ovl->mail.content.text.split.body,
-                                  MAIL_BODY_LEN);
+                                  sizeof(board_ovl->mail.content.text.split.body));
             board_ovl->field = mBD_FIELD_BODY;
             board_ovl->header_pos = mBD_HEADER_POS_PRE_NAME;
             menu_info->proc_status = mSM_OVL_PROC_PLAY;
@@ -985,25 +1054,29 @@ static void mBD_set_frame_dl(GRAPH* graph, mSM_MenuInfo_c* menu_info, f32 x, f32
     CLOSE_DISP(graph);
 }
 
+extern Gfx win_b_mes_model[];
+
+static void mBD_set_frame_dl_Bday_mes(GRAPH* graph, mSM_MenuInfo_c* menu_info, f32 x, f32 y, mBD_Ovl_c* board_ovl) {
+    Gfx* gfx;
+    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+    Matrix_translate(x, y, 140.0f, MTX_MULT);
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(gfx++, win_b_mes_model);
+    SET_POLY_OPA_DISP(gfx);
+    CLOSE_DISP(graph);
+}
+
 extern Gfx lat_point_mT_model[];
 extern Gfx lat_hani_senT_model[];
 
 static void mBD_set_point(Submenu* submenu, GAME* game, f32 x, f32 y) {
     mBD_Ovl_c* board_ovl = submenu->overlay->board_ovl;
     GRAPH* graph = game->graph;
-    u8* str_p;
-    int i;
-    int pre_back_width = 0;
     Gfx* gfx;
 
-    str_p = board_ovl->mail.content.text.split.header;
-    i = board_ovl->mail.content.header_back_start;
-    while (i-- != 0) {
-        pre_back_width += mFont_GetCodeWidth(*str_p, TRUE);
-        str_p++;
-    }
-
-    board_ovl->ofs_x = x + (f32)pre_back_width + 36.0f + -96.0f;
+    board_ovl->ofs_x = x + (board_ovl->mail.content.header_back_start + 3) * 12.0f + -96.0f;
     board_ovl->ofs_y = y - -76.0f;
 
     Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
@@ -1037,7 +1110,7 @@ static void mBD_set_cursol(Submenu* submenu, GAME* game, f32 x, f32 y) {
                 int ox = 0;
 
                 if (board_ovl->header_pos == mBD_HEADER_POS_POST_NAME) {
-                    ox = 80;
+                    ox = PLAYER_NAME_LEN * 12;
                 }
 
                 ofs_x = (f32)editor_ovl->cursor_line_width + (f32)ox + -7.0f;
@@ -1054,8 +1127,8 @@ static void mBD_set_cursol(Submenu* submenu, GAME* game, f32 x, f32 y) {
             }
 
             default: {
-                int width =
-                    mFont_GetStringWidth(board_ovl->mail.content.text.split.footer, board_ovl->lengths[mBD_FIELD_FOOTER], TRUE);
+                int width = mFont_GetStringWidthW(board_ovl->mail.content.text.split.footer,
+                                                  board_ovl->lengths[mBD_FIELD_FOOTER], TRUE);
 
                 ofs_x = 192.0f;
                 ofs_x -= width;
@@ -1073,28 +1146,17 @@ static void mBD_set_cursol(Submenu* submenu, GAME* game, f32 x, f32 y) {
 
 static void mBD_set_writing_footer(Submenu* submenu, GAME* game, f32 x, f32 y, rgba_t* color) {
     int footer_len = submenu->overlay->board_ovl->lengths[mBD_FIELD_FOOTER];
-    int i;
-    int footer_size = 0;
-    u8* str_p;
-
-    str_p = submenu->overlay->board_ovl->mail.content.text.split.footer;
-    i = footer_len;
-    while (i-- != 0) {
-        footer_size += mFont_GetCodeWidth(*str_p, TRUE);
-        str_p++;
-    }
-
-    x += 192.0f - (f32)footer_size;
-    mFont_SetLineStrings(game, submenu->overlay->board_ovl->mail.content.text.split.footer, footer_len, x, y, color->r, color->g,
-                         color->b, 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+    x += (MAIL_FOOTER_LEN - footer_len) * 12.0f;
+    mFont_SetLineStringsW(game, submenu->overlay->board_ovl->mail.content.text.split.footer, footer_len, x, y, color->r,
+                          color->g, color->b, 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 }
 
 static void mBD_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game, f32 x, f32* y, f32* end_x,
                                  f32* end_y, rgba_t* color) {
     mBD_Ovl_c* board_ovl = submenu->overlay->board_ovl;
-    u8* str = board_ovl->mail.content.text.split.body;
-    u8* str_p;
-    u8* str_end_p = str + board_ovl->lengths[mBD_FIELD_BODY];
+    u16* str = board_ovl->mail.content.text.split.body;
+    u16* str_p;
+    u16* str_end_p = str + board_ovl->lengths[mBD_FIELD_BODY];
     int body_len;
     int i;
     int width = 0;
@@ -1111,7 +1173,7 @@ static void mBD_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
 
             if (line_ret == mBD_LINE_CHECK_OVERSTRING) {
                 if (i != (mBD_BODY_LINE_NUM - 1) && ((str != str_p && str[-1] == CHAR_NEW_LINE) ||
-                                                     width + mFont_GetCodeWidth(*str, TRUE) > mBD_MAX_WIDTH)) {
+                                                     width + mFont_GetCodeWidthW(*str, TRUE) > mBD_MAX_WIDTH)) {
                     (*end_x) = (x + 1.0f) - 160.0f;
                     (*end_y) = -(*y + 16.0f) + 120.0f;
                 } else {
@@ -1124,8 +1186,8 @@ static void mBD_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
                 }
 
                 if (line != 0) {
-                    mFont_SetLineStrings(game, str_p, line, x, *y, color->r, color->g, color->b, 255, FALSE, TRUE, 1.0f,
-                                         1.0f, mFont_MODE_POLY);
+                    mFont_SetLineStringsW(game, str_p, line, x, *y, color->r, color->g, color->b, 255, FALSE, TRUE,
+                                          1.0f, 1.0f, mFont_MODE_POLY);
                 }
 
                 (*y) += (f32)(mBD_BODY_LINE_NUM - i) * 16.0f;
@@ -1138,8 +1200,8 @@ static void mBD_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
         }
 
         if (line != 0) {
-            mFont_SetLineStrings(game, str_p, line, x, *y, color->r, color->g, color->b, 255, FALSE, TRUE, 1.0f, 1.0f,
-                                 mFont_MODE_POLY);
+            mFont_SetLineStringsW(game, str_p, line, x, *y, color->r, color->g, color->b, 255, FALSE, TRUE, 1.0f, 1.0f,
+                                  mFont_MODE_POLY);
         }
 
         (*y) += 16.0f;
@@ -1149,17 +1211,14 @@ static void mBD_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
 static void mBD_set_writing_header(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info, f32 x, f32 y,
                                    rgba_t* color) {
     mBD_Ovl_c* board_ovl = submenu->overlay->board_ovl;
-    Mail_ct_c* mail_content = &board_ovl->mail.content;
-    u8* str_p;
+    MailW_ct_c* mail_content = &board_ovl->mail.content;
     u8* header_back_start_p = &mail_content->header_back_start;
-    int i = *header_back_start_p;
-    int header_len = 0;
     int len;
 
     if (menu_info->proc_status == mSM_OVL_PROC_PLAY) {
-        if (menu_info->data0 == 3) {
-            mFont_SetLineStrings(game, mail_content->text.split.header, board_ovl->lengths[mBD_FIELD_HEADER], x, y, color->r,
-                                 color->g, color->b, 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+        if (menu_info->data0 == mSM_BD_OPEN_WRITE_ISLAND || menu_info->data0 == mSM_BD_OPEN_WRITE_BIRTHDAY) {
+            mFont_SetLineStringsW(game, mail_content->text.split.header, board_ovl->lengths[mBD_FIELD_HEADER], x, y,
+                                  color->r, color->g, color->b, 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
         } else {
             if (board_ovl->field == mBD_FIELD_HEADER) {
                 len = PLAYER_NAME_LEN;
@@ -1167,64 +1226,68 @@ static void mBD_set_writing_header(Submenu* submenu, GAME* game, mSM_MenuInfo_c*
                 len = board_ovl->header_name_len;
             }
 
-            mFont_SetLineStrings(game, mail_content->text.split.header, *header_back_start_p, x, y, color->r, color->g, color->b,
-                                 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+            mFont_SetLineStringsW(game, mail_content->text.split.header, *header_back_start_p, x, y, color->r, color->g,
+                                  color->b, 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 
-            str_p = mail_content->text.split.header;
-            while (i-- != 0) {
-                header_len += mFont_GetCodeWidth(*str_p, TRUE);
-                str_p++;
-            }
-
-            x += (f32)header_len;
+            x += *header_back_start_p * 12.0f;
             mFont_SetLineStrings(game, board_ovl->mail.header.recipient.personalID.player_name, len, x, y, 185, 0, 0,
-                                 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+                                 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 
             if (mail_content->header_back_start < MAIL_HEADER_LEN) {
-                x += 80.0f;
-                mFont_SetLineStrings(game, &mail_content->text.split.header[mail_content->header_back_start],
-                                     board_ovl->lengths[mBD_FIELD_HEADER] - mail_content->header_back_start, x, y,
-                                     color->r, color->g, color->b, 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+                x += len * 12.0f;
+                mFont_SetLineStringsW(game, &mail_content->text.split.header[mail_content->header_back_start],
+                                      board_ovl->lengths[mBD_FIELD_HEADER] - mail_content->header_back_start, x, y,
+                                      color->r, color->g, color->b, 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
             }
         }
     } else {
-        u8 tmp_header[MAIL_HEADER_LEN + PLAYER_NAME_LEN];
+        u16 tmp_header[MAIL_HEADER_LEN + PLAYER_NAME_LEN];
 
-        if (menu_info->data0 == 3 || menu_info->data0 == 4) {
-            mem_copy(tmp_header, mail_content->text.split.header, board_ovl->lengths[mBD_FIELD_HEADER]);
+        if (menu_info->data0 == mSM_BD_OPEN_WRITE_ISLAND || menu_info->data0 == mSM_BD_OPEN_READ_ISLAND ||
+            menu_info->data0 == mSM_BD_OPEN_WRITE_BIRTHDAY) {
+            mFont_CopyStringsW(tmp_header, mail_content->text.split.header, board_ovl->lengths[mBD_FIELD_HEADER]);
             len = board_ovl->lengths[mBD_FIELD_HEADER];
         } else if (mail_content->mail_type == mMl_TYPE_SHOP_SALE_LEAFLET ||
                    mail_content->mail_type == mMl_TYPE_BROKER_SALE_LEAFLET ||
                    mail_content->mail_type == mMl_TYPE_OMIKUJI) {
-            mem_copy(tmp_header, mail_content->text.split.header, MAIL_HEADER_LEN);
+            mFont_CopyStringsW(tmp_header, mail_content->text.split.header, MAIL_HEADER_LEN);
             len = MAIL_HEADER_LEN;
         } else {
-            mem_copy(tmp_header, mail_content->text.split.header, mail_content->header_back_start);
-            mem_copy(&tmp_header[mail_content->header_back_start],
-                     board_ovl->mail.header.recipient.personalID.player_name, board_ovl->header_name_len);
+            mFont_CopyStringsW(tmp_header, mail_content->text.split.header, mail_content->header_back_start);
+            mBD_chrCopyOneByteTwoByte(&tmp_header[mail_content->header_back_start],
+                                      board_ovl->mail.header.recipient.personalID.player_name,
+                                      board_ovl->header_name_len);
 
             if (mail_content->header_back_start < MAIL_HEADER_LEN) {
-                mem_copy(&tmp_header[board_ovl->header_name_len + mail_content->header_back_start],
-                         &mail_content->text.split.header[mail_content->header_back_start],
-                         board_ovl->lengths[mBD_FIELD_HEADER] - mail_content->header_back_start);
+                mFont_CopyStringsW(&tmp_header[board_ovl->header_name_len + mail_content->header_back_start],
+                                   &mail_content->text.split.header[mail_content->header_back_start],
+                                   board_ovl->lengths[mBD_FIELD_HEADER] - mail_content->header_back_start);
             }
 
             len = board_ovl->header_name_len + board_ovl->lengths[mBD_FIELD_HEADER];
         }
 
-        mFont_SetLineStrings(game, tmp_header, len, x, y, color->r, color->g, color->b, 255, FALSE, TRUE, 1.0f, 1.0f,
-                             mFont_MODE_POLY);
+        mFont_SetLineStringsW(game, tmp_header, len, x, y, color->r, color->g, color->b, 255, FALSE, FALSE, 1.0f, 1.0f,
+                              mFont_MODE_POLY);
     }
 }
 
 static void mBD_set_character(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info, f32 x, f32 y) {
-    int paper_type = submenu->overlay->board_ovl->mail.content.paper_type;
-    rgba_t* color = &letter_color[paper_type];
-    f32 b_x = x + 64.0f;
-    f32 b_y = -y + 36.0f;
+    static rgba_t bday_color = { 90, 90, 110, 255 };
+    rgba_t* color;
+    f32 b_x;
+    f32 b_y;
     f32 end_x;
     f32 end_y;
 
+    if (menu_info->data0 == mSM_BD_OPEN_WRITE_BIRTHDAY) {
+        color = &bday_color;
+    } else {
+        color = &letter_color[submenu->overlay->board_ovl->mail.content.paper_type];
+    }
+
+    b_x = x + 64.0f;
+    b_y = -y + 36.0f;
     mBD_set_writing_header(submenu, game, menu_info, b_x, b_y, color);
 
     b_y += 28.0f;
@@ -1245,12 +1308,18 @@ static void mBD_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) 
     f32 x = menu_info->position[0];
     f32 y = menu_info->position[1];
 
-    mBD_set_frame_dl(graph, menu_info, x, y, submenu->overlay->board_ovl);
-
-    if (menu_info->data0 == mSM_BD_OPEN_READ || menu_info->data0 == mSM_BD_OPEN_READ_ISLAND ||
-        submenu->overlay->board_ovl->first == FALSE) {
+    if (menu_info->data0 == mSM_BD_OPEN_WRITE_BIRTHDAY) {
+        mBD_set_frame_dl_Bday_mes(graph, menu_info, x, y, submenu->overlay->board_ovl);
         (*submenu->overlay->set_char_matrix_proc)(graph);
         mBD_set_character(submenu, game, menu_info, x, y);
+    } else {
+        mBD_set_frame_dl(graph, menu_info, x, y, submenu->overlay->board_ovl);
+
+        if (menu_info->data0 == mSM_BD_OPEN_READ || menu_info->data0 == mSM_BD_OPEN_READ_ISLAND ||
+            submenu->overlay->board_ovl->first == FALSE) {
+            (*submenu->overlay->set_char_matrix_proc)(graph);
+            mBD_set_character(submenu, game, menu_info, x, y);
+        }
     }
 }
 
@@ -1269,8 +1338,8 @@ extern void mBD_board_ovl_set_proc(Submenu* submenu) {
 }
 
 static void mBD_board_ovl_init(Submenu* submenu) {
-    static u8 header_str[3] = "To ";
-    static u8 footer_str[5] = "from ";
+    static u8 header_str[3] = { 0x0A, 0xC3, 0x1C }; /* san e */
+    static u8 footer_str[2] = { 0x60, 0x7C };       /* yori */
     mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_BOARD];
     mBD_Ovl_c* board_ovl = submenu->overlay->board_ovl;
 
@@ -1288,31 +1357,33 @@ static void mBD_board_ovl_init(Submenu* submenu) {
         board_ovl->first = TRUE;
         menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
         mSM_open_submenu_new2(submenu, mSM_OVL_ADDRESS, 0, 0, board_ovl->mail.content.text.split.body, mBD_MAX_WIDTH);
-        mMl_init_mail(&board_ovl->mail, &Common_Get(now_private)->player_ID);
+        mMlW_init_mail(&board_ovl->mail, &Common_Get(now_private)->player_ID);
         board_ovl->mail.content.paper_type =
             (Common_Get(now_private)->inventory.pockets[menu_info->data1] - ITM_PAPER_START) % PAPER_UNIQUE_NUM;
 
         if (mail_header->header_back_start == -1) {
             int name_len = mMl_strlen(Common_Get(now_private)->player_ID.player_name, PLAYER_NAME_LEN, CHAR_SPACE);
 
-            mem_copy(board_ovl->mail.content.text.split.header, header_str, sizeof(header_str));
-            mem_copy(board_ovl->mail.content.text.split.footer + sizeof(footer_str),
-                     Common_Get(now_private)->player_ID.player_name, name_len);
-            mem_copy(board_ovl->mail.content.text.split.footer, footer_str, sizeof(footer_str));
-            board_ovl->mail.content.header_back_start = sizeof(header_str);
+            mBD_chrCopyOneByteTwoByte(board_ovl->mail.content.text.split.header, header_str, sizeof(header_str));
+            mBD_chrCopyOneByteTwoByte(board_ovl->mail.content.text.split.footer,
+                                      Common_Get(now_private)->player_ID.player_name, name_len);
+            mBD_chrCopyOneByteTwoByte(board_ovl->mail.content.text.split.footer + name_len, footer_str,
+                                      sizeof(footer_str));
+            board_ovl->mail.content.header_back_start = 0;
         } else {
-            mem_copy(board_ovl->mail.content.text.split.header, (u8*)mail_header->header, MAIL_HEADER_LEN);
-            mem_copy(board_ovl->mail.content.text.split.footer, (u8*)mail_header->footer, MAIL_FOOTER_LEN);
+            mFont_CopyStringsW(board_ovl->mail.content.text.split.header, mail_header->header, MAIL_HEADER_LEN);
+            mFont_CopyStringsW(board_ovl->mail.content.text.split.footer, mail_header->footer, MAIL_FOOTER_LEN);
             board_ovl->mail.content.header_back_start = mail_header->header_back_start;
         }
     } else {
-        mMl_copy_mail(&board_ovl->mail, (Mail_c*)menu_info->data2);
+        mMl_conv_MlP2MlW((Mail_c*)menu_info->data2, &board_ovl->mail);
 
         if (menu_info->data0 == mSM_BD_OPEN_READ || menu_info->data0 == mSM_BD_OPEN_READ_ISLAND) {
             menu_info->next_proc_status = mSM_OVL_PROC_WAIT;
         } else {
             menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
-            mSM_open_submenu_new2(submenu, mSM_OVL_ADDRESS, 1, 0, board_ovl->mail.content.text.split.body, mBD_MAX_WIDTH);
+            mSM_open_submenu_new2(submenu, mSM_OVL_ADDRESS, 1, 0, board_ovl->mail.content.text.split.body,
+                                  mBD_MAX_WIDTH);
         }
 
         board_ovl->first = FALSE;
@@ -1320,9 +1391,12 @@ static void mBD_board_ovl_init(Submenu* submenu) {
             mMl_strlen(board_ovl->mail.header.recipient.personalID.player_name, PLAYER_NAME_LEN, CHAR_SPACE);
     }
 
-    board_ovl->lengths[mBD_FIELD_HEADER] = mMl_strlen(board_ovl->mail.content.text.split.header, MAIL_HEADER_LEN, CHAR_SPACE);
-    board_ovl->lengths[mBD_FIELD_FOOTER] = mMl_strlen(board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
-    board_ovl->lengths[mBD_FIELD_BODY] = mMl_strlen(board_ovl->mail.content.text.split.body, MAIL_BODY_LEN, CHAR_SPACE);
+    board_ovl->lengths[mBD_FIELD_HEADER] =
+        mMlW_strlen(board_ovl->mail.content.text.split.header, MAIL_HEADER_LEN, CHAR_SPACE);
+    board_ovl->lengths[mBD_FIELD_FOOTER] =
+        mMlW_strlen(board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
+    board_ovl->lengths[mBD_FIELD_BODY] =
+        mMlW_strlen(board_ovl->mail.content.text.split.body, MAIL_BODY_LEN, CHAR_SPACE);
 
     if (board_ovl->mail.content.header_back_start > MAIL_HEADER_LEN) {
         board_ovl->mail.content.header_back_start = MAIL_HEADER_LEN;
@@ -1337,26 +1411,31 @@ static void mBD_board_ovl_init(Submenu* submenu) {
 
     if (board_ovl->lengths[mBD_FIELD_FOOTER] != 0) {
         int i;
-        u8* tmp_footer_p;
-        u8 tmp_footer[MAIL_FOOTER_LEN];
+        int len;
+        u16* tmp_footer_p;
+        u16 tmp_footer[MAIL_FOOTER_LEN];
 
         /* Cut out any left padding spaces */
         tmp_footer_p = tmp_footer;
-        mem_copy(tmp_footer_p, board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN);
-        for (i = 0; i < board_ovl->lengths[mBD_FIELD_FOOTER]; i++, tmp_footer_p++) {
+        mFont_CopyStringsW(tmp_footer_p, board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN);
+        len = board_ovl->lengths[mBD_FIELD_FOOTER];
+        for (i = 0; len > 0; i++, len--, tmp_footer_p++) {
             if (*tmp_footer_p != CHAR_SPACE) {
                 break;
             }
         }
 
-        mem_clear(board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
-        mem_copy(board_ovl->mail.content.text.split.footer, tmp_footer_p, board_ovl->lengths[mBD_FIELD_FOOTER] - i);
+        mMlW_clear_buf(board_ovl->mail.content.text.split.footer, MAIL_FOOTER_LEN, CHAR_SPACE);
+        mFont_CopyStringsW(board_ovl->mail.content.text.split.footer, tmp_footer_p,
+                           board_ovl->lengths[mBD_FIELD_FOOTER] - i);
     }
 }
 
 extern void mBD_board_ovl_construct(Submenu* submenu) {
-    if (submenu->overlay->board_ovl == NULL) {
-        submenu->overlay->board_ovl = &board_ovl_data;
+    Submenu_Overlay_c* overlay = submenu->overlay;
+    if (overlay->board_ovl == NULL) {
+        mem_clear((u8*)&board_ovl_data, sizeof(board_ovl_data), 0);
+        overlay->board_ovl = &board_ovl_data;
     }
 
     mBD_board_ovl_init(submenu);
