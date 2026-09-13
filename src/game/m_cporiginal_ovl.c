@@ -650,7 +650,7 @@ static void mCO_set_frame_string_dl(Submenu* submenu, GAME* game, f32 pos_x, f32
         mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
 
         if (editor_ovl != NULL) {
-            editor_ovl->cursol_draw(submenu, game, pos_x + (editor_ovl->_26 + -6.0f) * 0.875f, pos_y);
+            editor_ovl->cursol_draw(submenu, game, pos_x + (editor_ovl->cursor_line_width + -6.0f) * 0.875f, pos_y);
         }
     }
 }

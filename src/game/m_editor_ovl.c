@@ -1,7 +1,9 @@
 #include "m_editor_ovl.h"
 
+#include "m_ledit_ovl.h"
+#include "m_debug.h"
+
 #include "audio.h"
-#include "m_warning_ovl.h"
 #include "m_lib.h"
 #include "m_font.h"
 #include "m_msg.h"
@@ -14,296 +16,242 @@
 #include "m_address_ovl.h"
 #include "sys_matrix.h"
 #include "m_rcp.h"
-#include "m_lib.h"
+#define mED_CHARS_PER_PAGE 5
 
-static u8 mED_ornament_table[] = {
-    // clang-format off
-    0x21, 0x3f, 0x03, 0x04, 0x05, 0x06, 0x07, 0x41,
-    0x43, 0x0a, 0x0b, 0x0c, 0x45, 0x0e, 0x0f, 0x10,
-    0x49, 0x44, 0x4e, 0x14, 0x15, 0x16, 0x17, 0x4f,
-    0x8d, 0x1a, 0x1b, 0x1c, 0x55, 0x1d, 0x95, 0x23,
-    0x20, 0x00, 0xa4, 0x24, 0x5b, 0x25, 0x26, 0x27,
-    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
-    0x18, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x01,
-    0x40, 0x02, 0x42, 0x08, 0x11, 0x09, 0x46, 0x47,
-    0x48, 0x0d, 0x4a, 0x4b, 0x4c, 0x4d, 0x12, 0x13,
-    0x50, 0x51, 0x52, 0x53, 0x54, 0x19, 0x56, 0x57,
-    0x58, 0x96, 0x5a, 0x5d, 0x5c, 0x5e, 0x61, 0x5f,
-    0x63, 0x1f, 0x62, 0x60, 0x64, 0x7b, 0x66, 0x67,
-    0x68, 0x81, 0x6a, 0x6b, 0x6c, 0x6d, 0x87, 0x88,
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x8e, 0x76, 0x77,
-    0x78, 0x93, 0x7a, 0x7c, 0x7d, 0x7e, 0x65, 0x7f,
-    0x80, 0x82, 0x83, 0x84, 0x69, 0x85, 0x86, 0x6e,
-    0x89, 0x8a, 0x8b, 0x8c, 0x6f, 0x30, 0x8f, 0x91,
-    0x90, 0x92, 0x75, 0x94, 0x79, 0x1e, 0x59, 0x97,
-    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-    0xa0, 0xa1, 0xa3, 0xa2, 0x22, 0xa5, 0xa6, 0xa7,
-    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
-    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
-    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-    0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
-    0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-    0xd0, 0xd1, 0xff, 0xd2, 0xd4, 0xd5, 0xd6, 0xd7,
-    0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-    0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-    0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
-    0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-    0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xd3
-    // clang-format on
+static u16 mED_ornament_table[256] = {
+    0x00C4, 0x00C5, 0x00C6, 0x00C7, 0x00C8, 0x00E7, 0x00E8, 0x00E9, 0x00EA, 0x00EB, 0x00EC, 0x00ED, 0x00EE, 0x00EF,
+    0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x00F6, 0x00F7, 0x00F8,
+    0x00F9, 0x00FA, 0x001E, 0x001F, 0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027, 0x0028, 0x0029,
+    0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F, 0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
+    0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F, 0x0040, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065,
+    0x0066, 0x0067, 0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F, 0x0070, 0x0071, 0x0072, 0x0073,
+    0x0074, 0x0075, 0x0076, 0x0077, 0x0078, 0x0079, 0x007A, 0x005B, 0x005C, 0x00C9, 0x00CA, 0x005F, 0x00CB, 0x0041,
+    0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048, 0x0049, 0x004A, 0x004B, 0x004C, 0x004D, 0x004E, 0x004F,
+    0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057, 0x0058, 0x0059, 0x005A, 0x007B, 0x007C, 0x007D,
+    0x007E, 0x007F, 0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095,
+    0x00B4, 0x00B5, 0x00B6, 0x00A2, 0x0090, 0x0087, 0x0088, 0x00BE, 0x008A, 0x008B, 0x00CE, 0x00CF, 0x00D0, 0x00D1,
+    0x00D2, 0x00D3, 0x00D4, 0x00D5, 0x00D6, 0x00D7, 0x00D8, 0x00D9, 0x00DA, 0x00DB, 0x00DC, 0x00A5, 0x00A6, 0x00A7,
+    0x00A8, 0x00A9, 0x00DD, 0x00DE, 0x00DF, 0x00E0, 0x00E1, 0x00AF, 0x00B0, 0x00B1, 0x00B2, 0x00B3, 0x008C, 0x008D,
+    0x008E, 0x00B7, 0x00B8, 0x00B9, 0x00BA, 0x00BB, 0x00BC, 0x00BD, 0x0089, 0x00BF, 0x00C0, 0x00C1, 0x00C2, 0x00C3,
+    0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x005D, 0x005E, 0x0060, 0x0011, 0x00CD, 0x0096, 0x0097, 0x0098, 0x0099,
+    0x009A, 0x009B, 0x009C, 0x009D, 0x009E, 0x009F, 0x00A0, 0x00A1, 0x008F, 0x00A3, 0x00A4, 0x00E2, 0x00E3, 0x00E4,
+    0x00E5, 0x00E6, 0x00AA, 0x00AB, 0x00AC, 0x00AD, 0x00AE, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B,
+    0x000C, 0x000D, 0x000E, 0x000F, 0x0010, 0x00CC, 0x0012, 0x0013, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF, 0x0019,
+    0x001A, 0x001B, 0x001C, 0x001D,
 };
 
-static void mED_open_warning_window(Submenu* submenu, mSM_MenuInfo_c* menu_info, int warning) {
-    mWR_SHOW_WARNING(submenu, warning);
-    menu_info->proc_status = mSM_OVL_PROC_WAIT;
-    menu_info->next_proc_status = mSM_OVL_PROC_WAIT;
-    sAdo_SysTrgStart(0x1003);
+static u16 mED_hiragana_table[50] = { 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009,
+                                      0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F, 0x0010, 0x0011, 0x0012, 0x0013,
+                                      0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D,
+                                      0x001E, 0x001F, 0x0023, 0x0024, 0x005B, 0x005D, 0x005E, 0x0060, 0x0090, 0x002A,
+                                      0x007B, 0x007C, 0x007D, 0x007E, 0x00C0, 0x00C1, 0x00C2, 0x00C3, 0x0084, 0x0081 };
+
+static u16 mED_katakana_table[50] = { 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097, 0x0098, 0x0099, 0x009A,
+                                      0x009B, 0x009C, 0x009D, 0x009E, 0x009F, 0x00A0, 0x00A1, 0x00A2, 0x00A3, 0x00A4,
+                                      0x00A5, 0x00A6, 0x00A7, 0x00A8, 0x00A9, 0x00AA, 0x00AB, 0x00AC, 0x00AD, 0x00AE,
+                                      0x00AF, 0x00B0, 0x00B1, 0x00B2, 0x00B3, 0x00B4, 0x00B5, 0x00B6, 0x0090, 0x002A,
+                                      0x00B7, 0x00B8, 0x00B9, 0x00BA, 0x00BB, 0x00BC, 0x0086, 0x00BD, 0x0084, 0x0081 };
+
+static u16 mED_kigou_table[30] = { 0x0084, 0x0081, 0x0085, 0x0020, 0x00CD, 0x0090, 0x002A, 0x003F, 0x0021, 0x0026,
+                                   0x0082, 0x0083, 0x0028, 0x0029, 0x0025, 0x002C, 0x002E, 0x0027, 0x0022, 0x003A,
+                                   0x002B, 0x002F, 0x003B, 0x005C, 0x00BF, 0x003C, 0x003E, 0x005F, 0x0040, 0x002D };
+
+static u16 mED_number_table[10] = { 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, 0x0038, 0x0039, 0x0030 };
+
+static u16 mED_alphabet_table[30] = { 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048, 0x0049, 0x004A,
+                                      0x004B, 0x004C, 0x004D, 0x004E, 0x004F, 0x0050, 0x0051, 0x0052, 0x0053, 0x0054,
+                                      0x0055, 0x0056, 0x0057, 0x0058, 0x0059, 0x005A, 0x002C, 0x002E, 0x00CD, 0x0020 };
+
+static u16 mED_alphabet_table2[30] = { 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048, 0x0049, 0x004A,
+                                       0x004B, 0x004C, 0x004D, 0x004E, 0x004F, 0x0050, 0x0051, 0x0052, 0x0053, 0x0054,
+                                       0x0055, 0x0056, 0x0057, 0x0058, 0x0059, 0x005A, 0x005F, 0x0080, 0x0080, 0x0080 };
+
+static u16 mED_emoji_table[35] = { 0x0104, 0x0106, 0x0105, 0x0107, 0x0108, 0x00BF, 0x0100, 0x0101, 0x0102,
+                                   0x0103, 0x0109, 0x010A, 0x010B, 0x010C, 0x010D, 0x0110, 0x0111, 0x0112,
+                                   0x0113, 0x0114, 0x0115, 0x0116, 0x0117, 0x0118, 0x0119, 0x011A, 0x011B,
+                                   0x011C, 0x011D, 0x011E, 0x003D, 0x002D, 0x010E, 0x010F, 0x011F };
+
+static int shift_total[mED_SHIFT_NUM] = { 5, 6 };
+static int page_num_max[mED_SHIFT_MODE_NUM] = { 10, 30, 10, 30, 10, 35 };
+
+extern u8 lat_sousa_2b1_tex_rgb_i4[];
+extern u8 lat_sousa_2b2_tex_rgb_i4[];
+
+static u8* lat_sousa_button_pallet_tbl[] = { lat_sousa_2b1_tex_rgb_i4, lat_sousa_2b2_tex_rgb_i4 };
+
+static int mED_get_col_line_width(mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl, s16* cursor_col, s16* cursor_row,
+                                  s16* cursor_line_width, int max);
+
+static u16 mED_get_str_data(mED_Ovl_c* editor_ovl, int idx) {
+    if (editor_ovl->is_wide_string == TRUE) {
+        return editor_ovl->input_wstr[idx];
+    } else {
+        return (u16)editor_ovl->input_str[idx];
+    }
 }
 
-static int mED_get_code(mED_Ovl_c* editor_ovl, int col, int row) {
-    static u8 letterS_table[] = {
-        // clang-format off
-        0x21, 0x3f, 0x22, 0x2d, 0x2a, 0x90, 0x27, 0xd0,
-        0x3a, 0xd4, 0x71, 0x77, 0x65, 0x72, 0x74, 0x79,
-        0x75, 0x69, 0x6f, 0x70, 0x61, 0x73, 0x64, 0x66,
-        0x67, 0x68, 0x6a, 0x6b, 0x6c, 0xcd, 0x7a, 0x78,
-        0x63, 0x76, 0x62, 0x6e, 0x6d, 0x2c, 0x2e, 0x20,
-        // clang-format on
-    };
-
-    static u8 letterS_table2[] = {
-        // clang-format off
-        0x21, 0x3f, 0x22, 0x2d, 0x2a, 0x90, 0x27, 0xd0,
-        0x3a, 0x85, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
-        0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e,
-        0x6f, 0x70, 0x71, 0x72, 0x73, 0xcd, 0x74, 0x75,
-        0x76, 0x77, 0x78, 0x79, 0x7a, 0x2c, 0x2e, 0x20,
-        // clang-format on
-    };
-
-    static u8 letterL_table[] = {
-        // clang-format off
-        0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
-        0x39, 0x30, 0x51, 0x57, 0x45, 0x52, 0x54, 0x59,
-        0x55, 0x49, 0x4f, 0x50, 0x41, 0x53, 0x44, 0x46,
-        0x47, 0x48, 0x4a, 0x4b, 0x4c, 0xcd, 0x5a, 0x58,
-        0x43, 0x56, 0x42, 0x4e, 0x4d, 0x2c, 0x2e, 0x20,
-        // clang-format on
-    };
-
-    static u8 letterL_table2[] = {
-        // clang-format off
-        0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
-        0x39, 0x30, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46,
-        0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e,
-        0x4f, 0x50, 0x51, 0x52, 0x53, 0xcd, 0x54, 0x55,
-        0x56, 0x57, 0x58, 0x59, 0x5a, 0x2c, 0x2e, 0x20,
-        // clang-format on
-    };
-
-    static u8 sign_table[] = {
-        // clang-format off
-        0xd1, 0x3f, 0x22, 0x2d, 0x2a, 0x90, 0x85, 0xd0,
-        0x3a, 0xa2, 0x25, 0x26, 0x40, 0x5f, 0xa0, 0xae,
-        0x97, 0xc0, 0xc1, 0x3d, 0x28, 0x29, 0x3c, 0x3e,
-        0xa5, 0xa6, 0xac, 0xad, 0xb4, 0xcd, 0x1d, 0x1e,
-        0x86, 0x98, 0x9b, 0x9c, 0xa1, 0x2c, 0x2e, 0x20,
-        // clang-format on
-    };
-
-    static u8 mark_table[] = {
-        // clang-format off
-        0x2b, 0xb9, 0x2f, 0x3b, 0x5c, 0xb8, 0xc6, 0xb6,
-        0xb7, 0xaf, 0xb0, 0xb1, 0xb2, 0xb3, 0xba, 0xbb,
-        0xbc, 0xbd, 0xbe, 0xbf, 0xa7, 0xa8, 0xa9, 0xab,
-        0xaa, 0xb5, 0xc2, 0xc3, 0xc4, 0xcd, 0xc7, 0xc8,
-        0xc9, 0xca, 0xcb, 0xcc, 0xc5, 0xce, 0xcf, 0x20,
-        // clang-format on
-    };
-
-    static u8* dataS_table[] = { letterS_table, sign_table, mark_table };
-
-    static u8* dataS_table2[] = { letterS_table2, sign_table, mark_table };
-
-    static u8* dataL_table[] = { letterL_table, sign_table, mark_table };
-
-    static u8* dataL_table2[] = { letterL_table2, sign_table, mark_table };
-
-    static u8** data_table[2][2] = { { dataS_table, dataL_table }, { dataS_table2, dataL_table2 } };
-
-    u8* table = data_table[editor_ovl->arrange][editor_ovl->shift_mode][editor_ovl->input_mode];
-    int idx = col + row * mED_COLUMNS;
-
-    return table[idx];
+static void mED_set_str_data(mED_Ovl_c* editor_ovl, int idx, u16 data) {
+    if (editor_ovl->is_wide_string == TRUE) {
+        editor_ovl->input_wstr[idx] = data;
+    } else {
+        editor_ovl->input_str[idx] = (u8)data;
+    }
 }
 
-static void mED_set_stick_area(mED_Ovl_c* editor_ovl) {
-    u8 prev_stick_area = editor_ovl->stick_area;
+static int mED_strlen(mED_Ovl_c* editor_ovl, int count, u16 ignore_char) {
+    int i;
 
-    if (gamePT->mcon.adjusted_pR < 0.2f) {
-        /* Stick is in deadzone */
+    for (i = count - 1; count != 0; i--, count--) {
+        if (mED_get_str_data(editor_ovl, i) != ignore_char) {
+            return count;
+        }
+    }
+
+    return 0;
+}
+
+static void mED_input_multi_line_R_make_forecastW(mED_Ovl_c* editor_ovl, u16* output, int output_length) {
+    int i;
+    u16* src = editor_ovl->input_wstr;
+
+    for (i = 0; i < editor_ovl->cursor_idx; i++) {
+        *output++ = *src++;
+    }
+
+    *output++ = editor_ovl->now_code;
+    for (; i < output_length; i++) {
+        *output++ = *src++;
+    }
+}
+
+static void mED_input_multi_line_R_make_forecast(mED_Ovl_c* editor_ovl, u8* output, u16* output_wstr,
+                                                 int output_length) {
+    if (editor_ovl->is_wide_string == TRUE) {
+        mED_input_multi_line_R_make_forecastW(editor_ovl, output_wstr, output_length);
+    } else {
+        int i;
+        u8* src = editor_ovl->input_str;
+
+        for (i = 0; i < editor_ovl->cursor_idx; i++) {
+            *output++ = *src++;
+        }
+
+        *output++ = editor_ovl->now_code;
+        for (; i < output_length; i++) {
+            *output++ = *src++;
+        }
+    }
+}
+
+static int mED_input_multi_line_R_chk_cond(mED_Ovl_c* editor_ovl, u8* str, u16* wstr, mSM_MenuInfo_c* menu_info) {
+    u8* src_str = editor_ovl->input_str;
+    u16* src_wstr = editor_ovl->input_wstr;
+    s16 rows;
+    s16 cols;
+    s16 line_width;
+    int res;
+
+    editor_ovl->input_str = str;
+    editor_ovl->input_wstr = wstr;
+    res = mED_get_col_line_width(menu_info, editor_ovl, &cols, &rows, &line_width, editor_ovl->now_str_len + 1);
+    editor_ovl->input_str = src_str;
+    editor_ovl->input_wstr = src_wstr;
+    return res;
+}
+
+static int mED_get_shift_total(mED_Ovl_c* editor_ovl) {
+    int ret = 5;
+
+    if (editor_ovl->is_wide_string == TRUE) {
+        ret = 6;
+    }
+
+    return ret;
+}
+
+static int mED_get_code(mED_Ovl_c* editor_ovl, int base, int stick_area, int first) {
+    static u16* page_data_table[mED_SHIFT_MODE_NUM] = {
+        mED_hiragana_table, mED_kigou_table, mED_katakana_table, mED_alphabet_table, mED_number_table, mED_emoji_table,
+    };
+
+    static u16* page_data_table2[mED_SHIFT_MODE_NUM] = {
+        mED_hiragana_table, mED_kigou_table, mED_katakana_table, mED_alphabet_table2, mED_number_table, mED_emoji_table,
+    };
+
+    static int offset_max[mED_SHIFT_MODE_NUM] = { 50, 30, 50, 30, 10, 35 };
+
+    int shift_mode = editor_ovl->shift_mode;
+    int idx;
+
+    switch (shift_mode) {
+        case mED_SHIFT_MODE_HIRAGANA:
+        case mED_SHIFT_MODE_KATAKANA:
+            if (first) {
+                idx = (base + stick_area) * mED_CHARS_PER_PAGE;
+            } else {
+                idx = base * mED_CHARS_PER_PAGE + stick_area;
+            }
+            break;
+        default:
+            idx = base + stick_area;
+            break;
+    }
+
+    idx %= offset_max[shift_mode];
+    if (editor_ovl->latin_shift_mode == mED_SHIFT_UPPER) {
+        return page_data_table2[shift_mode][idx];
+    } else {
+        return page_data_table[shift_mode][idx];
+    }
+}
+
+static void mED_set_stick_area(Submenu* submenu) {
+    mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
+    float r = gamePT->mcon.adjusted_pR;
+
+    editor_ovl->last_stick_area = editor_ovl->stick_area;
+    if (r < 0.2f) {
         editor_ovl->stick_area = mED_STICK_AREA_CENTER;
     } else {
-        s16 angle = gamePT->mcon.move_angle;
+        int angle = gamePT->mcon.move_angle;
 
-        /* [-180, -157.5) 22.5 degrees */
-        if (angle < DEG2SHORT_ANGLE(-157.5f)) {
+        if (angle < DEG2SHORT_ANGLE2(-157.5f)) {
             editor_ovl->stick_area = mED_STICK_AREA_LEFT;
-        }
-        /* [-157.5, -112.5) 45 degrees */
-        else if (angle >= DEG2SHORT_ANGLE(-157.5f) && angle < DEG2SHORT_ANGLE(-112.5f)) {
-            editor_ovl->stick_area = prev_stick_area;
-        }
-        /* [-112.5, -67.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(-67.5f)) {
+        } else if (angle >= DEG2SHORT_ANGLE(-157.5f) && angle < DEG2SHORT_ANGLE2(-112.5f)) {
+            editor_ovl->stick_area = mED_STICK_AREA_BOTTOM_LEFT;
+        } else if (angle < DEG2SHORT_ANGLE2(-67.5f)) {
             editor_ovl->stick_area = mED_STICK_AREA_BOTTOM;
-        }
-        /* [-67.5, -22.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(-22.5f)) {
-            editor_ovl->stick_area = prev_stick_area;
-        }
-        /* [-22.5, 22.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(22.5f)) {
+        } else if (angle < DEG2SHORT_ANGLE2(-22.5f)) {
+            editor_ovl->stick_area = mED_STICK_AREA_BOTTOM_RIGHT;
+        } else if (angle < DEG2SHORT_ANGLE2(22.5f)) {
             editor_ovl->stick_area = mED_STICK_AREA_RIGHT;
-        }
-        /* [22.5, 67.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(67.5f)) {
-            editor_ovl->stick_area = prev_stick_area;
-        }
-        /* [67.5, 112.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(112.5f)) {
+        } else if (angle < DEG2SHORT_ANGLE2(67.5f)) {
+            editor_ovl->stick_area = mED_STICK_AREA_TOP_RIGHT;
+        } else if (angle < DEG2SHORT_ANGLE2(112.5f)) {
             editor_ovl->stick_area = mED_STICK_AREA_TOP;
-        }
-        /* [112.5, 157.5) 45 degrees */
-        else if (angle < DEG2SHORT_ANGLE(157.5f)) {
-            editor_ovl->stick_area = prev_stick_area;
-        }
-        /* [157.5, 180] 22.5 degrees */
-        else {
+        } else if (angle < DEG2SHORT_ANGLE2(157.5f)) {
+            editor_ovl->stick_area = mED_STICK_AREA_TOP_LEFT;
+        } else {
             editor_ovl->stick_area = mED_STICK_AREA_LEFT;
         }
     }
 
-    if (editor_ovl->stick_area != prev_stick_area) {
+    if (editor_ovl->last_stick_area != editor_ovl->stick_area) {
+        int stick_area = editor_ovl->stick_area;
+
         editor_ovl->stick_area_changed = TRUE;
-    } else {
-        editor_ovl->stick_area_changed = FALSE;
-    }
-}
-
-static int mED_check_pw_usable_letter_sub(u8 letter) {
-    static u8 usable_str_table[] = {
-        // clang-format off
-        0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
-        0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50,
-        0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
-        0x59, 0x5a, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
-        0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e,
-        0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76,
-        0x77, 0x78, 0x79, 0x7a, 0x25, 0x26, 0xd1, 0x40,
-        0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-        // clang-format on
-    };
-
-    int i;
-    int res = FALSE;
-
-    switch (letter) {
-        case CHAR_ZERO:
-            letter = CHAR_O;
-            break;
-        case CHAR_ONE:
-            letter = CHAR_l;
-            break;
-    }
-
-    for (i = 0; i < ARRAY_COUNT(usable_str_table); i++) {
-        if (letter == usable_str_table[i]) {
-            res = TRUE;
-            break;
-        }
-    }
-
-    return res;
-}
-
-static int mED_check_pw_usable_letter(mPC_Ovl_c* passwordChk_ovl) {
-    u8* line;
-    int i;
-    int res = TRUE;
-
-    line = passwordChk_ovl->line0;
-    for (i = 0; i < ARRAY_COUNT(passwordChk_ovl->line0); i++) {
-        if (mED_check_pw_usable_letter_sub(*line) == FALSE) {
-            res = FALSE;
-            break;
-        }
-
-        line++;
-    }
-
-    line = passwordChk_ovl->line1;
-    for (i = 0; i < ARRAY_COUNT(passwordChk_ovl->line1); i++) {
-        if (mED_check_pw_usable_letter_sub(*line) == FALSE) {
-            res = FALSE;
-            break;
-        }
-
-        line++;
-    }
-
-    return res;
-}
-
-static void mED_move_keyboard_cursor(mED_Ovl_c* editor_ovl) {
-    static int add_w[mED_STICK_AREA_NUM] = { -1, 0, 0, 0, 1, 0, 0, 0, 0 };
-
-    static int add_h[mED_STICK_AREA_NUM] = { 0, 0, -1, 0, 0, 0, 1, 0, 0 };
-
-    int move = FALSE;
-    int stick_area = editor_ovl->stick_area;
-
-    if (stick_area != mED_STICK_AREA_CENTER) {
-        if (editor_ovl->stick_area_changed == TRUE) {
-            editor_ovl->stick_area_held_frames = 0;
-            move = TRUE;
-        } else {
-            editor_ovl->stick_area_held_frames++;
-
-            if (editor_ovl->stick_area_held_frames >= 16) {
-                editor_ovl->stick_area_held_frames = 12;
-                move = TRUE;
+        if ((int)editor_ovl->stick_area >= mED_STICK_AREA_NUM ||
+            (int)editor_ovl->stick_area < mED_STICK_AREA_BOTTOM_RIGHT) {
+            if ((editor_ovl->shift_mode != mED_SHIFT_MODE_HIRAGANA &&
+                 editor_ovl->shift_mode != mED_SHIFT_MODE_KATAKANA) ||
+                editor_ovl->consonant_num != -1) {
+                sAdo_SysTrgStart(0x40F);
+            } else {
+                sAdo_SysTrgStart(0x411);
             }
         }
-    }
-
-    if (move == TRUE) {
-        int move2 = TRUE;
-        int next_col = editor_ovl->select_col + add_w[stick_area];
-        int next_row = editor_ovl->select_row + add_h[stick_area];
-
-        if (next_col < 0) {
-            next_col = 0;
-            move2 = FALSE;
-        } else if (next_col >= mED_COLUMNS) {
-            next_col = mED_COLUMNS - 1;
-            move2 = FALSE;
-        }
-
-        if (next_row < 0) {
-            next_row = 0;
-            move2 = FALSE;
-        } else if (next_row >= mED_ROWS) {
-            next_row = mED_ROWS - 1;
-            move2 = FALSE;
-        }
-
-        editor_ovl->select_col = next_col;
-        editor_ovl->select_row = next_row;
-
-        if (move2 == TRUE) {
-            sAdo_SysTrgStart(0x411);
-        }
+    } else {
+        editor_ovl->stick_area_changed = FALSE;
     }
 }
 
@@ -313,33 +261,33 @@ static int mED_check_move_cursol(mED_Ovl_c* editor_ovl) {
 
     if (buttons == BUTTON_NONE) {
         editor_ovl->last_buttons = 0;
-        editor_ovl->_10 = 30;
-        editor_ovl->_0F = 26;
-        editor_ovl->_0E = 0;
+        editor_ovl->button_repeat_timer = 30;
+        editor_ovl->button_repeat_accel_timer = 26;
+        editor_ovl->button_repeat_started = 0;
     } else {
         if (buttons == editor_ovl->last_buttons) {
-            if (editor_ovl->_0E == 1 && editor_ovl->_0F != 0) {
-                editor_ovl->_0F--;
+            if (editor_ovl->button_repeat_started == 1 && editor_ovl->button_repeat_accel_timer != 0) {
+                editor_ovl->button_repeat_accel_timer--;
             }
 
-            if (editor_ovl->_10 != 0) {
-                editor_ovl->_10--;
+            if (editor_ovl->button_repeat_timer != 0) {
+                editor_ovl->button_repeat_timer--;
                 return mED_COMMAND_9;
             }
 
-            if (editor_ovl->_0F == 0) {
-                editor_ovl->_10 = 2;
-                editor_ovl->_34 = 3;
+            if (editor_ovl->button_repeat_accel_timer == 0) {
+                editor_ovl->button_repeat_timer = 2;
+                editor_ovl->button_repeat_speed = 3;
             } else {
-                editor_ovl->_10 = 6;
-                editor_ovl->_0E = 1;
-                editor_ovl->_34 = 2;
+                editor_ovl->button_repeat_timer = 6;
+                editor_ovl->button_repeat_started = 1;
+                editor_ovl->button_repeat_speed = 2;
             }
         } else {
             editor_ovl->last_buttons = buttons;
-            editor_ovl->_10 = 30;
-            editor_ovl->_0F = 26;
-            editor_ovl->_0E = 0;
+            editor_ovl->button_repeat_timer = 30;
+            editor_ovl->button_repeat_accel_timer = 26;
+            editor_ovl->button_repeat_started = 0;
         }
 
         if ((buttons & BUTTON_B) != 0) {
@@ -358,63 +306,107 @@ static int mED_check_move_cursol(mED_Ovl_c* editor_ovl) {
     return res;
 }
 
-static int mED_check_shift(mED_Ovl_c* editor_ovl) {
-    int res = FALSE;
-
-    if (chkTrigger(BUTTON_L)) {
-        if (editor_ovl->shift_mode == mED_SHIFT_LOWER) {
-            editor_ovl->shift_mode = mED_SHIFT_UPPER;
-        } else {
-            editor_ovl->shift_mode = mED_SHIFT_LOWER;
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mED_check_arrange(mED_Ovl_c* editor_ovl) {
-    int res = FALSE;
-
-    if (chkTrigger(BUTTON_Z)) {
-        if (editor_ovl->arrange == mED_ARRANGE_QWERTY) {
-            editor_ovl->arrange = mED_ARRANGE_ALPHA;
-        } else {
-            editor_ovl->arrange = mED_ARRANGE_QWERTY;
-        }
-
-        res = TRUE;
-    }
-
-    return res;
-}
-
-static int mED_check_input_mode(mED_Ovl_c* editor_ovl) {
+static int mED_check_shift_mode(mED_Ovl_c* editor_ovl) {
     int res = FALSE;
 
     if (chkTrigger(BUTTON_Y)) {
-        editor_ovl->input_mode++;
-        editor_ovl->shift_mode = mED_SHIFT_LOWER;
+        editor_ovl->shift_mode++;
+        if (editor_ovl->latin_shift_mode == mED_SHIFT_UPPER) {
+            if (editor_ovl->shift_mode > mED_SHIFT_MODE_NUMBER) {
+                editor_ovl->shift_mode = mED_SHIFT_MODE_ALPHABET;
+            }
+        } else {
+            int total = mED_get_shift_total(editor_ovl);
 
-        if (editor_ovl->input_mode >= mED_INPUT_MODE_NUM) {
-            editor_ovl->input_mode = mED_INPUT_MODE_LETTER;
+            editor_ovl->page_top_num = 0;
+            editor_ovl->consonant_num = -1;
+            if (editor_ovl->shift_mode >= total) {
+                editor_ovl->shift_mode = mED_SHIFT_MODE_HIRAGANA;
+            }
         }
 
         res = TRUE;
     }
 
     return res;
+}
+
+static int mED_check_page_mode(mED_Ovl_c* editor_ovl) {
+    if ((editor_ovl->stick_area == mED_STICK_AREA_BOTTOM &&
+         (chkTrigger(BUTTON_A) || editor_ovl->stick_area_changed == TRUE)) ||
+        (editor_ovl->consonant_num != -1 && chkTrigger(BUTTON_B))) {
+        if (editor_ovl->consonant_num == -1) {
+            editor_ovl->page_top_num += 3;
+            editor_ovl->rotate_timer = 6;
+        } else {
+            editor_ovl->consonant_num = -1;
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static int mED_area_to_consonant(mED_Ovl_c* editor_ovl) {
+    int stick_area = editor_ovl->stick_area;
+    int consonant = -1;
+
+    if (stick_area >= mED_STICK_AREA_LEFT && stick_area <= mED_STICK_AREA_RIGHT) {
+        consonant = editor_ovl->stick_area + editor_ovl->page_top_num;
+    }
+
+    return consonant;
+}
+
+static int mED_input_consonant_num(mED_Ovl_c* editor_ovl) {
+    int ret = FALSE;
+
+    if (editor_ovl->shift_mode == mED_SHIFT_MODE_HIRAGANA || editor_ovl->shift_mode == mED_SHIFT_MODE_KATAKANA) {
+        if (editor_ovl->consonant_num == -1) {
+            int consonant_num = mED_area_to_consonant(editor_ovl);
+
+            if (consonant_num != -1 && chkTrigger(BUTTON_A)) {
+                editor_ovl->consonant_num = consonant_num;
+                ret = TRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int mED_get_now_code(mED_Ovl_c* editor_ovl) {
+    int stick_area = editor_ovl->stick_area;
+    int shift_mode = editor_ovl->shift_mode;
+    int ret = -1;
+
+    if ((stick_area >= mED_STICK_AREA_LEFT && stick_area <= mED_STICK_AREA_RIGHT) &&
+        ((shift_mode != mED_SHIFT_MODE_HIRAGANA && shift_mode != mED_SHIFT_MODE_KATAKANA) ||
+         editor_ovl->consonant_num != -1)) {
+        int base_idx;
+
+        if (editor_ovl->consonant_num == -1) {
+            base_idx = editor_ovl->page_top_num;
+        } else {
+            base_idx = editor_ovl->consonant_num;
+        }
+
+        ret = mED_get_code(editor_ovl, base_idx, stick_area, FALSE);
+    }
+
+    return ret;
 }
 
 static int mED_check_now_code(mED_Ovl_c* editor_ovl) {
     int res = FALSE;
 
     if (chkTrigger(BUTTON_A)) {
-        int code = mED_get_code(editor_ovl, editor_ovl->select_col, editor_ovl->select_row);
+        int code = mED_get_now_code(editor_ovl);
 
-        if (code != CHAR_SPACE_3) {
+        if (code != -1) {
             editor_ovl->now_code = code;
+            editor_ovl->consonant_num = -1;
             res = TRUE;
         }
     } else if (chkTrigger(BUTTON_R)) {
@@ -427,23 +419,20 @@ static int mED_check_now_code(mED_Ovl_c* editor_ovl) {
 
 static int mED_check_output_code(mED_Ovl_c* editor_ovl) {
     int res = mED_COMMAND_NONE;
-
-    if (mED_check_shift(editor_ovl) == TRUE) {
-        if (editor_ovl->input_mode == mED_INPUT_MODE_LETTER) {
-            sAdo_SysTrgStart(0x37);
-        }
-    } else if (mED_check_arrange(editor_ovl) == TRUE) {
+    if (mED_check_shift_mode(editor_ovl)) {
         sAdo_SysTrgStart(0x37);
-    } else if (mED_check_input_mode(editor_ovl) == TRUE) {
-        sAdo_SysTrgStart(0x37);
-    } else if (mED_check_now_code(editor_ovl) == TRUE) {
+    } else if (mED_check_page_mode(editor_ovl)) {
+        sAdo_SysTrgStart(0x38);
+    } else if (mED_input_consonant_num(editor_ovl)) {
+        sAdo_SysTrgStart(0x32);
+    } else if (mED_check_now_code(editor_ovl)) {
         res = mED_COMMAND_OUTPUT_CODE;
     }
-
     return res;
 }
 
-static void mED_set_command(mED_Ovl_c* editor_ovl) {
+static void mED_set_command(Submenu* submenu) {
+    mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
     if (chkTrigger(BUTTON_START)) {
         editor_ovl->command = mED_COMMAND_END_EDIT;
     } else if (chkTrigger(BUTTON_X)) {
@@ -457,180 +446,151 @@ static void mED_set_command(mED_Ovl_c* editor_ovl) {
     }
 }
 
-static int mED_get_col_line_width(mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl, s16* param_3, s16* param_4,
-                                  s16* param_5, int max) {
-    u8* str_p = editor_ovl->input_str;
+static int mED_get_col_line_width(mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl, s16* cursor_col, s16* cursor_row,
+                                  s16* cursor_line_width, int max) {
+    int idx = 0;
     int i;
-    s16 temp0;
-    s16 temp1;
-    int cut;
-    int res;
-
-    temp0 = 0;
-    temp1 = 0;
-
-    cut = TRUE;
-    param_4[0] = 0;
-    param_3[0] = 0;
-    param_5[0] = 0;
-    res = mED_LINE_OK;
-
-    if (menu_info->data0 == mED_TYPE_PASSWORDCHK) {
-        cut = FALSE;
-    }
-
+    s16 prev_col = 0;
+    s16 prev_width = 0;
+    *cursor_row = 0;
+    *cursor_col = 0;
+    *cursor_line_width = 0;
     for (i = 0; i < max; i++) {
-        int temp_res;
-
-        if (*str_p == CHAR_NEW_LINE) {
-            temp0 = *param_3;
-            temp1 = *param_5;
-            param_3[0] = 0;
-            param_5[0] = 0;
-            param_4[0]++;
-            temp_res = mED_LINE_NEWLINE;
-        } else {
-            s16 width = mFont_GetCodeWidth(*str_p, cut);
-            s16 t = *param_5;
-
-            if (t + width > editor_ovl->line_width) {
-                temp0 = *param_3;
-                temp1 = t;
-                param_3[0] = 1;
-                param_5[0] = width;
-                param_4[0]++;
-                temp_res = mED_LINE_WIDTH_OVER;
-            } else {
-                param_3[0]++;
-                param_5[0] += width;
-                temp_res = mED_LINE_OK;
-            }
+        int line = mED_LINE_OK;
+        s16 width = *cursor_line_width;
+        if (width + mFont_TEX_CHAR_WIDTH > editor_ovl->line_width) {
+            prev_col = *cursor_col;
+            prev_width = width;
+            *cursor_col = 1;
+            *cursor_line_width = mFont_TEX_CHAR_WIDTH;
+            (*cursor_row)++;
+            line = mED_LINE_WIDTH_OVER;
         }
-
-        if (*param_4 >= editor_ovl->max_line_no) {
-            param_3[0] = temp0 + 1;
-            param_4[0] = editor_ovl->max_line_no - 1;
-            param_5[0] = temp1;
-
-            if (temp_res == mED_LINE_OK) {
-                res = mED_LINE_NUM_OVER;
-            } else {
-                res = temp_res;
-            }
-
-            break;
+        if (mED_get_str_data(editor_ovl, idx) == CHAR_NEW_LINE) {
+            prev_col = *cursor_col;
+            prev_width = *cursor_line_width;
+            *cursor_col = 0;
+            *cursor_line_width = 0;
+            (*cursor_row)++;
+            line = mED_LINE_NEWLINE;
         }
-
-        str_p++;
+        if (line == mED_LINE_OK) {
+            (*cursor_col)++;
+            *cursor_line_width += mFont_TEX_CHAR_WIDTH;
+        }
+        if (*cursor_row >= editor_ovl->max_line_no) {
+            *cursor_col = prev_col + 1;
+            *cursor_row = editor_ovl->max_line_no - 1;
+            *cursor_line_width = prev_width;
+            return line == mED_LINE_OK ? mED_LINE_NUM_OVER : line;
+        }
+        idx++;
     }
-
-    return res;
+    return mED_LINE_OK;
 }
 
 static void mED_check_line_over(mED_Ovl_c* editor_ovl) {
-    if (editor_ovl->max_line_no > 1 && editor_ovl->_24 < (editor_ovl->max_line_no - 1) &&
-        editor_ovl->input_str[editor_ovl->cursor_idx] != CHAR_NEW_LINE) {
-        s16 width = mFont_GetCodeWidth(editor_ovl->input_str[editor_ovl->cursor_idx], TRUE);
-
-        if ((editor_ovl->_26 + width) > editor_ovl->line_width) {
-            editor_ovl->_22 = 0;
-            editor_ovl->_26 = 0;
-            editor_ovl->_24++;
-        }
+    if (editor_ovl->max_line_no > 1 && editor_ovl->cursor_row < editor_ovl->max_line_no - 1 &&
+        editor_ovl->cursor_line_width + mFont_TEX_CHAR_WIDTH > editor_ovl->line_width) {
+        editor_ovl->cursor_col = 0;
+        editor_ovl->cursor_line_width = 0;
+        editor_ovl->cursor_row++;
     }
 }
 
 static void mED_set_idxcol_inLineWidth(mED_Ovl_c* editor_ovl) {
-    u8* str_p = editor_ovl->input_str;
+    int idx = 0;
     int i;
-    int _22;
-    int _26;
+    int cursor_col;
+    int width;
     int lines;
-    int r25;
-    int r24;
-    int r23;
-    int _24;
-
-    _22 = 0;
+    int prev_col;
+    int prev_width;
+    int prev_line;
+    int row;
+    cursor_col = 0;
     lines = 0;
-    _26 = 0;
-    r25 = 0;
-    r23 = 0;
-    r24 = 0;
-    _24 = editor_ovl->_24;
-
+    width = 0;
+    prev_col = 0;
+    prev_line = 0;
+    prev_width = 0;
+    row = editor_ovl->cursor_row;
     for (i = 0; i < editor_ovl->now_str_len; i++) {
-        if (*str_p == CHAR_NEW_LINE) {
-            _26 = 0;
-            _22 = 0;
+        if (width + mFont_TEX_CHAR_WIDTH > editor_ovl->line_width) {
+            prev_line = lines + 1;
+            prev_col = 0;
+            prev_width = 0;
+            width = mFont_TEX_CHAR_WIDTH;
+            cursor_col = 1;
             lines++;
         } else {
-            int width = mFont_GetCodeWidth(*str_p, TRUE);
-
-            if ((_26 + width) > editor_ovl->line_width) {
-                r23 = lines + 1;
-                _26 = width;
-                r25 = 0;
-                r24 = 0;
-                _22 = 1;
-                lines++;
-            } else {
-                _26 += width;
-            }
+            width += mFont_TEX_CHAR_WIDTH;
         }
-
-        if (lines > _24) {
-            if (r23 == _24) {
-                _26 = r24;
-                _22 = r25;
+        if (mED_get_str_data(editor_ovl, idx) == CHAR_NEW_LINE) {
+            width = 0;
+            cursor_col = 0;
+            lines++;
+        }
+        if (lines > row) {
+            if (prev_line == row) {
+                width = prev_width;
+                cursor_col = prev_col;
             }
-
             break;
-        } else if (lines == _24) {
-            int temp = editor_ovl->_26;
-
-            if (_26 >= temp) {
-                if (r23 == _24 && (temp - r24) < (_26 - temp)) {
-                    _26 = r24;
-                    _22 = r25;
+        } else if (lines == row) {
+            int desired = editor_ovl->cursor_line_width;
+            if (width >= desired) {
+                if (prev_line == row && desired - prev_width < width - desired) {
+                    width = prev_width;
+                    cursor_col = prev_col;
                     i--;
                 }
-
-                _22++;
+                cursor_col++;
                 i++;
                 break;
             }
         }
-
-        r25 = _22;
-        r23 = lines;
-        r24 = _26;
-        str_p++;
-        _22++;
+        prev_col = cursor_col;
+        prev_line = lines;
+        prev_width = width;
+        idx++;
+        cursor_col++;
     }
-
-    editor_ovl->_26 = _26;
+    editor_ovl->cursor_line_width = width;
     editor_ovl->cursor_idx = i;
-    editor_ovl->_22 = _22;
+    editor_ovl->cursor_col = cursor_col;
 }
 
 static void mED_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
-    static s16 edit_line[mED_TYPE_NUM] = { 6, 4, 6, 1, 1, 31, 1, 1 };
+    static s16 edit_line[mED_TYPE_NUM] = { 6, 4, 6, 1, 1, mDI_ENTRY_SIZE / 16, 1, 1, 1 };
 
     mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
 
     editor_ovl->stick_area = mED_STICK_AREA_CENTER;
+    editor_ovl->last_stick_area = mED_STICK_AREA_CENTER;
     editor_ovl->stick_area_changed = FALSE;
-    editor_ovl->input_mode = mED_INPUT_MODE_LETTER;
-    editor_ovl->shift_mode = mED_SHIFT_LOWER;
-    editor_ovl->arrange = mED_ARRANGE_QWERTY;
-    editor_ovl->select_col = 0;
-    editor_ovl->select_row = 0;
-    editor_ovl->stick_area_held_frames = 0;
+    editor_ovl->shift_mode = mED_SHIFT_MODE_HIRAGANA;
+    editor_ovl->page_top_num = 0;
+    editor_ovl->consonant_num = -1;
     editor_ovl->command = mED_COMMAND_NONE;
     editor_ovl->now_code = 0;
+    editor_ovl->anim_frame = 0;
     editor_ovl->max_line_no = edit_line[menu_info->data0];
-    editor_ovl->input_str = (u8*)menu_info->data2;
+    editor_ovl->input_str = NULL;
+    editor_ovl->input_wstr = NULL;
+    switch (menu_info->data0) {
+        case mED_TYPE_BOARD:
+        case mED_TYPE_HBOARD:
+        case mED_TYPE_NOTICE:
+        case mED_TYPE_DIARY:
+            editor_ovl->input_wstr = (u16*)menu_info->data2;
+            editor_ovl->is_wide_string = TRUE;
+            break;
+        default:
+            editor_ovl->input_str = (u8*)menu_info->data2;
+            editor_ovl->is_wide_string = FALSE;
+            break;
+    }
     editor_ovl->line_width = menu_info->data3;
 
     if (menu_info->data1 > 0) {
@@ -638,16 +598,16 @@ static void mED_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
         if (menu_info->data0 == mED_TYPE_DIARY) {
             editor_ovl->now_str_len =
-                mDi_strlen(editor_ovl->input_str, editor_ovl->input_length * editor_ovl->max_line_no, CHAR_SPACE);
+                mED_strlen(editor_ovl, editor_ovl->input_length * editor_ovl->max_line_no, CHAR_SPACE);
         } else {
             editor_ovl->now_str_len =
-                mMl_strlen(editor_ovl->input_str, editor_ovl->input_length * editor_ovl->max_line_no, CHAR_SPACE);
+                mED_strlen(editor_ovl, editor_ovl->input_length * editor_ovl->max_line_no, CHAR_SPACE);
         }
     } else {
         int type = menu_info->data0;
 
         if (type == mED_TYPE_BOARD) {
-            editor_ovl->input_length = 32;
+            editor_ovl->input_length = MAIL_BODY_LEN / mBD_BODY_LINE_NUM;
             editor_ovl->now_str_len = submenu->overlay->board_ovl->lengths[mBD_FIELD_BODY];
         } else if (type == mED_TYPE_PASSWORDMAKE) {
             editor_ovl->input_length = LAND_NAME_SIZE;
@@ -663,19 +623,19 @@ static void mED_init(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
         if (menu_info->data1 > 0) {
             editor_ovl->cursor_idx = editor_ovl->now_str_len;
-            mED_get_col_line_width(menu_info, editor_ovl, &editor_ovl->_22, &editor_ovl->_24, &editor_ovl->_26,
-                                   editor_ovl->cursor_idx);
+            mED_get_col_line_width(menu_info, editor_ovl, &editor_ovl->cursor_col, &editor_ovl->cursor_row,
+                                   &editor_ovl->cursor_line_width, editor_ovl->cursor_idx);
         } else {
             editor_ovl->cursor_idx = diary_ovl->cursor_idx;
-            editor_ovl->_22 = diary_ovl->_48;
-            editor_ovl->_24 = diary_ovl->_46;
+            editor_ovl->cursor_col = diary_ovl->_48;
+            editor_ovl->cursor_row = diary_ovl->_46;
             mED_set_idxcol_inLineWidth(editor_ovl);
         }
     } else {
         editor_ovl->cursor_idx = 0;
-        editor_ovl->_22 = 0;
-        editor_ovl->_24 = 0;
-        editor_ovl->_26 = 0;
+        editor_ovl->cursor_col = 0;
+        editor_ovl->cursor_row = 0;
+        editor_ovl->cursor_line_width = 0;
     }
 
     editor_ovl->exchange_code = -1;
@@ -709,10 +669,10 @@ static void mED_set_se(Submenu* submenu) {
     int command = editor_ovl->command;
 
     if (command == mED_COMMAND_OUTPUT_CODE) {
-        int voice = mMsg_sound_voice_get_for_editor(editor_ovl->now_code);
+        int voice = mMsg_sound_voice_get(editor_ovl->now_code);
 
-        if (voice == 0x85 || voice == 0x80 || voice == 0x81 || voice == 0x82 || voice == 0x83 || voice == -1) {
-            voice = 0x86;
+        if ((u32)(voice - 0x4F) <= 3 || (u32)(voice - 0x54) <= 1 || voice == -1) {
+            voice = 0x4E;
         }
 
         sAdo_VoiceSe(voice, 0, 32);
@@ -720,7 +680,7 @@ static void mED_set_se(Submenu* submenu) {
         int exchange_code = editor_ovl->exchange_code;
 
         if (exchange_code != -1 && mED_exchange_se_list[exchange_code] != FALSE) {
-            int voice = mMsg_sound_voice_get_for_editor(exchange_code);
+            int voice = mMsg_sound_voice_get(exchange_code);
 
             sAdo_VoiceSe(voice, 0, 32);
         } else {
@@ -732,172 +692,114 @@ static void mED_set_se(Submenu* submenu) {
 }
 
 static void mED_output_code(mED_Ovl_c* editor_ovl) {
-    int len = editor_ovl->now_str_len;
-    u8* output_p = editor_ovl->input_str + len;
+    int idx = editor_ovl->now_str_len;
     int i;
-
-    for (i = len; i > editor_ovl->cursor_idx; i--) {
-        output_p[0] = output_p[-1];
-        output_p--;
+    for (i = editor_ovl->now_str_len; i > editor_ovl->cursor_idx; idx--) {
+        mED_set_str_data(editor_ovl, idx, mED_get_str_data(editor_ovl, idx - 1));
+        i--;
     }
-
     editor_ovl->cursor_idx++;
     editor_ovl->now_str_len++;
-    output_p[0] = editor_ovl->now_code;
-    editor_ovl->command_processed = TRUE;
+    mED_set_str_data(editor_ovl, idx, editor_ovl->now_code);
+    editor_ovl->se_flag = TRUE;
 }
 
 static int mED_get_single_line_width(mED_Ovl_c* editor_ovl) {
-    u8* str_p = editor_ovl->input_str;
+    int idx = 0;
     int i;
     int width = 0;
-
     for (i = editor_ovl->now_str_len; i > 0; i--) {
-        width += mFont_GetCodeWidth(*str_p, TRUE);
-
-        if (*str_p == CHAR_NEW_LINE) {
+        width += mFont_TEX_CHAR_WIDTH;
+        if (mED_get_str_data(editor_ovl, idx) == CHAR_NEW_LINE) {
             break;
         }
-
-        str_p++;
+        idx++;
     }
-
     return width;
 }
 
 static void mED_input_single_line(Submenu* submenu, mED_Ovl_c* editor_ovl) {
+    if (editor_ovl->latin_shift_mode == TRUE) {
+        switch (editor_ovl->now_code) {
+            case CHAR_SPACE:
+            case CHAR_MESSAGE_TAG:
+                editor_ovl->now_code = CHAR_NEW_LINE;
+                break;
+        }
+    }
     if (editor_ovl->now_code != CHAR_NEW_LINE) {
-        int line_width = mED_get_single_line_width(editor_ovl);
-        int now_code_width = mFont_GetCodeWidth(editor_ovl->now_code, TRUE);
-        int width = line_width + now_code_width;
-
-        if (editor_ovl->now_str_len < editor_ovl->input_length && width <= editor_ovl->line_width) {
+        int width = mED_get_single_line_width(editor_ovl);
+        if (editor_ovl->now_str_len < editor_ovl->input_length &&
+            width + mFont_TEX_CHAR_WIDTH <= editor_ovl->line_width) {
             mED_output_code(editor_ovl);
-        } else {
-            mED_open_warning_window(submenu, &submenu->overlay->menu_info[mSM_OVL_EDITOR], mWR_WARNING_WORD_OVER);
         }
     }
 }
 
-static void mED_input_multi_line_R(Submenu* submenu, mED_Ovl_c* editor_ovl, u8* buf) {
-    mSM_MenuInfo_c* menu_info;
-    u8* input_p;
-    u8* str_p;
-    u8* buf_p;
-    int i;
-    int res;
-    int total_characters;
-    s16 b;
-    s16 a;
-    s16 c;
-
-    menu_info = &submenu->overlay->menu_info[mSM_OVL_EDITOR];
-    total_characters = editor_ovl->input_length * editor_ovl->max_line_no;
-
-    if (total_characters <= editor_ovl->now_str_len) {
-        mED_open_warning_window(submenu, menu_info, mWR_WARNING_WORD_OVER);
-    } else {
-        str_p = editor_ovl->input_str;
-        buf_p = buf;
-
-        /* Copy string up to cursor */
-        for (i = 0; i < editor_ovl->cursor_idx; i++) {
-            *buf_p++ = *str_p++;
-        }
-
-        *buf_p++ = editor_ovl->now_code; // insert character
-
-        /* Copy the remaining string after the cursor */
-        for (; i < total_characters; i++) {
-            *buf_p++ = *str_p++;
-        }
-
-        input_p = editor_ovl->input_str; // save pointer
-        editor_ovl->input_str = buf;
-        res = mED_get_col_line_width(menu_info, editor_ovl, &a, &b, &c, editor_ovl->now_str_len + 1);
-        editor_ovl->input_str = input_p; // restore pointer
-
-        switch (res) {
+static void mED_input_multi_line_R(Submenu* submenu, mED_Ovl_c* editor_ovl, u8* buf, u16* wbuf) {
+    mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_EDITOR];
+    int count = editor_ovl->input_length * editor_ovl->max_line_no;
+    if (count > editor_ovl->now_str_len) {
+        mED_input_multi_line_R_make_forecast(editor_ovl, buf, wbuf, count);
+        switch (mED_input_multi_line_R_chk_cond(editor_ovl, buf, wbuf, menu_info)) {
             case mED_LINE_OK:
                 mED_output_code(editor_ovl);
-                break;
-            case mED_LINE_WIDTH_OVER:
-            case mED_LINE_NUM_OVER:
-                mED_open_warning_window(submenu, menu_info, mWR_WARNING_WORD_OVER);
-                break;
-            case mED_LINE_NEWLINE:
-                if (editor_ovl->_24 != (editor_ovl->max_line_no - 1)) {
-                    mED_open_warning_window(submenu, menu_info, mWR_WARNING_WORD_OVER);
-                }
                 break;
         }
     }
 }
 
 static void mED_input_multi_line(Submenu* submenu, mED_Ovl_c* editor_ovl) {
-    u8 buf[1000];
-
-    mED_input_multi_line_R(submenu, editor_ovl, buf);
+    u8 buf[mDI_ENTRY_SIZE];
+    u16 wbuf[mDI_ENTRY_SIZE + 2];
+    mED_input_multi_line_R(submenu, editor_ovl, buf, wbuf);
 }
 
 static void mED_input_pw_make_line(Submenu* submenu, mED_Ovl_c* editor_ovl) {
     if (editor_ovl->now_code != CHAR_NEW_LINE) {
-        int line_width = mED_get_single_line_width(editor_ovl);
-        int char_width = mFont_GetCodeWidth(editor_ovl->now_code, TRUE);
-        int width = line_width + char_width;
-
-        if (editor_ovl->now_str_len < editor_ovl->input_length && width <= editor_ovl->line_width) {
+        int width = mED_get_single_line_width(editor_ovl);
+        if (editor_ovl->now_str_len < editor_ovl->input_length &&
+            width + mFont_TEX_CHAR_WIDTH <= editor_ovl->line_width) {
             mED_output_code(editor_ovl);
-        } else {
-            mED_open_warning_window(submenu, &submenu->overlay->menu_info[mSM_OVL_EDITOR], mWR_WARNING_WORD_OVER);
         }
     }
 }
 
+static void mED_input_pw_chk_line_sub(u8* str, int idx, u8 code) {
+    u8* src = str + mPC_STR_SIZE - 2;
+    u8* dst = str + mPC_STR_SIZE - 1;
+    int i;
+    for (i = mPC_STR_SIZE - 1 - idx; i > 0; i--) {
+        *dst-- = *src--;
+    }
+    str[idx] = code;
+}
+
 static void mED_input_pw_chk_line(Submenu* submenu, mED_Ovl_c* editor_ovl) {
+    u8 last;
+    mPC_Ovl_c* passwordChk_ovl = submenu->overlay->passwordChk_ovl;
     if (editor_ovl->now_code != CHAR_NEW_LINE) {
-        u8* str_p;
-        u8* src_p;
-        u8* dst_p;
-        int cursor_idx;
-        int size;
-        int i;
-        int len;
-
-        if (editor_ovl->input_str[editor_ovl->input_length - 1] == CHAR_SPACE) {
-            str_p = editor_ovl->input_str + editor_ovl->input_length;
-            cursor_idx = editor_ovl->cursor_idx;
-
-            if (cursor_idx < editor_ovl->input_length) {
-                len = editor_ovl->input_length;
-                src_p = str_p - 2;
-                dst_p = str_p - 1;
-
-                for (i = (len - 1) - cursor_idx; i > 0; i--) {
-                    *dst_p-- = *src_p--;
-                }
-
-                editor_ovl->input_str[editor_ovl->cursor_idx] = editor_ovl->now_code;
-                editor_ovl->cursor_idx++;
-
-                if (editor_ovl->cursor_idx >= editor_ovl->input_length) {
-                    mPC_Ovl_c* passwordChk_ovl = submenu->overlay->passwordChk_ovl;
-
-                    if (passwordChk_ovl->selected_line == 0) {
-                        passwordChk_ovl->selected_line = 1;
-                        editor_ovl->input_str = passwordChk_ovl->line1;
-                        editor_ovl->cursor_idx = 0;
-                    } else {
-                        editor_ovl->cursor_idx = editor_ovl->input_length;
-                    }
-                }
-
-                editor_ovl->command_processed = TRUE;
-                return;
+        if (passwordChk_ovl->line1[mPC_STR_SIZE - 1] == CHAR_SPACE &&
+            editor_ovl->cursor_idx < editor_ovl->input_length) {
+            last = editor_ovl->input_str[mPC_STR_SIZE - 1];
+            mED_input_pw_chk_line_sub(editor_ovl->input_str, editor_ovl->cursor_idx, editor_ovl->now_code);
+            if (passwordChk_ovl->selected_line == 0) {
+                mED_input_pw_chk_line_sub(passwordChk_ovl->line1, 0, last);
             }
+            editor_ovl->cursor_idx++;
+            if (editor_ovl->cursor_idx >= editor_ovl->input_length) {
+                if (passwordChk_ovl->selected_line == 0) {
+                    passwordChk_ovl->selected_line = 1;
+                    editor_ovl->input_str = passwordChk_ovl->line1;
+                    editor_ovl->cursor_idx = 0;
+                } else {
+                    editor_ovl->cursor_idx = editor_ovl->input_length;
+                }
+            }
+            editor_ovl->se_flag = TRUE;
+        } else {
+            sAdo_SysTrgStart(0x1003);
         }
-
-        sAdo_SysTrgStart(0x1003);
     } else {
         sAdo_SysTrgStart(0x1003);
     }
@@ -912,7 +814,7 @@ static void mED_move_cursol_right(Submenu* submenu, mED_Ovl_c* editor_ovl, int l
 
     if (cursor_idx < now_str_len && now_str_len > 0) {
         editor_ovl->cursor_idx = cursor_idx + 1;
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->se_flag = TRUE;
     } else if (cursor_idx == now_str_len) {
         editor_ovl->now_code = CHAR_SPACE;
 
@@ -928,7 +830,7 @@ static void mED_move_cursol_right(Submenu* submenu, mED_Ovl_c* editor_ovl, int l
                 break;
         }
 
-        if (editor_ovl->command_processed != FALSE) {
+        if (editor_ovl->se_flag != FALSE) {
             editor_ovl->command = mED_COMMAND_OUTPUT_CODE;
         }
     }
@@ -937,15 +839,15 @@ static void mED_move_cursol_right(Submenu* submenu, mED_Ovl_c* editor_ovl, int l
 static void mED_move_cursol_left(mED_Ovl_c* editor_ovl) {
     if (editor_ovl->cursor_idx > 0) {
         editor_ovl->cursor_idx--;
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->se_flag = TRUE;
     }
 }
 
 static void mED_move_cursol_upper(mED_Ovl_c* editor_ovl) {
-    if (editor_ovl->_24 > 0) {
-        editor_ovl->_24--;
+    if (editor_ovl->cursor_row > 0) {
+        editor_ovl->cursor_row--;
         mED_set_idxcol_inLineWidth(editor_ovl);
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->se_flag = TRUE;
     }
 }
 
@@ -957,15 +859,15 @@ static void mED_move_cursol_lower(Submenu* submenu, mED_Ovl_c* editor_ovl) {
     mED_get_col_line_width(&submenu->overlay->menu_info[mSM_OVL_EDITOR], editor_ovl, &a, &b, &c,
                            editor_ovl->now_str_len);
 
-    if (editor_ovl->_24 < b) {
-        editor_ovl->_24++;
+    if (editor_ovl->cursor_row < b) {
+        editor_ovl->cursor_row++;
         mED_set_idxcol_inLineWidth(editor_ovl);
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->se_flag = TRUE;
     } else if (editor_ovl->cursor_idx == editor_ovl->now_str_len) {
         editor_ovl->now_code = CHAR_NEW_LINE;
         mED_input_multi_line(submenu, editor_ovl);
 
-        if (editor_ovl->command_processed == TRUE) {
+        if (editor_ovl->se_flag != FALSE) {
             editor_ovl->command = mED_COMMAND_OUTPUT_CODE;
         }
     }
@@ -973,92 +875,134 @@ static void mED_move_cursol_lower(Submenu* submenu, mED_Ovl_c* editor_ovl) {
 
 static void mED_end_edit_func(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     (*submenu->overlay->move_chg_base_proc)(menu_info, mSM_MOVE_OUT_BOTTOM); // transition off the bottom of the screen
-    submenu->overlay->editor_ovl->command_processed = TRUE;
+    submenu->overlay->editor_ovl->se_flag = TRUE;
 }
 
 static void mED_backspace_func(mED_Ovl_c* editor_ovl) {
-    u8* str_p;
+    int idx;
     int i;
-
     if (editor_ovl->cursor_idx != 0) {
         editor_ovl->cursor_idx--;
         editor_ovl->now_str_len--;
-
-        str_p = editor_ovl->input_str + editor_ovl->cursor_idx;
-
-        for (i = editor_ovl->cursor_idx; i < editor_ovl->now_str_len; i++) {
-            str_p[0] = str_p[1];
-            str_p++;
+        idx = editor_ovl->cursor_idx;
+        for (i = editor_ovl->cursor_idx; i < editor_ovl->now_str_len; idx++) {
+            mED_set_str_data(editor_ovl, idx, mED_get_str_data(editor_ovl, idx + 1));
+            i++;
         }
-
-        str_p[0] = CHAR_SPACE;
-        editor_ovl->command_processed = TRUE;
+        mED_set_str_data(editor_ovl, idx, CHAR_SPACE);
+        editor_ovl->se_flag = TRUE;
     }
 }
 
-static void mED_backspace_func_pw_chk(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_ovl) {
+static void mED_backspace_func_pw_chk_sub(int idx, u8* str) {
+    mem_copy(str + idx, str + idx + 1, mPC_STR_SIZE - 1 - idx);
+    str[mPC_STR_SIZE - 1] = CHAR_SPACE;
+}
+
+static void mED_backspace_func_pw_chk(Submenu* submenu, mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl,
+                                      mPC_Ovl_c* passwordChk_ovl) {
     if (editor_ovl->cursor_idx != 0) {
         editor_ovl->cursor_idx--;
-        mem_copy(editor_ovl->input_str + editor_ovl->cursor_idx, editor_ovl->input_str + editor_ovl->cursor_idx + 1,
-                 (editor_ovl->input_length - editor_ovl->cursor_idx) - 1);
-        editor_ovl->input_str[editor_ovl->input_length - 1] = CHAR_SPACE;
-        editor_ovl->command_processed = TRUE;
+        mED_backspace_func_pw_chk_sub(editor_ovl->cursor_idx, editor_ovl->input_str);
+        if (passwordChk_ovl->selected_line == 0) {
+            passwordChk_ovl->line0[mPC_STR_SIZE - 1] = passwordChk_ovl->line1[0];
+            mED_backspace_func_pw_chk_sub(0, passwordChk_ovl->line1);
+        }
+        editor_ovl->se_flag = TRUE;
     } else if (passwordChk_ovl->selected_line == 1) {
+        u8 first = passwordChk_ovl->line1[0];
+        mED_backspace_func_pw_chk_sub(0, passwordChk_ovl->line1);
         passwordChk_ovl->selected_line = 0;
         editor_ovl->input_str = passwordChk_ovl->line0;
         editor_ovl->cursor_idx = editor_ovl->input_length - 1;
-        editor_ovl->input_str[editor_ovl->cursor_idx] = CHAR_SPACE;
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->input_str[editor_ovl->cursor_idx] = first;
+        editor_ovl->se_flag = TRUE;
+    } else if (mMl_strlen(passwordChk_ovl->line0, mPC_STR_SIZE, CHAR_SPACE) == 0 &&
+               mMl_strlen(passwordChk_ovl->line1, mPC_STR_SIZE, CHAR_SPACE) == 0) {
+        mED_end_edit_func(submenu, menu_info);
     }
 }
 
 static int mED_get_exchange_code(mED_Ovl_c* editor_ovl) {
-    int exchange_code = -1;
-
+    int exchange = -1;
     if (editor_ovl->cursor_idx != 0) {
-        int ornament = mED_ornament_table[editor_ovl->input_str[editor_ovl->cursor_idx - 1]];
-        int exchange = editor_ovl->input_str[editor_ovl->cursor_idx - 1];
-
-        if (exchange != ornament) {
-            exchange_code = ornament;
+        int code = mED_get_str_data(editor_ovl, editor_ovl->cursor_idx - 1);
+        if (code >= TOTAL_CHARS) {
+            return -1;
+        } else {
+            int ornament = editor_ovl->latin_shift_mode == TRUE ? code : mED_ornament_table[code];
+            if (code != ornament) {
+                exchange = ornament;
+            }
         }
     }
+    return exchange;
+}
 
-    return exchange_code;
+static int mED_get_exchange_code_pw_chk(Submenu* submenu, mED_Ovl_c* editor_ovl) {
+    mPC_Ovl_c* passwordChk_ovl = submenu->overlay->passwordChk_ovl;
+    int code;
+    int exchange = -1;
+    if (editor_ovl->cursor_idx != 0) {
+        code = mED_get_str_data(editor_ovl, editor_ovl->cursor_idx - 1);
+    } else if (passwordChk_ovl->selected_line == 1) {
+        code = passwordChk_ovl->line0[editor_ovl->input_length - 1];
+    } else {
+        return -1;
+    }
+    if (code >= TOTAL_CHARS) {
+        return -1;
+    } else {
+        int ornament = editor_ovl->latin_shift_mode == TRUE ? code : mED_ornament_table[code];
+        if (code != ornament) {
+            exchange = ornament;
+        }
+    }
+    return exchange;
 }
 
 static int mED_exchange_code_func(mED_Ovl_c* editor_ovl) {
     if (editor_ovl->exchange_code != -1) {
-        editor_ovl->command_processed = TRUE;
-        editor_ovl->input_str[editor_ovl->cursor_idx - 1] = editor_ovl->exchange_code;
+        editor_ovl->se_flag = TRUE;
+        mED_set_str_data(editor_ovl, editor_ovl->cursor_idx - 1, editor_ovl->exchange_code);
     }
+    return editor_ovl->se_flag;
+}
 
-    return editor_ovl->command_processed;
+static int mED_exchange_code_func_pw_chk(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_ovl) {
+    if (editor_ovl->exchange_code != -1) {
+        editor_ovl->se_flag = TRUE;
+        if (editor_ovl->cursor_idx == 0 && passwordChk_ovl->selected_line == 1) {
+            passwordChk_ovl->line0[editor_ovl->input_length - 1] = editor_ovl->exchange_code;
+        } else {
+            mED_set_str_data(editor_ovl, editor_ovl->cursor_idx - 1, editor_ovl->exchange_code);
+        }
+    }
+    return editor_ovl->se_flag;
 }
 
 static void mED_clear_input_data(mED_Ovl_c* editor_ovl) {
-    u8* str_p = editor_ovl->input_str;
+    int idx = 0;
     int i;
-
     for (i = 0; i < editor_ovl->input_length; i++) {
-        *str_p++ = CHAR_SPACE;
+        mED_set_str_data(editor_ovl, idx, CHAR_SPACE);
+        idx++;
     }
-
     editor_ovl->now_str_len = 0;
-    editor_ovl->_22 = 0;
+    editor_ovl->cursor_col = 0;
     editor_ovl->cursor_idx = 0;
-    editor_ovl->_26 = 0;
+    editor_ovl->cursor_line_width = 0;
 }
 
 static int mED_all_space_check(Submenu* submenu, mED_Ovl_c* editor_ovl, mSM_MenuInfo_c* menu_info) {
-    if (menu_info->data0 != mED_TYPE_LEDIT) {
+    if (menu_info->data0 != mED_TYPE_LEDIT && menu_info->data0 != mED_TYPE_LEDIT_LATIN) {
         return FALSE;
     } else {
-        u8* str_p = editor_ovl->input_str;
         int res;
 
-        if (submenu->overlay->menu_info[mSM_OVL_LEDIT].data0 == 2) {
-            if (mem_cmp(submenu->overlay->menu_info[mSM_OVL_LEDIT].data2, str_p, editor_ovl->input_length) == 0) {
+        if (submenu->overlay->menu_info[mSM_OVL_LEDIT].data0 == mLE_TYPE_EPHRASE) {
+            if (mem_cmp(submenu->overlay->menu_info[mSM_OVL_LEDIT].data2, editor_ovl->input_str,
+                        editor_ovl->input_length) == 0) {
                 res = FALSE;
             } else {
                 res = TRUE;
@@ -1068,15 +1012,12 @@ static int mED_all_space_check(Submenu* submenu, mED_Ovl_c* editor_ovl, mSM_Menu
         }
 
         if (res == FALSE) {
-            u8* t_str_p = str_p;
             int i;
 
             for (i = 0; i < editor_ovl->now_str_len; i++) {
-                if (*t_str_p != CHAR_SPACE) {
+                if (mED_get_str_data(editor_ovl, i) != CHAR_SPACE) {
                     return FALSE;
                 }
-
-                t_str_p++;
             }
         }
 
@@ -1086,33 +1027,6 @@ static int mED_all_space_check(Submenu* submenu, mED_Ovl_c* editor_ovl, mSM_Menu
 }
 
 static int mED_ng_word_check(mED_Ovl_c* editor_ovl, mSM_MenuInfo_c* menu_info) {
-    static int ng_word_length[mED_NG_WORD_NUM] = { 4, 4, 4, 4, 4, 5, 5, 7, 7, 7, 7, 7, 9, 10 };
-
-    if (menu_info->data0 == mED_TYPE_LEDIT) {
-        u8 ng_word[10];
-        int len;
-        u8* str_p;
-        int i;
-        int j;
-        int idx = mED_NG_WORD_START;
-
-        for (i = 0; i < mED_NG_WORD_NUM; i++) {
-            len = ng_word_length[i];
-            mString_Load_StringFromRom(ng_word, sizeof(ng_word), idx);
-            str_p = editor_ovl->input_str;
-
-            for (j = (editor_ovl->input_length - len) + 1; j >= 0; j--) {
-                if (mem_cmp(str_p, ng_word, len) == TRUE) {
-                    mED_clear_input_data(editor_ovl);
-                    return TRUE;
-                }
-
-                str_p++;
-            }
-
-            idx++;
-        }
-    }
     return FALSE;
 }
 
@@ -1187,19 +1101,20 @@ static void mED_edit_func_letter_header_kill_space(Submenu* submenu) {
     mED_Ovl_c* editor_ovl = overlay->editor_ovl;
     mBD_Ovl_c* board_ovl = overlay->board_ovl;
 
-    if (overlay->menu_info[mSM_OVL_BOARD].data0 == 3) {
-        s16 len = mMl_strlen(editor_ovl->input_str, editor_ovl->input_length, CHAR_SPACE);
-        s16 _22 = editor_ovl->_22;
+    if ((overlay->menu_info[mSM_OVL_BOARD].data0 == mSM_BD_OPEN_WRITE_ISLAND ||
+         overlay->menu_info[mSM_OVL_BOARD].data0 == mSM_BD_OPEN_WRITE_BIRTHDAY)) {
+        s16 len = mED_strlen(editor_ovl, editor_ovl->input_length, CHAR_SPACE);
+        s16 cursor_col = editor_ovl->cursor_col;
 
-        if (_22 > len) {
-            len = _22;
+        if (cursor_col > len) {
+            len = cursor_col;
         }
 
         editor_ovl->now_str_len = len;
     } else {
-        s16 len = mMl_strlen(editor_ovl->input_str, editor_ovl->input_length, CHAR_SPACE);
+        s16 len = mED_strlen(editor_ovl, editor_ovl->input_length, CHAR_SPACE);
         int header_back_start = board_ovl->mail.content.header_back_start;
-        int min_len = editor_ovl->_22;
+        int min_len = editor_ovl->cursor_col;
         int res;
 
         if (len > header_back_start) {
@@ -1227,7 +1142,8 @@ static void mED_edit_func_letter_header(Submenu* submenu, mSM_MenuInfo_c* menu_i
     mED_Ovl_c* editor_ovl = overlay->editor_ovl;
     mBD_Ovl_c* board_ovl = overlay->board_ovl;
 
-    if (overlay->menu_info[mSM_OVL_BOARD].data0 == 3) {
+    if ((overlay->menu_info[mSM_OVL_BOARD].data0 == mSM_BD_OPEN_WRITE_ISLAND ||
+         overlay->menu_info[mSM_OVL_BOARD].data0 == mSM_BD_OPEN_WRITE_BIRTHDAY)) {
         mED_edit_func_single_line(submenu, menu_info);
     } else if (board_ovl->header_pos != mBD_HEADER_POS_ON_NAME) {
         s16 len = editor_ovl->now_str_len;
@@ -1237,7 +1153,7 @@ static void mED_edit_func_letter_header(Submenu* submenu, mSM_MenuInfo_c* menu_i
              (board_ovl->header_pos == mBD_HEADER_POS_POST_NAME &&
               (editor_ovl->command == mED_COMMAND_CURSOL_LEFT || editor_ovl->command == mED_COMMAND_BACKSPACE)))) {
             board_ovl->header_pos = mBD_HEADER_POS_ON_NAME;
-            editor_ovl->command_processed = TRUE;
+            editor_ovl->se_flag = TRUE;
         } else {
             mED_edit_func_single_line(submenu, menu_info);
 
@@ -1254,37 +1170,29 @@ static void mED_edit_func_letter_header(Submenu* submenu, mSM_MenuInfo_c* menu_i
     mED_edit_func_letter_header_kill_space(submenu);
 }
 
-static void mED_break_space_code(u8* str) {
-    u8 buf[32];
-
-    mem_copy(buf, str + 1, sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = CHAR_SPACE;
-    mem_copy(str, buf, sizeof(buf));
+static void mED_break_space_code(mED_Ovl_c* editor_ovl) {
+    u16 str[MAIL_FOOTER_LEN];
+    u16* dst = editor_ovl->input_wstr;
+    mem_copy((u8*)str, (u8*)(dst + 1), (MAIL_FOOTER_LEN - 1) * sizeof(u16));
+    str[MAIL_FOOTER_LEN - 1] = CHAR_SPACE;
+    mem_copy((u8*)dst, (u8*)str, sizeof(str));
 }
 
 static void mED_input_footer_line_sub(Submenu* submenu, mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl) {
-    int now_code_width = mFont_GetCodeWidth(editor_ovl->now_code, TRUE);
-    int str_width = mFont_GetStringWidth(editor_ovl->input_str, editor_ovl->now_str_len, TRUE);
-    int width = str_width + now_code_width;
-
-    if ((editor_ovl->now_str_len + 1) <= editor_ovl->input_length) {
+    int width = editor_ovl->now_str_len * mFont_TEX_CHAR_WIDTH + mFont_TEX_CHAR_WIDTH;
+    if (editor_ovl->now_str_len + 1 <= editor_ovl->input_length) {
         if (width <= editor_ovl->line_width) {
             mED_output_code(editor_ovl);
-        } else if (editor_ovl->input_str[0] == CHAR_SPACE &&
-                   width - mFont_GetCodeWidth(CHAR_SPACE, TRUE) < editor_ovl->line_width) {
-            mED_break_space_code(editor_ovl->input_str);
+        } else if (mED_get_str_data(editor_ovl, 0) == CHAR_SPACE &&
+                   width - mFont_TEX_CHAR_WIDTH < editor_ovl->line_width) {
+            mED_break_space_code(editor_ovl);
             editor_ovl->now_str_len--;
             mED_output_code(editor_ovl);
-        } else {
-            mED_open_warning_window(submenu, menu_info, mWR_WARNING_WORD_OVER);
         }
-    } else if (editor_ovl->input_str[0] == CHAR_SPACE &&
-               width - mFont_GetCodeWidth(CHAR_SPACE, TRUE) < editor_ovl->line_width) {
-        mED_break_space_code(editor_ovl->input_str);
+    } else if (mED_get_str_data(editor_ovl, 0) == CHAR_SPACE && width - mFont_TEX_CHAR_WIDTH < editor_ovl->line_width) {
+        mED_break_space_code(editor_ovl);
         editor_ovl->now_str_len--;
         mED_output_code(editor_ovl);
-    } else {
-        mED_open_warning_window(submenu, menu_info, mWR_WARNING_WORD_OVER);
     }
 }
 
@@ -1311,27 +1219,27 @@ static void mED_move_footer_cursol_right(Submenu* submenu, mSM_MenuInfo_c* menu_
     str_len = editor_ovl->now_str_len;
 
     if (cursor_idx < str_len && str_len > 0) {
-        if (cursor_idx == 0 && editor_ovl->input_str[0] == CHAR_SPACE) {
-            u8* str_p = editor_ovl->input_str;
+        if (cursor_idx == 0 && mED_get_str_data(editor_ovl, 0) == CHAR_SPACE) {
+            int idx = 0;
             int i;
 
-            editor_ovl->now_str_len = str_len - 1;
-            for (i = 0; i < editor_ovl->now_str_len; i++) {
-                str_p[0] = str_p[1];
-                str_p++;
+            editor_ovl->now_str_len--;
+            for (i = 0; i < editor_ovl->now_str_len; idx++) {
+                mED_set_str_data(editor_ovl, idx, mED_get_str_data(editor_ovl, idx + 1));
+                i++;
             }
 
-            str_p[0] = CHAR_SPACE;
-            editor_ovl->command_processed = TRUE;
+            mED_set_str_data(editor_ovl, idx, CHAR_SPACE);
+            editor_ovl->se_flag = TRUE;
         } else {
             editor_ovl->cursor_idx++;
-            editor_ovl->command_processed = TRUE;
+            editor_ovl->se_flag = TRUE;
         }
     } else if (cursor_idx == str_len) {
         editor_ovl->now_code = CHAR_SPACE;
         mED_input_footer_line(submenu, menu_info, editor_ovl);
 
-        if (editor_ovl->command_processed) {
+        if (editor_ovl->se_flag) {
             editor_ovl->command = mED_COMMAND_OUTPUT_CODE;
         }
     }
@@ -1340,13 +1248,13 @@ static void mED_move_footer_cursol_right(Submenu* submenu, mSM_MenuInfo_c* menu_
 static void mED_move_footer_cursol_left(Submenu* submenu, mSM_MenuInfo_c* menu_info, mED_Ovl_c* editor_ovl) {
     if (editor_ovl->cursor_idx > 0) {
         editor_ovl->cursor_idx--;
-        editor_ovl->command_processed = TRUE;
+        editor_ovl->se_flag = TRUE;
     } else if (editor_ovl->now_str_len < editor_ovl->input_length) {
         editor_ovl->now_code = CHAR_SPACE;
         mED_input_footer_line(submenu, menu_info, editor_ovl);
         editor_ovl->cursor_idx = 0;
 
-        if (editor_ovl->command_processed) {
+        if (editor_ovl->se_flag) {
             editor_ovl->command = mED_COMMAND_OUTPUT_CODE;
         }
     }
@@ -1365,8 +1273,7 @@ static void mED_edit_func_letter_footer(Submenu* submenu, mSM_MenuInfo_c* menu_i
         case mED_COMMAND_END_EDIT:
             if (mED_all_space_check(submenu, editor_ovl, menu_info)) {
                 sAdo_SysTrgStart(0x1003);
-            } else if (mED_ng_word_check(editor_ovl, menu_info)) {
-                sAdo_SysTrgStart(0x1003);
+
             } else {
                 mED_end_edit_func(submenu, menu_info);
             }
@@ -1386,7 +1293,7 @@ static void mED_edit_func_letter_footer(Submenu* submenu, mSM_MenuInfo_c* menu_i
 static void mED_move_letter_table(mED_Ovl_c* editor_ovl, mBD_Ovl_c* board_ovl, Submenu* submenu) {
     static s16 letter_table_col[mBD_FIELD_NUM] = { MAIL_HEADER_LEN, MAIL_BODY_LEN / mBD_BODY_LINE_NUM,
                                                    MAIL_FOOTER_LEN };
-    static s16 letter_table_width[mBD_FIELD_NUM] = { 112, 192, 192 };
+    static s16 letter_table_width[mBD_FIELD_NUM] = { 120, 192, 192 };
 
     u8 field = board_ovl->field;
     Submenu_Overlay_c* overlay = submenu->overlay;
@@ -1412,7 +1319,7 @@ static void mED_move_letter_table(mED_Ovl_c* editor_ovl, mBD_Ovl_c* board_ovl, S
         return;
     }
 
-    editor_ovl->command_processed = TRUE;
+    editor_ovl->se_flag = TRUE;
     board_ovl->field = next_field;
     board_ovl->header_pos = mBD_HEADER_POS_PRE_NAME;
     editor_ovl->input_length = letter_table_col[next_field];
@@ -1421,7 +1328,7 @@ static void mED_move_letter_table(mED_Ovl_c* editor_ovl, mBD_Ovl_c* board_ovl, S
 
     if (next_field == mBD_FIELD_BODY) {
         editor_ovl->max_line_no = mBD_BODY_LINE_NUM;
-        editor_ovl->input_str = board_ovl->mail.content.text.split.body;
+        editor_ovl->input_wstr = (u16*)board_ovl->mail.content.text.all + MAIL_HEADER_LEN;
 
         if (upper == TRUE) {
             editor_ovl->cursor_idx = -1;
@@ -1433,9 +1340,9 @@ static void mED_move_letter_table(mED_Ovl_c* editor_ovl, mBD_Ovl_c* board_ovl, S
         editor_ovl->cursor_idx = 0;
 
         if (next_field == mBD_FIELD_HEADER) {
-            editor_ovl->input_str = board_ovl->mail.content.text.split.header;
+            editor_ovl->input_wstr = (u16*)board_ovl->mail.content.text.split.header;
         } else {
-            editor_ovl->input_str = board_ovl->mail.content.text.split.footer;
+            editor_ovl->input_wstr = (u16*)board_ovl->mail.content.text.all + MAIL_HEADER_LEN + MAIL_BODY_LEN;
         }
     }
 
@@ -1459,7 +1366,7 @@ static void mED_edit_func_letter(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     (*letter_base_func[field])(submenu, menu_info);
     board_ovl->lengths[field] = editor_ovl->now_str_len;
 
-    if (editor_ovl->command_processed == FALSE) {
+    if (editor_ovl->se_flag == FALSE) {
         mED_move_letter_table(editor_ovl, board_ovl, submenu);
     }
 }
@@ -1510,7 +1417,7 @@ static void mED_move_pw_make_table(mED_Ovl_c* editor_ovl, mPM_Ovl_c* passwordMak
     switch (editor_ovl->command) {
         case mED_COMMAND_CURSOL_LOWER: {
             if (passwordMake_ovl->selected_idx == mPM_ENTRY_TOWN) {
-                editor_ovl->now_str_len = mMl_strlen(editor_ovl->input_str, editor_ovl->input_length, CHAR_SPACE);
+                editor_ovl->now_str_len = mED_strlen(editor_ovl, editor_ovl->input_length, CHAR_SPACE);
                 editor_ovl->cursor_idx = editor_ovl->now_str_len;
                 passwordMake_ovl->lengths[mPM_ENTRY_TOWN] = editor_ovl->now_str_len;
 
@@ -1537,10 +1444,10 @@ static void mED_move_pw_make_table(mED_Ovl_c* editor_ovl, mPM_Ovl_c* passwordMak
         return;
     }
 
-    editor_ovl->command_processed = TRUE;
+    editor_ovl->se_flag = TRUE;
     passwordMake_ovl->selected_idx = (u8)next_idx;
     editor_ovl->input_length = pm_make_table_col[next_idx];
-    editor_ovl->line_width = editor_ovl->input_length * 10;
+    editor_ovl->line_width = editor_ovl->input_length * mFont_TEX_CHAR_WIDTH;
 
     switch (next_idx) {
         case mPM_ENTRY_TOWN:
@@ -1559,11 +1466,11 @@ static void mED_move_pw_make_table(mED_Ovl_c* editor_ovl, mPM_Ovl_c* passwordMak
         case mED_COMMAND_CURSOL_LOWER:
             mED_set_idxcol_inLineWidth(editor_ovl);
             break;
-        case mED_COMMAND_CURSOL_RIGHT: // ??
+        case mED_COMMAND_CURSOL_RIGHT:
             editor_ovl->cursor_idx = 0;
             break;
-        case mED_COMMAND_CURSOL_LEFT: // ??
-        default:                      // ??
+        case mED_COMMAND_CURSOL_LEFT:
+        default:
             editor_ovl->cursor_idx = editor_ovl->now_str_len;
             break;
     }
@@ -1571,9 +1478,10 @@ static void mED_move_pw_make_table(mED_Ovl_c* editor_ovl, mPM_Ovl_c* passwordMak
 
 static void mED_edit_func_pw_make(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     int selected_idx;
-    mPM_Ovl_c* passwordMake_ovl = submenu->overlay->passwordMake_ovl;
-    mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
-
+    mPM_Ovl_c* passwordMake_ovl;
+    mED_Ovl_c* editor_ovl;
+    editor_ovl = submenu->overlay->editor_ovl;
+    passwordMake_ovl = submenu->overlay->passwordMake_ovl;
     selected_idx = passwordMake_ovl->selected_idx;
     switch (editor_ovl->command) {
         case mED_COMMAND_CURSOL_LEFT:
@@ -1583,18 +1491,36 @@ static void mED_edit_func_pw_make(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
             mED_move_cursol_right(submenu, editor_ovl, mED_LINETYPE_PW);
             break;
         case mED_COMMAND_END_EDIT:
-            if (selected_idx == mPM_ENTRY_TOWN) {
+            if (mED_strlen(editor_ovl, editor_ovl->input_length, CHAR_SPACE) == 0) {
+                if (editor_ovl->cursor_idx == 0) {
+                    submenu->item_p->slot_no = FALSE;
+                    mED_end_edit_func(submenu, menu_info);
+                    editor_ovl->se_flag = FALSE;
+                    sAdo_SysTrgStart(2);
+                } else {
+                    editor_ovl->cursor_idx = 0;
+                    editor_ovl->now_str_len = 0;
+                    sAdo_SysTrgStart(0x1003);
+                }
+            } else if (passwordMake_ovl->selected_idx == mPM_ENTRY_TOWN) {
                 editor_ovl->command = mED_COMMAND_CURSOL_LOWER;
-            } else if (mMl_strlen(editor_ovl->input_str, editor_ovl->input_length, CHAR_SPACE) == 0) {
-                editor_ovl->cursor_idx = 0;
-                editor_ovl->now_str_len = 0;
-                sAdo_SysTrgStart(0x1003);
             } else {
+                submenu->item_p->slot_no = TRUE;
                 mED_end_edit_func(submenu, menu_info);
+                editor_ovl->se_flag = FALSE;
             }
             break;
         case mED_COMMAND_BACKSPACE:
-            mED_backspace_func(editor_ovl);
+            if (editor_ovl->cursor_idx == 0 && selected_idx == mPM_ENTRY_TOWN) {
+                int town_len = mED_strlen(editor_ovl, editor_ovl->input_length, CHAR_SPACE);
+                int player_len = mMl_strlen(passwordMake_ovl->player_name, PLAYER_NAME_LEN, CHAR_SPACE);
+                if (town_len == 0 || player_len == 0) {
+                    submenu->item_p->slot_no = FALSE;
+                    mED_end_edit_func(submenu, menu_info);
+                }
+            } else {
+                mED_backspace_func(editor_ovl);
+            }
             break;
         case mED_COMMAND_EXCHANGE_CODE:
             mED_exchange_code_func(editor_ovl);
@@ -1603,18 +1529,14 @@ static void mED_edit_func_pw_make(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
             mED_input_pw_make_line(submenu, editor_ovl);
             break;
     }
-
     passwordMake_ovl->lengths[selected_idx] = editor_ovl->now_str_len;
-
-    if (editor_ovl->command_processed == FALSE) {
+    if (editor_ovl->se_flag == FALSE)
         mED_move_pw_make_table(editor_ovl, passwordMake_ovl);
-    }
 }
 
-static void mED_move_pw_chk_table(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_ovl) {
+static int mED_move_pw_chk_table(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_ovl, u8 command) {
     int next_line;
-
-    switch (editor_ovl->command) {
+    switch (command) {
         case mED_COMMAND_CURSOL_LOWER:
             next_line = passwordChk_ovl->selected_line + 1;
             break;
@@ -1622,16 +1544,16 @@ static void mED_move_pw_chk_table(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_
             next_line = passwordChk_ovl->selected_line - 1;
             break;
         default:
-            return;
+            return FALSE;
     }
-
-    if (next_line < 0 || next_line >= mPC_LINE_COUNT) {
-        return;
+    if (next_line < 0 || next_line >= mPC_LINE_COUNT)
+        return FALSE;
+    if (next_line == 0 && editor_ovl->cursor_idx >= editor_ovl->input_length) {
+        next_line = 1;
+        editor_ovl->cursor_idx = 0;
     }
-
-    editor_ovl->command_processed = TRUE;
+    editor_ovl->se_flag = TRUE;
     passwordChk_ovl->selected_line = (u8)next_line;
-
     switch (next_line) {
         case 0:
             editor_ovl->input_str = passwordChk_ovl->line0;
@@ -1640,53 +1562,51 @@ static void mED_move_pw_chk_table(mED_Ovl_c* editor_ovl, mPC_Ovl_c* passwordChk_
             editor_ovl->input_str = passwordChk_ovl->line1;
             break;
     }
+    return TRUE;
 }
 
 static void mED_edit_func_pw_chk(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
-    int selected_idx;
     mPC_Ovl_c* passwordChk_ovl = submenu->overlay->passwordChk_ovl;
     mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
-
-    selected_idx = passwordChk_ovl->selected_line;
     switch (editor_ovl->command) {
         case mED_COMMAND_CURSOL_LEFT:
             if (editor_ovl->cursor_idx > 0) {
                 editor_ovl->cursor_idx--;
-                editor_ovl->command_processed = TRUE;
+                editor_ovl->se_flag = TRUE;
+            } else if (mED_move_pw_chk_table(editor_ovl, passwordChk_ovl, mED_COMMAND_CURSOL_UPPER)) {
+                editor_ovl->cursor_idx = editor_ovl->input_length - 1;
             } else {
                 sAdo_SysTrgStart(0x1003);
             }
             break;
         case mED_COMMAND_CURSOL_RIGHT:
-            if (editor_ovl->cursor_idx < editor_ovl->input_length) {
+            if ((passwordChk_ovl->selected_line == 1 && editor_ovl->cursor_idx < editor_ovl->input_length) ||
+                (passwordChk_ovl->selected_line == 0 && editor_ovl->cursor_idx < editor_ovl->input_length - 1)) {
                 editor_ovl->cursor_idx++;
-                editor_ovl->command_processed = TRUE;
+                editor_ovl->se_flag = TRUE;
+            } else if (mED_move_pw_chk_table(editor_ovl, passwordChk_ovl, mED_COMMAND_CURSOL_LOWER)) {
+                editor_ovl->cursor_idx = 0;
             } else {
                 sAdo_SysTrgStart(0x1003);
             }
             break;
         case mED_COMMAND_END_EDIT:
-            if (passwordChk_ovl->line1[mPC_STR_SIZE - 1] != CHAR_SPACE &&
-                mED_check_pw_usable_letter(passwordChk_ovl) == FALSE) {
-                mED_open_warning_window(submenu, menu_info, mWR_WARNING_PW_CHK);
-            } else {
-                mED_end_edit_func(submenu, menu_info);
-            }
+            mED_end_edit_func(submenu, menu_info);
+            editor_ovl->se_flag = FALSE;
+            sAdo_SysTrgStart(2);
             break;
         case mED_COMMAND_BACKSPACE:
-            mED_backspace_func_pw_chk(editor_ovl, passwordChk_ovl);
+            mED_backspace_func_pw_chk(submenu, menu_info, editor_ovl, passwordChk_ovl);
             break;
         case mED_COMMAND_EXCHANGE_CODE:
-            mED_exchange_code_func(editor_ovl);
+            mED_exchange_code_func_pw_chk(editor_ovl, passwordChk_ovl);
             break;
         case mED_COMMAND_OUTPUT_CODE:
             mED_input_pw_chk_line(submenu, editor_ovl);
             break;
     }
-
-    if (editor_ovl->command_processed == FALSE) {
-        mED_move_pw_chk_table(editor_ovl, passwordChk_ovl);
-    }
+    if (editor_ovl->se_flag == FALSE)
+        mED_move_pw_chk_table(editor_ovl, passwordChk_ovl, editor_ovl->command);
 }
 
 static void mED_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
@@ -1699,21 +1619,23 @@ static void mED_move_Play(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     static mED_EDIT_FUNC mED_edit_func[mED_TYPE_NUM] = { &mED_edit_func_letter,      &mED_edit_func_multi_line,
                                                          &mED_edit_func_multi_line,  &mED_edit_func_single_line,
                                                          &mED_edit_func_single_line, &mED_edit_func_diary,
-                                                         &mED_edit_func_pw_make,     &mED_edit_func_pw_chk };
+                                                         &mED_edit_func_pw_make,     &mED_edit_func_pw_chk,
+                                                         &mED_edit_func_single_line };
 
     mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
     mBD_Ovl_c* board_ovl;
 
-    editor_ovl->command_processed = FALSE;
+    editor_ovl->se_flag = FALSE;
     if (submenu->overlay->address_ovl != NULL &&
         submenu->overlay->menu_info[mSM_OVL_ADDRESS].next_proc_status == mSM_OVL_PROC_WAIT) {
         editor_ovl->stick_area = mED_STICK_AREA_CENTER;
+        editor_ovl->stick_area_changed = FALSE;
         editor_ovl->command = mED_COMMAND_NONE;
         editor_ovl->last_buttons =
             (getButton() | getTrigger()) & (BUTTON_B | BUTTON_DRIGHT | BUTTON_DLEFT | BUTTON_DDOWN | BUTTON_DUP);
-        editor_ovl->_10 = 30;
-        editor_ovl->_0F = 26;
-        editor_ovl->_0E = 0;
+        editor_ovl->button_repeat_timer = 30;
+        editor_ovl->button_repeat_accel_timer = 26;
+        editor_ovl->button_repeat_started = 0;
 
         if (submenu->overlay->address_ovl->editor_move_down) {
             board_ovl = submenu->overlay->board_ovl;
@@ -1728,18 +1650,47 @@ static void mED_move_Play(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     } else {
         editor_ovl->cursol_opacity_step++;
 
-        if (editor_ovl->cursol_opacity_step == 35) {
+        if (editor_ovl->cursol_opacity_step == 40) {
             editor_ovl->cursol_opacity_step = 0;
         }
 
-        mED_set_stick_area(editor_ovl);
-        mED_move_keyboard_cursor(editor_ovl);
-        mED_set_command(editor_ovl);
+        mED_set_stick_area(submenu);
+        if (editor_ovl->rotate_timer != 0) {
+            if (editor_ovl->stick_area_changed == TRUE && editor_ovl->stick_area != mED_STICK_AREA_CENTER) {
+                editor_ovl->rotate_timer = 0;
+                while (editor_ovl->page_top_num % mED_CHARS_PER_PAGE != 0) {
+                    editor_ovl->page_top_num++;
+                }
+                if (editor_ovl->page_top_num == page_num_max[editor_ovl->shift_mode]) {
+                    editor_ovl->page_top_num = 0;
+                }
+            } else {
+                editor_ovl->rotate_timer--;
+                if (editor_ovl->rotate_timer == 2) {
+                    editor_ovl->page_top_num += 2;
+                    if (editor_ovl->page_top_num == page_num_max[editor_ovl->shift_mode]) {
+                        editor_ovl->page_top_num = 0;
+                    }
+                }
+                return;
+            }
+        }
+        mED_set_command(submenu);
         (*mED_edit_func[menu_info->data0])(submenu, menu_info);
 
-        if (editor_ovl->command_processed) {
+        if (editor_ovl->consonant_num == -1) {
+            if (editor_ovl->anim_frame != 0)
+                editor_ovl->anim_frame--;
+        } else if (editor_ovl->anim_frame < 5) {
+            editor_ovl->anim_frame++;
+        }
+        if (editor_ovl->se_flag) {
             mED_set_se(submenu);
-            editor_ovl->exchange_code = mED_get_exchange_code(editor_ovl);
+            if (menu_info->data0 == mED_TYPE_PASSWORDCHK) {
+                editor_ovl->exchange_code = mED_get_exchange_code_pw_chk(submenu, editor_ovl);
+            } else {
+                editor_ovl->exchange_code = mED_get_exchange_code(editor_ovl);
+            }
 
             if (editor_ovl->command == mED_COMMAND_CURSOL_RIGHT || editor_ovl->command == mED_COMMAND_CURSOL_LEFT ||
                 editor_ovl->command == mED_COMMAND_CURSOL_UPPER || editor_ovl->command == mED_COMMAND_CURSOL_LOWER ||
@@ -1749,8 +1700,8 @@ static void mED_move_Play(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         }
     }
 
-    mED_get_col_line_width(menu_info, editor_ovl, &editor_ovl->_22, &editor_ovl->_24, &editor_ovl->_26,
-                           editor_ovl->cursor_idx);
+    mED_get_col_line_width(menu_info, editor_ovl, &editor_ovl->cursor_col, &editor_ovl->cursor_row,
+                           &editor_ovl->cursor_line_width, editor_ovl->cursor_idx);
     mED_check_line_over(editor_ovl);
 }
 
@@ -1761,7 +1712,7 @@ static void mED_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 }
 
 static void mED_move_End(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
-    submenu->overlay->editor_ovl->_22 = 0;
+    submenu->overlay->editor_ovl->cursor_col = 0;
     (*submenu->overlay->move_End_proc)(submenu, menu_info);
 }
 
@@ -1778,620 +1729,550 @@ static void mED_editor_ovl_move(Submenu* submenu) {
     (*ovl_move_proc[menu_info->proc_status])(submenu, menu_info);
 }
 
-extern u8 kai_sousa_button1a_tex_rgb_ia8[];
-extern u8 kai_sousa_button1b_tex_rgb_ia8[];
-extern Gfx kai_sousa_abuttonT_model[];
+extern u8 lat_sousa_b3_tex[];
+extern u8 lat_sousa_b32_tex[];
+extern Gfx lat_sousa_b3_model[];
+extern u8 lat_sousa_b2_tex[];
+extern u8 lat_sousa_b22_tex[];
+extern Gfx lat_sousa_b2_model[];
+extern Gfx lat_sousa_b1_model[];
+extern Gfx lat_sousa_waku3T_model[];
+extern Gfx lat_sousa_waku2T_model[];
+extern u8 lat_sousa_w1_tex_rgb_ia8[];
+extern u8 lat_sousa_w2_tex_rgb_ia8[];
+extern u8 lat_sousa_w3_tex_rgb_ia8[];
+extern Gfx lat_sousa_waku1T_model[];
+extern u8 lat_sousa_jyu1_tex_rgb_ia8[];
+extern u8 lat_sousa_jyu2_tex_rgb_ia8[];
+extern u8 lat_sousa_jyu3_tex_rgb_ia8[];
+extern u8 lat_sousa_jyu4_tex_rgb_ia8[];
+extern u8 lat_sousa_jyu5_tex_rgb_ia8[];
+extern Gfx lat_sousa_jyuT_model[];
+extern u8 lat_sousa_x_tex_rgb_ia8[];
+extern u8 lat_sousa_x2_tex_rgb_ia8[];
+extern u8 lat_sousa_y_tex_rgb_ia8[];
+extern u8 lat_sousa_y2_tex_rgb_ia8[];
+extern Gfx lat_sousa_model[];
+extern Gfx lat_sousa_kirikae2T_model[];
+extern Gfx lat_sousa_kirikaeT_model[];
+extern Gfx lat_sousa_hiraT_model[];
+extern Gfx lat_sousa_kigouT_model[];
+extern Gfx lat_sousa_kataT_model[];
+extern Gfx lat_sousa_eiT_model[];
+extern Gfx lat_sousa_suT_model[];
+extern Gfx lat_sousa_hira2T_model[];
+extern Gfx lat_sousa_kigou2T_model[];
+extern Gfx lat_sousa_kata2T_model[];
+extern Gfx lat_sousa_ei2T_model[];
+extern Gfx lat_sousa_su2T_model[];
+extern Gfx lat_sousa_emoji2T_model[];
+extern Gfx lat_sousa_teiT_model[];
+extern Gfx lat_sousa_henT_model[];
+extern Gfx lat_sousa_henkanT_model[];
+extern Gfx lat_sousa_word_combine[];
+extern Gfx lat_sousa_henyajiT_model[];
+extern u8 lat_sousa_st5_tex_rgb_ia8[];
+extern u8 lat_sousa_st4_tex_rgb_ia8[];
+extern u8 lat_sousa_st2_tex_rgb_ia8[];
+extern u8 lat_sousa_st6_tex_rgb_ia8[];
+extern u8 lat_sousa_st3_tex_rgb_ia8[];
+extern u8 lat_sousa_st1_tex_rgb_ia8[];
+extern Gfx lat_sousa_other_combine[];
+extern Gfx lat_sousa_stT_model[];
+extern Gfx lat_sousa_yajiT_model[];
+extern Gfx lat_sousa_mode[];
+extern Gfx lat_sousa_sousaT_model[];
+extern Gfx lat_sousa_2cycle_combine[];
+
+enum {
+    mED_MODEL_OUTER_PRIM,
+    mED_MODEL_OUTER_ENV,
+    mED_MODEL_MIDDLE_PRIM,
+    mED_MODEL_MIDDLE_ENV,
+    mED_MODEL_INNER_PRIM,
+    mED_MODEL_INNER_ENV,
+    mED_MODEL_ARROW,
+    mED_MODEL_COLOR_NUM
+};
 
 static void mED_KeyDraw_A_button(GRAPH* graph) {
-    static u8* tex[] = { kai_sousa_button1a_tex_rgb_ia8, kai_sousa_button1b_tex_rgb_ia8 };
-
+    static u8* lat_sousa_a_button_tbl[] = { lat_sousa_b3_tex, lat_sousa_b32_tex };
     int key = 0;
     Gfx* gfx;
-
-    if (chkButton(BUTTON_A)) {
+    if (chkButton(BUTTON_A))
         key = 1;
-    }
-
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_abuttonT_model);
-
+    gSPSegment(gfx++, G_MWO_SEGMENT_8, lat_sousa_button_pallet_tbl[key]);
+    gSPSegment(gfx++, G_MWO_SEGMENT_9, lat_sousa_a_button_tbl[key]);
+    gSPDisplayList(gfx++, lat_sousa_b3_model);
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
-
-extern u8 kai_sousa_button2a_tex_rgb_ia8[];
-extern u8 kai_sousa_button2b_tex_rgb_ia8[];
-extern Gfx kai_sousa_bbuttonT_model[];
-extern Gfx kai_sousa_cancelT_model[];
 
 static void mED_KeyDraw_B_button(GRAPH* graph) {
-    static u8* tex[] = { kai_sousa_button2a_tex_rgb_ia8, kai_sousa_button2b_tex_rgb_ia8 };
-
+    static u8* lat_sousa_b_button_tbl[] = { lat_sousa_b2_tex, lat_sousa_b22_tex };
     int key = 0;
     Gfx* gfx;
-
-    if (chkButton(BUTTON_B)) {
+    if (chkButton(BUTTON_B))
         key = 1;
-    }
-
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_bbuttonT_model);
-    gSPDisplayList(gfx++, kai_sousa_cancelT_model);
-
+    gSPSegment(gfx++, G_MWO_SEGMENT_8, lat_sousa_button_pallet_tbl[key]);
+    gSPSegment(gfx++, G_MWO_SEGMENT_9, lat_sousa_b_button_tbl[key]);
+    gSPDisplayList(gfx++, lat_sousa_b2_model);
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
-
-extern u8 kai_sousa_xbutton_tex_rgb_ia8[];
-extern u8 kai_sousa_xbutton2_tex_rgb_ia8[];
-extern Gfx kai_sousa_xbuttonT_model[];
-extern Gfx kai_sousa_henkan_model[];
-extern Gfx kai_sousa_yajirushi_model[];
-
-static void mED_KeyDraw_X_button(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static u8* tex[] = { kai_sousa_xbutton_tex_rgb_ia8, kai_sousa_xbutton2_tex_rgb_ia8 };
-
-    int key = 0;
-    Gfx* gfx;
-
-    if (chkButton(BUTTON_X)) {
-        key = 1;
-    }
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_henkan_model);
-
-    if (editor_ovl->exchange_code != -1) {
-        gSPDisplayList(gfx++, kai_sousa_yajirushi_model);
-    }
-
-    gSPDisplayList(gfx++, kai_sousa_xbuttonT_model);
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
-}
-
-extern u8 kai_sousa_ybutton_tex_rgb_ia8[];
-extern u8 kai_sousa_ybutton2_tex_rgb_ia8[];
-extern Gfx kai_sousa_ybuttonT_model[];
-extern Gfx kai_sousa_kirikae_model[];
-extern Gfx kai_sousa_letter_model[];
-extern Gfx kai_sousa_sign_model[];
-extern Gfx kai_sousa_mark_model[];
-
-static void mED_KeyDraw_Y_button(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static u8* tex[] = { kai_sousa_ybutton_tex_rgb_ia8, kai_sousa_ybutton2_tex_rgb_ia8 };
-
-    static Gfx* dl[mED_INPUT_MODE_NUM] = { kai_sousa_letter_model, kai_sousa_sign_model, kai_sousa_mark_model };
-
-    /* r, g, b, a, l */
-    static u8 prim[2][5] = { { 155, 155, 160, 255, 255 }, { 225, 255, 255, 255, 255 } };
-
-    int mode = editor_ovl->input_mode;
-    int key = 0;
-    Gfx* gfx;
-    int i;
-
-    if (chkButton(BUTTON_Y)) {
-        key = 1;
-    }
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_kirikae_model);
-
-    for (i = 0; i < mED_INPUT_MODE_NUM; i++) {
-        u8* col;
-
-        if (i == mode) {
-            col = prim[1];
-        } else {
-            col = prim[0];
-        }
-
-        gDPSetPrimColor(gfx++, 0, col[4], col[0], col[1], col[2], col[3]);
-        gSPDisplayList(gfx++, dl[i]);
-    }
-
-    gSPDisplayList(gfx++, kai_sousa_ybuttonT_model);
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
-}
-
-extern Gfx kai_sousa_startbuttonT_model[];
-extern Gfx kai_sousa_endT_model[];
 
 static void mED_KeyDraw_START_button(GRAPH* graph) {
     Gfx* gfx;
-
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPDisplayList(gfx++, kai_sousa_startbuttonT_model);
-    gSPDisplayList(gfx++, kai_sousa_endT_model);
-
+    gSPDisplayList(gfx++, lat_sousa_b1_model);
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
 
-typedef struct l_button_info_s {
-    u8* tex;
-    int prim;
-} mED_L_button_info_c;
-
-extern u8 kai_sousa_caps_tex_rgb_i4[];
-extern u8 kai_sousa_small_tex_rgb_i4[];
-extern u8 kai_sousa_lbutton_tex_rgb_ia8[];
-extern u8 kai_sousa_lbutton2_tex_rgb_ia8[];
-extern Gfx kai_sousa_lwaku_model[];
-extern Gfx kai_sousa_lmoji_model[];
-extern Gfx kai_sousa_lbuttonT_model[];
-
-static void mED_KeyDraw_L_button(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static mED_L_button_info_c data[mED_INPUT_MODE_NUM][mED_SHIFT_NUM] = { { { kai_sousa_caps_tex_rgb_i4, 0 },
-                                                                             { kai_sousa_small_tex_rgb_i4, 1 } },
-                                                                           { { NULL, 0 }, { NULL, 0 } },
-                                                                           { { NULL, 0 }, { NULL, 0 } } };
-
-    static u8* btn_tex[] = { kai_sousa_lbutton_tex_rgb_ia8, kai_sousa_lbutton2_tex_rgb_ia8 };
-
-    /* r, g, b, a, l */
-    static u8 prim[2][5] = { { 30, 30, 215, 255, 255 }, { 215, 30, 30, 255, 255 } };
-
-    int key = 0;
+static void mED_KeyDraw_Inside_circle(GRAPH* graph, mED_Ovl_c* editor_ovl, rgba_t* color) {
+    s16 consonant = editor_ovl->consonant_num;
     Gfx* gfx;
-    int prim_idx;
-    u8* col;
-    int i;
-    int mode;
-    int shift;
-    mED_L_button_info_c* button_info;
-
-    if (chkButton(BUTTON_L)) {
-        key = 1;
-    }
-
-    mode = editor_ovl->input_mode;
-    shift = editor_ovl->shift_mode;
-
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-    button_info = &data[mode][shift];
-    col = prim[button_info->prim];
-
-    gDPPipeSync(gfx++);
-    gDPSetPrimColor(gfx++, 0, col[4], col[0], col[1], col[2], col[3]);
-    gSPDisplayList(gfx++, kai_sousa_lwaku_model);
-
-    if (data[mode][shift].tex != NULL) {
-        gSPSegment(gfx++, G_MWO_SEGMENT_8, button_info->tex);
-        gSPDisplayList(gfx++, kai_sousa_lmoji_model);
+    gDPSetPrimColor(gfx++, 0, 255, color[mED_MODEL_INNER_PRIM].r, color[mED_MODEL_INNER_PRIM].g,
+                    color[mED_MODEL_INNER_PRIM].b, 255);
+    gDPSetEnvColor(gfx++, color[mED_MODEL_INNER_ENV].r, color[mED_MODEL_INNER_ENV].g, color[mED_MODEL_INNER_ENV].b,
+                   255);
+    gSPDisplayList(gfx++, lat_sousa_waku3T_model);
+    if (consonant != -1) {
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 255, color[mED_MODEL_MIDDLE_PRIM].r, color[mED_MODEL_MIDDLE_PRIM].g,
+                        color[mED_MODEL_MIDDLE_PRIM].b, 255);
+        gDPSetEnvColor(gfx++, color[mED_MODEL_MIDDLE_ENV].r, color[mED_MODEL_MIDDLE_ENV].g,
+                       color[mED_MODEL_MIDDLE_ENV].b, 255);
+        gSPDisplayList(gfx++, lat_sousa_waku2T_model);
     }
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, btn_tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_lbuttonT_model);
-
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
 
-extern u8 kai_sousa_rbutton_tex_rgb_ia8[];
-extern u8 kai_sousa_rbutton2_tex_rgb_ia8[];
-extern Gfx kai_sousa_rbuttonT_model[];
-extern Gfx kai_sousa_spaceT_model[];
-
-static void mED_KeyDraw_R_button(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static u8* btn_tex[] = { kai_sousa_rbutton_tex_rgb_ia8, kai_sousa_rbutton2_tex_rgb_ia8 };
-
-    int key = 0;
+static void mED_KeyDraw_Outside_circle(GRAPH* graph, mED_Ovl_c* editor_ovl, rgba_t* color) {
+    static u8* lat_sousa_waku1_tex_tbl[] = { lat_sousa_w1_tex_rgb_ia8, lat_sousa_w2_tex_rgb_ia8,
+                                             lat_sousa_w3_tex_rgb_ia8 };
+    int shift = editor_ovl->shift_mode;
+    s16 consonant = editor_ovl->consonant_num;
     Gfx* gfx;
-
-    if (chkButton(BUTTON_R)) {
-        key = 1;
-    }
-
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, btn_tex[key]);
-    gSPDisplayList(gfx++, kai_sousa_rbuttonT_model);
-    gSPDisplayList(gfx++, kai_sousa_spaceT_model);
-
+    if (shift == mED_SHIFT_MODE_HIRAGANA || shift == mED_SHIFT_MODE_KATAKANA) {
+        int frame = editor_ovl->anim_frame >> 1;
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 255, color[mED_MODEL_OUTER_PRIM].r, color[mED_MODEL_OUTER_PRIM].g,
+                        color[mED_MODEL_OUTER_PRIM].b, 255);
+        gDPSetEnvColor(gfx++, color[mED_MODEL_OUTER_ENV].r, color[mED_MODEL_OUTER_ENV].g, color[mED_MODEL_OUTER_ENV].b,
+                       255);
+        gSPSegment(gfx++, G_MWO_SEGMENT_9, lat_sousa_waku1_tex_tbl[frame]);
+        gSPDisplayList(gfx++, lat_sousa_waku1T_model);
+    }
+    if (consonant == -1) {
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 255, color[mED_MODEL_MIDDLE_PRIM].r, color[mED_MODEL_MIDDLE_PRIM].g,
+                        color[mED_MODEL_MIDDLE_PRIM].b, 255);
+        gDPSetEnvColor(gfx++, color[mED_MODEL_MIDDLE_ENV].r, color[mED_MODEL_MIDDLE_ENV].g,
+                       color[mED_MODEL_MIDDLE_ENV].b, 255);
+        gSPDisplayList(gfx++, lat_sousa_waku2T_model);
+    }
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
-
-extern Vtx kai_sousa2_v[];
-extern u8 testbutton[];
-
-static void mED_KeyDraw_keyboard(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static u8 model_type[mED_COLUMNS * mED_ROWS] = { 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
-                                                     1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0 };
-
-    static rgba_t sel_col[2] = { { 205, 0, 0, 255 }, { 0, 0, 205, 255 } };
-
-    Vtx* vert = &kai_sousa2_v[0];
-    u8* mtype = &model_type[0];
-    int selected_col;
-    int selected_row;
-    rgba_t* color;
-    int selected = TRUE;
-    int col_idx = 0;
-    int col;
-    int row;
-    Gfx* gfx;
-
-    if (editor_ovl->input_mode == mED_INPUT_MODE_LETTER && editor_ovl->shift_mode == mED_SHIFT_UPPER) {
-        col_idx = 1;
-    }
-
-    selected_col = editor_ovl->select_col;
-    selected_row = editor_ovl->select_row;
-    color = &sel_col[col_idx];
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPTexture(gfx++, 0, 0, 0, G_TX_RENDERTILE, G_ON);
-    gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0, 0, 0, 0, COMBINED, 0, 0, 0, COMBINED);
-
-    for (row = 0; row < mED_ROWS; row++) {
-        for (col = 0; col < mED_COLUMNS; col++) {
-            if (col == selected_col && row == selected_row) {
-                gDPSetPrimColor(gfx++, 0, 255, color->r, color->g, color->b, 255);
-                selected = TRUE;
-            } else if (selected == TRUE) {
-                gDPSetPrimColor(gfx++, 0, 255, 255, 255, 255, 255);
-                selected = FALSE;
-            }
-
-            gDPSetTextureImage_Dolphin(gfx++, G_IM_FMT_I, G_IM_SIZ_4b, 16, 16, testbutton);
-            gDPSetTile_Dolphin(gfx++, G_DOLPHIN_TLUT_DEFAULT_MODE, G_TX_RENDERTILE, 15, GX_MIRROR, GX_MIRROR, GX_CLAMP,
-                               GX_CLAMP);
-            gSPVertex(gfx++, vert, 4, 0);
-
-            if (*mtype != 0) {
-                gSPNTrianglesInit_5b(gfx++,
-                                     2,       // tri count
-                                     0, 1, 2, // tri0
-                                     3, 0, 2, // tri1
-                                     0, 0, 0  // tri2
-                );
-            } else {
-                gSPNTrianglesInit_5b(gfx++,
-                                     2,       // tri count
-                                     0, 1, 2, // tri0
-                                     1, 3, 2, // tri1
-                                     0, 0, 0  // tri2
-                );
-            }
-
-            vert += 4;
-            mtype++;
-        }
-    }
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
-}
-
-extern u8 kai_sousa_controllpad1_tex_rgb_ia8[];
-extern u8 kai_sousa_controllpad2_tex_rgb_ia8[];
-extern u8 kai_sousa_controllpad3_tex_rgb_ia8[];
-extern u8 kai_sousa_controllpad4_tex_rgb_ia8[];
-extern u8 kai_sousa_controllpad5_tex_rgb_ia8[];
-
-extern Gfx kai_sousa_controllpadT_model[];
-extern Gfx kai_sousa_cursorT_model[];
 
 static void mED_KeyDraw_J_key(GRAPH* graph) {
-    static u8* tex[5] = { kai_sousa_controllpad1_tex_rgb_ia8, kai_sousa_controllpad3_tex_rgb_ia8,
-                          kai_sousa_controllpad4_tex_rgb_ia8, kai_sousa_controllpad5_tex_rgb_ia8,
-                          kai_sousa_controllpad2_tex_rgb_ia8 };
-
-    int tex_idx = 0;
+    static u8* lat_sousa_jyu_button_tbl[] = { lat_sousa_jyu1_tex_rgb_ia8, lat_sousa_jyu2_tex_rgb_ia8,
+                                              lat_sousa_jyu3_tex_rgb_ia8, lat_sousa_jyu4_tex_rgb_ia8,
+                                              lat_sousa_jyu5_tex_rgb_ia8 };
+    int key = 0;
     Gfx* gfx;
-
-    if (chkButton(BUTTON_DLEFT)) {
-        tex_idx = 2;
-    } else if (chkButton(BUTTON_DDOWN)) {
-        tex_idx = 1;
-    } else if (chkButton(BUTTON_DUP)) {
-        tex_idx = 4;
-    } else if (chkButton(BUTTON_DRIGHT)) {
-        tex_idx = 3;
-    }
-
+    if (chkButton(BUTTON_DLEFT))
+        key = 2;
+    else if (chkButton(BUTTON_DDOWN))
+        key = 1;
+    else if (chkButton(BUTTON_DUP))
+        key = 4;
+    else if (chkButton(BUTTON_DRIGHT))
+        key = 3;
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[tex_idx]);
-    gSPDisplayList(gfx++, kai_sousa_controllpadT_model);
-    gSPDisplayList(gfx++, kai_sousa_cursorT_model);
-
+    gSPSegment(gfx++, G_MWO_SEGMENT_8, lat_sousa_jyu_button_tbl[key]);
+    gSPDisplayList(gfx++, lat_sousa_jyuT_model);
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
 
-extern u8 kai_sousa_3Dst_tex_rgb_ia8[];
-extern u8 kai_sousa_3Dst2_tex_rgb_ia8[];
-extern u8 kai_sousa_3Dst3_tex_rgb_ia8[];
-extern u8 kai_sousa_3Dst4_tex_rgb_ia8[];
-extern u8 kai_sousa_3Dst5_tex_rgb_ia8[];
-extern u8 kai_sousa_3Dst6_tex_rgb_ia8[];
-
-extern Gfx kai_sousa_3DT_model[];
-extern Gfx kai_sousa_3DstT_model[];
-
-static void mED_KeyDraw_3D_stick(GRAPH* graph, mED_Ovl_c* editor_ovl) {
-    static u8* tex[mED_STICK_AREA_NUM] = { kai_sousa_3Dst4_tex_rgb_ia8, kai_sousa_3Dst3_tex_rgb_ia8,
-                                           kai_sousa_3Dst2_tex_rgb_ia8, kai_sousa_3Dst3_tex_rgb_ia8,
-                                           kai_sousa_3Dst4_tex_rgb_ia8, kai_sousa_3Dst5_tex_rgb_ia8,
-                                           kai_sousa_3Dst6_tex_rgb_ia8, kai_sousa_3Dst5_tex_rgb_ia8,
-                                           kai_sousa_3Dst_tex_rgb_ia8 };
-
-    int stick_area = editor_ovl->stick_area;
+static void mED_KeyDraw_XY_button(GRAPH* graph, mED_Ovl_c* editor_ovl) {
+    static u8* lat_sousa_x_button_tbl[] = { lat_sousa_x_tex_rgb_ia8, lat_sousa_x2_tex_rgb_ia8 };
+    static u8* lat_sousa_y_button_tbl[] = { lat_sousa_y_tex_rgb_ia8, lat_sousa_y2_tex_rgb_ia8 };
+    int x = 0;
+    int y = 0;
     Gfx* gfx;
-
-    Matrix_push();
-
-    if (stick_area >= mED_STICK_AREA_TOP_RIGHT && stick_area <= mED_STICK_AREA_BOTTOM_RIGHT) {
-        Matrix_translate(-111.0f, -50.0f, 0.0f, MTX_MULT);
-        Matrix_RotateY(DEG2SHORT_ANGLE(-180.0f), MTX_MULT);
+    if (chkButton(BUTTON_X))
+        x = 1;
+    if (chkButton(BUTTON_Y))
+        y = 1;
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPSegment(gfx++, G_MWO_SEGMENT_8, lat_sousa_x_button_tbl[x]);
+    gSPSegment(gfx++, G_MWO_SEGMENT_9, lat_sousa_y_button_tbl[y]);
+    gSPDisplayList(gfx++, lat_sousa_model);
+    if (editor_ovl->is_wide_string == TRUE) {
+        gSPDisplayList(gfx++, lat_sousa_kirikae2T_model);
     } else {
-        Matrix_translate(-110.0f, -50.0f, 0.0f, MTX_MULT);
+        gSPDisplayList(gfx++, lat_sousa_kirikaeT_model);
     }
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPDisplayList(gfx++, kai_sousa_3DT_model);
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, tex[stick_area]);
-    gSPDisplayList(gfx++, kai_sousa_3DstT_model);
-
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
-
-    Matrix_pull();
 }
 
-extern Gfx kai_sousa_mode[];
-extern Gfx kai_sousa_shitaT_model[];
-extern Gfx kai_sousa_controllerT_model[];
-extern Gfx kai_sousa_controller2T_model[];
-extern Gfx kai_sousa_mojibanT_model[];
-
-static void mED_KeyDraw(mED_Ovl_c* editor_ovl, GRAPH* graph, f32 x, f32 y) {
+static void mED_KeyDraw_Strings(GRAPH* graph, mED_Ovl_c* editor_ovl) {
+    static Gfx* displayList_table[mED_SHIFT_MODE_EMOJI] = { lat_sousa_hiraT_model, lat_sousa_kigouT_model,
+                                                            lat_sousa_kataT_model, lat_sousa_eiT_model,
+                                                            lat_sousa_suT_model };
+    static Gfx* displayList_table2[mED_SHIFT_MODE_NUM] = { lat_sousa_hira2T_model, lat_sousa_kigou2T_model,
+                                                           lat_sousa_kata2T_model, lat_sousa_ei2T_model,
+                                                           lat_sousa_su2T_model,   lat_sousa_emoji2T_model };
+    int shift = editor_ovl->shift_mode;
+    int code = mED_get_now_code(editor_ovl);
     Gfx* gfx;
-
-    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
-    Matrix_translate(x, y, 0.0f, MTX_MULT);
-
+    int i;
     OPEN_DISP(graph);
     gfx = NOW_POLY_OPA_DISP;
-
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, kai_sousa_mode);
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
-
-    mED_KeyDraw_L_button(graph, editor_ovl);
-    mED_KeyDraw_R_button(graph, editor_ovl);
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPDisplayList(gfx++, kai_sousa_shitaT_model);
-    gSPDisplayList(gfx++, kai_sousa_controllerT_model);
-    gSPDisplayList(gfx++, kai_sousa_controller2T_model);
-    gSPDisplayList(gfx++, kai_sousa_mojibanT_model);
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(graph);
-
-    mED_KeyDraw_A_button(graph);
-    mED_KeyDraw_B_button(graph);
-    mED_KeyDraw_X_button(graph, editor_ovl);
-    mED_KeyDraw_Y_button(graph, editor_ovl);
-    mED_KeyDraw_START_button(graph);
-    mED_KeyDraw_J_key(graph);
-    mED_KeyDraw_3D_stick(graph, editor_ovl);
-    mED_KeyDraw_keyboard(graph, editor_ovl);
-}
-
-extern Gfx kai_sousa_ink_mode[];
-extern Gfx kai_sousa_ink_model[];
-extern Gfx kai_sousa_inktuboT_model[];
-extern Gfx kai_sousa_inkmojiT_model[];
-
-static void mED_InkPotDraw(Submenu* submenu, mED_Ovl_c* editor_ovl, GRAPH* graph, f32 x, f32 y) {
-    f32 line_y;
-    f32 single_line_y;
-    Gfx* gfx;
-    Gfx* scroll_gfx;
-
-    /* Filter out editors without the inkpot */
-    switch (submenu->overlay->menu_info[mSM_OVL_EDITOR].data0) {
-        case mED_TYPE_BOARD:
+    switch (code) {
+        case -1:
+        case CHAR_MESSAGE_TAG:
+            gSPDisplayList(gfx++, lat_sousa_teiT_model);
             break;
-        case mED_TYPE_NOTICE:
-            break;
-        case mED_TYPE_DIARY:
-            break;
-        default:
-            return;
     }
-
-    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
-    Matrix_translate(x, y, 0.0f, MTX_MULT);
-    single_line_y = 0.0f;
-    line_y = ((f32)editor_ovl->now_str_len * 15.0f) / (f32)(editor_ovl->input_length * editor_ovl->max_line_no);
-
-    if (line_y > 15.0f) {
-        line_y = 15.0f;
-    }
-
-    if (editor_ovl->max_line_no == 1) {
-        single_line_y = ((f32)mED_get_single_line_width(editor_ovl) * 15.0f) / (f32)editor_ovl->line_width;
-
-        if (single_line_y > 15.0f) {
-            single_line_y = 15.0f;
+    if (editor_ovl->latin_shift_mode != TRUE) {
+        if (editor_ovl->exchange_code == -1) {
+            gDPSetPrimColor(gfx++, 0, 255, 20, 20, 175, 255);
+        } else {
+            gDPSetPrimColor(gfx++, 0, 255, 120, 20, 20, 255);
+        }
+        gSPDisplayList(gfx++, lat_sousa_henT_model);
+        if (editor_ovl->exchange_code == -1) {
+            gSPDisplayList(gfx++, lat_sousa_henkanT_model);
+        } else {
+            gSPDisplayList(gfx++, lat_sousa_word_combine);
+            gSPDisplayList(gfx++, lat_sousa_henyajiT_model);
         }
     }
-
-    if (line_y < single_line_y) {
-        line_y = single_line_y;
+    gSPDisplayList(gfx++, lat_sousa_word_combine);
+    gDPSetPrimColor(gfx++, 0, 255, 225, 45, 0, 255);
+    if (editor_ovl->is_wide_string == TRUE) {
+        gSPDisplayList(gfx++, displayList_table2[shift]);
+        gDPSetPrimColor(gfx++, 0, 255, 205, 135, 80, 255);
+        for (i = 0; i < mED_SHIFT_MODE_NUM; i++) {
+            if (i != shift) {
+                gSPDisplayList(gfx++, displayList_table2[i]);
+            }
+        }
+    } else {
+        gSPDisplayList(gfx++, displayList_table[shift]);
+        gDPSetPrimColor(gfx++, 0, 255, 205, 135, 80, 255);
+        for (i = 0; i < mED_SHIFT_MODE_EMOJI; i++) {
+            if (i != shift) {
+                gSPDisplayList(gfx++, displayList_table[i]);
+            }
+        }
     }
-
-    scroll_gfx = two_tex_scroll_dolphin(graph, 0, 0, 0, 32, 32, 1, 0, line_y * 8.0f, 32, 32);
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(gfx++, G_MWO_SEGMENT_8, scroll_gfx);
-    gSPDisplayList(gfx++, kai_sousa_ink_mode);
-    gSPDisplayList(gfx++, kai_sousa_ink_model);
-    gSPDisplayList(gfx++, kai_sousa_inktuboT_model);
-    gSPDisplayList(gfx++, kai_sousa_inkmojiT_model);
-
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
+}
+
+static void mED_KeyDraw_3D_stick(GRAPH* graph, mED_Ovl_c* editor_ovl, rgba_t* color) {
+    static u8* lat_sousa_st_tex_tbl[mED_STICK_AREA_NUM] = { lat_sousa_st5_tex_rgb_ia8, lat_sousa_st4_tex_rgb_ia8,
+                                                            lat_sousa_st2_tex_rgb_ia8, lat_sousa_st4_tex_rgb_ia8,
+                                                            lat_sousa_st5_tex_rgb_ia8, lat_sousa_st6_tex_rgb_ia8,
+                                                            lat_sousa_st3_tex_rgb_ia8, lat_sousa_st6_tex_rgb_ia8,
+                                                            lat_sousa_st1_tex_rgb_ia8 };
+    int stick = editor_ovl->stick_area;
+    Gfx* gfx;
+    Matrix_push();
+    Matrix_translate(-74.0f, 23.2f, 0.0f, MTX_MULT);
+    if (stick >= mED_STICK_AREA_TOP_RIGHT && stick <= mED_STICK_AREA_BOTTOM_RIGHT) {
+        Matrix_RotateY(DEG2SHORT_ANGLE(-180.0f), MTX_MULT);
+    }
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPSegment(gfx++, G_MWO_SEGMENT_8, lat_sousa_st_tex_tbl[stick]);
+    gDPSetTextureAdjustMode(gfx++, G_TA_DOLPHIN);
+    gSPDisplayList(gfx++, lat_sousa_other_combine);
+    gSPDisplayList(gfx++, lat_sousa_stT_model);
+    gDPSetTextureAdjustMode(gfx++, G_TA_N64);
+    Matrix_pull();
+    gSPDisplayList(gfx++, lat_sousa_word_combine);
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gDPSetPrimColor(gfx++, 0, 255, color[mED_MODEL_ARROW].r, color[mED_MODEL_ARROW].g, color[mED_MODEL_ARROW].b, 255);
+    gSPDisplayList(gfx++, lat_sousa_yajiT_model);
+    SET_POLY_OPA_DISP(gfx);
+    CLOSE_DISP(graph);
+}
+
+static void mED_KeyDraw(mED_Ovl_c* editor_ovl, GRAPH* graph, f32 x, f32 y) {
+    static rgba_t model_color[3][mED_MODEL_COLOR_NUM] = { { { 130, 60, 50, 255 },
+                                                            { 40, 70, 40, 255 },
+                                                            { 85, 100, 255, 255 },
+                                                            { 0, 10, 75, 255 },
+                                                            { 100, 90, 175, 255 },
+                                                            { 50, 50, 75, 255 },
+                                                            { 255, 255, 30, 255 } },
+                                                          { { 140, 50, 40, 255 },
+                                                            { 95, 55, 30, 255 },
+                                                            { 55, 90, 225, 255 },
+                                                            { 0, 10, 65, 255 },
+                                                            { 155, 50, 155, 255 },
+                                                            { 20, 40, 20, 255 },
+                                                            { 195, 125, 255, 255 } },
+                                                          { { 160, 40, 30, 255 },
+                                                            { 130, 40, 20, 255 },
+                                                            { 40, 80, 185, 255 },
+                                                            { 0, 10, 55, 255 },
+                                                            { 180, 50, 70, 255 },
+                                                            { 40, 50, 20, 255 },
+                                                            { 170, 255, 170, 255 } } };
+    rgba_t* color = model_color[editor_ovl->anim_frame >> 1];
+    Gfx* gfx;
+    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+    Matrix_translate(x, y, 0.0f, MTX_MULT);
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(gfx++, lat_sousa_mode);
+    SET_POLY_OPA_DISP(gfx);
+    CLOSE_DISP(graph);
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPDisplayList(gfx++, lat_sousa_word_combine);
+    gSPDisplayList(gfx++, lat_sousa_sousaT_model);
+    gSPDisplayList(gfx++, lat_sousa_2cycle_combine);
+    SET_POLY_OPA_DISP(gfx);
+    CLOSE_DISP(graph);
+    mED_KeyDraw_A_button(graph);
+    mED_KeyDraw_B_button(graph);
+    mED_KeyDraw_START_button(graph);
+    OPEN_DISP(graph);
+    gfx = NOW_POLY_OPA_DISP;
+    gSPDisplayList(gfx++, lat_sousa_other_combine);
+    gDPSetCycleType(gfx++, G_CYC_1CYCLE);
+    gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+    SET_POLY_OPA_DISP(gfx);
+    CLOSE_DISP(graph);
+    mED_KeyDraw_Inside_circle(graph, editor_ovl, color);
+    mED_KeyDraw_Outside_circle(graph, editor_ovl, color);
+    mED_KeyDraw_J_key(graph);
+    mED_KeyDraw_XY_button(graph, editor_ovl);
+    mED_KeyDraw_Strings(graph, editor_ovl);
+    mED_KeyDraw_3D_stick(graph, editor_ovl, color);
 }
 
 extern Gfx lat_sousa_spT_model[];
 
-static void mED_StringsDraw_spaceCode(GAME* game, rgba_t* color, f32 x, f32 y) {
-    GRAPH* graph = game->graph;
-    Gfx* gfx;
+enum {
+    mED_RING_COLOR_SELECTED,
+    mED_RING_COLOR_BACK,
+    mED_RING_COLOR_FRONT,
+    mED_RING_COLOR_OUTER,
+    mED_RING_COLOR_NUM = mED_RING_COLOR_OUTER + 3
+};
 
-    x = 6.5f + (x - 160.0f);
-    y = -(8.5f + (y - 120.0f));
-
-    OPEN_DISP(graph);
-    gfx = NOW_POLY_OPA_DISP;
-
-    Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
-    Matrix_translate(x, y, 0.0f, MTX_MULT);
-    Matrix_scale(0.75f, 1.0f, 1.0f, MTX_MULT);
-
-    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gDPSetPrimColor(gfx++, 0, 255, color->r, color->g, color->b, 255);
-    gSPDisplayList(gfx++, lat_sousa_spT_model);
-    gSPMatrix(gfx++, &Mtx_clear, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-
-    SET_POLY_OPA_DISP(gfx);
-    CLOSE_DISP(gfx);
-}
-
-static void mED_StringsDraw_keyboard(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
-    static f32 offset_posX[mED_COLUMNS] = {
-        60.0f, 76.0f, 92.0f, 108.0f, 124.0f, 140.0f, 156.0f, 172.0f, 188.0f, 204.0f
-    };
-
-    static f32 offset_posY[mED_ROWS] = { 133.0f, 149.0f, 165.0f, 181.0f };
-
-    static f32 slide_posX[mED_ROWS] = { 0.0f, 3.0f, 7.0f, 10.0f };
-
-    static rgba_t col[2] = { { 35, 30, 55, 255 }, { 255, 255, 255, 255 } };
-
-    int column;
-    int row;
-    int sel_col = editor_ovl->select_col;
-    int sel_row = editor_ovl->select_row;
-
-    for (row = 0; row < mED_ROWS; row++) {
-        for (column = 0; column < mED_COLUMNS; column++) {
-            u8 code = mED_get_code(editor_ovl, column, row);
-
-            if (code != CHAR_SPACE_3) {
-                rgba_t* color;
-                f32 text_x;
-                f32 text_y;
-
-                if (column == sel_col && row == sel_row) {
-                    color = &col[1];
-                } else {
-                    color = &col[0];
-                }
-
-                text_x = x + offset_posX[column] + slide_posX[row] + 2.0f;
-                text_y = -y + offset_posY[row];
-
-                switch (code) {
-                    case CHAR_SPACE:
-                        mED_StringsDraw_spaceCode(game, color, text_x, text_y);
-                        break;
-                    default:
-                        mFont_SetLineStrings(game, &code, 1, text_x, text_y, color->r, color->g, color->b, 255, FALSE,
-                                             FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
-                        break;
-                }
+static void mED_StringsDraw_RingSingle(GAME* game, u16* str, int color, int ring, f32 x, f32 y, f32 scale) {
+    static rgba_t rstr_color[mED_RING_COLOR_NUM] = { { 255, 255, 255, 255 }, { 110, 155, 255, 255 },
+                                                     { 105, 205, 225, 255 }, { 215, 120, 215, 255 },
+                                                     { 235, 135, 235, 255 }, { 255, 150, 255, 255 } };
+    rgba_t* col = &rstr_color[color];
+    switch (*str) {
+        case CHAR_MESSAGE_TAG:
+            break;
+        case CHAR_SPACE: {
+            GRAPH* graph = game->graph;
+            Gfx* gfx;
+            OPEN_DISP(graph);
+            gfx = NOW_POLY_OPA_DISP;
+            Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
+            Matrix_translate(x - 160.0f, -(y - 120.0f), 0.0f, MTX_MULT);
+            if (ring != FALSE) {
+                Matrix_scale(scale, scale, 1.0f, MTX_MULT);
+            } else {
+                Matrix_scale(scale * 0.75f, scale, 1.0f, MTX_MULT);
             }
+            Matrix_translate(7.0f, -9.0f, 0.0f, MTX_MULT);
+            gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            gDPSetPrimColor(gfx++, 0, 255, col->r, col->g, col->b, 255);
+            gSPDisplayList(gfx++, lat_sousa_spT_model);
+            gSPMatrix(gfx++, &Mtx_clear, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            SET_POLY_OPA_DISP(gfx);
+            CLOSE_DISP(graph);
+            break;
         }
+        default:
+            mFont_SetLineStringsW(game, str, 1, x, y, col->r, col->g, col->b, 255, FALSE, FALSE, scale, scale,
+                                  mFont_MODE_POLY);
+            break;
     }
 }
 
-static void mED_StringsDraw_select(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
-    static rgba_t sp_col = { 255, 255, 255, 255 };
-    u8 code = mED_get_code(editor_ovl, editor_ovl->select_col, editor_ovl->select_row);
-
-    if (code != CHAR_SPACE_3) {
-        f32 text_x = (237.0f + x) + 5.0f;
-        f32 text_y = (177.0f - y) + 3.0f;
-
-        if (chkButton(BUTTON_A)) {
-            text_y += 1.0f;
-        }
-
-        switch (code) {
-            case CHAR_SPACE:
-                mED_StringsDraw_spaceCode(game, &sp_col, text_x, text_y);
-                break;
-            default:
-                mFont_SetLineStrings(game, &code, 1, text_x, text_y, 255, 255, 255, 255, FALSE, FALSE, 1.0f, 1.0f,
-                                     mFont_MODE_POLY);
-                break;
-        }
+static void mED_StringsDraw_forRingInReturn(GAME* game, f32 x, f32 y) {
+    static f32 pos[3][2] = { { 147.5f, 208.0f }, { 161.0f, 213.0f }, { 175.5f, 208.0f } };
+    static u8 return_str[3] = { CHAR_PP_091, CHAR_PP_245, CHAR_PP_125 };
+    int i;
+    f32* point = pos[0];
+    u8* str = return_str;
+    for (i = 0; i < 3; str++) {
+        mFont_SetLineStrings(game, str, 1, point[0] + x, point[1] - y, 225, 135, 225, 255, FALSE, FALSE, 0.875f, 0.875f,
+                             mFont_MODE_POLY);
+        i++;
+        point += 2;
     }
 }
 
-static void mED_StringsDraw_ornament(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
+static void mED_StringsDraw_forRingIn(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
+    static f32 pos[2][10][2] = { { { 131.2f, 181.0f },
+                                   { 139.4f, 162.0f },
+                                   { 160.2f, 154.2f },
+                                   { 180.7f, 161.6f },
+                                   { 188.2f, 181.0f },
+                                   { 183.5f, 199.0f },
+                                   { 174.0f, 207.0f },
+                                   { 162.0f, 212.0f },
+                                   { 150.5f, 207.0f },
+                                   { 140.5f, 199.0f } },
+                                 { { 134.5f, 171.0f },
+                                   { 148.5f, 157.0f },
+                                   { 171.0f, 157.0f },
+                                   { 185.5f, 171.0f },
+                                   { 188.5f, 193.0f },
+                                   { 179.5f, 203.3f },
+                                   { 168.6f, 209.5f },
+                                   { 155.9f, 209.5f },
+                                   { 145.0f, 203.3f },
+                                   { 135.5f, 193.0f } } };
+    u16 str[10];
+    f32* point;
+    int i;
+    int color;
+    f32 scale;
+    if (editor_ovl->rotate_timer == 0 || (editor_ovl->rotate_timer > 2 && editor_ovl->rotate_timer <= 4)) {
+        point = pos[0][0];
+    } else {
+        point = pos[1][0];
+    }
+    for (i = 0; i < 10; i++) {
+        str[i] = mED_get_code(editor_ovl, editor_ovl->page_top_num, i, TRUE);
+    }
+    for (i = 0; i < 10; point += 2) {
+        if (point[1] > pos[0][0][1]) {
+            color = mED_RING_COLOR_BACK;
+            scale = 0.75f;
+        } else {
+            scale = 1.125f;
+            if (i == editor_ovl->stick_area)
+                color = mED_RING_COLOR_SELECTED;
+            else
+                color = mED_RING_COLOR_FRONT;
+        }
+        mED_StringsDraw_RingSingle(game, &str[i], color, TRUE, GETREG(TAKREG, 40) * 0.1f + (point[0] + x),
+                                   GETREG(TAKREG, 41) * 0.1f + (point[1] - y), scale);
+        i++;
+    }
+}
+
+static void mED_StringsDraw_forRingOut(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
+    static f32 pos[3][mED_CHARS_PER_PAGE][2] = {
+        { { 122.5f, 163.0f }, { 137.5f, 145.5f }, { 162.0f, 139.5f }, { 187.0f, 146.0f }, { 202.0f, 163.0f } },
+        { { 121.375f, 169.0f },
+          { 135.375f, 148.25f },
+          { 160.875f, 139.75f },
+          { 187.125f, 148.5f },
+          { 200.375f, 169.0f } },
+        { { 119.5f, 174.0f }, { 132.5f, 150.0f }, { 159.0f, 139.0f }, { 186.5f, 150.0f }, { 198.0f, 174.0f } }
+    };
+    static f32 scale_kind[3] = { 0.875f, 1.0f, 1.25f };
+    u16 str[mED_CHARS_PER_PAGE];
+    u8 stick;
+    int consonant;
+    int frame;
+    int i;
+    int base;
+    int j;
+    f32* point;
+    f32 scale;
+    int color;
+    frame = editor_ovl->anim_frame >> 1;
+    consonant = editor_ovl->consonant_num;
+    stick = editor_ovl->stick_area;
+    point = pos[frame][0];
+    scale = scale_kind[frame];
+    if (consonant == -1)
+        base = stick + editor_ovl->page_top_num;
+    else
+        base = consonant;
+    for (i = 0; i < mED_CHARS_PER_PAGE; i++) {
+        str[i] = mED_get_code(editor_ovl, base, i, FALSE);
+    }
+    for (j = 0; j < mED_CHARS_PER_PAGE; point += 2) {
+        if (j == stick && consonant != -1)
+            color = mED_RING_COLOR_SELECTED;
+        else
+            color = frame + mED_RING_COLOR_OUTER;
+        mED_StringsDraw_RingSingle(game, &str[j], color, TRUE, point[0] + x, point[1] - y, scale);
+        j++;
+    }
+}
+
+static void mED_StringsDraw_forNormal(Submenu* submenu, GAME* game, f32 x, f32 y) {
+    u16 str[1];
+    int code = mED_get_now_code(submenu->overlay->editor_ovl);
+    if (code != -1) {
+        str[0] = code;
+        mED_StringsDraw_RingSingle(game, str, mED_RING_COLOR_SELECTED, FALSE, x + 239.0f, 168.0f - y, 1.0f);
+    }
+}
+
+static void mED_StringsDraw_forOrnament(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
     if (editor_ovl->exchange_code != -1) {
-        u8 code = editor_ovl->exchange_code;
-        f32 text_x = 259.0f + x;
-        f32 text_y = 190.0f - y;
-        int cursor_idx = editor_ovl->cursor_idx;
-        u8* str_p = &editor_ovl->input_str[cursor_idx];
-
-        mFont_SetLineStrings(game, &str_p[-1], 1, text_x + 2.0f, text_y, 225, 195, 195, 255, FALSE, FALSE, 1.0f, 1.0f,
-                             mFont_MODE_POLY);
-        text_x = 281.0f + x;
-        mFont_SetLineStrings(game, &code, 1, text_x + 2.0f, text_y, 255, 255, 255, 255, FALSE, FALSE, 1.0f, 1.0f,
-                             mFont_MODE_POLY);
+        u16 previous;
+        u16 code = editor_ovl->exchange_code;
+        f32 text_y = 120.0f - ((y + 8.0f) - 6.0f);
+        f32 text_x = 160.0f + (51.0f + x);
+        previous = mED_get_str_data(editor_ovl, editor_ovl->cursor_idx - 1);
+        mFont_SetLineStringsW(game, &previous, 1, text_x + 8.0f, text_y, 255, 175, 255, 255, FALSE, FALSE, 1.0f, 1.0f,
+                              mFont_MODE_POLY);
+        mFont_SetLineStringsW(game, &code, 1, text_x + 18.0f + 16.0f, text_y, 255, 255, 255, 255, FALSE, FALSE, 1.0f,
+                              1.0f, mFont_MODE_POLY);
     }
+}
+
+static int mED_StringsDrawCheck_forRingOut(mED_Ovl_c* editor_ovl) {
+    int ret = TRUE;
+    if ((editor_ovl->shift_mode != mED_SHIFT_MODE_HIRAGANA && editor_ovl->shift_mode != mED_SHIFT_MODE_KATAKANA) ||
+        (editor_ovl->consonant_num == -1 && editor_ovl->stick_area >= mED_CHARS_PER_PAGE)) {
+        ret = FALSE;
+    }
+    return ret;
 }
 
 static void mED_StringsDraw(Submenu* submenu, mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y) {
     (*submenu->overlay->set_char_matrix_proc)(game->graph);
-    mED_StringsDraw_keyboard(editor_ovl, game, x, y);
-    mED_StringsDraw_select(editor_ovl, game, x, y);
-    mED_StringsDraw_ornament(editor_ovl, game, x, y);
+    if (editor_ovl->consonant_num == -1) {
+        mED_StringsDraw_forRingIn(editor_ovl, game, x - 80.0f, y + 22.0f);
+    } else {
+        mED_StringsDraw_forRingInReturn(game, x - 80.0f, y + 22.0f);
+    }
+    if (mED_StringsDrawCheck_forRingOut(editor_ovl)) {
+        mED_StringsDraw_forRingOut(editor_ovl, game, x - 80.0f, (y + 18.0f) - GETREG(TAKREG, 41) * 0.1f);
+    }
+    mED_StringsDraw_forNormal(submenu, game, x, y);
+    mED_StringsDraw_forOrnament(editor_ovl, game, x + 18.0f, y - 10.0f);
 }
 
 static void mED_set_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) {
@@ -2399,7 +2280,6 @@ static void mED_set_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) 
     GRAPH* graph = game->graph;
 
     mED_KeyDraw(editor_ovl, graph, menu_info->position[0], menu_info->position[1]);
-    mED_InkPotDraw(submenu, editor_ovl, graph, menu_info->position[0], menu_info->position[1]);
     mED_StringsDraw(submenu, editor_ovl, game, menu_info->position[0], menu_info->position[1]);
 }
 
@@ -2427,11 +2307,11 @@ static void mED_cursol_draw(Submenu* submenu, GAME* game, f32 x, f32 y) {
     int cursol_opacity_step = editor_ovl->cursol_opacity_step;
     int a;
 
-    if (cursol_opacity_step > 17) {
-        cursol_opacity_step = 35 - cursol_opacity_step;
+    if (cursol_opacity_step > 20) {
+        cursol_opacity_step = 40 - cursol_opacity_step;
     }
 
-    a = ((17 - cursol_opacity_step) * 255) / 17;
+    a = ((20 - cursol_opacity_step) * 255) / 20;
     mFont_SetMarkChar(game, mFont_MARKTYPE_CURSOR, x, y, 195, 80, 80, a, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 }
 
@@ -2461,12 +2341,22 @@ extern void mED_editor_ovl_set_proc(Submenu* submenu) {
 static void mED_editor_ovl_init(Submenu* submenu) {
     Submenu_Overlay_c* overlay = submenu->overlay;
     mSM_MenuInfo_c* menu_info = &overlay->menu_info[mSM_OVL_EDITOR];
-
     (*overlay->move_chg_base_proc)(menu_info, mSM_MOVE_IN_BOTTOM);
-
-    if (menu_info->data0 == mED_TYPE_CP_TITLE || menu_info->data0 == mED_TYPE_LEDIT ||
-        menu_info->data0 == mED_TYPE_HBOARD) {
-        sAdo_SysTrgStart(0x59);
+    switch (menu_info->data0) {
+        case mED_TYPE_CP_TITLE:
+        case mED_TYPE_LEDIT:
+        case mED_TYPE_HBOARD:
+            overlay->editor_ovl->latin_shift_mode = FALSE;
+            sAdo_SysTrgStart(0x59);
+            break;
+        case mED_TYPE_LEDIT_LATIN:
+            overlay->editor_ovl->shift_mode = mED_SHIFT_MODE_ALPHABET;
+            overlay->editor_ovl->latin_shift_mode = TRUE;
+            sAdo_SysTrgStart(0x59);
+            break;
+        default:
+            overlay->editor_ovl->latin_shift_mode = FALSE;
+            break;
     }
 }
 

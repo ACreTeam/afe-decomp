@@ -743,7 +743,7 @@ static void mBD_roll_control(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         f32 abs_pos_dist;
 
         if (board_ovl->field == mBD_FIELD_BODY) {
-            line = editor_ovl->_24 + 2;
+            line = editor_ovl->cursor_row + 2;
         } else if (board_ovl->field == mBD_FIELD_HEADER) {
             line = 0;
         } else {
@@ -934,8 +934,8 @@ static void mBD_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
         if (editor_ovl != NULL) {
             editor_ovl->cursor_idx = 0;
-            editor_ovl->_22 = 0;
-            editor_ovl->_24 = 0;
+            editor_ovl->cursor_col = 0;
+            editor_ovl->cursor_row = 0;
         }
     }
 }
@@ -1040,16 +1040,16 @@ static void mBD_set_cursol(Submenu* submenu, GAME* game, f32 x, f32 y) {
                     ox = 80;
                 }
 
-                ofs_x = (f32)editor_ovl->_26 + (f32)ox + -7.0f;
+                ofs_x = (f32)editor_ovl->cursor_line_width + (f32)ox + -7.0f;
                 line = 0.0f;
                 ofs_y = 0.0f;
                 break;
             }
 
             case mBD_FIELD_BODY: {
-                ofs_x = (f32)editor_ovl->_26 + -7.0f;
+                ofs_x = (f32)editor_ovl->cursor_line_width + -7.0f;
                 ofs_y = 12.0f;
-                line = editor_ovl->_24 + 1;
+                line = editor_ovl->cursor_row + 1;
                 break;
             }
 
@@ -1059,7 +1059,7 @@ static void mBD_set_cursol(Submenu* submenu, GAME* game, f32 x, f32 y) {
 
                 ofs_x = 192.0f;
                 ofs_x -= width;
-                ofs_x += editor_ovl->_26 + -7.0f;
+                ofs_x += editor_ovl->cursor_line_width + -7.0f;
                 line = 7.0f;
                 ofs_y = 24.0f;
                 break;

@@ -179,7 +179,7 @@ static void mHB_set_dl_sub(Submenu* submenu, GRAPH* graph, GAME* game, f32 x, f3
 
   if (editor_ovl != NULL) {
     /* Draw editor cursor */
-    (*submenu->overlay->editor_ovl->cursol_draw)(submenu, game, x + editor_ovl->_26 + -7.0f, y + editor_ovl->_24 * 16.0f);
+    (*submenu->overlay->editor_ovl->cursol_draw)(submenu, game, x + editor_ovl->cursor_line_width + -7.0f, y + editor_ovl->cursor_row * 16.0f);
     
     /* Draw end code */
     (*submenu->overlay->editor_ovl->end_code_draw)(submenu, game, endCode_x, endCode_y);

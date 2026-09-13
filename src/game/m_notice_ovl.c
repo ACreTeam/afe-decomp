@@ -73,7 +73,7 @@ static void mNT_roll_control(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     mNT_Ovl_c* notice_ovl = submenu->overlay->notice_ovl;
 
     if (editor_ovl != NULL) {
-        int line = editor_ovl->_24;
+        int line = editor_ovl->cursor_row;
         int dist = line - notice_ovl->page_center;
         f32 roll_pos;
         f32 abs_pos_dist;
@@ -650,8 +650,8 @@ static void mNT_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
     mNT_set_strings_dl(menu_info, game, post_p->message, body_len, x, y, &end_x, &end_y);
 
     if (menu_info->proc_status == mSM_OVL_PROC_WAIT && editor_ovl != NULL) {
-        (*submenu->overlay->editor_ovl->cursol_draw)(submenu, game, x + (f32)editor_ovl->_26 + -7.0f,
-                                                     y + editor_ovl->_24 * 16.0f);
+        (*submenu->overlay->editor_ovl->cursol_draw)(submenu, game, x + (f32)editor_ovl->cursor_line_width + -7.0f,
+                                                     y + editor_ovl->cursor_row * 16.0f);
         (*submenu->overlay->editor_ovl->end_code_draw)(submenu, game, end_x, end_y);
     }
 }

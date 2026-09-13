@@ -165,7 +165,7 @@ static void mPM_set_character(Submenu* submenu, GAME* game, int sel_idx, f32 x, 
 
   /* Draw editor cursor */
   sel_idx2 = passwordMake_ovl->selected_idx;
-  cursor_x = x + cursol_baseX[sel_idx2] + (f32)editor_ovl->_26 + -7.0f;
+  cursor_x = x + cursol_baseX[sel_idx2] + (f32)editor_ovl->cursor_line_width + -7.0f;
   cursor_y = -y + cursol_baseY[sel_idx2];
   (*submenu->overlay->editor_ovl->cursol_draw)(submenu, game, cursor_x, cursor_y);
 }

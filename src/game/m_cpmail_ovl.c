@@ -364,7 +364,7 @@ static void mCM_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
             mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
             
             if (editor_ovl != NULL) {
-                editor_ovl->cursol_draw(submenu, game, str_x + editor_ovl->_26 - 7.0f, str_y);
+                editor_ovl->cursol_draw(submenu, game, str_x + editor_ovl->cursor_line_width - 7.0f, str_y);
             }
         }
     }

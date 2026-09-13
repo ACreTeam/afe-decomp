@@ -366,7 +366,7 @@ static void mDI_roll_control(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     mDI_Ovl_c* diary_ovl = submenu->overlay->diary_ovl;
 
     if (editor_ovl != NULL) {
-        int col = 2 + editor_ovl->_24;
+        int col = 2 + editor_ovl->cursor_row;
         f32 aim;
         f32 dPosY;
 
@@ -381,10 +381,10 @@ static void mDI_roll_control(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
         aim = (diary_ovl->_05 - 2) * 16;
         dPosY = fabsf(aim - menu_info->position[1]);
         if (dPosY > 0.1f) {
-            if (editor_ovl->_34 == 3) {
+            if (editor_ovl->button_repeat_speed == 3) {
                 diary_ovl->_1E = 3;
                 diary_ovl->_20 = 2;
-            } else if (editor_ovl->_34 == 2) {
+            } else if (editor_ovl->button_repeat_speed == 2) {
                 diary_ovl->_1E = 2;
                 diary_ovl->_20 = 6;
             }
@@ -409,7 +409,7 @@ static void mDI_roll_control(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
             chase_f(&menu_info->position[1], aim, menu_info->speed[1]);
 
-            if (editor_ovl->_34 != 3 && editor_ovl->_34 != 2 && diary_ovl->_20 > 0) {
+            if (editor_ovl->button_repeat_speed != 3 && editor_ovl->button_repeat_speed != 2 && diary_ovl->_20 > 0) {
                 diary_ovl->_20--;
 
                 if (diary_ovl->_20 <= 0) {
@@ -491,8 +491,8 @@ static void mDI_Play_write(Submenu* submenu, mSM_MenuInfo_c* menu_info, mDI_Ovl_
         
         mDI_get_col_line_width(diary_ovl, NULL, &lines, NULL, NULL, diary_ovl->entry_len[0]);
         diary_ovl->cursor_idx = editor_ovl->cursor_idx;
-        diary_ovl->_48 = editor_ovl->_22;
-        diary_ovl->_46 = editor_ovl->_24;
+        diary_ovl->_48 = editor_ovl->cursor_col;
+        diary_ovl->_46 = editor_ovl->cursor_row;
 
         if (lines < diary_ovl->_24) {
             diary_ovl->_18 = lines;
@@ -607,8 +607,8 @@ static void mDI_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
 
         if (editor_ovl != NULL) {
             editor_ovl->cursor_idx = 0;
-            editor_ovl->_22 = 0;
-            editor_ovl->_24 = 0;
+            editor_ovl->cursor_col = 0;
+            editor_ovl->cursor_row = 0;
         }
     }
 }
@@ -873,7 +873,7 @@ static void mDI_set_character(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu
     endcode_pos_y = 120.0f - char_pos_y;
     mDI_set_writing_body(submenu, menu_info, game, char_pos_x, char_pos_y, &endcode_pos_x, &endcode_pos_y, &letter_color);
     if (menu_info->proc_status == mSM_OVL_PROC_PLAY && diary_ovl->move_proc == 3 && editor_ovl != NULL) {
-        submenu->overlay->editor_ovl->cursol_draw(submenu, game, char_pos_x + editor_ovl->_26 + -7.0f, char_pos_y + editor_ovl->_24 * 16.0f);
+        submenu->overlay->editor_ovl->cursol_draw(submenu, game, char_pos_x + editor_ovl->cursor_line_width + -7.0f, char_pos_y + editor_ovl->cursor_row * 16.0f);
         submenu->overlay->editor_ovl->end_code_draw(submenu, game, endcode_pos_x, endcode_pos_y);
     }
 }

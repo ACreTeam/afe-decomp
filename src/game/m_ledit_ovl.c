@@ -252,7 +252,7 @@ static void mLE_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) 
         // clang-format on
 
         // clang-format off
-        edit_pos_x += ((f32)(int)GETREG(TAKREG, 10) - 7.0f) + (f32)(int)editor_ovl->_26 * data_p->edit_scale;
+        edit_pos_x += ((f32)(int)GETREG(TAKREG, 10) - 7.0f) + (f32)(int)editor_ovl->cursor_line_width * data_p->edit_scale;
         submenu->overlay->editor_ovl->cursol_draw(
             submenu, game,
             edit_pos_x, edit_pos_y
