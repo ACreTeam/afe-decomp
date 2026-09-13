@@ -42,6 +42,8 @@ extern u8* mNW_get_image_name(Submenu* submenu, int idx);
 extern mNW_original_design_c* mNW_get_image_data(Submenu* submenu, int idx);
 extern void mNW_draw_original(Submenu* submenu, GRAPH* graph, f32 pos_x, f32 pos_y, f32 scale, int idx, int shadow_flag);
 extern void mNW_next_data(Submenu* submenu);
+extern void mNW_next_data_new(void);
+extern void mNW_repair_data(void);
 extern void mNW_draw_sav_mark_before(GAME* game);
 extern void mNW_draw_sav_mark(GAME* game, int x, int y);
 

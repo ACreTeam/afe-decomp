@@ -127,6 +127,8 @@ enum {
     mCD_TRANS_ERR_NUM
 };
 
+#define mCD_TRANS_ERR_ORIGINAL_CHANGED 32
+
 enum {
     mCD_HOME_SFX_NORMAL,
     mCD_HOME_SFX_DELETE,
@@ -368,7 +370,9 @@ extern int mCD_SaveStation_Passport_bg(s32* chan);
 
 extern void mCD_InitAll();
 extern void mCD_LoadLand(void);
-extern void mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig);
+extern int mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig, size_t size);
+extern int mCD_GetSpaceSlot_check_light_main_bg(u8* slot_ok, u8* slot_a_file_extence, u8* slot_b_file_extence);
+extern int mCD_SaveMydesign_bg(void* buf, s32 chan, s32 idx);
 extern void mCD_toNextLand();
 
 extern int mCD_EraseBrokenLand_bg(int* slot);

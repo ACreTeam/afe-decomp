@@ -13,8 +13,8 @@ enum {
     aNNW_AREA_NUM
 };
 
-static s16 target_pos_table_x[14] = {0, 0, 60, 140, 140, 140, 140, 340, 340, 340, 200, 200, 140, 0};
-static s16 target_pos_table_z[14] = {0, 0, 180, 180, 60, 140, 220, 60, 140, 220, 240, 300, 100, 0};
+static s16 target_pos_table_x[14] = { 0, 0, 60, 140, 140, 140, 140, 340, 340, 340, 200, 200, 140, 0 };
+static s16 target_pos_table_z[14] = { 0, 0, 180, 180, 60, 140, 220, 60, 140, 220, 240, 300, 100, 0 };
 
 // clang-format off
 static u8 near_area_table[9][5] = {
@@ -122,6 +122,7 @@ static u8 aNNW_next_target(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
         }
 
         if (actorx->player_distance_xz < dist) {
+            u8* table_p;
             u8 area;
             int i;
 
@@ -129,15 +130,9 @@ static u8 aNNW_next_target(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
                 return 0;
             } else {
                 for (i = 0; i < 5; i++) {
-// TODO: fakematch
-#if VERSION >= VER_GAFU01_00
-                    area = near_area_table[now_area][i];
-#else
-                    u8* table_p = (u8*)near_area_table;
-                    
+                    table_p = (u8*)near_area_table;
                     table_p += now_area * 5;
                     area = table_p[i];
-#endif
                     if (area == player_area) {
                         return 0;
                     }
@@ -247,7 +242,7 @@ static u8 aNNW_next_target2(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
 
     player_area = aNNW_get_area(playerx);
     now_area = aNNW_get_area((ACTOR*)actor);
-    
+
     if (player_area == aNNW_AREA_9) {
         player_area = actor->pl_area;
     }
@@ -336,7 +331,8 @@ static void aNNW_my_proc_player_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* pla
 
     actor->_9B6 = 1;
     actor->proc_delay_frames = 5;
-    aNNW_set_request_act(actor, 4, aNPC_ACT_RUN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, playerx->world.position.x, playerx->world.position.z);
+    aNNW_set_request_act(actor, 4, aNPC_ACT_RUN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         playerx->world.position.x, playerx->world.position.z);
 }
 
 static void aNNW_my_proc_turn_p_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
@@ -352,12 +348,14 @@ static void aNNW_my_proc_turn_p_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* pla
         aNNW_my_proc_init(actor, play, aNNW_MY_PROC_PLAYER);
     } else {
         actor->_9B6 = 1;
-        aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, playerx->world.position.x, playerx->world.position.z);
+        aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                             playerx->world.position.x, playerx->world.position.z);
     }
 }
 
 static void aNNW_my_proc_run_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
-    aNNW_set_request_act(actor, 4, aNPC_ACT_RUN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, target_pos_table_x[actor->_9B6], target_pos_table_z[actor->_9B6]);
+    aNNW_set_request_act(actor, 4, aNPC_ACT_RUN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         target_pos_table_x[actor->_9B6], target_pos_table_z[actor->_9B6]);
 }
 
 static void aNNW_my_proc_turn_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
@@ -382,7 +380,8 @@ static void aNNW_my_proc_turn_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play)
 #endif
         aNNW_my_proc_init(actor, play, aNNW_MY_PROC_RUN);
     } else {
-        aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, target_pos_table_x[actor->_9B6], target_pos_table_z[actor->_9B6]);
+        aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                             target_pos_table_x[actor->_9B6], target_pos_table_z[actor->_9B6]);
     }
 }
 
@@ -406,7 +405,7 @@ static void aNNW_my_proc_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play, u8 m
 static void aNNW_my_proc_wait(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
     ACTOR* actorx = (ACTOR*)actor;
     f32 dist;
-    
+
     if (actor->think_idx == aNNW_THINK_OMATIKUDASI || actor->think_idx == aNNW_THINK_OMATIKUDASI2) {
         dist = 60.0f;
     } else {
@@ -504,7 +503,8 @@ static void aNNW_omatikudasai2(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
             str_no = mMsg_ITEM_STR1;
         }
 
-        mMsg_SET_ITEM_STR(str_no, Save_Get(needlework).original_design[actor->buy_ut_idx & 7].name, mNW_ORIGINAL_DESIGN_NAME_LEN);
+        mMsg_SET_ITEM_STR(str_no, Save_Get(needlework).original_design[actor->buy_ut_idx & 7].name,
+                          mNW_ORIGINAL_DESIGN_NAME_LEN);
     }
 }
 
@@ -569,10 +569,12 @@ static void aNNW_ainote3(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
 static void aNNW_misin_wait(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
     if (actor->npc_class.draw.animation_id == aNPC_ANIM_MISIN1) {
         if (actor->_9BB) {
-            if (aNNW_FrameControl_passCheck_now(&actor->npc_class.draw.main_animation.keyframe.frame_control, actor->saved_keyframe_current)) {
+            if (aNNW_FrameControl_passCheck_now(&actor->npc_class.draw.main_animation.keyframe.frame_control,
+                                                actor->saved_keyframe_current)) {
                 actor->_9BB = 0;
                 CLIP(misin_clip)->request_dustcloth_move_proc();
-                actor->npc_class.draw.main_animation.keyframe.frame_control.current_frame = actor->saved_keyframe_current + 0.5f;
+                actor->npc_class.draw.main_animation.keyframe.frame_control.current_frame =
+                    actor->saved_keyframe_current + 0.5f;
                 actor->npc_class.draw.anim_speed_type = aNPC_ANIM_SPEED_TYPE_LOCKED;
                 actor->npc_class.draw.frame_speed = 0.5f;
             }
@@ -604,7 +606,9 @@ static void aNNW_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 
     switch (actorx->npc_id) {
         case SP_NPC_NEEDLEWORK0:
-            if (aNNW_first_talk_check(0x80)) {
+            if (Common_Get(door_data).door_actor_name == RSV_NO) {
+                think_idx = aNNW_THINK_IKAGADESYOU;
+            } else if (aNNW_first_talk_check(0x80)) {
                 think_idx = aNNW_THINK_9;
             } else {
                 think_idx = aNNW_THINK_8;
@@ -622,7 +626,9 @@ static void aNNW_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             think_idx = aNNW_THINK_MISIN_WAIT;
             actorx->status_data.weight = MASSTYPE_IMMOVABLE;
             nactorx->collision.check_kind = aNPC_BG_CHECK_TYPE_NONE;
-            nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_BGCHECK | aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV | aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
+            nactorx->condition_info.demo_flg = aNPC_COND_DEMO_SKIP_FORWARD_CHECK | aNPC_COND_DEMO_SKIP_BGCHECK |
+                                               aNPC_COND_DEMO_SKIP_MOVE_Y | aNPC_COND_DEMO_SKIP_MOVE_CIRCLE_REV |
+                                               aNPC_COND_DEMO_SKIP_MOVE_RANGE_CHECK;
             nactorx->collision.BGcheck_radius = 1.0f;
             actorx->world.position.y = mCoBG_GetBgY_OnlyCenter_FromWpos2(actorx->world.position, 0.0f) + 2.0f;
             actorx->position_speed.y = 0.0f;
@@ -630,7 +636,7 @@ static void aNNW_think_init_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
             actorx->max_velocity_y = 0.0f;
             actorx->world.position.x = 87.0f;
             actorx->world.position.z = actorx->home.position.z + 13.0f;
-            nactorx->head.lock_flag = TRUE;
+            nactorx->head.lock_flag = aNPC_HEAD_LOCK_BOTH;
             nactorx->talk_info.turn = aNPC_TALK_TURN_NONE;
 
             if (CLIP(misin_clip) != NULL) {
@@ -660,7 +666,7 @@ static void aNNW_misin_wait_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
     actor->npc_class.draw.main_animation.keyframe.frame_control.mode = cKF_FRAMECONTROL_REPEAT;
     actor->npc_class.action.idx = aNPC_ACT_WAIT;
     aNNW_normal_wait_init(actor, play);
-    
+
     if (actor->_9BB) {
         actor->npc_class.draw.anim_speed_type = aNPC_ANIM_SPEED_TYPE_FREE;
         actor->npc_class.draw.frame_speed = 2.0f;
@@ -670,9 +676,9 @@ static void aNNW_misin_wait_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
 static void aNNW_ainote_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
     ACTOR* actorx = (ACTOR*)actor;
     ACTOR* sisterx = aNNW_search_sister(play, actorx);
-    
+
     aNNW_normal_wait_init(actor, play);
-    actor->npc_class.head.lock_flag = TRUE;
+    actor->npc_class.head.lock_flag = aNPC_HEAD_LOCK_BOTH;
     NPC_CLIP->set_dst_pos_proc((NPC_ACTOR*)actorx, sisterx->world.position.x, sisterx->world.position.z);
 }
 
@@ -684,7 +690,8 @@ static void aNNW_next_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
 static void aNNW_turn_init(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play) {
     ACTOR* actorx = (ACTOR*)actor;
 
-    aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT, actorx->world.position.x, actorx->world.position.z + 10.0f);
+    aNNW_set_request_act(actor, 4, aNPC_ACT_TURN, aNPC_ACT_TYPE_TO_POINT, aNPC_ACT_OBJ_DEFAULT,
+                         actorx->world.position.x, actorx->world.position.z + 10.0f);
 }
 
 typedef struct {
@@ -750,18 +757,18 @@ static void aNNW_setup_think_proc(NPC_NEEDLEWORK_ACTOR* actor, GAME_PLAY* play, 
     };
     // clang-format on
     aNNW_think_data_c* data_p = &dt_tbl[think_idx];
-    
+
     actor->think_idx = think_idx;
     actor->think_proc = proc_table[data_p->think_proc];
     actor->npc_class.talk_info.talk_request_proc = talk_request_table[data_p->talk_request_proc];
-    actor->talk_idx = data_p->talk_idx;
+    actor->talk_request_idx = data_p->talk_idx;
     actor->think_idx_after_talk = data_p->think_idx_after_talk;
     (*init_table[data_p->think_init_proc])(actor, play);
     actor->_9B3 = 1;
 }
 
 static void aNNW_think_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
-    switch (type) { 
+    switch (type) {
         case aNPC_THINK_PROC_INIT:
             aNNW_think_init_proc(nactorx, play);
             break;
@@ -783,7 +790,7 @@ static void aNNW_schedule_main_proc(NPC_ACTOR* nactorx, GAME_PLAY* play) {
 }
 
 static void aNNW_schedule_proc(NPC_ACTOR* nactorx, GAME_PLAY* play, int type) {
-    switch (type) { 
+    switch (type) {
         case aNPC_SCHEDULE_PROC_INIT:
             aNNW_schedule_init_proc(nactorx, play);
             break;

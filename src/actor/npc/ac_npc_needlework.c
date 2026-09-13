@@ -14,12 +14,13 @@
 #include "m_ledit_ovl.h"
 #include "m_bgm.h"
 #include "GBA2/gba2.h"
+#include "jsyswrap.h"
+#include "m_item_name.h"
 
 enum {
     aNNW_TALK_WHAT_HAPPEN_FIRST,
     aNNW_TALK_WHAT_HAPPEN,
     aNNW_TALK_OTHER_HAPPEN,
-    aNNW_TALK_OTHER_HAPPEN2,
     aNNW_TALK_CHECK_LISTEN,
     aNNW_TALK_LISTEN_SISTER,
     aNNW_TALK_LISTEN_SISTER2,
@@ -28,12 +29,14 @@ enum {
     aNNW_TALK_ANE_0,
     aNNW_TALK_ANE_1,
     aNNW_TALK_ANE_2,
+    aNNW_TALK_ANE_4,
     aNNW_TALK_DESIGN_CHECK,
     aNNW_TALK_DESIGN_WHICH,
     aNNW_TALK_DESIGN_OPEN,
     aNNW_TALK_DESIGN_CLOSE,
     aNNW_TALK_DESIGN_CLOSE2,
     aNNW_TALK_DESIGN_CLOSE2_END,
+    aNNW_TALK_DESIGN_TYPE,
     aNNW_TALK_DESIGN_WHICH2,
     aNNW_TALK_DESIGN_OPEN3,
     aNNW_TALK_DESIGN_CLOSE3,
@@ -71,9 +74,16 @@ enum {
     aNNW_TALK_CLOTH_WAIT3,
     aNNW_TALK_CLOTH_CHANGE4,
     aNNW_TALK_CLOTH_WAIT4,
+    aNNW_TALK_CPORIGINAL_B0,
+    aNNW_TALK_CPORIGINAL_B1,
+    aNNW_TALK_CPORIGINAL_B2,
+    aNNW_TALK_CPORIGINAL_B3,
     aNNW_TALK_CPORIGINAL0,
     aNNW_TALK_CPORIGINAL1,
     aNNW_TALK_CPORIGINAL2,
+    aNNW_TALK_CPORIGINAL_A0,
+    aNNW_TALK_CPORIGINAL_A1,
+    aNNW_TALK_CPORIGINAL_A2,
     aNNW_TALK_GBA_MENU0,
     aNNW_TALK_GBA_MENU1,
     aNNW_TALK_ANE_3,
@@ -81,6 +91,11 @@ enum {
     aNNW_TALK_GBA_TOOL_BF_2,
     aNNW_TALK_GBA_TOOL_2,
     aNNW_TALK_GBA_TOOL_AF3_2,
+    aNNW_TALK_GIVE_LIVE_MD,
+    aNNW_TALK_FORMAT_CHK,
+    aNNW_TALK_FORMAT_BF,
+    aNNW_TALK_FORMAT,
+    aNNW_TALK_FORMAT_AF,
     aNNW_TALK_END_WAIT,
     aNNW_TALK_CARD_E_LOAD_BF_0_0,
     aNNW_TALK_CARD_E_LOAD_BF_0,
@@ -229,7 +244,8 @@ static void aNNW_actor_init(ACTOR* actorx, GAME* game) {
     NPC_CLIP->init_proc(actorx, game);
 }
 
-static int aNNW_set_request_act(NPC_NEEDLEWORK_ACTOR* actor, u8 priority, u8 act_idx, u8 act_type, u16 act_obj, s16 move_x, s16 move_z) {
+static int aNNW_set_request_act(NPC_NEEDLEWORK_ACTOR* actor, u8 priority, u8 act_idx, u8 act_type, u16 act_obj,
+                                s16 move_x, s16 move_z) {
     int ret = FALSE;
 
     if (priority >= actor->npc_class.request.act_priority) {

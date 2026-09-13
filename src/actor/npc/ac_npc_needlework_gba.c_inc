@@ -1,16 +1,3 @@
-// Aus version increased client program size by 0x04 bytes
-// and loader program by 0x3C bytes
-#if VERSION >= VER_GAFU01_00
-#define aNNW_CLIENT_PRG_SIZE 0xACC4
-#define aNNW_CLIENT_LDR_SIZE 0x8D5C
-#else
-#define aNNW_CLIENT_PRG_SIZE 0xACC0
-#define aNNW_CLIENT_LDR_SIZE 0x8D20
-#endif
-
-extern u8 aNNW_client_prg[] = {0};
-extern u8 aNNW_client_ldr[] = {0};
-
 static u8 aNNW_trance_data[0x1100] ATTRIBUTE_ALIGN(32);
 
 static void aNNW_gba_init(void) {
@@ -25,7 +12,7 @@ static void aNNW_gba_trance_data_init(Submenu* submenu) {
 
     for (i = 0; i < mPr_ORIGINAL_DESIGN_COUNT; i++) {
         int idx = mNW_get_image_no(submenu, i);
-        
+
         bcopy(&design_p[idx], &dst_p[i], sizeof(mNW_original_design_c));
         mNW_GC_to_Agb_texture(design_p[idx].design.data, dst_p[i].design.data);
     }
@@ -72,13 +59,17 @@ static int aNNW_check_GBA(u8* gba_connected_p) {
 
 static int aNNW_mGcgba_boot(u8* gba_connected_p) {
     int status;
+    u8* data;
+    size_t size;
 
     if (*gba_connected_p == FALSE) {
         mGcgba_InitVar();
         *gba_connected_p = TRUE;
     }
 
-    status = mGcgba_Boot(aNNW_client_ldr, aNNW_CLIENT_LDR_SIZE);
+    data = JW_Get_AgbTarget_EditorLoader_data_p();
+    size = JW_Get_AgbTarget_EditorLoader_size();
+    status = mGcgba_Boot(data, size);
     if (status != GBA2_GBA_STATE_TRANSMITTING) {
         *gba_connected_p = FALSE;
     }
@@ -94,13 +85,17 @@ static int aNNW_mGcgba_boot(u8* gba_connected_p) {
 
 static int aNNW_SendPrg(u8* gba_connected_p) {
     int status;
+    u8* data;
+    size_t size;
 
     if (*gba_connected_p == FALSE) {
         mGcgba_InitVar();
         *gba_connected_p = TRUE;
     }
 
-    status = mGcgba_Send(aNNW_client_prg, aNNW_CLIENT_PRG_SIZE);
+    data = JW_Get_AgbTarget_EditorProg_data_p();
+    size = JW_Get_AgbTarget_EditorProg_size();
+    status = mGcgba_Send(data, size);
     if (status != GBA2_GBA_STATE_TRANSMITTING) {
         *gba_connected_p = FALSE;
     }

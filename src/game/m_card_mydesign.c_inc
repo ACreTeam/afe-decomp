@@ -505,7 +505,7 @@ static int mCD_SaveMydesign_set(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileIn
                 original = &save->original;
                 if (mFRm_ReturnCheckSum((u16*)&original->checksum, l_aram_real_size_32_table[mCD_ARAM_DATA_ORIGINAL]) == 0 &&
                     S_comp_code != original->landid) {
-                    fileInfo->_04 = 0x20; /* TODO: add mCD_TRANS_ERR_* enum */
+                    fileInfo->_04 = mCD_TRANS_ERR_ORIGINAL_CHANGED;
                     return mCD_RESULT_ERROR;
                 }
             } else {
@@ -777,7 +777,7 @@ extern int mCD_SaveMydesign_bg(void* buf, s32 chan, s32 idx) {
     return ret;
 }
 
-extern void mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig) {
+extern int mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig, size_t size) {
     mCD_memMgr_c* mgr = &l_memMgr;
     OriginalSave_c* save;
     mCD_memMgr_fileInfo_c* fileInfo;
@@ -817,7 +817,7 @@ extern void mCD_LoadMydesign(s32 chan, s32 idx, mCD_keep_original_c* keep_orig) 
     }
 
     mCD_ClearMemMgr_com2(mgr);
-    mCD_TransErrorCode_nes(result);
+    return mCD_TransErrorCode_nes(result);
 }
 
 static int mCD_GetSpaceSlot_check_get_area(mCD_memMgr_c* mgr, mCD_memMgr_fileInfo_c* fileInfo) {

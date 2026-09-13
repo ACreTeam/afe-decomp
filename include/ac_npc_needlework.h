@@ -4,6 +4,8 @@
 #include "types.h"
 #include "m_actor.h"
 #include "ac_npc.h"
+#include "m_card.h"
+#include "m_choice.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,6 +18,8 @@ extern "C" {
 
 #define aNNW_DESIGN_PRICE 350
 #define aNNW_TALK_DAYS_MAX 10
+#define aNNW_CARD_FILE_NUM 6
+#define aNNW_CARD_EXISTING_FILE_NUM (aNNW_CARD_FILE_NUM - 1)
 
 enum {
     aNNW_SISTER0,
@@ -40,6 +44,7 @@ struct npc_needlework_actor_s {
     u8 think_idx_after_talk;
     u8 _9B1;
     u8 talk_idx;
+    u8 talk_request_idx;
     u8 _9B3;
     u8 _9B4;
     u8 buy_ut_idx;
@@ -51,6 +56,14 @@ struct npc_needlework_actor_s {
     u8 _9BB;
     u8 gba_ready;
     u8 gba_wait_frames;
+    u8 card_slot;
+    u8 error_slot;
+    u16 card_choices[mChoice_CHOICE_NUM];
+    u8 card_slot_status[mCD_SLOT_NUM];
+    u8 card_file_exists[mCD_SLOT_NUM][aNNW_CARD_FILE_NUM];
+    u8 format_resume;
+    u8 card_file;
+    mActor_name_t music_gift;
 };
 
 extern ACTOR_PROFILE Npc_Needlework_Profile;

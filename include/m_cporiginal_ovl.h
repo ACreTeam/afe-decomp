@@ -40,6 +40,8 @@ struct cporiginal_s {
 };
 
 extern int mCO_get_change_flg(void);
+extern int mCO_get_cancel_flg(void);
+extern mCD_keep_original_c* mCO_get_card_data(void);
 extern void mCO_swap_image(Submenu* submenu, mActor_name_t item0, mActor_name_t item1);
 extern int mCO_change_up_folder(Submenu* submenu, int idx);
 extern int mCO_top_folder(Submenu* submenu);
