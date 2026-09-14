@@ -7,10 +7,11 @@
 
 static mCW_Ovl_c cpwarning_ovl_data;
 
-static u8 mCW_mes0[18] = "Do you want to let";
-static u8 mCW_mes1[27] = "anyone else see this diary?";
-static u8 mCW_yes_mes[3] = "Yes";
-static u8 mCW_no_mes[2] = "No";
+static u8 mCW_mes0[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_021, CHAR_PP_204, CHAR_PP_006, CHAR_PP_194, CHAR_PP_132 };
+static u8 mCW_mes1[] = { CHAR_PP_026, CHAR_PP_019, CHAR_PP_021, CHAR_PP_031, CHAR_PP_123, CHAR_PP_126,
+                         CHAR_PP_018, CHAR_PP_091, CHAR_PP_146, CHAR_PP_136, CHAR_PP_063 };
+static u8 mCW_yes_mes[] = { CHAR_PP_146, CHAR_PP_146, CHAR_PP_096 };
+static u8 mCW_no_mes[] = { CHAR_PP_216, CHAR_PP_178 };
 
 enum {
     mCW_MOVE_OUT,
@@ -108,9 +109,9 @@ static void mCW_set_frame_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_
     gSPDisplayList(POLY_OPA_DISP++, dia_att_winT_model);
 
     if (cpwarning_ovl->diary_edit_mode) {
-        Matrix_translate(19.0f, -29.0f, 0.0f, MTX_MULT);
+        Matrix_translate(19.0f, -21.0f, 0.0f, MTX_MULT);
     } else {
-        Matrix_translate(-19.0f, -29.0f, 0.0f, MTX_MULT);
+        Matrix_translate(-44.0f, -21.0f, 0.0f, MTX_MULT);
     }
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, dia_att_cursor_model);
@@ -120,31 +121,23 @@ static void mCW_set_frame_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_
 
 static void mCW_set_character_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) {
     static u8 color_table[2][3] = { { 30, 30, 215 }, { 110, 110, 140 } };
-
-    GRAPH* graph = game->graph;
     mCW_Ovl_c* cpwarning_ovl = submenu->overlay->cpwarning_ovl;
-    f32 scale = cpwarning_ovl->scale;
-    f32 x = 160.0f - 112.0f * scale;
-    f32 y = 120.0f - 56.0f * scale;
     u8* color;
-
     submenu->overlay->set_char_matrix_proc(game->graph);
-
-    y += 28.0f * scale;
-    mFont_SetLineStrings(game, mCW_mes0, sizeof(mCW_mes0), x + 54.0f * scale, y, 95, 20, 20, 255, FALSE, TRUE, scale,
-                         scale, mFont_MODE_POLY);
-
-    y += 24.0f * scale;
-    mFont_SetLineStrings(game, mCW_mes1, sizeof(mCW_mes1), x + 30.0f * scale, y, 95, 20, 20, 255, FALSE, TRUE, scale,
-                         scale, mFont_MODE_POLY);
-
-    y += 24.0f * scale;
+    mFont_SetLineStrings(game, mCW_mes0, sizeof(mCW_mes0), cpwarning_ovl->scale * -44.0f + 160.0f,
+                         cpwarning_ovl->scale * -36.0f + 120.0f, 95, 20, 20, 255, FALSE, FALSE, cpwarning_ovl->scale,
+                         cpwarning_ovl->scale, mFont_MODE_POLY);
+    mFont_SetLineStrings(game, mCW_mes1, sizeof(mCW_mes1), cpwarning_ovl->scale * -68.0f + 160.0f,
+                         cpwarning_ovl->scale * -12.0f + 120.0f, 95, 20, 20, 255, FALSE, FALSE, cpwarning_ovl->scale,
+                         cpwarning_ovl->scale, mFont_MODE_POLY);
     color = color_table[cpwarning_ovl->diary_edit_mode];
-    mFont_SetLineStrings(game, mCW_yes_mes, sizeof(mCW_yes_mes), x + 94.0f * scale, y, color[0], color[1], color[2],
-                         255, FALSE, TRUE, scale, scale, mFont_MODE_POLY);
+    mFont_SetLineStrings(game, mCW_yes_mes, sizeof(mCW_yes_mes), cpwarning_ovl->scale * -44.0f + 160.0f,
+                         cpwarning_ovl->scale * 12.0f + 120.0f, color[0], color[1], color[2], 255, FALSE, FALSE,
+                         cpwarning_ovl->scale, cpwarning_ovl->scale, mFont_MODE_POLY);
     color = color_table[!cpwarning_ovl->diary_edit_mode];
-    mFont_SetLineStrings(game, mCW_no_mes, sizeof(mCW_no_mes), x + 133.0f * scale, y, color[0], color[1], color[2], 255,
-                         FALSE, TRUE, scale, scale, mFont_MODE_POLY);
+    mFont_SetLineStrings(game, mCW_no_mes, sizeof(mCW_no_mes), cpwarning_ovl->scale * 20.0f + 160.0f,
+                         cpwarning_ovl->scale * 12.0f + 120.0f, color[0], color[1], color[2], 255, FALSE, FALSE,
+                         cpwarning_ovl->scale, cpwarning_ovl->scale, mFont_MODE_POLY);
 }
 
 static void mCW_cpwarning_ovl_draw(Submenu* submenu, GAME* game) {

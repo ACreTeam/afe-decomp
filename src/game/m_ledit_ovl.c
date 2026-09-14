@@ -8,13 +8,22 @@
 #include "m_common_data.h"
 #include "m_debug.h"
 
-static u8 mLE_player_title[16] = "Enter your name.";
-static u8 mLE_country_title[18] = "Enter Destination.";
-static u8 mLE_ephrase_title[16] = "Enter something!";
-static u8 mLE_reset_title[7] = "Say it!";
-static u8 mLE_request_title[15] = "Request a song!";
-static u8 mLE_myoriginal_title[13] = "Enter a name.";
-static u8 mLE_island_title[20] = "Enter a destination.";
+static u8 mLE_player_title[] = { CHAR_PP_020, CHAR_PP_030, CHAR_PP_003, CHAR_PP_194,
+                                 CHAR_PP_006, CHAR_PP_036, CHAR_PP_018, CHAR_PP_023 };
+static u8 mLE_country_title[] = { CHAR_PP_001, CHAR_PP_006, CHAR_PP_010, CHAR_PP_006, CHAR_PP_194,
+                                  CHAR_PP_006, CHAR_PP_036, CHAR_PP_018, CHAR_PP_023 };
+static u8 mLE_ephrase_title[] = { CHAR_PP_007, CHAR_PP_016, CHAR_PP_233, CHAR_PP_013, CHAR_PP_194,
+                                  CHAR_PP_006, CHAR_PP_036, CHAR_PP_018, CHAR_PP_023 };
+static u8 mLE_reset_title[] = { CHAR_PP_174, CHAR_PP_186, CHAR_PP_143, CHAR_PP_132, CHAR_PP_001,
+                                CHAR_PP_204, CHAR_PP_018, CHAR_PP_031, CHAR_PP_033 };
+static u8 mLE_request_title[] = { CHAR_PP_184, CHAR_PP_152, CHAR_PP_148, CHAR_PP_157, CHAR_PP_164,
+                                  CHAR_PP_194, CHAR_PP_245, CHAR_PP_002, CHAR_PP_240 };
+static u8 mLE_myoriginal_title[] = { CHAR_PP_020, CHAR_PP_030, CHAR_PP_003, CHAR_PP_194,
+                                     CHAR_PP_006, CHAR_PP_036, CHAR_PP_018, CHAR_PP_023 };
+static u8 mLE_island_title[] = { CHAR_PP_011, CHAR_PP_030, CHAR_PP_024, CHAR_PP_020, CHAR_PP_030, CHAR_PP_003,
+                                 CHAR_PP_194, CHAR_PP_006, CHAR_PP_036, CHAR_PP_018, CHAR_PP_023 };
+static u8 mLE_sd_country_title[] = { CHAR_PP_003, CHAR_PP_001, CHAR_PP_235, CHAR_PP_244,
+                                     CHAR_PP_001, CHAR_PP_002, CHAR_PP_019, CHAR_PP_063 };
 
 typedef struct ledit_win_data_s {
     f32 edit_ofs[2];
@@ -52,60 +61,21 @@ extern Gfx shi_win_mode[];
 extern Gfx shi_win_model[];
 
 // clang-format off
+extern Gfx mra_win_pp_mode[];
+extern Gfx mra_win_pp_model[];
 static mLE_win_data_c mLE_win_data[] = {
-    {
-        { 120.0f, 72.0f }, 1.0f,
-        { 132.0f, 45.0f }, 0.875f,
-        mLE_player_title, sizeof(mLE_player_title),
-        PLAYER_NAME_LEN, 80, { 0, 0, 255, 255 },
-        nam_win_mode, nam_win_model,
-    },
-    {
-        { 118.0f, 74.0f }, 1.0f,
-        { 134.0f, 43.0f }, 0.875f,
-        mLE_country_title, sizeof(mLE_country_title),
-        LAND_NAME_SIZE, 80, { 215, 15, 0, 255 },
-        mra_win_mode, mra_win_model,
-    },
-    {
-        { 100.0f, 76.0f }, 1.0f,
-        { 134.0f, 45.0f }, 0.875f,
-        mLE_ephrase_title, sizeof(mLE_ephrase_title),
-        ANIMAL_CATCHPHRASE_LEN, 120, { 235, 75, 0, 255 },
-        ephrase_win_mode, ephrase_win_model,
-    },
-    {
-        { 79.0f, 79.0f }, 1.0f,
-        { 154.0f, 43.0f }, 1.0f,
-        mLE_reset_title, sizeof(mLE_reset_title),
-        16, 160, { 85, 30, 235, 255 },
-        rst_win_mode, rst_win_model,
-    },
-    {
-        { 82.0f, 76.0f }, 1.0f,
-        { 138.0f, 41.0f }, 0.875f,
-        mLE_request_title, sizeof(mLE_request_title),
-        mIN_ITEM_NAME_LEN, 160, { 50, 50, 235, 255 },
-        req_win_mode, req_win_model,
-    },
-    {
-        { 82.0f, 69.0f }, 1.0f,
-        { 142.0f, 37.0f }, 0.875f,
-        mLE_myoriginal_title, sizeof(mLE_myoriginal_title),
-        mNW_ORIGINAL_DESIGN_NAME_LEN, 160, { 50, 40, 50, 255 },
-        dna_win_mode, dna_win_model,
-    },
-    {
-        { 118.0f, 75.0f }, 1.0f,
-        { 121.0f, 40.0f }, 0.875f,
-        mLE_island_title, sizeof(mLE_island_title),
-        mISL_ISLAND_NAME_LEN, 80, { 175, 70, 40, 255 },
-        shi_win_mode, shi_win_model,
-    },
+    { { 122.0f, 76.0f }, 1.0f, { 136.0f, 44.0f }, 0.875f, mLE_player_title, sizeof(mLE_player_title), 6, 72, { 0, 0, 255, 255 }, nam_win_mode, nam_win_model },
+    { { 103.0f, 77.0f }, 1.0f, { 135.0f, 42.0f }, 0.875f, mLE_country_title, sizeof(mLE_country_title), 6, 72, { 215, 15, 0, 255 }, mra_win_mode, mra_win_model },
+    { { 140.0f, 78.0f }, 1.0f, { 126.0f, 45.0f }, 0.875f, mLE_ephrase_title, sizeof(mLE_ephrase_title), 4, 48, { 235, 75, 0, 255 }, ephrase_win_mode, ephrase_win_model },
+    { { 102.0f, 76.0f }, 1.0f, { 132.0f, 44.0f }, 0.875f, mLE_reset_title, sizeof(mLE_reset_title), 10, 120, { 85, 30, 235, 255 }, rst_win_mode, rst_win_model },
+    { { 102.0f, 76.0f }, 1.0f, { 131.0f, 44.0f }, 0.875f, mLE_request_title, sizeof(mLE_request_title), 10, 120, { 50, 50, 235, 255 }, req_win_mode, req_win_model },
+    { { 102.0f, 69.0f }, 1.0f, { 137.0f, 37.0f }, 0.875f, mLE_myoriginal_title, sizeof(mLE_myoriginal_title), 10, 120, { 50, 40, 50, 255 }, dna_win_mode, dna_win_model },
+    { { 107.0f, 74.0f }, 1.0f, { 115.0f, 41.0f }, 0.875f, mLE_island_title, sizeof(mLE_island_title), 6, 72, { 175, 70, 40, 255 }, shi_win_mode, shi_win_model },
+    { { 103.0f, 77.0f }, 1.0f, { 136.0f, 43.0f }, 0.875f, mLE_sd_country_title, sizeof(mLE_sd_country_title), 8, 96, { 215, 15, 0, 255 }, mra_win_pp_mode, mra_win_pp_model },
 };
 // clang-format on
 
-static u8 mLE_md_name[MINIDISK_NUM][mIN_ITEM_NAME_LEN];
+static u8 mLE_md_name[MINIDISK_AIRCHECK_NUM][mIN_ITEM_NAME_LEN];
 static u8 mLE_npc_end_word_edit[ANIMAL_CATCHPHRASE_LEN];
 
 static void mLE_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
@@ -125,7 +95,7 @@ static void mLE_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
             int i;
 
             if (editor_ovl != NULL) {
-                for (i = 0; i < MINIDISK_NUM; i++) {
+                for (i = 0; i < MINIDISK_AIRCHECK_NUM; i++) {
                     if (mem_cmp(md_name_p, editor_ovl->input_str, mIN_ITEM_NAME_LEN)) {
                         item_p->item = ITM_MINIDISK_START + i;
                         break;
@@ -134,7 +104,7 @@ static void mLE_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
                     md_name_p += mIN_ITEM_NAME_LEN;
                 }
 
-                if (i == MINIDISK_NUM) {
+                if (i == MINIDISK_AIRCHECK_NUM) {
                     item_p->item = ITM_MINIDISK_END; // @BUG - this is an invalid minidisk id!
                 }
             } else {
@@ -171,6 +141,8 @@ extern Gfx ledit_common_mode[];
 extern Gfx lat_sousa_spT_model[];
 
 static void mLE_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) {
+    static u8 country_str[] = { CHAR_PP_035, CHAR_PP_123, CHAR_PP_028 };
+    static u8 island_str[] = { CHAR_PP_237, CHAR_PP_030 };
     mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
     mLE_win_data_c* data_p = &mLE_win_data[menu_info->data0];
     GRAPH* graph = game->graph;
@@ -202,8 +174,8 @@ static void mLE_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) 
         int i;
 
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, data_p->edit_color.r, data_p->edit_color.g, data_p->edit_color.b, 255);
-        for (i = 0; i < editor_ovl->now_str_len; i++) { 
-            if (editor_ovl->input_str[i] == CHAR_SPACE_3) {
+        for (i = 0; i < editor_ovl->now_str_len; i++) {
+            if (editor_ovl->input_str[i] == CHAR_SPACE) {
                 int width = mFont_GetStringWidth(editor_ovl->input_str, i, TRUE);
 
                 Matrix_push();
@@ -232,7 +204,7 @@ static void mLE_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) 
             data_p->title_ofs[0] + pos_x, data_p->title_ofs[1] - pos_y,
             255, 255, 255, 255,
             FALSE,
-            TRUE,
+            FALSE,
             data_p->title_scale, data_p->title_scale,
             mFont_MODE_POLY
         );
@@ -245,14 +217,22 @@ static void mLE_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) 
             edit_pos_x, edit_pos_y,
             data_p->edit_color.r, data_p->edit_color.g, data_p->edit_color.b, 255,
             FALSE,
-            TRUE,
+            FALSE,
             data_p->edit_scale, data_p->edit_scale,
             mFont_MODE_POLY
         );
         // clang-format on
 
         // clang-format off
-        edit_pos_x += ((f32)(int)GETREG(TAKREG, 10) - 7.0f) + (f32)(int)editor_ovl->cursor_line_width * data_p->edit_scale;
+        switch (menu_info->data0) {
+            case mLE_TYPE_COUNTRY_NAME:
+                mFont_SetLineStrings(game, country_str, sizeof(country_str), edit_pos_x + 75.0f, edit_pos_y + 1.0f, 145, 55, 0, 255, FALSE, FALSE, 0.875f, 0.875f, mFont_MODE_POLY);
+                break;
+            case mLE_TYPE_ISLAND_NAME:
+                mFont_SetLineStrings(game, island_str, sizeof(island_str), pos_x + 160.0f + 24.0f, (120.0f - pos_y) - 44.0f, 60, 120, 60, 255, FALSE, FALSE, 0.875f, 0.875f, mFont_MODE_POLY);
+                break;
+        }
+        edit_pos_x += (f32)(int)editor_ovl->cursor_line_width * data_p->edit_scale + -7.0f;
         submenu->overlay->editor_ovl->cursol_draw(
             submenu, game,
             edit_pos_x, edit_pos_y
@@ -280,20 +260,28 @@ static void mLE_ledit_ovl_init(Submenu* submenu) {
     mSM_MenuInfo_c* menu_info = &overlay->menu_info[mSM_OVL_LEDIT];
     int max;
     u8* str;
+    int editor_type;
 
     overlay->menu_control.animation_flag = FALSE;
-    if (menu_info->data0 == mLE_TYPE_PLAYER_NAME) {
-        str = Now_Private->player_ID.player_name;
-    } else if (menu_info->data0 == mLE_TYPE_COUNTRY_NAME) {
-        str = Save_Get(land_info).name;
-    } else if (menu_info->data0 == mLE_TYPE_EPHRASE) {
-        str = mLE_npc_end_word_edit;
-    } else {
-        str = (u8*)menu_info->data2;
-
-        if (menu_info->data0 == mLE_TYPE_REQUEST) {
-            mem_copy((u8*)mLE_md_name, itemName_minidisk, sizeof(mLE_md_name));
-        }
+    switch (menu_info->data0) {
+        case mLE_TYPE_PLAYER_NAME:
+            str = Now_Private->player_ID.player_name;
+            break;
+        case mLE_TYPE_COUNTRY_NAME:
+            str = Save_Get(land_info).name;
+            break;
+        case mLE_TYPE_SDCARD_ENG_NAME:
+            str = Save_Get(sd_eng_name);
+            break;
+        case mLE_TYPE_EPHRASE:
+            str = mLE_npc_end_word_edit;
+            break;
+        default:
+            str = (u8*)menu_info->data2;
+            if (menu_info->data0 == mLE_TYPE_REQUEST) {
+                mem_copy((u8*)mLE_md_name, itemName_minidisk, sizeof(mLE_md_name));
+            }
+            break;
     }
 
     max = mLE_win_data[menu_info->data0].edit_max;
@@ -301,8 +289,16 @@ static void mLE_ledit_ovl_init(Submenu* submenu) {
     menu_info->proc_status = mSM_OVL_PROC_MOVE;
     menu_info->next_proc_status = mSM_OVL_PROC_WAIT;
     menu_info->move_drt = mSM_MOVE_IN_TOP;
-    
-    mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_LEDIT, max, str, mLE_win_data[menu_info->data0].edit_col_max);
+
+    switch (menu_info->data0) {
+        case mLE_TYPE_SDCARD_ENG_NAME:
+            editor_type = mED_TYPE_LEDIT_LATIN;
+            break;
+        default:
+            editor_type = mED_TYPE_LEDIT;
+            break;
+    }
+    mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, editor_type, max, str, mLE_win_data[menu_info->data0].edit_col_max);
 }
 
 extern void mLE_ledit_ovl_construct(Submenu* submenu) {

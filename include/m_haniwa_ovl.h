@@ -20,7 +20,6 @@ enum {
     mHW_MSG_MOU,
     mHW_MSG_OKANE,
     mHW_MSG_MAIDO,
-    mHW_MSG_DONO2,
     mHW_MSG_TADA,
     mHW_MSG_TADA2,
     mHW_MSG_MISE,

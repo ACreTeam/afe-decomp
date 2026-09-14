@@ -18,233 +18,317 @@ typedef struct warning_ovl_data_s {
   f32 scale_y;
 } mWR_data_c;
 
-/**
- * Text displayed in the various warning messages.
- * This would have been done by using the CHAR_* definitions
- * located in m_font.h, but for readability, I chose to use
- * u8 arrays with defined lengths to remove the null terminator.
- */
+static u8 wr_yes_mes[] = { CHAR_PP_146, CHAR_PP_146, CHAR_PP_096 };
 
-static u8 wr_You_cant_hold[14] = "You can't hold";
-static u8 wr_any_more_letters_Want_to[25] = "any more letters! Want to";
-static u8 wr_throw_away_some_old_ones[25] = "throw away some old ones?";
-static u8 wr_Yes[3] = "Yes";
-static u8 wr_No[2] = "No";
+static u8 wr_no_mes[] = { CHAR_PP_216, CHAR_PP_178 };
 
-static u8 wr_You_cant_pull_out_a_present[28] = "You can't pull out a present";
-static u8 wr_when_your_item_screen_is_full[30] = "when your item screen is full!";
+static u8 wr_mailbox_mes0[] = { CHAR_PP_091, CHAR_PP_198, CHAR_PP_163, CHAR_PP_206, CHAR_PP_176, CHAR_PP_194,
+                                CHAR_PP_091, CHAR_PP_018, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
 
-static u8 wr_You_cant_carry[15] = "You can't carry";
-static u8 wr_more_than_99999_Bells[23] = "more than 99,999 Bells!";
+static u8 wr_mailbox_mes1[] = { CHAR_PP_001, CHAR_PP_123, CHAR_PP_020, CHAR_PP_001, CHAR_PP_163,
+                                CHAR_PP_206, CHAR_PP_176, CHAR_PP_132, CHAR_PP_012, CHAR_PP_018,
+                                CHAR_PP_018, CHAR_PP_091, CHAR_PP_146, CHAR_PP_146, CHAR_PP_063 };
 
-static u8 wr_You_cant_mail[14] = "You can't mail";
-static u8 wr_turnips_or_living_things[25] = "turnips or living things!";
-static u8 wr_someone_elses_belongings[26] = "someone else's belongings!";
-static u8 wr_a_wrapped_present[18] = "a wrapped present!";
-static u8 wr_any_more_letters[17] = "any more letters,";
-static u8 wr_so_you_cant_write_a_new_one[29] = "so you can't write a new one!";
+static u8 wr_pr_leave_mes0[] = { CHAR_PP_179, CHAR_PP_161, CHAR_PP_179, CHAR_PP_169, CHAR_PP_231, CHAR_PP_001,
+                                 CHAR_PP_204, CHAR_PP_251, CHAR_PP_001, CHAR_PP_241, CHAR_PP_019, CHAR_PP_132 };
 
-static u8 wr_Your_item_screen_is_full[25] = "Your item screen is full,";
-static u8 wr_so_you_cant_use_a_pattern[27] = "so you can't use a pattern!";
-static u8 wr_an_exercise_card[17] = "an exercise card!";
+static u8 wr_pr_leave_mes1[] = { CHAR_PP_228, CHAR_PP_186, CHAR_PP_214, CHAR_PP_189, CHAR_PP_164,
+                                 CHAR_PP_025, CHAR_PP_170, CHAR_PP_213, CHAR_PP_013, CHAR_PP_020,
+                                 CHAR_PP_001, CHAR_PP_096, CHAR_PP_033 };
 
-static u8 wr_You_cant_put[13] = "You can't put";
-static u8 wr_any_more_items_out[19] = "any more items out!";
-static u8 wr_any_more_items_there[21] = "any more items there!";
+static u8 wr_money_mes0[] = { CHAR_PP_057, CHAR_PP_057, CHAR_PP_057, CHAR_PP_057, CHAR_PP_057, CHAR_PP_224,
+                              CHAR_PP_185, CHAR_PP_030, CHAR_PP_244, CHAR_PP_011, CHAR_PP_005, CHAR_PP_132 };
 
-static u8 wr_This_diary_is_locked[21] = "This diary is locked!";
+static u8 wr_money_mes1[] = { CHAR_PP_091, CHAR_PP_017, CHAR_PP_154, CHAR_PP_164, CHAR_PP_231, CHAR_PP_244,
+                              CHAR_PP_006, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
 
-static u8 wr_You_cant_pull_anything_out[27] = "You can't pull anything out";
+static u8 wr_food_mes[] = { CHAR_PP_007, CHAR_PP_010, CHAR_PP_204, CHAR_PP_016, CHAR_PP_201,
+                            CHAR_PP_002, CHAR_PP_179, CHAR_PP_169, CHAR_PP_025, CHAR_PP_132 };
 
-static u8 wr_Theres_already_music_in_there[31] = "There's already music in there!";
+static u8 wr_send_mes[] = { CHAR_PP_150, CHAR_PP_223, CHAR_PP_093, CHAR_PP_146, CHAR_PP_151,
+                            CHAR_PP_179, CHAR_PP_169, CHAR_PP_025, CHAR_PP_132 };
 
-static u8 wr_You_cant_drop[14] = "You can't drop";
-static u8 wr_any_more_items_here[20] = "any more items here!";
+static u8 wr_quest_mes[] = { CHAR_PP_015, CHAR_PP_021, CHAR_PP_195, CHAR_PP_024,
+                             CHAR_PP_179, CHAR_PP_169, CHAR_PP_025, CHAR_PP_132 };
 
-static u8 wr_You_cant_plant[15] = "You can't plant";
-static u8 wr_anything_else_here[19] = "anything else here!";
+static u8 wr_furniture_mes[] = { CHAR_PP_014, CHAR_PP_195, CHAR_PP_020, CHAR_PP_179,
+                                 CHAR_PP_169, CHAR_PP_025, CHAR_PP_132 };
 
-static u8 wr_You_cant_open_a_bag[20] = "You can't open a bag";
-static u8 wr_unless_you_have_room[20] = "unless you have room";
-static u8 wr_for_three_more_items[21] = "for three more items!";
+static u8 wr_present_mes[] = { CHAR_PP_228, CHAR_PP_186, CHAR_PP_214, CHAR_PP_189, CHAR_PP_164, CHAR_PP_244,
+                               CHAR_PP_006, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
 
-static u8 wr_You_cant_plant_anything_here[30] = "You can't plant anything here!";
-
-static u8 wr_You_cant_put_a_sign_up_here[29] = "You can't put a sign up here!";
-
-static u8 wr_You_can_put_signs_up_only[25] = "You can put signs up only";
-static u8 wr_in_your_own_village[20] = "in your own village!";
-
-static u8 wr_You_cant_put_signs_on_the_island[34] = "You can't put signs on the island!";
-
-static u8 wr_You_cant_leave[15] = "You can't leave";
-static u8 wr_this_NES_on_the_island[23] = "this NES on the island!";
-
-static u8 wr_You_dont_have_room[19] = "You don't have room";
-static u8 wr_to_write_any_more[18] = "to write any more.";
-
-static u8 wr_You_entered_letters[19] = "You entered letters";
-static u8 wr_that_have_nothing_to_do[23] = "that have nothing to do";
-static u8 wr_with_secret_codes[18] = "with secret codes!";
-
-static u8 wr_this_item[10] = "this item!";
-
-/* Line definitions */
-#define mWR_LINE(str, pos_x, pos_y) { (pos_x), (pos_y), ##str, ARRAY_COUNT(str) }
-
-static mWR_line_c wr_mailbox_line[] = {
-  mWR_LINE(wr_You_cant_hold,             70.0f, 28.0f),
-  mWR_LINE(wr_any_more_letters_Want_to,  40.0f, 24.0f),
-  mWR_LINE(wr_throw_away_some_old_ones,  36.0f, 24.0f),
-  mWR_LINE(wr_Yes,                       94.0f, 24.0f),
-  mWR_LINE(wr_No,                       140.0f,  0.0f)
+static u8 wr_putin_mes[] = {
+    CHAR_PP_011, CHAR_PP_030, CHAR_PP_003, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033
 };
 
-static mWR_line_c wr_pr_leave_line[] = {
-  mWR_LINE(wr_You_cant_pull_out_a_present,    44.0f, 40.0f),
-  mWR_LINE(wr_when_your_item_screen_is_full,  40.0f, 24.0f)
+static u8 wr_sell_mes[] = { CHAR_PP_002, CHAR_PP_126, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_max_furniture_mes0[] = { CHAR_PP_154, CHAR_PP_186, CHAR_PP_001, CHAR_PP_237, CHAR_PP_203,
+                                          CHAR_PP_002, CHAR_PP_132, CHAR_PP_004, CHAR_PP_007, CHAR_PP_019 };
+
+static u8 wr_put_max_furniture_mes1[] = { CHAR_PP_181, CHAR_PP_150, CHAR_PP_231, CHAR_PP_022, CHAR_PP_008,
+                                          CHAR_PP_016, CHAR_PP_201, CHAR_PP_002, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_furniture_mes0[] = { CHAR_PP_091, CHAR_PP_198, CHAR_PP_009, CHAR_PP_024, CHAR_PP_029, CHAR_PP_002,
+                                      CHAR_PP_009, CHAR_PP_002, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_put_furniture_mes1[] = { CHAR_PP_004, CHAR_PP_007, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_244,
+                                      CHAR_PP_006, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_item_mes0[] = { CHAR_PP_091, CHAR_PP_198, CHAR_PP_009, CHAR_PP_024, CHAR_PP_000,
+                                 CHAR_PP_015, CHAR_PP_124, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_put_item_mes1[] = { CHAR_PP_179, CHAR_PP_169, CHAR_PP_231, CHAR_PP_004, CHAR_PP_008,
+                                 CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_plant_mes0[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_246, CHAR_PP_011,
+                                  CHAR_PP_203, CHAR_PP_021, CHAR_PP_025 };
+
+static u8 wr_put_plant_mes1[] = { CHAR_PP_002, CHAR_PP_003, CHAR_PP_123, CHAR_PP_126,
+                                  CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_hukubukuro_open_mes0[] = { CHAR_PP_051, CHAR_PP_017, CHAR_PP_001, CHAR_PP_237, CHAR_PP_203,
+                                        CHAR_PP_002, CHAR_PP_145, CHAR_PP_151, CHAR_PP_231, CHAR_PP_020,
+                                        CHAR_PP_001, CHAR_PP_019, CHAR_PP_132 };
+
+static u8 wr_hukubukuro_open_mes1[] = { CHAR_PP_027, CHAR_PP_007, CHAR_PP_248, CHAR_PP_007, CHAR_PP_192,
+                                        CHAR_PP_025, CHAR_PP_145, CHAR_PP_153, CHAR_PP_126, CHAR_PP_020,
+                                        CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_present_mail_mes0[] = { CHAR_PP_228, CHAR_PP_186, CHAR_PP_214, CHAR_PP_189, CHAR_PP_164, CHAR_PP_225,
+                                     CHAR_PP_143, CHAR_PP_152, CHAR_PP_157, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_present_mail_mes1[] = { CHAR_PP_163, CHAR_PP_206, CHAR_PP_176, CHAR_PP_021, CHAR_PP_017, CHAR_PP_008,
+                                     CHAR_PP_123, CHAR_PP_126, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_write_mes0[] = { CHAR_PP_163, CHAR_PP_206, CHAR_PP_176, CHAR_PP_231, CHAR_PP_001, CHAR_PP_204,
+                              CHAR_PP_251, CHAR_PP_001, CHAR_PP_241, CHAR_PP_019, CHAR_PP_132 };
+
+static u8 wr_write_mes1[] = { CHAR_PP_005, CHAR_PP_007, CHAR_PP_154, CHAR_PP_164, CHAR_PP_231, CHAR_PP_244,
+                              CHAR_PP_006, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_lock_diary_mes0[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_021, CHAR_PP_204,
+                                   CHAR_PP_006, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_lock_diary_mes1[] = { CHAR_PP_150, CHAR_PP_207, CHAR_PP_231, CHAR_PP_005, CHAR_PP_005, CHAR_PP_204,
+                                   CHAR_PP_018, CHAR_PP_001, CHAR_PP_125, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_music_mes0[] = { CHAR_PP_179, CHAR_PP_161, CHAR_PP_179, CHAR_PP_169, CHAR_PP_231, CHAR_PP_001,
+                              CHAR_PP_204, CHAR_PP_251, CHAR_PP_001, CHAR_PP_241, CHAR_PP_019, CHAR_PP_132 };
+
+static u8 wr_music_mes1[] = { CHAR_PP_019, CHAR_PP_124, CHAR_PP_241, CHAR_PP_013,
+                              CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_music2_mes0[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_176, CHAR_PP_141, CHAR_PP_144,
+                               CHAR_PP_212, CHAR_PP_143, CHAR_PP_152, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_music2_mes1[] = { CHAR_PP_091, CHAR_PP_198, CHAR_PP_025, CHAR_PP_001, CHAR_PP_204,
+                               CHAR_PP_018, CHAR_PP_125, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_original_mes0[] = { CHAR_PP_179, CHAR_PP_161, CHAR_PP_179, CHAR_PP_169, CHAR_PP_231, CHAR_PP_001,
+                                 CHAR_PP_204, CHAR_PP_251, CHAR_PP_001, CHAR_PP_241, CHAR_PP_019, CHAR_PP_132 };
+
+static u8 wr_original_mes1[] = { CHAR_PP_175, CHAR_PP_146, CHAR_PP_219, CHAR_PP_211,
+                                 CHAR_PP_146, CHAR_PP_189, CHAR_PP_019 };
+
+static u8 wr_original_mes2[] = { CHAR_PP_001, CHAR_PP_126, CHAR_PP_005, CHAR_PP_003, CHAR_PP_125,
+                                 CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_244, CHAR_PP_006,
+                                 CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_sign_mes1[] = { CHAR_PP_015, CHAR_PP_018, CHAR_PP_123, CHAR_PP_126,
+                                 CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_put_sign_other_mes0[] = { CHAR_PP_029, CHAR_PP_005, CHAR_PP_024, CHAR_PP_035,
+                                       CHAR_PP_123, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_put_sign_island_mes0[] = { CHAR_PP_011, CHAR_PP_030, CHAR_PP_021, CHAR_PP_025, CHAR_PP_132,
+                                        CHAR_PP_015, CHAR_PP_018, CHAR_PP_123, CHAR_PP_126, CHAR_PP_020,
+                                        CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_card_mes0[] = { CHAR_PP_015, CHAR_PP_001, CHAR_PP_014, CHAR_PP_002, CHAR_PP_150,
+                             CHAR_PP_144, CHAR_PP_220, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_put_fami_mes0[] = { CHAR_PP_011, CHAR_PP_030, CHAR_PP_021, CHAR_PP_025, CHAR_PP_009,
+                                 CHAR_PP_024, CHAR_PP_172, CHAR_PP_135, CHAR_PP_176, CHAR_PP_154,
+                                 CHAR_PP_189, CHAR_PP_025, CHAR_PP_132 };
+
+static u8 wr_put_fami_mes1[] = { CHAR_PP_004, CHAR_PP_007, CHAR_PP_009, CHAR_PP_019, CHAR_PP_231, CHAR_PP_244,
+                                 CHAR_PP_006, CHAR_PP_020, CHAR_PP_001, CHAR_PP_142, CHAR_PP_033 };
+
+static u8 wr_You_dont_have_room[] = { CHAR_PP_089, CHAR_PP_111, CHAR_PP_117, CHAR_PP_032, CHAR_PP_100,
+                                      CHAR_PP_111, CHAR_PP_110, CHAR_PP_039, CHAR_PP_116, CHAR_PP_032,
+                                      CHAR_PP_104, CHAR_PP_097, CHAR_PP_118, CHAR_PP_101, CHAR_PP_032,
+                                      CHAR_PP_114, CHAR_PP_111, CHAR_PP_111, CHAR_PP_109 };
+
+static u8 wr_to_write_any_more[] = { CHAR_PP_116, CHAR_PP_111, CHAR_PP_032, CHAR_PP_119, CHAR_PP_114, CHAR_PP_105,
+                                     CHAR_PP_116, CHAR_PP_101, CHAR_PP_032, CHAR_PP_097, CHAR_PP_110, CHAR_PP_121,
+                                     CHAR_PP_032, CHAR_PP_109, CHAR_PP_111, CHAR_PP_114, CHAR_PP_101, CHAR_PP_046 };
+
+static u8 wr_You_entered_letters[] = { CHAR_PP_089, CHAR_PP_111, CHAR_PP_117, CHAR_PP_032, CHAR_PP_101,
+                                       CHAR_PP_110, CHAR_PP_116, CHAR_PP_101, CHAR_PP_114, CHAR_PP_101,
+                                       CHAR_PP_100, CHAR_PP_032, CHAR_PP_108, CHAR_PP_101, CHAR_PP_116,
+                                       CHAR_PP_116, CHAR_PP_101, CHAR_PP_114, CHAR_PP_115 };
+
+static u8 wr_that_have_nothing_to_do[] = { CHAR_PP_116, CHAR_PP_104, CHAR_PP_097, CHAR_PP_116, CHAR_PP_032, CHAR_PP_104,
+                                           CHAR_PP_097, CHAR_PP_118, CHAR_PP_101, CHAR_PP_032, CHAR_PP_110, CHAR_PP_111,
+                                           CHAR_PP_116, CHAR_PP_104, CHAR_PP_105, CHAR_PP_110, CHAR_PP_103, CHAR_PP_032,
+                                           CHAR_PP_116, CHAR_PP_111, CHAR_PP_032, CHAR_PP_100, CHAR_PP_111 };
+
+static u8 wr_with_secret_codes[] = { CHAR_PP_119, CHAR_PP_105, CHAR_PP_116, CHAR_PP_104, CHAR_PP_032, CHAR_PP_115,
+                                     CHAR_PP_101, CHAR_PP_099, CHAR_PP_114, CHAR_PP_101, CHAR_PP_116, CHAR_PP_032,
+                                     CHAR_PP_099, CHAR_PP_111, CHAR_PP_100, CHAR_PP_101, CHAR_PP_115, CHAR_PP_033 };
+
+static u8 wr_pr_fork_mes[] = { CHAR_PP_009, CHAR_PP_024, CHAR_PP_145, CHAR_PP_146,
+                               CHAR_PP_163, CHAR_PP_177, CHAR_PP_025, CHAR_PP_132 };
+
+static mWR_line_c wr_mailbox_line[] = {
+    { 44.0f, 27.0f, wr_mailbox_mes0, sizeof(wr_mailbox_mes0) },
+    { 29.0f, 7.0f, wr_mailbox_mes1, sizeof(wr_mailbox_mes1) },
+    { 63.0f, 7.0f, wr_yes_mes, sizeof(wr_yes_mes) },
+    { 150.0f, -16.0f, wr_no_mes, sizeof(wr_no_mes) },
+};
+
+static mWR_line_c wr_pre_leave_line[] = {
+    { 36.0f, 32.0f, wr_pr_leave_mes0, sizeof(wr_pr_leave_mes0) },
+    { 30.0f, 8.0f, wr_pr_leave_mes1, sizeof(wr_pr_leave_mes1) },
 };
 
 static mWR_line_c wr_money_line[] = {
-  mWR_LINE(wr_You_cant_carry,         66.0f, 40.0f),
-  mWR_LINE(wr_more_than_99999_Bells,  44.0f, 24.0f)
+    { 32.0f, 30.0f, wr_money_mes0, sizeof(wr_money_mes0) },
+    { 36.0f, 8.0f, wr_money_mes1, sizeof(wr_money_mes1) },
 };
 
 static mWR_line_c wr_pr_food_line[] = {
-  mWR_LINE(wr_You_cant_mail,            70.0f, 40.0f),
-  mWR_LINE(wr_turnips_or_living_things, 42.0f, 24.0f)
+    { 48.0f, 27.0f, wr_send_mes, sizeof(wr_send_mes) },
+    { 33.0f, 8.0f, wr_present_mes, sizeof(wr_present_mes) },
 };
 
 static mWR_line_c wr_pr_quest_line[] = {
-  mWR_LINE(wr_You_cant_mail,            74.0f, 40.0f),
-  mWR_LINE(wr_someone_elses_belongings, 38.0f, 24.0f)
-};
-
-static mWR_line_c wr_present_mail_line[] = {
-  mWR_LINE(wr_You_cant_mail,     74.0f, 40.0f),
-  mWR_LINE(wr_a_wrapped_present, 62.0f, 24.0f)
-};
-
-static mWR_line_c wr_write_line[] = {
-  mWR_LINE(wr_You_cant_carry,              85.0f, 40.0f),
-  mWR_LINE(wr_any_more_letters,            82.0f, 24.0f),
-  mWR_LINE(wr_so_you_cant_write_a_new_one, 45.0f, 24.0f)
-};
-
-static mWR_line_c wr_original_line[] = {
-  mWR_LINE(wr_Your_item_screen_is_full,  54.0f, 40.0f),
-  mWR_LINE(wr_so_you_cant_use_a_pattern, 48.0f, 24.0f)
-};
-
-static mWR_line_c wr_pr_card_line[] = {
-  mWR_LINE(wr_You_cant_mail,    60.0f, 40.0f),
-  mWR_LINE(wr_an_exercise_card, 54.0f, 24.0f)
+    { 49.0f, 26.0f, wr_quest_mes, sizeof(wr_quest_mes) },
+    { 34.0f, 8.0f, wr_present_mes, sizeof(wr_present_mes) },
 };
 
 static mWR_line_c wr_put_max_furniture_line[] = {
-  mWR_LINE(wr_You_cant_put,       68.0f, 40.0f),
-  mWR_LINE(wr_any_more_items_out, 50.0f, 24.0f)
+    { 37.0f, 27.0f, wr_put_max_furniture_mes0, sizeof(wr_put_max_furniture_mes0) },
+    { 37.0f, 8.0f, wr_put_max_furniture_mes1, sizeof(wr_put_max_furniture_mes1) },
 };
 
 static mWR_line_c wr_put_furniture_line[] = {
-  mWR_LINE(wr_You_cant_put,         68.0f, 40.0f),
-  mWR_LINE(wr_any_more_items_there, 46.0f, 24.0f)
-};
-
-static mWR_line_c wr_lock_diary_line[] = {
-  mWR_LINE(wr_This_diary_is_locked, 38.0f, 46.0f)
-};
-
-static mWR_line_c wr_music_line[] = {
-  mWR_LINE(wr_You_cant_pull_anything_out,    47.0f, 40.0f),
-  mWR_LINE(wr_when_your_item_screen_is_full, 41.0f, 24.0f)
-};
-
-static mWR_line_c wr_music2_line[] = {
-  mWR_LINE(wr_Theres_already_music_in_there, 38.0f, 46.0f)
-};
-
-static mWR_line_c wr_hukubukuro_open_line[] = {
-  mWR_LINE(wr_You_cant_open_a_bag,  48.0f, 37.0f),
-  mWR_LINE(wr_unless_you_have_room, 50.0f, 24.0f),
-  mWR_LINE(wr_for_three_more_items, 52.0f, 24.0f)
-};
-
-static mWR_line_c wr_put_plant_line[] = {
-  mWR_LINE(wr_You_cant_plant_anything_here, 39.0f, 46.0f)
-};
-
-static mWR_line_c wr_put_sign_line[] = {
-  mWR_LINE(wr_You_cant_put_a_sign_up_here, 40.0f, 46.0f)
-};
-
-static mWR_line_c wr_put_sign_other_line[] = {
-  mWR_LINE(wr_You_can_put_signs_up_only, 44.0f, 40.0f),
-  mWR_LINE(wr_in_your_own_village,       64.0f, 24.0f)
-};
-
-static mWR_line_c wr_put_sign_island_line[] = {
-  mWR_LINE(wr_You_cant_put_signs_on_the_island, 31.0f, 46.0f)
-};
-
-static mWR_line_c wr_put_fami_line[] = {
-  mWR_LINE(wr_You_cant_leave,         72.0f, 40.0f),
-  mWR_LINE(wr_this_NES_on_the_island, 44.0f, 24.0f)
-};
-
-static mWR_line_c wr_word_over_line[] = {
-  mWR_LINE(wr_You_dont_have_room, 54.0f, 40.0f),
-  mWR_LINE(wr_to_write_any_more,  63.0f, 24.0f)
+    { 36.0f, 30.0f, wr_put_furniture_mes0, sizeof(wr_put_furniture_mes0) },
+    { 36.0f, 8.0f, wr_put_furniture_mes1, sizeof(wr_put_furniture_mes1) },
 };
 
 static mWR_line_c wr_put_item_line[] = {
-  mWR_LINE(wr_You_cant_drop,       72.0f, 40.0f),
-  mWR_LINE(wr_any_more_items_here, 54.0f, 24.0f)
+    { 35.0f, 25.0f, wr_put_item_mes0, sizeof(wr_put_item_mes0) },
+    { 35.0f, 8.0f, wr_put_item_mes1, sizeof(wr_put_item_mes1) },
+};
+
+static mWR_line_c wr_put_plant_line[] = {
+    { 44.0f, 25.0f, wr_put_plant_mes0, sizeof(wr_put_plant_mes0) },
+    { 44.0f, 8.0f, wr_put_plant_mes1, sizeof(wr_put_plant_mes1) },
+};
+
+static mWR_line_c wr_hukubukuro_open_line[] = {
+    { 27.0f, 32.0f, wr_hukubukuro_open_mes0, sizeof(wr_hukubukuro_open_mes0) },
+    { 27.0f, 8.0f, wr_hukubukuro_open_mes1, sizeof(wr_hukubukuro_open_mes1) },
+};
+
+static mWR_line_c wr_present_mail_line[] = {
+    { 36.0f, 29.0f, wr_present_mail_mes0, sizeof(wr_present_mail_mes0) },
+    { 28.0f, 8.0f, wr_present_mail_mes1, sizeof(wr_present_mail_mes1) },
+};
+
+static mWR_line_c wr_write_line[] = {
+    { 38.0f, 30.0f, wr_write_mes0, sizeof(wr_write_mes0) },
+    { 38.0f, 8.0f, wr_write_mes1, sizeof(wr_write_mes1) },
+};
+
+static mWR_line_c wr_music_line[] = {
+    { 28.0f, 30.0f, wr_music_mes0, sizeof(wr_music_mes0) },
+    { 51.0f, 8.0f, wr_music_mes1, sizeof(wr_music_mes1) },
+};
+
+static mWR_line_c wr_music2_line[] = {
+    { 39.0f, 30.0f, wr_music2_mes0, sizeof(wr_music2_mes0) },
+    { 45.0f, 8.0f, wr_music2_mes1, sizeof(wr_music2_mes1) },
+};
+
+static mWR_line_c wr_original_line[] = {
+    { 43.0f, 36.0f, wr_original_mes0, sizeof(wr_original_mes0) },
+    { 73.0f, 8.0f, wr_original_mes1, sizeof(wr_original_mes1) },
+    { 33.0f, 8.0f, wr_original_mes2, sizeof(wr_original_mes2) },
+};
+
+static mWR_line_c wr_put_sign_line[] = {
+    { 44.0f, 25.0f, wr_put_plant_mes0, sizeof(wr_put_plant_mes0) },
+    { 44.0f, 8.0f, wr_put_sign_mes1, sizeof(wr_put_sign_mes1) },
+};
+
+static mWR_line_c wr_put_sign_other_line[] = {
+    { 44.0f, 25.0f, wr_put_sign_other_mes0, sizeof(wr_put_sign_other_mes0) },
+    { 44.0f, 8.0f, wr_put_sign_mes1, sizeof(wr_put_sign_mes1) },
+};
+
+static mWR_line_c wr_put_sign_island_line[] = {
+    { 43.0f, 42.0f, wr_put_sign_island_mes0, sizeof(wr_put_sign_island_mes0) },
+};
+
+static mWR_line_c wr_pr_card_line[] = {
+    { 48.0f, 27.0f, wr_card_mes0, sizeof(wr_card_mes0) },
+    { 32.0f, 8.0f, wr_present_mes, sizeof(wr_present_mes) },
+};
+
+static mWR_line_c wr_lock_diary_line[] = {
+    { 48.0f, 27.0f, wr_lock_diary_mes0, sizeof(wr_lock_diary_mes0) },
+    { 36.0f, 8.0f, wr_lock_diary_mes1, sizeof(wr_lock_diary_mes1) },
+};
+
+static mWR_line_c wr_put_fami_line[] = {
+    { 32.0f, 34.0f, wr_put_fami_mes0, sizeof(wr_put_fami_mes0) },
+    { 40.0f, 8.0f, wr_put_fami_mes1, sizeof(wr_put_fami_mes1) },
+};
+
+static mWR_line_c wr_word_over_line[] = {
+    { 54.0f, 40.0f, wr_You_dont_have_room, sizeof(wr_You_dont_have_room) },
+    { 63.0f, 24.0f, wr_to_write_any_more, sizeof(wr_to_write_any_more) },
 };
 
 static mWR_line_c wr_pw_chk_line[] = {
-  mWR_LINE(wr_You_entered_letters,     59.0f, 40.0f),
-  mWR_LINE(wr_that_have_nothing_to_do, 45.0f, 24.0f),
-  mWR_LINE(wr_with_secret_codes,       63.0f, 24.0f)
+    { 59.0f, 40.0f, wr_You_entered_letters, sizeof(wr_You_entered_letters) },
+    { 45.0f, 24.0f, wr_that_have_nothing_to_do, sizeof(wr_that_have_nothing_to_do) },
+    { 63.0f, 24.0f, wr_with_secret_codes, sizeof(wr_with_secret_codes) },
 };
 
 static mWR_line_c wr_pr_fork_line[] = {
-  mWR_LINE(wr_You_cant_mail, 60.0f, 40.0f),
-  mWR_LINE(wr_this_item,     80.0f, 24.0f)
+    { 49.0f, 26.0f, wr_pr_fork_mes, sizeof(wr_pr_fork_mes) },
+    { 34.0f, 8.0f, wr_present_mes, sizeof(wr_present_mes) },
 };
 
-#define mWR_DATA(line, scale_x, scale_y) { ##line, ARRAY_COUNT(line), (scale_x), (scale_y) }
-#define mWR_NULL { NULL, 0, 1.0f, 1.0f }
-
 static mWR_data_c wr_win_data[] = {
-  mWR_DATA(wr_mailbox_line, 1.0f, 1.2f),
-  mWR_DATA(wr_pr_leave_line, 1.15f, 1.0f),
-  mWR_DATA(wr_money_line, 1.0f, 1.0f),
-  mWR_DATA(wr_pr_food_line, 1.0f, 1.0f),
-  mWR_DATA(wr_pr_quest_line, 1.0f, 1.0f),
-  mWR_NULL,
-  mWR_NULL,
-  mWR_NULL,
-  mWR_NULL,
-  mWR_DATA(wr_put_max_furniture_line, 0.95f, 1.0f),
-  mWR_DATA(wr_put_furniture_line, 0.95f, 1.0f),
-  mWR_DATA(wr_put_item_line, 1.0f, 1.0f),
-  mWR_DATA(wr_put_plant_line, 1.15f, 0.9f),
-  mWR_DATA(wr_hukubukuro_open_line, 1.0f, 1.15f),
-  mWR_DATA(wr_present_mail_line, 1.0f, 1.0f),
-  mWR_DATA(wr_write_line, 1.15f, 1.2f),
-  mWR_DATA(wr_music_line, 1.15f, 1.0f),
-  mWR_DATA(wr_music2_line, 1.15f, 0.9f),
-  mWR_DATA(wr_original_line, 1.13f, 1.0f),
-  mWR_DATA(wr_put_sign_line, 1.13f, 0.9f),
-  mWR_DATA(wr_put_sign_other_line, 1.1f, 1.0f),
-  mWR_DATA(wr_put_sign_island_line, 1.15f, 0.9f),
-  mWR_DATA(wr_pr_card_line, 0.9f, 1.0f),
-  mWR_DATA(wr_lock_diary_line, 0.9f, 0.9f),
-  mWR_DATA(wr_put_fami_line, 1.0f, 1.0f),
-  mWR_DATA(wr_word_over_line, 1.0f, 1.0f),
-  mWR_DATA(wr_pw_chk_line, 1.0f, 1.2f),
-  mWR_DATA(wr_pr_fork_line, 0.9f, 1.0f)
+    { wr_mailbox_line, ARRAY_COUNT(wr_mailbox_line), 1.0f, 1.0f },
+    { wr_pre_leave_line, ARRAY_COUNT(wr_pre_leave_line), 0.8700000047683716f, 0.8700000047683716f },
+    { wr_money_line, ARRAY_COUNT(wr_money_line), 0.8500000238418579f, 0.8399999737739563f },
+    { wr_pr_food_line, ARRAY_COUNT(wr_pr_food_line), 0.800000011920929f, 0.7799999713897705f },
+    { wr_pr_quest_line, ARRAY_COUNT(wr_pr_quest_line), 0.7900000214576721f, 0.7599999904632568f },
+    { wr_put_max_furniture_line, ARRAY_COUNT(wr_put_max_furniture_line), 0.800000011920929f, 0.7799999713897705f },
+    { wr_put_furniture_line, ARRAY_COUNT(wr_put_furniture_line), 0.8500000238418579f, 0.8399999737739563f },
+    { wr_put_item_line, ARRAY_COUNT(wr_put_item_line), 0.7699999809265137f, 0.75f },
+    { wr_put_plant_line, ARRAY_COUNT(wr_put_plant_line), 0.7699999809265137f, 0.75f },
+    { wr_hukubukuro_open_line, ARRAY_COUNT(wr_hukubukuro_open_line), 0.8700000047683716f, 0.8999999761581421f },
+    { wr_present_mail_line, ARRAY_COUNT(wr_present_mail_line), 0.8199999928474426f, 0.8199999928474426f },
+    { wr_write_line, ARRAY_COUNT(wr_write_line), 0.8500000238418579f, 0.8399999737739563f },
+    { wr_music_line, ARRAY_COUNT(wr_music_line), 0.8500000238418579f, 0.8399999737739563f },
+    { wr_music2_line, ARRAY_COUNT(wr_music2_line), 0.8500000238418579f, 0.8399999737739563f },
+    { wr_original_line, ARRAY_COUNT(wr_original_line), 0.9599999785423279f, 1.149999976158142f },
+    { wr_put_sign_line, ARRAY_COUNT(wr_put_sign_line), 0.7699999809265137f, 0.75f },
+    { wr_put_sign_other_line, ARRAY_COUNT(wr_put_sign_other_line), 0.7699999809265137f, 0.75f },
+    { wr_put_sign_island_line, ARRAY_COUNT(wr_put_sign_island_line), 1.0f, 0.8500000238418579f },
+    { wr_pr_card_line, ARRAY_COUNT(wr_pr_card_line), 0.800000011920929f, 0.7799999713897705f },
+    { wr_lock_diary_line, ARRAY_COUNT(wr_lock_diary_line), 0.800000011920929f, 0.7799999713897705f },
+    { wr_put_fami_line, ARRAY_COUNT(wr_put_fami_line), 0.8999999761581421f, 0.8999999761581421f },
+    { wr_word_over_line, ARRAY_COUNT(wr_word_over_line), 1.0f, 1.0f },
+    { wr_pw_chk_line, ARRAY_COUNT(wr_pw_chk_line), 1.0f, 1.2000000476837158f },
+    { wr_pr_fork_line, ARRAY_COUNT(wr_pr_fork_line), 0.800000011920929f, 0.7799999713897705f },
 };
 
 static void mWR_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
@@ -361,18 +445,17 @@ static void mWR_set_frame_dl(Submenu* submenu, GRAPH* graph, mSM_MenuInfo_c* men
     f32 x;
     f32 y;
 
-    x = (menu_info->position[0] - 120.0f * data->scale_x) - 8.0f;
+    f32 line_y = data->lines[2].pos_y + (data->lines[0].pos_y + data->lines[1].pos_y);
+    x = (menu_info->position[0] - 120.0f) - 5.0f;
+    y = ((60.0f + menu_info->position[1]) - (32.0f + line_y)) - 8.0f;
     if (submenu->overlay->warning_ovl->selected == 0) {
-      x += data->lines[3].pos_x;
+        x += data->lines[2].pos_x;
+    } else {
+        x += data->lines[3].pos_x;
     }
-    else {
-      x += data->lines[4].pos_x;
-    }
-
-    y = (menu_info->position[1] + 60.0f * data->scale_y) - (data->lines[0].pos_y + data->lines[1].pos_y + data->lines[2].pos_y + data->lines[3].pos_y + 8.0f);
 
     Matrix_scale(scale, scale, 1.0f, MTX_LOAD);
-    Matrix_translate(x, y, 0.0f, MTX_MULT);
+    Matrix_translate(x, y, -32.0f, MTX_MULT);
     gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(gfx++, att_win_cursor_model);
   }
@@ -387,7 +470,7 @@ static void mWR_set_strings(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_i
   static int col_type2[3] = { 255, 255, 255 }; // unselected choice color
 
   mWR_Ovl_c* warning_ovl = submenu->overlay->warning_ovl;
-  int selected_idx = 3 + warning_ovl->selected;
+  int selected_idx = 2 + warning_ovl->selected;
   f32 scale = warning_ovl->scale;
   f32 x;
   f32 y;
@@ -399,41 +482,25 @@ static void mWR_set_strings(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_i
   (*submenu->overlay->set_char_matrix_proc)(game->graph);
 
   line = data->lines;
-  x = (160.0f + menu_info->position[0]) - (data->scale_x * 120.0f) * scale;
-  y = (120.0f - menu_info->position[1]) - (data->scale_y * 60.0f) * scale;
+  x = (160.0f + menu_info->position[0]) - scale * 120.0f * data->scale_x;
+  y = (120.0f - menu_info->position[1]) - scale * 60.0f * data->scale_y;
 
-  for (i = 0; i < data->num_lines; i++) {
-    if (i == selected_idx) {
-      color = col_type1;
-    }
-    else if (i >= 3 && menu_info->data0 == 0) {
-      color = col_type2;
-    }
-    else {
-      color = col_type0;
-    }
+  for (i = 0; i < data->num_lines; i++, line++) {
+      if (i == selected_idx) {
+          color = col_type1;
+      } else if (i >= 2 && menu_info->data0 == 0) {
+          color = col_type2;
+      } else {
+          color = col_type0;
+      }
 
-    line_x = line->pos_x * scale;
-    y += line->pos_y * scale;
+      line_x = line->pos_x * scale;
+      y += line->pos_y * scale;
 
-    mFont_SetLineStrings(
-      game,
-      line->str,
-      line->str_len,
-      x + line_x,
-      y,
-      color[0],
-      color[1],
-      color[2],
-      255,
-      FALSE,
-      TRUE,
-      scale,
-      scale,
-      mFont_MODE_POLY
-    );
+      mFont_SetLineStrings(game, line->str, line->str_len, x + line_x, y, color[0], color[1], color[2], 255, FALSE,
+                           FALSE, scale, scale, mFont_MODE_POLY);
 
-    line++;
+      y += scale * 16.0f;
   }
 }
 

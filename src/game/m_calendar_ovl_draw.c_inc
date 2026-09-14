@@ -24,29 +24,29 @@ static u8* back_tex_table[lbRTC_MONTHS_MAX] = {
    cal_win_tuki2_tex, cal_win_tuki2_tex, cal_win_tuki2_tex, cal_win_tuki2_tex,
 };
 
-extern u8 cal_win_april_tex_rgb_ia8[];
-extern u8 cal_win_august_tex_rgb_ia8[];
-extern u8 cal_win_december_tex_rgb_ia8[];
-extern u8 cal_win_february_tex_rgb_ia8[];
-extern u8 cal_win_january_tex_rgb_ia8[];
-extern u8 cal_win_july_tex_rgb_ia8[];
-extern u8 cal_win_june_tex_rgb_ia8[];
-extern u8 cal_win_march_tex_rgb_ia8[];
-extern u8 cal_win_may_tex_rgb_ia8[];
-extern u8 cal_win_november_tex_rgb_ia8[];
-extern u8 cal_win_october_tex_rgb_ia8[];
-extern u8 cal_win_september_tex_rgb_ia8[];
+extern u8 cal_win_kazu4_tex_rgb_ia8[];
+extern u8 cal_win_kazu8_tex_rgb_ia8[];
+extern u8 cal_win_kazu12_tex_rgb_ia8[];
+extern u8 cal_win_kazu2_tex_rgb_ia8[];
+extern u8 cal_win_kazu1_tex_rgb_ia8[];
+extern u8 cal_win_kazu7_tex_rgb_ia8[];
+extern u8 cal_win_kazu6_tex_rgb_ia8[];
+extern u8 cal_win_kazu3_tex_rgb_ia8[];
+extern u8 cal_win_kazu5_tex_rgb_ia8[];
+extern u8 cal_win_kazu11_tex_rgb_ia8[];
+extern u8 cal_win_kazu10_tex_rgb_ia8[];
+extern u8 cal_win_kazu9_tex_rgb_ia8[];
 
 static u8* month_tex_table[lbRTC_MONTHS_MAX] = {
-   cal_win_january_tex_rgb_ia8, cal_win_february_tex_rgb_ia8, cal_win_march_tex_rgb_ia8, cal_win_april_tex_rgb_ia8, cal_win_may_tex_rgb_ia8, cal_win_june_tex_rgb_ia8, cal_win_july_tex_rgb_ia8, cal_win_august_tex_rgb_ia8,
-   cal_win_september_tex_rgb_ia8, cal_win_october_tex_rgb_ia8, cal_win_november_tex_rgb_ia8, cal_win_december_tex_rgb_ia8,
+    cal_win_kazu1_tex_rgb_ia8, cal_win_kazu2_tex_rgb_ia8,  cal_win_kazu3_tex_rgb_ia8,  cal_win_kazu4_tex_rgb_ia8,
+    cal_win_kazu5_tex_rgb_ia8, cal_win_kazu6_tex_rgb_ia8,  cal_win_kazu7_tex_rgb_ia8,  cal_win_kazu8_tex_rgb_ia8,
+    cal_win_kazu9_tex_rgb_ia8, cal_win_kazu10_tex_rgb_ia8, cal_win_kazu11_tex_rgb_ia8, cal_win_kazu12_tex_rgb_ia8,
 };
 
-extern u8 cal_win_event_tex[];
+extern u8 cal_win_event_tex_rgb_ia8[];
+extern u8 cal_win_event2_tex_rgb_ia8[];
 
-static u8* event_tex_table[] = {
-    cal_win_event_tex, cal_win_event_tex
-};
+static u8* event_tex_table[] = { cal_win_event_tex_rgb_ia8, cal_win_event2_tex_rgb_ia8 };
 
 static u8 box_prim_table[5][3] = {
     {120, 120, 95}, {225, 195, 100}, {245, 205, 165}, {255, 245, 185}, {185, 215, 185},
@@ -231,9 +231,13 @@ static void mCD_set_base_dl(Submenu* submenu, GAME* game, f32 pos_x, f32 pos_y, 
         t0 /= 10;
     }
 
+    Matrix_push();
+    Matrix_translate(13.0f, 0.0f, 0.0f, MTX_MULT);
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gDPLoadTextureBlock_8b_Dolphin(POLY_OPA_DISP++, month_tex_table[month], G_IM_FMT_IA, 32, 128, 0, GX_MIRROR, GX_MIRROR, 0, 0);
+    gDPLoadTextureBlock_8b_Dolphin(POLY_OPA_DISP++, month_tex_table[month], G_IM_FMT_IA, 32, 32, 0, GX_MIRROR,
+                                   GX_MIRROR, 0, 0);
     gSPDisplayList(POLY_OPA_DISP++, cal_win_monthT_model);
+    Matrix_pull();
     gDPLoadTextureBlock_8b_Dolphin(POLY_OPA_DISP++, cal_win_box_tex_rgb_ia8, G_IM_FMT_IA, 32, 32, 0, GX_MIRROR, GX_MIRROR, 0, 0);
     
     k = 0;
@@ -341,7 +345,7 @@ static void mCD_set_base_dl(Submenu* submenu, GAME* game, f32 pos_x, f32 pos_y, 
         
         if (calendar->_103C[calendar->_1042] & 0x80) {
             Matrix_push();
-            Matrix_translate(0.0f, 0.0f, 0.0f, MTX_MULT);
+            Matrix_translate(0.0f, -4.0f, 0.0f, MTX_MULT);
             gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
             gSPDisplayList(POLY_OPA_DISP++, cal_icon_sakana_model);
             Matrix_pull();
@@ -463,9 +467,9 @@ static void mCD_disp_event_dl(Submenu* submenu, GAME* game) {
         mFont_SetLineStrings(
             game,
             calendar->event_name_str, mCD_EVENT_NAME_STR_LEN,
-            128.0f, 161.0f,
+            138.0f, 161.0f,
             prim_p[0], prim_p[1], prim_p[2], 255,
-            FALSE, TRUE,
+            FALSE, FALSE,
             0.875f, 0.875f,
             mFont_MODE_POLY
         );

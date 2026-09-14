@@ -444,162 +444,6 @@ extern mMP_HousePos_c mMP_house_pos_list[];
 
 extern Gfx kan_win_mode[];
 
-static u16 kan_tizu1_pal[16] ATTRIBUTE_ALIGN(32) = {
-    0x0000, 0xc3b0, 0x9e87, 0xd294, 0xca52, 0xbdef, 0xb5ad, 0xb9ce,
-    0xa2e8, 0xb18c, 0xa705, 0xdaff, 0xab4a, 0xffff, 0xb635, 0xbe9f,
-};
-
-static u16 kan_tizu2_pal[16] ATTRIBUTE_ALIGN(32) = {
-    0x0000, 0xc3b0, 0x9e87, 0xc94a, 0xe70d, 0xe1ce, 0xb5ad, 0xb195,
-    0xf390, 0xb18c, 0xa705, 0xffff, 0xd54a, 0xdaff, 0xb635, 0xbe9f,
-};
-
-static u16* l_kan_tizu_pal[2] = { kan_tizu1_pal, kan_tizu2_pal };
-
-extern u8 kan_win_suuji1_tex_rgb_ia8[];
-extern u8 kan_win_suuji2_tex_rgb_ia8[];
-extern u8 kan_win_suuji3_tex_rgb_ia8[];
-extern u8 kan_win_suuji4_tex_rgb_ia8[];
-extern u8 kan_win_suuji5_tex_rgb_ia8[];
-
-static u8* kan_win_evw_anime_1_tex_table[FG_BLOCK_X_NUM] = {
-    kan_win_suuji1_tex_rgb_ia8, kan_win_suuji2_tex_rgb_ia8, kan_win_suuji3_tex_rgb_ia8,
-    kan_win_suuji4_tex_rgb_ia8, kan_win_suuji5_tex_rgb_ia8,
-};
-
-extern u8 kan_win_a_tex_rgb_ia8[];
-extern u8 kan_win_b_tex_rgb_ia8[];
-extern u8 kan_win_c_tex_rgb_ia8[];
-extern u8 kan_win_d_tex_rgb_ia8[];
-extern u8 kan_win_e_tex_rgb_ia8[];
-extern u8 kan_win_f_tex_rgb_ia8[];
-
-static u8* kan_win_evw_anime_2_tex_table[FG_BLOCK_Z_NUM] = {
-    kan_win_a_tex_rgb_ia8, kan_win_b_tex_rgb_ia8, kan_win_c_tex_rgb_ia8,
-    kan_win_d_tex_rgb_ia8, kan_win_e_tex_rgb_ia8, kan_win_f_tex_rgb_ia8,
-};
-
-extern Gfx kan_win_npcT_1_model[];
-extern Gfx kan_win_npcT_2_model[];
-extern Gfx kan_win_npcT_3_model[];
-
-extern Gfx kan_win_npc2T_1_model[];
-extern Gfx kan_win_npc2T_2_model[];
-extern Gfx kan_win_npc2T_3_model[];
-
-static Gfx* kan_win_npcT_table[] = { kan_win_npcT_1_model, kan_win_npcT_2_model, kan_win_npcT_3_model };
-
-static Gfx* kan_win_npc2T_table[] = { kan_win_npc2T_1_model, kan_win_npc2T_2_model, kan_win_npc2T_3_model };
-
-extern Gfx kan_win_genzaiT_model[];
-
-extern Gfx kan_tizu_mode[];
-extern Gfx kan_tizu_model[];
-
-extern Gfx kan_win_cursorT_model[];
-
-extern Gfx kan_win_playerT_model[];
-extern Gfx kan_win_omiseT_model[];
-extern Gfx kan_win_koubanT_model[];
-extern Gfx kan_win_yuuT_model[];
-extern Gfx kan_win_yashiroT_model[];
-extern Gfx kan_win_ekiT_model[];
-extern Gfx kan_win_gomiT_model[];
-extern Gfx kan_win_mu_model[];
-extern Gfx kan_win_ta_model[];
-extern Gfx kan_win_funeT_model[];
-
-static mMP_LabelWord_c mMP_label_word_npc = { -92.0f, -19.0f, NULL, 0 };
-
-static mMP_Label_c mMP_label_npc = { -98.0f, -24.0f, kan_win_npcT_1_model, { &mMP_label_word_npc, NULL } };
-
-static mMP_LabelWord_c mMP_label_word_player = { -92.0f, -21.5f, NULL, 0 };
-
-static mMP_Label_c mMP_label_player = { -98.0f, -26.5f, kan_win_playerT_model, { &mMP_label_word_player, NULL } };
-
-static u8 mMP_label_str_shop[4] = { CHAR_S, CHAR_h, CHAR_o, CHAR_p };
-
-static mMP_LabelWord_c mMP_label_word_shop = { -83.0f, -25.0f, mMP_label_str_shop, 4 };
-
-static mMP_Label_c mMP_label_shop = { -93.0f, -30.0f, kan_win_omiseT_model, { &mMP_label_word_shop, NULL } };
-
-static u8 mMP_label_str_police[6] = { CHAR_P, CHAR_o, CHAR_l, CHAR_i, CHAR_c, CHAR_e };
-
-static mMP_LabelWord_c mMP_label_word_police = { -83.0f, -19.0f, mMP_label_str_police, 6 };
-
-static u8 mMP_label_str_police2[7] = { CHAR_S, CHAR_t, CHAR_a, CHAR_t, CHAR_i, CHAR_o, CHAR_n };
-
-static mMP_LabelWord_c mMP_label_word_police2 = { -83.0f, -31.0f, mMP_label_str_police2, 7 };
-
-static mMP_Label_c mMP_label_police = {
-    -93.0f, -30.0f, kan_win_koubanT_model, { &mMP_label_word_police, &mMP_label_word_police2 }
-};
-
-static u8 mMP_label_str_post[4] = { CHAR_P, CHAR_o, CHAR_s, CHAR_t };
-
-static mMP_LabelWord_c mMP_label_word_post = { -83.0f, -19.0f, mMP_label_str_post, 4 };
-
-static u8 mMP_label_str_post2[6] = { CHAR_O, CHAR_f, CHAR_f, CHAR_i, CHAR_c, CHAR_e };
-
-static mMP_LabelWord_c mMP_label_word_post2 = { -83.0f, -31.0f, mMP_label_str_post2, 6 };
-
-static mMP_Label_c mMP_label_post = {
-    -93.0f, -30.0f, kan_win_yuuT_model, { &mMP_label_word_post, &mMP_label_word_post2 }
-};
-
-static u8 mMP_label_str_shrine[7] = { CHAR_W, CHAR_i, CHAR_s, CHAR_h, CHAR_i, CHAR_n, CHAR_g };
-
-static mMP_LabelWord_c mMP_label_word_shrine = { -83.0f, -19.0f, mMP_label_str_shrine, 7 };
-
-static u8 mMP_label_str_shrine2[4] = { CHAR_W, CHAR_e, CHAR_l, CHAR_l };
-
-static mMP_LabelWord_c mMP_label_word_shrine2 = { -83.0f, -31.0f, mMP_label_str_shrine2, 4 };
-
-static mMP_Label_c mMP_label_shrine = {
-    -93.0f, -30.0f, kan_win_yashiroT_model, { &mMP_label_word_shrine, &mMP_label_word_shrine2 }
-};
-
-static u8 mMP_label_str_station[5] = { CHAR_T, CHAR_r, CHAR_a, CHAR_i, CHAR_n };
-
-static mMP_LabelWord_c mMP_label_word_station = { -83.0f, -19.0f, mMP_label_str_station, 5 };
-
-static u8 mMP_label_str_station2[7] = { CHAR_S, CHAR_t, CHAR_a, CHAR_t, CHAR_i, CHAR_o, CHAR_n };
-
-static mMP_LabelWord_c mMP_label_word_station2 = { -83.0f, -31.0f, mMP_label_str_station2, 7 };
-
-static mMP_Label_c mMP_label_station = {
-    -93.0f, -31.0f, kan_win_ekiT_model, { &mMP_label_word_station, &mMP_label_word_station2 }
-};
-
-static u8 mMP_label_str_junk[4] = { CHAR_D, CHAR_u, CHAR_m, CHAR_p };
-
-static mMP_LabelWord_c mMP_label_word_junk = { -83.0f, -25.0f, mMP_label_str_junk, 4 };
-
-static mMP_Label_c mMP_label_junk = { -93.0f, -30.0f, kan_win_gomiT_model, { &mMP_label_word_junk, NULL } };
-
-static u8 mMP_label_str_museum[6] = { CHAR_M, CHAR_u, CHAR_s, CHAR_e, CHAR_u, CHAR_m };
-
-static mMP_LabelWord_c mMP_label_word_museum = { -83.0f, -25.0f, mMP_label_str_museum, 6 };
-
-static mMP_Label_c mMP_label_museum = { -93.0f, -30.0f, kan_win_mu_model, { &mMP_label_word_museum, NULL } };
-
-static u8 mMP_label_str_needle[6] = { CHAR_T, CHAR_a, CHAR_i, CHAR_l, CHAR_o, CHAR_r };
-
-static mMP_LabelWord_c mMP_label_word_needle = { -83.0f, -25.0f, mMP_label_str_needle, 6 };
-
-static mMP_Label_c mMP_label_needle = { -93.0f, -30.0f, kan_win_ta_model, { &mMP_label_word_needle, NULL } };
-
-static u8 mMP_label_str_port[4] = { CHAR_D, CHAR_o, CHAR_c, CHAR_k };
-
-static mMP_LabelWord_c mMP_label_word_port = { -83.0f, -25.0f, mMP_label_str_port, 4 };
-
-static mMP_Label_c mMP_label_port = { -93.0f, -30.0f, kan_win_funeT_model, { &mMP_label_word_port, NULL } };
-
-static mMP_Label_c* mMP_label_data[mMP_LABEL_NUM] = {
-    &mMP_label_npc,     &mMP_label_player, &mMP_label_shop,   &mMP_label_police, &mMP_label_post, &mMP_label_shrine,
-    &mMP_label_station, &mMP_label_junk,   &mMP_label_museum, &mMP_label_needle, &mMP_label_port,
-};
-
 static int mMP_check_layer(f32 y) {
     int layer;
 
@@ -694,7 +538,9 @@ static mActor_name_t mMP_GetFgBlockName(mMP_Ovl_c* map_ovl, int block_x, int blo
 }
 
 static void mMP_set_house_data(mMP_Ovl_c* map_ovl, mSM_MenuInfo_c* menu) {
-    static u8 akiya_str[PLAYER_NAME_LEN] = "free  ";
+    static u8 akiya_str[PLAYER_NAME_LEN] = {
+        CHAR_PP_000, CHAR_PP_006, CHAR_PP_093, CHAR_SPACE, CHAR_SPACE, CHAR_SPACE
+    };
 
     mMP_ResidentInfo_c* resident_p;
     mMP_LabelInfo_c* block_label;
@@ -968,7 +814,102 @@ static void mMP_map_ovl_move(Submenu* submenu) {
     (*ovl_move_proc[menu->proc_status])(submenu, menu);
 }
 
-static void mMP_map_draw_init() {
+extern Gfx kan_win_npcT_1_model[];
+extern Gfx kan_win_npcT_2_model[];
+extern Gfx kan_win_npcT_3_model[];
+extern Gfx kan_win_npc2T_1_model[];
+extern Gfx kan_win_npc2T_2_model[];
+extern Gfx kan_win_npc2T_3_model[];
+static Gfx* kan_win_npcT_table[] = { kan_win_npcT_1_model, kan_win_npcT_2_model, kan_win_npcT_3_model };
+static Gfx* kan_win_npc2T_table[] = { kan_win_npc2T_1_model, kan_win_npc2T_2_model, kan_win_npc2T_3_model };
+static u16 kan_tizu1_pal[16] ATTRIBUTE_ALIGN(32) = {
+    0x0000, 0xc3b0, 0x9e87, 0xd294, 0xca52, 0xbdef, 0xb5ad, 0xb9ce,
+    0xa2e8, 0xb18c, 0xa705, 0xdaff, 0xab4a, 0xffff, 0xb635, 0xbe9f,
+};
+
+static u16 kan_tizu2_pal[16] ATTRIBUTE_ALIGN(32) = {
+    0x0000, 0xc3b0, 0x9e87, 0xc94a, 0xe70d, 0xe1ce, 0xb5ad, 0xb195,
+    0xf390, 0xb18c, 0xa705, 0xffff, 0xd54a, 0xdaff, 0xb635, 0xbe9f,
+};
+
+static u16* l_kan_tizu_pal[2] = { kan_tizu1_pal, kan_tizu2_pal };
+
+extern u8 kan_win_suuji1_tex_rgb_ia8[];
+extern u8 kan_win_suuji2_tex_rgb_ia8[];
+extern u8 kan_win_suuji3_tex_rgb_ia8[];
+extern u8 kan_win_suuji4_tex_rgb_ia8[];
+extern u8 kan_win_suuji5_tex_rgb_ia8[];
+
+extern u8 kan_win_suuji1_tex_rgb_ia8[];
+extern u8 kan_win_suuji2_tex_rgb_ia8[];
+extern u8 kan_win_suuji3_tex_rgb_ia8[];
+extern u8 kan_win_suuji4_tex_rgb_ia8[];
+extern u8 kan_win_suuji5_tex_rgb_ia8[];
+extern u8 kan_win_suuji6_tex_rgb_ia8[];
+static u8* kan_win_evw_anime_1_tex_table[] = { kan_win_suuji1_tex_rgb_ia8, kan_win_suuji2_tex_rgb_ia8,
+                                               kan_win_suuji3_tex_rgb_ia8, kan_win_suuji4_tex_rgb_ia8,
+                                               kan_win_suuji5_tex_rgb_ia8, kan_win_suuji6_tex_rgb_ia8 };
+
+extern u8 kan_win_a_tex_rgb_ia8[];
+extern u8 kan_win_b_tex_rgb_ia8[];
+extern u8 kan_win_c_tex_rgb_ia8[];
+extern u8 kan_win_d_tex_rgb_ia8[];
+extern u8 kan_win_e_tex_rgb_ia8[];
+extern u8 kan_win_f_tex_rgb_ia8[];
+
+extern Gfx kan_win_npcT_1_model[];
+extern Gfx kan_win_npcT_2_model[];
+extern Gfx kan_win_npcT_3_model[];
+
+extern Gfx kan_win_npc2T_1_model[];
+extern Gfx kan_win_npc2T_2_model[];
+extern Gfx kan_win_npc2T_3_model[];
+
+extern Gfx kan_win_genzaiT_model[];
+
+extern Gfx kan_tizu_mode[];
+extern Gfx kan_tizu_model[];
+
+extern Gfx kan_win_cursorT_model[];
+
+extern Gfx kan_win_playerT_model[];
+extern Gfx kan_win_omiseT_model[];
+extern Gfx kan_win_koubanT_model[];
+extern Gfx kan_win_yuuT_model[];
+extern Gfx kan_win_yashiroT_model[];
+extern Gfx kan_win_ekiT_model[];
+extern Gfx kan_win_gomiT_model[];
+extern Gfx kan_win_mu_model[];
+extern Gfx kan_win_ta_model[];
+extern Gfx kan_win_funeT_model[];
+
+static u8 mMP_label_shop[] = { CHAR_PP_004, CHAR_PP_031, CHAR_PP_013 };
+static u8 mMP_label_police[] = { CHAR_PP_009, CHAR_PP_002, CHAR_PP_246, CHAR_PP_195 };
+static u8 mMP_label_post[] = { CHAR_PP_094, CHAR_PP_002, CHAR_PP_247, CHAR_PP_195 };
+static u8 mMP_label_post2[] = { CHAR_PP_006, CHAR_PP_203, CHAR_PP_007 };
+static u8 mMP_label_shrine[] = { CHAR_PP_023, CHAR_PP_231, CHAR_PP_001, CHAR_PP_024 };
+static u8 mMP_label_shrine2[] = { CHAR_PP_001, CHAR_PP_238, CHAR_PP_031 };
+static u8 mMP_label_station[] = { CHAR_PP_003, CHAR_PP_006 };
+static u8 mMP_label_junk[] = { CHAR_PP_235, CHAR_PP_031, CHAR_PP_012, CHAR_PP_018, CHAR_PP_246 };
+static u8 mMP_label_musium[] = { CHAR_PP_025, CHAR_PP_007, CHAR_PP_248, CHAR_PP_017 };
+static u8 mMP_label_musium2[] = { CHAR_PP_005, CHAR_PP_195 };
+static u8 mMP_label_needle[] = { CHAR_PP_011, CHAR_PP_015, CHAR_PP_018, CHAR_PP_093 };
+static u8 mMP_label_port[] = { CHAR_PP_027, CHAR_PP_020, CHAR_PP_017, CHAR_PP_006, CHAR_PP_246 };
+static mMP_Label_c mMP_label_data[mMP_LABEL_NUM] = {
+    { -98.0f, -24.0f, -92.0f, -19.0f, kan_win_npcT_1_model, NULL, 0 },
+    { -98.0f, -26.5f, -92.0f, -21.5f, kan_win_playerT_model, NULL, 0 },
+    { -93.0f, -30.0f, -83.0f, -25.0f, kan_win_omiseT_model, mMP_label_shop, sizeof(mMP_label_shop) },
+    { -93.0f, -30.0f, -83.0f, -25.0f, kan_win_koubanT_model, mMP_label_police, sizeof(mMP_label_police) },
+    { -93.0f, -30.0f, -83.0f, -19.0f, kan_win_yuuT_model, mMP_label_post, sizeof(mMP_label_post) },
+    { -93.0f, -30.0f, -83.0f, -19.0f, kan_win_yashiroT_model, mMP_label_shrine, sizeof(mMP_label_shrine) },
+    { -93.0f, -31.0f, -83.0f, -25.0f, kan_win_ekiT_model, mMP_label_station, sizeof(mMP_label_station) },
+    { -93.0f, -30.0f, -83.0f, -25.0f, kan_win_gomiT_model, mMP_label_junk, sizeof(mMP_label_junk) },
+    { -93.0f, -30.0f, -83.0f, -19.0f, kan_win_mu_model, mMP_label_musium, sizeof(mMP_label_musium) },
+    { -93.0f, -30.0f, -83.0f, -25.0f, kan_win_ta_model, mMP_label_needle, sizeof(mMP_label_needle) },
+    { -93.0f, -30.0f, -83.0f, -25.0f, kan_win_funeT_model, mMP_label_port, sizeof(mMP_label_port) },
+};
+
+static void mMP_map_draw_init(mSM_MenuInfo_c* menu) {
     kan_win_wakuT_model_p = kan_win_wakuT_model;
     kan_win_waku1T_model_p = kan_waku_w1T_model;
     kan_win_waku2T_model_p = kan_waku_w2T_model;
@@ -1124,49 +1065,41 @@ static void mMP_set_cursol_dl(GRAPH* graph, mMP_Ovl_c* map_ovl, f32 base_x, f32 
 }
 
 static void mMP_set_label_dl(GAME* game, mMP_LabelInfo_c* label_info, f32 xpos, f32 ypos) {
-    mMP_Label_c* label = mMP_label_data[label_info->label_no];
-
+    int label_no = label_info->label_no;
+    mMP_Label_c* label = &mMP_label_data[label_no];
+    mMP_ResidentInfo_c** resident = label_info->residents;
     if (label != NULL) {
-        mMP_ResidentInfo_c** resident_p = label_info->residents;
-        mMP_LabelWord_c* word;
-        f32 base_x = 160.0f + xpos;
-        f32 base_y = 120.0f - ypos;
-        int i;
-
-        for (i = 0; i < mMP_LABEL_WORD_NUM; i++) {
-            word = label->words[i];
-
-            if (word != NULL) {
-                if (word->str == NULL) {
-                    /* draw resident name label (villagers, players) */
-                    int j;
-
-                    for (j = 0; j < label_info->label_cnt; j++) {
-                        int width = mFont_GetStringWidth((*resident_p)->name, PLAYER_NAME_LEN, TRUE);
-                        f32 scale_x = 54.0f / width;
-
-                        if (scale_x > 0.75f) {
-                            scale_x = 0.75f;
-                        }
-
-                        if (resident_p[0]->sex != -1) {
-                            mFont_SetLineStrings(game, resident_p[0]->name, PLAYER_NAME_LEN, base_x + word->ofs_x,
-                                                 base_y - word->ofs_y, 255, 75, 40, 255, FALSE, TRUE, scale_x, 0.75f,
-                                                 mFont_MODE_POLY);
-                        } else {
-                            mFont_SetLineStrings(game, resident_p[0]->name, PLAYER_NAME_LEN, base_x + word->ofs_x,
-                                                 base_y - word->ofs_y, 165, 145, 140, 255, FALSE, TRUE, scale_x, 0.75f,
-                                                 mFont_MODE_POLY);
-                        }
-
-                        resident_p++;
-                        base_y += 12.0f;
-                    }
+        f32 x = xpos + label->text_ofs_x + 160.0f;
+        f32 y = 120.0f - (ypos + label->text_ofs_y);
+        if (label->str != NULL) {
+            mFont_SetLineStrings(game, label->str, label->str_len, x, y, 120, 95, 205, 255, FALSE, FALSE, 0.75f, 0.75f,
+                                 mFont_MODE_POLY);
+            switch (label_no) {
+                case mMP_LABEL_POST:
+                    mFont_SetLineStrings(game, mMP_label_post2, sizeof(mMP_label_post2), x + 18.0f, y + 12.0f, 120, 95,
+                                         205, 255, FALSE, FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
+                    break;
+                case mMP_LABEL_SHRINE:
+                    mFont_SetLineStrings(game, mMP_label_shrine2, sizeof(mMP_label_shrine2), x + 18.0f, y + 12.0f, 120,
+                                         95, 205, 255, FALSE, FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
+                    break;
+                case mMP_LABEL_MUSEUM:
+                    mFont_SetLineStrings(game, mMP_label_musium2, sizeof(mMP_label_musium2), x + 20.0f, y + 12.0f, 120,
+                                         95, 205, 255, FALSE, FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
+                    break;
+            }
+        } else {
+            int i;
+            for (i = 0; i < label_info->label_cnt; i++) {
+                if ((*resident)->sex != -1) {
+                    mFont_SetLineStrings(game, (*resident)->name, PLAYER_NAME_LEN, x, y, 255, 75, 40, 255, FALSE, FALSE,
+                                         0.75f, 0.75f, mFont_MODE_POLY);
                 } else {
-                    /* draw building name */
-                    mFont_SetLineStrings(game, word->str, word->str_len, base_x + word->ofs_x, base_y - word->ofs_y,
-                                         120, 95, 205, 255, FALSE, TRUE, 0.75f, 0.75f, mFont_MODE_POLY);
+                    mFont_SetLineStrings(game, (*resident)->name, PLAYER_NAME_LEN, x, y, 165, 145, 140, 255, FALSE,
+                                         FALSE, 0.75f, 0.75f, mFont_MODE_POLY);
                 }
+                resident++;
+                y += 12.0f;
             }
         }
     }
@@ -1184,12 +1117,16 @@ static void mMP_set_base_dl(GRAPH* graph, mSM_MenuInfo_c* menu) {
         gSPSegment(gfx++, G_MWO_SEGMENT_B, kan_win_color1_mode_p);
     }
 
+    Matrix_scale(0.1f, 0.1f, 0.1f, MTX_MULT);
     gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(gfx++, kan_win_model);
+    Matrix_scale(10.0f, 10.0f, 10.0f, MTX_MULT);
 
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
+
+extern Gfx kan_win_muraT_model[];
 
 static void mMP_set_win_dl(GRAPH* graph, mMP_Ovl_c* map_ovl, mMP_LabelInfo_c* label_info) {
     int label_count = label_info->label_cnt;
@@ -1200,7 +1137,7 @@ static void mMP_set_win_dl(GRAPH* graph, mMP_Ovl_c* map_ovl, mMP_LabelInfo_c* la
 
     /* move X-acre number texture into segment 8 and Z-acre character texture int segment 9 */
     gSPSegment(gfx++, ANIME_1_TXT_SEG, kan_win_evw_anime_1_tex_table[map_ovl->sel_bx]);
-    gSPSegment(gfx++, ANIME_2_TXT_SEG, kan_win_evw_anime_2_tex_table[map_ovl->sel_bz]);
+    gSPSegment(gfx++, ANIME_2_TXT_SEG, kan_win_evw_anime_1_tex_table[map_ovl->sel_bz]);
 
     /* move label area texture into segment 10 based on number of labels */
     if (label_count == 4) {
@@ -1215,15 +1152,22 @@ static void mMP_set_win_dl(GRAPH* graph, mMP_Ovl_c* map_ovl, mMP_LabelInfo_c* la
         gSPSegment(gfx++, ANIME_3_TXT_SEG, kan_win_waku2T_model_p);
     }
 
+    Matrix_scale(0.1f, 0.1f, 0.1f, MTX_MULT);
     gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(gfx++, kan_win_model2);
+    Matrix_scale(10.0f, 10.0f, 10.0f, MTX_MULT);
 
+    Matrix_push();
+    Matrix_translate(map_ovl->land_name_str_len * 12.0f + -98.0f, 64.0f, 0.0f, MTX_MULT);
+    gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(gfx++, kan_win_muraT_model);
+    Matrix_pull();
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
 }
 
 static void mMP_set_label_top_dl(GRAPH* graph, mMP_LabelInfo_c* label_info) {
-    mMP_Label_c* label = mMP_label_data[label_info->label_no];
+    mMP_Label_c* label = &mMP_label_data[label_info->label_no];
     mMP_ResidentInfo_c** resident_p;
 
     if (label != NULL) {
@@ -1297,10 +1241,10 @@ static void mMP_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu) {
 
     /* draw town name */
     land_name = Save_Get(land_info.name);
-    str_xpos = (xpos + -136.0f) + 24.0f;
-    str_ypos = (ypos + 102.0f) + -29.0f;
+    str_xpos = (xpos + -136.0f) + 26.0f;
+    str_ypos = (ypos + 102.0f) + -28.0f;
     mFont_SetLineStrings(game, land_name, map_ovl->land_name_str_len, str_xpos + 160.0f, 120.0f - str_ypos, col[0],
-                         col[1], col[2], 255, FALSE, TRUE, 1.0f, 1.0f, mFont_MODE_POLY);
+                         col[1], col[2], 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
 
     mMP_set_label_dl(game, label_info, xpos, ypos);
 }
@@ -1338,7 +1282,7 @@ extern void mMP_map_ovl_construct(Submenu* submenu) {
         overlay->map_ovl = (mMP_Ovl_c*)zelda_malloc(sizeof(mMP_Ovl_c));
         mem_clear((u8*)overlay->map_ovl, sizeof(mMP_Ovl_c), 0);
         overlay->map_ovl->combination_table = data_combi_table;
-        mMP_map_draw_init();
+        mMP_map_draw_init(&overlay->menu_info[mSM_OVL_MAP]);
     }
 
     mMP_map_ovl_init(submenu);

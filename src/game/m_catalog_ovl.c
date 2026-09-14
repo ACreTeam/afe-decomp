@@ -164,7 +164,7 @@ static mCL_win_data_c mCL_win_data[] = {
 };
 // clang-format on
 
-static u8 not_sell[12] = "Not for Sale";
+static u8 not_sell[] = { CHAR_PP_026, CHAR_PP_246, CHAR_PP_001, CHAR_PP_026, CHAR_PP_195 };
 
 static void mCL_dma_furniture_program(mCL_Item_c* item) {
     item->profile = furniture_quality[item->ftr_actor.name];
@@ -229,7 +229,7 @@ static void mCL_furniture_init(mCL_Item_c* item, mActor_name_t item_no) {
     FTR_ACTOR* ftr_actor;
 
     item->gfx_type = mCL_DRAW_TYPE_FTR;
-    item->ftr_actor.name = mRmTp_FtrItemNo2FtrIdx(item_no);
+    item->ftr_actor.name = mNT_ftr_item_no_to_ftr_idx(item_no);
     mCL_dma_furniture_program(item);
     mCL_dma_furniture_bank(item, item_no);
 
@@ -302,12 +302,17 @@ static void mCL_furniture_init(mCL_Item_c* item, mActor_name_t item_no) {
         item->scale = 1.0f;
         ftr_actor->position.y = 0.0f;
         item->price = mSP_ItemNo2ItemPrice(item_no);
-    } else if ((mRmTp_FtrItemNo2FtrIdx(item_no) >= 0x3FC && mRmTp_FtrItemNo2FtrIdx(item_no) <= 0x403) ||
+    } else if ((mNT_ftr_item_no_to_ftr_idx(item_no) >= FTR_NOG_BALLOON_COMMON0 &&
+                mNT_ftr_item_no_to_ftr_idx(item_no) <= FTR_NOG_BALLOON_COMMON7) ||
                (item_no >= FTR_START(FTR_NOG_COLLEGENOTE) && item_no <= FTR_END(FTR_IKE_NIKKI_WAFU1)) ||
-               (mRmTp_FtrItemNo2FtrIdx(item_no) >= 0x453 && mRmTp_FtrItemNo2FtrIdx(item_no) <= 0x45A) ||
-               (mRmTp_FtrItemNo2FtrIdx(item_no) >= 0x45B && mRmTp_FtrItemNo2FtrIdx(item_no) <= 0x462) ||
-               (mRmTp_FtrItemNo2FtrIdx(item_no) >= 0x44F && mRmTp_FtrItemNo2FtrIdx(item_no) <= 0x452) ||
-               (mRmTp_FtrItemNo2FtrIdx(item_no) >= 0x463 && mRmTp_FtrItemNo2FtrIdx(item_no) <= 0x466)) {
+               (mNT_ftr_item_no_to_ftr_idx(item_no) >= FTR_UTIWA0 &&
+                mNT_ftr_item_no_to_ftr_idx(item_no) <= FTR_UTIWA7) ||
+               (mNT_ftr_item_no_to_ftr_idx(item_no) >= FTR_KAZAGURUMA0 &&
+                mNT_ftr_item_no_to_ftr_idx(item_no) <= FTR_KAZAGURUMA7) ||
+               (mNT_ftr_item_no_to_ftr_idx(item_no) >= FTR_GOLD_ITEM0 &&
+                mNT_ftr_item_no_to_ftr_idx(item_no) <= FTR_GOLD_ITEM3) ||
+               (mNT_ftr_item_no_to_ftr_idx(item_no) >= FTR_TOOL0 && mNT_ftr_item_no_to_ftr_idx(item_no) <= FTR_TOOL3) ||
+               mNT_ftr_item_no_to_ftr_idx(item_no) == FTR_TOOL_CRACKER) {
         item->pos_y = 36.0f;
         item->scale = 1.0f;
         ftr_actor->position.y = 0.0f;
@@ -378,7 +383,7 @@ static void mCL_wall_init(mCL_Item_c* item, mActor_name_t item_no) {
     item->profile = NULL;
     item->ftr_actor.name = (item_no - ITM_WALL_START);
     item->pos_y = -90.0f;
-    item->scale = 0.54f;
+    item->scale = 0.5f;
     item->seg_ofs = (item_no - ITM_WALL_START) * (mNW_PALETTE_SIZE + 0x1000);
 
     mRmTp_CopyWallData(item->seg1, item_no - ITM_WALL_START);
@@ -396,7 +401,7 @@ static void mCL_carpet_init(mCL_Item_c* item, mActor_name_t item_no) {
     item->profile = NULL;
     item->ftr_actor.name = (item_no - ITM_CARPET_START);
     item->pos_y = -90.0f;
-    item->scale = 0.54f;
+    item->scale = 0.5f;
     item->seg_ofs = (item_no - ITM_CARPET_START) * (mNW_PALETTE_SIZE + 0x2000);
 
     mRmTp_CopyFloorData(item->seg1, item_no - ITM_CARPET_START);
@@ -416,7 +421,7 @@ static void mCL_music_init(mCL_Item_c* item, mActor_name_t item_no) {
     item->timer = 60;
     item->scale = 0.55f;
     item->pos_y = -90.0f;
-    item->ftr_actor.name = (item_no - ITM_MINIDISK_START);
+    item->ftr_actor.name = ((u16)item_no - ITM_MINIDISK_START);
 }
 
 static void mCL_item_data_set(Submenu* submenu, int page_no) {
@@ -590,11 +595,11 @@ static void mCL_catalog_ovl_move(Submenu* submenu) {
     menu_info->pre_move_func(submenu);
     (*ovl_move_proc[menu_info->proc_status])(submenu, menu_info);
 
-    catalog_ovl->counter = (catalog_ovl->counter + 1) % 35;
-    if (catalog_ovl->counter < 17) {
-        catalog_ovl->alpha = ((f32)catalog_ovl->counter * 255.0f) / 17.0f;
+    catalog_ovl->counter = (catalog_ovl->counter + 1) % 30;
+    if (catalog_ovl->counter < 15) {
+        catalog_ovl->alpha = ((f32)catalog_ovl->counter * 255.0f) / 15.0f;
     } else {
-        catalog_ovl->alpha = ((f32)(35 - catalog_ovl->counter) * 255.0f) / 18.0f;
+        catalog_ovl->alpha = ((f32)(30 - catalog_ovl->counter) * 255.0f) / 15.0f;
     }
 }
 
@@ -845,6 +850,7 @@ static void mCL_carpet_draw(mCL_Item_c* item, mSM_MenuInfo_c* menu_info, GRAPH* 
 }
 
 extern Gfx mCL_music_model[];
+extern Gfx obj_cata_liveT_model[];
 
 static void mCL_music_draw(mCL_Item_c* item, mSM_MenuInfo_c* menu_info, GRAPH* graph) {
     Gfx* gfx;
@@ -854,7 +860,11 @@ static void mCL_music_draw(mCL_Item_c* item, mSM_MenuInfo_c* menu_info, GRAPH* g
 
     Matrix_RotateZ(cos_s(item->timer * 0x222) * 0x1000, MTX_MULT);
     gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(gfx++, mCL_music_model);
+    if (ITEM_IS_MINIDISK_AIRCHECK(item->item_no)) {
+        gSPDisplayList(gfx++, mCL_music_model);
+    } else {
+        gSPDisplayList(gfx++, obj_cata_liveT_model);
+    }
 
     SET_POLY_OPA_DISP(gfx);
     CLOSE_DISP(graph);
@@ -885,7 +895,7 @@ static void mCL_item_draw(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* gam
         Gfx* gfx;
 
         Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
-        Matrix_translate((-143.0f + pos_x) + 58.0f + item->ftr_actor.position.x, (97.0f + pos_y) + item->pos_y, 0.0f,
+        Matrix_translate((-140.0f + pos_x) + 58.0f + item->ftr_actor.position.x, (96.0f + pos_y) + item->pos_y, 0.0f,
                          MTX_MULT);
         Matrix_scale(item->scale, item->scale, 1.0f, MTX_MULT);
 
@@ -903,61 +913,18 @@ static void mCL_item_draw(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* gam
 }
 
 static void mCL_price_draw(Submenu* submenu, GAME* game, GRAPH* graph, mCL_Item_c* item, f32 pos_x, f32 pos_y) {
-    submenu->overlay->set_char_matrix_proc(graph);
-
+    u8 price_str[5];
+    f32 str_x = (pos_x + -112.0f) + 160.0f;
+    f32 str_y = 120.0f - (pos_y + -48.0f);
     if (item->price == 0) {
-        // clang-format off
-        mFont_SetLineStrings(
-            game,
-            not_sell, sizeof(not_sell),
-            (-112.0f + pos_x) + 160.0f, 120 - (-47.0f + pos_y),
-            205, 0, 0, 255,
-            FALSE,
-            TRUE,
-            0.875f, 0.875f,
-            mFont_MODE_POLY
-        );
-        // clang-format on
+        mem_copy(price_str, not_sell, sizeof(price_str));
+        str_x += 9.0f;
     } else {
-        u8 price_str[6];
-        f32 str_x;
-        f32 str_y;
-        u32 price;
-        f32 width;
-        int i;
-
-        mFont_UnintToString(price_str, sizeof(price_str), item->price, 5, TRUE, FALSE, TRUE);
-
-        price = item->price;
-        for (i = 1; i < 6; i++) {
-            price /= 10;
-
-            if (price == 0) {
-                break;
-            }
-        }
-
-        if (i > 3) {
-            i++; /* account for comma */
-        }
-
-        width = mFont_GetStringWidth(price_str, i, TRUE) * 0.875f;
-        str_x = 160.0f + (-73.5f + pos_x) - width;
-        str_y = 120.0f - (-47.0f + pos_y);
-
-        // clang-format off
-        mFont_SetLineStrings(
-            game,
-            price_str, sizeof(price_str),
-            str_x, str_y,
-            205, 0, 0, 255,
-            FALSE,
-            TRUE,
-            0.875f, 0.875f,
-            mFont_MODE_POLY
-        );
-        // clang-format on
+        mFont_UnintToString(price_str, sizeof(price_str), item->price, sizeof(price_str), FALSE, FALSE, FALSE);
     }
+    submenu->overlay->set_char_matrix_proc(graph);
+    mFont_SetLineStrings(game, price_str, sizeof(price_str), str_x, str_y, 205, 0, 0, 255, FALSE, FALSE, 0.75f, 0.75f,
+                         mFont_MODE_POLY);
 }
 
 extern Gfx clg_win_na1T_model[];
@@ -1047,7 +1014,7 @@ static void mCL_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
 
         if (menu->top_idx != 0) {
             Matrix_push();
-            Matrix_translate(-11.0f, 80.0f, 0.0f, MTX_MULT);
+            Matrix_translate(-8.0f, 79.0f, 0.0f, MTX_MULT);
 
             gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
             gSPDisplayList(gfx++, clg_win_shirushi1T_model);
@@ -1057,7 +1024,7 @@ static void mCL_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
 
         if (menu->top_idx + mCL_MENU_PAGE_SIZE < menu->item_count) {
             Matrix_push();
-            Matrix_translate(-11.0f, -66.0f, 0.0f, MTX_MULT);
+            Matrix_translate(-8.0f, -67.0f, 0.0f, MTX_MULT);
             Matrix_RotateZ(DEG2SHORT_ANGLE2(-180.0f), MTX_MULT);
 
             gSPMatrix(gfx++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
@@ -1075,9 +1042,9 @@ static void mCL_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
     if (disp_entries_flag) {
         u8* item_name = menu->item_name[0];
         f32 str_x;
-        f32 str_y;
         f32 tmp_x;
-        int idx;
+        f32 str_y;
+        u32 idx;
         int idx_str_len;
         f32 idx_str_width;
         u8 idx_str[3];
@@ -1104,7 +1071,7 @@ static void mCL_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
                 str_x, str_y,
                 item_name_color[col_idx][0], item_name_color[col_idx][1], item_name_color[col_idx][2], 255,
                 FALSE,
-                TRUE,
+                FALSE,
                 0.875f, 0.875f,
                 mFont_MODE_POLY
             );
@@ -1120,47 +1087,38 @@ static void mCL_set_page_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* g
             idx = 0;
         }
 
-        idx_str_len = mFont_UnintToString(idx_str, sizeof(idx_str), idx, sizeof(idx_str), TRUE, FALSE, TRUE);
-        width = mFont_GetStringWidth(idx_str, idx_str_len, TRUE);
-        str_x = 160.0f + (28.0f + pos_x - width * 0.875f);
-        str_y = 120.0f - ((-62.0f + pos_y) + 1.0f);
-
-        // clang-format off
-        mFont_SetLineStrings(
-            game,
-            idx_str, idx_str_len,
-            str_x, str_y,
-            20, 20, 70, 255,
-            FALSE,
-            TRUE,
-            0.875f, 0.875f,
-            mFont_MODE_POLY
-        );
-        // clang-format on
-
-        mFont_UnintToString(idx_str, sizeof(idx_str), menu->item_count, sizeof(idx_str), TRUE, FALSE, TRUE);
-        str_x = (pos_x + 40.0f) + -2.0f;
-        idx_str_width = 7.0f + (mMl_strlen(idx_str, sizeof(idx_str), CHAR_SPACE) * 8.0f) * 0.875f;
-        tmp = str_x + (idx_str_width);
-
-        // clang-format off
-        mFont_SetLineStrings(
-            game,
-            idx_str, sizeof(idx_str),
-            160.0f + str_x, str_y,
-            20, 20, 70, 255,
-            FALSE,
-            TRUE,
-            0.875f, 0.875f,
-            mFont_MODE_POLY
-        );
-        // clang-format on
+        mFont_UnintToString(idx_str, sizeof(idx_str), idx, sizeof(idx_str), TRUE, FALSE, FALSE);
+        str_x = (pos_x + -140.0f) + 142.0f;
+        tmp_x = str_x + 160.0f;
+        str_y = 120.0f - ((pos_y + 96.0f) - 158.0f);
+        if ((u32)idx < 100) {
+            if (idx >= 10)
+                tmp_x += 4.5f;
+            else
+                tmp_x += 13.5f;
+        }
+        mFont_SetLineStrings(game, idx_str, sizeof(idx_str), tmp_x, str_y, 205, 0, 0, 255, FALSE, FALSE, 0.75f, 0.75f,
+                             mFont_MODE_POLY);
+        idx = menu->item_count;
+        mFont_UnintToString(idx_str, sizeof(idx_str), idx, sizeof(idx_str), TRUE, FALSE, FALSE);
+        tmp = str_x + 27.0f + 8.0f;
+        tmp_x = tmp + 160.0f;
+        if (idx >= 100) {
+            str_x = tmp;
+            str_x += 39.0f;
+        } else {
+            tmp_x += 4.5f;
+            str_x = tmp;
+            str_x += 34.5f;
+        }
+        mFont_SetLineStrings(game, idx_str, sizeof(idx_str), tmp_x, str_y, 20, 20, 70, 255, FALSE, FALSE, 0.75f, 0.75f,
+                             mFont_MODE_POLY);
 
         if (menu->completed_flag) {
             Gfx* gfx;
 
             Matrix_scale(16.0f, 16.0f, 1.0f, MTX_LOAD);
-            Matrix_translate(tmp, (97.0f + pos_y) - 163.0f, 140.0f, MTX_MULT);
+            Matrix_translate(str_x, (96.0f + pos_y) - 163.0f, 140.0f, MTX_MULT);
 
             OPEN_DISP(graph);
             gfx = NOW_POLY_OPA_DISP;
@@ -1323,7 +1281,7 @@ static void mCL_catalog_ovl_init(Submenu* submenu) {
     item_list = menu->item_list;
     for (i = 0; i < mCL_FTR_LIST_COUNT; i++) {
         if (mCL_check_item_collect_bit(Now_Private->furniture_collected_bitfield, ftr_info->ftr_idx)) {
-            *item_list++ = mRmTp_FtrIdx2FtrItemNo(ftr_info->ftr_idx, mRmTp_DIRECT_SOUTH);
+            *item_list++ = mNT_ftr_idx_to_ftr_item_no(ftr_info->ftr_idx, mRmTp_DIRECT_SOUTH);
             menu->item_count++;
         }
 
@@ -1359,7 +1317,7 @@ static void mCL_catalog_ovl_init(Submenu* submenu) {
                 } else if (k == mCL_MENU_MUSIC) {
                     *item_list = ITM_MINIDISK_START + *idx_list;
                 } else {
-                    *item_list = mRmTp_FtrIdx2FtrItemNo(*idx_list, mRmTp_DIRECT_SOUTH);
+                    *item_list = mNT_ftr_idx_to_ftr_item_no(*idx_list, mRmTp_DIRECT_SOUTH);
                 }
 
                 item_list++;

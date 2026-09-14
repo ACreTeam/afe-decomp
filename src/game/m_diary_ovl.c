@@ -8,6 +8,7 @@
 #include "m_editEndChk_ovl.h"
 #include "m_cpwarning_ovl.h"
 #include "m_malloc.h"
+#include "m_text.h"
 
 enum {
     mDI_MOVE_READ,
@@ -33,17 +34,17 @@ static void mDI_get_col_line_width(
     s16* newline_count, /* */
     int len  /* */
 ) {
-    u8* str_p;
+    u16* str_p;
     int i;
     s16 cur_newline_width;
     s16 newlines;
     s16 cur_line_count;
-    s16 width;
     s16 lines;
-    s16 line_width;
+    s16 width;
     s16 newline_width;
+    s16 line_width;
 
-    str_p = diary_ovl->current_entry->text;
+    str_p = (u16*)mTxt_get_first_buff();
     newline_width = 0;
     line_width = 0;
     cur_newline_width = 0;
@@ -52,7 +53,7 @@ static void mDI_get_col_line_width(
     lines = 0;
     width = 0;
     for (i = 0; i < len; i++) {
-        width += mFont_GetCodeWidth(*str_p, TRUE);
+        width += 12;
 
         if (width > 192 || *str_p == CHAR_NEW_LINE) {
             lines++;
@@ -72,14 +73,14 @@ static void mDI_get_col_line_width(
         str_p++;
     }
 
-    if (lines >= 31) {
+    if (lines >= 62) {
         cur_line_count = line_width + 1;
-        lines = 30;
+        lines = 61;
     }
 
-    if (newlines >= 31) {
+    if (newlines >= 62) {
         cur_newline_width = newline_width + 1;
-        newlines = 30;
+        newlines = 61;
     }
 
     if (last_newline_width != NULL) {
@@ -458,6 +459,7 @@ static void mDI_Play_read(Submenu* submenu, mSM_MenuInfo_c* menu_info, mDI_Ovl_c
 }
 
 static void mDI_Play_read_to_write_scroll(Submenu* submenu, mSM_MenuInfo_c* menu_info, mDI_Ovl_c* diary_ovl) {
+    u16* str = (u16*)mTxt_get_first_buff();
     mDI_roll_control_read_to_write(submenu, menu_info);
 
     if (diary_ovl->_42 == 0) {
@@ -469,14 +471,14 @@ static void mDI_Play_read_to_write_scroll(Submenu* submenu, mSM_MenuInfo_c* menu
         }
 
         if (menu_info->speed[1] == 0.0f && diary_ovl->_28 == -100.0f) {
-            mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_DIARY, 32, diary_ovl->current_entry->text, 192);
+            mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_DIARY, 16, str, 192);
             diary_ovl->move_proc = mDI_MOVE_EDITOR_IN;
         }
     } else {
         mSM_MenuInfo_c* editEndChk_menu = &submenu->overlay->menu_info[mSM_OVL_EDITENDCHK];
 
         if (menu_info->speed[1] == 0.0f && editEndChk_menu->proc_status != mSM_OVL_PROC_END) {
-            mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_DIARY, 0, diary_ovl->current_entry->text, 192);
+            mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_DIARY, 0, str, 192);
             diary_ovl->move_proc = mDI_MOVE_EDITOR_IN;
         }
     }
@@ -590,10 +592,13 @@ static void mDI_move_Obey(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     mDI_Ovl_c* diary_ovl = submenu->overlay->diary_ovl;
     mSM_MenuInfo_c* endEditChk_menu = &submenu->overlay->menu_info[mSM_OVL_EDITENDCHK];
 
+    u16* str = (u16*)mTxt_get_first_buff();
+
     if (endEditChk_menu->proc_status == mSM_OVL_PROC_MOVE && endEditChk_menu->next_proc_status == mSM_OVL_PROC_END) {
         mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
 
         if (endEditChk_menu->data1 == 0) {
+            mTxt_conv_9or8bit(str, diary_ovl->current_entry->text, mDI_ENTRY_SIZE);
             mCD_save_data_main_to_aram(diary_ovl->data, mCD_KEEP_DIARY_SIZE, mCD_ARAM_DATA_DIARY);
             mSM_open_submenu(submenu, mSM_OVL_CPWARNING, 0, 0);
             menu_info->proc_status = mSM_OVL_PROC_WAIT;
@@ -645,9 +650,9 @@ static void mDI_diary_ovl_move(Submenu* submenu) {
 
 extern Gfx dia_init_mode[];
 // extern Gfx kei_win_b2_model[];
-extern Gfx kei_win_b2_model_1_data_4075A0[];
+extern Gfx dia_win_b2_model[];
 // extern Gfx kei_win_amojiT_model[];
-extern Gfx kei_win_amojiT_model_1_data_407620[];
+extern Gfx dia_win_amojiT_model[];
 extern Gfx dia_win_bb_model[];
 extern Gfx dia_win_mojiT_model[];
 
@@ -658,18 +663,15 @@ static void mDI_set_button_dl(GRAPH* graph, f32 pos_x, f32 pos_y) {
     Matrix_translate(pos_x, pos_y, 140.0f, MTX_MULT);
 
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPDisplayList(POLY_OPA_DISP++, dia_init_mode);
-    gSPDisplayList(POLY_OPA_DISP++, kei_win_b2_model_1_data_4075A0);
-    gSPDisplayList(POLY_OPA_DISP++, kei_win_amojiT_model_1_data_407620);
-    gSPDisplayList(POLY_OPA_DISP++, dia_win_bb_model);
-    gSPDisplayList(POLY_OPA_DISP++, dia_win_mojiT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win_b2_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win_amojiT_model);
 
     CLOSE_POLY_OPA_DISP(graph);
 }
 
 extern Gfx dia_init_mode_letter[];
-extern Gfx dia_win_wT_model[];
-extern Gfx dia_win_fusenT_model[];
+extern Gfx dia_win1_wT_model[];
+extern Gfx dia_win1_fusenT_model[];
 extern Gfx dia_win_tukiT_model[];
 extern Gfx dia_win_moji_model[];
 extern Gfx dia_win2_wT_model[];
@@ -692,38 +694,21 @@ extern u8 dia_win_september_tex_rgb_ia8[];
 
 static void mDI_set_frame_dl(GRAPH* graph, mSM_MenuInfo_c* menu_info, mDI_Ovl_c* diary_ovl, f32 pos_x, f32 pos_y, int month) {
     // clang-format off
-    static u8* month_tex_table[lbRTC_MONTHS_MAX] = {
-        dia_win_january_tex_rgb_ia8,
-        dia_win_february_tex_rgb_ia8,
-        dia_win_march_tex_rgb_ia8,
-        dia_win_april_tex_rgb_ia8,
-        dia_win_may_tex_rgb_ia8,
-        dia_win_june_tex_rgb_ia8,
-        dia_win_july_tex_rgb_ia8,
-        dia_win_august_tex_rgb_ia8,
-        dia_win_september_tex_rgb_ia8,
-        dia_win_october_tex_rgb_ia8,
-        dia_win_november_tex_rgb_ia8,
-        dia_win_december_tex_rgb_ia8,
-    };
+    extern u8 cal_win_kazu1_tex_rgb_ia8[];
+extern u8 cal_win_kazu2_tex_rgb_ia8[];
+extern u8 cal_win_kazu3_tex_rgb_ia8[];
+extern u8 cal_win_kazu4_tex_rgb_ia8[];
+extern u8 cal_win_kazu5_tex_rgb_ia8[];
+extern u8 cal_win_kazu6_tex_rgb_ia8[];
+extern u8 cal_win_kazu7_tex_rgb_ia8[];
+extern u8 cal_win_kazu8_tex_rgb_ia8[];
+extern u8 cal_win_kazu9_tex_rgb_ia8[];
+extern u8 cal_win_kazu10_tex_rgb_ia8[];
+extern u8 cal_win_kazu11_tex_rgb_ia8[];
+extern u8 cal_win_kazu12_tex_rgb_ia8[];
+static u8* month_tex_table[] = { cal_win_kazu1_tex_rgb_ia8, cal_win_kazu2_tex_rgb_ia8, cal_win_kazu3_tex_rgb_ia8, cal_win_kazu4_tex_rgb_ia8, cal_win_kazu5_tex_rgb_ia8, cal_win_kazu6_tex_rgb_ia8, cal_win_kazu7_tex_rgb_ia8, cal_win_kazu8_tex_rgb_ia8, cal_win_kazu9_tex_rgb_ia8, cal_win_kazu10_tex_rgb_ia8, cal_win_kazu11_tex_rgb_ia8, cal_win_kazu12_tex_rgb_ia8 };
     // clang-format on
 
-    // clang-format off
-    static f32 month_tex_adjust[lbRTC_MONTHS_MAX] = {
-        -26.0f,
-        -16.0f,
-        -40.0f,
-        -52.0f,
-        -57.0f,
-        -52.0f,
-        -57.0f,
-        -32.0f,
-        0.0f,
-        -23.0f,
-        -6.0f,
-        -6.0f,
-    };
-    // clang-format on
 
     Matrix_push();
 
@@ -734,26 +719,31 @@ static void mDI_set_frame_dl(GRAPH* graph, mSM_MenuInfo_c* menu_info, mDI_Ovl_c*
 
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, dia_init_mode_letter);
-    gSPDisplayList(POLY_OPA_DISP++, dia_win_wT_model);
-    gSPDisplayList(POLY_OPA_DISP++, dia_win_fusenT_model);
-    gDPLoadTextureBlock_8b_Dolphin(POLY_OPA_DISP++, month_tex_table[month], G_IM_FMT_IA, 16, 64, 0, GX_MIRROR, GX_MIRROR, 0, 0);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win1_wT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win1_fusenT_model);
+    gDPLoadTextureBlock_8b_Dolphin(POLY_OPA_DISP++, month_tex_table[month], G_IM_FMT_IA, 32, 32, 0, GX_MIRROR,
+                                   GX_MIRROR, 0, 0);
     gSPDisplayList(POLY_OPA_DISP++, dia_win_tukiT_model);
 
-    Matrix_push();
-    Matrix_translate(month_tex_adjust[month], 0.0f, 0.0f, MTX_MULT);
-
-    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, dia_win_moji_model);
 
-    Matrix_pull();
-
-    Matrix_translate(0.0f, -194.0f, 0.0f, MTX_MULT);
+    Matrix_translate(0.0f, -218.0f, 0.0f, MTX_MULT);
 
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, dia_win2_wT_model);
     gSPDisplayList(POLY_OPA_DISP++, dia_win2_fusenT_model);
-    
-    Matrix_translate(0.0f, -164.0f, 0.0f, MTX_MULT);
+
+    Matrix_translate(0.0f, -224.0f, 0.0f, MTX_MULT);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_wT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_fusenT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_wT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_fusenT_model);
+    Matrix_translate(0.0f, -224.0f, 0.0f, MTX_MULT);
+    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_wT_model);
+    gSPDisplayList(POLY_OPA_DISP++, dia_win2_fusenT_model);
+    Matrix_translate(0.0f, -188.0f, 0.0f, MTX_MULT);
 
     gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, dia_win3_wT_model);
@@ -764,8 +754,8 @@ static void mDI_set_frame_dl(GRAPH* graph, mSM_MenuInfo_c* menu_info, mDI_Ovl_c*
     Matrix_pull();
 }
 
-static int mDI_strLineCheck(u8** str_pp, u8* str_end_p, int* width, int* line_len) {
-    u8* cur_str_p = *str_pp;
+static int mDI_strLineCheck(u16** str_pp, u16* str_end_p, int* width, int* line_len) {
+    u16* cur_str_p = *str_pp;
     int ret = 0;
 
     if (cur_str_p >= str_end_p) {
@@ -775,7 +765,7 @@ static int mDI_strLineCheck(u8** str_pp, u8* str_end_p, int* width, int* line_le
         (*line_len)++;
         ret = 1;
     } else {
-        (*width) += mFont_GetCodeWidth(*cur_str_p, TRUE);
+        (*width) += 12;
         if (*width > 192) {
             ret = 2;
         } else {
@@ -789,12 +779,12 @@ static int mDI_strLineCheck(u8** str_pp, u8* str_end_p, int* width, int* line_le
 
 static void mDI_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game, f32 pos_x, f32 pos_y, f32* o_pos_x, f32* o_pos_y, rgba_t* color) {
     mDI_Ovl_c* diary_ovl = submenu->overlay->diary_ovl;
-    u8* str_p = diary_ovl->current_entry->text;
-    u8* str_end_p = str_p + diary_ovl->entry_len[0];
+    u16* str_p = (u16*)mTxt_get_first_buff();
+    u16* str_end_p = str_p + diary_ovl->entry_len[0];
     int i;
 
-    for (i = 0; i < 31; i++) {
-        u8* start_str_p = str_p;
+    for (i = 0; i < 62; i++) {
+        u16* start_str_p = str_p;
         int width = 0;
         int line_len = 0;
         int cmd;
@@ -803,7 +793,7 @@ static void mDI_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
             cmd = mDI_strLineCheck(&str_p, str_end_p, &width, &line_len);
             
             if (cmd == 3) {
-                if (i != 30 && ((str_p != start_str_p && str_p[-1] == CHAR_NEW_LINE) || width + mFont_GetCodeWidth(*str_p, TRUE) > 192)) {
+                if (i != 61 && ((str_p != start_str_p && str_p[-1] == CHAR_NEW_LINE) || width + 12 > 192)) {
                     *o_pos_x = (pos_x + 1.0f) - 160.0f;
                     *o_pos_y = 120.0f - (pos_y + 16.0f);
                 } else {
@@ -817,7 +807,7 @@ static void mDI_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
 
                 if (line_len != 0) {
                     // clang-format off
-                    mFont_SetLineStrings(
+                    mFont_SetLineStringsW(
                         game,
                         start_str_p, line_len,
                         pos_x, pos_y,
@@ -841,7 +831,7 @@ static void mDI_set_writing_body(Submenu* submenu, mSM_MenuInfo_c* menu_info, GA
 
         if (line_len != 0 && (pos_y - 36.0f) >= -48.0f && (pos_y - 36.0f) < 192.0f) {
             // clang-format off
-            mFont_SetLineStrings(
+            mFont_SetLineStringsW(
                 game,
                 start_str_p, line_len,
                 pos_x, pos_y,
@@ -913,11 +903,12 @@ extern void mDI_diary_ovl_set_proc(Submenu* submenu) {
 }
 
 static void mDI_diary_ovl_init(Submenu* submenu) {
-    mDI_Ovl_c* diary_ovl = submenu->overlay->diary_ovl;
-    mSM_Control_c* ctrl = &submenu->overlay->menu_control;
     mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_DIARY];
+    mDI_Ovl_c* diary_ovl = submenu->overlay->diary_ovl;
 
-    ctrl->animation_flag = FALSE;
+    u16* str = (u16*)mTxt_get_first_buff();
+
+    submenu->overlay->menu_control.animation_flag = FALSE;
     menu_info->move_drt = mSM_MOVE_IN_LEFT;
     submenu->overlay->move_chg_base_proc(menu_info, menu_info->move_drt);
     menu_info->proc_status = mSM_OVL_PROC_MOVE;
@@ -925,8 +916,9 @@ static void mDI_diary_ovl_init(Submenu* submenu) {
     diary_ovl->_05 = 2;
     mCD_save_data_aram_to_main(diary_ovl->data, mCD_KEEP_DIARY_SIZE, mCD_ARAM_DATA_DIARY);
     diary_ovl->current_entry = diary_ovl->data->entries[menu_info->data1] + menu_info->data3;
+    mTxt_conv_16bit(diary_ovl->current_entry->text, str, mDI_ENTRY_SIZE);
     menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
-    diary_ovl->entry_len[mDI_FIELD_BODY] = mDi_strlen(diary_ovl->current_entry->text, mDI_ENTRY_SIZE, CHAR_SPACE);
+    diary_ovl->entry_len[mDI_FIELD_BODY] = mMl_strlenW(str, mDI_ENTRY_SIZE, CHAR_SPACE);
     diary_ovl->_18 = 0;
     mDI_get_col_line_width(diary_ovl, &diary_ovl->_22, &diary_ovl->_24, NULL, NULL, diary_ovl->entry_len[mDI_FIELD_BODY]);
     diary_ovl->move_proc = mDI_MOVE_READ;

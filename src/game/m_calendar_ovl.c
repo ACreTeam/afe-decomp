@@ -32,7 +32,7 @@ static u32 mCD_sp_soncho_chk(lbRTC_year_t year, lbRTC_month_t month, lbRTC_day_t
 
     switch (month) {
         case lbRTC_JUNE:
-#if VERSION == VER_GAFU01_00
+#if VERSION == VER_GAFU01_00 || VERSION == VER_GAEJ01_01
             wday = lbRTC_Week(year, month, day);
 #else
             wday = lbRTC_Week(year, month, day + 1);
@@ -388,16 +388,20 @@ static void mCD_make_calendar_data_unfixed_day_event(mCD_month_entry_c* entry, l
 }
 
 static void mCD_make_calendar_data_year(lbRTC_year_t year, mCD_month_entry_c* entry, int player_no) {
-    mPr_birthday_c* birthday;
+    mPr_birthday_c birthday;
     int i;
     
     mCD_make_calendar_data_month(entry, year, player_no);
     mCD_make_calendar_data_fixed_day_event(entry);
     mCD_make_calendar_data_unfixed_day_event(entry, year);
 
-    birthday = &Save_Get(private_data[player_no]).birthday;
-    if (birthday->month != 0xFF) {
-        mDC_set_event_day_data(entry, birthday->month, birthday->day, mSC_EVENT_PLAYER_BIRTHDAY, 5, 0);
+    birthday = Save_Get(private_data[player_no]).birthday;
+    if (birthday.month == lbRTC_FEBRUARY && birthday.day == 29 && lbRTC_GetDaysByMonth(year, lbRTC_FEBRUARY) == 28) {
+        birthday.month = lbRTC_MARCH;
+        birthday.day = 1;
+    }
+    if (birthday.month != 0xFF) {
+        mDC_set_event_day_data(entry, birthday.month, birthday.day, mSC_EVENT_PLAYER_BIRTHDAY, 5, 0);
     }
 
     for (i = lbRTC_JANUARY; i <= lbRTC_DECEMBER; i++) {

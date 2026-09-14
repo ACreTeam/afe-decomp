@@ -216,7 +216,7 @@ struct submenu_overlay_s {
     /* 0xAD8 */ mFL_Ovl_c* film_ovl;
     /* 0xADC */ u8 hboard_exists;
     /* 0xADD */ u8 le_exists;
-    /* 0xADE */ u8 _ADE;
+    /* 0xADE */ u8 hboard_home_idx;
     /* 0xADF */ u8 _ADF;
     /* 0xAE0 */ int _AE0;
     /* 0xAE4 */ Mtx* projection_matrix;

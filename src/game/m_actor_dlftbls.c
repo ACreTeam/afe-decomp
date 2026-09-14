@@ -245,6 +245,20 @@
 #include "ac_windmill.h"
 #include "ac_yatai.h"
 #include "ac_weather.h"
+#include "ac_t_hatAthletic1.h"
+#include "ac_t_hatAthletic2.h"
+#include "ac_t_hatHarvest1.h"
+#include "ac_t_hatHarvest2.h"
+#include "ac_t_hatChristmas1.h"
+#include "ac_t_hatParty1.h"
+#include "ac_t_hatParty2.h"
+#include "ac_t_hatParty3.h"
+#include "ac_t_hatParty4.h"
+#include "ac_resetcenter_indoor.h"
+#include "ac_reset_chair.h"
+#include "ac_npc_reset.h"
+#include "ac_monument.h"
+#include "ac_island_npc.h"
 
 #define MAKE_ACTOR_DLF(actor)\
   {0,0,NULL,NULL,NULL,&actor##_Profile, 0,0,0,0}
@@ -494,18 +508,32 @@ ACTOR_DLFTBL actor_dlftbls[] = {
   MAKE_ACTOR_DLF(Ev_Speech_Soncho),
   MAKE_ACTOR_DLF(Groundhog_Npc0),
   MAKE_ACTOR_DLF(Ev_Turkey),
+  MAKE_ACTOR_DLF(Mscore_Control),
   MAKE_ACTOR_DLF(Ghog),
-  MAKE_ACTOR_DLF(Htable),
-  MAKE_ACTOR_DLF(Npc_Hem),
   MAKE_ACTOR_DLF(Tent),
+  MAKE_ACTOR_DLF(Npc_Hem),
+  MAKE_ACTOR_DLF(Htable),
   MAKE_ACTOR_DLF(Pterminal),
-  MAKE_ACTOR_DLF(Mscore_Control)
+  MAKE_ACTOR_DLF(T_HatAthletic1),
+  MAKE_ACTOR_DLF(T_HatAthletic2),
+  MAKE_ACTOR_DLF(T_HatChristmas1),
+  MAKE_ACTOR_DLF(T_HatHarvest1),
+  MAKE_ACTOR_DLF(T_HatHarvest2),
+  MAKE_ACTOR_DLF(T_HatParty1),
+  MAKE_ACTOR_DLF(T_HatParty2),
+  MAKE_ACTOR_DLF(T_HatParty3),
+  MAKE_ACTOR_DLF(T_HatParty4),
+  MAKE_ACTOR_DLF(Resetcenter_Indoor),
+  MAKE_ACTOR_DLF(Reset_Chair),
+  MAKE_ACTOR_DLF(Npc_Reset),
+  MAKE_ACTOR_DLF(Monument),
+  MAKE_ACTOR_DLF(Island_Npc),
 };
 
 int actor_dlftbls_num;
 
 extern void actor_dlftbls_init() {
-  actor_dlftbls_num = 246;
+  actor_dlftbls_num = ARRAY_COUNT(actor_dlftbls);
 }
 
 extern void actor_dlftbls_cleanup() {

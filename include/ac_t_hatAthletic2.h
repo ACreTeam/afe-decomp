@@ -16,6 +16,8 @@ typedef struct tool_hat_athletic2_s {
     int action;
 } TOOL_HAT_ATHLETIC2_ACTOR;
 
+extern ACTOR_PROFILE T_HatAthletic2_Profile;
+
 #ifdef __cplusplus
 }
 #endif

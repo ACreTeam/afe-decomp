@@ -16,6 +16,8 @@ typedef struct tool_hat_party3_s {
     int action;
 } TOOL_HAT_PARTY3_ACTOR;
 
+extern ACTOR_PROFILE T_HatParty3_Profile;
+
 #ifdef __cplusplus
 }
 #endif

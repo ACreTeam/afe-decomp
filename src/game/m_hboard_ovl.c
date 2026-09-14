@@ -3,36 +3,9 @@
 #include "m_common_data.h"
 #include "m_editor_ovl.h"
 #include "m_font.h"
+#include "m_text.h"
 #include "m_haniwaPortrait_ovl.h"
 #include "sys_matrix.h"
-
-static int mHB_strLineCheck(u8** str_pp, u8* str_end_p, int* line_width, int* line_len) {
-  u8* str_p = *str_pp;
-  int res = mHB_LINE_CHECK_OK; /* within bounds of line */
-
-  if (str_p >= str_end_p) {
-    res = mHB_LINE_CHECK_OVER_STR_LEN; /* reached end of string */
-  }
-  else if (*str_p == CHAR_NEW_LINE) {
-    str_pp[0] = str_p + 1;
-    line_len[0]++;
-    res = mHB_LINE_CHECK_NEWLINE; /* newline encountered */
-  }
-  else {
-    line_width[0] += mFont_GetCodeWidth(*str_p, TRUE);
-
-    if (*line_width > mHB_LINE_WIDTH_MAX) {
-      res = mHB_LINE_CHECK_OVER_WIDTH; /* exceeded line width */
-    }
-    else {
-      /* Still within the bounds of the line */
-      str_pp[0]++;
-      line_len[0]++;
-    }
-  }
-
-  return res;
-}
 
 static void mHB_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
   (*submenu->overlay->move_Move_proc)(submenu, menu_info);
@@ -101,65 +74,37 @@ static void mHB_set_frame_dl(GRAPH* graph, mSM_MenuInfo_c* menu_info, f32 x, f32
 }
 
 static void mHB_set_character(mED_Ovl_c* editor_ovl, GAME* game, f32 x, f32 y, f32* endCode_x, f32* endCode_y) {
-  u8* input_str = editor_ovl->input_str;
-  u8* end_str = input_str + editor_ovl->now_str_len;
-  int i;
-
-  for (i = 0; i < mHB_LINE_NUM; i++) {
-    u8* str = input_str;
-    int width = 0;
-    int line_len = 0;
-    int line_check;
-
-    do {
-      line_check = mHB_strLineCheck(&input_str, end_str, &width, &line_len);
-
-      /* Handle reaching the end of the string and set the end code position */
-      if (line_check == mHB_LINE_CHECK_OVER_STR_LEN) {
-        if (
-          i != (mHB_LINE_NUM - 1) &&
-          ((input_str != str && input_str[-1] == CHAR_NEW_LINE) || width + mFont_GetCodeWidth(*input_str, TRUE) > mHB_LINE_WIDTH_MAX)
-        ) {
-          endCode_x[0] =  (x +  1.0f) - 160.0f;
-          endCode_y[0] = -(y + 16.0f) + 120.0f;
+    u16* str = editor_ovl->input_wstr;
+    int i;
+    int remaining = editor_ovl->now_str_len;
+    for (i = 0; i < mHB_LINE_NUM; i++) {
+        int len;
+        int newline = FALSE;
+        len = 0;
+        while (len < mHB_LINE_WIDTH_MAX / 12 && len < remaining) {
+            if (str[len] == CHAR_NEW_LINE) {
+                newline = TRUE;
+                len++;
+                break;
+            }
+            len++;
         }
-        else {
-          endCode_x[0] = ((x + width) + 1.0f) - 160.0f;
-          endCode_y[0] = -y + 120.0f;
+        if (len != 0) {
+            mFont_SetLineStringsW(game, str, len, x, y, 90, 10, 130, 255, FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
+            remaining -= len;
+            str += len;
+            if (remaining == 0) {
+                if (i != mHB_LINE_NUM - 1 && (newline || len == mHB_LINE_WIDTH_MAX / 12)) {
+                    *endCode_x = x - 160.0f;
+                    *endCode_y = 120.0f - (y + 16.0f);
+                } else {
+                    *endCode_x = (x + len * 12.0f) - 160.0f;
+                    *endCode_y = 120.0f - y;
+                }
+            }
         }
-
-        if (line_len != 0) {
-          mFont_SetLineStrings(
-            game,
-            str, line_len,
-            x, y,
-            30, 0, 0, 255,
-            FALSE,
-            TRUE,
-            1.0f, 1.0f,
-            mFont_MODE_POLY
-          );
-        }
-
-        return;
-      }
-    } while (line_check == mHB_LINE_CHECK_OK);
-
-    if (line_len != 0) {
-      mFont_SetLineStrings(
-        game,
-        str, line_len,
-        x, y,
-        30, 0, 0, 255,
-        FALSE,
-        TRUE,
-        1.0f, 1.0f,
-        mFont_MODE_POLY
-      );
+        y += 16.0f;
     }
-
-    y += 16.0f;
-  }
 }
 
 static void mHB_set_dl_sub(Submenu* submenu, GRAPH* graph, GAME* game, f32 x, f32 y) {
@@ -225,8 +170,12 @@ static void mHB_hboard_ovl_init(Submenu* submenu) {
   menu_info->next_proc_status = mSM_OVL_PROC_WAIT;
   menu_info->move_drt = mSM_MOVE_IN_TOP;
 
-  /* Open the editor overlay */
-  mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_HBOARD, 32, Save_Get(homes[menu_info->data1].haniwa.message), mHB_LINE_WIDTH_MAX);
+  {
+      u16* str = (u16*)mTxt_get_first_buff();
+      mTxt_conv_16bit(Save_Get(homes[menu_info->data1].haniwa.message), str, 64);
+      mSM_open_submenu_new2(submenu, mSM_OVL_EDITOR, mED_TYPE_HBOARD, 16, (u8*)str, mHB_LINE_WIDTH_MAX);
+      submenu->overlay->hboard_home_idx = menu_info->data1;
+  }
 }
 
 extern void mHB_hboard_ovl_construct(Submenu* submenu) {
@@ -239,5 +188,7 @@ extern void mHB_hboard_ovl_construct(Submenu* submenu) {
 }
 
 extern void mHB_hboard_ovl_destruct(Submenu* submenu) {
-  submenu->overlay->hboard_exists = FALSE;
+    u16* str = (u16*)mTxt_get_first_buff();
+    mTxt_conv_9or8bit(str, Save_Get(homes[submenu->overlay->hboard_home_idx].haniwa.message), 64);
+    submenu->overlay->hboard_exists = FALSE;
 }

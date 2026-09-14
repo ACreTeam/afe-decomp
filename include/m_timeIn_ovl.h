@@ -13,11 +13,11 @@ extern "C" {
 #define mTI_MAX_YEAR 30
 
 enum {
-    mTI_IDX_HOUR,
-    mTI_IDX_MIN,
+    mTI_IDX_YEAR,
     mTI_IDX_MONTH,
     mTI_IDX_DAY,
-    mTI_IDX_YEAR,
+    mTI_IDX_HOUR,
+    mTI_IDX_MIN,
     mTI_IDX_OK,
 
     mTI_IDX_NUM = mTI_IDX_OK

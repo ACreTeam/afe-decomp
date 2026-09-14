@@ -26,17 +26,15 @@ static int mRP_money_repay(mRP_Ovl_c* repay_ovl) {
     for (i = 0; i < MONEY_NUM; i++) {
       item_p = Common_Get(now_private)->inventory.pockets;
       for (j = 0; j < mPr_POCKETS_SLOT_COUNT; j++) {
-        if (
-          mPr_GET_ITEM_COND(Common_Get(now_private)->inventory.item_conditions, j) == mPr_ITEM_COND_NORMAL &&
-          *item_p == *money_name_p
-        ) {
-          total_money += *money_amount_p;
-          mPr_SetPossessionItem(Common_Get(now_private), j, EMPTY_NO, mPr_ITEM_COND_NORMAL);
+          if (mPr_CHK_ITEM_COND(Common_Get(now_private)->inventory.item_conditions, j) == mPr_ITEM_COND_NORMAL &&
+              *item_p == *money_name_p) {
+              total_money += *money_amount_p;
+              mPr_SetPossessionItem(Common_Get(now_private), j, EMPTY_NO, mPr_ITEM_COND_NORMAL);
 
-          if (total_money >= repay_ovl->repay_amount) {
-            return total_money - repay_ovl->repay_amount;
+              if (total_money >= repay_ovl->repay_amount) {
+                  return total_money - repay_ovl->repay_amount;
+              }
           }
-        }
 
         item_p++;
       }
@@ -188,83 +186,56 @@ static void mRP_set_frame_dl(Submenu* submenu, GRAPH* graph, mSM_MenuInfo_c* men
 }
 
 static void mRP_set_num_str(GAME* game, u32 num, rgba_t* str_col_p, f32 x, f32 y, f32 scale) {
-  u8 str[7];
+    u8 str[6];
 
-  mFont_UnintToString(str, sizeof(str), num, 6, FALSE, FALSE, TRUE);
-  x -= scale * mFont_GetStringWidth(str, sizeof(str), TRUE);
-  mFont_SetLineStrings(
-    game,
-    str, sizeof(str),
-    x, y,
-    str_col_p->r, str_col_p->g, str_col_p->b, 255,
-    FALSE,
-    TRUE,
-    scale, scale,
-    mFont_MODE_POLY
-  );
+    mFont_UnintToString(str, sizeof(str), num, 6, FALSE, FALSE, FALSE);
+    x -= scale * mFont_GetStringWidth(str, sizeof(str), TRUE);
+    mFont_SetLineStrings(game, str, sizeof(str), x, y, str_col_p->r, str_col_p->g, str_col_p->b, 255, FALSE, FALSE,
+                         scale, scale, mFont_MODE_POLY);
 }
 
 static void mRP_set_character_dl(Submenu* submenu, GAME* game, f32 x, f32 y) {
-  static u8 kingaku_str[9] = "Your Loan";
-  static u8 kettei_str[2] = "OK";
-  static rgba_t money_col  = { 100,  40, 255, 255 };
-  static rgba_t repay_col  = {  70, 120, 245, 255 };
-  static rgba_t select_col = { 215,   0,   0, 255 };
-  static rgba_t kettei_col = {  70, 120, 245, 255 };
-  static rgba_t loan_col   = {  40, 185, 110, 255 };
+    static u8 kingaku_str[] = { CHAR_PP_006, CHAR_PP_195, CHAR_PP_231, CHAR_PP_007, CHAR_PP_194,
+                                CHAR_PP_001, CHAR_PP_126, CHAR_PP_018, CHAR_PP_023 };
+    static u8 kettei_str[] = { CHAR_PP_004, CHAR_PP_193, CHAR_PP_124 };
+    static rgba_t money_col = { 100, 40, 255, 255 };
+    static rgba_t repay_col = { 70, 120, 245, 255 };
+    static rgba_t select_col = { 215, 0, 0, 255 };
+    static rgba_t kettei_col = { 70, 120, 245, 255 };
+    static rgba_t loan_col = { 40, 185, 110, 255 };
 
-  mRP_Ovl_c* repay_ovl = submenu->overlay->repay_ovl;
-  rgba_t* color_p;
-  u8 repay_amount_str[7];
-  int sel;
-  f32 char_y;
-  f32 char_x;
-  int i;
+    mRP_Ovl_c* repay_ovl = submenu->overlay->repay_ovl;
+    rgba_t* color_p;
+    u8 repay_amount_str[6];
+    int sel;
+    f32 char_y;
+    f32 char_x;
+    int i;
 
-  (*submenu->overlay->set_char_matrix_proc)(game->graph);
-  mFont_SetLineStrings(
-    game,
-    kingaku_str, sizeof(kingaku_str),
-    x + 153.0f, -y + 64.0f,
-    255, 255, 255, 255,
-    FALSE,
-    TRUE,
-    0.875f, 0.875f,
-    mFont_MODE_POLY
-  );
+    (*submenu->overlay->set_char_matrix_proc)(game->graph);
+    mFont_SetLineStrings(game, kingaku_str, sizeof(kingaku_str), x + 133.0f, 64.0f - y, 255, 255, 255, 255, FALSE,
+                         FALSE, 0.9375f, 0.9375f, mFont_MODE_POLY);
 
-  mRP_set_num_str(game, repay_ovl->money, &money_col, x + 206.0f, -y + 91.0f, 0.875f);
-  sel = repay_ovl->cursor_idx;
-  if (sel >= mRP_CURSOR_100) {
-    sel++; // move past the comma
-  }
+    mRP_set_num_str(game, repay_ovl->money, &money_col, x + 215.5f, 91.0f - y, 0.875f);
+    sel = repay_ovl->cursor_idx;
 
-  mFont_UnintToString(repay_amount_str, sizeof(repay_amount_str), repay_ovl->repay_amount, 6, FALSE, TRUE, TRUE);
-  
-  /* Draw each individual character in the repayment amount string */
-  char_x =  x - mFont_GetStringWidth(repay_amount_str, 7, TRUE) + 206.0f;
-  char_y = -y + 112.0f;
-  for (i = 0; i < 7; i++) {
-    if (sel == i) {
-      color_p = &select_col;
+    mFont_UnintToString(repay_amount_str, sizeof(repay_amount_str), repay_ovl->repay_amount, 6, FALSE, TRUE, FALSE);
+
+    /* Draw each individual character in the repayment amount string */
+    char_x = x - mFont_GetStringWidth(repay_amount_str, 6, TRUE) + 217.0f;
+    char_y = 113.0f - y;
+    for (i = 0; i < 6; i++) {
+        if (sel == i) {
+            color_p = &select_col;
+        } else {
+            color_p = &repay_col;
+        }
+
+        mFont_SetLineStrings(game, &repay_amount_str[i], 1, char_x, char_y, color_p->r, color_p->g, color_p->b, 255,
+                             FALSE, FALSE, 1.0f, 1.0f, mFont_MODE_POLY);
+
+        char_x += mFont_GetStringWidth(&repay_amount_str[i], 1, TRUE);
     }
-    else {
-      color_p = &repay_col;
-    }
-
-    mFont_SetLineStrings(
-      game,
-      &repay_amount_str[i], 1,
-      char_x, char_y,
-      color_p->r, color_p->g, color_p->b, 255,
-      FALSE,
-      TRUE,
-      1.0f, 1.0f,
-      mFont_MODE_POLY
-    );
-
-    char_x += mFont_GetStringWidth(&repay_amount_str[i], 1, TRUE);
-  }
 
   if (repay_ovl->cursor_idx < mRP_CURSOR_OK) {
     color_p = &kettei_col;
@@ -273,18 +244,10 @@ static void mRP_set_character_dl(Submenu* submenu, GAME* game, f32 x, f32 y) {
     color_p = &select_col;
   }
 
-  mFont_SetLineStrings(
-    game,
-    kettei_str, sizeof(kettei_str),
-    x + 207.0f, -y + 128.0f,
-    color_p->r, color_p->g, color_p->b, 255,
-    FALSE,
-    TRUE,
-    0.875f, 0.875f,
-    mFont_MODE_POLY
-  );
+  mFont_SetLineStrings(game, kettei_str, sizeof(kettei_str), x + 213.0f, 131.0f - y, color_p->r, color_p->g, color_p->b,
+                       255, FALSE, FALSE, 0.875f, 0.875f, mFont_MODE_POLY);
 
-  mRP_set_num_str(game, repay_ovl->loan, &loan_col, x + 209.0f, -y + 155.0f, 0.875f);
+  mRP_set_num_str(game, repay_ovl->loan, &loan_col, x + 217.5f, 156.0f - y, 0.875f);
 }
 
 static void mRP_set_dl(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_info) {
@@ -325,16 +288,16 @@ static void mRP_repay_ovl_init(Submenu* submenu) {
   repay_ovl->money = Common_Get(now_private)->inventory.wallet;
 
   for (i = 0; i < mPr_POCKETS_SLOT_COUNT; i++, item_p++) {
-    if (mPr_GET_ITEM_COND(Common_Get(now_private)->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL) {
-      int j;
+      if (mPr_CHK_ITEM_COND(Common_Get(now_private)->inventory.item_conditions, i) == mPr_ITEM_COND_NORMAL) {
+          int j;
 
-      for (j = 0; j < MONEY_NUM; j++) {
-        if (*item_p == mRP_money_name[j]) {
-          repay_ovl->money += mRP_money_amount[j];
-          break;
-        }
+          for (j = 0; j < MONEY_NUM; j++) {
+              if (*item_p == mRP_money_name[j]) {
+                  repay_ovl->money += mRP_money_amount[j];
+                  break;
+              }
+          }
       }
-    }
   }
 
   repay_ovl->max_money = repay_ovl->money;

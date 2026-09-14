@@ -29,7 +29,8 @@ struct cporiginal_s {
     s16 timer;
     u8 up_folder;
     u8 change_flg;
-    int _10;
+    u8 cancel_flg;
+    u8 _11[3];
     int _14;
     u16 mark_flg;
     u16 hide_flg[mCO_PAGE_NUM];

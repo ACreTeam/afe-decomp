@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 #define mCD_YEARS_SHOWN 3
-#define mCD_EVENT_NAME_STR_LEN 16
+#define mCD_EVENT_NAME_STR_LEN 66
 
 enum {
     mCD_STICK_AREA_LEFT,
@@ -79,8 +79,6 @@ struct calendar_ovl_s {
     u8 stick_area;
     u8 _105C;
     u8 _105D;
-    u8 _105E;
-    u8 _105F;
 };
 
 extern void mCD_calendar_ovl_construct(Submenu* submenu);

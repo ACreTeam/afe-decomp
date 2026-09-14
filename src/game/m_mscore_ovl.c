@@ -35,14 +35,14 @@ typedef struct {
     f32 offset[2];
 } mMS_note_frame_c;
 
-extern u8 onp_win_q_tex_rgb_i4[];
-extern u8 onp_win_a_tex_rgb_i4[];
-extern u8 onp_win_b_tex_rgb_i4[];
-extern u8 onp_win_c_tex_rgb_i4[];
-extern u8 onp_win_d_tex_rgb_i4[];
-extern u8 onp_win_e_tex_rgb_i4[];
-extern u8 onp_win_f_tex_rgb_i4[];
-extern u8 onp_win_g_tex_rgb_i4[];
+extern u8 onp_win_onpu9_tex_rgb_i4[];
+extern u8 onp_win_onpu6_tex_rgb_i4[];
+extern u8 onp_win_onpu7_tex_rgb_i4[];
+extern u8 onp_win_onpu1_tex_rgb_i4[];
+extern u8 onp_win_onpu2_tex_rgb_i4[];
+extern u8 onp_win_onpu3_tex_rgb_i4[];
+extern u8 onp_win_onpu4_tex_rgb_i4[];
+extern u8 onp_win_onpu5_tex_rgb_i4[];
 
 extern u8 onp_win_bou1_tex[];
 extern u8 onp_win_shimari_tex_rgb_ia8[];
@@ -71,22 +71,22 @@ static mMS_note_frame_c note_frame[] = {
     {
         { onp_win_test1_tex_rgb_ia8, onp_win_test2_tex_rgb_ia8 },
         onp_hyouji_waku1T_model,
-        { 0.0f, 0.0f }
+        { 2.0f, -2.0f }
     },
     {
         { onp_win_test2_tex_rgb_ia8, onp_win_test3_tex_rgb_ia8 },
         onp_hyouji_waku2T_model,
-        { -1.0f, 20.0f }
+        { 1.0f, 18.0f }
     },
     {
         { onp_win_test5_tex_rgb_ia8, onp_win_shimari_tex_rgb_ia8 },
         onp_hyouji_waku3T_model,
-        { 1.0f, 1.0f }
+        { 3.0f, -1.0f }
     },
     {
         { onp_win_test10_tex_rgb_ia8, onp_win_test11_tex_rgb_ia8 },
         onp_hyouji_waku4T_model,
-        { -1.0f, 5.0f }
+        { 1.0f, 2.0f }
     },
 };
 // clang-format on
@@ -101,28 +101,28 @@ typedef struct {
 
 // clang-format onff
 static mMS_note_moji_c note_moji[] = {
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_g_tex_rgb_i4, -29.0f, { 0, 10, 0 }, { 70, 155, 255 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_a_tex_rgb_i4, -29.0f, { 0, 10, 0 }, { 0, 200, 205 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_b_tex_rgb_i4, -29.0f, { 0, 20, 0 }, { 0, 225, 150 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_c_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 20, 235, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_d_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 90, 245, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_e_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 130, 255, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_f_tex_rgb_i4, -23.0f, { 0, 50, 0 }, { 155, 255, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_g_tex_rgb_i4, -23.0f, { 0, 50, 0 }, { 175, 255, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_a_tex_rgb_i4, -23.0f, { 0, 60, 0 }, { 195, 255, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_b_tex_rgb_i4, -23.0f, { 0, 60, 0 }, { 225, 255, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_c_tex_rgb_i4, -16.0f, { 0, 60, 0 }, { 255, 235, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_d_tex_rgb_i4, -16.0f, { 0, 60, 0 }, { 255, 215, 0 } },
-    { &note_frame[mMS_FRAME_NORMAL], onp_win_e_tex_rgb_i4, -16.0f, { 0, 70, 0 }, { 255, 175, 0 } },
-    { &note_frame[mMS_FRAME_RANDOM], onp_win_q_tex_rgb_i4, -20.0f, { 70, 60, 30 }, { 255, 110, 110 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu5_tex_rgb_i4, -29.0f, { 0, 10, 0 }, { 70, 155, 255 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu6_tex_rgb_i4, -29.0f, { 0, 10, 0 }, { 0, 200, 205 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu7_tex_rgb_i4, -29.0f, { 0, 20, 0 }, { 0, 225, 150 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu1_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 20, 235, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu2_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 90, 245, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu3_tex_rgb_i4, -23.0f, { 0, 40, 0 }, { 130, 255, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu4_tex_rgb_i4, -23.0f, { 0, 50, 0 }, { 155, 255, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu5_tex_rgb_i4, -23.0f, { 0, 50, 0 }, { 175, 255, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu6_tex_rgb_i4, -23.0f, { 0, 60, 0 }, { 195, 255, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu7_tex_rgb_i4, -23.0f, { 0, 60, 0 }, { 225, 255, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu1_tex_rgb_i4, -16.0f, { 0, 60, 0 }, { 255, 235, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu2_tex_rgb_i4, -16.0f, { 0, 60, 0 }, { 255, 215, 0 } },
+    { &note_frame[mMS_FRAME_NORMAL], onp_win_onpu3_tex_rgb_i4, -16.0f, { 0, 70, 0 }, { 255, 175, 0 } },
+    { &note_frame[mMS_FRAME_RANDOM], onp_win_onpu9_tex_rgb_i4, -20.0f, { 70, 60, 30 }, { 255, 110, 110 } },
     { &note_frame[mMS_FRAME_REST], onp_win_z_tex_rgb_i4, -29.0f, { 10, 10, 0 }, { 165, 100, 255 } },
     { &note_frame[mMS_FRAME_OFF], onp_win_onpu8_tex_rgb_i4, -29.0f, { 60, 0, 60 }, { 255, 50, 255 } },
 };
 // clang-format on
 
-static u8 mMS_str_title[13] = "Are you sure?";
-static u8 mMS_str_ok[3] = "Yes";
-static u8 mMS_str_cancel[2] = "No";
+static u8 mMS_str_title[] = { CHAR_PP_174, CHAR_PP_189, CHAR_PP_164, CHAR_PP_021, CHAR_PP_063 };
+static u8 mMS_str_ok[] = { CHAR_PP_002, CHAR_PP_195 };
+static u8 mMS_str_cancel[] = { CHAR_PP_093, CHAR_PP_204, CHAR_PP_251, CHAR_PP_093, CHAR_PP_036, CHAR_PP_125 };
 
 static void mMS_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     submenu->overlay->move_Move_proc(submenu, menu_info);
@@ -524,7 +524,7 @@ static void mMS_set_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) 
         gSPDisplayList(POLY_OPA_DISP++, sen_win_wakuT_model);
         Matrix_pull();
 
-        Matrix_translate(-26.0f, 51.0f - (mscore_ovl->menu_idx + 1) * 16, 0.0f, MTX_MULT);
+        Matrix_translate(-20.0f, 51.0f - (mscore_ovl->menu_idx + 1) * 16, 0.0f, MTX_MULT);
         gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, 235, 60, 60, 255);
         gSPDisplayList(POLY_OPA_DISP++, sen_win_cursor_model);
@@ -534,21 +534,21 @@ static void mMS_set_dl(Submenu* submenu, mSM_MenuInfo_c* menu_info, GAME* game) 
 
         CLOSE_POLY_OPA_DISP(graph);
 
-        base_x = 160.0f + (-17.0f + pos_x + -22.0f * anm_scale);
+        base_x = 160.0f + (-17.0f + pos_x + -16.0f * anm_scale);
         base_y = 120.0f - (-65.0f + pos_y + 59.0f * anm_scale);
-        text_scale = anm_scale * 0.875f;
+        text_scale = anm_scale;
 
         submenu->overlay->set_char_matrix_proc(graph);
-        mFont_SetLineStrings(game, mMS_str_title, sizeof(mMS_str_title), base_x, base_y, 255, 60, 60, 255, FALSE, TRUE,
+        mFont_SetLineStrings(game, mMS_str_title, sizeof(mMS_str_title), base_x, base_y, 255, 60, 60, 255, FALSE, FALSE,
                              text_scale, text_scale, mFont_MODE_POLY);
         color_p = &sel_str_color_data[mscore_ovl->menu_idx == 0];
         base_y += 16.0f * anm_scale;
         mFont_SetLineStrings(game, mMS_str_ok, sizeof(mMS_str_ok), base_x, base_y, color_p->r, color_p->g, color_p->b,
-                             255, FALSE, TRUE, text_scale, text_scale, mFont_MODE_POLY);
+                             255, FALSE, FALSE, text_scale, text_scale, mFont_MODE_POLY);
         color_p = &sel_str_color_data[mscore_ovl->menu_idx == 1];
         base_y += 16.0f * anm_scale;
         mFont_SetLineStrings(game, mMS_str_cancel, sizeof(mMS_str_cancel), base_x, base_y, color_p->r, color_p->g,
-                             color_p->b, 255, FALSE, TRUE, text_scale, text_scale, mFont_MODE_POLY);
+                             color_p->b, 255, FALSE, FALSE, text_scale, text_scale, mFont_MODE_POLY);
     }
 }
 

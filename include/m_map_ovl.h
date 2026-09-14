@@ -75,9 +75,11 @@ typedef struct map_label_word_s {
 typedef struct map_label_s {
   f32 ofs_x;
   f32 ofs_y;
-
+  f32 text_ofs_x;
+  f32 text_ofs_y;
   Gfx* gfx;
-  mMP_LabelWord_c* words[mMP_LABEL_WORD_NUM];
+  u8* str;
+  int str_len;
 } mMP_Label_c;
 
 struct map_overlay_s {
@@ -107,10 +109,9 @@ struct map_overlay_s {
 
   mMP_LabelInfo_c label_info[FG_BLOCK_Z_NUM][FG_BLOCK_X_NUM];
 
-  int unk_3E8[2];
+  u8 unk_3C0[6];
 
   u8 land_name_str_len;
-  int unk_3F4;
 };
 
 extern void mMP_map_ovl_set_proc(Submenu* submenu);

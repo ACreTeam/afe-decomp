@@ -16,6 +16,8 @@ typedef struct tool_hat_harvest2_s {
     int action;
 } TOOL_HAT_HARVEST2_ACTOR;
 
+extern ACTOR_PROFILE T_HatHarvest2_Profile;
+
 #ifdef __cplusplus
 }
 #endif

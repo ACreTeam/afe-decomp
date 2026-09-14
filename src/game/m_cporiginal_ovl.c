@@ -10,7 +10,9 @@
 #include "m_tag_ovl.h"
 #include "m_hand_ovl.h"
 #include "m_malloc.h"
+#include "dolphin/os/OSCache.h"
 
+static mCD_keep_original_c s_card_data;
 static mCO_Ovl_c co_ovl_data;
 
 // clang-format off
@@ -36,8 +38,16 @@ static int mCO_check_pat_idx(int pat_idx) {
     return ret;
 }
 
+extern mCD_keep_original_c* mCO_get_card_data(void) {
+    return &s_card_data;
+}
+
 extern int mCO_get_change_flg(void) {
     return co_ovl_data.change_flg;
+}
+
+extern int mCO_get_cancel_flg(void) {
+    return co_ovl_data.cancel_flg;
 }
 
 static int mCO_pat_idx_to_folder(int pat_idx) {
@@ -280,9 +290,8 @@ static void mCO_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
     if (next_menu->proc_status == mSM_OVL_PROC_MOVE && next_menu->next_proc_status == mSM_OVL_PROC_END) {
         if (next_menu->menu_type == mSM_OVL_EDITENDCHK) {
             if (next_menu->data1 == 0) {
-                mNW_next_data(submenu);
-                mCD_save_data_main_to_aram(cporiginal_ovl->card_original, mCD_KEEP_ORIGINAL_SIZE, mCD_ARAM_DATA_ORIGINAL);
                 submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
+                cporiginal_ovl->cancel_flg = FALSE;
 
                 if (Now_Private->cloth.idx >= (CLOTH_NUM + 1)) {
                     if (cporiginal_ovl->cloth_org_no != 255 && cporiginal_ovl->cloth_org_idx != 255) {
@@ -305,6 +314,7 @@ static void mCO_move_Wait(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
                 menu_info->proc_status = mSM_OVL_PROC_PLAY;
             } else {
                 submenu->overlay->move_chg_base_proc(menu_info, mSM_MOVE_OUT_RIGHT);
+                cporiginal_ovl->cancel_flg = TRUE;
             }
         } else if (next_menu->menu_type == mSM_OVL_EDITOR) {
             menu_info->proc_status = mSM_OVL_PROC_PLAY;
@@ -583,6 +593,8 @@ static void mCO_set_frame_main_dl(Submenu* submenu, GAME* game, int folder) {
 
 }
 
+extern Gfx lat_sousa_spT_model[];
+
 static void mCO_set_frame_string_dl(Submenu* submenu, GAME* game, f32 pos_x, f32 pos_y, int folder) {
     static rgb8_t color1 = { 0x50, 0x32, 0x32 };
     static rgb8_t color2 = { 0x46, 0x32, 0x32 };
@@ -602,18 +614,37 @@ static void mCO_set_frame_string_dl(Submenu* submenu, GAME* game, f32 pos_x, f32
     };
     // clang-format on
 
-    GRAPH* graph = game->graph;
-    u8* folder_name = mCO_get_folder_name(submenu, folder);
-    mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_CPORIGINAL];
-    rgb8_t* color = color_table[folder];
+    GRAPH* graph;
+    mSM_MenuInfo_c* menu_info;
+    u8* folder_name;
+    rgb8_t* color;
     int len;
     
+    graph = game->graph;
+    folder_name = mCO_get_folder_name(submenu, folder);
+    menu_info = &submenu->overlay->menu_info[mSM_OVL_CPORIGINAL];
+    color = color_table[folder];
     if (menu_info->proc_status == mSM_OVL_PROC_WAIT && menu_info->next_menu_type == mSM_OVL_EDITOR) {
+        mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
         OPEN_POLY_OPA_DISP(graph);
 
         gDPSetCycleType(POLY_OPA_DISP++, G_CYC_1CYCLE);
         gDPSetRenderMode(POLY_OPA_DISP++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
 
+        if (editor_ovl != NULL) {
+            int i;
+            for (i = 0; i < editor_ovl->now_str_len; i++) {
+                if (folder_name[i] == CHAR_SPACE) {
+                    Matrix_push();
+                    Matrix_translate((f32)i * 0.875f * 12.0f + -13.0f, 74.0f, 0.0f, MTX_MULT);
+                    Matrix_scale(0.546875f, 0.875f, 1.0f, MTX_MULT);
+                    gSPMatrix(POLY_OPA_DISP++, _Matrix_to_Mtx_new(graph), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 255, color->r, color->g, color->b, 255);
+                    gSPDisplayList(POLY_OPA_DISP++, lat_sousa_spT_model);
+                    Matrix_pull();
+                }
+            }
+        }
         CLOSE_POLY_OPA_DISP(graph);
     }
 
@@ -639,7 +670,7 @@ static void mCO_set_frame_string_dl(Submenu* submenu, GAME* game, f32 pos_x, f32
             folder_name, len,
             pos_x, pos_y,
             color->r, color->g, color->b, 255,
-            FALSE, TRUE,
+            FALSE, FALSE,
             0.875f, 0.875f,
             mFont_MODE_POLY
         );
@@ -650,7 +681,7 @@ static void mCO_set_frame_string_dl(Submenu* submenu, GAME* game, f32 pos_x, f32
         mED_Ovl_c* editor_ovl = submenu->overlay->editor_ovl;
 
         if (editor_ovl != NULL) {
-            editor_ovl->cursol_draw(submenu, game, pos_x + (editor_ovl->cursor_line_width + -6.0f) * 0.875f, pos_y);
+            editor_ovl->cursol_draw(submenu, game, pos_x + (editor_ovl->cursor_line_width - 8.0f) * 0.875f, pos_y);
         }
     }
 }
@@ -728,10 +759,12 @@ extern void mCO_cporiginal_ovl_set_proc(Submenu* submenu) {
 }
 
 static void mCO_cporiginal_ovl_init(Submenu* submenu) {
-    mCO_Ovl_c* cporiginal_ovl = submenu->overlay->cporiginal_ovl;
     mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_CPORIGINAL];
     int i;
-    u8* page_order_p = cporiginal_ovl->page_order;
+    int j;
+    u8* page_order_p;
+    mCO_Ovl_c* cporiginal_ovl = submenu->overlay->cporiginal_ovl;
+    page_order_p = cporiginal_ovl->page_order;
 
     submenu->overlay->menu_control.animation_flag = FALSE;
     menu_info->proc_status = mSM_OVL_PROC_MOVE;
@@ -744,6 +777,7 @@ static void mCO_cporiginal_ovl_init(Submenu* submenu) {
 
     cporiginal_ovl->timer = 0;
     cporiginal_ovl->change_flg = FALSE;
+    cporiginal_ovl->cancel_flg = TRUE;
     cporiginal_ovl->cloth_org_no = 255;
     cporiginal_ovl->up_folder = 0;
 
@@ -758,9 +792,15 @@ static void mCO_cporiginal_ovl_init(Submenu* submenu) {
         }
     }
 
-    mCD_save_data_aram_to_main(cporiginal_ovl->card_original, mCD_KEEP_ORIGINAL_SIZE, mCD_ARAM_DATA_ORIGINAL);
+    cporiginal_ovl->card_original = &s_card_data;
     for (i = 0; i < ARRAY_COUNT(cporiginal_ovl->image_order); i++) {
         cporiginal_ovl->image_order[i] = i;
+    }
+
+    for (j = 0; j < mCO_PAGE_NUM; j++) {
+        for (i = 0; i < mCO_ORIGINAL_NUM; i++) {
+            DCStoreRangeNoSync(&s_card_data.original[j][i].design, sizeof(mNW_original_tex_c));
+        }
     }
 }
 
@@ -770,7 +810,6 @@ extern void mCO_cporiginal_ovl_construct(Submenu* submenu) {
     if (ovl->cporiginal_ovl == NULL) {
         mem_clear((u8*)&co_ovl_data, sizeof(co_ovl_data), 0);
         ovl->cporiginal_ovl = &co_ovl_data;
-        co_ovl_data.card_original = (mCD_keep_original_c*)zelda_malloc_align(mCD_KEEP_ORIGINAL_SIZE, 32);
         mCO_clear_mark_flg(submenu);
     }
 
@@ -779,10 +818,5 @@ extern void mCO_cporiginal_ovl_construct(Submenu* submenu) {
 }
 
 extern void mCO_cporiginal_ovl_destruct(Submenu* submenu) {
-    if (co_ovl_data.card_original != NULL) {
-        zelda_free(co_ovl_data.card_original);
-        co_ovl_data.card_original = NULL;
-    }
-
     submenu->overlay->cporiginal_ovl = NULL;
 }

@@ -24,20 +24,19 @@ static void mHW_set_interrupt_message(Submenu* submenu, mTG_tag_c* tag, int msg_
 static void mHW_set_price(Submenu* submenu, u8** str) {
     mTG_tag_c* tag = &submenu->overlay->tag_ovl->tags[0];
     mSM_MenuInfo_c* menu_info = &submenu->overlay->menu_info[mSM_OVL_HANIWA];
-    u8 price_str[6];
+    u8 price_str[5];
     u32 price = Save_Get(homes[menu_info->data1]).haniwa.items[tag->tag_col].extra_data;
     int len;
     int found;
 
     submenu->overlay->haniwa_ovl->msg_price = price;
-    mFont_UnintToString(price_str, sizeof(price_str), price, sizeof(price_str) - 1, TRUE, FALSE, TRUE);
+    mFont_UnintToString(price_str, sizeof(price_str), price, sizeof(price_str), TRUE, FALSE, FALSE);
     len = mMl_strlen2(&found, price_str, sizeof(price_str), CHAR_SPACE);
     if (found == TRUE) {
         len--;
     }
     mem_copy(*str, price_str, len);
-    (*str)[len] = CHAR_SPACE;
-    *str += len + 1;
+    *str += len;
 }
 
 typedef struct {
@@ -46,49 +45,49 @@ typedef struct {
 } mHW_msg_c;
 
 static void mHW_make_cond_message(Submenu* submenu, int msg_idx) {
-    static u8 mes_ikaga[15] = "How can I help?";
-    static u8 mes_dono[11] = "Choose one.";
-    static u8 mes_dono2[15] = "May I help you?";
-    static u8 mes_oikura[9] = "How much?";
-    static u8 mes_kasiko[7] = "Got it!";
-    static u8 mes_dorewo[11] = "Choose one.";
-    static u8 mes_mou[20] = "You don't have room.";
-    static u8 mes_okane[22] = "You can't afford that.";
-    static u8 mes_maido[20] = "Thank you very much!";
-    static u8 mes_tada[11] = "That's free";
-    static u8 mes_tada2[9] = "Give Away";
-    static u8 mes_mise[20] = "That's display only.";
-    static u8 mes_beru[5] = "It's\xD3";
-    static u8 mes_beru2[5] = "Bells";
+    static u8 mes_sore[] = { CHAR_PP_014, CHAR_PP_126, CHAR_PP_025 };
+    static u8 mes_ikaga[] = { CHAR_PP_001, CHAR_PP_005, CHAR_PP_231, CHAR_PP_001, CHAR_PP_015,
+                              CHAR_PP_011, CHAR_PP_030, CHAR_PP_171, CHAR_PP_063 };
+    static u8 mes_dono[] = { CHAR_PP_245, CHAR_PP_024, CHAR_PP_096, CHAR_PP_002, CHAR_PP_021, CHAR_PP_001,
+                             CHAR_PP_015, CHAR_PP_011, CHAR_PP_030, CHAR_PP_171, CHAR_PP_063 };
+    static u8 mes_oikura[] = { CHAR_PP_004, CHAR_PP_001, CHAR_PP_007, CHAR_PP_123, CHAR_PP_021, CHAR_PP_001,
+                               CHAR_PP_015, CHAR_PP_011, CHAR_PP_030, CHAR_PP_171, CHAR_PP_063 };
+    static u8 mes_kasiko[] = { CHAR_PP_005, CHAR_PP_011, CHAR_PP_009, CHAR_PP_030,
+                               CHAR_PP_124, CHAR_PP_030, CHAR_PP_171, CHAR_PP_015 };
+    static u8 mes_dorewo[] = { CHAR_PP_245, CHAR_PP_126, CHAR_PP_194, CHAR_PP_235, CHAR_PP_123, CHAR_PP_195,
+                               CHAR_PP_021, CHAR_PP_020, CHAR_PP_124, CHAR_PP_030, CHAR_PP_171, CHAR_PP_063 };
+    static u8 mes_mou[] = { CHAR_PP_091, CHAR_PP_002, CHAR_PP_091, CHAR_PP_018,
+                            CHAR_PP_020, CHAR_PP_001, CHAR_PP_244, CHAR_PP_171 };
+    static u8 mes_okane[] = { CHAR_PP_004, CHAR_PP_005, CHAR_PP_023, CHAR_PP_231, CHAR_PP_015,
+                              CHAR_PP_124, CHAR_PP_020, CHAR_PP_001, CHAR_PP_244, CHAR_PP_171 };
+    static u8 mes_maido[] = {
+        CHAR_PP_030, CHAR_PP_001, CHAR_PP_245, CHAR_PP_000, CHAR_PP_124, CHAR_PP_244, CHAR_PP_171
+    };
+    static u8 mes_tada[] = { CHAR_PP_160, CHAR_PP_216, CHAR_PP_244, CHAR_PP_171 };
+    static u8 mes_tada2[] = { CHAR_PP_160, CHAR_PP_216, CHAR_PP_244, CHAR_PP_010, CHAR_PP_011,
+                              CHAR_PP_000, CHAR_PP_234, CHAR_PP_030, CHAR_PP_171 };
+    static u8 mes_mise[] = {
+        CHAR_PP_031, CHAR_PP_013, CHAR_PP_125, CHAR_PP_241, CHAR_PP_008, CHAR_PP_244, CHAR_PP_171
+    };
+    static u8 mes_beru[] = { CHAR_PP_224, CHAR_PP_185, CHAR_PP_244, CHAR_PP_171 };
 
     static mHW_msg_c mes_data_tbl[] = {
-        // clang-format off
-        {mes_ikaga, sizeof(mes_ikaga)},
-        {mes_dono, sizeof(mes_dono)},
-        {mes_dono2, sizeof(mes_dono2)},
-        {mes_oikura, sizeof(mes_oikura)},
-        {mes_kasiko, sizeof(mes_kasiko)},
-        {mes_dorewo, sizeof(mes_dorewo)},
-        {mes_mou, sizeof(mes_mou)},
-        {mes_okane, sizeof(mes_okane)},
-        {mes_maido, sizeof(mes_maido)},
-        {mes_tada, sizeof(mes_tada)},
-        {mes_tada2, sizeof(mes_tada2)},
-        {mes_mise, sizeof(mes_mise)},
-        {mes_beru2, sizeof(mes_beru2)},
-        // clang-format on
+        { mes_ikaga, sizeof(mes_ikaga) },   { mes_dono, sizeof(mes_dono) },     { mes_oikura, sizeof(mes_oikura) },
+        { mes_kasiko, sizeof(mes_kasiko) }, { mes_dorewo, sizeof(mes_dorewo) }, { mes_mou, sizeof(mes_mou) },
+        { mes_okane, sizeof(mes_okane) },   { mes_maido, sizeof(mes_maido) },   { mes_tada, sizeof(mes_tada) },
+        { mes_tada2, sizeof(mes_tada2) },   { mes_mise, sizeof(mes_mise) },     { mes_beru, sizeof(mes_beru) },
     };
-
-    static mHW_msg_c mes_beru_data = { mes_beru, sizeof(mes_beru) };
 
     mHW_msg_c* msg_p = &mes_data_tbl[msg_idx];
     u8* str_p = submenu->overlay->haniwa_ovl->msg;
 
     mem_clear(str_p, mHW_OVL_MSG_SIZE, CHAR_SPACE);
-    if (msg_idx == mHW_MSG_BERU2) {
-        mem_copy(str_p, mes_beru_data.str, mes_beru_data.len);
-        str_p += mes_beru_data.len;
-        mHW_set_price(submenu, &str_p);
+    if (msg_idx >= mHW_MSG_TADA) {
+        mem_copy(str_p, mes_sore, sizeof(mes_sore));
+        str_p += sizeof(mes_sore);
+        if (msg_idx == mHW_MSG_BERU2) {
+            mHW_set_price(submenu, &str_p);
+        }
     }
 
     mem_copy(str_p, msg_p->str, msg_p->len);
@@ -160,7 +159,7 @@ static int mHW_make_message_normal(Submenu* submenu, mSM_MenuInfo_c* menu_info) 
                     if (menu_info->data0 == 0) {
                         msg_idx = mHW_MSG_IKAGA;
                     } else {
-                        msg_idx = mHW_MSG_DONO2;
+                        msg_idx = mHW_MSG_DOREWO;
                     }
                 }
             } else {
@@ -309,9 +308,9 @@ static void mHW_set_message(Submenu* submenu, GAME* game, mSM_MenuInfo_c* menu_i
     mFont_SetLineStrings(
         game,
         haniwa_ovl->msg, haniwa_ovl->msg_counter,
-        160.0f + (26.0f + (menu_info->position[0] - 89.0f)), 120.0f - ((97.0f + menu_info->position[1]) - 11.0f),
+        160.0f + (25.25f + (menu_info->position[0] - 89.0f)), 120.0f - ((97.0f + menu_info->position[1]) - 10.0f),
         45, 50, 0, 255,
-        FALSE, TRUE,
+        FALSE, FALSE,
         0.875f, 0.875f,
         mFont_MODE_POLY
     );
@@ -361,8 +360,6 @@ static void mHW_haniwa_ovl_init(Submenu* submenu) {
             break;
         case 1:
             haniwa_ovl->msg_interrupt_idx = mHW_MSG_DOREWO;
-            haniwa_ovl->table_idx = mTG_TABLE_HANIWA;
-            haniwa_ovl->sub_idx = 0;
             haniwa_ovl->msg_time = 120;
             break;
     }

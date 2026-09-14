@@ -8,6 +8,9 @@
 #include "m_hand_ovl.h"
 #include "m_malloc.h"
 
+static mNW_Ovl_c nw_ovl_data;
+static mNW_Ovl_c old_nw_ovl_data;
+
 static int mNW_with_cporiginal_check(Submenu* submenu) {
     switch (submenu->overlay->menu_info[mSM_OVL_NEEDLEWORK].data0) {
         case mNW_OPEN_CPORIGINAL:
@@ -182,6 +185,34 @@ extern void mNW_next_data(Submenu* submenu) {
     for (i = 0; i < mNW_DESIGN_COUNT; i++) {
         mNW_CopyOriginalTextureClass(&Now_Private->my_org[i], &needlework_ovl->my_org[i]);
     }
+}
+
+extern void mNW_next_data_new(void) {
+    mNW_Ovl_c* needlework_ovl = &nw_ovl_data;
+    int i;
+    bcopy(needlework_ovl->my_org_no_table, Now_Private->my_org_no_table, mNW_DESIGN_COUNT * sizeof(u8));
+    for (i = 0; i < mNW_DESIGN_COUNT; i++) {
+        mNW_CopyOriginalTextureClass(&Now_Private->my_org[i], &needlework_ovl->my_org[i]);
+    }
+}
+
+extern void mNW_repair_data(void) {
+    mNW_Ovl_c* needlework_ovl = &old_nw_ovl_data;
+    int i;
+    bcopy(needlework_ovl->my_org_no_table, Now_Private->my_org_no_table, mNW_DESIGN_COUNT * sizeof(u8));
+    for (i = 0; i < mNW_DESIGN_COUNT; i++) {
+        mNW_CopyOriginalTextureClass(&Now_Private->my_org[i], &needlework_ovl->my_org[i]);
+    }
+}
+
+static void mNW_init_data(mNW_Ovl_c* needlework_ovl) {
+    int i;
+    mem_clear((u8*)needlework_ovl, sizeof(mNW_Ovl_c), 0);
+    bcopy(Now_Private->my_org, needlework_ovl->my_org, sizeof(Now_Private->my_org));
+    for (i = 0; i < mNW_DESIGN_COUNT; i++) {
+        DCStoreRangeNoSync(needlework_ovl->my_org[i].design.data, mNW_DESIGN_TEX_SIZE);
+    }
+    bcopy(Now_Private->my_org_no_table, needlework_ovl->my_org_no_table, mNW_DESIGN_COUNT * sizeof(u8));
 }
 
 static void mNW_move_Move(Submenu* submenu, mSM_MenuInfo_c* menu_info) {
@@ -456,21 +487,6 @@ static void mNW_set_frame_dl_cpo(Submenu* submenu, GAME* game, mSM_MenuInfo_c* m
 
     mNW_draw_sav_mark_before(game);
 
-// TODO: I don't like this devation. It's probably fake.
-#if VERSION >= VER_GAFU01_00
-    {
-        s16* y_p = mark_table_y;
-        s16* x_p = mark_table_x;
-        int j;
-        for (j = 0; j < mNW_DESIGN_COUNT; j++, y_p++, x_p++) {
-            if (mNW_check_mark_flg(submenu, j)) {
-                Matrix_push();
-                mNW_draw_sav_mark(game, *x_p, *y_p);
-                Matrix_pull();
-            }
-        }
-    }
-#else
     for (j = 0; j < mNW_DESIGN_COUNT; j++) {
         if (mNW_check_mark_flg(submenu, j)) {
             Matrix_push();
@@ -478,7 +494,6 @@ static void mNW_set_frame_dl_cpo(Submenu* submenu, GAME* game, mSM_MenuInfo_c* m
             Matrix_pull();
         }
     }
-#endif
 }
 
 static void mNW_needlework_ovl_draw(Submenu* submenu, GAME* game) {
@@ -519,14 +534,8 @@ static void mNW_needlework_ovl_init(Submenu* submenu) {
     overlay->menu_control.animation_flag = FALSE;
     menu_info->proc_status = mSM_OVL_PROC_MOVE;
     menu_info->next_proc_status = mSM_OVL_PROC_PLAY;
-    mem_clear((u8*)overlay->needlework_ovl, sizeof(mNW_Ovl_c), 0);
-    bcopy(Now_Private->my_org, overlay->needlework_ovl->my_org, sizeof(Now_Private->my_org));
-
-    for (i = 0; i < mNW_DESIGN_COUNT; i++) {
-        DCStoreRangeNoSync(overlay->needlework_ovl->my_org[i].design.data, mNW_DESIGN_TEX_SIZE);
-    }
-
-    bcopy(Now_Private->my_org_no_table, overlay->needlework_ovl->my_org_no_table, mNW_DESIGN_COUNT * sizeof(u8));
+    mNW_init_data(overlay->needlework_ovl);
+    mNW_init_data(&old_nw_ovl_data);
 
     switch (menu_info->data0) {
         case mNW_OPEN_CPORIGINAL:
@@ -554,7 +563,7 @@ extern void mNW_needlework_ovl_construct(Submenu* submenu) {
     mNW_Ovl_c** nw_ovl_p = &submenu->overlay->needlework_ovl;
 
     if (*nw_ovl_p == NULL) {
-        *nw_ovl_p = (mNW_Ovl_c*)zelda_malloc_align(sizeof(mNW_Ovl_c), 32);
+        *nw_ovl_p = &nw_ovl_data;
     }
 
     mNW_needlework_ovl_init(submenu);
@@ -562,11 +571,5 @@ extern void mNW_needlework_ovl_construct(Submenu* submenu) {
 }
 
 extern void mNW_needlework_ovl_destruct(Submenu* submenu) {
-    mNW_Ovl_c* nw_ovl = submenu->overlay->needlework_ovl;
-
-    if (nw_ovl != NULL) {
-        zelda_free(nw_ovl);
-    }
-
     submenu->overlay->needlework_ovl = NULL;
 }
