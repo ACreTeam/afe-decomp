@@ -81,6 +81,7 @@ public:
     void createIFDExif();
     void createIFD1();
     void createThumbnail();
+    void createMainImage();
 
     void create(u8* buffer);
     bool getInfo(u8* buffer);
@@ -118,8 +119,28 @@ public:
     u32 getImageWidth() const { return mIFD0.mImageWidth; }
     u32 getImageHeight() const { return mIFD0.mImageHeight; }
     u32 getCompression() const { return mIFD0.mCompression; }
+    u8* getStripOffsets() const { return mStripOffsetsArr; }
+    u8* getStripByteCounts() const { return mStripByteCountsArr; }
     
 private:
+    bool getInfo_subroutine(u8* buffer, bool full);
+    u32 readEntry_1data(u8* entry) const {
+        u16 type = readShort(entry + 2);
+        if (type == ETYPE_BYTE) return (u32)(entry + 8);
+        if (type == ETYPE_SHORT) return readShort(entry + 8);
+        if (type == ETYPE_LONG) return readLong(entry + 8);
+        if (type == ETYPE_SLONG) return readLong(entry + 8);
+        return 0;
+    }
+    void readEntry_string(u8* entry, const char** value);
+    void readEntry_array(u8* entry, u8** value, int* count) {
+        *count = readLong(entry + 4);
+        if (*count <= 4) {
+            if (value) *value = entry + 8;
+        } else {
+            if (value) *value = mBuffer + readLong(entry + 8);
+        }
+    }
     void storeEntry_1data(u16 tag, EType type, u32 value);
     void storeEntry_multidata(u8* buffer, u16 tag, void* value);
     void storeEntry_rational(u8* buffer, u16 tag, u32 numerator, u32 denominator);
@@ -160,28 +181,25 @@ private:
     void writeLong(u8* buffer, u32 value) const {
         if (mByteOrder == JUTTiff_BYTE_ORDER_BIG) {
             buffer[0] = value >> 24;
-            buffer[1] = value >> 16;
-            buffer[2] = value >> 8;
+            buffer[1] = (value >> 16) & 0xFF;
+            buffer[2] = (value >> 8) & 0xFF;
             buffer[3] = value & 0xFF;
         } else {
             buffer[0] = value & 0xFF;
-            buffer[1] = value >> 8;
-            buffer[2] = value >> 16;
+            buffer[1] = (value >> 8) & 0xFF;
+            buffer[2] = (value >> 16) & 0xFF;
             buffer[3] = value >> 24;
         }
     }
 
     u8* findTag(u8* buffer, u16 tag) const {
-        // Read the number of entries in this IFD block
         u16 numEntries = readShort(buffer);
-        u8* entryPtr = buffer + sizeof(u16);
-
-        // This loop is the issue
-        for (int i = 0; i < numEntries; i++, entryPtr += JUTTiff_IFDEntrySize) {
-            u16 tagValue = readShort(entryPtr);
+        buffer += sizeof(u16);
+        for (int i = 0; i < numEntries; i++, buffer += JUTTiff_IFDEntrySize) {
+            u16 tagValue = readShort(buffer);
             
             if (tagValue == tag) {
-                return entryPtr;
+                return buffer;
             }
         }
 
@@ -190,7 +208,7 @@ private:
 
     /* 0x00 */ JUTTiff_IFD0 mIFD0;
     // Revision 0 copies these metadata pairs as aggregates.
-#if VERSION == GAEJ01_00
+#if VERSION == VER_GAEJ01_00
     struct {
         /* 0x38 */ const char* mDateOriginal;
         /* 0x3C */ const char* mDateDigitalized;
