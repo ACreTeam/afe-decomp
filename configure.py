@@ -628,7 +628,7 @@ config.libs = [
             Object(NonMatching, "JSystem/JUtility/carddrv.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
 
             Object(Matching, "JSystem/JUtility/EXIBios.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-O3,p", "-inline all"]),
-            Object(NonMatching, "JSystem/JUtility/JUTTiff.cpp", mw_version="GC/1.3"),
+            Object(Matching, "JSystem/JUtility/JUTTiff.cpp", mw_version="GC/1.3"),
         ],
     ),
         {

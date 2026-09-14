@@ -7,32 +7,29 @@
 #include "_mem.h"
 #include <dolphin/gx.h>
 
-static char emptyCopyrightStr[] = " ";
+static inline u32 makeCopyright(const char* photoStr, const char* editorStr, void*& result) {
+    u32 photoLen = photoStr != nullptr ? strlen(photoStr) : 0;
+    u32 editorLen = editorStr != nullptr ? strlen(editorStr) : 0;
 
-const char* title = "TIFF_Sample";
-const char* maker = "Nintendo";
-const char* model = "Gamecube";
-const char* copyright_p = "(C)2003 Nintendo. All rights reserved.";
-const char* copyright_e = "";
-const char* date = "2003:04:01 12:00:00";
-const char* date_original = "2003:04:01 12:00:00";
-const char* date_digitalized = "2003:04:01 12:00:00";
+    // Allocate memory for the concatenated copyright string
+    void* copyrightStr = JKRAllocFromSysHeap(photoLen + editorLen + 8, 0);
+    result = copyrightStr;
 
-inline JUTTiff_IFD0::JUTTiff_IFD0() {
-    _00 = 0;
-    _04 = 0;
-    mImageWidth = 640;
-    mImageHeight = 480;
-    mCompression = JUTTiff_COMPRESSION_UNCOMPRESSED;
-    mTitle = title;
-    mMaker = maker;
-    mModel = model;
-    mSoftware = nullptr;
-    mArtist = nullptr;
-    mCopyrightPhotographer = copyright_p;
-    mCopyrightEditor = copyright_e;
-    mDateModified = date;
-    mRowsPerStrip = 5;
+    strcpy((char*)copyrightStr, photoLen != 0 ? photoStr : " ");
+
+    u32 copyrightTotalLen = photoLen != 0 ? photoLen + 1 : 2;
+    if (editorStr != nullptr) {
+        strcpy((char*)copyrightStr + copyrightTotalLen, editorStr);
+        copyrightTotalLen = editorLen + copyrightTotalLen;
+        copyrightTotalLen++;
+    }
+    return copyrightTotalLen;
+}
+
+// needed for data ordering so that " " loads first
+static void __fake() {
+    void* tmp;
+    makeCopyright(nullptr, nullptr, tmp);
 }
 
 void JUTTiff::storeEntry_1data(u16 tag, EType type, u32 value) {
@@ -112,7 +109,8 @@ inline void JUTTiff::storeEntry_n_ascii(u8* buffer, u16 tag, u8* ascii, int len)
 
     u8* entryPtr = findTag(buffer, tag);
     writeLong(entryPtr + 8, (u32)(m_IFDEntryAddr - mBuffer));
-    for (; len != 0; len--) {
+    int count = len;
+    for (; count != 0; count--) {
         *m_IFDEntryAddr++ = *ascii++;
     }
     while (((uintptr_t)m_IFDEntryAddr - (uintptr_t)mBuffer) & 1) {
@@ -226,6 +224,32 @@ void JUTTiff::prepEntry_undefined(u16 tag, int length, u8* undefined) {
     mNumIFDEntries++;
 }
 
+const char* title = "TIFF_Sample";
+const char* maker = "Nintendo";
+const char* model = "Gamecube";
+const char* copyright_p = "(C)2003 Nintendo. All rights reserved.";
+const char* copyright_e = "";
+const char* date = "2003:04:01 12:00:00";
+const char* date_original = "2003:04:01 12:00:00";
+const char* date_digitalized = "2003:04:01 12:00:00";
+
+inline JUTTiff_IFD0::JUTTiff_IFD0() {
+    _00 = 0;
+    _04 = 0;
+    mImageWidth = 640;
+    mImageHeight = 480;
+    mCompression = JUTTiff_COMPRESSION_UNCOMPRESSED;
+    mTitle = title;
+    mMaker = maker;
+    mModel = model;
+    mSoftware = nullptr;
+    mArtist = nullptr;
+    mCopyrightPhotographer = copyright_p;
+    mCopyrightEditor = copyright_e;
+    mDateModified = date;
+    mRowsPerStrip = 5;
+}
+
 // TODO: dunno if IFD0 actually has a ctor, seems to match with or without it.
 JUTTiff::JUTTiff() : mIFD0() {
     // mIFD0._00 = 0;
@@ -308,25 +332,6 @@ void JUTTiff::setXluImagePos(int x, int y) {
     mXluImageY = y;
 }
 
-static inline u32 makeCopyright(const char* photoStr, const char* editorStr, void*& result) {
-    u32 photoLen = photoStr != nullptr ? strlen(photoStr) : 0;
-    u32 editorLen = editorStr != nullptr ? strlen(editorStr) : 0;
-
-    // Allocate memory for the concatenated copyright string
-    void* copyrightStr = JKRAllocFromSysHeap(photoLen + editorLen + 8, 0);
-
-    strcpy((char*)copyrightStr, photoLen != 0 ? photoStr : emptyCopyrightStr);
-
-    u32 copyrightTotalLen = photoLen != 0 ? photoLen + 1 : 2;
-    if (editorStr != nullptr) {
-        strcpy((char*)copyrightStr + copyrightTotalLen, editorStr);
-        copyrightTotalLen = editorLen + copyrightTotalLen;
-        copyrightTotalLen++;
-    }
-    result = copyrightStr;
-    return copyrightTotalLen;
-}
-
 void JUTTiff::createIFD0() {
     // 1. Initialize Header Pointers
     mIFDAddr = m_IFDEntryAddr;
@@ -336,7 +341,7 @@ void JUTTiff::createIFD0() {
     m_IFDEntryAddr += 2;
 
     void* copyrightStr;
-    u32 copyrightTotalLen = makeCopyright(mIFD0.mCopyrightPhotographer, mIFD0.mCopyrightEditor, copyrightStr);
+    int copyrightTotalLen = makeCopyright(mIFD0.mCopyrightPhotographer, mIFD0.mCopyrightEditor, copyrightStr);
 
     // --- Write Directory Entries (Tags) ---
 
@@ -508,8 +513,8 @@ void JUTTiff::createIFD1() {
     mNextIFDAddr = m_IFDEntryAddr;
     u8* nextIfdOffsetPtr = mIFDAddr;
     u16 numEntriesIFD0 = readShort(nextIfdOffsetPtr);
-    nextIfdOffsetPtr = nextIfdOffsetPtr + (int)(numEntriesIFD0 * JUTTiff_IFDEntrySize);
-    writeLong(nextIfdOffsetPtr + 2, (u32)(m_IFDEntryAddr - mBuffer));
+    nextIfdOffsetPtr += numEntriesIFD0 * JUTTiff_IFDEntrySize + 2;
+    writeLong(nextIfdOffsetPtr, (u32)(m_IFDEntryAddr - mBuffer));
 
     // 2. Initialize IFD1 Pointers
     _58 = m_IFDEntryAddr;
@@ -607,14 +612,6 @@ static inline u32 tiffReadLong(u8* buffer, int byteOrder) {
     return (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
 }
 
-static inline u32 tiffRgb565Offset(u32 width, u16 x, int y) {
-    u32 offset = width * ((y & 0xFFFC) * 8) / 4;
-    offset += (x & 0xFFFC) * 8;
-    offset += (x & 3) * 2;
-    offset += (y & 3) * 8;
-    return offset;
-}
-
 struct TiffRGB { u8 r, g, b; };
 
 static inline void tiffRgb565Read(u8* src, u8* dst) {
@@ -632,8 +629,8 @@ void JUTTiff::createMainImage() {
     u32 second = readLong(counts + 8);
     counts = mBuffer;
     counts += second;
-    u32 offset = m_IFDEntryAddr - mBuffer;
     u32 stripSize = mIFD0.mRowsPerStrip * (mIFD0.mImageWidth * 3);
+    u32 offset = m_IFDEntryAddr - mBuffer;
     for (int i = 0; i < mStripCount; i++) {
         writeLong(offsets, offset);
         offsets += 4;
@@ -654,7 +651,8 @@ void JUTTiff::createMainImage() {
                             *m_IFDEntryAddr++ = *src++;
                             *m_IFDEntryAddr++ = *src++;
                         } else {
-                            src = mImageArea + tiffRgb565Offset(mIFD0.mImageWidth, x, y);
+                            src = mImageArea + mIFD0.mImageWidth * ((y & 0xFFFC) * 8) / 4 +
+                                  ((u16)x & 0xFFFC) * 8 + ((u16)x & 3) * 2 + (y & 3) * 8;
                             tiffRgb565Read(src, m_IFDEntryAddr);
                             m_IFDEntryAddr += 3;
                         }
@@ -673,7 +671,8 @@ void JUTTiff::createMainImage() {
         if (mXluImageArea) {
             u32 useKey;
             int pixelSize = mXluImageCompType == GX_S8 ? 3 : 2;
-            useKey = _A8 != 0xFFFFFFFF;
+            useKey = _A8;
+            useKey = ((0xFFFFFFFF - useKey) | (useKey + 1)) >> 31;
             u8 keyR, keyG, keyB;
             if (pixelSize == 3) {
                 u32 red = (_A8 >> 16) & 255;
@@ -692,8 +691,9 @@ void JUTTiff::createMainImage() {
                         if (mImageAreaCompType == GX_S8) {
                             r = *src++; g = *src++; b = *src++;
                         } else {
-                            src = mImageArea + tiffRgb565Offset(mIFD0.mImageWidth, x, y);
-                            u8 hi = *src++; u8 lo = *src;
+                            src = mImageArea + mIFD0.mImageWidth * ((y & 0xFFFC) * 8) / 4 +
+                                  ((u16)x & 0xFFFC) * 8 + ((u16)x & 3) * 2 + (y & 3) * 8;
+                            u8 hi = *src++; u8 lo = *src & 0xFF;
                             r = (hi & 0xF8) | (hi >> 5);
                             g = ((hi >> 1) & 3) | ((hi << 5) | (lo >> 3));
                             b = (lo << 3) | ((lo >> 2) & 3);
@@ -705,10 +705,15 @@ void JUTTiff::createMainImage() {
                     }
                     if (mXluImageX <= x && x < mXluImageX + mXluImageWidth &&
                         mXluImageY <= y && y < mXluImageY + mXluImageHeight) {
+                        bool transparent;
                         u8* decal;
-                        if (pixelSize == 2) decal = mXluImageArea + tiffRgb565Offset(mXluImageWidth, x - mXluImageX, y - mXluImageY);
+                        if (pixelSize == 2) {
+                            decal = mXluImageArea + mXluImageWidth * (((y - mXluImageY) & 0xFFFC) * 8) / 4 +
+                                    ((u16)(x - mXluImageX) & 0xFFFC) * 8 + ((u16)(x - mXluImageX) & 3) * 2 +
+                                    ((y - mXluImageY) & 3) * 8;
+                        }
                         else decal = mXluImageArea + ((x - mXluImageX) + mXluImageWidth * (y - mXluImageY)) * 3;
-                        bool transparent = false;
+                        transparent = false;
                         if (useKey && decal[0] == keyR && decal[1] == keyG && (pixelSize == 2 || decal[2] == keyB)) transparent = true;
                         if (!transparent) {
                             u8 color[3];
@@ -732,9 +737,7 @@ void JUTTiff::createMainImage() {
 }
 
 static inline u32 tiffStripCount(u32 height, u32 rows) {
-    int rounded = rows - 1;
-    rounded = height + rounded;
-    return rounded / rows;
+    return (height + rows - 1) / rows;
 }
 
 void JUTTiff::create(u8* buffer) {
@@ -764,51 +767,53 @@ u8 defaultTimgData[32] = {
 
 static inline u8* tiffTileAddress(u8* buffer, u32 width, u32 x, u32 y, int blockSize) {
     u32 row = width * (((int)(y & 0xFFFC) / 4) * blockSize) / 4;
-    u32 column = ((int)(x & 0xFFFC) / 4) * blockSize + (x & 3) * 2 + (y & 3) * 8;
-    return buffer + row + column;
+    return buffer + row + ((int)(x & 0xFFFC) / 4) * blockSize + (x & 3) * 2 + (y & 3) * 8;
 }
 
 int JUTTiff::convertTiffToTimg(u8* src, u8* dst, GXTexFmt format) {
     JUTTiff tiff;
-    int strip;
-    u32 width;
+    u32 endY;
+    u16* outRGBA;
+    u16* outRGB;
     u32 y;
     u32 height;
+    u32 width;
     u8* offsets;
     u8* counts;
     u32 startY;
+    int strip;
     u8* pixel;
     u32 x;
-    u32 rows;
     u32 size;
     tiff.getInfo(src);
     memcpy(dst, defaultTimgData, 32);
     switch (format) { case GX_TF_RGBA8: dst[0] = GX_TF_RGBA8; break; case GX_TF_RGB565: dst[0] = GX_TF_RGB565; break; default: return 0; }
     width = tiff.getImageWidth();
-    height = tiff.getImageHeight();
+    height = tiff.mIFD0.mImageHeight;
     dst[2] = width >> 8; dst[3] = width;
     dst[4] = height >> 8; dst[5] = height;
-    if (width & 31) { OSReport("Err: sizeX=%d"); return 0; }
+    if (width & 31) { OSReport("Err: sizeX=%d", width); return 0; }
     offsets = tiff.getStripOffsets();
     counts = tiff.getStripByteCounts();
     startY = 0;
     for (strip = 0; strip < tiff.mStripCount; strip++) {
         pixel = tiff.mBuffer + tiff.readLong(offsets);
         size = tiff.readLong(counts);
-        rows = size / width;
-        if (size % width) { OSReport("Err: sizeX=%d size=%d"); return 0; }
-        for (y = startY; y < startY + rows; y++) {
+        const u32 rows = size / width;
+        if (size % width) { OSReport("Err: sizeX=%d size=%d", width, size); return 0; }
+        endY = startY + rows;
+        for (y = startY; y < endY; y++) {
             if (y >= height) break;
             for (x = 0; x < width; x += 4) {
                 switch (format) {
                 case GX_TF_RGBA8: {
-                    u16* out = (u16*)tiffTileAddress(dst + 32, width, x, y, 64);
-                    for (int i = 0; i < 4; i++) { out[0] = 0xFF00 | pixel[0]; out[16] = (pixel[1] << 8) | pixel[2]; out++; pixel += 3; }
+                    outRGBA = (u16*)tiffTileAddress(dst + 32, width, x, y, 64);
+                    for (int i = 0; i < 4; i++) { outRGBA[0] = 0xFF00 | pixel[0]; outRGBA[16] = (pixel[1] << 8) | pixel[2]; outRGBA++; pixel += 3; }
                     break;
                 }
                 case GX_TF_RGB565: {
-                    u16* out = (u16*)tiffTileAddress(dst + 32, width, x, y, 32);
-                    for (int i = 0; i < 4; i++) { *out++ = ((pixel[0] & 0xF8) << 8) | ((pixel[1] & 0xFC) << 3) | (pixel[2] >> 3); pixel += 3; }
+                    outRGB = (u16*)tiffTileAddress(dst + 32, width, x, y, 32);
+                    for (int i = 0; i < 4; i++) { *outRGB++ = ((pixel[0] & 0xF8) << 8) | ((pixel[1] & 0xFC) << 3) | (pixel[2] >> 3); pixel += 3; }
                     break;
                 }
                 }
