@@ -597,6 +597,7 @@ config.libs = [
             Object(Matching, "JSystem/JUtility/JUTResFont.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTVideo.cpp"),
             Object(NonMatching, "JSystem/JUtility/JUTXfb.cpp"),
+            Object(Matching, "JSystem/JUtility/JUTGba.cpp"),
             Object(Matching, "JSystem/JUtility/JUTSDDrive.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),
             Object(Matching, "JSystem/JUtility/fs_vara.c", mw_version="GC/1.2.5n", cflags=[*cflags_base, "-inline all"]),
             Object(MatchingFor("GAEJ01_00"), "JSystem/JUtility/JUTSDFile.cpp", extra_cflags=["-O4,p", "-RTTI on", "-inline auto", "-enum int"]),

@@ -3,6 +3,10 @@
 
 #include <dolphin/hw_regs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CHAN_NONE -1
 
 #define SI_MAX_CHAN 4
@@ -92,5 +96,9 @@ void __SITestSamplingRate(u32 tvmode);
 #endif
 
 extern u32 __PADFixBits;
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif // _DOLPHIN_OSSERIAL_H
