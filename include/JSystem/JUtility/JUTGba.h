@@ -59,7 +59,7 @@ struct JUTGbaThreadVar {
 class JUTGba {
 public:
     static JUTGba* create(JUTGba*);
-    static JUTGba* getManager();
+    static JUTGba* getManager() { return sManager; }
 
     void doJoyBoot(int, s32, s32, u8*, u32, JUTGbaCallback, void*);
     s32 resultJoyBoot(int, u8*);
@@ -74,6 +74,7 @@ public:
     void doGetStatus(int, JUTGbaCallback, void*);
     s32 resultGetStatus(int, u8*);
 
+private:
     static void* gbaThreadMain(void*);
     void gbaThread_sleep(OSTime);
     void gbaThread_Destroy(JUTGbaThreadVar*);
