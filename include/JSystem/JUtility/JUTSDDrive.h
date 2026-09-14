@@ -20,11 +20,15 @@ enum JUTSeekPathResult {
 };
 
 class JUTSDCardFinder : public JKRFileFinder {
+  public:
     JUTSDCardFinder(const char* path);
 
     virtual ~JUTSDCardFinder();
     virtual bool findNextFile(); // _0C
 
+    const char* getPathName() const { return mUnk_18.unk_00; }
+
+  private:
     // _00     = VTBL
     // _00-_14 = JKRFileFinder
     SDDirInfo* mUnk_14; // _14
@@ -45,6 +49,11 @@ struct JUTSDDrive {
     static u16 setCurrentDirectory(int nDrive, const char* path);
     static u16 makeDirectory(int nDrive, const char* newDirName);
     static u16 expandPath(int nDrive, const char* src, char* dest);
+
+    static int getCurrentDrive() { return sCurrentDrive; }
+    static void setCurrentDrive(int drive) { sCurrentDrive = drive; }
+    static u16 setCurrentDirectory(const char* path) { return setCurrentDirectory(sCurrentDrive, path); }
+    static u16 makeDirectory(const char* path) { return makeDirectory(sCurrentDrive, path); }
 
     static bool IsInitialized() {
         return sInitialized;

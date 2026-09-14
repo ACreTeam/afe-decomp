@@ -49,7 +49,7 @@ dvderr.c:
 	.data       start:0x800D7E60 end:0x800DFDB0
 	.bss        start:0x801070D8 end:0x801074D0
 
-m_sdcard.c:
+m_sdcard.cpp:
 	.text       start:0x80009790 end:0x8000CA0C
 	.text       start:0x8000CA0C end:0x8000CA1C
 	.text       start:0x8000CA1C end:0x8000CAA0

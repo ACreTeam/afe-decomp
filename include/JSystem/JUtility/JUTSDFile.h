@@ -4,6 +4,7 @@
 #include "types.h"
 #include "JSystem/JKernel/JKRFile.h"
 #include "JSystem/JUtility/fs_file.h"
+#include "JSystem/JUtility/JUTSDDrive.h"
 
 class JUTSDFile : public JKRFile {
   public:
@@ -17,6 +18,8 @@ class JUTSDFile : public JKRFile {
     virtual u32 getFileSize() const;
 
     bool open(int nDrive, const char* param2, u16 param3);
+    bool open(const char* path, u16 mode) { return open(JUTSDDrive::getCurrentDrive(), path, mode); }
+    u16 getErrorStatus() const { return mUnk_26; }
 
   private:
     u16 mUnk_1C;   // _1C

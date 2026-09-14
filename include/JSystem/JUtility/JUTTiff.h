@@ -73,7 +73,6 @@ public:
     };
 
     JUTTiff();
-    ~JUTTiff() {}
 
     void setImageArea(u8* buffer, int width, int height, GXCompType compType);
     void setXluImageArea(u8* buffer, GXCompType compType, int width, int height, float transparency, u32 param_6);
@@ -82,6 +81,39 @@ public:
     void createIFDExif();
     void createIFD1();
     void createThumbnail();
+
+    void create(u8* buffer);
+    bool getInfo(u8* buffer);
+    static int convertTiffToTimg(u8* src, u8* dst, GXTexFmt format);
+
+    u32 getFileSize() const { return mFileSize; }
+#if VERSION == 0
+    void setDate_digitized(u8* date) { mDates.mDateDigitalized = (const char*)date; }
+    void setDate_original(u8* date) { mDates.mDateOriginal = (const char*)date; }
+    void setDate_modified(u8* date) { mIFD0.mDateModified = (const char*)date; }
+    void setComment(u8* comment, int length) { mCommentInfo.mComment = (const char*)comment; mCommentInfo.mCommentLength = length; }
+#else
+    void setDate_digitized(u8* date) { mDateDigitalized = (const char*)date; }
+    void setDate_original(u8* date) { mDateOriginal = (const char*)date; }
+    void setDate_modified(u8* date) { mIFD0.mDateModified = (const char*)date; }
+    void setComment(u8* comment, int length) { mComment = (const char*)comment; mCommentLength = length; }
+#endif
+    void setArtist(u8* artist) { mIFD0.mArtist = (const char*)artist; }
+    void setSoftware(u8* software) { mIFD0.mSoftware = (const char*)software; }
+    void setCopyright_photographer(u8* copyright) { mIFD0.mCopyrightPhotographer = (const char*)copyright; }
+    void setCopyright_editor(u8* copyright) { mIFD0.mCopyrightEditor = (const char*)copyright; }
+    void setCopyright(u8* photographer, u8* editor) {
+        setCopyright_photographer(photographer);
+        setCopyright_editor(editor);
+    }
+    void setModel(u8* model) { mIFD0.mModel = (const char*)model; }
+    void setMaker(u8* maker) { mIFD0.mMaker = (const char*)maker; }
+    void setTitle(u8* title) { mIFD0.mTitle = (const char*)title; }
+    void setThumbnailIncluding(bool include) { mThumbnailIncluding = include; }
+    void setDecalImagePos(int x, int y) { setXluImagePos(x, y); }
+    void setDecalImageArea(u8* buffer, GXCompType type, int width, int height, u32 color) {
+        setXluImageArea(buffer, type, width, height, 1.0f, color);
+    }
     
     u32 getImageWidth() const { return mIFD0.mImageWidth; }
     u32 getImageHeight() const { return mIFD0.mImageHeight; }
@@ -157,12 +189,28 @@ private:
     }
 
     /* 0x00 */ JUTTiff_IFD0 mIFD0;
+    // Revision 0 copies these metadata pairs as aggregates.
+#if VERSION == GAEJ01_00
+    struct {
+        /* 0x38 */ const char* mDateOriginal;
+        /* 0x3C */ const char* mDateDigitalized;
+    } mDates;
+    struct {
+        /* 0x40 */ const char* mComment;
+        /* 0x44 */ int mCommentLength;
+    } mCommentInfo;
+    struct {
+        /* 0x48 */ int mThumbnailWidth;
+        /* 0x4C */ int mThumbnailHeight;
+    } mThumbnailSize;
+#else
     /* 0x38 */ const char* mDateOriginal;
     /* 0x3C */ const char* mDateDigitalized;
     /* 0x40 */ const char* mComment;
     /* 0x44 */ int mCommentLength;
     /* 0x48 */ int mThumbnailWidth;
     /* 0x4C */ int mThumbnailHeight;
+#endif
     /* 0x50 */ u8* mBuffer;
     /* 0x54 */ u8* m_IFDEntryAddr; // current entry
     /* 0x58 */ u8* _58;

@@ -348,7 +348,7 @@ def MatchingFor(*versions):
 config.warn_missing_config = True
 config.warn_missing_source = False
 config.libs = [
-        DolphinLib(
+    DolphinLib(
         "ai",
         [
             Object(MatchingFor(), "GAEJ01_00/dolphin/ai/ai.c"),
@@ -782,7 +782,17 @@ config.libs = [
             # Object(Matching, "libforest/ReconfigBATs.c"),
         ],
     },
-        {
+    {
+        "lib": "static",
+        "mw_version": config.linker_version,
+        "cflags": cflags_static,
+        "progress_category": "game",
+        "src_dir": "src/static",
+        "objects": [
+            Object(Matching, "m_sdcard.cpp", extra_cflags=["-lang=c++", "-inline off", "-sdata 0", "-sdata2 0", "-sym on"]),
+        ],
+    },
+    {
         "lib": "libu64",
         "mw_version": config.linker_version,
         "cflags": cflags_static,

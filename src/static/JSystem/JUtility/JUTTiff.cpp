@@ -238,12 +238,21 @@ JUTTiff::JUTTiff() : mIFD0() {
     // mIFD0.mDateModified = date;
     // mIFD0.mRowsPerStrip = 5;
 
+#if VERSION == GAEJ01_00
+    mDates.mDateOriginal = date_original;
+    mDates.mDateDigitalized = date_digitalized;
+    mCommentInfo.mComment = nullptr;
+    mCommentInfo.mCommentLength = 0;
+    mThumbnailSize.mThumbnailWidth = 160;
+    mThumbnailSize.mThumbnailHeight = 120;
+#else
     mDateOriginal = date_original;
     mDateDigitalized = date_digitalized;
     mComment = nullptr;
     mCommentLength = 0;
     mThumbnailWidth = 160;
     mThumbnailHeight = 120;
+#endif
     mImageArea = nullptr;
     mImageAreaSize = 0;
     _AC = 0;
@@ -433,9 +442,15 @@ void JUTTiff::createIFDExif() {
     // --- Write Directory Entries (Tags) ---
 
     prepEntry_undefined(0x9000, 4, exifVersion);                  // ExifVersion
+#if VERSION == 0
+    prepEntry_ascii(0x9003, (u8*)mDates.mDateOriginal);                  // DateTimeOriginal
+    prepEntry_ascii(0x9004, (u8*)mDates.mDateDigitalized);               // DateTimeDigitized
+    prepEntry_undefined(0x9286, mCommentInfo.mCommentLength, (u8*)mCommentInfo.mComment);   // UserComment
+#else
     prepEntry_ascii(0x9003, (u8*)mDateOriginal);                  // DateTimeOriginal
     prepEntry_ascii(0x9004, (u8*)mDateDigitalized);               // DateTimeDigitized
     prepEntry_undefined(0x9286, mCommentLength, (u8*)mComment);   // UserComment
+#endif
     
     // SubSec strings are 4 bytes with null-terminator, so they fit inline
     prepEntry_ascii(0x9290, (u8*)"000");                          // SubSecTime
@@ -457,17 +472,31 @@ void JUTTiff::createIFDExif() {
 
     u8* data = _64;
     
+#if VERSION == 0
+    if (mDates.mDateOriginal != nullptr) {
+        storeEntry_ascii(data, 0x9003, (u8*)mDates.mDateOriginal);
+#else
     if (mDateOriginal != nullptr) {
         storeEntry_ascii(data, 0x9003, (u8*)mDateOriginal);
+#endif
     }
 
+#if VERSION == 0
+    if (mDates.mDateDigitalized != nullptr) {
+        storeEntry_ascii(data, 0x9004, (u8*)mDates.mDateDigitalized);
+#else
     if (mDateDigitalized != nullptr) {
         storeEntry_ascii(data, 0x9004, (u8*)mDateDigitalized);
+#endif
     }
     
     // ETYPE_UNDEFINED copies bytes exactly like ASCII, so we can reuse the n_ascii method
     // Dunno why this one is missing a check for nullptr
+#if VERSION == 0
+    storeEntry_n_ascii_nochk(data, 0x9286, (u8*)mCommentInfo.mComment, mCommentInfo.mCommentLength);
+#else
     storeEntry_n_ascii_nochk(data, 0x9286, (u8*)mComment, mCommentLength);
+#endif
 
     // Initialize the NextIFD Offset field to 0
     writeLong(_60, 0);
@@ -541,18 +570,32 @@ void JUTTiff::createThumbnail() {
         // --- Custom Buffer Branch ---
         // If a custom thumbnail was provided, simply copy it byte-by-byte into the file buffer.
         // Assuming thumbnail is RGB8 (3 bytes per pixel) based on the image bounds.
+#if VERSION == 0
+        int totalBytes = mThumbnailSize.mThumbnailWidth * mThumbnailSize.mThumbnailHeight * 3;
+#else
         int totalBytes = mThumbnailWidth * mThumbnailHeight * 3;
+#endif
         
         for (int i = 0; i < 0x4B00; i++) {
             *m_IFDEntryAddr++ = *customThumb++;
         }
     } else {
         // --- Dynamic Downsampling Branch ---
+#if VERSION == 0
+        float scaleX = (float)mIFD0.mImageWidth / mThumbnailSize.mThumbnailWidth;
+        float scaleY = (float)mIFD0.mImageHeight / mThumbnailSize.mThumbnailHeight;
+#else
         float scaleX = (float)mIFD0.mImageWidth / mThumbnailWidth;
         float scaleY = (float)mIFD0.mImageHeight / mThumbnailHeight;
+#endif
 
+#if VERSION == 0
+        for (int y = 0; y < mThumbnailSize.mThumbnailHeight; y++) {
+            for (int x = 0; x < mThumbnailSize.mThumbnailWidth; x++) {
+#else
         for (int y = 0; y < mThumbnailHeight; y++) {
             for (int x = 0; x < mThumbnailWidth; x++) {
+#endif
                 
                 // Calculate the bounding box in the source image for this single thumbnail pixel
                 int startY = mIFD0._04 + (int)(y * scaleY);
