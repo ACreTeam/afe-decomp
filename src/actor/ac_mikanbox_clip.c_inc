@@ -442,28 +442,26 @@ static int aMKBC_get_bdmsg_code_len(u16* str, int include_newline) {
     return aMIK_BDMSG_LINE_LEN;
 }
 
-extern void aMKBC_body_draw(GAME_PLAY* play, int timer) {
-    GAME* game;
-    GRAPH* graph;
-    u16* str;
+extern void aMKBC_body_draw(GAME_PLAY* const play, int timer) {
+    GAME* game = (GAME*)play;
+    GRAPH* graph = play->game.graph;
     int alpha;
+    u16* str = (u16*)mTxt_get_first_buff();
+    u16* str_p;
     int i;
     int len;
     f32 y;
 
-    game = (GAME*)play;
-    graph = play->game.graph;
-    str = (u16*)mTxt_get_first_buff();
     if (Common_Get(event_common).exist_flags1 & aNTT_FLAG_BIRTHDAY_BODY) {
         mFont_SetMatrix(graph, mFont_MODE_FONT);
         alpha = aMKBC_get_alpha_bdm(timer);
         y = 70.0f;
+        str_p = str;
         for (i = 0; i < aMIK_BDMSG_LINE_NUM; i++) {
-            len = aMKBC_get_bdmsg_code_len(str, FALSE);
-            if (len != 0) mFont_SetLineStringsW(game, str, len, 30.0f, y, 255, 255, 255, alpha, FALSE, FALSE, 0.9f, 0.9f, mFont_MODE_FONT);
+            len = aMKBC_get_bdmsg_code_len(str_p, FALSE);
+            if (len != 0) mFont_SetLineStringsW(game, str_p, len, 30.0f, y, 255, 255, 255, alpha, FALSE, FALSE, 0.9f, 0.9f, mFont_MODE_FONT);
             y += 15.0f;
-            len = aMKBC_get_bdmsg_code_len(str, TRUE);
-            str += len;
+            str_p += aMKBC_get_bdmsg_code_len(str_p, TRUE);
         }
         mFont_UnSetMatrix(graph, mFont_MODE_FONT);
     }
