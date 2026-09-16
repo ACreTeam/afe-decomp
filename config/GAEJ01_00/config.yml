@@ -54137,6 +54137,7 @@ modules:
     binary: assets/forestd/npc_1_umb_close1/rfoot_se_dt.bin
     header: assets/forestd/npc_1_umb_close1/rfoot_se_dt.inc
     header_type: raw
+
 - object: files/foresti.rel
   hash: 39a8462764ecc1405b25d41f829fe36fff793f25
   symbols: config/GAEJ01_00/foresti/symbols.txt
