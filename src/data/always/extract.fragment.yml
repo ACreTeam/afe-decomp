@@ -1,0 +1,8 @@
+# Merge this extract list into the forestd module for GAEJ01_00.
+# Do not append it to the end of the project's YAML file.
+extract:
+  - symbol: glider_v!.data:0x00000020
+    binary: assets/forestd/glider/glider_v.bin
+    header: assets/forestd/glider/glider_v.inc
+    header_type: none
+    custom_type: vtx

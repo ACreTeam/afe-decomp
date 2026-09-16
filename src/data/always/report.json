@@ -1,0 +1,168 @@
+{
+  "module": "forestd",
+  "version": "GAEJ01_00",
+  "splits": "F:\\Projects\\afe-decomp\\afe-decomp\\config\\GAEJ01_00\\forestd\\splits.txt",
+  "symbols": "F:\\Projects\\afe-decomp\\afe-decomp\\config\\GAEJ01_00\\forestd\\symbols.txt",
+  "assembly": "F:\\Projects\\afe-decomp\\afe-decomp\\build\\GAEJ01_00\\forestd\\asm",
+  "summary": {
+    "ignored_section_lines": 2088,
+    "ignored_text_lines": 2087,
+    "excluded_owner_ranges": 1,
+    "selected_range_lines": 2083,
+    "empty_ranges": 26
+  },
+  "selected_units": 1,
+  "selected_symbols": 2,
+  "unnamed_ranges": [
+    {
+      "unit": "data_0035EDC8",
+      "guessed_stem": "data_0035EDC8",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x0035EDC8",
+      "end": "0x0035EDE0",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_0036E828",
+      "guessed_stem": "data_0036E828",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x0036E828",
+      "end": "0x0036E840",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_00397C38",
+      "guessed_stem": "data_00397C38",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00397C38",
+      "end": "0x00397C40",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_003DA350",
+      "guessed_stem": "data_003DA350",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x003DA350",
+      "end": "0x003DA360",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_00531BB0",
+      "guessed_stem": "data_00531BB0",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00531BB0",
+      "end": "0x00531BC0",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_00545768",
+      "guessed_stem": "data_00545768",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00545768",
+      "end": "0x00545780",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_005725F8",
+      "guessed_stem": "data_005725F8",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x005725F8",
+      "end": "0x00572600",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_005809B8",
+      "guessed_stem": "data_005809B8",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x005809B8",
+      "end": "0x005809C0",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_00587638",
+      "guessed_stem": "data_00587638",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00587638",
+      "end": "0x00587640",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_005FA2C8",
+      "guessed_stem": "data_005FA2C8",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x005FA2C8",
+      "end": "0x005FA2E0",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_0061E278",
+      "guessed_stem": "data_0061E278",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x0061E278",
+      "end": "0x0061E280",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_00627A10",
+      "guessed_stem": "data_00627A10",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00627A10",
+      "end": "0x00627A20",
+      "symbols": 0,
+      "first_symbol": null
+    },
+    {
+      "unit": "data_0068FA48",
+      "guessed_stem": "data_0068FA48",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x0068FA48",
+      "end": "0x0068FA60",
+      "symbols": 0,
+      "first_symbol": null
+    }
+  ],
+  "converted": [
+    {
+      "unit": "data_00000020",
+      "guessed_stem": "glider",
+      "owner": "dataobject.obj",
+      "section": ".data",
+      "start": "0x00000020",
+      "end": "0x00000120",
+      "symbols": 2,
+      "first_symbol": "glider_v",
+      "source": "src/data/forestd/glider.c",
+      "asset_includes": 1
+    }
+  ],
+  "failed": [],
+  "warnings": [
+    "Assembly address comments absent for 18171 matched objects; used symbols.txt name/section/scope/size metadata instead (671 repeated-name occurrences resolved by metadata order)"
+  ],
+  "project_updates": null,
+  "note": "Conversion is not proof of matching. Unnamed ranges are not converted; .bin/.inc extraction still uses the generated recipe."
+}

@@ -1,0 +1,14 @@
+#include "types.h"
+#include "libforest/gbi_extensions.h"
+#include "PR/gbi.h"
+
+Vtx obj_w_palm5_coco_v[] ATTRIBUTE_ALIGN(32) = {
+#include "assets/forestd/obj_w_palm5_coco/obj_w_palm5_coco_v.inc"
+};
+
+Gfx obj_w_palm5_cocoT_gfx_model[] ATTRIBUTE_ALIGN(8) = {
+gsSPVertex(obj_w_palm5_coco_v, 8, 0),
+gsSPNTrianglesInit_5b(4, 0, 1, 2, 0, 2, 3, 4, 5, 6),
+gsSPNTriangles_5b(4, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+gsSPEndDisplayList(),
+};

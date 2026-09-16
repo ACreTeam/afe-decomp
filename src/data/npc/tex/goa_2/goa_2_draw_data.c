@@ -1,0 +1,66 @@
+#ifdef __INTELLISENSE__
+#include "ac_npc.h"
+
+extern cKF_Skeleton_R_c cKF_bs_r_goa_1;
+extern unsigned short goa_2_pal[];
+extern unsigned char goa_2_eye1_TA_tex_txt[];
+extern unsigned char goa_2_eye2_TA_tex_txt[];
+extern unsigned char goa_2_eye3_TA_tex_txt[];
+extern unsigned char goa_2_eye4_TA_tex_txt[];
+extern unsigned char goa_2_eye5_TA_tex_txt[];
+extern unsigned char goa_2_eye6_TA_tex_txt[];
+extern unsigned char goa_2_eye7_TA_tex_txt[];
+extern unsigned char goa_2_eye8_TA_tex_txt[];
+extern unsigned char goa_2_mouth1_TA_tex_txt[];
+extern unsigned char goa_2_mouth2_TA_tex_txt[];
+extern unsigned char goa_2_mouth3_TA_tex_txt[];
+extern unsigned char goa_2_mouth4_TA_tex_txt[];
+extern unsigned char goa_2_mouth5_TA_tex_txt[];
+extern unsigned char goa_2_mouth6_TA_tex_txt[];
+extern unsigned char goa_2_tmem_txt[];
+
+static aNPC_draw_data_c goa_2_draw_data = {
+#endif
+    ACTOR_OBJ_BANK_220,
+    ACTOR_OBJ_BANK_222,
+    &cKF_bs_r_goa_1,
+    {
+        goa_2_tmem_txt,
+        goa_2_pal,
+        {
+            goa_2_eye1_TA_tex_txt,
+            goa_2_eye2_TA_tex_txt,
+            goa_2_eye3_TA_tex_txt,
+            goa_2_eye4_TA_tex_txt,
+            goa_2_eye5_TA_tex_txt,
+            goa_2_eye6_TA_tex_txt,
+            goa_2_eye7_TA_tex_txt,
+            goa_2_eye8_TA_tex_txt,
+        },
+        {
+            goa_2_mouth1_TA_tex_txt,
+            goa_2_mouth2_TA_tex_txt,
+            goa_2_mouth3_TA_tex_txt,
+            goa_2_mouth4_TA_tex_txt,
+            goa_2_mouth5_TA_tex_txt,
+            goa_2_mouth6_TA_tex_txt,
+        },
+        136,
+        88,
+        192,
+    },
+    0.010499999858438969,
+    0,
+    1,
+    7,
+    35,
+    0,
+    0,
+    151,
+    20,
+    45,
+    -1,
+    -1,
+#ifdef __INTELLISENSE__
+};
+#endif
