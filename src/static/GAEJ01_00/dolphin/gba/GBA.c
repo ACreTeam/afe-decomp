@@ -1,4 +1,4 @@
-#include "gba/gbaPriv.h"
+#include "GBA/GBAPriv.h"
 #include <dolphin/os.h>
 
 // local declarations
@@ -25,7 +25,7 @@ static void ShortCommandProc(s32 chan) {
         gba->ret = 1;
         return;
     }
-    
+
     *gba->status = gba->input[2] & GBA_JSTAT_MASK;
 }
 

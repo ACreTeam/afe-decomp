@@ -4,7 +4,7 @@
 #include "jaudio_NES/dsp_GBAKey.h"
 
 #include "jaudio_NES/ipldec.h"
-#include "gba/GBAPriv.h"
+#include "GBA/GBAPriv.h"
 #include "dolphin/dsp.h"
 #include "_mem.h"
 
@@ -18,7 +18,7 @@ static s32 F152(DSPTaskInfo* task) {
             return chan;
         }
     }
-    
+
     ASSERTLINE(173, 0 <= chan && chan < 4);
     OSPanic(__FILE__, 174, "GBA - unexpected dsp call");
     return -1;

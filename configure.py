@@ -427,12 +427,12 @@ config.libs = [
     DolphinLib(
         "gba",
         [
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBA.c"),
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAGetProcessStatus.c"),
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAJoyBoot.c"),
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBARead.c"),
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAWrite.c"),
-            Object(MatchingFor(), "GAEJ01_00/dolphin/gba/GBAXfer.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBA.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBAGetProcessStatus.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBAJoyBoot.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBARead.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBAWrite.c"),
+            Object(MatchingFor("GAEJ01_00"), "GAEJ01_00/dolphin/gba/GBAXfer.c"),
         ],
     ),
     DolphinLib(

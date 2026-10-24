@@ -520,26 +520,26 @@ Famicom/famicom_nesinfo.cpp:
 	.data       start:0x800FDAC8 end:0x800FE8F8
 	.bss        start:0x8021EAC0 end:0x8021EB80
 
-gba/GBA.c:
+GAEJ01_00/dolphin/gba/GBA.c:
 	.text       start:0x8004C3EC end:0x8004C6DC
 	.data       start:0x800FE8F8 end:0x800FE908
 	.bss        start:0x8021EB80 end:0x8021F080
 	.sbss       start:0x80291640 end:0x80291648
 
-gba/GBAGetProcessStatus.c:
+GAEJ01_00/dolphin/gba/GBAGetProcessStatus.c:
 	.text       start:0x8004C6DC end:0x8004C850
 
-gba/GBAJoyBoot.c:
+GAEJ01_00/dolphin/gba/GBAJoyBoot.c:
 	.text       start:0x8004C850 end:0x8004D75C
 	.data       start:0x800FE908 end:0x800FE938
 
-gba/GBARead.c:
+GAEJ01_00/dolphin/gba/GBARead.c:
 	.text       start:0x8004D75C end:0x8004D8BC
 
-gba/GBAWrite.c:
+GAEJ01_00/dolphin/gba/GBAWrite.c:
 	.text       start:0x8004D8BC end:0x8004DA44
 
-gba/GBAXfer.c:
+GAEJ01_00/dolphin/gba/GBAXfer.c:
 	.text       start:0x8004DA44 end:0x8004DD7C
 
 gba2/JoyBoot.cpp:

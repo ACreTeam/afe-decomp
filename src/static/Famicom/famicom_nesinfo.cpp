@@ -33,6 +33,9 @@ static u32 nesinfo_expand_rom_size = 0;
 u8 tcs_bad = false;
 u8 ics_bad = false;
 
+/* same here */
+static u8 __hack2[0x18];
+
 // clang-format off
 
 enum highscore_state {
@@ -195,7 +198,7 @@ static u8 tags_table_wario_no_mori[] = {
     GID_TAG(2), 'U', 'W',
     GNM_TAG(13), 'W', 'A', 'R', 'I', 'O', '\'', 's', ' ', 'W', 'O', 'O', 'D', 'S',
     GNO_TAG(), FAMICOM_GAME_WARIOS_WOODS,
-    
+
     OFS_TAG(), OFS_U16(0x00D8),
     BBR_TAG(), OFS_U16(0x1B00), OFS_U16(0x0004), //  4 bytes from 0x1B00
     BBR_TAG(), OFS_U16(0x1B10), OFS_U16(0x0034), // 34 bytes from 0x1B10
@@ -203,7 +206,7 @@ static u8 tags_table_wario_no_mori[] = {
     BBR_TAG(), OFS_U16(0x1B67), OFS_U16(0x0003), //  3 bytes from 0x1B67
     BBR_TAG(), OFS_U16(0x1B70), OFS_U16(0x0002), //  2 bytes from 0x1B70
     BBR_TAG(), OFS_U16(0x1B74), OFS_U16(0x0002), //  2 bytes from 0x1B74
-    
+
     /* Was this data saved at a later date and therefore had to have its offset much further? */
     OFS_TAG(), OFS_U16(0x0127),
     BBR_TAG(), OFS_U16(0x1B6D), OFS_U16(0x0002), //  2 bytes from 0x1B6D
@@ -214,7 +217,7 @@ static u8 tags_table_wario_no_mori[] = {
 //     GID_TAG(2), 'I', 'C',
 //     GNM_TAG(11), 'I', 'C', 'E', ' ', 'C', 'L', 'I', 'M', 'B', 'E', 'R',
 //     GNO_TAG(), FAMICOM_GAME_ICE_CLIMBER,
-    
+
 //     OFS_TAG(), OFS_U16(0x0128),
 //     HSC_TAG(3), OFS_U16(0x87ED), 0, 0, 0,
 //     END_TAG(),
@@ -224,7 +227,7 @@ static u8 tags_table_wario_no_mori[] = {
 //     GID_TAG(2), 'M', 'A',
 //     GNM_TAG(11), 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S', '.',
 //     GNO_TAG(), FAMICOM_GAME_MARIO_BROS,
-    
+
 //     OFS_TAG(), OFS_U16(0x012B),
 //     HSC_TAG(3), OFS_U16(0x0091), 0, 0, 0,
 //     END_TAG(),
@@ -234,7 +237,7 @@ static u8 tags_table_wario_no_mori[] = {
 //     GID_TAG(2), 'S', 'M',
 //     GNM_TAG(16), 'S', 'U', 'P', 'E', 'R', ' ', 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S',
 //     GNO_TAG(), FAMICOM_GAME_SUPER_MARIO_BROS,
-    
+
 //     OFS_TAG(), OFS_U16(0x0131),
 //     HSC_TAG(6), OFS_U16(0x87D7), 0, 0, 0, 0, 0, 0,
 //     HSC_TAG(1), OFS_U16(0x07FC), 0,
@@ -246,7 +249,7 @@ static u8 tags_table_wario_no_mori[] = {
 //     GID_TAG(2), 'Z', 'L',
 //     GNM_TAG(15), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A',
 //     GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
-    
+
 //     OFS_TAG(), OFS_U16(0x0139),
 //     QDS_TAG(), OFS_U24(0x01BAFD), OFS_U16(0x051C), // Save 0x51C bytes from 0x1BAFD
 //     END_TAG(),
@@ -256,7 +259,7 @@ static u8 tags_table_wario_no_mori[] = {
 //     GID_TAG(2), 'Z', 'L',
 //     GNM_TAG(16), 'L', 'E', 'G', 'E', 'N', 'D', ' ', 'O', 'F', ' ', 'Z', 'E', 'L', 'D', 'A', '1',
 //     GNO_TAG(), FAMICOM_GAME_LEGEND_OF_ZELDA,
-    
+
 //     OFS_TAG(), OFS_U16(0x0139),
 //     BBR_TAG(), OFS_U16(0x0002), OFS_U16(0x051C), // Save 0x51C bytes from BBR+0x0002
 //     SPE_TAG(), 1,
@@ -275,36 +278,36 @@ static u8 tags_table_excite_bike_design[] = {
     GNM_TAG(10), 'E', 'X', 'C', 'I', 'T', 'E', 'B', 'I', 'K', 'E',
     GNO_TAG(), FAMICOM_GAME_EXCITEBIKE,
     OFS_TAG(), OFS_U16(0x0096),
-    HSC_TAG(3), OFS_U16(0x8580), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x8583), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x8586), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x8589), 1, 12, 0, 
-    HSC_TAG(3), OFS_U16(0x858C), 1, 6, 0, 
-    HSC_TAG(3), OFS_U16(0x8590), 1, 24, 0, 
-    HSC_TAG(3), OFS_U16(0x8593), 1, 22, 0, 
-    HSC_TAG(3), OFS_U16(0x8596), 1, 10, 0, 
-    HSC_TAG(3), OFS_U16(0x8599), 1, 20, 0, 
-    HSC_TAG(3), OFS_U16(0x859C), 1, 6, 0, 
-    HSC_TAG(3), OFS_U16(0x85A0), 10, 0, 0, 
-    HSC_TAG(3), OFS_U16(0x85A3), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x85A6), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x85A9), 1, 16, 0, 
-    HSC_TAG(3), OFS_U16(0x85AC), 1, 12, 0, 
-    HSC_TAG(3), OFS_U16(0x85AF), 1, 6, 0, 
-    HSC_TAG(3), OFS_U16(0x85B3), 1, 24, 0, 
-    HSC_TAG(3), OFS_U16(0x85B6), 1, 22, 0, 
-    HSC_TAG(3), OFS_U16(0x85B9), 1, 10, 0, 
-    HSC_TAG(3), OFS_U16(0x85BC), 1, 20, 0, 
-    HSC_TAG(3), OFS_U16(0x85BF), 1, 6, 0, 
-    HSC_TAG(3), OFS_U16(0x85C3), 10, 0, 0, 
+    HSC_TAG(3), OFS_U16(0x8580), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x8583), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x8586), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x8589), 1, 12, 0,
+    HSC_TAG(3), OFS_U16(0x858C), 1, 6, 0,
+    HSC_TAG(3), OFS_U16(0x8590), 1, 24, 0,
+    HSC_TAG(3), OFS_U16(0x8593), 1, 22, 0,
+    HSC_TAG(3), OFS_U16(0x8596), 1, 10, 0,
+    HSC_TAG(3), OFS_U16(0x8599), 1, 20, 0,
+    HSC_TAG(3), OFS_U16(0x859C), 1, 6, 0,
+    HSC_TAG(3), OFS_U16(0x85A0), 10, 0, 0,
+    HSC_TAG(3), OFS_U16(0x85A3), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x85A6), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x85A9), 1, 16, 0,
+    HSC_TAG(3), OFS_U16(0x85AC), 1, 12, 0,
+    HSC_TAG(3), OFS_U16(0x85AF), 1, 6, 0,
+    HSC_TAG(3), OFS_U16(0x85B3), 1, 24, 0,
+    HSC_TAG(3), OFS_U16(0x85B6), 1, 22, 0,
+    HSC_TAG(3), OFS_U16(0x85B9), 1, 10, 0,
+    HSC_TAG(3), OFS_U16(0x85BC), 1, 20, 0,
+    HSC_TAG(3), OFS_U16(0x85BF), 1, 6, 0,
+    HSC_TAG(3), OFS_U16(0x85C3), 10, 0, 0,
     OFS_TAG(), OFS_U16(0x0129),
-    HSC_TAG(240), OFS_U16(0x86E0), 1, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    HSC_TAG(240), OFS_U16(0x86E0), 1, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     END_TAG(),
 };
 
 static u8 tags_table_nazo_no_murasamejo[] = {
-    GID_TAG(3), 'N', 'M', 'J', 
-    GNM_TAG(16), 'N', 'A', 'Z', 'O', 'N', 'O', 'M', 'U', 'R', 'A', 'S', 'A', 'M', 'E', 'J', 'O', 
+    GID_TAG(3), 'N', 'M', 'J',
+    GNM_TAG(16), 'N', 'A', 'Z', 'O', 'N', 'O', 'M', 'U', 'R', 'A', 'S', 'A', 'M', 'E', 'J', 'O',
     GNO_TAG(), FAMICOM_GAME_EXTERNAL,
     OFS_TAG(), OFS_U16(0x0000),
     QDS_TAG(), OFS_U24(0x009AC7), OFS_U16(0x003E),
@@ -314,20 +317,20 @@ static u8 tags_table_nazo_no_murasamejo[] = {
 static u8 tags_table_super_mario_bros_2[] = {
     TCS_TAG(), OFS_U16(0x0000),
     ICS_TAG(), OFS_U16(0x0000),
-    GID_TAG(4), 'S', 'M', 'B', '2', 
-    GNM_TAG(18), 'S', 'U', 'P', 'E', 'R', ' ', 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S', ' ', '2', 
+    GID_TAG(4), 'S', 'M', 'B', '2',
+    GNM_TAG(18), 'S', 'U', 'P', 'E', 'R', ' ', 'M', 'A', 'R', 'I', 'O', ' ', 'B', 'R', 'O', 'S', ' ', '2',
     GNO_TAG(), FAMICOM_GAME_EXTERNAL,
     OFS_TAG(), OFS_U16(0x0000),
     QDS_TAG(), OFS_U24(0x01CC4E), OFS_U16(0x0001),
-    HSC_TAG(6), OFS_U16(0x87D7), 0, 0, 0, 0, 0, 0, 
+    HSC_TAG(6), OFS_U16(0x87D7), 0, 0, 0, 0, 0, 0,
     END_TAG(),
 };
 
 static u8 tags_table_marioopen_golf[] = {
     TCS_TAG(), OFS_U16(0x0000),
     ICS_TAG(), OFS_U16(0x0000),
-    GID_TAG(2), 'U', 'G', 
-    GNM_TAG(14), 'M', 'A', 'R', 'I', 'O', 'O', 'P', 'E', 'N', ' ', 'G', 'O', 'L', 'F', 
+    GID_TAG(2), 'U', 'G',
+    GNM_TAG(14), 'M', 'A', 'R', 'I', 'O', 'O', 'P', 'E', 'N', ' ', 'G', 'O', 'L', 'F',
     GNO_TAG(), FAMICOM_GAME_EXTERNAL,
     OFS_TAG(), OFS_U16(0x0000),
     BBR_TAG(), OFS_U16(0x0001), OFS_U16(0x0E0C),
