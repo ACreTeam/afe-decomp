@@ -285,7 +285,7 @@ exit:
 static void F33(s32 chan, s32 ret) {
     GBAControl* gba = &__GBA[chan]; // r27
     GBABootInfo* bootInfo = &__GBA[chan].bootInfo; // r31
-    
+
     if (ret == GBA_READY) {
         for (bootInfo->i = 33; bootInfo->i < 36; bootInfo->i++) {
             ret = (bootInfo->readbuf[3] ^ (bootInfo->dummyWord[D54[bootInfo->i]] >> 24) |
@@ -297,7 +297,7 @@ static void F33(s32 chan, s32 ret) {
                 break;
             }
         }
-        
+
         if (ret != GBA_READY) {
             ret = GBA_JOYBOOT_UNKNOWN_STATE;
         }
@@ -316,7 +316,7 @@ static void F33(s32 chan, s32 ret) {
 static void F35(s32 chan, s32 ret) {
     GBAControl* gba = &__GBA[chan]; // r28
     GBABootInfo* bootInfo = &__GBA[chan].bootInfo; // r30
-    
+
     if (ret == GBA_READY) {
         if (OSSecondsToTicks(10) <= OSGetTick() - bootInfo->start) {
             ret = GBA_JOYBOOT_UNKNOWN_STATE;
@@ -343,7 +343,7 @@ static void F35(s32 chan, s32 ret) {
 static void F37(s32 chan, s32 ret) {
     GBAControl* gba = &__GBA[chan]; // r28
     GBABootInfo* bootInfo = &__GBA[chan].bootInfo; // r31
-    
+
     if (ret == GBA_READY) {
         if ((bootInfo->readbuf[3] ^ (bootInfo->initialCode >> 24) |
              bootInfo->readbuf[2] ^ (bootInfo->initialCode >> 16) |
@@ -378,8 +378,8 @@ s32 GBAJoyBoot(s32 chan, s32 paletteColor, s32 paletteSpeed, u8* programp, s32 l
     s32 ret; // r31
 
     ret = GBAJoyBootAsync(chan, paletteColor, paletteSpeed, programp, length, status, &__GBASyncCallback);
-    if (ret == GBA_READY) {
-        return __GBASync(chan);
+    if (ret != GBA_READY) {
+        return ret;
     }
-    return ret;
+    return __GBASync(chan);
 }
