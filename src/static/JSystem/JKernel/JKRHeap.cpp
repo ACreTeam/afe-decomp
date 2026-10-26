@@ -1,4 +1,5 @@
 #include "JSystem/JUtility/JUTAssertion.h"
+#include "JSystem/JMacro.h"
 #include "JSystem/JKernel/JKRHeap.h"
 #include "dolphin/os.h"
 #include "dolphin/os/OSArena.h"
@@ -11,6 +12,7 @@ JKRHeap* JKRHeap::sSystemHeap;
 JKRHeap* JKRHeap::sCurrentHeap;
 JKRHeap* JKRHeap::sRootHeap;
 JKRHeapErrorHandler* JKRHeap::mErrorHandler;
+bool JKRHeap::sDefaultFillCheckFlag = false;
 void* JKRHeap::mCodeStart;
 void* JKRHeap::mCodeEnd;
 void* JKRHeap::mUserRamStart;
@@ -18,7 +20,6 @@ void* JKRHeap::mUserRamEnd;
 u32 JKRHeap::mMemorySize;
 
 bool JKRHeap::sDefaultFillFlag = true;
-bool JKRHeap::sDefaultFillCheckFlag = false;
 
 JKRHeap::JKRHeap(void* data, u32 size, JKRHeap* heap, bool errorFlag)
     : JKRDisposer(), mChildTree(this), mDisposerList() {
@@ -279,7 +280,7 @@ void JKRHeap::copyMemory(void* dst, void* src, u32 size) {
 void JKRDefaultMemoryErrorRoutine(void* heap, u32 size, int alignment) {
     // OSReport("Error: Cannot allocate memory %d(0x%x)byte in %d byte alignment from %08x\n", size, size, alignment,
     // heap);
-    OSErrorLine(830, "abort\n");
+    JPANIC(831, "abort\n");
 }
 
 JKRHeapErrorHandler* JKRHeap::setErrorHandler(JKRHeapErrorHandler* newHandler) {

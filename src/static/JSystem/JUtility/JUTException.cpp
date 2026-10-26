@@ -5,11 +5,36 @@
 #include <dolphin/os.h>
 
 #include "MSL_C/printf.h"
+#include "_mem.h"
 #include "libc/string.h"
 
 #include "JSystem/JUtility/JUTException.h"
 #include "JSystem/JUtility/JUTDirectPrint.h"
 #include "JSystem/JUtility/JUTDirectFile.h"
+
+#ifndef OS_ERROR_FPE
+#define OS_ERROR_FPE 16
+#endif
+
+inline int __fpclassifyf(f32 x) {
+    switch ((*(s32*)&x) & 0x7F800000) {
+        case 0x7F800000: {
+            if ((*(s32*)&x) & 0x007FFFFF)
+                return FP_QNAN;
+            else
+                return FP_INFINITE;
+            break;
+        }
+        case 0: {
+            if ((*(s32*)&x) & 0x007FFFFF)
+                return FP_SUBNORMAL;
+            else
+                return FP_ZERO;
+            break;
+        }
+    }
+    return FP_NORMAL;
+}
 
 struct CallbackObject {
     JUTErrorHandler callback;
@@ -39,7 +64,8 @@ const char* JUTException::sCpuExpName[] = { "SYSTEM RESET",
                                             "BREAK POINT",
                                             "SYSTEM INTERRUPT",
                                             "THERMAL INTERRUPT",
-                                            "PROTECTION" };
+                                            "PROTECTION",
+                                            "FLOATING POINT" };
 
 JUTException* JUTException::sErrorManager;
 JUTErrorHandler JUTException::sPreUserCallback;
@@ -52,6 +78,27 @@ u32 JUTException::msr;
 u32 JUTException::fpscr;
 
 JSUList<JUTException::JUTExMapFile> JUTException::sMapFileList(false);
+
+JUTException::JUTException(JUTDirectPrint* directPrint) : JKRThread(0x4000, 0x10, 0) {
+    mDirectPrint = directPrint;
+
+    OSSetErrorHandler(OS_ERROR_DSI, (OSErrorHandler)errorHandler);
+    OSSetErrorHandler(OS_ERROR_ISI, (OSErrorHandler)errorHandler);
+    OSSetErrorHandler(OS_ERROR_PROGRAM, (OSErrorHandler)errorHandler);
+    OSSetErrorHandler(OS_ERROR_ALIGNMENT, (OSErrorHandler)errorHandler);
+    OSSetErrorHandler(OS_ERROR_PROTECTION, (OSErrorHandler)errorHandler);
+    setFPException(0);
+
+    sPreUserCallback = nullptr;
+    sPostUserCallback = nullptr;
+    mGamePad = nullptr;
+    mPadPort = JUTGamePad::Port_Invalid;
+    mPrintWaitTime0 = 10;
+    mPrintWaitTime1 = 10;
+    mTraceSuppress = 0xffffffff;
+    _98 = 0;
+    mPrintFlags = EXPRINTFLAG_All;
+}
 
 JUTException* JUTException::create(JUTDirectPrint* directPrint) {
     if (sErrorManager == nullptr) {
@@ -67,6 +114,8 @@ void* JUTException::run() {
     OSMessage message;
     while (true) {
         OSReceiveMessage(&sMessageQueue, &message, OS_MESSAGE_BLOCK);
+        VISetPreRetraceCallback(nullptr);
+        VISetPostRetraceCallback(nullptr);
         CallbackObject* cb = (CallbackObject*)message;
         JUTErrorHandler callback = cb->callback;
         u16 error = cb->error;
@@ -74,42 +123,28 @@ void* JUTException::run() {
         u32 dsisr = cb->dsisr;
         u32 dar = cb->dar;
 
-        mFrameMemory = (JUTExternalFB*)sErrorManager->mDirectPrint->getFrameBuffer();
-        if (!sErrorManager->mDirectPrint->getFrameBuffer())
+        if (error < OS_ERROR_FPE + 1)
+            mStackPointer = context->gpr[1];
+
+        mFrameMemory = (JUTExternalFB*)VIGetCurrentFrameBuffer();
+        if (mFrameMemory == nullptr)
             sErrorManager->createFB();
+        sErrorManager->mDirectPrint->changeFrameBuffer(mFrameMemory);
 
         if (callback)
             callback(error, context, dsisr, dar);
 
         OSDisableInterrupts();
 
+        mFrameMemory = (JUTExternalFB*)VIGetCurrentFrameBuffer();
+        sErrorManager->mDirectPrint->changeFrameBuffer(mFrameMemory);
         sErrorManager->printContext(error, context, dsisr, dar);
     }
 }
 
-JUTException::JUTException(JUTDirectPrint* directPrint) : JKRThread(0x4000, 0x10, 0) {
-    mDirectPrint = directPrint;
-
-    OSSetErrorHandler(OS_ERROR_DSI, (OSErrorHandler)errorHandler);
-    OSSetErrorHandler(OS_ERROR_ISI, (OSErrorHandler)errorHandler);
-    OSSetErrorHandler(OS_ERROR_PROGRAM, (OSErrorHandler)errorHandler);
-    OSSetErrorHandler(OS_ERROR_ALIGNMENT, (OSErrorHandler)errorHandler);
-    OSSetErrorHandler(OS_ERROR_PROTECTION, (OSErrorHandler)errorHandler);
-
-    sPreUserCallback = nullptr;
-    sPostUserCallback = nullptr;
-    mGamePad = nullptr;
-    mPadPort = JUTGamePad::Port_Invalid;
-    mPrintWaitTime0 = 10;
-    mPrintWaitTime1 = 10;
-    mTraceSuppress = 0xffffffff;
-    _98 = 0;
-    mPrintFlags = EXPRINTFLAG_All;
-}
-
 void JUTException::errorHandler(OSError error, OSContext* context, u32 dsisr, u32 dar) {
     msr = PPCMfmsr();
-    fpscr = getFpscr();
+    fpscr = context->fpscr;
     OSFillFPUContext(context);
     OSSetErrorHandler(error, nullptr);
     if (error == OS_ERROR_PROTECTION) {
@@ -128,6 +163,51 @@ void JUTException::errorHandler(OSError error, OSContext* context, u32 dsisr, u3
     OSSendMessage(&sMessageQueue, &exCallbackObject, OS_MESSAGE_BLOCK);
     OSEnableScheduler();
     OSYieldThread();
+}
+
+void JUTException::panic_f_va(const char* file, int line, const char* fmt, va_list vl) {
+    char buf[256];
+    vsnprintf(buf, sizeof(buf) - 1, fmt, vl);
+    if (sErrorManager == nullptr) {
+        OSPanic(file, line, buf);
+    }
+
+    static OSContext context;
+    memcpy(&context, OSGetCurrentContext(), sizeof(OSContext));
+    sErrorManager->mStackPointer = OSGetStackPointer();
+
+    exCallbackObject.callback = sPreUserCallback;
+    exCallbackObject.error = 0xFF;
+    exCallbackObject.context = &context;
+    exCallbackObject.dsisr = 0;
+    exCallbackObject.dar = 0;
+
+    if (sConsole == nullptr || (sConsole && !(sConsole->getOutput() & JUTConsole::OUTPUT_CONSOLE))) {
+        OSReport("%s in \"%s\" on line %d\n", buf, file, line);
+    }
+
+    if (sConsole) {
+        sConsole->print_f("%s in \"%s\" on line %d\n", buf, file, line);
+    }
+
+    OSSendMessage(&sMessageQueue, &exCallbackObject, OS_MESSAGE_BLOCK);
+    OSSuspendThread(OSGetCurrentThread());
+}
+
+void JUTException::panic_f(const char* file, int line, const char* fmt, ...) {
+    va_list vl;
+    va_start(vl, fmt);
+    panic_f_va(file, line, fmt, vl);
+    va_end(vl);
+}
+
+void JUTException::setFPException(u32 fpscr_enable_bits) {
+    __OSFpscrEnableBits = fpscr_enable_bits;
+    if (fpscr_enable_bits) {
+        OSSetErrorHandler(OS_ERROR_FPE, (OSErrorHandler)errorHandler);
+    } else {
+        OSSetErrorHandler(OS_ERROR_FPE, nullptr);
+    }
 }
 
 void JUTException::showFloatSub(int index, f32 value) {
@@ -224,12 +304,11 @@ void JUTException::showStack(OSContext* context) {
     }
 
     u32 i;
-    u32* stackPointer;
     sConsole->print("-------------------------------- TRACE\n");
+    u32* stackPointer = (u32*)mStackPointer;
     sConsole->print_f("Address:   BackChain   LR save\n");
 
-    for (i = 0, stackPointer = (u32*)context->gpr[1];
-         (stackPointer != nullptr) && (stackPointer != (u32*)0xFFFFFFFF) && (i++ < 0x10);) {
+    for (i = 0; (stackPointer != nullptr) && (stackPointer != (u32*)0xFFFFFFFF) && (i++ < 0x10);) {
         if (i > mTraceSuppress) {
             sConsole->print("Suppress trace.\n");
             return;
@@ -249,7 +328,57 @@ void JUTException::showMainInfo(u16 error, OSContext* context, u32 dsisr, u32 da
         return;
     }
 
-    sConsole->print_f("CONTEXT:%08XH  (%s EXCEPTION)\n", context, sCpuExpName[error]);
+    if (error < OS_ERROR_FPE + 1) {
+        sConsole->print_f("CONTEXT:%08XH  (%s EXCEPTION)\n", context, sCpuExpName[error]);
+    } else {
+        sConsole->print_f("CONTEXT:%08XH\n", context);
+    }
+
+    if (error == OS_ERROR_FPE) {
+        u32 flags = fpscr & (((fpscr & 0xF8) << 22) | 0x1F80700);
+        if ((flags & 0x20000000) != 0) {
+            sConsole->print_f(" FPE: Invalid operation\n");
+            if ((fpscr & 0x1000000) != 0) {
+                sConsole->print_f(" SNaN\n");
+            }
+            if ((fpscr & 0x800000) != 0) {
+                sConsole->print_f(" Infinity - Infinity\n");
+            }
+            if ((fpscr & 0x400000) != 0) {
+                sConsole->print_f(" Infinity / Infinity\n");
+            }
+            if ((fpscr & 0x200000) != 0) {
+                sConsole->print_f(" 0 / 0\n");
+            }
+            if ((fpscr & 0x100000) != 0) {
+                sConsole->print_f(" Infinity * 0\n");
+            }
+            if ((fpscr & 0x80000) != 0) {
+                sConsole->print_f(" Invalid compare\n");
+            }
+            if ((fpscr & 0x400) != 0) {
+                sConsole->print_f(" Software request\n");
+            }
+            if ((fpscr & 0x200) != 0) {
+                sConsole->print_f(" Invalid square root\n");
+            }
+            if ((fpscr & 0x100) != 0) {
+                sConsole->print_f(" Invalid integer convert\n");
+            }
+        }
+        if ((flags & 0x10000000) != 0) {
+            sConsole->print_f(" FPE: Overflow\n");
+        }
+        if ((flags & 0x8000000) != 0) {
+            sConsole->print_f(" FPE: Underflow\n");
+        }
+        if ((flags & 0x4000000) != 0) {
+            sConsole->print_f(" FPE: Zero division\n");
+        }
+        if ((flags & 0x2000000) != 0) {
+            sConsole->print_f(" FPE: Inexact result\n");
+        }
+    }
     sConsole->print_f("SRR0:   %08XH   SRR1:%08XH\n", context->srr0, context->srr1);
     sConsole->print_f("DSISR:  %08XH   DAR: %08XH\n", dsisr, dar);
 }
@@ -268,17 +397,18 @@ void JUTException::showGPR(OSContext* context) {
 }
 
 bool JUTException::showMapInfo_subroutine(u32 address, bool begin_with_newline) {
-    if ((address < 0x80000000) || (0x82ffffff < address)) {
-        return false;
-    }
-
+    const char* new_line;
     u32 name_offset;
     u32 module_id;
     u32 section_id;
     u32 section_offset;
     u8 name_part[36];
 
-    const char* new_line = "\n";
+    if ((address < 0x80000000) || (0x82ffffff < address)) {
+        return false;
+    }
+
+    new_line = "\n";
     if (begin_with_newline == false) {
         new_line = "";
     }
@@ -296,16 +426,17 @@ bool JUTException::showMapInfo_subroutine(u32 address, bool begin_with_newline) 
         u32 out_addr;
         u32 out_size;
         char out_line[256];
+        bool map_result;
 
         if (result == true) {
-            result = queryMapAddress((char*)name_part, section_offset, section_id, &out_addr, &out_size, out_line,
-                                     sizeof(out_line), true, begin_with_newline);
+            map_result = queryMapAddress((char*)name_part, section_offset, section_id, &out_addr, &out_size,
+                                         out_line, sizeof(out_line), true, begin_with_newline);
         } else {
-            result = queryMapAddress(nullptr, address, -1, &out_addr, &out_size, out_line, sizeof(out_line), true,
-                                     begin_with_newline);
+            map_result = queryMapAddress(nullptr, address, -1, &out_addr, &out_size, out_line, sizeof(out_line),
+                                         true, begin_with_newline);
         }
 
-        if (result == true) {
+        if (map_result == true) {
             return true;
         }
     }
@@ -314,6 +445,8 @@ bool JUTException::showMapInfo_subroutine(u32 address, bool begin_with_newline) 
 }
 
 void JUTException::showGPRMap(OSContext* context) {
+    u32 address;
+
     if (!sConsole) {
         return;
     }
@@ -322,7 +455,7 @@ void JUTException::showGPRMap(OSContext* context) {
     sConsole->print("-------------------------------- GPRMAP\n");
 
     for (int i = 0; i < 31; i++) {
-        u32 address = context->gpr[i];
+        address = context->gpr[i];
 
         if (address >= 0x80000000 && 0x83000000 - 1 >= address) {
             found_address_register = true;
@@ -341,6 +474,22 @@ void JUTException::showGPRMap(OSContext* context) {
     }
 }
 
+void JUTException::showSRR0Map(OSContext* context) {
+    if (!sConsole) {
+        return;
+    }
+
+    sConsole->print("-------------------------------- SRR0MAP\n");
+    u32 address = context->srr0;
+    if (address >= 0x80000000 && 0x83000000 - 1 >= address) {
+        sConsole->print_f("SRR0: %08XH", address);
+        if (showMapInfo_subroutine(address, true) == false) {
+            sConsole->print("  no information\n");
+        }
+        JUTConsoleManager::getManager()->drawDirect(true);
+    }
+}
+
 void JUTException::printDebugInfo(JUTException::EInfoPage page, OSError error, OSContext* context, u32 param_3,
                                   u32 param_4) {
     switch (page) {
@@ -356,6 +505,8 @@ void JUTException::printDebugInfo(JUTException::EInfoPage page, OSError error, O
             return showStack(context);
         case INFOPAGE_GPRMap:
             return showGPRMap(context);
+        case INFOPAGE_SRR0Map:
+            return showSRR0Map(context);
     }
 }
 
@@ -450,12 +601,20 @@ void JUTException::printContext(OSError error, OSContext* context, u32 dsisr, u3
     if (!sErrorManager->mDirectPrint->isActive()) {
         return;
     }
+    VISetPreRetraceCallback(nullptr);
+    VISetPostRetraceCallback(nullptr);
+    VISetBlack(FALSE);
+    VIFlush();
 
     if (!sConsole) {
         return;
     }
 
-    sConsole->print_f("******** EXCEPTION OCCURRED! ********\nFrameMemory:%XH\n", getFrameMemory());
+    if (error < OS_ERROR_FPE + 1) {
+        sConsole->print_f("******** EXCEPTION OCCURRED! ********\nFrameMemory:%XH\n", getFrameMemory());
+    } else {
+        sConsole->print_f("******** USER HALT ********\nFrameMemory:%XH\n", getFrameMemory());
+    }
 
     int post_callback_executed = false;
     while (true) {
@@ -466,6 +625,11 @@ void JUTException::printContext(OSError error, OSContext* context, u32 dsisr, u3
 
         if ((mPrintFlags & EXPRINTFLAG_GPR) != 0) {
             printDebugInfo(INFOPAGE_GPR, error, context, dsisr, dar);
+            JUTConsoleManager::sManager->drawDirect(true);
+            waitTime(mPrintWaitTime0);
+        }
+        if ((mPrintFlags & EXPRINTFLAG_SRR0Map) != 0) {
+            printDebugInfo(INFOPAGE_SRR0Map, error, context, dsisr, dar);
             JUTConsoleManager::sManager->drawDirect(true);
             waitTime(mPrintWaitTime0);
         }
@@ -612,13 +776,20 @@ void JUTException::createFB() {
 
     void* begin = (void*)ALIGN_PREV((u32)end - size, 32);
     void* object = (void*)ALIGN_PREV((s32)begin - sizeof(JUTExternalFB), 32);
-    JUTExternalFB* fb = new (object) JUTExternalFB(renderMode, GX_GM_1_7, begin, size);
+    new (object) JUTExternalFB(renderMode, GX_GM_1_7, begin, size);
 
-    mDirectPrint->changeFrameBuffer(object);
+    mDirectPrint->changeFrameBuffer(begin, renderMode->fbWidth, renderMode->efbHeight);
     VIConfigure(renderMode);
     VISetNextFrameBuffer(begin);
     VISetBlack(FALSE);
     VIFlush();
+    VIFlush();
+
+    for (int i = 0; i < 3; i++) {
+        u32 retraceCount = VIGetRetraceCount();
+        do {
+        } while (retraceCount == VIGetRetraceCount());
+    }
 
     mFrameMemory = (JUTExternalFB*)object;
 }
@@ -748,8 +919,7 @@ bool JUTException::queryMapAddress_single(char* mapPath, u32 address, s32 sectio
                 break;
             if ((length < 28))
                 continue;
-            // if (buffer[28] == '4') {
-            if (buffer[37] == '4') {
+            if (buffer[28] == '4') {
                 u32 addr = ((buffer[18] - '0') << 28) | strtol(buffer + 19, nullptr, 16);
                 int size = strtol(buffer + 11, nullptr, 16);
                 if ((addr <= address && address < addr + size)) {

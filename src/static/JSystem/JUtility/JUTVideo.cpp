@@ -26,9 +26,9 @@ void JUTVideo::destroyManager() {
 JUTVideo::JUTVideo(const GXRenderModeObj* renderModeObj) {
     mRenderModeObj = nullptr;
     VIInit();
-    setRenderMode(renderModeObj);
     mIsSetBlack = true;
     mSetBlackFrameCount = 2;
+    setRenderMode(renderModeObj);
     VISetBlack(TRUE);
     VIFlush();
     _08 = 0;
@@ -102,9 +102,9 @@ void JUTVideo::preRetraceProc(u32 retrace_count) {
                 VISetBlack(TRUE);
                 VIFlush();
             } else {
-                VISetBlack(FALSE);
                 VISetNextFrameBuffer(xfb->getDisplayingXfb());
                 VIFlush();
+                VISetBlack(FALSE);
                 frameBuffer = xfb->getDisplayingXfb();
             }
         }
@@ -117,7 +117,9 @@ void JUTVideo::preRetraceProc(u32 retrace_count) {
                 GXFlush();
                 xfb->setSDrawingFlag(2);
                 frameBuffer = xfb->getDisplayingXfb();
-                VISetBlack(FALSE);
+                if (VIGetNextFrameBuffer()) {
+                    VISetBlack(FALSE);
+                }
 
             } else {
                 VISetBlack(TRUE);

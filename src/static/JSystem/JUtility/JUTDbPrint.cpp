@@ -53,13 +53,17 @@ void JUTDbPrint::enter(int x, int y, int duration, const char* txt, int len) {
 }
 
 void JUTDbPrint::flush() {
+    flush(0, 0, JUTVideo::getManager()->getRenderMode()->fbWidth, JUTVideo::getManager()->getEfbHeight());
+}
+
+void JUTDbPrint::flush(int left, int top, int right, int bottom) {
     // eyebrow raise emoji
     JUTDbPrintList* pList = (JUTDbPrintList*)&mList;
     JUTDbPrintList* currList = mList;
 
     if (mFont) {
         if (currList) {
-            J2DOrthoGraph orthograph(0.0f, 0.0f, 640.0f, 480.0f, -1.0f, 1.0f);
+            J2DOrthoGraph orthograph(left, top, right, bottom, -1.0f, 1.0f);
             orthograph.setPort();
             mFont->setGX();
             mFont->setCharColor(mColor);
@@ -81,21 +85,21 @@ void JUTDbPrint::flush() {
     }
 }
 
-void JUTDbPrint::flush(int left, int top, int right, int bottom) {
-}
-
 void JUTDbPrint::drawString(int x, int y, int len, const unsigned char* str) {
     mFont->drawString_size(x, y, reinterpret_cast<const char*>(str), len, true);
+}
+
+inline void enter_(int x, int y, int duration, const char* txt, int n) {
+    if (n >= 0) {
+        JUTDbPrint::getManager()->enter(x, y, duration, txt, n < 256 ? n : 255);
+    }
 }
 
 void JUTReport(int x, int y, const char* fmt, ...) {
     va_list vl;
     va_start(vl, fmt);
-    char buf[128];
-    s32 n = vsnprintf(buf, sizeof(buf), fmt, vl);
-    if (n >= 0) {
-        JUTDbPrint::getManager()->enter(x, y, 1, buf, n < 256 ? n : 255);
-    }
+    char buf[256];
+    enter_(x, y, 1, buf, vsnprintf(buf, sizeof(buf), fmt, vl));
     va_end();
 }
 
@@ -103,9 +107,6 @@ void JUTReport(int x, int y, int duration, const char* fmt, ...) {
     va_list vl;
     va_start(vl, fmt);
     char buf[256];
-    s32 n = vsnprintf(buf, sizeof(buf), fmt, vl);
-    if (n >= 0) {
-        JUTDbPrint::getManager()->enter(x, y, duration, buf, n < 256 ? n : 255);
-    }
+    enter_(x, y, duration, buf, vsnprintf(buf, sizeof(buf), fmt, vl));
     va_end(vl);
 }

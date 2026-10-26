@@ -180,17 +180,12 @@ template <class T> class JSULink : public JSUPtrLink {
     JSULink<T>* getPrev() const {
         return (JSULink<T>*)JSUPtrLink::getPrev();
     }
-
-    ~JSULink() {
-    }
 };
 
 template <typename T> // TODO: most of these inlines are probably wrong: rework
 class JSUTree : public JSUList<T>, public JSULink<T> {
   public:
     JSUTree(T* owner) : JSUList<T>(), JSULink<T>(owner) {
-    }
-    ~JSUTree() {
     }
 
     bool appendChild(JSUTree<T>* child) {

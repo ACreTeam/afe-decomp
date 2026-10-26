@@ -26,7 +26,7 @@ class JKRFileLoader : public JKRDisposer {
     virtual u32 countFile(const char*) const = 0;                                                      // _34
     virtual JKRFileFinder* getFirstFile(const char*) const = 0;                                        // _38
 
-    bool isMounted() const {
+    bool isMounted() {
         return mIsMounted;
     }
     u32 getVolumeType() const {
@@ -41,6 +41,7 @@ class JKRFileLoader : public JKRDisposer {
 
     static bool removeResource(void* resourceBuffer, JKRFileLoader* fileLoader);
     static bool detachResource(void* resourceBuffer, JKRFileLoader* fileLoader);
+    static u32 getResSize(void* resourceBuffer, JKRFileLoader* fileLoader);
 
     static JKRFileLoader* findVolume(const char**);
     static JKRFileFinder* findFirstFile(const char*);
@@ -77,8 +78,16 @@ inline void* JKRGetResource(const char* path) {
     return JKRFileLoader::getGlbResource(path);
 }
 
-inline void JKRRemoveResource(void* resource, JKRFileLoader* fileLoader) {
+inline void JKRRemoveResource(void* resource, JKRFileLoader* fileLoader = nullptr) {
     JKRFileLoader::removeResource(resource, fileLoader);
+}
+
+inline bool JKRDetachResource(void* resource, JKRFileLoader* fileLoader = nullptr) {
+    return JKRFileLoader::detachResource(resource, fileLoader);
+}
+
+inline u32 JKRGetResourceSize(void* resource, JKRFileLoader* fileLoader = nullptr) {
+    return JKRFileLoader::getResSize(resource, fileLoader);
 }
 
 inline void JKRChangeDirectory(const char* dir) {

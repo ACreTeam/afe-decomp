@@ -66,10 +66,12 @@ JUTConsole::JUTConsole(uint p1, uint maxLines, bool p3) {
     mIsVisible = true;
     _69 = false;
     _6A = false;
+    _6B = false;
     mOutput = 1;
 
     _5C = JUtility::TColor(0, 0, 0, 100);
     _60 = JUtility::TColor(0, 0, 0, 230);
+    _64 = 8;
 }
 
 JUTConsole::~JUTConsole() {
@@ -116,9 +118,8 @@ void JUTConsole::doDraw(JUTConsole::EConsoleType consoleType) const {
                     J2DOrthoGraph ortho(0.0f, 0.0f, 640.0f, 480.0f, -1.0f, 1.0f);
                     ortho.setPort();
                 } else {
-                    f32 w = JUTVideo::getManager()->getFbWidth();
-                    f32 h = JUTVideo::getManager()->getEfbHeight();
-                    J2DOrthoGraph ortho(0.0f, 0.0f, w, h, -1.0f, 1.0f);
+                    J2DOrthoGraph ortho(0.0f, 0.0f, (u16)JUTVideo::getManager()->getFbWidth(),
+                                        (u16)JUTVideo::getManager()->getEfbHeight(), -1.0f, 1.0f);
                     ortho.setPort();
                 }
 
@@ -148,6 +149,7 @@ void JUTConsole::doDraw(JUTConsole::EConsoleType consoleType) const {
             } else {
                 JUTDirectPrint::getManager()->erase(mPositionX - 3, mPositionY - 2, (_20 * 6) + 6,
                                                     (int)(font_yOffset * mHeight) + 4);
+                JUTDirectPrint::getManager()->setCharColor(JUtility::TColor(255, 255, 255, 255));
             }
 
             char* linePtr;
@@ -204,7 +206,7 @@ void JUTConsole::print(char const* param_0) {
                 while (_3C < _20) {
                     *(r28++) = ' ';
                     _3C++;
-                    if (_3C % 8 == 0) {
+                    if (_3C % _64 == 0) {
                         break;
                     }
                 }
@@ -240,6 +242,9 @@ void JUTConsole::print(char const* param_0) {
             }
             if (_38 == _30) {
                 _30 = nextIndex(_30);
+            }
+            if (_6B) {
+                break;
             }
         }
         *r28 = 0;

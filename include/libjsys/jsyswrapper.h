@@ -35,6 +35,7 @@ extern CSDIFileEntry* JC__JKRGetResourceEntry_byName(u32 root_name, const char* 
 
 extern void* JC__JKRDvdToMainRam_byName(const char* name, u8* buf, JKRExpandSwitch expandSwitch);
 extern void JC__JKRDetachResource(void* ptr);
+extern u32 JC__JKRGetResourceSize(void* res);
 
 extern int JC_JUTConsole_isVisible(void* console);
 extern void JC_JUTConsole_setVisible(void* console, BOOL visible);
@@ -53,6 +54,7 @@ extern u32 JC_JUTConsole_getHeight(void* console);
 extern u32 JC_JUTConsole_getUsedLine(void* console);
 extern void JC_JUTConsole_print_f_va(void* console, const char* fmt, va_list arg);
 extern void JC_JUTConsole_print_f(void* console, const char* fmt, ...);
+extern void JC_JUTConsole_print(void* console, const char* str);
 
 extern void* JC_JUTConsoleManager_getManager();
 extern void JC_JUTConsoleManager_drawDirect(void* manager, int direct);
@@ -95,7 +97,7 @@ extern void* JC_JFWDisplay_changeToSingleXfb(void* manager, int index);
 extern void* JC_JFWDisplay_changeToDoubleXfb(void* manager);
 extern int JC_JFWDisplay_getEfbWidth(void* manager);
 extern int JC_JFWDisplay_getEfbHeight(void* manager);
-extern void* JC_JFWDisplay_createManager_0(GXRenderModeObj* renderMode, void* heap, int exfbNumber, int enableAlpha);
+extern void* JC_JFWDisplay_createManager_0(void* heap, int exfbNumber, int enableAlpha);
 extern void JC_JFWDisplay_setFader(void* manager, void* fader);
 extern void JC_JFWDisplay_setGamma(void* manager, int gamma);
 extern void JC_JFWDisplay_destroyManager();

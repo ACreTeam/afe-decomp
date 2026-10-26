@@ -14,11 +14,11 @@ CSD SD_CSD[CARD_NUM_CHANS];
 OSAlarm CARD_Alarm[CARD_NUM_CHANS];
 OSSemaphore CARD_Sem[CARD_NUM_CHANS];
 
-const u8 CARD_TBL_CLOCK_DIV[] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x03, 0x05, 0xFF, 0x00, 0x03, 0x05, 0xFF, 0x00, 0x03, 0x05,
-    0xFF, 0x00, 0x03, 0x05, 0xFF, 0x01, 0x04, 0x05, 0xFF, 0x01, 0x04, 0x05, 0xFF, 0x01, 0x04, 0x05,
-    0xFF, 0x01, 0x05, 0x05, 0xFF, 0x02, 0x05, 0x05, 0xFF, 0x02, 0x05, 0x05, 0xFF, 0x02, 0x05, 0x05,
-    0xFF, 0x02, 0x05, 0x05, 0xFF, 0x02, 0x05, 0x05, 0xFF, 0x02, 0x05, 0x05, 0xFF, 0x03, 0x05, 0x05,
+const u8 CARD_TBL_CLOCK_DIV[16][4] = {
+    { 0xFF, 0xFF, 0xFF, 0xFF }, { 0xFF, 0x00, 0x03, 0x05 }, { 0xFF, 0x00, 0x03, 0x05 }, { 0xFF, 0x00, 0x03, 0x05 },
+    { 0xFF, 0x00, 0x03, 0x05 }, { 0xFF, 0x01, 0x04, 0x05 }, { 0xFF, 0x01, 0x04, 0x05 }, { 0xFF, 0x01, 0x04, 0x05 },
+    { 0xFF, 0x01, 0x05, 0x05 }, { 0xFF, 0x02, 0x05, 0x05 }, { 0xFF, 0x02, 0x05, 0x05 }, { 0xFF, 0x02, 0x05, 0x05 },
+    { 0xFF, 0x02, 0x05, 0x05 }, { 0xFF, 0x02, 0x05, 0x05 }, { 0xFF, 0x02, 0x05, 0x05 }, { 0xFF, 0x03, 0x05, 0x05 },
 };
 
 int CARD_WP_Flag[CARD_NUM_CHANS]; // write protection flag
@@ -29,7 +29,7 @@ int CARD_SectorSize[CARD_NUM_CHANS];
 volatile u16 CARD_ErrStatus[CARD_NUM_CHANS];
 int CARD_Status[CARD_NUM_CHANS];
 int CARD_UnlockFlag[CARD_NUM_CHANS];
-int CARD_Size[CARD_NUM_CHANS];
+u32 CARD_Size[CARD_NUM_CHANS];
 int func_CARD_In[CARD_NUM_CHANS];
 int func_CARD_Out[CARD_NUM_CHANS];
 
@@ -83,13 +83,17 @@ u16 CARD_Select(u16 nDrive) {
 }
 
 u16 CARD_Reset() {
-    u32 sp8;
-    u32 temp_r0;
-    u8 temp_r28;
-    u8 temp_r29;
-    u8 temp_r29_2;
+    volatile u32 sp8;
+    u8 tran;
+    u8 value;
+    u16 div;
+    u8 unit;
 
-    CARD_ExiFreq[CARD_ExiChannel] = 4;
+    (void)tran;
+    (void)tran;
+    (void)tran;
+
+    CARD_ExiFreq[CARD_ExiChannel] = 0;
 
     if (EXIAttach(CARD_ExiChannel, (EXICallback)EXI_Null) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0090;
@@ -133,45 +137,51 @@ u16 CARD_Reset() {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    temp_r29 = SD_CSD[CARD_ExiChannel].data[3];
-    temp_r29_2 = temp_r29 & 7;
+    unit = SD_CSD[CARD_ExiChannel].data[3];
+    value = (unit >> 3) & 0xF;
+    unit &= 7;
 
-    if (temp_r29_2 > 3) {
+    if (unit > 3) {
         CARD_ExiFreq[CARD_ExiChannel] = 0;
     } else {
-        temp_r28 = CARD_TBL_CLOCK_DIV[((((temp_r29 >> 3U) & 0xF) * 4) & 0x3FC) + temp_r29_2];
+        div = CARD_TBL_CLOCK_DIV[value][unit];
 
-        if (temp_r28 == 0xFF) {
+        if (div == 0xFF) {
             CARD_ExiFreq[CARD_ExiChannel] = 0;
         } else {
-            CARD_ExiFreq[CARD_ExiChannel] = temp_r28;
+            CARD_ExiFreq[CARD_ExiChannel] = div;
         }
     }
 
+    CARD_ErrStatus[CARD_ExiChannel];
     CARD_SD_Status();
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    CARD_Size[CARD_ExiChannel] = SD_SDSTATUS[CARD_ExiChannel].data[6] * 0x100 + SD_SDSTATUS[CARD_ExiChannel].data[7];
-    CARD_Size[CARD_ExiChannel] = SD_SDSTATUS[CARD_ExiChannel].data[4] * 0x100 + SD_SDSTATUS[CARD_ExiChannel].data[5];
+    ((u16*)&CARD_Size[CARD_ExiChannel])[1] =
+        ((u16)SD_SDSTATUS[CARD_ExiChannel].data[6] << 8) + SD_SDSTATUS[CARD_ExiChannel].data[7];
+    ((u16*)&CARD_Size[CARD_ExiChannel])[0] =
+        ((u16)SD_SDSTATUS[CARD_ExiChannel].data[4] << 8) + SD_SDSTATUS[CARD_ExiChannel].data[5];
 
-    CARD_Size[CARD_ExiChannel] *=
-        (4 << ((SD_CSD[CARD_ExiChannel].data[9] & 3) << 1 | (SD_CSD[CARD_ExiChannel].data[10] >> 7)));
+    CARD_Size[CARD_ExiChannel] *= 4 << (((SD_CSD[CARD_ExiChannel].data[9] & 3) << 1) |
+                                        ((SD_CSD[CARD_ExiChannel].data[10] & 0x80) >> 7));
 
-    if ((SD_CSD[CARD_ExiChannel].data[5] & 0xf) != 0) {
-        CARD_Size[CARD_ExiChannel] <<=
-            ((SD_CSD[CARD_ExiChannel].data[12] & 3) << 2 | (SD_CSD[CARD_ExiChannel].data[0xd] >> 6));
+    if ((SD_CSD[CARD_ExiChannel].data[5] & 0xF) != 0) {
+        CARD_Size[CARD_ExiChannel] = CARD_Size[CARD_ExiChannel] << (((SD_CSD[CARD_ExiChannel].data[12] & 3) << 2) |
+                                                                    ((SD_CSD[CARD_ExiChannel].data[13] & 0xC0) >> 6));
     }
 
     CARD_Size[CARD_ExiChannel] /= CARD_SectorSize[CARD_ExiChannel];
 
-    CARD_Size[CARD_ExiChannel] +=
-        (((SD_CSD[CARD_ExiChannel].data[8] >> 6) + SD_CSD[CARD_ExiChannel].data[7] * 4 +
-          (SD_CSD[CARD_ExiChannel].data[6] & 3) * 0x400 + 1) *
-             (4 << ((SD_CSD[CARD_ExiChannel].data[9] & 3) << 1 | (SD_CSD[CARD_ExiChannel].data[10] >> 7)))
-         << ((SD_CSD[CARD_ExiChannel].data[12] & 3) << 2 | (SD_CSD[CARD_ExiChannel].data[13] >> 6))) /
-        CARD_SectorSize[CARD_ExiChannel];
+    sp8 = ((SD_CSD[CARD_ExiChannel].data[8] & 0xC0) >> 6) + (SD_CSD[CARD_ExiChannel].data[7] << 2) +
+          ((SD_CSD[CARD_ExiChannel].data[6] & 3) << 10) + 1;
+    sp8 *= 4 << (((SD_CSD[CARD_ExiChannel].data[9] & 3) << 1) | ((SD_CSD[CARD_ExiChannel].data[10] & 0x80) >> 7));
+    sp8 <<= ((SD_CSD[CARD_ExiChannel].data[12] & 3) << 2) | ((SD_CSD[CARD_ExiChannel].data[13] & 0xC0) >> 6);
+    sp8 /= CARD_SectorSize[CARD_ExiChannel];
+    !tran;
+    CARD_Size[CARD_ExiChannel] += sp8;
+    !tran;
 
     return CARD_ErrStatus[CARD_ExiChannel];
 }
@@ -248,7 +258,7 @@ u16 CARD_WriteD(u8* param1, u32 param2, int param3, int param4, UnknownStruct1* 
 
     if (!CARD_Command(WRITE_MULTIPLE_BLOCK, param3 * CARD_SectorSize[CARD_ExiChannel]) && !CARD_Response1()) {
         for (i = 0; i < param2; i++) {
-            if (EXI_MultiDataWrite(pData, CARD_SectorSize[CARD_ExiChannel]) || CARD_DataResponse()) {
+            if (EXI_MultiDataWrite(pData, CARD_SectorSize[CARD_ExiChannel])) {
                 break;
             }
 
@@ -387,52 +397,39 @@ u16 CARD_StopResponse() {
     return CARD_ErrStatus[CARD_ExiChannel];
 }
 
-u16 CARD_DataResponse() {
-    EXI_DataRes(SD_RES[CARD_ExiChannel].data);
-
-    if (((CARD_GetResponse0() >> 1) & 7) == 5) {
-        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0002;
-    }
-
-    if (((CARD_GetResponse0() >> 1) & 7) == 6) {
-        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0200;
-    }
-
-    return CARD_ErrStatus[CARD_ExiChannel];
-}
-
 u16 CARD_SoftReset() {
     u16 ret;
-    int tmp;
+    UnkARG iVar0;
+    UnkARG iVar1;
     UnkARG iVar2;
-    UnkARG iVar2_2;
-    int pad1;
-    int pad2;
+    UnkARG iVar3;
 
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
     SD_ARG[CARD_ExiChannel].data_u32 = 0;
-    iVar2.arg = SD_ARG[CARD_ExiChannel];
-    iVar2._00 = GO_IDLE_STATE;
+    iVar1.arg = SD_ARG[CARD_ExiChannel];
+    iVar1._00 = GO_IDLE_STATE;
+    SD_CMD[CARD_ExiChannel].data[0] = iVar1._00;
+    SD_CMD[CARD_ExiChannel].data[1] = iVar1.arg.data[0];
+    SD_CMD[CARD_ExiChannel].data[2] = iVar1.arg.data[1];
+    SD_CMD[CARD_ExiChannel].data[3] = iVar1.arg.data[2];
+    SD_CMD[CARD_ExiChannel].data[4] = iVar1.arg.data[3];
+
+    EXI_CmdWrite0(SD_CMD[CARD_ExiChannel].data, 5);
+
+    CARD_ErrStatus[CARD_ExiChannel];
+    !ret;
+    !ret;
+    CARD_ErrStatus[CARD_ExiChannel];
+    CARD_Response1();
+
+    CARD_ErrStatus[CARD_ExiChannel];
+    iVar2.arg.data_u32 = 0;
+    iVar2._00 = STOP_TRANSMISSION;
     SD_CMD[CARD_ExiChannel].data[0] = iVar2._00;
     SD_CMD[CARD_ExiChannel].data[1] = iVar2.arg.data[0];
     SD_CMD[CARD_ExiChannel].data[2] = iVar2.arg.data[1];
     SD_CMD[CARD_ExiChannel].data[3] = iVar2.arg.data[2];
     SD_CMD[CARD_ExiChannel].data[4] = iVar2.arg.data[3];
-
-    EXI_CmdWrite0(SD_CMD[CARD_ExiChannel].data, 5);
-
-    CARD_ErrStatus[CARD_ExiChannel];
-    CARD_ErrStatus[CARD_ExiChannel];
-    CARD_Response1();
-
-    CARD_ErrStatus[CARD_ExiChannel];
-    iVar2_2.arg = iVar2.arg;
-    iVar2_2._00 = STOP_TRANSMISSION;
-    SD_CMD[CARD_ExiChannel].data[0] = iVar2_2._00;
-    SD_CMD[CARD_ExiChannel].data[1] = iVar2_2.arg.data[0];
-    SD_CMD[CARD_ExiChannel].data[2] = iVar2_2.arg.data[1];
-    SD_CMD[CARD_ExiChannel].data[3] = iVar2_2.arg.data[2];
-    SD_CMD[CARD_ExiChannel].data[4] = iVar2_2.arg.data[3];
 
     EXI_CmdWrite(SD_CMD[CARD_ExiChannel].data, 5);
 
@@ -443,27 +440,25 @@ u16 CARD_SoftReset() {
     CARD_ErrStatus[CARD_ExiChannel] = CARD_ERROR_0000;
 
     SD_ARG[CARD_ExiChannel].data_u32 = 0;
-    iVar2.arg = SD_ARG[CARD_ExiChannel];
-    iVar2._00 = GO_IDLE_STATE;
-    SD_CMD[CARD_ExiChannel].data[0] = iVar2._00;
-    SD_CMD[CARD_ExiChannel].data[1] = iVar2.arg.data[0];
-    SD_CMD[CARD_ExiChannel].data[2] = iVar2.arg.data[1];
-    SD_CMD[CARD_ExiChannel].data[3] = iVar2.arg.data[2];
-    SD_CMD[CARD_ExiChannel].data[4] = iVar2.arg.data[3];
+    iVar3.arg = SD_ARG[CARD_ExiChannel];
+    iVar3._00 = GO_IDLE_STATE;
+    SD_CMD[CARD_ExiChannel].data[0] = iVar3._00;
+    SD_CMD[CARD_ExiChannel].data[1] = iVar3.arg.data[0];
+    SD_CMD[CARD_ExiChannel].data[2] = iVar3.arg.data[1];
+    SD_CMD[CARD_ExiChannel].data[3] = iVar3.arg.data[2];
+    SD_CMD[CARD_ExiChannel].data[4] = iVar3.arg.data[3];
     EXI_CmdWrite(SD_CMD[CARD_ExiChannel].data, 5);
 
     if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
-        // ?
-        CARD_ErrStatus[CARD_ExiChannel];
-    } else {
-        // ?
-        CARD_ErrStatus[CARD_ExiChannel];
-        CARD_Response1();
+        return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    // ?
     CARD_ErrStatus[CARD_ExiChannel];
+    !ret;
+    CARD_Response1();
+    !ret;
 
+    CARD_ErrStatus[CARD_ExiChannel];
     ret = CARD_ErrStatus[CARD_ExiChannel];
     return ret;
 }
@@ -482,62 +477,71 @@ u16 CARD_AppCommand() {
     }
 
     CARD_Response1();
-
     ret = CARD_ErrStatus[CARD_ExiChannel];
     return ret;
 }
 
-inline u16 CARD_SendOpCond_UnknownInline1() {
-    u16 ret;
+static inline u16 CARD_AppCommandI() {
+    UnkARG iVar2;
 
-    if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
-        ret = CARD_ErrStatus[CARD_ExiChannel];
-    } else {
-        // CARD_Response1();
-        ret = CARD_ErrStatus[CARD_ExiChannel];
+    SD_ARG[CARD_ExiChannel].data_u32 = 0;
+    iVar2.arg = SD_ARG[CARD_ExiChannel];
+    iVar2._00 = APP_CMD;
+
+    if (CARD_Command2(&iVar2)) {
+        return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    return ret;
+    CARD_Response1();
+    return CARD_ErrStatus[CARD_ExiChannel];
 }
 
 u16 CARD_SendOpCond() {
-    UnkARG iVar2;
     u16 ret;
+    UnkARG iVar1;
+    UnkARG iVar2;
     OSTick tick;
 
     tick = OSGetTick();
 
     do {
-        CARD_AppCommand();
-        CARD_SendOpCond_UnknownInline1();
+        CARD_AppCommandI();
+        if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
+            return CARD_ErrStatus[CARD_ExiChannel];
+        }
 
+        CARD_ErrStatus[CARD_ExiChannel];
         SD_ARG[CARD_ExiChannel].data_u32 = 0;
-        iVar2.arg = SD_ARG[CARD_ExiChannel];
-        iVar2._00 = CMD_69;
-        if (CARD_Command2(&iVar2)) {
-            ret = CARD_ErrStatus[CARD_ExiChannel];
-            return ret;
+        iVar1.arg = SD_ARG[CARD_ExiChannel];
+        iVar1._00 = CMD_69;
+        if (CARD_Command2(&iVar1)) {
+            return CARD_ErrStatus[CARD_ExiChannel];
         }
 
         CARD_Response1();
+        ret = SD_RES[CARD_ExiChannel].data[0];
+        !tick;
 
         if (CARD_ErrStatus[CARD_ExiChannel] != 0 || !(SD_RES[CARD_ExiChannel].data[0] & 1)) {
             goto end;
         }
     } while (EXI_CheckTimeOut(tick, 1500) == 0);
 
-    CARD_AppCommand();
-    CARD_SendOpCond_UnknownInline1();
+    CARD_AppCommandI();
+    if (CARD_ErrStatus[CARD_ExiChannel] != 0) {
+        return CARD_ErrStatus[CARD_ExiChannel];
+    }
 
+    CARD_ErrStatus[CARD_ExiChannel];
     SD_ARG[CARD_ExiChannel].data_u32 = 0;
     iVar2.arg = SD_ARG[CARD_ExiChannel];
-    iVar2._00 = SEND_CSD;
+    iVar2._00 = CMD_69;
     if (CARD_Command2(&iVar2)) {
-        ret = CARD_ErrStatus[CARD_ExiChannel];
-        return ret;
+        return CARD_ErrStatus[CARD_ExiChannel];
     }
 
     CARD_Response1();
+    ret = SD_RES[CARD_ExiChannel].data[0];
 
     if (CARD_ErrStatus[CARD_ExiChannel] == 0 && (SD_RES[CARD_ExiChannel].data[0] & 1)) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_8000;
@@ -613,6 +617,23 @@ u16 CARD_SetBlockLength(int param_1) {
 
     ret = CARD_ErrStatus[CARD_ExiChannel];
     return ret;
+}
+
+u16 CARD_SecureGetinfo(SDInfos* param1) {
+    u8* ptr;
+    int i;
+
+    CARD_SD_Status();
+
+    if (CARD_ErrStatus[CARD_ExiChannel] == 0) {
+        ptr = param1->data;
+
+        for (i = 0; i < ARRAY_COUNT(SD_SDSTATUS[CARD_ExiChannel].data); i++) {
+            *ptr++ = SD_SDSTATUS[CARD_ExiChannel].data[i];
+        }
+    }
+
+    return CARD_ErrStatus[CARD_ExiChannel];
 }
 
 u16 CARD_Term() {

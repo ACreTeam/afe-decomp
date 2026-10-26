@@ -88,6 +88,23 @@ bool JKRFileLoader::detachResource(void* resourceBuffer, JKRFileLoader* fileLoad
     return false;
 }
 
+u32 JKRFileLoader::getResSize(void* resourceBuffer, JKRFileLoader* fileLoader) {
+    long resSize = -1;
+    if (fileLoader) {
+        return fileLoader->getResSize(resourceBuffer);
+    }
+
+    JSUList<JKRFileLoader>& volumeList = getVolumeList();
+    JSUListIterator<JKRFileLoader> iterator;
+    for (iterator = volumeList.getFirst(); iterator != volumeList.getEnd(); ++iterator) {
+        resSize = iterator->getResSize(resourceBuffer);
+        if (resSize >= 0)
+            break;
+    }
+
+    return resSize;
+}
+
 JKRFileLoader* JKRFileLoader::findVolume(const char** volumeName) {
     if (*volumeName[0] != '/') {
         return sCurrentVolume;

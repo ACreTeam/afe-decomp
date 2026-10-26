@@ -22,7 +22,7 @@ class JUTXfb {
 
     void clearIndex();
     void common_init(int);
-    JUTXfb(JKRHeap*, JUTXfb::EXfbNumber);
+    JUTXfb(const GXRenderModeObj*, JKRHeap*, JUTXfb::EXfbNumber);
     ~JUTXfb();
     void delXfb(int);
     static JUTXfb* createManager(JKRHeap*, JUTXfb::EXfbNumber);

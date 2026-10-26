@@ -28,11 +28,6 @@ struct TColor : public GXColor {
         set(color);
     }
 
-    TColor& operator=(const TColor& other) {
-        ((GXColor*)this)->operator=(other);
-        return *this;
-    }
-
     /** @fabricated */
     TColor& operator=(const GXColorS10& other) {
         r = other.r;

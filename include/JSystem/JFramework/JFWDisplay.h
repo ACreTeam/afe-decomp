@@ -19,7 +19,7 @@ extern GC_Mtx e_mtx;
 class JFWAlarm : public OSAlarm { // everything here seems to be auto inlined or unused
   public:
     // Contructor and Destructor are both present in map but unused, not sure if it belongs here
-    JFWAlarm() {
+    JFWAlarm() : mLink(this) {
     }
     ~JFWAlarm() {
     }
@@ -28,6 +28,12 @@ class JFWAlarm : public OSAlarm { // everything here seems to be auto inlined or
     }
     void cancelAlarm() {
         OSCancelAlarm(this);
+    }
+    void removeLink() {
+        sList.remove(&mLink);
+    }
+    void appendLink() {
+        sList.append(&mLink);
     }
 
     OSThread* getThread() const {
@@ -41,6 +47,7 @@ class JFWAlarm : public OSAlarm { // everything here seems to be auto inlined or
 
   public:
     /* 0x28 */ OSThread* mThread;
+    /* 0x2C */ JSULink<JFWAlarm> mLink;
 };
 
 class JFWDisplay {
@@ -51,6 +58,9 @@ class JFWDisplay {
     };
 
     static JFWDisplay* createManager(const _GXRenderModeObj*, JKRHeap*, JUTXfb::EXfbNumber, bool); // 0x80015bfc
+    static JFWDisplay* createManager(JKRHeap* heap, JUTXfb::EXfbNumber xfbNum, bool enableAlpha) {
+        return createManager(nullptr, heap, xfbNum, enableAlpha);
+    }
     void waitBlanking(int);                                                                        // 0x8001684c
     void threadSleep(s64);                                                                         // 0x800169fc
     void clearEfb_init();                                                                          // 0x80016ab8
@@ -59,8 +69,8 @@ class JFWDisplay {
     void clearEfb(int, int, int, int, _GXColor);                                                   // 0x80016b9c
     void calcCombinationRatio();                                                                   // 0x80016f0c
 
-    void ctor_subroutine(const GXRenderModeObj*, bool);
-    JFWDisplay(const GXRenderModeObj*, JKRHeap*, JUTXfb::EXfbNumber, bool);
+    void ctor_subroutine(bool);
+    JFWDisplay(JKRHeap*, JUTXfb::EXfbNumber, bool);
 
     static void destroyManager();
     void prepareCopyDisp();
@@ -99,15 +109,15 @@ class JFWDisplay {
     }
 
     const GXRenderModeObj* getRenderMode() const {
-        return mRMode;
+        return JUTVideo::getManager()->getRenderMode();
     }
 
     int getEfbHeight() const {
-        return getRenderMode() ->efbHeight;
+        return (u16)JUTVideo::getManager()->getEfbHeight();
     }
 
     int getEfbWidth() const {
-        return getRenderMode() ->fbWidth;
+        return JUTVideo::getManager()->getFbWidth();
     }
 
     JUTFader* getFader() const {
@@ -155,7 +165,7 @@ class JFWDisplay {
         return mEnableAlpha;
     }
 
-    void setGamma(u16 gamma) {
+    void setGamma(GXGamma gamma) {
         mGamma = gamma;
     }
 
@@ -167,23 +177,26 @@ class JFWDisplay {
     static JFWDisplay* sManager; // 0x80415718
 
   private:
-    JUTFader* mFader;              // 04
-    const GXRenderModeObj* mRMode; // 08
-    JUtility::TColor mClearColor;  // 0c
-    u32 mZClear;                   // 10
-    JUTXfb* mXfb;                  // 14
-    u16 mGamma;                    // 18
-    EDrawDone mDrawDoneMethod;     // 1c
-    u16 mFrameRate;                // 20
-    u32 mTickRate;                 // 24
-    bool mEnableAlpha;             // 28
-    u16 mClamp;                    // 2a
-    f32 mCombinationRatio;         // 2c
-    u32 mStartTick;                // 30, tick of when the frame starts rendering
-    u32 mFrameTime;                // 34, time it took to render a frame/amount of ticks beginRender took
-    u32 mVideoFrameTime;           // 38, time between mStartTick and the last Video Tick
-    s16 mDrawingXfbNo;             // 3c
-    bool mIsSingleXfb;             // 3e
+    JUTFader* mFader;                // 04
+    JUtility::TColor mClearColor;    // 08
+    u32 mZClear;                     // 0c
+    JUTXfb* mXfb;                    // 10
+    u16 mGamma;                      // 14
+    EDrawDone mDrawDoneMethod;       // 18
+    u16 mFrameRate;                  // 1c
+    u32 mTickRate;                   // 20
+    bool mEnableAlpha;               // 24
+    u16 mClamp;                      // 26
+    f32 mCombinationRatio;           // 28
+    u32 mStartTick;                  // 2c, tick of when the frame starts rendering
+    u32 mFrameTime;                  // 30, time it took to render a frame/amount of ticks beginRender took
+    u32 mVideoFrameTime;             // 34
+    int mDrawInterval;               // 38
+    int mDrawCount;                  // 3c
+    bool mIsDrawFrame;               // 40
+    JFWDisplayUnkFunc mPreCopyDispFunc; // 44
+    s16 mDrawingXfbNo;               // 48
+    bool mIsSingleXfb;               // 4a
 };
 
 #endif

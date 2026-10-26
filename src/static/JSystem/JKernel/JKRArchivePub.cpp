@@ -11,8 +11,21 @@
 // TODO: this file should emit a vtable but it doesn't, luckily JKRArchivePri
 // does that and it doesn't cause any issues
 
+JKRArchive* JKRArchive::check_mount_already(s32 entryNum) {
+    for (JSUListIterator<JKRFileLoader> iterator = sVolumeList.getFirst(); iterator != sVolumeList.getEnd();
+         ++iterator) {
+        if (iterator->getVolumeType() == 'RARC') {
+            JKRArchive* archive = (JKRArchive*)iterator.getObject(); // in TP debug it calls operator-> ?
+            if (archive->mEntryNum == entryNum) {
+                archive->mMountCount++;
+                return archive;
+            }
+        }
+    }
+    return nullptr;
+}
+
 JKRArchive* JKRArchive::check_mount_already(s32 entryNum, JKRHeap* pHeap) {
-    // UNUSED FUNCTION
     JKRHeap* heap = pHeap;
     if (heap == nullptr) {
         heap = JKRGetCurrentHeap();
@@ -31,54 +44,9 @@ JKRArchive* JKRArchive::check_mount_already(s32 entryNum, JKRHeap* pHeap) {
     return nullptr;
 }
 
-JKRArchive* JKRArchive::check_mount_already(s32 entryNum) {
-    for (JSUListIterator<JKRFileLoader> iterator = sVolumeList.getFirst(); iterator != sVolumeList.getEnd();
-         ++iterator) {
-        if (iterator->getVolumeType() == 'RARC') {
-            JKRArchive* archive = (JKRArchive*)iterator.getObject(); // in TP debug it calls operator-> ?
-            if (archive->mEntryNum == entryNum) {
-                archive->mMountCount++;
-                return archive;
-            }
-        }
-    }
-    return nullptr;
-}
-
 JKRArchive* JKRArchive::mount(const char* path, EMountMode mode, JKRHeap* heap, EMountDirection direction) {
     int entryNum = DVDConvertPathToEntrynum((char*)path);
-    if (entryNum < 0)
-        return nullptr;
-
-    JKRArchive* mountedArchive = check_mount_already(entryNum);
-    if (mountedArchive != nullptr) {
-        return mountedArchive;
-    }
-
-    int alignment = (direction == MOUNT_DIRECTION_HEAD) ? 4 : -4;
-    JKRArchive* archive;
-    switch (mode) {
-        case MOUNT_MEM:
-            if (entryNum == -1)
-                archive = nullptr;
-            else
-                archive = new (heap, alignment) JKRMemArchive(entryNum, direction);
-            break;
-        case MOUNT_ARAM:
-            archive = new (heap, alignment) JKRAramArchive(entryNum, direction);
-            break;
-        case MOUNT_DVD:
-            archive = new (heap, alignment) JKRDvdArchive(entryNum, direction);
-            break;
-        case MOUNT_COMP:
-            archive = new (heap, alignment) JKRCompArchive(entryNum, direction);
-            break;
-    }
-    if (archive != nullptr && archive->getMountMode() == UNKNOWN_MOUNT_MODE) {
-        delete archive;
-        archive = nullptr;
-    }
-    return archive;
+    return (entryNum < 0) ? nullptr : mount(entryNum, mode, heap, direction);
 }
 
 JKRArchive* JKRArchive::mount(void* p1, JKRHeap* heap, EMountDirection mountDirection) {
@@ -242,9 +210,10 @@ void JKRArchive::removeResourceAll() {
         SDIFileEntry* entry = mFileEntries;
         for (int i = 0; i < mArcInfoBlock->num_file_entries; i++) {
             if (entry->mData) {
-                entry->mData = nullptr;
                 JKRFreeToHeap(mHeap, entry->mData);
+                entry->mData = nullptr;
             }
+            entry++;
         }
     }
 }

@@ -19,14 +19,20 @@ void JUTXfb::common_init(int xfbNum) {
     mSDrawingFlag = 99;
 }
 
-JUTXfb::JUTXfb(JKRHeap* heap, JUTXfb::EXfbNumber number) {
+JUTXfb::JUTXfb(const GXRenderModeObj* rmode, JKRHeap* heap, JUTXfb::EXfbNumber number) {
     common_init(number);
 
-    u16 efbWidth = JUTVideo::getManager()->getRenderMode()->fbWidth;
-    u16 xfbHeight = JUTVideo::getManager()->getRenderMode()->xfbHeight;
-    u16 efbHeight = JUTVideo::getManager()->getRenderMode()->efbHeight;
+    if (rmode) {
+        initiate(rmode->fbWidth, rmode->xfbHeight, heap, number);
+    } else {
+        u16 efbWidth = JUTVideo::getManager()->getRenderMode()->fbWidth;
+        u16 xfbHeight = JUTVideo::getManager()->getRenderMode()->xfbHeight;
+        u16 efbHeight = JUTVideo::getManager()->getRenderMode()->efbHeight;
 
-    initiate(efbWidth, xfbHeight, heap, number);
+        f32 yScale = GXGetYScaleFactor(efbHeight, xfbHeight);
+        u16 numLines = GXGetNumXfbLines(efbHeight, yScale);
+        initiate(efbWidth, numLines, heap, number);
+    }
 }
 
 JUTXfb::~JUTXfb() {
@@ -45,7 +51,7 @@ void JUTXfb::delXfb(int xfbIdx) {
 JUTXfb* JUTXfb::createManager(JKRHeap* heap, JUTXfb::EXfbNumber number) {
     JUT_CONFIRM_MESSAGE(sManager == 0);
     if (sManager == nullptr) {
-        sManager = new JUTXfb(heap, number);
+        sManager = new JUTXfb(nullptr, heap, number);
     }
     return sManager;
 }
@@ -83,8 +89,11 @@ void JUTXfb::initiate(u16 w, u16 h, JKRHeap* heap, JUTXfb::EXfbNumber number) {
 }
 
 u32 JUTXfb::accumeXfbSize() {
-    JUTVideo* video = JUTVideo::getManager();
-    u16 height = video->getXfbHeight();
-    u16 width = video->getFbWidth();
-    return (u16)ALIGN_NEXT(width, 16) * height * 2;
+    const GXRenderModeObj* rmode = JUTVideo::getManager()->getRenderMode();
+    u16 efbHeight = rmode->efbHeight;
+    u16 xfbHeight = rmode->xfbHeight;
+    u16 efbWidth = rmode->fbWidth;
+    f32 yScale = GXGetYScaleFactor(efbHeight, xfbHeight);
+    u16 numLines = GXGetNumXfbLines(efbHeight, yScale);
+    return (u16)ALIGN_NEXT((u16)efbWidth, 16) * numLines * 2;
 }

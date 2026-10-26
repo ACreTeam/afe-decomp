@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "libc/stdarg.h"
+#include "JSystem/JUtility/TColor.h"
 
 #ifdef __cplusplus
 
@@ -13,6 +14,8 @@ class JUTDirectPrint {
   public:
     static JUTDirectPrint* start();
     void erase(int x, int y, int w, int h);
+    void setCharColor(JUtility::TColor color);
+    void setCharColor(u8 r, u8 g, u8 b);
     void drawChar(int, int, int);
     void drawString(u16 x, u16 y, char* text);
     void drawString_f(u16 x, u16 y, const char* text, ...);
@@ -25,6 +28,9 @@ class JUTDirectPrint {
     }
     void* getFrameBuffer() {
         return mFramebuffer;
+    }
+    JUtility::TColor getCharColor() const {
+        return mCharColor;
     }
 
     void changeFrameBuffer(void* fb) {
@@ -48,6 +54,14 @@ class JUTDirectPrint {
     size_t mFbSize;     // _0C
     u8 _10[0x4];        // _10 - unknown
     u16* mFrameMemory;  // _14
+    JUtility::TColor mCharColor; // _18
+    u16 mCharColorY;             // _1C
+    u16 mCharColorCb;            // _1E
+    u16 mCharColorCb2;           // _20
+    u16 mCharColorCb4;           // _22
+    u16 mCharColorCr;            // _24
+    u16 mCharColorCr2;           // _26
+    u16 mCharColorCr4;           // _28
 };
 
 inline void JUTChangeFrameBuffer(void* buffer, u16 height, u16 width) {

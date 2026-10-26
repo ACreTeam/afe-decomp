@@ -1,4 +1,5 @@
 #include "JSystem/JKernel/JKRDvdFile.h"
+#include "JSystem/JMacro.h"
 
 JSUList<JKRDvdFile> JKRDvdFile::sDvdList;
 
@@ -73,7 +74,7 @@ bool JKRDvdFile::close() {
             this->mFileOpen = false;
             return sDvdList.remove(&this->mLink);
         } else {
-            OSErrorLine(212, "cannot close DVD file\n"); /* JKRDvdFile.cpp line 212 */
+            JPANIC(213, "cannot close DVD file\n");
         }
     }
 }

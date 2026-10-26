@@ -1961,7 +1961,11 @@ u16 FS_write_sub(u8* param1, u32 param2, u32 param3, UnknownStruct1* param4, u16
 }
 
 u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 modeFlags, u16 arg3, u16 chan) {
+#if VERSION == VER_GAEJ01_00
     s32 blockMultiplier;
+#else
+    u32 max;
+#endif
     u32 i;
     DrvCtl* pDrvCtl;
     SDInfos rawCsdInfo;
@@ -1971,18 +1975,28 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
     u32 read_bl_len;
     u32 c_size;
     u32 c_size_mult;
+#if VERSION == VER_GAEJ01_00
     u32 max;
+#else
+    s32 blockMultiplier;
+#endif
     u32 size;
     s32 t0;
 
     pDrvCtl = &FS_drv_ctl[chan];
     sp16 = arg3;
+#if VERSION == VER_GAEJ01_01
+    status = 0;
+    (void)status;
+#endif
 
+#if VERSION == VER_GAEJ01_00
     // these are probably used somewhere in assert calls or something
     (void)read_bl_len;
     (void)c_size;
     (void)c_size_mult;
     (void)t0;
+#endif
 
     if (modeFlags & FS_SD_CARD_MODE_RAW) {
         *outSectorsPerCluster = 0xF28 * 0x20; // 0x1E500
@@ -1992,7 +2006,11 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
         *outCsdBlockMultiplier = 0x20;
     }
 
+#if VERSION == VER_GAEJ01_00
     status = FS_DrvSel_Getinfo(&rawCsdInfo, pDrvCtl->unk_00[1]);
+#else
+    FS_DrvSel_Getinfo(&rawCsdInfo, pDrvCtl->unk_00[1]);
+#endif
 
     // byte swap CSD register data I guess?
     i = 0;
@@ -2002,10 +2020,19 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
     }
 
     read_bl_len = ((u16)(csdInfo.data[12] & 3) << 2) | ((u16)(csdInfo.data[13] & (3 << 6)) >> 6);
+#if VERSION == VER_GAEJ01_00
     c_size = ((u16)(csdInfo.data[6] & (3 << 0)) << 10) | ((u16)(csdInfo.data[7] << 2)) | ((u16)(csdInfo.data[8] & (3 << 6)) >> 6);
+#else
+    c_size = ((csdInfo.data[6] & 3) << 10) | ((u16)(csdInfo.data[7] << 2)) | ((u16)(csdInfo.data[8] & (3 << 6)) >> 6);
+    status = 0;
+    (void)status;
+#endif
     c_size_mult = ((u16)(csdInfo.data[9] & (3 << 0)) << 1) | ((u16)(csdInfo.data[10] & (1 << 7)) >> 7); // r23
     size = 1 + (c_size & 0xFFFF); // these are actually the 'total blocks' until the later multiplication step
-    
+
+#if VERSION == VER_GAEJ01_01
+    (void)size;
+#endif
     max = c_size_mult & 0xFFFF;
     blockMultiplier = 2;
     i = 0;
@@ -2055,16 +2082,14 @@ u16 FS_csd_to_size(u32 *outSectorsPerCluster, s32 *outCsdBlockMultiplier, u16 mo
             *outSectorsPerCluster = 0xA0 * 0x100; // 2GB card
         }
 #else
-        u16 status;
-
-        status = FS_DrvSel_SecureGetInfo(&csdInfo, pDrvCtl->unk_00[1]);
-        if (status != 0) {
+        if ((u16)FS_DrvSel_SecureGetInfo(&rawCsdInfo, pDrvCtl->unk_00[1]) != 0) {
             *outSectorsPerCluster = 0;
             *outCsdBlockMultiplier = 0;
             return 0xA00E;
         }
 
-        *outSectorsPerCluster = blockMultiplier * (((csdInfo.pad_unk_20[32] & 0xFF) << 24) | ((csdInfo.pad_unk_20[33] & 0xFF) << 16) | ((csdInfo.pad_unk_20[34] & 0xFF) << 8) | (csdInfo.pad_unk_20[35] & 0xFF));
+        *outSectorsPerCluster = blockMultiplier * (((rawCsdInfo.data[4] & 0xFF) << 24) | ((rawCsdInfo.data[5] & 0xFF) << 16) |
+                                                   ((rawCsdInfo.data[6] & 0xFF) << 8) | (rawCsdInfo.data[7] & 0xFF));
 #endif
 
         *outCsdBlockMultiplier = blockMultiplier;

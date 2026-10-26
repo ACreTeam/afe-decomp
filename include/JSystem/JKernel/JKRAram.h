@@ -25,40 +25,7 @@ class JKRAramHeap;
 class JKRDecompCommand;
 class JKRAMCommand;
 
-class JKRAramBlock {
-  public:
-    JKRAramBlock(u32 address, u32 size, u32 freeSize, u8 groupID, bool tempMemory);
-
-    virtual ~JKRAramBlock();
-
-    JKRAramBlock* allocHead(u32 size, u8 groupID, JKRAramHeap* heap);
-    JKRAramBlock* allocTail(u32 size, u8 groupID, JKRAramHeap* heap);
-
-    u32 getAddress() const {
-        return this->mAddress;
-    }
-    u32 getSize() const {
-        return this->mSize;
-    }
-    u32 getFreeSize() const {
-        return this->mFreeSize;
-    }
-    bool isTempMemory() const {
-        return this->mIsTempMemory;
-    }
-    void newGroupID(u8 groupID) {
-        this->mGroupID = groupID;
-    }
-
-    JSULink<JKRAramBlock> mLink;
-    u32 mAddress;
-    u32 mSize;
-    u32 mFreeSize;
-    u8 mGroupID;
-    bool mIsTempMemory;
-
-    friend class JKRAramHeap;
-};
+#include "JSystem/JKernel/JKRAramBlock.h"
 
 class JKRAramHeap : public JKRDisposer {
   public:
@@ -116,6 +83,8 @@ class JKRAram : public JKRThread {
     static JKRAram* create(u32, u32, long, long, long);
     static JKRAramBlock* mainRamToAram(u8*, u32, u32, JKRExpandSwitch, u32, JKRHeap*, int);
     static JKRAramBlock* mainRamToAram(u8*, JKRAramBlock* block, u32, JKRExpandSwitch, u32, JKRHeap*, int);
+    static JKRAramBlock* mainRamToAram(u8*, u32, u32, JKRExpandSwitch, u32, JKRHeap*, int, u32*);
+    static JKRAramBlock* mainRamToAram(u8*, JKRAramBlock* block, u32, JKRExpandSwitch, u32, JKRHeap*, int, u32*);
     static u8* aramToMainRam(u32, u8*, u32, JKRExpandSwitch, u32, JKRHeap*, int, u32*);
     static u8* aramToMainRam(JKRAramBlock*, u8*, u32, u32, JKRExpandSwitch, u32, JKRHeap*, int, u32*);
 
@@ -242,15 +211,16 @@ class JKRAramStreamCommand {
     u32 _0C;                       // _0C
     JSUFileInputStream* mStream;   // _10
     u32 mOffset;                   // _14
-    u8* mTransferBuffer;           // _18
-    u32 mTransferBufferSize;       // _1C
-    JKRHeap* mHeap;                // _20
-    bool mAllocatedTransferBuffer; // _24
-    u32 _28;                       // _28
-    OSMessageQueue mMessageQueue;  // _2C
-    void* mMessage;                // _4C
-    u32 _50;                       // _50
+    u32* mReturnSize;              // _18
+    u8* mTransferBuffer;           // _1C
+    u32 mTransferBufferSize;       // _20
+    JKRHeap* mHeap;                // _24
+    bool mAllocatedTransferBuffer; // _28
+    u32 _2C;                       // _2C
+    OSMessageQueue mMessageQueue;  // _30
+    void* mMessage;                // _50
     u32 _54;                       // _54
+    u32 _58;                       // _58
 };
 
 class JKRAramStream : public JKRThread {
@@ -266,6 +236,8 @@ class JKRAramStream : public JKRThread {
     static s32 writeToAram(JKRAramStreamCommand*);
     static JKRAramStreamCommand* write_StreamToAram_Async(JSUFileInputStream*, JKRAramBlock*, u32, u32);
     static JKRAramStreamCommand* write_StreamToAram_Async(JSUFileInputStream*, u32, u32, u32);
+    static JKRAramStreamCommand* write_StreamToAram_Async(JSUFileInputStream*, JKRAramBlock*, u32, u32, u32*);
+    static JKRAramStreamCommand* write_StreamToAram_Async(JSUFileInputStream*, u32, u32, u32, u32*);
     static JKRAramStreamCommand* sync(JKRAramStreamCommand*, BOOL);
     static void setTransBuffer(u8*, u32, JKRHeap*);
 
@@ -297,6 +269,16 @@ inline u8* JKRAramToMainRam(u32 address, u8* buf, u32 bufSize, JKRExpandSwitch e
 inline JKRAramBlock* JKRMainRamToAram(u8* buf, u32 bufSize, u32 alignedSize, JKRExpandSwitch expandSwitch, u32 fileSize,
                                       JKRHeap* heap, int id, u32) {
     return JKRAram::mainRamToAram(buf, bufSize, alignedSize, expandSwitch, fileSize, heap, id);
+}
+
+inline u8* JKRAramToMainRam(JKRAramBlock* block, u8* buf, u32 bufSize, u32 offset, JKRExpandSwitch expandSwitch,
+                            u32 maxDest, JKRHeap* heap, int id, u32* pSize) {
+    return JKRAram::aramToMainRam(block, buf, bufSize, offset, expandSwitch, maxDest, heap, id, pSize);
+}
+
+inline JKRAramBlock* JKRMainRamToAram(u8* buf, JKRAramBlock* block, u32 bufSize, JKRExpandSwitch expandSwitch,
+                                      u32 maxDest, JKRHeap* heap, int id, u32* pSize) {
+    return JKRAram::mainRamToAram(buf, block, bufSize, expandSwitch, maxDest, heap, id, pSize);
 }
 
 inline JKRAramStream* JKRCreateAramStreamManager(s32 priority) {

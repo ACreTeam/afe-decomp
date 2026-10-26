@@ -12,14 +12,6 @@
 //     return JKRFileLoader::getGlbResource(resourceName);
 // }
 
-inline void JKRRemoveResource(void* resource) {
-    JKRFileLoader::removeResource(resource, nullptr);
-}
-
-inline BOOL JKRDetachResource(void* resource) {
-    return JKRFileLoader::detachResource(resource, nullptr);
-}
-
 inline void* JKRGetResourceEntry_byName(u32 root_name, const char* res_name, JKRArchive* archive) {
     return archive->findTypeResource(root_name, res_name);
 }

@@ -16,9 +16,10 @@ typedef void (*JUTErrorHandler)(OSError error, OSContext* context, u32 dsisr, u3
 enum ExPrintFlags {
     EXPRINTFLAG_GPR = 0x1,
     EXPRINTFLAG_GPRMap = 0x2,
-    EXPRINTFLAG_Float = 0x4,
-    EXPRINTFLAG_Stack = 0x8,
-    EXPRINTFLAG_All = 0xFF,
+    EXPRINTFLAG_SRR0Map = 0x4,
+    EXPRINTFLAG_Float = 0x8,
+    EXPRINTFLAG_Stack = 0x10,
+    EXPRINTFLAG_All = 0x1F,
 };
 
 /**
@@ -30,7 +31,7 @@ struct JUTException : public JKRThread {
         INFOPAGE_Float = 2,
         INFOPAGE_Stack = 3,
         INFOPAGE_GPRMap = 4,
-
+        INFOPAGE_SRR0Map = 5,
     };
 
     // size: 0x14
@@ -106,13 +107,17 @@ struct JUTException : public JKRThread {
         mTraceSuppress = supress;
     }
 
-    void setGamePad(JUTGamePad* gamePad) {
+    void enterPad(JUTGamePad* gamePad) {
         mGamePad = gamePad;
         mPadPort = JUTGamePad::Port_Invalid;
     }
 
     void enterAllPad() {
-        setGamePad((JUTGamePad*)-1);
+        enterPad((JUTGamePad*)-1);
+    }
+
+    static void setMapFile(const char* path) {
+        appendMapFile(path);
     }
 
     static JUTException* getManager() {
@@ -132,7 +137,7 @@ struct JUTException : public JKRThread {
     static JUTErrorHandler sPostUserCallback;
     static u32 msr;
     static u32 fpscr;
-    static const char* sCpuExpName[16];
+    static const char* sCpuExpName[17];
     static JSUList<JUTExMapFile> sMapFileList;
 
     // _00     = VTBL
@@ -146,6 +151,7 @@ struct JUTException : public JKRThread {
     u32 mTraceSuppress;            // _94
     u32 _98;                       // _98
     u32 mPrintFlags;               // _9C, see ExPrintFlags enum
+    u32 mStackPointer;             // _A0
 };
 
 #endif

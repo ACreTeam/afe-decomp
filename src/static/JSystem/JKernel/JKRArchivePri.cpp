@@ -16,7 +16,7 @@ JKRArchive::JKRArchive(s32 entryNum, JKRArchive::EMountMode mountMode) : JKRFile
     mIsMounted = false;
     mMountMode = mountMode;
     mMountCount = 1;
-    _54 = 1;
+    _58 = 1;
     mHeap = JKRHeap::findFromRoot(this);
     if (!mHeap) {
         mHeap = JKRHeap::sCurrentHeap;
@@ -186,4 +186,20 @@ const char* JKRArchive::CArcName::store(const char* name, char endChar) {
     if (*name == 0)
         return nullptr;
     return name + 1;
+}
+
+void JKRArchive::setExpandSize(SDIFileEntry* entry, u32 size) {
+    u32 index = entry - mFileEntries;
+    if (mExpandSizes == nullptr || index >= mArcInfoBlock->num_file_entries) {
+        return;
+    }
+    mExpandSizes[index] = size;
+}
+
+u32 JKRArchive::getExpandSize(SDIFileEntry* entry) const {
+    u32 index = entry - mFileEntries;
+    if (mExpandSizes == nullptr || index >= mArcInfoBlock->num_file_entries) {
+        return 0;
+    }
+    return mExpandSizes[index];
 }

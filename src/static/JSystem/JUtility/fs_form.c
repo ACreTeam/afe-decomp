@@ -421,29 +421,6 @@ u16 FS_calc_parameter(u32* param1, u16 param2) {
     return 0xA01E;
 }
 
-inline void test(DrvCtl* temp_r31, u32 arg1, u16 index) {
-
-}
-
-u32 GET_FS_LCS() { return FS_LCS; };
-u16 GET_FS_TRACK_PER_SECTOR() { return FS_TRACK_PER_SECTOR; };
-u16 GET_FS_HEAD_NUM() { return FS_HEAD_NUM; };
-u32 GET_FS_gl_partition_size() { return FS_gl_partition_size; };
-u16 GET_FS_gl_card_size() { return FS_gl_card_size; };
-u16 GET_FS_format_fat_mode() { return FS_format_fat_mode; };
-u16 GET_FS_gl_bu() { return FS_gl_bu; };
-u8 GET_FS_FAT_MODE() { return FS_FAT_MODE; };
-u16 GET_FS_FAT_SC() { return FS_FAT_SC; };
-u32 GET_FS_FAT_MAX() { return FS_FAT_MAX; };
-u16 GET_FS_FAT_SF() { return FS_FAT_SF; };
-u16 GET_FS_FAT_SSA() { return FS_FAT_SSA; };
-u16 GET_FS_FAT_RSC() { return FS_FAT_RSC; };
-u16 GET_FS_FAT_MBR() { return FS_FAT_MBR; };
-u16 GET_FS_BUF_POS_FDC() { return FS_BUF_POS_FDC; };
-u16 GET_FS_BUF_POS_FAT1() { return FS_BUF_POS_FAT1; };
-u16 GET_FS_BUF_POS_FAT2() { return FS_BUF_POS_FAT2; };
-u16 GET_FS_BUF_POS_RDE() { return FS_BUF_POS_RDE; };
-
 u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     DrvCtl* temp_r31;
     u16 index;
@@ -476,7 +453,7 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
     temp_r31->unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_0 + index] = 0;
     temp_r31->unk_20BA4[OFFSET_BPB_BYTES_PER_SEC_INDEX_1 + index] = 2;
 
-    temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_CLUS + index] = FS_LCS / sizeof(FSPartitionBootSector);
+    temp_r31->unk_20BA4[OFFSET_BPB_SEC_PER_CLUS + index] = (FS_LCS >> 9) & 0xFF;
     temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_0 + index] = FS_FAT_RSC;
     temp_r31->unk_20BA4[OFFSET_BPB_RSVD_SEC_CNT_INDEX_1 + index] = (FS_FAT_RSC >> 8);
 
@@ -529,13 +506,21 @@ u16 FS_init_pbs(char* arg0, u32 arg1, s32* arg2, u16 arg3, u16 arg4, u16 arg5) {
 
     status = FS_rand(0xFF, arg5) * 256;
     // tmp = FS_rand(0xFF, arg5);
+#if VERSION == VER_GAEJ01_00
     status *= (temp_r29 = FS_rand(0xFF, arg5));
+#else
+    status += (temp_r29 = FS_rand(0xFF, arg5));
+#endif
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_0 + index] = status;
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_1 + index] = EXTRACT_BITS(status, 8, 8);
 
     status = FS_rand(0xFF, arg5) * 256;
     // tmp = FS_rand(0xFF, arg5);
+#if VERSION == VER_GAEJ01_00
     status *= (temp_r29 = FS_rand(0xFF, arg5));
+#else
+    status += (temp_r29 = FS_rand(0xFF, arg5));
+#endif
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_2 + index] = status;
     // temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = EXTRACT_BITS(status, 8, 8);
     temp_r31->unk_20BA4[OFFSET_BS_VOL_ID_INDEX_3 + index] = (status >> 8) & 0xFF;

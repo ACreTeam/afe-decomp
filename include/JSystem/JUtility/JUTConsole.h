@@ -41,6 +41,7 @@ class JUTConsole : JKRDisposer {
     void doDraw(JUTConsole::EConsoleType) const;
     void print_f(char const*, ...);
     void print(char const*);
+    void print_f_va(const char*, va_list);
     void dumpToTerminal(uint);
     void scroll(int);
     int getUsedLine() const;
@@ -173,6 +174,13 @@ class JUTConsoleManager {
 
 extern "C" {
 void JUTConsole_print_f_va_(JUTConsole*, const char*, va_list);
+}
+
+inline void JUTConsole::print_f_va(const char* fmt, va_list args) {
+    JUTConsole_print_f_va_(this, fmt, args);
+}
+
+extern "C" {
 JUTConsole* JUTGetReportConsole();
 void JUTSetReportConsole(JUTConsole*);
 JUTConsole* JUTGetWarningConsole();

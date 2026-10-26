@@ -28,8 +28,8 @@ struct JUTVideo {
     int getXfbHeight() const {
         return mRenderModeObj->xfbHeight & 0xffff;
     }
-    u32 getFbWidth() const {
-        return (u16)mRenderModeObj->fbWidth;
+    u16 getFbWidth() const {
+        return mRenderModeObj->fbWidth;
     }
     void getBounds(u16& width, u16& height) const {
         width = getFbWidth();

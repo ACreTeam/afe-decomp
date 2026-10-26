@@ -38,7 +38,7 @@ JKRAMCommand* JKRAramPiece::orderAsync(int direction, u32 source, u32 destinatio
         JLOGF("source = %x\n", source);
         JLOGF("destination = %x\n", destination);
         JLOGF("length = %x\n", length);
-        JPANICLINE(102);
+        JPANIC(108, "illegal address. abort.");
     }
 
     JKRAramCommand* aramCmd = new (JKRGetSystemHeap(), -4) JKRAramCommand();

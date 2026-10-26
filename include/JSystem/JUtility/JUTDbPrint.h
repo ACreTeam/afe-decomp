@@ -35,6 +35,9 @@ struct JUTDbPrint {
     void setVisible(bool visible) {
         mVisible = visible;
     }
+    bool isVisible() const {
+        return mVisible;
+    }
     JUTFont* getFont() const {
         return mFont;
     }

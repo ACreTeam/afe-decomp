@@ -1,59 +1,73 @@
-
 #include "JSystem/JKernel/JKRMacro.h"
 #include "JSystem/JKernel/JKRThread.h"
 #include "JSystem/JKernel/JKRHeap.h"
 
-JSUList<JKRThread> JKRThread::sThreadList;
+JSUList<JKRThread> JKRThread::sThreadList(false);
+JSUList<JKRTask> JKRTask::sTaskList;
+u8 JKRTask::sEndMesgQueue[32];
 
 JKRThread::JKRThread(u32 stackSize, int msgCount, int threadPrio) : mLink(this) {
-    this->mHeap = JKRHeap::findFromRoot(this);
-    if (this->mHeap == nullptr) {
-        this->mHeap = JKRHeap::sSystemHeap;
+    JKRHeap* heap = JKRHeap::findFromRoot(this);
+    if (heap == nullptr) {
+        heap = JKRHeap::getSystemHeap();
     }
 
-    this->mStackSize = JKR_ALIGN32(stackSize);
-    this->mStackMemory = JKRHeap::alloc(this->mStackSize, 32, this->mHeap);
-    this->mThreadRecord = (OSThread*)JKRHeap::alloc(sizeof(OSThread), 32, this->mHeap);
-    OSCreateThread(this->mThreadRecord, &JKRThread::start, this, (void*)((u32)this->mStackMemory + this->mStackSize),
-                   this->mStackSize, threadPrio, OS_THREAD_ATTR_DETACH);
-    this->mMesgCount = msgCount;
-    this->mMesgBuffer = (OSMessage*)JKRHeap::alloc(mMesgCount * sizeof(OSMessage), 0, this->mHeap);
-    OSInitMessageQueue(&this->mMesgQueue, this->mMesgBuffer, this->mMesgCount);
-    JKRThread::sThreadList.append(&this->mLink);
+    setCommon_heapSpecified(heap, stackSize, threadPrio);
+    setCommon_mesgQueue(mHeap, msgCount);
 }
 
 JKRThread::JKRThread(OSThread* threadRecord, int msgCount) : mLink(this) {
-    this->mHeap = nullptr;
-    this->mThreadRecord = threadRecord;
-    this->mStackSize = (u32)threadRecord->stackEnd - (u32)threadRecord->stackBase;
-    this->mStackMemory = threadRecord->stackBase;
-    this->mMesgCount = msgCount;
-    this->mMesgBuffer = (OSMessage*)JKRHeap::sSystemHeap->alloc(mMesgCount * sizeof(OSMessage), 4);
-    OSInitMessageQueue(&this->mMesgQueue, this->mMesgBuffer, this->mMesgCount);
-    JKRThread::sThreadList.append(&this->mLink);
+    mHeap = nullptr;
+    mThreadRecord = threadRecord;
+    mStackSize = (u32)threadRecord->stackEnd - (u32)threadRecord->stackBase;
+    mStackMemory = threadRecord->stackBase;
+
+    setCommon_mesgQueue(JKRHeap::getSystemHeap(), msgCount);
 }
 
 JKRThread::~JKRThread() {
-    JKRThread::sThreadList.remove(&this->mLink);
+    sThreadList.remove(&mLink);
 
-    if (this->mHeap != nullptr) {
-        if (!OSIsThreadTerminated(this->mThreadRecord)) {
-            OSDetachThread(this->mThreadRecord);
-            OSCancelThread(this->mThreadRecord);
+    if (mHeap != nullptr) {
+        if (!OSIsThreadTerminated(mThreadRecord)) {
+            OSDetachThread(mThreadRecord);
+            OSCancelThread(mThreadRecord);
         }
 
-        JKRHeap::free(this->mStackMemory, this->mHeap);
-        JKRHeap::free(this->mThreadRecord, this->mHeap);
+        JKRFreeToHeap(mHeap, mStackMemory);
+        JKRFreeToHeap(mHeap, mThreadRecord);
     }
 
-    JKRHeap::free(this->mMesgBuffer, nullptr);
+    JKRFree(mMesgBuffer);
+}
+
+void JKRThread::setCommon_mesgQueue(JKRHeap* heap, int msgCount) {
+    mMesgCount = msgCount;
+    mMesgBuffer = (OSMessage*)JKRHeap::alloc(mMesgCount * sizeof(OSMessage), 0, heap);
+
+    OSInitMessageQueue(&mMesgQueue, mMesgBuffer, mMesgCount);
+    sThreadList.append(&mLink);
+    mCurrentHeap = nullptr;
+    mCurrentHeapError = 0;
+}
+
+BOOL JKRThread::setCommon_heapSpecified(JKRHeap* heap, u32 stackSize, int threadPrio) {
+    mHeap = heap;
+    mStackSize = JKR_ALIGN32(stackSize);
+    mStackMemory = JKRHeap::alloc(mStackSize, 32, mHeap);
+    mThreadRecord = (OSThread*)JKRHeap::alloc(sizeof(OSThread), 32, mHeap);
+    return OSCreateThread(mThreadRecord, &JKRThread::start, this, (void*)((u32)mStackMemory + mStackSize), mStackSize,
+                          threadPrio, OS_THREAD_ATTR_DETACH);
 }
 
 void* JKRThread::start(void* thread) {
     return static_cast<JKRThread*>(thread)->run();
 }
 
-// UNUSED FUNCTIONS, REQUIRED FOR RTTI
+void* JKRThread::run() {
+    return nullptr;
+}
+
 JKRTask::JKRTask() : JKRThread(0x4000, 4, 31) {
 }
 
@@ -70,7 +84,6 @@ void JKRTask::destroy() {
 
 void* JKRTask::run() {
     Request* req;
-    // OSInitFastCast();
     while (true) {
         req = (Request*)waitMessageBlock();
         if (req->mCb) {

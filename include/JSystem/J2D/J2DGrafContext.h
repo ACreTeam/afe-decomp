@@ -131,8 +131,7 @@ struct J2DOrthoGraph : public J2DGrafContext {
     }
 
     void setOrtho(f32 param_0, f32 param_1, f32 param_2, f32 param_3, f32 param_4, f32 param_5) {
-        JGeometry::TBox2<f32> ortho(param_0, param_1, param_0 + param_2, param_1 + param_3);
-        setOrtho(ortho, param_4, param_5);
+        setOrtho(JGeometry::TBox2<f32>(param_0, param_1, param_0 + param_2, param_1 + param_3), param_4, param_5);
     }
 
     // _00 		= VTBL

@@ -101,9 +101,10 @@ class TLoad {
     JKRThread(OSThread* osThread, int msgCount);
 
     virtual ~JKRThread();
-    virtual void* run() {
-        return nullptr;
-    }
+    virtual void* run();
+
+    void setCommon_mesgQueue(JKRHeap* heap, int msgCount);
+    BOOL setCommon_heapSpecified(JKRHeap* heap, u32 stackSize, int threadPrio);
 
     static void* start(void* param);
     static JSUList<JKRThread>* getList() {
