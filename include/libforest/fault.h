@@ -45,7 +45,7 @@ typedef struct {
 extern void fault_AddClientEx(fault_client* client, FaultCallback callback, const char* msg, u32 param, u8 priority, u8 flags);
 extern void fault_AddClient(fault_client* client, FaultCallback callback, const char* msg, u32 param);
 extern void fault_Printf(const char* msg, ...);
-static void fault_DrawUpdate();
+extern void fault_DrawUpdate();
 extern void fault_WaitTime(u32 waitTime);
 extern int fault_ReadPad(u32* outTriggers, u32* outButtons);
 static void fault_CallBackFunc(int stage);

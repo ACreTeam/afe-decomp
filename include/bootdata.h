@@ -22,6 +22,7 @@ extern Gfx gam_win1_moji2_model[];
 extern Gfx gam_win1_moji3_model[];
 
 extern Gfx gam_win2_moji_model[];
+extern Gfx gam_win2_moji2_model[];
 extern Gfx gam_win3_moji_model[];
 
 extern u8 nintendo_376x104[];
