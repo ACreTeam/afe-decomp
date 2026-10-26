@@ -1,0 +1,53 @@
+/*
+ * --INFO--
+ * Address:	800156E0
+ * Size:	000154
+ */
+static jc_* __Oneshot_GetLogicalChannel(jcs_* jcs, CtrlWave_* wave)
+{
+	if (wave && wave->_0C == NULL) {
+		return FALSE;
+	}
+
+	jc_* chan = List_GetChannel(&jcs->freeChannels);
+	jc_* chan2;
+	jc_** REF_chan2 = &chan2;
+	if (chan == NULL) {
+
+		if (FixAllocChannel(jcs, 1) == FALSE) {
+			return 0;
+		}
+		jcs->chanAllocCount++;
+		chan = List_GetChannel(&jcs->freeChannels);
+		if (chan == NULL) {
+			return 0;
+		}
+
+		if (jcs->voiceStealingMode == 1) {
+			chan2 = List_GetChannel(&jcs->releasingChannels);
+			if (chan2 == NULL) {
+				chan2 = List_GetChannel(&jcs->activeChannels);
+				if (chan2) {
+					List_CountChannel(&jcs->waitingChannels);
+				}
+			}
+
+			if (chan2) {
+				chan2->mOscBuffers[0].state = 6;
+				List_AddChannel(&jcs->waitingChannels, chan2);
+				if (chan2->dspChannel) {
+					ForceStopDSPchannel(chan2->dspChannel);
+				}
+			}
+		}
+	}
+	Channel_Init(chan);
+	if (wave) {
+		chan->waveData        = (Wave_*)wave->_34;
+		chan->_14             = wave->_0C;
+		chan->logicalChanType = 0;
+	}
+	chan->_18 = 0;
+	UpdatePanPower_1Shot(chan, 1.0f, 1.0f, 1.0f, 1.0f);
+	return chan;
+}

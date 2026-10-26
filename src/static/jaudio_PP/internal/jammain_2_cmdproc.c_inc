@@ -1,0 +1,218 @@
+static Arghead_ Arglist[CMD_COUNT] = {
+	{ 0, 0x0000 }, //
+	{ 2, 0x0008 }, // OpenTrack
+	{ 2, 0x0008 }, // OpenTrackBros
+	{ 1, 0x0002 }, // Call
+	{ 0, 0x0000 }, // CallF
+	{ 0, 0x0000 }, // Ret
+	{ 1, 0x0000 }, // RetF
+	{ 1, 0x0002 }, // Jmp
+	{ 0, 0x0000 }, // JmpF
+	{ 1, 0x0001 }, // LoopS
+	{ 0, 0x0000 }, // LoopE
+	{ 2, 0x0000 }, // ReadPort
+	{ 2, 0x000c }, // WritePort
+	{ 1, 0x0000 }, // CheckPortImport
+	{ 1, 0x0000 }, // CheckPortExport
+	{ 1, 0x0003 }, // WaitReg
+	{ 2, 0x0005 }, // ConnectName
+	{ 2, 0x000c }, // ParentWritePort
+	{ 2, 0x000c }, // ChildWritePort
+	{ 2, 0x000f }, //
+	{ 1, 0x0000 }, // SetLastNote
+	{ 1, 0x0000 }, // TimeRelate
+	{ 1, 0x0000 }, // SimpleOsc
+	{ 2, 0x0008 }, // SimpleEnv
+	{ 5, 0x0155 }, // SimpleADSR
+	{ 1, 0x0000 }, // Transpose
+	{ 1, 0x0000 }, // CloseTrack
+	{ 1, 0x0000 }, // OutSwitch
+	{ 1, 0x0001 }, // UpdateSync
+	{ 2, 0x0004 }, // BusConnect
+	{ 1, 0x0000 }, // PauseStatus
+	{ 2, 0x0008 }, // SetInterrupt
+	{ 1, 0x0000 }, // DisInterrupt
+	{ 0, 0x0000 }, // ClrI
+	{ 0, 0x0000 }, // SetI
+	{ 0, 0x0000 }, // RetI
+	{ 2, 0x0004 }, // IntTimer
+	{ 0, 0x0000 }, // ConnectOpen
+	{ 0, 0x0000 }, // ConnectClose
+	{ 1, 0x0001 }, // SyncCPU
+	{ 0, 0x0000 }, // FlushAll
+	{ 0, 0x0000 }, // FlushRelease
+	{ 1, 0x0002 }, // Wait3
+	{ 5, 0x0000 }, // PanPowSet
+	{ 4, 0x0055 }, // IIRSet
+	{ 1, 0x0002 }, // FIRSet
+	{ 1, 0x0002 }, // EXTSet
+	{ 3, 0x0000 }, // PanSwSet
+	{ 1, 0x0000 }, // OscRoute
+	{ 1, 0x0000 }, // IIRCutOff
+	{ 3, 0x0028 }, // OscFull
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 0, 0x0000 }, //
+	{ 1, 0x0001 }, // CheckWave
+	{ 0, 0x0000 }, // Printf
+	{ 0, 0x0000 }, // Nop
+	{ 1, 0x0001 }, // Tempo
+	{ 1, 0x0001 }, // TimeBase
+	{ 0, 0x0000 }, // Finish
+
+};
+
+static CmdFunction CMDP_LIST[CMD_COUNT] = {
+	NULL,
+	Cmd_OpenTrack,
+	Cmd_OpenTrackBros,
+	Cmd_Call,
+	Cmd_CallF,
+	Cmd_Ret,
+	Cmd_RetF,
+	Cmd_Jmp,
+	Cmd_JmpF,
+	Cmd_LoopS,
+	Cmd_LoopE,
+	Cmd_ReadPort,
+	Cmd_WritePort,
+	Cmd_CheckPortImport,
+	Cmd_CheckPortExport,
+	Cmd_WaitReg,
+	Cmd_ConnectName,
+	Cmd_ParentWritePort,
+	Cmd_ChildWritePort,
+	NULL,
+	Cmd_SetLastNote,
+	Cmd_TimeRelate,
+	Cmd_SimpleOsc,
+	Cmd_SimpleEnv,
+	Cmd_SimpleADSR,
+	Cmd_Transpose,
+	Cmd_CloseTrack,
+	Cmd_OutSwitch,
+	Cmd_UpdateSync,
+	Cmd_BusConnect,
+	Cmd_PauseStatus,
+	Cmd_SetInterrupt,
+	Cmd_DisInterrupt,
+	Cmd_ClrI,
+	Cmd_SetI,
+	Cmd_RetI,
+	Cmd_IntTimer,
+	Cmd_ConnectOpen,
+	Cmd_ConnectClose,
+	Cmd_SyncCPU,
+	Cmd_FlushAll,
+	Cmd_FlushRelease,
+	Cmd_Wait3,
+	Cmd_PanPowSet,
+	Cmd_IIRSet,
+	Cmd_FIRSet,
+	Cmd_EXTSet,
+	Cmd_PanSwSet,
+	Cmd_OscRoute,
+	Cmd_IIRCutOff,
+	Cmd_OscFull,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	Cmd_CheckWave,
+	Cmd_Printf,
+	Cmd_Nop,
+	Cmd_Tempo,
+	Cmd_TimeBase,
+	Cmd_Finish,
+};
+
+/*
+ * --INFO--
+ * Address:	80012CC0
+ * Size:	000130
+ */
+u32 Cmd_Process(seqp_* track, u8 cmd, u16 param_3)
+{
+	Arghead_ argpair;
+	u16 argTypes;
+	size_t i;
+	u32 arg;
+	CmdFunction function;
+	seqp_** REF_track;
+	u8* REF_cmd;
+
+	REF_track = &track;
+	REF_cmd   = &cmd;
+
+	argpair  = Arglist[cmd - 0xC0];
+	argTypes = argpair.argTypes | param_3;
+	for (i = 0; i < argpair.argCount; ++i) {
+		switch (argTypes & 0x03) {
+		case 0: // 8-bit immediate value
+			arg = __ByteRead(track);
+			break;
+		case 1: // 16-bit immediate value
+			arg = __WordRead(track);
+			break;
+		case 2: // 24-bit immediate value
+			arg = __24Read(track);
+			break;
+		case 3: // Register value
+			arg = __ExchangeRegisterValue(track, __ByteRead(track));
+			break;
+		}
+
+		argTypes   = argTypes >> 2;
+		SEQ_ARG[i] = arg;
+	}
+
+	// Me when I have to introduce global state because I'm bored.
+	SEQ_CMD = cmd;
+	SEQ_P   = track;
+
+	function = CMDP_LIST[cmd - 0xC0];
+	if (!function) {
+        OSReport("Error: NULL Command Pointer (cmd. %x ) \n", cmd);
+        OSReport("SEQP %x  Access Offset %d\n", track, track->programCounter);
+		return 0;
+	}
+	return function();
+}
+
+/*
+ * --INFO--
+ * Address:	80012E00
+ * Size:	0000A8
+ */
+u32 RegCmd_Process(seqp_* track, BOOL param_2, u32 param_3)
+{
+	size_t i;
+	u8 uVar4;
+	u8 uVar3;
+	u16 uVar5;
+	u16 uVar6; // Uninitialized!  Naughty!
+
+	uVar4 = __ByteRead(track);
+	if (param_2 == TRUE) {
+		uVar4 = __ExchangeRegisterValue(track, uVar4);
+	}
+	if (param_2 != TRUE || param_3 != 0) {
+		uVar3 = __ByteRead(track);
+		uVar5 = 0b11;
+		for (i = 0; i < param_3 + 1; ++i) {
+			if (uVar3 & 0b10000000) {
+				uVar6 |= uVar5;
+			}
+			uVar3 = uVar3 << 1;
+			uVar5 = uVar5 << 2;
+		}
+	}
+	return Cmd_Process(track, uVar4, uVar6);
+}

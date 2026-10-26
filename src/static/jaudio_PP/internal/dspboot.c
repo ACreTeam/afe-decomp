@@ -245,6 +245,27 @@ u16 jdsp[] ATTRIBUTE_ALIGN(32) = {
     0x0000, 0x0000,    0x0000, 0x0000,    0x0000, 0x0000,    0x0000, 0x0000,    0x0000, 0x0000, 
 };
 
+extern void DSPInit2(DSPTaskInfo2* task);
+
+void DspBoot(){
+    DSPTaskInfo2 task;
+
+    task.iram_mmem_addr = jdsp;
+    task.iram_length = sizeof(jdsp);
+    task.iram_addr = 0;
+    task.dram_mmem_addr = jdsp;
+    task.dram_length = 0x100;
+    task.dram_addr = 0;
+
+    task.dsp_init_vector = 0;
+    DSPInit2(&task);
+
+    while(DSPCheckMailFromDSP() == 0);
+    DSPReadMailFromDSP();
+    DSPCheckMailFromDSP();
+    DwaitFrame();
+}
+
 extern s32 __DSPCheckMXICBoot2(DSPTaskInfo2* task) {
     u32 mail;
 
@@ -357,24 +378,4 @@ extern void DSPInit2 (DSPTaskInfo2* task){
     if(__DSPCheckMXICBoot2(task) != 1){ 
         OSPanic("mxic.c", 357,"DSPInit(): MXIC Boot failed.");
     }
-}
-
-
-void DspBoot(){
-    DSPTaskInfo2 task;
-
-    task.iram_mmem_addr = jdsp;
-    task.iram_length = sizeof(jdsp);
-    task.iram_addr = 0;
-    task.dram_mmem_addr = jdsp;
-    task.dram_length = 0x100;
-    task.dram_addr = 0;
-
-    task.dsp_init_vector = 0;
-    DSPInit2(&task);
-
-    while(DSPCheckMailFromDSP() == 0);
-    DSPReadMailFromDSP();
-    DSPCheckMailFromDSP();
-    DwaitFrame();
 }

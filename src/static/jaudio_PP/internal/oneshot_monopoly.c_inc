@@ -1,0 +1,126 @@
+/*
+ * --INFO--
+ * Address:	80015940
+ * Size:	000010
+ */
+static void __Oneshot_WavePause(jc_* jc, u8 a)
+{
+	jc->pauseFlag = a;
+	jc->toFlush   = 1;
+}
+
+/*
+ * --INFO--
+ * Address:	80015960
+ * Size:	00014C
+ */
+static BOOL __Oneshot_StartMonoPolyCheck(jc_* jc, u32 id)
+{
+	jcs_* mgr = jc->mMgr;
+	jc_* chan = mgr->activeChannels;
+	u32 index = 0;
+	u8 flag   = id >> 0x18;
+	u8 poly   = polys_table[flag & 0xf];
+
+
+	if (poly == 0) {
+		return TRUE;
+	}
+
+	while (TRUE) {
+		if (chan == NULL) {
+			break;
+		}
+
+		if (chan->soundId == id) {
+			if (flag & 0x20) {
+				index++;
+			} else {
+				chan->polyphonyCounter++;
+				if (chan->polyphonyCounter == poly) {
+					if (flag & 0x10) {
+						ForceStopLogicalChannel(chan);
+					} else {
+						__Oneshot_WavePause(chan, 1);
+					}
+				}
+			}
+		}
+		chan = (jc_*)chan->mNext;
+	}
+
+	chan = mgr->releasingChannels;
+	while (TRUE) {
+		if (chan == NULL) {
+			break;
+		}
+
+		if (chan->soundId == id) {
+			if (flag & 0x20) {
+				index++;
+			} else {
+				chan->polyphonyCounter++;
+				if (chan->polyphonyCounter == poly) {
+					ForceStopLogicalChannel(chan);
+				}
+			}
+		}
+
+		chan = (jc_*)chan->mNext;
+	}
+
+	if (flag & 0x20) {
+		jc->polyphonyCounter = index;
+		if (index < poly) {
+			return TRUE;
+		}
+		return FALSE;
+	}
+
+	jc->polyphonyCounter = 0;
+	return TRUE;
+}
+
+/*
+ * --INFO--
+ * Address:	80015AC0
+ * Size:	0000E8
+ */
+static void __Oneshot_StopMonoPolyCheck(jc_* jc, u32 id)
+{
+	jc_* chan;
+	u8 poly;
+
+	chan = jc->mMgr->activeChannels;
+	poly = polys_table[id >> 0x18 & 0xf];
+
+	if (id && poly) {
+
+		while (TRUE) {
+			if (chan == NULL) {
+				break;
+			}
+
+			int flag = id >> 0x18 & 0x20;
+			if (chan->soundId == id) {
+				if (flag) {
+					if (chan->polyphonyCounter > jc->polyphonyCounter) {
+						chan->polyphonyCounter--;
+						if (chan->polyphonyCounter == poly - 1) {
+							__Oneshot_WavePause(chan, 0);
+						}
+					}
+				} else {
+					if (chan->polyphonyCounter > jc->polyphonyCounter) {
+						chan->polyphonyCounter--;
+						if (chan->polyphonyCounter < poly) {
+							__Oneshot_WavePause(chan, 0);
+						}
+					}
+				}
+			}
+
+			chan = (jc_*)chan->mNext;
+		}
+	}
+}

@@ -1,0 +1,11 @@
+// UNUSED
+void* PCM[9] = { (void*)&_STOP, (void*)&_STOP, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+
+// UNUSED
+u32 PCMSIZE[9] = { sizeof(_STOP), sizeof(_STOP), 0, 0, 0, 0, 0, 0, 0 };
+
+// @unused, @fabricated
+void* Sound_GetPCM(u8 no, u32* size) {
+    *size = PCMSIZE[no];
+    return PCM[no];
+}

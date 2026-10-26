@@ -20,13 +20,21 @@
 #include "libjsys/jsyswrapper.h"
 #include "jsyswrap_cpp.h"
 #include "MSL_C/printf.h"
+#include "ver.h"
 #include "jaudio_NES/emusound.h"
 #include "JSystem/JUtility/JUTProcBar.h"
 #include "JSystem/JUtility/JUTGamePad.h"
 #include "nintendo_hi_0.h"
 #include "m_nmibuf.h"
-#include "MSL_C/string.h"
+#include "Famicom/famicom_cstring.h"
 // #include "JSystem/J2D/J2DGrafContext.h" // needed for ~J2DOrthoGraph
+
+/* OSPanic line numbers differ between revisions */
+#if VERSION == VER_GAEJ01_01
+#define REV_LINE(rev0, rev1) (rev1)
+#else
+#define REV_LINE(rev0, rev1) (rev0)
+#endif
 
 /* For some reason, there are a bunch of unused implicit one-byte 4-byte-aligned bss variables */
 #ifdef MUST_MATCH
@@ -1556,7 +1564,7 @@ static void select_game() {
 
             if (nesrom_idx >= nesrom_count) {
                 if (nesrom_idx_loaded < 0) {
-                    OSPanic(__FILE__, 4231, "no nesfile specified");
+                    OSPanic(__FILE__, REV_LINE(4231, 4242), "no nesfile specified");
                     continue;
                 }
 
@@ -1681,14 +1689,14 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
     JKRChangeDirectory("/FAMICOM/");
     size_t unused_totalfreesize = my_gettotalfreesize();
 
-    MALLOC_MALLOC(u8, CHR_TO_I8_BUF_SIZE, famicomCommon.chr_to_i8_bufp, 4492);
-    MALLOC_MALLOC(u8, KS_NES_NESFILE_HEADER_SIZE + KS_NES_PRGROM_SIZE + KS_NES_CHRROM_SIZE, famicomCommon.nesromp, 4494);
-    MALLOC_MALLOC(ksNesCommonWorkObj, sizeof(ksNesCommonWorkObj), famicomCommon.wp, 4496);
-    MALLOC_MALLOC(ksNesStateObj, sizeof(ksNesStateObj), famicomCommon.sp, 4497);
-    MALLOC_MALLOC(u8, KS_NES_CHRRAM_SIZE, famicomCommon.chrramp, 4500);
-    MALLOC_MALLOC(u8, KS_NES_BBRAM_SIZE, famicomCommon.bbramp, 4505);
-    MALLOC_MALLOC(u8, KS_NES_NOISE_DATA_SIZE, famicomCommon.noise_bufp, 4510);
-    MALLOC_MALLOC(u8, KS_NES_DRAW_RESULT_BUF_SIZE, famicomCommon.result_bufp, 4512);
+    MALLOC_MALLOC(u8, CHR_TO_I8_BUF_SIZE, famicomCommon.chr_to_i8_bufp, REV_LINE(4492, 4503));
+    MALLOC_MALLOC(u8, KS_NES_NESFILE_HEADER_SIZE + KS_NES_PRGROM_SIZE + KS_NES_CHRROM_SIZE, famicomCommon.nesromp, REV_LINE(4494, 4505));
+    MALLOC_MALLOC(ksNesCommonWorkObj, sizeof(ksNesCommonWorkObj), famicomCommon.wp, REV_LINE(4496, 4507));
+    MALLOC_MALLOC(ksNesStateObj, sizeof(ksNesStateObj), famicomCommon.sp, REV_LINE(4497, 4508));
+    MALLOC_MALLOC(u8, KS_NES_CHRRAM_SIZE, famicomCommon.chrramp, REV_LINE(4500, 4511));
+    MALLOC_MALLOC(u8, KS_NES_BBRAM_SIZE, famicomCommon.bbramp, REV_LINE(4505, 4516));
+    MALLOC_MALLOC(u8, KS_NES_NOISE_DATA_SIZE, famicomCommon.noise_bufp, REV_LINE(4510, 4521));
+    MALLOC_MALLOC(u8, KS_NES_DRAW_RESULT_BUF_SIZE, famicomCommon.result_bufp, REV_LINE(4512, 4523));
 
     famicomCommon.memcard_save_comment = commentImageBuffer;
 
@@ -1732,8 +1740,8 @@ extern int famicom_init(int rom_idx, Famicom_MallocInfo* malloc_info, int player
                         goto exit;
                     }
 
-                    MALLOC_MALLOC(u8 *, nesrom_count * sizeof(u8*), nesrom_filename_ptrs, 4671);
-                    MALLOC_MALLOC(char, length, nesrom_filename_strbuf, 4672);
+                    MALLOC_MALLOC(u8 *, nesrom_count * sizeof(u8*), nesrom_filename_ptrs, REV_LINE(4671, 4682));
+                    MALLOC_MALLOC(char, length, nesrom_filename_strbuf, REV_LINE(4672, 4683));
                 }
             }
         }
@@ -2292,10 +2300,12 @@ static int ksnes_thread_exec(u32 flags) {
     if (ksnes_emu_stack != nullptr) {
         OSTime timeout = OSMillisecondsToTicks(2000); // 2 second timeout
 
+#if VERSION == VER_GAEJ01_00
         if (famicomCommon.sp->motor_timer != 0) {
             // Disk motor is on.
             OSReport("ディスクモーターオン\n");
         }
+#endif
         
         OSTime frame_start_time = OSGetTime();
         s32 prio = OSGetThreadPriority(OSGetCurrentThread());
@@ -2336,6 +2346,21 @@ static void nogbaInput() {
         switch ((int)JUTGamePad::getPortStatus((JUTGamePad::EPadPort)port)) {
             case PAD_ERR_NONE:
             {
+#if VERSION == VER_GAEJ01_01
+                const JUTGamePad::CButton* button;
+
+                InputValid[port] = true;
+                button = JUTGamePad::getPadButton((JUTGamePad::EPadPort)port);
+                InputData[port] = button->mButton;
+
+                if (button->mAnalogL != 0) {
+                    InputData[port] |= JUTGamePad::L;
+                }
+
+                if (button->mAnalogR != 0) {
+                    InputData[port] |= JUTGamePad::R;
+                }
+#else
                 InputValid[port] = true;
                 InputData[port] = ((JUTGamePad*)gamePad)[port].getButton();
                 
@@ -2346,6 +2371,7 @@ static void nogbaInput() {
                 if (((JUTGamePad*)gamePad)[port].getAnalogR() != 0) {
                     InputData[port] |= JUTGamePad::R;
                 }
+#endif
                 break;
             }
 
@@ -2592,7 +2618,7 @@ extern int famicom_rom_load_check() {
             nesrom_idx++;
             if (nesrom_idx >= nesrom_count) {
                 if (nesrom_idx_loaded < 0) {
-                    OSPanic(__FILE__, 6063, "no nesfile specified");
+                    OSPanic(__FILE__, REV_LINE(6063, 6174), "no nesfile specified");
                     continue;
                 }
 
@@ -2621,10 +2647,17 @@ static int famicom_cardResultToMiyake(s32 cardResult) {
             return FAMICOM_RESULT_NOSPACE;
         case CARD_RESULT_NOENT:
             return FAMICOM_RESULT_NOENTRY;
+#if VERSION == VER_GAEJ01_01
+        case CARD_RESULT_IOERROR:
+#else
         case CARD_RESULT_BROKEN:
+#endif
             return FAMICOM_RESULT_BROKEN;
         case CARD_RESULT_WRONGDEVICE:
             return FAMICOM_RESULT_WRONGDEVICE;
+#if VERSION == VER_GAEJ01_01
+        case CARD_RESULT_BROKEN:
+#endif
         case CARD_RESULT_ENCODING:
             return FAMICOM_RESULT_WRONGENCODING;
         case CARD_RESULT_NOCARD:

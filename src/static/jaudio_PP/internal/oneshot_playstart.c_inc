@@ -1,0 +1,41 @@
+/*
+ * --INFO--
+ * Address:	800155C0
+ * Size:	00010C
+ */
+static jc_* __Oneshot_Play_Start(jcs_* jcs, jc_* jc, u32 id)
+{
+	BOOL play;
+
+	if (id == 0) {
+		id = -1;
+	}
+	jc->playId         = id;
+	jc->savedPlayId    = jc->playId;
+	jc->updateCallback = Jesus1Shot_Update;
+	jc->dspChannel     = AllocDSPchannel(0, (u32)jc);
+
+	if (jc->dspChannel == NULL) {
+		play = CheckLogicalChannel(jc);
+	} else {
+		play = PlayLogicalChannel(jc);
+	}
+
+	if (jc->dspChannel == NULL && play == TRUE) {
+		if (Add_WaitDSPChannel(jc) == TRUE) {
+			List_AddChannelTail(&jcs->waitingChannels, jc);
+			return jc;
+		} else {
+			List_AddChannelTail(&jcs->freeChannels, jc);
+			return NULL;
+		}
+	} else if (play == FALSE) {
+		DeAllocDSPchannel(jc->dspChannel, (u32)jc);
+		jc->dspChannel = NULL;
+		List_AddChannelTail(&jcs->freeChannels, jc);
+		return NULL;
+	} else {
+		List_AddChannelTail(&jcs->activeChannels, jc);
+	}
+	return jc;
+}

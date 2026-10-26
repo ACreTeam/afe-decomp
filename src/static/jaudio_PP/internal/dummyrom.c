@@ -65,7 +65,7 @@ extern void* ARAllocFull(u32* outSize) {
 }
 
 extern void Jac_InitARAM(u32 loadAudiorom) {
-    u32 aram_size = AUDIO_ARAM_SIZE;
+    u32 aram_size = 0x810000;
     volatile u32 audiorom_size;
 
     if (SELECTED_ARAM_SIZE != 0) {

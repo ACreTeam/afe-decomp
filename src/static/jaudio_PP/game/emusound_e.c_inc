@@ -1,0 +1,115 @@
+void MoveDeltaCounter(u8 a) {
+    if (a) {
+        delta_counter++;
+        delta_sign++;
+    } else {
+        delta_counter--;
+        delta_sign--;
+    }
+}
+
+void MoveBias() {
+    s32 oldBias = bias;
+    bias += delta_sign * 2;
+    if (bias > 0x7f) {
+        bias = 0x7f;
+    }
+    if (bias < 0) {
+        bias = 0;
+    }
+    bias_move += bias - oldBias;
+    delta_sign = 0;
+}
+
+void WriteBias(u16 a) {
+    bias_move = (s16)a - (s16)bias;
+    bias = (a & 0xffff);
+}
+
+int MoveVoltage() {
+    voltage = 0.9994586f * voltage;
+    voltage += bias_move;
+    bias_move = 0;
+    if (voltage > 127.f) {
+        voltage = 127.f;
+    }
+    if (voltage < -127.f) {
+        voltage = -127.f;
+    }
+    voltage_out += (voltage - voltage_out) / 4.f;
+
+    return (int)(216.f * voltage_out);
+}
+
+u32 __PitchTo32_HVC_E(u16 a) {
+    return DMOD_TABLE[a];
+}
+
+void __Sound_Write_E(u16 a, u8 b) {
+    switch (a) {
+        case 0x10: {
+            SoundE._08 = __PitchTo32_HVC_E(sbuffer.apu.DMC.FrequencyIndex);
+        } break;
+        case 0x11: {
+            SoundE._1E = sbuffer.apu.DMC.DirectLoad;
+            WriteBias(SoundE._1E);
+        } break;
+        case 0x12: {
+            SoundE._18 = sbuffer.apu.DMC.SampleAddress << 6;
+        } break;
+        case 0x13: {
+            SoundE._10 = sbuffer.apu.DMC.SampleLength << 4;
+        } break;
+    }
+}
+
+void StartE() {
+    SoundE._00 = 1;
+    SoundE._14 = (SoundE._10 + 1) * 8;
+    SoundE._04 = 0;
+    SoundE._1A = 0;
+    SoundE._20 = 0;
+    delta_counter = 0;
+    bias_move = 0;
+}
+
+int __ProcessSoundE() {
+    if (SoundE._00) {
+        for (int i = 0; i < 2u; i++) {
+            SoundE._04 += SoundE._08;
+            if (SoundE._04p._04_hi != SoundE._1A) {
+                u32 vv = SoundE._1A & 7;
+                u32 offset = (SoundE._1A >> 3 & 0x1fff);
+                if (!vv) {
+                    if (SoundE._18 + offset < 0x2000) {
+                        SoundE._1C = ROM_TOP_C000[SoundE._18 + offset];
+                    } else {
+                        SoundE._1C = ROM_TOP_E000[SoundE._18 + offset - 0x2000];
+                    }
+                }
+                MoveDeltaCounter((SoundE._1C << vv) & 0x80);
+                SoundE._1A = SoundE._04p._04_hi;
+                if (SoundE._14) {
+                    SoundE._14--;
+                }
+                if (!SoundE._14) {
+                    switch (sbuffer.apu.DMC.LoopSample) {
+                        case 0: {
+                            SoundE._00 = 0;
+                            if (sbuffer.apu.DMC.IRQEnable == 1) {
+                                SoundE._20 = 1;
+                            }
+                        } break;
+                        case 1: {
+                            SoundE._14 = (SoundE._10 + 1) * 8;
+                            SoundE._04p._04_hi = 0;
+                            SoundE._1A = 0;
+                        } break;
+                    }
+                }
+            }
+        }
+    }
+    MoveBias();
+    return MoveVoltage();
+}

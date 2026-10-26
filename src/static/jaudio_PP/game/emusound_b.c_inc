@@ -1,0 +1,200 @@
+void __Sound_Write_B(u16 a, u8 b) {
+    a -= 4;
+    switch (a) {
+        case 0: {
+            SoundB._3C = sbuffer.apu.Pulse2.Duty;
+            u32 v = SoundB._28;
+            SoundB._28 = sbuffer.apu.Pulse2.ConstantVolume ^ 1;
+            SoundB._14 = sbuffer.apu.Pulse2.EnvelopeLoopCounter;
+            if (!SoundB._28) {
+                SoundB._2C = sbuffer.apu.Pulse2.EnvelopePeriod_Volume << 8;
+            } else {
+                SoundB._24 = sbuffer.apu.Pulse2.EnvelopePeriod_Volume + 1;
+                if (!v && SoundB._00) {
+                    SoundB._2C = 0xf00;
+                    SoundB._20 = 0;
+                }
+            }
+        } break;
+        case 1: {
+            SoundB._34 = (sbuffer.apu.Pulse2.SweepUnitPeriod + 1) << 1;
+            SoundB._39 = sbuffer.apu.Pulse2.SweepUnitNegative;
+            SoundB._38 = sbuffer.apu.Pulse2.SweepUnitShiftCount;
+            SoundB._30 = 0;
+            SoundB._3B = 0;
+            SoundB._3A = sbuffer.apu.Pulse2.SweepUnitEnabled;
+        } break;
+        case 2: {
+            SoundB._0C = SoundB._0C & 0xf00 | sbuffer.apu.Pulse2.TimerLow;
+            SoundB._08 = __PitchTo32_HVC(SoundB._0C);
+        } break;
+        case 3: {
+            SoundB._0C = (sbuffer.apu.Pulse2.TimerHigh << 8) | sbuffer.apu.Pulse2.TimerLow;
+            SoundB._08 = __PitchTo32_HVC(SoundB._0C);
+            SoundB._18 = LEN_TABLE_HVC[sbuffer.apu.Pulse2.LengthCounterLow];
+            SoundB._10 = SoundB._18 << 2;
+            SoundB._04 = 0;
+            SoundB._48 = 0;
+            SoundB._3E = 0;
+            SoundB._2A = 0;
+            if (sbuffer.apu.Pulse2Status) {
+                SoundB._00 = 1;
+            }
+            if (!sbuffer.apu.Pulse2.ConstantVolume) {
+                SoundB._2C = 0xf00;
+            } else {
+                SoundB._2C = sbuffer.apu.Pulse2.EnvelopePeriod_Volume << 8;
+            }
+            SoundB._20 = 0;
+            SoundB._30 = 0;
+            SoundB._3B = 0;
+            SoundB._3A = sbuffer.apu.Pulse2.SweepUnitEnabled;
+        } break;
+    }
+}
+
+int __ProcessSoundB() {
+    if (SoundB._3A) {
+        if (PHASE_SYNC_FLAG) {
+            SoundB._30++;
+            if (SoundB._30 % SoundB._34 == 0) {
+                SoundB._3B |= 1;
+            }
+        }
+
+        if (SoundB._3B == 3) {
+            SoundB._3B = 0;
+            u32 c = SoundB._0C;
+            u16 j = SoundB._0C >> SoundB._38;
+            if (!SoundB._38) {
+                j = 0;
+            }
+            switch (SoundB._39) {
+                case 0: {
+                    SoundB._0C = SoundB._0C + j;
+                } break;
+                case 1: {
+                    if (!SoundB._38) {
+                        j = 0;
+                    }
+
+                    SoundB._0C = SoundB._0C - j;
+                } break;
+            }
+            if (SoundB._0C >= 0x800) {
+                SoundB._0C = 0x800;
+            } else {
+                SoundB._08 = __PitchTo32_HVC(SoundB._0C);
+            }
+        }
+    }
+
+    if (!SoundB._00 && !SoundB._3E) {
+        return 0;
+    }
+
+    if (SoundB._28 && PHASE_SYNC_FLAG) {
+        SoundB._20++;
+        if ((SoundB._20 % SoundB._24) == 0) {
+            switch (SoundB._14) {
+                case 0: {
+                    if (SoundB._2C) {
+                        SoundB._2C -= 0x100;
+                    } else {
+                        SoundB._00 = 0;
+                    }
+                } break;
+                case 1: {
+                    if (SoundB._2C) {
+                        SoundB._2C -= 0x100;
+                    } else {
+                        SoundB._2C = 0xf00;
+                    }
+                } break;
+            }
+        }
+    }
+
+    if (SoundB._14 == 0) {
+        if (PHASE_SYNC_FLAG && SoundB._10) {
+            SoundB._10--;
+        }
+        if (SoundB._10 == 0) {
+            SoundB._00 = 0;
+        }
+    }
+
+    if (SoundB._0C <= 7) {
+        SoundB._44 = 1;
+    } else if (SoundB._0C >= 0x800) {
+        SoundB._44 = 1;
+    } else {
+        SoundB._44 = 0;
+    }
+
+    s8 c = __GetWave_Pulse(SoundB._3C, SoundB._04p._04_hi);
+
+    if (SoundB._44) {
+        SoundB._04 += SoundB._40;
+    } else {
+        SoundB._04 += SoundB._08;
+        SoundB._40 = SoundB._08;
+    }
+
+    if (SoundB._04 & 0xffe00000) {
+        SoundB._3B |= 2;
+    }
+
+    SoundB._04 &= 0x1fffff;
+    if (SoundB._44 == 1 || !SoundB._00) {
+        if (SoundB._3E) {
+            SoundB._3E--;
+        }
+    } else {
+        if (SoundB._3E < 0x20) {
+            SoundB._3E++;
+        }
+        if (SoundB._3E < 0x20) {
+            SoundB._3E++;
+        }
+    }
+
+    u32 _2a_6 = SoundB._2A >> 8 & 0xff;
+    f32 f_2a = (SoundB._2A & 0xff) / 256.f;
+    f32 param0 = VOLTABLE_HVCPULSE[_2a_6];
+    f32 param1 = VOLTABLE_HVCPULSE[_2a_6 + 1];
+    f32 f_sum = param0 * (1.f - f_2a) + param1 * f_2a;
+
+    if (SoundB._2A != SoundB._2C) {
+        if (SoundB._2A > SoundB._2C) {
+            u16 diff = (SoundB._2A - SoundB._2C) >> 4;
+            if (!diff) {
+                SoundB._2A = SoundB._2C;
+            } else {
+                SoundB._2A -= diff;
+            }
+        } else if (SoundB._2A < SoundB._2C) {
+            u16 diff = (SoundB._2C - SoundB._2A) >> 4;
+            if (!diff) {
+                SoundB._2A = SoundB._2C;
+            } else {
+                SoundB._2A += diff;
+            }
+        }
+    }
+
+    switch (c) {
+        case 0: {
+            // almost 1. / 15.6
+            f_sum = -0.064103;
+        } break;
+        case 1: {
+            f_sum = -0.064103 + f_sum;
+        } break;
+    }
+
+    s16 t = f_sum * 4096.f;
+
+    t = (t * SoundB._3E) >> 5;
+    return t;
+}

@@ -1,0 +1,107 @@
+u8 DISKSUB_TABLE[32];
+s16 disksubwave[32][2];
+
+void __CreateDiskSubWave() {
+    for (int i = 0; i < 32; i++) {
+        disksubwave[i][0] = DISK_SUB_GAIN[DISKSUB_TABLE[i]];
+        disksubwave[i][1] = DISK_SUB_GAIN[DISKSUB_TABLE[i]];
+    }
+}
+
+u32 __PitchTo32_DISKFM(u16 v) {
+    return (0.85343015f * (int)v) / 500.4375f * 32768.f;
+}
+
+void __Sound_Write_Disk(u16 a, u8 b) {
+    static int shiftr = 0;
+    sbuffer.buff[a] = b;
+    if (a == 0x23) {
+        if (!(b & 2)) {
+            SoundF._2D = 0;
+            SoundF._2C = 0;
+        }
+    } else if (a >= 0x40 && a <= 0x7f) {
+        DISKFM_TABLE[a - 0x40] = ((WaveTableEntry*)&sbuffer.buff[a])->Sample;
+    } else {
+        switch (a) {
+            case 0x80: {
+                u32 old_2c = SoundF._2C;
+                SoundF._2C = sbuffer.apu.VolumeEnvelopeEnabled;
+                SoundF._2E = sbuffer.apu.VolumeEnvelopeIncreasing;
+                if (SoundF._2C == 1) {
+                    SoundF._2D = sbuffer.apu.VolumeEnvelopeGainAndSpeed;
+                } else {
+                    SoundF._28 = (DISK_FRAME_SAMPLE * (sbuffer.apu.VolumeEnvelopeGainAndSpeed + 1)) >> 4;
+                }
+                if (SoundF._2C != old_2c) {
+                    SoundF._24 = 0;
+                }
+            } break;
+            case 0x82: {
+                SoundF._14 = sbuffer.apu.FrequencyHigh << 8 | sbuffer.apu.FrequencyLow;
+                SoundF._10 = __PitchTo32_DISKFM(SoundF._14);
+            } break;
+            case 0x83: {
+                SoundF._14 = sbuffer.apu.FrequencyHigh << 8 | sbuffer.apu.FrequencyLow;
+                SoundF._10 = __PitchTo32_DISKFM(SoundF._14);
+                if (sbuffer.apu.HighSpeedFrequency) {
+                    SoundF._04 = 0;
+                }
+            } break;
+            case 0x84: {
+                u32 c = SoundF._38;
+                SoundF._38 = sbuffer.apu.ModEnvelopeEnabled;
+                SoundF._3A = sbuffer.apu.ModEnvelopeIncreasing;
+                if (SoundF._38 == 1) {
+                    SoundF._39 = sbuffer.apu.ModEnvelopeGainAndSpeed;
+                } else {
+                    SoundF._34 = (DISK_FRAME_SAMPLE * (sbuffer.apu.ModEnvelopeGainAndSpeed + 1)) >> 4;
+                }
+                if (SoundF._38 != c) {
+                    SoundF._30 = 0;
+                }
+            } break;
+            case 0x85: {
+                SoundF._44 = sbuffer.apu.ModCounter;
+                if (SoundF._44 & 0x40) {
+                    SoundF._44 |= 0x80;
+                }
+            } break;
+            case 0x86: {
+                SoundF._1C = sbuffer.apu.ModFrequencyHigh << 8 | sbuffer.apu.ModFrequencyLow;
+                SoundF._18 = __PitchTo32_DISKFM(SoundF._1C);
+            } break;
+            case 0x87: {
+                u32 c = sbuffer.apu.HaltModTableCounter;
+                SoundF._1C = sbuffer.apu.ModFrequencyHigh << 8 | sbuffer.apu.ModFrequencyLow;
+                SoundF._18 = __PitchTo32_DISKFM(SoundF._1C);
+                SoundF._46 = sbuffer.apu.HaltModTableCounter;
+                if (!SoundF._46 && c == 1) {
+                    __CreateDiskSubWave();
+                }
+                if (SoundF._46) {
+                    shiftr = 0;
+                }
+                SoundF._0C = -1;
+                SoundF._08 = 0;
+                SoundF._47 = 0;
+
+            } break;
+            case 0x88: {
+                if (shiftr < 0x20) {
+                    DISKSUB_TABLE[shiftr & 0x1f] = b & 7;
+                    if (++shiftr == 0x20) {
+                        __CreateDiskSubWave();
+                    }
+                }
+            } break;
+            case 0x89: {
+                SoundF._43 = DISKFM_GAINTABLE[sbuffer.apu.WaveTableMasterVolume];
+                SoundF._45 = sbuffer.apu.WaveTableWriteEnable;
+            } break;
+            case 0x8a: {
+                SoundF._48 = sbuffer.apu.EnvelopeSpeed;
+            } break;
+        }
+    }
+}
