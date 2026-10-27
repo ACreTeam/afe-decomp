@@ -90,7 +90,7 @@ class JKRHeap : public JKRDisposer {
     /* vt[03] */ virtual void callAllDisposer();
     /* vt[04] */ virtual u32 getHeapType() = 0;
     /* vt[05] */ virtual bool check() = 0;
-    /* vt[06] */ virtual bool dump_sort();
+    /* vt[06] */ virtual bool dump_sort() { return true; }
     /* vt[07] */ virtual bool dump() = 0;
     /* vt[08] */ virtual void do_destroy() = 0;
     /* vt[09] */ virtual void* do_alloc(u32 size, int alignment) = 0;
@@ -311,9 +311,7 @@ void JKRDefaultMemoryErrorRoutine(void*, u32, int);
 void* operator new(size_t);
 void* operator new(size_t, s32);
 void* operator new(size_t, JKRHeap*, int);
-inline void* operator new(size_t, void* buf) {
-    return buf;
-} // i believe this is actually part of MSL_C?
+#include "libc/new.h"
 
 void* operator new[](size_t);
 void* operator new[](size_t, s32);

@@ -25,7 +25,8 @@ template <typename T> struct TVec2 {
         y = x = v;
     }
 
-    void set(T x, T y) {
+    template <typename U>
+    void set(U x, U y) {
         this->x = x;
         this->y = y;
     }

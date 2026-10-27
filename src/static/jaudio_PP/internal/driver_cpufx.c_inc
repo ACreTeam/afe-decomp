@@ -1,0 +1,104 @@
+static void Nas_CpuFX(s32 chunkLen, s32 updateIdx, s32 reverbIdx) {
+    delayparam* param_p;
+    s32 count;
+    delay* del_p;
+    s32 t;
+    s32 i;
+    s32 sample2;
+    s32 next_buf_pos;
+    s32 t2;
+    s32 idx;
+    s32 t3;
+    s32 sample;
+    s32 n;
+    s32 s;
+
+    del_p = &AG.synth_delay[reverbIdx];
+    param_p = &del_p->params[del_p->cur_frame][updateIdx];
+    count = chunkLen / AG.synth_delay[reverbIdx].downsample_rate;
+    if (AG.synth_delay[reverbIdx].resample_effect_on && AG.synth_delay[reverbIdx].downsample_rate == 1 && del_p->right_save_resample_buf != NULL) {
+        count += del_p->resample_effect_extra_samples;
+        param_p->save_resample_num_samples = count;
+        param_p->load_resample_pitch = (param_p->save_resample_num_samples << 15) / chunkLen;
+        param_p->save_resample_pitch = (chunkLen << 15) / param_p->save_resample_num_samples;
+        
+        n = 10;
+        s = 10;
+        for (i = 0; i < 10; i++) {
+            n--;
+            sample = del_p->resample_effect_load_unk + param_p->load_resample_pitch * chunkLen * SAMPLE_SIZE;
+            sample2 = (sample >> 16);
+            if (sample2 != count && n == 0) {
+                param_p->load_resample_pitch = (count * 0x10000 - del_p->resample_effect_load_unk) / (chunkLen * SAMPLE_SIZE);
+            } else if (sample2 > count) {
+                param_p->load_resample_pitch--;
+            } else if (sample2 < count) {
+                param_p->load_resample_pitch++;
+            } else {
+                break;
+            }
+        }
+
+        del_p->resample_effect_load_unk = sample;
+
+        for (i = 0; i < 10; i++) {            
+            s--;
+            sample = del_p->resample_effect_save_unk + param_p->save_resample_pitch * count * SAMPLE_SIZE;
+            sample2 = (sample >> 16);
+            if (sample2 != chunkLen && s == 0) {
+                param_p->save_resample_pitch = (chunkLen * 0x10000 - del_p->resample_effect_save_unk) / (count * SAMPLE_SIZE);
+            } else if (sample2 > chunkLen) {
+                param_p->save_resample_pitch--;
+            } else if (sample2 < chunkLen) {
+                param_p->save_resample_pitch++;
+            } else {
+                break;
+            }
+        }
+
+        del_p->resample_effect_save_unk = sample;
+    }
+
+    next_buf_pos = del_p->next_reverb_buf_pos;
+    t = del_p->next_reverb_buf_pos + count - del_p->delay_num_samples;
+
+    if (t < 0) {
+        param_p->size = count * SAMPLE_SIZE;
+        param_p->wrapped_size = 0;
+        param_p->start_pos = del_p->next_reverb_buf_pos;
+        del_p->next_reverb_buf_pos += count;
+    } else {
+        param_p->size = (count - t) * SAMPLE_SIZE;
+        param_p->wrapped_size = t * SAMPLE_SIZE;
+        param_p->start_pos = del_p->next_reverb_buf_pos;
+        del_p->next_reverb_buf_pos = t;
+    }
+
+    param_p->n_samples_after_downsampling = count;
+    param_p->n_samples = chunkLen;
+
+    if (del_p->sub_delay != 0) {
+        t = del_p->delay_num_samples;
+        idx = next_buf_pos + del_p->sub_delay;
+        while (idx >= t) {
+            idx -= t;
+        }
+
+        param_p = del_p->sub_params[del_p->cur_frame] + updateIdx;
+        t2 = chunkLen / del_p->downsample_rate;
+        t3 = idx + t2 - t;
+
+        if (t3 < 0) {
+            param_p->size = t2 * SAMPLE_SIZE;
+            param_p->wrapped_size = 0;
+            param_p->start_pos = idx;
+        } else {
+            param_p->size = (t2 - t3) * SAMPLE_SIZE;
+            param_p->wrapped_size = t3 * SAMPLE_SIZE;
+            param_p->start_pos = idx;
+        }
+
+        param_p->n_samples_after_downsampling = t2;
+        param_p->n_samples = chunkLen;
+    }
+}

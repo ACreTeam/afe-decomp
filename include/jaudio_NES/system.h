@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "libultra/libultra.h"
+#include "ver.h"
 
 #define REFRESH_RATE_DEVIATION_NTSC 1.00278f
 #define REFRESH_RATE_NTSC 60
@@ -62,7 +63,11 @@ extern void MK_Init(void);
 extern void Nas_WaveDmaNew(s32 n_channels);
 
 extern Na_SyncProc NA_SYNC_PROC;
+#if VERSION == VER_GAEJ01_01
+extern BOOL AUDIO_SYSTEM_READY;
+#else
 extern volatile BOOL AUDIO_SYSTEM_READY;
+#endif
 extern Na_DmaProc NA_DMA_PROC;
 extern OSMesgQueue MK_QUEUE;
 extern OSMesg MK_QBUF[];

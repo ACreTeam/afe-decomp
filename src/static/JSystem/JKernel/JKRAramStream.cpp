@@ -72,7 +72,7 @@ s32 JKRAramStream::writeToAram(JKRAramStreamCommand* command) {
             buffer = (u8*)JKRAllocFromHeap(heap, bufferSize, -0x20);
             command->mTransferBuffer = buffer;
         } else {
-            buffer = (u8*)JKRAllocFromHeap(nullptr, bufferSize, -0x20);
+            buffer = (u8*)JKRAllocFromSysHeap(bufferSize, -0x20);
             command->mTransferBuffer = buffer;
         }
 
@@ -86,7 +86,7 @@ s32 JKRAramStream::writeToAram(JKRAramStreamCommand* command) {
         } else {
             heap->dump();
         }
-        JPANIC(169, "abort\n");
+        JPANIC(172, ":::Cannot alloc memory\n");
     }
 
     if (buffer) {
@@ -95,11 +95,19 @@ s32 JKRAramStream::writeToAram(JKRAramStreamCommand* command) {
             u32 length = (dstSize > bufferSize) ? bufferSize : dstSize;
 
             s32 readLength = command->mStream->read(buffer, length);
+            if (readLength == 0) {
+                writtenLength = 0;
+                break;
+            }
 
             JKRAramPcs(0, (u32)buffer, destination, length, nullptr);
             dstSize -= length;
             writtenLength += length;
             destination += length;
+
+            if (command->mReturnSize) {
+                *command->mReturnSize += length;
+            }
         }
 
         if (command->mAllocatedTransferBuffer) {
@@ -112,24 +120,22 @@ s32 JKRAramStream::writeToAram(JKRAramStreamCommand* command) {
     return writtenLength;
 };
 
-/*
- * Unused function, made-up contents. Do not take this seriously!
- * While the function exists in the map, this is almost certainly incorrect.
- * Should exist to generate JSURandomInputStream::getAvailable() const
- * afterwards.
- */
 JKRAramStreamCommand* JKRAramStream::write_StreamToAram_Async(JSUFileInputStream* stream, JKRAramBlock* addr, u32 size,
-                                                              u32 offset) {
+                                                              u32 offset, u32* returnSize) {
     JKRAramStreamCommand* command = new (JKRGetSystemHeap(), -4) JKRAramStreamCommand();
     command->type = JKRAramStreamCommand::ECT_WRITE;
     command->mAddress = (u32)addr;
     command->mSize = size;
     command->mStream = stream;
-    command->_28 = stream->getAvailable();
+    command->_2C = stream->getAvailable();
     command->mOffset = offset;
     command->mTransferBuffer = transBuffer;
     command->mHeap = transHeap;
     command->mTransferBufferSize = transSize;
+    command->mReturnSize = returnSize;
+    if (returnSize) {
+        *returnSize = 0;
+    }
 
     OSInitMessageQueue(&command->mMessageQueue, &command->mMessage, 1);
     OSSendMessage(&sMessageQueue, command, OS_MESSAGE_BLOCK);
@@ -137,17 +143,21 @@ JKRAramStreamCommand* JKRAramStream::write_StreamToAram_Async(JSUFileInputStream
 }
 
 JKRAramStreamCommand* JKRAramStream::write_StreamToAram_Async(JSUFileInputStream* stream, u32 addr, u32 size,
-                                                              u32 offset) {
+                                                              u32 offset, u32* returnSize) {
     JKRAramStreamCommand* command = new (JKRGetSystemHeap(), -4) JKRAramStreamCommand();
     command->type = JKRAramStreamCommand::ECT_WRITE;
     command->mAddress = addr;
     command->mSize = size;
     command->mStream = stream;
-    command->_28 = 0;
+    command->_2C = 0;
     command->mOffset = offset;
     command->mTransferBuffer = transBuffer;
     command->mHeap = transHeap;
     command->mTransferBufferSize = transSize;
+    command->mReturnSize = returnSize;
+    if (returnSize) {
+        *returnSize = 0;
+    }
 
     OSInitMessageQueue(&command->mMessageQueue, &command->mMessage, 1);
     OSSendMessage(&sMessageQueue, command, OS_MESSAGE_BLOCK);

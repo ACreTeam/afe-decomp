@@ -1,0 +1,239 @@
+s32 __GetWave_Pulse(s32 a, s32 b) {
+    switch (a) {
+
+        case 0: {
+            if (b >= 4 && b <= 7) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        case 1: {
+            return b <= 7;
+        }
+        case 2: {
+            return b <= 15;
+        }
+        case 3: {
+            return b > 7;
+        }
+        case 0xb: {
+            return b & 0xff;
+        }
+        case 0xc: {
+            return b <= 0 ? 127 : 0;
+        }
+        case 0xd: {
+            return b <= 1 ? 127 : 0;
+        }
+        case 0xe: {
+            return b <= 2 ? 127 : 0;
+        }
+        case 0xf: {
+            return b <= 3 ? 127 : 0;
+        }
+        case 0x10: {
+            return b <= 4 ? 127 : 0;
+        }
+        case 0x11: {
+            return b <= 5 ? 0 : 127;
+        }
+        case 0x12: {
+            return b <= 6 ? 0 : 127;
+        }
+        case 0x13: {
+            return b <= 7 ? 0 : 127;
+        }
+    }
+    return a;
+}
+
+u32 __PitchTo32_VRC_C(u16 pitch) {
+    f32 scalefactor = 2.f;
+    return (u32)((NES_CLOCK_SPEED - 0.25f) / scalefactor / (pitch + 1) / 1000.875f * 32768.f);
+}
+
+u32 __PitchTo32_VRC_PULSE(u16 pitch) {
+    f32 scalefactor = 16.f;
+    return (u32)((NES_CLOCK_SPEED - 0.25f) / scalefactor / (pitch + 1) / 1000.875f * 32768.f);
+}
+
+u32 __PitchTo32_HVC(u16 pitch) {
+    f32 scalefactor = 8.f;
+    return (u32)((NES_CLOCK_SPEED - 0.25f) / scalefactor / (pitch + 1) / 1000.875f * 32768.f);
+}
+
+void __Sound_Write_VRC(u16 a, u8 b) {
+    NESSoundStruct* pSound;
+    Unknown_VRC* pBuffer;
+    int v;
+    int xyzIndex;
+
+    u16 index = a - 0xc0;
+    if (index <= 3) {
+        pSound = &SoundX;
+        xyzIndex = 0;
+        pBuffer = &sbuffer.apu._C0;
+    } else if (index <= 7) {
+        pSound = &SoundY;
+        xyzIndex = 1;
+        pBuffer = &sbuffer.apu._C4;
+    } else {
+        pSound = &SoundZ;
+        xyzIndex = 2;
+        pBuffer = &sbuffer.apu._C8;
+    }
+
+    if (index == 21) {
+        if (!(b & 1)) {
+            SoundX._00 = 0;
+        }
+        if (!(b & 2)) {
+            SoundY._00 = 0;
+        }
+        if (!(b & 4)) {
+            SoundZ._00 = 0;
+        }
+        return;
+    }
+
+    switch (index & 3) {
+        case 0: {
+            pSound->_3C = pBuffer->_0_6;
+            pSound->_28 = pBuffer->_0_7;
+            pSound->_1C = VOLTABLE_VRCPULSE[pBuffer->_0_3];
+            pSound->_1D = pBuffer->_0_3;
+            pSound->_2A = pSound->_1D;
+            if (xyzIndex == 2) {
+                pSound->_24 = ((pSound->_3C & 3) << 4) | pSound->_2A;
+                pSound->_1C = (pSound->_24 * 7) / 3;
+                if (pSound->_1C >= 0x7f) {
+                    pSound->_1C = 0x7f;
+                }
+            }
+        } break;
+        case 2: {
+            pSound->_0C = (pBuffer->_3_3 << 8) | pBuffer->_2;
+            if (xyzIndex == 2) {
+                pSound->_08 = __PitchTo32_VRC_C(pSound->_0C);
+            } else {
+                pSound->_08 = __PitchTo32_VRC_PULSE(pSound->_0C);
+            }
+        } break;
+        case 3: {
+            pSound->_0C = (pBuffer->_3_3 << 8) | pBuffer->_2;
+            if (xyzIndex == 2) {
+                pSound->_08 = __PitchTo32_VRC_C(pSound->_0C);
+            } else {
+                pSound->_08 = __PitchTo32_VRC_PULSE(pSound->_0C);
+            }
+
+            if (!pSound->_00 && !pSound->_3E) {
+                pSound->_04 = 0;
+            }
+
+            if (xyzIndex == 0) {
+                v = sbuffer.apu._D5_0;
+            }
+            if (xyzIndex == 1) {
+                v = sbuffer.apu._D5_1;
+            }
+            if (xyzIndex == 2) {
+                v = sbuffer.apu._D5_2;
+            }
+
+            if ((u8)v == 1 && pBuffer->_3_7) {
+                pSound->_00 = 1;
+            } else {
+                pSound->_00 = 0;
+            }
+
+            pSound->_2A = pSound->_1D;
+            pSound->_20 = 0;
+        } break;
+    }
+}
+
+void __Sound_Write_MMC5(u16 a, u8 b) {
+    NESSoundStruct* pSound;
+    PulseChannel* pBuffer;
+    u32 v;
+    int xyzIndex;
+
+    u16 index = a - 0xc0;
+    pBuffer = 0;
+    if (index <= 3) {
+        pSound = &SoundX;
+        xyzIndex = 0;
+        pBuffer = (PulseChannel*)&sbuffer.apu._C0;
+    } else if (index <= 7) {
+        pSound = &SoundY;
+        xyzIndex = 1;
+        pBuffer = (PulseChannel*)&sbuffer.apu._C4;
+    }
+
+    if (index == 17) {
+        SoundZ._3E = (b & 0xff) << 6;
+    } else if (index == 21) {
+        if (!(b & 1)) {
+            SoundX._00 = 0;
+        }
+        if (!(b & 2)) {
+            SoundY._00 = 0;
+        }
+    } else if (pBuffer) {
+        switch (index & 3) {
+            case 0: {
+                pSound->_3C = pBuffer->Duty;
+                v = pSound->_28;
+                pSound->_28 = pBuffer->ConstantVolume ^ 1;
+                pSound->_14 = pBuffer->EnvelopeLoopCounter;
+                pSound->_1D = VOLTABLE_HVCPULSE[pBuffer->EnvelopePeriod_Volume];
+                if (pSound->_28 == 0 && pSound->_00 == 1) {
+                    pSound->_1C = VOLTABLE_HVCPULSE[pBuffer->EnvelopePeriod_Volume];
+                } else {
+                    pSound->_24 = PHASE_SAMPLE * (pBuffer->EnvelopePeriod_Volume + 1);
+                    if (v == 0) {
+                        pSound->_2A = 0xf;
+                        pSound->_20 = 0;
+                    }
+                }
+            } break;
+            case 2: {
+                pSound->_0C = pBuffer->TimerHigh << 8 | pBuffer->TimerLow;
+                pSound->_08 = __PitchTo32_HVC(pSound->_0C);
+            } break;
+            case 3: {
+                pSound->_0C = pBuffer->TimerHigh << 8 | pBuffer->TimerLow;
+                pSound->_08 = __PitchTo32_HVC(pSound->_0C);
+                pSound->_18 = LEN_TABLE_HVC[pBuffer->LengthCounterLow];
+                pSound->_10 = FRAME_SAMPLE * pSound->_18;
+                if (!pSound->_00 && !pSound->_3E) {
+                    pSound->_04 = 0;
+                }
+
+                if (xyzIndex == 0) {
+                    v = sbuffer.apu._D5_0;
+                }
+                if (xyzIndex == 1) {
+                    v = sbuffer.apu._D5_1;
+                }
+
+                if ((v & 0xff) != 0) {
+                    pSound->_00 = 1;
+                }
+
+                if (pBuffer->ConstantVolume == 0) {
+                    pSound->_1C = VOLTABLE_HVCPULSE[15];
+                } else {
+                    pSound->_1C = pSound->_1D;
+                }
+
+                pSound->_2A = 0xf;
+                pSound->_20 = 0;
+                pSound->_30 = 0;
+                pSound->_3A = 0;
+            } break;
+        }
+    }
+}

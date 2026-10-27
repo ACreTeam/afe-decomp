@@ -11,7 +11,7 @@ static u32 sMessageLife;
 static u32 sMessageOwner;
 static bool mSynchro;
 static char sMessageFileLine[64];
-static char sMessageString[96];
+static char sMessageString[256];
 
 static u32 sDisplayTime = -1;
 static u32 sDevice = 3;
@@ -36,8 +36,12 @@ u32 flush_subroutine() {
 
 void flushMessage() {
     if (flush_subroutine() && sVisible == true) {
-        JUTDirectPrint::getManager()->drawString(16, 16, sMessageFileLine);
-        JUTDirectPrint::getManager()->drawString(16, 24, sMessageString);
+        JUTDirectPrint* manager = JUTDirectPrint::getManager();
+        JUtility::TColor color = manager->getCharColor();
+        manager->setCharColor(JUtility::TColor(255, 200, 200, 255));
+        manager->drawString(16, 16, sMessageFileLine);
+        manager->drawString(16, 24, sMessageString);
+        manager->setCharColor(color);
     }
 }
 

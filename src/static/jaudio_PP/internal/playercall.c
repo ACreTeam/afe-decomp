@@ -11,7 +11,7 @@ extern void ResetPlayerCallback() {
     }
 }
 
-static s32 Jac_CheckPlayerCallback(PlayerCallBack callback, void* arg) {
+s32 Jac_CheckPlayerCallback(PlayerCallBack callback, void* arg) {
     int i;
 
     for (i = 0; i < 16; i++) {

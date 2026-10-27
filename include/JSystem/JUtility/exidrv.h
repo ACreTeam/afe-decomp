@@ -15,7 +15,7 @@ extern void EXI_Unlock(s32 chan /*, OSContext* context*/);
 extern void EXI_AlarmFunc(OSAlarm* alarm, OSContext* context);
 extern u16 EXI_ResRead(u8* arg0, u16 arg1);
 extern u16 EXI_StopResRead(u8* arg0, u16 arg1);
-extern u16 EXI_DataRes(u8* arg0);
+extern u16 EXI_DataRes(u8* arg0, u16 arg1);
 extern u16 EXI_MultiWriteStop(void);
 extern u16 EXI_DataRead(u8* arg0, u16 arg1);
 extern u16 EXI_DataReadFinal(u8* arg0, u16 arg1);

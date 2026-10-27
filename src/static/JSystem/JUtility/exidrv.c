@@ -49,26 +49,37 @@ u8 EXI_ClrData[CARD_NUM_CHANS];
     }
 
 static inline u16 EXI_LockAndSelect(u32 nFreq) {
-    (void)nFreq;
-
     EXI_Lock();
     EXI_Select(nFreq);
 
     return 0;
 }
 
+#define EXI_Deselect_Unlock()                                   \
+    {                                                           \
+        if (EXIDeselect(CARD_ExiChannel) == 0) {                \
+            CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00E0; \
+        }                                                       \
+                                                                \
+        if (EXIUnlock(CARD_ExiChannel) == 0) {                  \
+            CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00D0; \
+            CARD_ErrStatus[CARD_ExiChannel];                    \
+        }                                                       \
+    }
+
 static inline u16 EXI_DeselectAndUnlock() {
-    if (EXIDeselect(CARD_ExiChannel) == 0) {
-        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00E0;
-    }
-
-    if (EXIUnlock(CARD_ExiChannel) == 0) {
-        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00D0;
-        CARD_ErrStatus[CARD_ExiChannel];
-    }
-
+    EXI_Deselect_Unlock();
     return CARD_ErrStatus[CARD_ExiChannel];
 }
+
+#define EXI_DataResReturn(locked)                   \
+    {                                               \
+        if ((locked) == 0) {                        \
+            EXI_Deselect_Unlock();                  \
+        }                                           \
+                                                    \
+        return CARD_ErrStatus[CARD_ExiChannel];     \
+    }
 
 static inline void EXI_UnknownInline3(u8* pRES, OSTick tick, int time) {
     while (((pRES[0] & 0x80) != 0)) {
@@ -152,7 +163,7 @@ void EXI_AlarmFunc(OSAlarm* alarm, OSContext* context) {
 u16 EXI_ResRead(u8* arg0, u16 arg1) {
     u8* sp8;
     u16 spE;
-    u16 bruh = arg1;
+    u16 bruh = 0;
     OSTick tick;
 
     if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
@@ -161,7 +172,6 @@ u16 EXI_ResRead(u8* arg0, u16 arg1) {
 
     spE = 0;
     sp8 = arg0;
-    (void)sp8;
     (void)bruh;
     (void)bruh;
     (void)bruh;
@@ -174,7 +184,6 @@ u16 EXI_ResRead(u8* arg0, u16 arg1) {
     }
 
     tick = OSGetTick();
-    (void)tick;
     EXI_UnknownInline3(sp8, tick, 500);
 
     if (arg1 > sizeof(u8)) {
@@ -191,7 +200,7 @@ u16 EXI_ResRead(u8* arg0, u16 arg1) {
 u16 EXI_StopResRead(u8* arg0, u16 arg1) {
     u8* sp8;
     s16 spE;
-    u16 bruh = arg1;
+    u16 bruh = 0;
     OSTick tick;
 
     if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
@@ -200,7 +209,6 @@ u16 EXI_StopResRead(u8* arg0, u16 arg1) {
 
     spE = 0;
     sp8 = arg0;
-    (void)sp8;
     (void)bruh;
     (void)bruh;
     (void)bruh;
@@ -234,18 +242,19 @@ u16 EXI_StopResRead(u8* arg0, u16 arg1) {
     return EXI_DeselectAndUnlock();
 }
 
-u16 EXI_DataRes(u8* arg0) {
+u16 EXI_DataRes(u8* arg0, u16 arg1) {
     u8* sp8;
-    OSTick tick;
     int pad2;
+    OSTick tick;
     s16 spE;
 
-    if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
-        return CARD_ErrStatus[CARD_ExiChannel];
+    if (arg1 == 0) {
+        if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
+            return CARD_ErrStatus[CARD_ExiChannel];
+        }
     }
 
     spE = 0;
-    pad2 = 0;
     (void)pad2;
     (void)pad2;
     (void)pad2;
@@ -253,25 +262,22 @@ u16 EXI_DataRes(u8* arg0) {
     (void)pad2;
     (void)pad2;
     (void)pad2;
-    (void)pad2;
-    (void)sp8;
     sp8 = arg0;
 
     sp8[0] = EXI_ClrData[CARD_ExiChannel];
     if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-        return EXI_DeselectAndUnlock();
+        EXI_DataResReturn(arg1);
     }
 
     tick = OSGetTick();
-    (void)tick;
-    (void)tick;
+    pad2 = EXI_ClrData[CARD_ExiChannel];
     while (sp8[0] & 0x10) {
         sp8[0] = EXI_ClrData[CARD_ExiChannel];
 
         if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
             CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-            return EXI_DeselectAndUnlock();
+            EXI_DataResReturn(arg1);
         }
 
         if (sp8[0] & 0x10) {
@@ -283,7 +289,7 @@ u16 EXI_DataRes(u8* arg0) {
 
             if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-                return EXI_DeselectAndUnlock();
+                EXI_DataResReturn(arg1);
             }
 
             if (sp8[0] & 0x10) {
@@ -297,19 +303,17 @@ u16 EXI_DataRes(u8* arg0) {
     *++sp8 = EXI_ClrData[CARD_ExiChannel];
     if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-        return EXI_DeselectAndUnlock();
+        EXI_DataResReturn(arg1);
     }
 
     tick = OSGetTick();
-    (void)tick;
-    (void)tick;
 
     while (sp8[0] == 0) {
         sp8[0] = EXI_ClrData[CARD_ExiChannel];
 
         if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
             CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-            return EXI_DeselectAndUnlock();
+            EXI_DataResReturn(arg1);
         }
 
         if (sp8[0] == 0) {
@@ -321,7 +325,7 @@ u16 EXI_DataRes(u8* arg0) {
 
             if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 2) == 0) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
-                return EXI_DeselectAndUnlock();
+                EXI_DataResReturn(arg1);
             }
 
             if (sp8[0] == 0) {
@@ -332,7 +336,7 @@ u16 EXI_DataRes(u8* arg0) {
         break;
     }
 
-    return EXI_DeselectAndUnlock();
+    EXI_DataResReturn(arg1);
 }
 
 u16 EXI_MultiWriteStop(void) {
@@ -387,7 +391,6 @@ u16 EXI_MultiWriteStop(void) {
     (void)tick2;
     (void)tick2;
     (void)tick2;
-    (void)tick2;
     tick = OSGetTick();
     !tick;
 
@@ -426,9 +429,14 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
     OSTick temp_r25;
     int var_r28;
     u8* var_r31;
-    u16 sp12[CARD_NUM_CHANS];
+    volatile u16 crc2;
+    volatile u16 crc;
     u8 sp10[CARD_NUM_CHANS];
+    int pad;
 
+    (void)pad;
+    (void)pad;
+    (void)pad;
     if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
@@ -438,35 +446,37 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
         *var_r31++ = EXI_ClrData[CARD_ExiChannel];
     }
 
-    sp12[0] = sp12[1] = 0;
+    crc2 = crc = 0;
 
-    if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+    var_r31 = arg0;
+    if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
 
     temp_r25 = OSGetTick();
-    while (arg0[0] != 0xFE) {
-        arg0[0] = EXI_ClrData[CARD_ExiChannel];
+    pad = EXI_ClrData[CARD_ExiChannel];
+    while (var_r31[0] != 0xFE) {
+        var_r31[0] = EXI_ClrData[CARD_ExiChannel];
 
-        if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+        if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
             CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
             return EXI_DeselectAndUnlock();
         }
 
-        if (arg0[0] != 0xFE) {
+        if (var_r31[0] != 0xFE) {
             if (EXI_CheckTimeOut(temp_r25, 1500) == 0) {
                 continue;
             }
 
-            arg0[0] = EXI_ClrData[CARD_ExiChannel];
+            var_r31[0] = EXI_ClrData[CARD_ExiChannel];
 
-            if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+            if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
                 return EXI_DeselectAndUnlock();
             }
 
-            if (arg0[0] != 0xFE) {
+            if (var_r31[0] != 0xFE) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_4000;
             }
         }
@@ -474,8 +484,8 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
         break;
     }
 
-    arg0[0] = EXI_ClrData[CARD_ExiChannel];
-    if (EXIImmEx(CARD_ExiChannel, arg0, arg1, 2) == 0) {
+    var_r31[0] = EXI_ClrData[CARD_ExiChannel];
+    if (EXIImmEx(CARD_ExiChannel, var_r31, arg1, 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
@@ -491,8 +501,8 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
         return EXI_DeselectAndUnlock();
     }
 
-    sp12[0] = (sp10[0] << 8) & 0xFF00;
-    sp12[0] += sp10[1];
+    crc = (u16)sp10[0] << 8;
+    crc += sp10[1];
 
     if (EXIDeselect(CARD_ExiChannel) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00E0;
@@ -503,7 +513,7 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
         CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    if (sp12[0] != EXI_MakeCRC16(arg0, arg1)) {
+    if (crc != EXI_MakeCRC16(arg0, arg1)) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0002;
     }
 
@@ -511,56 +521,68 @@ u16 EXI_DataRead(u8* arg0, u16 arg1) {
 }
 
 u16 EXI_DataReadFinal(u8* arg0, u16 arg1) {
-    int var_r28;
-    u8* sp8;
+    int i;
     u8* var_r31;
     OSTick tick;
-    u16 sp12[CARD_NUM_CHANS];
+    int pad1;
+    volatile u16 crc2;
+    volatile u16 crc;
     u8 sp10[CARD_NUM_CHANS];
-    u8 crc[6];
-    int i;
+    int pad2;
+    int pad3;
+    u8 cmd[6];
+    u8 crc7;
+    int pad;
+
+    (void)pad;
+    (void)pad;
+    (void)pad;
+    (void)pad;
+    (void)pad;
+    (void)pad;
+    (void)pad;
+    (void)pad;
 
     if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
     var_r31 = arg0;
-    for (var_r28 = 0; var_r28 < arg1; var_r28++) {
+    for (i = 0; i < arg1; i++) {
         *var_r31++ = EXI_ClrData[CARD_ExiChannel];
     }
 
-    sp12[0] = sp12[1] = 0;
+    crc2 = crc = 0;
 
-    arg0 = (u8*)var_r31;
-    if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+    var_r31 = arg0;
+    if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
 
     tick = OSGetTick();
-    (void)tick;
-    (void)tick;
-    while (arg0[0] != 0xFE) {
-        arg0[0] = EXI_ClrData[CARD_ExiChannel];
+    pad = EXI_ClrData[CARD_ExiChannel];
+    while (var_r31[0] != 0xFE) {
+        var_r31[0] = EXI_ClrData[CARD_ExiChannel];
 
-        if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+        if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
             CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
             return EXI_DeselectAndUnlock();
         }
 
-        if (arg0[0] != 0xFE) {
+        if (var_r31[0] != 0xFE) {
             if (EXI_CheckTimeOut(tick, 1500) == 0) {
                 continue;
             }
 
-            arg0[0] = EXI_ClrData[CARD_ExiChannel];
+            var_r31[0] = EXI_ClrData[CARD_ExiChannel];
 
-            if (EXIImmEx(CARD_ExiChannel, arg0, sizeof(u8), 2) == 0) {
+            if (EXIImmEx(CARD_ExiChannel, var_r31, sizeof(u8), 2) == 0) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
                 return EXI_DeselectAndUnlock();
             }
 
-            if (arg0[0] != 0xFE) {
+            if (var_r31[0] != 0xFE) {
                 CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_4000;
             }
         }
@@ -568,43 +590,45 @@ u16 EXI_DataReadFinal(u8* arg0, u16 arg1) {
         break;
     }
 
-    arg0[0] = EXI_ClrData[CARD_ExiChannel];
-    if (EXIImmEx(CARD_ExiChannel, arg0, arg1 - 4, 2) == 0) {
+    var_r31[0] = EXI_ClrData[CARD_ExiChannel];
+    if (EXIImmEx(CARD_ExiChannel, var_r31, arg1 - 4, 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
 
-    crc[0] = 0x0C;
-    crc[1] = 0x00;
-    crc[2] = 0x00;
-    crc[3] = 0x00;
-    crc[4] = 0x00;
-    crc[0] |= 0x40;
-    crc[5] = EXI_MakeCRC7(crc, 5) | 1;
+    cmd[0] = 0x0C;
+    cmd[1] = 0x00;
+    cmd[2] = 0x00;
+    cmd[3] = 0x00;
+    cmd[4] = 0x00;
+    cmd[0] |= 0x40;
+    crc7 = EXI_MakeCRC7(cmd, 5);
+    crc7 |= 1;
+    cmd[5] = crc7;
 
     if (CARD_WP_Flag[CARD_ExiChannel] != 0) {
         for (i = 0; i < 6; i++) {
-            crc[i] = ~crc[i];
+            cmd[i] = ~cmd[i];
         }
     }
 
-    if (EXIImmEx(CARD_ExiChannel, &sp10, 6, 2) == 0) {
+    if (EXIImmEx(CARD_ExiChannel, cmd, 6, 2) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
 
-    arg0[arg1 - 4] = crc[0];
-    arg0[arg1 - 3] = crc[1];
-    arg0[arg1 - 2] = crc[2];
-    arg0[arg1 - 1] = crc[3];
-    sp10[0] = crc[4];
-    sp10[1] = crc[5];
+    var_r31[arg1 - 4] = cmd[0];
+    var_r31[arg1 - 3] = cmd[1];
+    var_r31[arg1 - 2] = cmd[2];
+    var_r31[arg1 - 1] = cmd[3];
+    sp10[0] = cmd[4];
+    sp10[1] = cmd[5];
 
     OSSetAlarm(&CARD_Alarm[CARD_ExiChannel], OSMicrosecondsToTicks(1), EXI_AlarmFunc);
     OSWaitSemaphore(&CARD_Sem[CARD_ExiChannel]);
 
-    sp12[0] = (sp10[0] << 8) & 0xFF00;
-    sp12[0] += sp10[1];
+    crc = (u16)sp10[0] << 8;
+    crc += sp10[1];
 
     if (EXIDeselect(CARD_ExiChannel) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00E0;
@@ -615,7 +639,7 @@ u16 EXI_DataReadFinal(u8* arg0, u16 arg1) {
         CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    if (sp12[0] != EXI_MakeCRC16(arg0, arg1)) {
+    if (crc != EXI_MakeCRC16(arg0, arg1)) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0002;
     }
 
@@ -643,7 +667,6 @@ u16 EXI_CmdWrite0(u8* arg0, u16 arg1) {
     (void)pad0;
     (void)pad0;
     (void)arg1;
-    (void)arg1;
 
     EXI_ClrData[CARD_ExiChannel] = 0xFF;
     var_r29 = arg0;
@@ -666,7 +689,6 @@ u16 EXI_CmdWrite0(u8* arg0, u16 arg1) {
 
     var_r29 = arg0;
     for (var_r30 = 0; var_r30 < (s32)sizeof(SD_DUMMY); var_r30++) {
-        !var_r29;
         SD_DUMMY[var_r30] = EXI_ClrData[CARD_ExiChannel];
     }
 
@@ -710,7 +732,7 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
     u8 sp18;
     u8 sp10[0x20];
 
-    pad0 = 0;
+    pad0 = CARD_ExiChannel + 1;
     (void)pad0;
     (void)pad0;
     (void)pad0;
@@ -718,18 +740,11 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
     (void)pad0;
     (void)pad0;
     (void)pad0;
-    (void)pad0;
-    (void)pad0;
-    (void)pad0;
-
-    // (void)arg0;
-    // (void)arg1;
-    // (void)arg1;
 
     var_r29 = arg0;
     var_r29[0] |= 0x40;
 
-    sp18 = EXI_MakeCRC7(var_r29, arg1);
+    sp18 = EXI_MakeCRC7(arg0, arg1);
     if (CARD_WP_Flag[CARD_ExiChannel] != 0) {
         for (var_r30 = 0; var_r30 < arg1; var_r30++) {
             *var_r29++ = ~(*var_r29);
@@ -748,7 +763,7 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
-    !var_r29;
+    pad0 = EXI_ClrData[CARD_ExiChannel];
 
     for (var_r30 = 0; var_r30 < 0x20; var_r30++) {
         sp10[var_r30] = EXI_ClrData[CARD_ExiChannel];
@@ -759,10 +774,7 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
         return EXI_DeselectAndUnlock();
     }
 
-    (void)arg0;
-    (void)arg0;
-
-    if (EXIImmEx(CARD_ExiChannel, arg0, arg1, 1) == 0) {
+    if (EXIImmEx(CARD_ExiChannel, var_r29, arg1, 1) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
         return EXI_DeselectAndUnlock();
     }
@@ -781,7 +793,6 @@ u16 EXI_CmdWrite(u8* arg0, u16 arg1) {
 
 u16 EXI_MultiDataWrite(u8* arg0, u16 arg1) {
     int pad0;
-    int pad1;
     int i;
     u8* volatile sp30;
     u8 sp8[32];
@@ -789,19 +800,32 @@ u16 EXI_MultiDataWrite(u8* arg0, u16 arg1) {
 
     (void)pad0;
     (void)pad0;
-    (void)pad0;
-    (void)pad0;
 
     for (i = 0; i < 0x20; i++) {
         sp8[i] = EXI_ClrData[CARD_ExiChannel];
     }
 
+    (void)pad0;
+    (void)pad0;
     crc = EXI_MakeCRC16(arg0, arg1);
 
     if (EXI_LockAndSelect(CARD_ExiFreq[CARD_ExiChannel])) {
         return CARD_ErrStatus[CARD_ExiChannel];
     }
 
+    if (EXIImmEx(CARD_ExiChannel, sp8, 8, 1) == 0) {
+        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
+        return EXI_DeselectAndUnlock();
+    }
+
+    (void)pad0;
+    (void)pad0;
+    for (i = 0; i < 0x20; i++) {
+        sp8[i] = EXI_ClrData[CARD_ExiChannel];
+    }
+
+    (void)pad0;
+    (void)pad0;
     sp30 = arg0;
     sp8[0] = 0xFC;
     if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8), 1) == 0) {
@@ -814,15 +838,25 @@ u16 EXI_MultiDataWrite(u8* arg0, u16 arg1) {
         return EXI_DeselectAndUnlock();
     }
 
-    OSSetAlarm(&CARD_Alarm[CARD_ExiChannel], OSMicrosecondsToTicks(1), EXI_AlarmFunc);
-    OSWaitSemaphore(&CARD_Sem[CARD_ExiChannel]);
-
     sp8[0] = crc >> 8;
     sp8[1] = crc;
 
     if (EXIImmEx(CARD_ExiChannel, sp8, sizeof(u8) * 2, 1) == 0) {
         CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_00F0;
     }
+
+    EXI_DataRes(SD_RES[CARD_ExiChannel].data, 1);
+
+    if (((SD_RES[CARD_ExiChannel].data[0] & 0x0E) >> 1) == 5) {
+        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0002;
+    }
+
+    if (((SD_RES[CARD_ExiChannel].data[0] & 0x0E) >> 1) == 6) {
+        CARD_ErrStatus[CARD_ExiChannel] |= CARD_ERROR_0200;
+    }
+
+    OSSetAlarm(&CARD_Alarm[CARD_ExiChannel], OSMicrosecondsToTicks(1), EXI_AlarmFunc);
+    OSWaitSemaphore(&CARD_Sem[CARD_ExiChannel]);
 
     return EXI_DeselectAndUnlock();
 }

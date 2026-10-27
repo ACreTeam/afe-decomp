@@ -7,6 +7,7 @@ JUTDirectPrint* JUTDirectPrint::sDirectPrint;
 
 JUTDirectPrint::JUTDirectPrint() {
     changeFrameBuffer(nullptr, 0, 0);
+    setCharColor(0xFF, 0xFF, 0xFF);
 }
 
 JUTDirectPrint* JUTDirectPrint::start() {
@@ -77,6 +78,8 @@ u32 JUTDirectPrint::sFontData2[77] = {
 };
 
 void JUTDirectPrint::drawChar(int position_x, int position_y, int ch) {
+    static u32 twiceBit[4] = { 0x00000000, 0x00000003, 0x0000000C, 0x0000000F };
+
     int codepoint = (100 <= ch) ? ch - 100 : ch;
     int col_index = (codepoint % 5) * 6;
     int row_index = (codepoint / 5) * 7;
@@ -91,19 +94,36 @@ void JUTDirectPrint::drawChar(int position_x, int position_y, int ch) {
         u32 data = *font_data << col_index;
         font_data += 1;
 
-        for (int x = 0; x < 6; x++) {
-            u16 value = (data & 0x80000000) ? 0xeb80 : 0x80;
+        if (scale_x == 1) {
+            data = (data & 0xFC000000) >> 1;
+        } else {
+            u32 a = twiceBit[(data >> 26) & 3];
+            u32 b = twiceBit[(data >> 28) & 3] << 4;
+            u32 c = twiceBit[(data >> 30) & 3] << 8;
+            data = (a | b | c) << 19;
+        }
 
-            for (int y2 = 0; y2 < scale_y; y2++) {
-                int tmp = mStride * y2;
-                for (int x2 = 0; x2 < scale_x; x2++) {
-                    u16* row = &pixel[tmp];
-                    row[x2] = value;
-                }
+        for (int x = 0; x < scale_x * 6; x += 2) {
+            u16 value;
+
+            value = (((data & 0x40000000) ? mCharColorY : 0) | ((data & 0x80000000) ? mCharColorCb4 : 32) +
+                                                                    ((data & 0x40000000) ? mCharColorCb2 : 64) +
+                                                                    ((data & 0x20000000) ? mCharColorCb4 : 32));
+            pixel[0] = value;
+            if (scale_y > 1) {
+                pixel[mStride] = value;
             }
 
-            data <<= 1;
-            pixel += scale_x;
+            value = (((data & 0x20000000) ? mCharColorY : 0) | ((data & 0x40000000) ? mCharColorCr4 : 32) +
+                                                                    ((data & 0x20000000) ? mCharColorCr2 : 64) +
+                                                                    ((data & 0x10000000) ? mCharColorCr4 : 32));
+            pixel[1] = value;
+            if (scale_y > 1) {
+                pixel[1 + mStride] = value;
+            }
+
+            pixel += 2;
+            data <<= 2;
         }
 
         pixel += mStride * scale_y - 6 * scale_x;
@@ -151,7 +171,7 @@ void JUTDirectPrint::printSub(u16 position_x, u16 position_y, const char* format
         }
     }
 
-    DCFlushRange(mFrameMemory, mFbSize);
+    DCStoreRange(mFrameMemory, mFbSize);
 }
 
 void JUTDirectPrint::print(u16 position_x, u16 position_y, char const* format, ...) {
@@ -174,4 +194,23 @@ void JUTDirectPrint::drawString_f(u16 position_x, u16 position_y, char const* fo
         printSub(position_x, position_y, format, args, false);
         va_end(args);
     }
+}
+
+void JUTDirectPrint::setCharColor(JUtility::TColor color) {
+    setCharColor(color.r, color.g, color.b);
+}
+
+void JUTDirectPrint::setCharColor(u8 r, u8 g, u8 b) {
+    mCharColor = JUtility::TColor(r, g, b, 0xFF);
+    u16 Y = 0.257 * (int)r + 0.504 * (int)g + 0.098 * (int)b + 16;
+    u16 Cb = -0.148 * (int)r - 0.291 * (int)g + 0.439 * (int)b + 128;
+    u16 Cr = 0.439 * (int)r - 0.368 * (int)g - 0.071 * (int)b + 128;
+
+    mCharColorY = Y << 8;
+    mCharColorCb = Cb;
+    mCharColorCb2 = Cb / 2;
+    mCharColorCb4 = Cb / 4;
+    mCharColorCr = Cr;
+    mCharColorCr2 = Cr / 2;
+    mCharColorCr4 = Cr / 4;
 }

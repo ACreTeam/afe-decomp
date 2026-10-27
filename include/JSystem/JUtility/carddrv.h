@@ -74,7 +74,7 @@ extern int CARD_SectorSize[CARD_NUM_CHANS];
 extern volatile u16 CARD_ErrStatus[CARD_NUM_CHANS];
 extern int CARD_Status[CARD_NUM_CHANS];
 extern int CARD_UnlockFlag[CARD_NUM_CHANS];
-extern int CARD_Size[CARD_NUM_CHANS];
+extern u32 CARD_Size[CARD_NUM_CHANS];
 extern int func_CARD_In[CARD_NUM_CHANS];
 extern int func_CARD_Out[CARD_NUM_CHANS];
 

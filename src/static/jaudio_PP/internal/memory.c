@@ -811,7 +811,7 @@ void Nas_SetBPFilter(s16* a, s32 b, s32 c) {
         Nas_SetLPFilter(a, b);
         return;
     } else if (b == 0) {
-        Nas_SetLPFilter(a, c);
+        Nas_SetHPFilter(a, c);
         return;
     }
     k = 0;
@@ -1005,24 +1005,28 @@ void __Nas_MemoryReconfig() {
     }
 
     /*0x2A18*/ AG.num_abi_cmds_max = 8;
-    /*0x0002*/ AG._0002 = spec->_14;
+    /*0x0002*/ AG._0002 = (s16)spec->_14;
 
-    s32 tmp = AG.audio_params.updates_per_frame;
-    /*0x28BC*/ AG.max_tempo = ((((60.0f * 1000.0f * AUDIO_TATUMS_PER_BEAT) * tmp) / AGC.timeBase) / AG._29D8) / 1.04613;
+    /*0x28BC*/ AG.max_tempo = (int)(((((60.0f * 1000.0f * AUDIO_TATUMS_PER_BEAT) * (s16)AG.audio_params.updates_per_frame) / AGC.timeBase) / AG._29D8) / 1.04613);
 
-    /*0x2894*/ AG._2894 = (f32)AG.refresh_rate * (f32)tmp / AG.audio_params.ai_sampling_frequency / AG.max_tempo;
+    /*0x2894*/ AG._2894 = (f32)AG.refresh_rate * (f32)AG.audio_params.updates_per_frame / AG.audio_params.ai_sampling_frequency / (s16)AG.max_tempo;
 
-    /*0x286C*/ AG.audio_params.spec = spec->_04;
     /*0x2894*/ AG._2894 = AG.refresh_rate;
-    /*0x2894*/ AG._2894 *= tmp;
+    /*0x2894*/ AG._2894 *= AG.audio_params.updates_per_frame;
     /*0x2894*/ AG._2894 /= AG.audio_params.ai_sampling_frequency;
-    /*0x2894*/ AG._2894 /= AG.max_tempo;
-    /*0x2876*/ AG.audio_params.num_samples_per_frame_min *= AG.audio_params.spec;
-    /*0x2878*/ AG.audio_params.updates_per_frame *= AG.audio_params.spec;
-    /*0x2872*/ AG.audio_params.num_samples_per_frame_target *= AG.audio_params.spec;
-    /*0x2874*/ AG.audio_params.num_samples_per_frame_max *= AG.audio_params.spec;
+    /*0x2894*/ AG._2894 /= (s16)AG.max_tempo;
 
-    if (AG.audio_params.spec > 1) {
+    (void)(f32)AG.refresh_rate;
+    (void)(f32)AG.audio_params.updates_per_frame;
+    (void)(f32)AG.audio_params.ai_sampling_frequency;
+    
+    /*0x286C*/ AG.audio_params.spec = (s16)spec->_04;
+    /*0x2872*/ AG.audio_params.num_samples_per_frame_target *= (s16)AG.audio_params.spec;
+    /*0x2874*/ AG.audio_params.num_samples_per_frame_max *= (s16)AG.audio_params.spec;
+    /*0x2876*/ AG.audio_params.num_samples_per_frame_min *= (s16)AG.audio_params.spec;
+    /*0x2878*/ AG.audio_params.updates_per_frame *= (s16)AG.audio_params.spec;
+
+    if ((s16)AG.audio_params.spec > 1) {
         /*0x2874*/ AG.audio_params.num_samples_per_frame_max -= 0x10;
     }
     // int c = (a + b);

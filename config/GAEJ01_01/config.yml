@@ -15,10 +15,31 @@ fill_gaps: true
 ldscript_template: config/GAEJ01_01/ldscript.tpl
 
 block_relocations:
+# jaudio dspinterface DSPRES_FILTER / jamosc TRE_TABLE (numeric tables, false positive pointers)
+- source: 0x800FB620
+- source: 0x800FC19C
+# Famicom ksNesPaletteNormal (palette data, false positive pointers)
+- source: 0x800FE3CC
+- source: 0x800FE3EC
+- source: 0x800FE40C
+- source: 0x800FE42C
+# Famicom float constant pool (false positive pointer)
+- source: 0x800FE590
+# JUTDirectPrint::sFontData2 (font bitmap, false positive pointer into __savedGXdata)
+- source: 0x801053F8
+# nintendo_hi_0 (compressed data, false positive pointers)
+- source: 0x800ECD80
+- source: 0x800EE898
 # dspboot
 - source: 0x800FAE38
 # emu64
 - source: 0x800FF0F4
+# dvderr textures (false positive pointers)
+- source: 0x800D9AFC
+- source: 0x800DC7DC
+- source: 0x800DC848
+- source: 0x800DCDFC
+- source: 0x800DD27C
 
 add_relocations:
 # emu64
@@ -38,6 +59,315 @@ add_relocations:
 extract:
 - symbol: JUTResFONT_Ascfont_fix12
   binary: assets/JSystem/JUtility/FontData/Ascfont_fix12.bfn
+
+- symbol: __Creator__
+  binary: assets/__Creator__.bin
+  header: assets/__Creator__.inc
+  header_type: raw
+
+- symbol: __DateTime__
+  binary: assets/__DateTime__.bin
+  header: assets/__DateTime__.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji1_tex
+  binary: assets/dvd_keikoku_moji1_tex.bin
+  header: assets/dvd_keikoku_moji1_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji2_tex
+  binary: assets/dvd_keikoku_moji2_tex.bin
+  header: assets/dvd_keikoku_moji2_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_pp_moji1_tex
+  binary: assets/dvd_keikoku_pp_moji1_tex.bin
+  header: assets/dvd_keikoku_pp_moji1_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w1_tex
+  binary: assets/ctl_att_w1_tex.bin
+  header: assets/ctl_att_w1_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w2_tex
+  binary: assets/ctl_att_w2_tex.bin
+  header: assets/ctl_att_w2_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w3_tex
+  binary: assets/ctl_att_w3_tex.bin
+  header: assets/ctl_att_w3_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w4_tex
+  binary: assets/ctl_att_w4_tex.bin
+  header: assets/ctl_att_w4_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w5_tex
+  binary: assets/ctl_att_w5_tex.bin
+  header: assets/ctl_att_w5_tex.inc
+  header_type: raw
+
+- symbol: ctl_att_w6_tex
+  binary: assets/ctl_att_w6_tex.bin
+  header: assets/ctl_att_w6_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji3_tex
+  binary: assets/dvd_keikoku_moji3_tex.bin
+  header: assets/dvd_keikoku_moji3_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji4_tex
+  binary: assets/dvd_keikoku_moji4_tex.bin
+  header: assets/dvd_keikoku_moji4_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_e_tex
+  binary: assets/dvd_keikoku_e_tex.bin
+  header: assets/dvd_keikoku_e_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji5_tex
+  binary: assets/dvd_keikoku_moji5_tex.bin
+  header: assets/dvd_keikoku_moji5_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji6_tex
+  binary: assets/dvd_keikoku_moji6_tex.bin
+  header: assets/dvd_keikoku_moji6_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji7_tex
+  binary: assets/dvd_keikoku_moji7_tex.bin
+  header: assets/dvd_keikoku_moji7_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji8_tex
+  binary: assets/dvd_keikoku_moji8_tex.bin
+  header: assets/dvd_keikoku_moji8_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji9_tex
+  binary: assets/dvd_keikoku_moji9_tex.bin
+  header: assets/dvd_keikoku_moji9_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji10_tex
+  binary: assets/dvd_keikoku_moji10_tex.bin
+  header: assets/dvd_keikoku_moji10_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_maru_tex
+  binary: assets/dvd_keikoku_maru_tex.bin
+  header: assets/dvd_keikoku_maru_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji11_tex
+  binary: assets/dvd_keikoku_moji11_tex.bin
+  header: assets/dvd_keikoku_moji11_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji13_tex
+  binary: assets/dvd_keikoku_moji13_tex.bin
+  header: assets/dvd_keikoku_moji13_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji14_tex
+  binary: assets/dvd_keikoku_moji14_tex.bin
+  header: assets/dvd_keikoku_moji14_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji15_tex
+  binary: assets/dvd_keikoku_moji15_tex.bin
+  header: assets/dvd_keikoku_moji15_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku_moji16_tex
+  binary: assets/dvd_keikoku_moji16_tex.bin
+  header: assets/dvd_keikoku_moji16_tex.inc
+  header_type: raw
+
+- symbol: dvd_keikoku1_v
+  binary: assets/dvd_keikoku1_v.bin
+  header: assets/dvd_keikoku1_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: dvd_keikoku2_v
+  binary: assets/dvd_keikoku2_v.bin
+  header: assets/dvd_keikoku2_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: dvd_keikoku3_v
+  binary: assets/dvd_keikoku3_v.bin
+  header: assets/dvd_keikoku3_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: dvd_keikoku4_v
+  binary: assets/dvd_keikoku4_v.bin
+  header: assets/dvd_keikoku4_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: dvd_keikoku5_v
+  binary: assets/dvd_keikoku5_v.bin
+  header: assets/dvd_keikoku5_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: gam_win_moji1_tex!.data:0x800E1BA0
+  binary: assets/bootdata/win1/gam_win_moji1_tex.bin
+  header: assets/bootdata/win1/gam_win_moji1_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji2_tex
+  binary: assets/bootdata/win1/gam_win_moji2_tex.bin
+  header: assets/bootdata/win1/gam_win_moji2_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji3_tex
+  binary: assets/bootdata/win1/gam_win_moji3_tex.bin
+  header: assets/bootdata/win1/gam_win_moji3_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji4_tex
+  binary: assets/bootdata/win1/gam_win_moji4_tex.bin
+  header: assets/bootdata/win1/gam_win_moji4_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji5_tex
+  binary: assets/bootdata/win1/gam_win_moji5_tex.bin
+  header: assets/bootdata/win1/gam_win_moji5_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku1_tex!.data:0x800E2620
+  binary: assets/bootdata/win1/att_win_waku1_tex.bin
+  header: assets/bootdata/win1/att_win_waku1_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku2_tex!.data:0x800E2A20
+  binary: assets/bootdata/win1/att_win_waku2_tex.bin
+  header: assets/bootdata/win1/att_win_waku2_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku3_tex!.data:0x800E2E20
+  binary: assets/bootdata/win1/att_win_waku3_tex.bin
+  header: assets/bootdata/win1/att_win_waku3_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku4_tex!.data:0x800E3220
+  binary: assets/bootdata/win1/att_win_waku4_tex.bin
+  header: assets/bootdata/win1/att_win_waku4_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku5_tex!.data:0x800E3620
+  binary: assets/bootdata/win1/att_win_waku5_tex.bin
+  header: assets/bootdata/win1/att_win_waku5_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku6_tex!.data:0x800E3A20
+  binary: assets/bootdata/win1/att_win_waku6_tex.bin
+  header: assets/bootdata/win1/att_win_waku6_tex.inc
+  header_type: raw
+
+- symbol: gam_win1_v
+  binary: assets/bootdata/win1/gam_win1_v.bin
+  header: assets/bootdata/win1/gam_win1_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: gam_win_moji6_tex
+  binary: assets/bootdata/win2/gam_win_moji6_tex.bin
+  header: assets/bootdata/win2/gam_win_moji6_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji7_tex
+  binary: assets/bootdata/win2/gam_win_moji7_tex.bin
+  header: assets/bootdata/win2/gam_win_moji7_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji8_tex
+  binary: assets/bootdata/win2/gam_win_moji8_tex.bin
+  header: assets/bootdata/win2/gam_win_moji8_tex.inc
+  header_type: raw
+
+- symbol: gam_win_moji1_tex!.data:0x800E4700
+  binary: assets/bootdata/win2/gam_win_moji1_tex.bin
+  header: assets/bootdata/win2/gam_win_moji1_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku1_tex!.data:0x800E4B00
+  binary: assets/bootdata/win2/att_win_waku1_tex.bin
+  header: assets/bootdata/win2/att_win_waku1_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku2_tex!.data:0x800E4F00
+  binary: assets/bootdata/win2/att_win_waku2_tex.bin
+  header: assets/bootdata/win2/att_win_waku2_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku3_tex!.data:0x800E5300
+  binary: assets/bootdata/win2/att_win_waku3_tex.bin
+  header: assets/bootdata/win2/att_win_waku3_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku4_tex!.data:0x800E5700
+  binary: assets/bootdata/win2/att_win_waku4_tex.bin
+  header: assets/bootdata/win2/att_win_waku4_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku5_tex!.data:0x800E5B00
+  binary: assets/bootdata/win2/att_win_waku5_tex.bin
+  header: assets/bootdata/win2/att_win_waku5_tex.inc
+  header_type: raw
+
+- symbol: att_win_waku6_tex!.data:0x800E5F00
+  binary: assets/bootdata/win2/att_win_waku6_tex.bin
+  header: assets/bootdata/win2/att_win_waku6_tex.inc
+  header_type: raw
+
+- symbol: gam_win2_v
+  binary: assets/bootdata/win2/gam_win2_v.bin
+  header: assets/bootdata/win2/gam_win2_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: gam_win_moji9_tex
+  binary: assets/bootdata/win3/gam_win_moji9_tex.bin
+  header: assets/bootdata/win3/gam_win_moji9_tex.inc
+  header_type: raw
+
+- symbol: gam_win3_v
+  binary: assets/bootdata/win3/gam_win3_v.bin
+  header: assets/bootdata/win3/gam_win3_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: logo_nin2_tex
+  binary: assets/bootdata/logo_nin2_tex.bin
+  header: assets/bootdata/logo_nin2_tex.inc
+  header_type: raw
+
+- symbol: logo_nin1_tex
+  binary: assets/bootdata/logo_nin1_tex.bin
+  header: assets/bootdata/logo_nin1_tex.inc
+  header_type: raw
+
+- symbol: logo_nin_v
+  binary: assets/bootdata/logo_nin_v.bin
+  header: assets/bootdata/logo_nin_v.inc
+  header_type: none
+  custom_type: vtx
+
+- symbol: nintendo_hi_0
+  binary: assets/nintendo_hi_0.bin
+  header: assets/nintendo_hi_0.inc
+  header_type: raw
 
 modules:
 - object: files/foresta.rel

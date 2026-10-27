@@ -19,7 +19,11 @@
 
 static s32 Nas_GetSyncDummy(u8* param0, s32 param1);
 
+#if VERSION == VER_GAEJ01_01
+BOOL AUDIO_SYSTEM_READY = FALSE;
+#else
 volatile BOOL AUDIO_SYSTEM_READY = FALSE;
+#endif
 static void* FASTDMA_BUFFER = NULL;
 Na_DmaProc NA_DMA_PROC = Z_osEPiStartDma;
 Na_SyncProc NA_SYNC_PROC = Nas_GetSyncDummy;
@@ -535,7 +539,7 @@ s32 Nas_StartSeq_Skip(s32 group_idx, s32 seq_id, s32 skip_ticks) {
     return __Nas_StartSeq(group_idx, seq_id);
 }
 
-static s32 __Nas_StartSeq(s32 group_idx, s32 seq_id, s32 param) {
+static s32 __Nas_StartSeq(s32 group_idx, s32 seq_id) {
     group* group = AG.groups_p[group_idx];
     u8* seq_p;
     s32 bank_id;

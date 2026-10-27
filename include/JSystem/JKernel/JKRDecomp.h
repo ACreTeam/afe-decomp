@@ -9,7 +9,7 @@
 #include "JSystem/JKernel/JKREnum.h"
 
 #ifdef __cplusplus
-#define JKRDECOMP_MSG_BUF_COUNT 4
+#define JKRDECOMP_MSG_BUF_COUNT 8
 #define JKRDECOMP_STACK_SIZE 0x4000
 #define JKRDECOMP_THREAD_MSG_BUF_COUNT 16
 
@@ -47,7 +47,7 @@ class JKRDecompCommand {
 
 class JKRDecomp : public JKRThread {
   public:
-    enum CompressionMode { NONE = 0, SZP = 1, SZS = 2 };
+    enum CompressionMode { NONE = 0, SZP = 1, SZS = 2, ASR = 3 };
 
     JKRDecomp(s32 decompPriority);
 
@@ -97,9 +97,12 @@ inline void JKRDecompress(u8* src, u8* dst, u32 srcLength, u32 skipCount) {
 }
 
 int JKRDecompressFromDVD(JKRDvdFile* srcFile, void* buf, u32 size, u32 maxDest, u32 fileOffset, u32 srcOffset);
+int JKRDecompressFromDVD(JKRDvdFile* srcFile, void* buf, u32 size, u32 maxDest, u32 fileOffset, u32 srcOffset, u32* resSize);
 int JKRDecompressFromDVDToAram(JKRDvdFile* srcFile, u32 address, u32 fileSize, u32 maxDest, u32 fileOffset,
                                u32 srcOffset);
+int JKRDecompressFromDVDToAram(JKRDvdFile* srcFile, u32 address, u32 fileSize, u32 maxDest, u32 fileOffset, u32 srcOffset, u32* resSize);
 int JKRDecompressFromAramToMainRam(u32 srcAddress, void* dst, u32 fileSize, u32 maxDest, u32 fileOffset);
+int JKRDecompressFromAramToMainRam(u32 srcAddress, void* dst, u32 fileSize, u32 maxDest, u32 fileOffset, u32* resSize);
 
 #endif
 #endif

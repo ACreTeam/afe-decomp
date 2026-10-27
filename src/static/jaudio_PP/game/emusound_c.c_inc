@@ -1,0 +1,124 @@
+s8 __GetWave_Triangle(s32 a) {
+    return TRIANGLE_TABLE[a];
+}
+
+u32 __PitchTo32_HVC_C(u16 a) {
+    u32 pitch;
+    if (a == 0) {
+        return 0;
+    } else {
+        f32 scalefactor = 16.f;
+        return (u32)((NES_CLOCK_SPEED - 0.25f) / scalefactor / (a + 1) / 1000.875f * 32768.f);
+    }
+}
+u32 sample_timer = 0;
+u32 abs_timer = 0;
+
+void __Sound_Write_C(u16 a, u8 b) {
+    switch (a) {
+        case 0x8: {
+            u8 v = SoundC._14;
+            if (sbuffer.apu.Triangle.LinearCounterReloadVaue) {
+                SoundC._24 = sbuffer.apu.Triangle.LinearCounterReloadVaue + 1;
+            } else {
+                SoundC._24 = 0;
+            }
+
+            if (SoundC._00 && SoundC._4A) {
+                SoundC._14 = sbuffer.apu.Triangle.LengthCounter;
+                SoundC._20 = SoundC._24;
+            } else if (SoundC._00) {
+                if (v && !sbuffer.apu.Triangle.LengthCounter) {
+                    SoundC._14 = sbuffer.apu.Triangle.LengthCounter;
+                    SoundC._20 = SoundC._24;
+                    SoundC._4A = 0x80;
+                } else if (v) {
+                    SoundC._20 = SoundC._24;
+                }
+            } else if (SoundC._4A) {
+                SoundC._14 = sbuffer.apu.Triangle.LengthCounter;
+                SoundC._20 = SoundC._24;
+                if (sbuffer.apu.TriangleStatus) {
+                    SoundC._00 = 1;
+                }
+            }
+
+            if (!sbuffer.apu.Triangle.LinearCounterReloadVaue && !SoundC._14) {
+                SoundC._00 = 0;
+            }
+        } break;
+        case 0xa: {
+            SoundC._0C = (sbuffer.apu.Triangle.TimerHigh << 8) | sbuffer.apu.Triangle.TimerLow;
+            SoundC._08 = __PitchTo32_HVC_C(SoundC._0C);
+        } break;
+        case 0xb: {
+            sample_timer = 0;
+            SoundC._0C = (sbuffer.apu.Triangle.TimerHigh << 8) | sbuffer.apu.Triangle.TimerLow;
+            SoundC._18 = LEN_TABLE_HVC[sbuffer.apu.Triangle.LengthCounterLoad];
+            SoundC._10 = SoundC._18 * 4;
+            if (!SoundC._00 || !SoundC._20) {
+                SoundC._04 = 0;
+                SoundC._1C = (127 - bias >> 3) + 16;
+                SoundC._48 = 0;
+                SoundC._08 = __PitchTo32_HVC_C(SoundC._0C);
+            } else {
+                SoundC._08 = __PitchTo32_HVC_C(SoundC._0C);
+            }
+            SoundC._4A = 60;
+            SoundC._14 = sbuffer.apu.Triangle.LengthCounter;
+            SoundC._20 = SoundC._24;
+            if (sbuffer.apu.TriangleStatus && sbuffer.apu.Triangle.LinearCounterReloadVaue) {
+                if (!SoundC._00) {
+                    SoundC._00 = 1;
+                }
+            } else {
+                SoundC._00 = 0;
+            }
+        } break;
+    }
+}
+
+int __ProcessSoundC() {
+    static s16 timer = 0;
+    sample_timer++;
+    abs_timer++;
+
+    u16 v = SoundC._08;
+    if (!SoundC._00 || !SoundC._20) {
+        if (SoundC._3E) {
+            SoundC._3E--;
+        }
+    } else if (SoundC._3E < 0x20) {
+        SoundC._3E++;
+    }
+
+    s16 b = (int)__GetWave_Triangle(SoundC._04p._04_hi);
+    SoundC._1C = (127 - bias >> 3) + 0x10;
+    b *= SoundC._1C;
+    SoundC._04 = SoundC._04 + SoundC._08;
+    SoundC._04 &= 0x1fffff;
+    SoundC._40 = v;
+
+    if (!SoundC._14) {
+        if (PHASE_SYNC_FLAG && SoundC._10) {
+            SoundC._10--;
+        }
+        if (!SoundC._10 && !SoundC._14) {
+            SoundC._00 = 0;
+        }
+        if (SoundC._20 && PHASE_SYNC_FLAG) {
+            SoundC._20--;
+        }
+    }
+
+    if (!SoundC._20 && !SoundC._14) {
+        SoundC._00 = 0;
+    }
+
+    if (SoundC._4A) {
+        SoundC._4A--;
+    }
+
+    s16 ret = (b * SoundC._3E) >> 5;
+    return ret;
+}

@@ -1,5 +1,7 @@
 #include <dolphin/os/OSCache.h>
 #include <string.h>
+#include "_mem.h"
+#include "PowerPC_EABI_Support/MSL_C/MSL_Common/arith.h"
 
 #include "JSystem/JKernel/JKRAram.h"
 #include "JSystem/JKernel/JKRArchive.h"
@@ -38,6 +40,10 @@ JKRAramArchive::~JKRAramArchive() {
             mArcInfoBlock = nullptr;
         }
 
+        if (mExpandSizes) {
+            JKRFree(mExpandSizes);
+            mExpandSizes = nullptr;
+        }
         if (mDvdFile) {
             delete mDvdFile;
         }
@@ -53,9 +59,9 @@ JKRAramArchive::~JKRAramArchive() {
 void JKRAramArchive::fixedInit(s32 entryNum, EMountDirection direction) {
     mIsMounted = false;
     mMountDirection = direction;
-    mMountMode = 2;
+    mMountMode = MOUNT_ARAM;
     mMountCount = 1;
-    _54 = 2;
+    _58 = 2;
     mHeap = JKRGetCurrentHeap();
     mEntryNum = entryNum;
 
@@ -69,7 +75,7 @@ bool JKRAramArchive::mountFixed(s32 entryNum, EMountDirection direction) {
     if (entryNum < 0)
         return false;
 
-    if (check_mount_already(entryNum))
+    if (check_mount_already(entryNum, JKRGetCurrentHeap()))
         return false;
 
     fixedInit(entryNum, direction);
@@ -115,10 +121,6 @@ void JKRAramArchive::unmountFixed() {
     mIsMounted = false;
 }
 
-#if DEBUG
-CW_FORCE_STRINGS(JKRAramArchive_cpp, __FILE__, "isMounted()", "mMountCount == 1")
-#endif
-
 bool JKRAramArchive::open(long entryNum) {
     mArcInfoBlock = nullptr;
     mDirectories = nullptr;
@@ -132,14 +134,13 @@ bool JKRAramArchive::open(long entryNum) {
         return 0;
     }
 
-    // NOTE: a different struct is used here for sure, unfortunately i can't get
-    // any hits on this address, so gonna leave it like this for now
     SArcHeader* mem = (SArcHeader*)JKRAllocFromSysHeap(32, -32);
     if (mem == nullptr) {
         mMountMode = 0;
     } else {
         JKRDvdToMainRam(entryNum, (u8*)mem, EXPAND_SWITCH_DECOMPRESS, 32, nullptr, JKRDvdRipper::ALLOC_DIR_TOP, 0,
-                        &mCompression);
+                        &mCompression, nullptr);
+        DCInvalidateRange(mem, 32);
         int alignment = mMountDirection == MOUNT_DIRECTION_HEAD ? 32 : -32;
         u32 alignedSize = ALIGN_NEXT(mem->file_data_offset, 32);
         mArcInfoBlock = (SArcDataInfo*)JKRAllocFromHeap(mHeap, alignedSize, alignment);
@@ -147,20 +148,49 @@ bool JKRAramArchive::open(long entryNum) {
             mMountMode = 0;
         } else {
             JKRDvdToMainRam(entryNum, (u8*)mArcInfoBlock, EXPAND_SWITCH_DECOMPRESS, alignedSize, nullptr,
-                            JKRDvdRipper::ALLOC_DIR_TOP, 32, nullptr);
+                            JKRDvdRipper::ALLOC_DIR_TOP, 32, nullptr, nullptr);
+            DCInvalidateRange(mArcInfoBlock, alignedSize);
 
             mDirectories = (SDIDirEntry*)((u8*)mArcInfoBlock + mArcInfoBlock->node_offset);
             mFileEntries = (SDIFileEntry*)((u8*)mArcInfoBlock + mArcInfoBlock->file_entry_offset);
             mStrTable = (const char*)((u8*)mArcInfoBlock + mArcInfoBlock->string_table_offset);
+            mExpandSizes = nullptr;
+
+            u8 compressedFiles = 0;
+
+            SDIFileEntry* fileEntry = mFileEntries;
+            for (int i = 0; i < mArcInfoBlock->num_file_entries; i++) {
+                u8 flag = fileEntry->mFlag >> 24;
+                if ((flag & 1)) {
+                    compressedFiles |= (flag & JKRARCHIVE_ATTR_COMPRESSION);
+                }
+                fileEntry++;
+            }
+
+            if (compressedFiles != 0) {
+                mExpandSizes = (u32*)JKRAllocFromHeap(mHeap, mArcInfoBlock->num_file_entries << 2, abs(alignment));
+                if (mExpandSizes == nullptr) {
+                    JKRFree(mArcInfoBlock);
+                    mMountMode = 0;
+                    goto cleanup;
+                }
+                memset(mExpandSizes, 0, mArcInfoBlock->num_file_entries << 2);
+            }
 
             u32 aramSize = ALIGN_NEXT(mem->file_data_length, 32);
             mBlock = JKRAllocFromAram(aramSize,
                                       mMountDirection == MOUNT_DIRECTION_HEAD ? JKRAramHeap::Head : JKRAramHeap::Tail);
             if (mBlock == nullptr) {
+                if (mArcInfoBlock) {
+                    JKRFree(mArcInfoBlock);
+                }
+                if (mExpandSizes) {
+                    JKRFree(mExpandSizes);
+                }
                 mMountMode = 0;
             } else {
                 JKRDvdToAram(entryNum, mBlock->getAddress(), EXPAND_SWITCH_DECOMPRESS,
-                             mem->header_length + mem->file_data_offset, 0);
+                             mem->header_length + mem->file_data_offset, 0, nullptr);
             }
         }
     }
@@ -169,10 +199,12 @@ cleanup:
         JKRFreeToSysHeap(mem);
     }
     if (mMountMode == 0) {
-        JREPORTF(":::[%s: %d] Cannot alloc memory\n", __FILE__,
-                 415); // TODO: macro
+        if (mDvdFile != nullptr) {
+            delete mDvdFile;
+        }
+        return false;
     }
-    return mMountMode != 0;
+    return true;
 }
 
 void* JKRAramArchive::fetchResource(SDIFileEntry* fileEntry, u32* pSize) {
@@ -181,17 +213,26 @@ void* JKRAramArchive::fetchResource(SDIFileEntry* fileEntry, u32* pSize) {
     u32 sizeRef;
     u8* data;
 
-    if (fileEntry->mData) {
-        if (pSize)
-            *pSize = fileEntry->mSize;
+    if (pSize == nullptr) {
+        pSize = &sizeRef;
+    }
+
+    int compression = JKRConvertAttrToCompressionType(fileEntry->mFlag >> 0x18);
+    if (fileEntry->mData == nullptr) {
+        u32 size = fetchResource_subroutine(fileEntry->mDataOffset + mBlock->getAddress(), fileEntry->mSize, mHeap,
+                                            compression, &data);
+        *pSize = size;
+        if (size == 0) {
+            return nullptr;
+        }
+        fileEntry->mData = data;
+        if (compression == JKRCOMPRESSION_YAZ0) {
+            setExpandSize(fileEntry, *pSize);
+        }
+    } else if (compression == JKRCOMPRESSION_YAZ0) {
+        *pSize = getExpandSize(fileEntry);
     } else {
-        u32 addres = mBlock->getAddress();
-        int compression = JKRConvertAttrToCompressionType(fileEntry->mFlag >> 0x18);
-        u32 size =
-            fetchResource_subroutine(fileEntry->mDataOffset + addres, fileEntry->mSize, mHeap, compression, &data);
-        if (pSize)
-            *pSize = size;
-        fileEntry->mData = (void*)data;
+        *pSize = fileEntry->mSize;
     }
 
     return fileEntry->mData;
@@ -204,15 +245,28 @@ void* JKRAramArchive::fetchResource(void* data, u32 compressedSize, SDIFileEntry
     if (fileSize > compressedSize) {
         fileSize = compressedSize;
     }
-    if (fileEntry->mData) {
-        JKRHeap::copyMemory(data, fileEntry->mData, fileSize);
-    } else {
-        int compression = JKRConvertAttrToCompressionType(fileEntry->mFlag >> 0x18);
-        if (expandSwitch != EXPAND_SWITCH_DECOMPRESS)
-            compression = 0;
 
+    int compression = JKRConvertAttrToCompressionType(fileEntry->mFlag >> 0x18);
+    if (fileEntry->mData == nullptr) {
+        if (expandSwitch != EXPAND_SWITCH_DECOMPRESS)
+            compression = JKRCOMPRESSION_NONE;
+
+        compressedSize = (s32)ALIGN_PREV(compressedSize, 32);
         fileSize = fetchResource_subroutine(fileEntry->mDataOffset + mBlock->getAddress(), fileSize, (u8*)data,
                                             compressedSize, compression);
+    } else {
+        if (compression == JKRCOMPRESSION_YAZ0) {
+            u32 expandSize = getExpandSize(fileEntry);
+            if (expandSize != 0) {
+                fileSize = expandSize;
+            }
+        }
+
+        if (fileSize > compressedSize) {
+            fileSize = compressedSize;
+        }
+
+        JKRHeap::copyMemory(data, fileEntry->mData, fileSize);
     }
 
     if (pSize != nullptr) {
@@ -255,7 +309,7 @@ u32 JKRAramArchive::fetchResource_subroutine(u32 srcAram, u32 size, u8* data, u3
                              &sizeRef);
             return sizeRef;
         default:
-            JPANIC(550, ":::??? bad sequence\n");
+            JPANIC(655, "??? bad sequence\n");
             return 0;
     }
 }
@@ -272,23 +326,53 @@ u32 JKRAramArchive::fetchResource_subroutine(u32 srcAram, u32 size, JKRHeap* hea
 
             JKRAramToMainRam(srcAram, buffer, alignedSize, EXPAND_SWITCH_DEFAULT, alignedSize, nullptr, -1, nullptr);
             *pBuf = buffer;
-
             return size;
         case JKRCOMPRESSION_YAY0:
         case JKRCOMPRESSION_YAZ0:
-            u8* header = (u8*)JKRAllocFromHeap(heap, 0x20, 0x20);
-            JKRAramToMainRam(srcAram, header, 0x20, EXPAND_SWITCH_DEFAULT, 0, nullptr, -1, nullptr);
-            u32 expandSize = JKRDecompExpandSize(header);
-            JKRFreeToHeap(heap, header);
-            expandSize = ALIGN_NEXT(expandSize, 32);
-            buffer = (u8*)JKRAllocFromHeap(heap, expandSize, 0x20);
+            u8 decompBuf[64];
+            u8* bufptr = (u8*)ALIGN_NEXT((u32)decompBuf, 32);
+            JKRAramToMainRam(srcAram, bufptr, sizeof(decompBuf) / 2, EXPAND_SWITCH_DEFAULT, 0, nullptr, -1, nullptr);
+
+            u32 expandSize = ALIGN_NEXT(JKRDecompExpandSize(bufptr), 32);
+            buffer = (u8*)JKRAllocFromHeap(heap, expandSize, 32);
             JUT_ASSERT(buffer);
 
             JKRAramToMainRam(srcAram, buffer, alignedSize, EXPAND_SWITCH_DECOMPRESS, expandSize, heap, -1, &resSize);
             *pBuf = buffer;
             return resSize;
         default:
-            JPANIC(605, ":::??? bad sequence\n");
+            JPANIC(713, "??? bad sequence\n");
             return 0;
     }
+}
+
+u32 JKRAramArchive::getExpandedResSize(const void* resource) const {
+    if (mExpandSizes == nullptr) {
+        return getResSize(resource);
+    }
+
+    SDIFileEntry* fileEntry = findPtrResource(resource);
+    if (fileEntry == nullptr) {
+        return 0xffffffff;
+    }
+
+    u8 flags = (fileEntry->mFlag >> 0x18);
+    if ((flags & 4) == 0) {
+        return getResSize(resource);
+    }
+
+    u32 expandSize = getExpandSize(fileEntry);
+    if (expandSize != 0) {
+        return expandSize;
+    }
+
+    u8 buf[64];
+    u8* bufPtr = (u8*)ALIGN_NEXT((u32)buf, 32);
+
+    JKRAramToMainRam(fileEntry->mDataOffset + mBlock->getAddress(), bufPtr, sizeof(buf) / 2, EXPAND_SWITCH_DEFAULT, 0,
+                     nullptr, -1, nullptr);
+
+    u32 decompExpandSize = JKRDecompExpandSize(bufPtr);
+    const_cast<JKRAramArchive*>(this)->setExpandSize(fileEntry, decompExpandSize);
+    return decompExpandSize;
 }

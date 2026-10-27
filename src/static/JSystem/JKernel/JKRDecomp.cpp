@@ -75,7 +75,7 @@ JKRDecompCommand* JKRDecomp::prepareCommand(u8* srcBuffer, u8* dstBuffer, u32 sr
 }
 
 BOOL JKRDecomp::sendCommand(JKRDecompCommand* cmd) {
-    BOOL res = OSSendMessage(&JKRDecomp::sMessageQueue, (OSMessage)cmd, OS_MESSAGE_BLOCK);
+    BOOL res = OSSendMessage(&JKRDecomp::sMessageQueue, (OSMessage)cmd, OS_MESSAGE_NOBLOCK);
 
 #ifdef JSYSTEM_DEBUG
     if (res == FALSE) {
@@ -259,6 +259,10 @@ JKRDecomp::CompressionMode JKRDecomp::checkCompressed(u8* buf) {
         if (buf[2] == 'z') {
             return SZS;
         }
+    }
+
+    if (buf[0] == 'A' && buf[1] == 'S' && buf[2] == 'R') {
+        return ASR;
     }
 
     return NONE;

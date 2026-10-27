@@ -1,0 +1,41 @@
+/*
+ * --INFO--
+ * Address:	80015840
+ * Size:	000044
+ */
+Perc_* PercRead(u32 a1, u32 a2)
+{
+	Bank_* bank = Bank_Get(a1);
+	if (bank == NULL) {
+		return NULL;
+	}
+
+	return Bank_PercChange(bank, a2);
+}
+
+/*
+ * --INFO--
+ * Address:	800158A0
+ * Size:	000044
+ */
+Inst_* InstRead(u32 a1, u32 a2)
+{
+
+	Bank_* bank = Bank_Get(a1);
+	if (bank == NULL) {
+		return NULL;
+	}
+
+	return Bank_InstChange(bank, a2);
+}
+
+/*
+ * --INFO--
+ * Address:	80015900
+ * Size:	00002C
+ */
+Vmap_* VmapRead(Inst_* inst, u8 a1, u8 a2)
+{
+	Vmap_* map = (Vmap_*)Bank_GetInstVmap(inst, a1, a2);
+	return !map ? NULL : map;
+}

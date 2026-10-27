@@ -151,7 +151,11 @@ u16 FS_Readdir_sub(SDDirInfo* pDirInfo, UnknownStruct3* param2) {
                 temp_r30 = LOAD_LE_u16(var_r31->DIR_WrtTime.data_u16);
                 param2->unk_4C = ((temp_r30 >> 11) & 0x1F);
                 param2->unk_4E = ((temp_r30 >> 5) & 0x3F);
+#if VERSION == VER_GAEJ01_01
+                param2->unk_50 = ((temp_r30 & 0x1F) << 1);
+#else
                 param2->unk_50 = ((temp_r30 << 1) & 0x3E);
+#endif
                 sp28 += 0x20;
                 sp30++;
 

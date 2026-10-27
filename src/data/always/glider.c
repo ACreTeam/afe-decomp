@@ -2,7 +2,7 @@
 #include "libforest/gbi_extensions.h"
 #include "PR/mbi.h"
 
-Vtx glider_v[] ATTRIBUTE_ALIGN(8) = {
+Vtx glider_v[] ATTRIBUTE_ALIGN(32) = {
 #include "assets/forestd/glider/glider_v.inc"
 };
 
